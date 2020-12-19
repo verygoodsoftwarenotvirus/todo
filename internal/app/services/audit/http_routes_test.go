@@ -11,7 +11,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -35,7 +35,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
-		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return(exampleAuditLogEntryList, nil)
 		s.auditLog = auditLogEntryManager
 
@@ -66,7 +66,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
@@ -97,7 +97,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 
@@ -142,7 +142,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 			return exampleAuditLogEntry.ID
 		}
 
-		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
 		s.auditLog = auditLogEntryManager
 
@@ -178,7 +178,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 			return exampleAuditLogEntry.ID
 		}
 
-		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
@@ -214,7 +214,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 			return exampleAuditLogEntry.ID
 		}
 
-		auditLogEntryManager := &mockmodels.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 

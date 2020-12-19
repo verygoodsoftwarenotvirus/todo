@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	oauth2 "github.com/go-oauth2/oauth2/v4"
@@ -50,9 +51,6 @@ type (
 		HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
 	}
 
-	// ClientIDFetcher is a function for fetching client IDs out of requests.
-	ClientIDFetcher func(req *http.Request) uint64
-
 	// service manages our OAuth2 clients via HTTP.
 	service struct {
 		logger               logging.Logger
@@ -75,7 +73,6 @@ func ProvideOAuth2ClientsService(
 	userDataManager types.UserDataManager,
 	auditLog types.OAuth2ClientAuditManager,
 	authenticator password.Authenticator,
-	clientIDFetcher ClientIDFetcher,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (types.OAuth2ClientDataService, error) {
@@ -97,7 +94,7 @@ func ProvideOAuth2ClientsService(
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
-		urlClientIDExtractor: clientIDFetcher,
+		urlClientIDExtractor: routeparams.BuildRouteParamIDFetcher(logger, OAuth2ClientIDURIParamKey, "oauth2 client"),
 		oauth2Handler:        oHandler,
 	}
 	svc.initialize()

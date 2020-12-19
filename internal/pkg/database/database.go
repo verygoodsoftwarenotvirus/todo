@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"io"
+	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -33,13 +33,6 @@ type (
 		io.Closer
 	}
 
-	// UserCreationConfig is a helper struct because of cyclical imports.
-	UserCreationConfig struct {
-		Username string
-		Password string
-		IsAdmin  bool
-	}
-
 	// Querier is a subset interface for sql.{DB|Tx} objects.
 	Querier interface {
 		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
@@ -47,12 +40,15 @@ type (
 		QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 	}
 
+	// MetricsCollectionInterval defines the interval at which we collect database metrics.
+	MetricsCollectionInterval time.Duration
+
 	// ConnectionDetails is a string alias for dependency injection.
 	ConnectionDetails string
 
 	// DataManager describes anything that stores data for our services.
 	DataManager interface {
-		Migrate(ctx context.Context, authenticator password.Authenticator, testUserConfig *UserCreationConfig) error
+		Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error
 		IsReady(ctx context.Context) (ready bool)
 		BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 

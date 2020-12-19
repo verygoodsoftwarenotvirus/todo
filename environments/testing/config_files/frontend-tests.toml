@@ -15,6 +15,7 @@
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
   debug = true
+  metrics_collection_interval = "1s"
   provider = "postgres"
   run_migrations = true
 
@@ -28,13 +29,13 @@
   startup_deadline = "1m0s"
 
 [metrics]
-  database_metrics_collection_interval = "1s"
   metrics_provider = "prometheus"
   runtime_metrics_collection_interval = "1s"
   tracing_provider = "jaeger"
 
 [search]
   items_index_path = "items.bleve"
+  provider = "bleve"
 
 [server]
   debug = true

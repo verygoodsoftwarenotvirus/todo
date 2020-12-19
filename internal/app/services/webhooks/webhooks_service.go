@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -33,19 +34,10 @@ type (
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager types.WebhookDataManager
 		auditLog           types.WebhookAuditManager
-		sessionInfoFetcher SessionInfoFetcher
-		webhookIDFetcher   WebhookIDFetcher
+		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
+		webhookIDFetcher   func(*http.Request) uint64
 		encoderDecoder     encoding.EncoderDecoder
 	}
-
-	// UserIDFetcher is a function that fetches user IDs.
-	UserIDFetcher func(*http.Request) uint64
-
-	// WebhookIDFetcher is a function that fetches webhook IDs.
-	WebhookIDFetcher func(*http.Request) uint64
-
-	// SessionInfoFetcher is a function that fetches user IDs.
-	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 )
 
 // ProvideWebhooksService builds a new WebhooksService.
@@ -53,8 +45,6 @@ func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager types.WebhookDataManager,
 	auditLog types.WebhookAuditManager,
-	sessionInfoFetcher SessionInfoFetcher,
-	webhookIDFetcher WebhookIDFetcher,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
 ) (types.WebhookDataService, error) {
@@ -69,8 +59,8 @@ func ProvideWebhooksService(
 		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		webhookCounter:     webhookCounter,
-		sessionInfoFetcher: sessionInfoFetcher,
-		webhookIDFetcher:   webhookIDFetcher,
+		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
+		webhookIDFetcher:   routeparams.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
 	}
 
 	return svc, nil

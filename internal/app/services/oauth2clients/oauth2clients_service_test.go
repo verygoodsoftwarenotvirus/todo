@@ -10,12 +10,12 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/go-oauth2/oauth2/v4/manage"
 	oauth2server "github.com/go-oauth2/oauth2/v4/server"
@@ -53,15 +53,14 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
+		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
 		service, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
-			&mockmodels.UserDataManager{},
-			&mockmodels.AuditLogDataManager{},
+			&mocktypes.UserDataManager{},
+			&mocktypes.AuditLogDataManager{},
 			&mockauth.Authenticator{},
-			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, nil
@@ -75,15 +74,14 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 
 	T.Run("with error providing counter", func(t *testing.T) {
 		t.Parallel()
-		mockOAuth2ClientDataManager := &mockmodels.OAuth2ClientDataManager{}
+		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
 		service, err := ProvideOAuth2ClientsService(
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
-			&mockmodels.UserDataManager{},
-			&mockmodels.AuditLogDataManager{},
+			&mocktypes.UserDataManager{},
+			&mocktypes.AuditLogDataManager{},
 			&mockauth.Authenticator{},
-			func(req *http.Request) uint64 { return 0 },
 			&mockencoding.EncoderDecoder{},
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, errors.New("blah")

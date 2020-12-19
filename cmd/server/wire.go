@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"database/sql"
+
 	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
@@ -17,8 +18,9 @@ import (
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 
@@ -45,6 +47,7 @@ func BuildServer(
 		encoding.Providers,
 		httpserver.Providers,
 		metrics.Providers,
+		dbconfig.Providers,
 		// services,
 		adminservice.Providers,
 		auditservice.Providers,

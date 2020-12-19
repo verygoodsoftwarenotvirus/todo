@@ -8,12 +8,12 @@ package main
 
 import (
 	"context"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"log"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -36,9 +36,9 @@ var (
 	}
 
 	validDatabaseTypes = map[string]struct{}{
-		config.PostgresProviderKey: {},
-		config.MariaDBProviderKey:  {},
-		config.SqliteProviderKey:   {},
+		dbconfig.PostgresProviderKey: {},
+		dbconfig.MariaDBProviderKey:  {},
+		dbconfig.SqliteProviderKey:   {},
 	}
 )
 
@@ -83,25 +83,23 @@ func main() {
 	}
 
 	cfg := &config.ServerConfig{
-		Database: config.DatabaseSettings{
-			Provider:          databaseType,
-			ConnectionDetails: database.ConnectionDetails(dbConnectionDetails),
-		},
-		Metrics: config.MetricsSettings{
-			DBMetricsCollectionInterval: time.Second,
+		Database: dbconfig.Config{
+			MetricsCollectionInterval: time.Second,
+			Provider:                  databaseType,
+			ConnectionDetails:         database.ConnectionDetails(dbConnectionDetails),
 		},
 	}
 
 	// connect to our database.
 	logger.Debug("connecting to database")
-	rawDB, err := cfg.ProvideDatabaseConnection(logger)
+	rawDB, err := cfg.Database.ProvideDatabaseConnection(logger)
 	if err != nil {
 		log.Fatalf("error establishing connection to database: %v", err)
 	}
 
 	// establish the database client.
 	logger.Debug("setting up database client")
-	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost, logger))
+	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB, cfg.Database.MetricsCollectionInterval)
 	if err != nil {
 		log.Fatalf("error initializing database client: %v", err)
 	}

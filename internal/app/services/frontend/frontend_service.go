@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -14,18 +13,16 @@ const (
 type (
 	// service is responsible for serving HTML (and other static resources).
 	service struct {
-		logger         logging.Logger
-		logStaticFiles bool
-		config         config.FrontendSettings
+		logger logging.Logger
+		config Config
 	}
 )
 
 // ProvideService provides the frontend service to dependency injection.
-func ProvideService(logger logging.Logger, cfg config.FrontendSettings) types.FrontendService {
+func ProvideService(logger logging.Logger, cfg Config) types.FrontendService {
 	svc := &service{
-		config:         cfg,
-		logStaticFiles: cfg.LogStaticFiles,
-		logger:         logger.WithName(serviceName),
+		config: cfg,
+		logger: logger.WithName(serviceName),
 	}
 
 	return svc

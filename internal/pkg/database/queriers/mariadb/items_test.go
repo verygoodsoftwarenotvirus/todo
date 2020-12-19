@@ -3,7 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
+	sqldriver "database/sql/driver"
 	"errors"
 	"fmt"
 	"testing"
@@ -29,7 +29,7 @@ func buildMockRowsFromItems(includeCount bool, items ...*types.Item) *sqlmock.Ro
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, x := range items {
-		rowValues := []driver.Value{
+		rowValues := []sqldriver.Value{
 			x.ID,
 			x.Name,
 			x.Details,

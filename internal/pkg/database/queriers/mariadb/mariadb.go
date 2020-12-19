@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	loggerName        = "mariadb"
-	mariaDBDriverName = "wrapped-mariadb-driver"
+	loggerName = "mariadb"
+	driverName = "wrapped-mariadb-driverName"
 
 	// columnCountQueryTemplate is a generic counter query used in a few query builders.
 	columnCountQueryTemplate = `COUNT(%s.id)`
@@ -33,18 +33,18 @@ const (
 )
 
 func init() {
-	// Explicitly wrap the MariaDB driver with ocsql.
-	driver := ocsql.Wrap(
-		&mysql.MySQLDriver{},
-		ocsql.WithQuery(true),
-		ocsql.WithAllowRoot(false),
-		ocsql.WithRowsNext(true),
-		ocsql.WithRowsClose(true),
-		ocsql.WithQueryParams(true),
+	// Register our ocsql wrapper as a db driverName.
+	sql.Register(
+		driverName,
+		ocsql.Wrap(
+			&mysql.MySQLDriver{},
+			ocsql.WithQuery(true),
+			ocsql.WithAllowRoot(false),
+			ocsql.WithRowsNext(true),
+			ocsql.WithRowsClose(true),
+			ocsql.WithQueryParams(true),
+		),
 	)
-
-	// Register our ocsql wrapper as a db driver.
-	sql.Register(mariaDBDriverName, driver)
 }
 
 var _ database.DataManager = (*MariaDB)(nil)
@@ -71,11 +71,19 @@ type (
 	}
 )
 
-// ProvideMariaDBDB provides an instrumented maria DB db.
-func ProvideMariaDBDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
+// ProvideMariaDBConnection provides an instrumented maria DB db.
+func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to maria DB")
 
-	return sql.Open(mariaDBDriverName, string(connectionDetails))
+	db, err := sql.Open(driverName, string(connectionDetails))
+	if err != nil {
+		return nil, err
+	}
+
+	ocsql.RegisterAllViews()
+	ocsql.RecordStats(db, metricsCollectionInterval)
+
+	return db, nil
 }
 
 // ProvideMariaDB provides a maria DB controller.

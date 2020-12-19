@@ -13,10 +13,12 @@
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
   debug = false
+  metrics_collection_interval = "2s"
   provider = "mariadb"
   run_migrations = true
 
   [database.create_test_user]
+    hashed_password = "$2a$11$3qoWa/ZQZ2jlO2t/.yOZ4OziyeY0YFtAVPj3g/6sBqKxzd9av7EhG"
     is_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
@@ -30,13 +32,13 @@
   startup_deadline = "5m0s"
 
 [metrics]
-  database_metrics_collection_interval = "2s"
   metrics_provider = "prometheus"
   runtime_metrics_collection_interval = "2s"
   tracing_provider = "jaeger"
 
 [search]
   items_index_path = "items.bleve"
+  provider = "bleve"
 
 [server]
   debug = false

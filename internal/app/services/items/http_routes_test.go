@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -38,7 +38,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		exampleItemList := fakes.BuildFakeItemList()
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*types.QueryFilter")).Return(exampleItemList, nil)
 		s.itemDataManager = itemDataManager
 
@@ -70,7 +70,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*types.QueryFilter")).Return((*types.ItemList)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
@@ -102,7 +102,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.Anything, exampleUser.ID, mock.AnythingOfType("*types.QueryFilter")).Return((*types.ItemList)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -155,7 +155,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return(exampleItemList, nil)
 		s.itemDataManager = itemDataManager
 
@@ -234,7 +234,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return([]types.Item{}, sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
@@ -278,7 +278,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		si.On("Search", mock.Anything, exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItemsWithIDs", mock.Anything, exampleUser.ID, exampleLimit, exampleItemIDs).Return([]types.Item{}, errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -323,7 +323,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*types.ItemCreationInput")).Return(exampleItem, nil)
 		s.itemDataManager = itemDataManager
 
@@ -335,7 +335,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogItemCreationEvent", mock.Anything, exampleItem)
 		s.auditLog = auditLog
 
@@ -401,7 +401,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("CreateItem", mock.Anything, mock.AnythingOfType("*types.ItemCreationInput")).Return((*types.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -450,7 +450,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("ItemExists", mock.Anything, exampleItem.ID, exampleUser.ID).Return(true, nil)
 		s.itemDataManager = itemDataManager
 
@@ -484,7 +484,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("ItemExists", mock.Anything, exampleItem.ID, exampleUser.ID).Return(false, sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
@@ -522,7 +522,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("ItemExists", mock.Anything, exampleItem.ID, exampleUser.ID).Return(false, errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -569,7 +569,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
 		s.itemDataManager = itemDataManager
 
@@ -607,7 +607,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
@@ -645,7 +645,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -694,7 +694,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
 		itemDataManager.On("UpdateItem", mock.Anything, mock.AnythingOfType("*types.Item")).Return(nil)
 		s.itemDataManager = itemDataManager
@@ -703,7 +703,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogItemUpdateEvent", mock.Anything, exampleUser.ID, exampleItem.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
@@ -773,7 +773,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
@@ -815,7 +815,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -857,7 +857,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
 		itemDataManager.On("UpdateItem", mock.Anything, mock.AnythingOfType("*types.Item")).Return(errors.New("blah"))
 		s.itemDataManager = itemDataManager
@@ -907,11 +907,11 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogItemArchiveEvent", mock.Anything, exampleUser.ID, exampleItem.ID)
 		s.auditLog = auditLog
 
@@ -953,7 +953,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
@@ -991,7 +991,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -1029,11 +1029,11 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		itemDataManager := &mockmodels.ItemDataManager{}
+		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogItemArchiveEvent", mock.Anything, exampleUser.ID, exampleItem.ID)
 		s.auditLog = auditLog
 

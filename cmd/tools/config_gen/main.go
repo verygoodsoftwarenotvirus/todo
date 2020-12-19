@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"log"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 )
 
@@ -45,6 +48,17 @@ var files = map[string]configFunc{
 	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 
+func mustHashPass(password string) string {
+	hashed, err := bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost-1, noop.NewLogger()).
+		HashPassword(context.Background(), password)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return hashed
+}
+
 func localDevelopmentConfig(filePath string) error {
 	cfg := viper.BuildViperConfig()
 
@@ -63,13 +77,13 @@ func localDevelopmentConfig(filePath string) error {
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, "localhost")
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-	cfg.Set(viper.ConfigKeyAuthCookieLifetime, config.DefaultCookieLifetime)
+	cfg.Set(viper.ConfigKeyAuthCookieLifetime, auth.DefaultCookieLifetime)
 	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
 	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
 
 	cfg.Set(viper.ConfigKeyMetricsProvider, "prometheus")
 	cfg.Set(viper.ConfigKeyMetricsTracer, "jaeger")
-	cfg.Set(viper.ConfigKeyMetricsDBCollectionInterval, time.Second)
+	cfg.Set(viper.ConfigKeyDatabaseMetricsCollectionInterval, time.Second)
 	cfg.Set(viper.ConfigKeyMetricsRuntimeCollectionInterval, time.Second)
 
 	cfg.Set(viper.ConfigKeyDatabaseDebug, true)
@@ -79,6 +93,7 @@ func localDevelopmentConfig(filePath string) error {
 
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "username")
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, defaultPassword)
+	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserHashedPassword, mustHashPass(defaultPassword))
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserIsAdmin, true)
 
 	cfg.Set(viper.ConfigKeyItemsSearchIndexPath, "/search_indices/items.bleve")
@@ -107,13 +122,13 @@ func frontendTestsConfig(filePath string) error {
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, "localhost")
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-	cfg.Set(viper.ConfigKeyAuthCookieLifetime, config.DefaultCookieLifetime)
+	cfg.Set(viper.ConfigKeyAuthCookieLifetime, auth.DefaultCookieLifetime)
 	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
 	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
 
 	cfg.Set(viper.ConfigKeyMetricsProvider, "prometheus")
 	cfg.Set(viper.ConfigKeyMetricsTracer, "jaeger")
-	cfg.Set(viper.ConfigKeyMetricsDBCollectionInterval, time.Second)
+	cfg.Set(viper.ConfigKeyDatabaseMetricsCollectionInterval, time.Second)
 	cfg.Set(viper.ConfigKeyMetricsRuntimeCollectionInterval, time.Second)
 
 	cfg.Set(viper.ConfigKeyDatabaseDebug, true)
@@ -154,6 +169,7 @@ func coverageConfig(filePath string) error {
 
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "coverageUser")
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, defaultPassword)
+	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserHashedPassword, mustHashPass(defaultPassword))
 	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserIsAdmin, false)
 
 	cfg.Set(viper.ConfigKeyItemsSearchIndexPath, defaultItemsSearchIndexPath)
@@ -194,8 +210,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 		cfg.Set(viper.ConfigKeyDatabaseRunMigrations, true)
 		cfg.Set(viper.ConfigKeyDatabaseConnectionDetails, dbDetails)
 
+		pw := "integration-tests-are-cool"
+
 		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "exampleUser")
-		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, "integration-tests-are-cool")
+		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, pw)
+		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserHashedPassword, mustHashPass(pw))
 		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserIsAdmin, true)
 
 		cfg.Set(viper.ConfigKeyItemsSearchIndexPath, defaultItemsSearchIndexPath)

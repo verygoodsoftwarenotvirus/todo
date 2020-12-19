@@ -8,6 +8,14 @@ import (
 	"testing"
 	"time"
 
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 
@@ -45,39 +53,39 @@ func TestParseConfigFile(T *testing.T) {
 		filename := tf.Name()
 
 		exampleConfig := &config.ServerConfig{
-			Server: config.ServerSettings{
+			Server: httpserver.Config{
 				HTTPPort: 1234,
 				Debug:    false,
 			},
-			AuditLog: config.AuditLogSettings{
+			AuditLog: audit.Config{
 				Enabled: true,
 			},
 			Meta: config.MetaSettings{
 				StartupDeadline: time.Minute,
 				RunMode:         "development",
 			},
-			Auth: config.AuthSettings{
+			Auth: authservice.Config{
 				CookieDomain:          "https://verygoodsoftwarenotvirus.ru",
 				CookieLifetime:        time.Second,
 				MinimumUsernameLength: 4,
 				MinimumPasswordLength: 8,
 				EnableUserSignup:      true,
 			},
-			Metrics: config.MetricsSettings{
-				DBMetricsCollectionInterval:      2 * time.Second,
+			Observability: observability.Config{
 				RuntimeMetricsCollectionInterval: 2 * time.Second,
 			},
-			Frontend: config.FrontendSettings{
+			Frontend: frontend.Config{
 				StaticFilesDirectory: "/static",
 			},
-			Search: config.SearchSettings{
+			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
 			},
-			Database: config.DatabaseSettings{
-				Provider:          "postgres",
-				Debug:             true,
-				RunMigrations:     true,
-				ConnectionDetails: database.ConnectionDetails("postgres://username:password@host/table"),
+			Database: dbconfig.Config{
+				Provider:                  "postgres",
+				MetricsCollectionInterval: 2 * time.Second,
+				Debug:                     true,
+				RunMigrations:             true,
+				ConnectionDetails:         database.ConnectionDetails("postgres://username:password@host/table"),
 			},
 		}
 

@@ -1,14 +1,11 @@
 package auth
 
 import (
-	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/assert"
@@ -24,14 +21,13 @@ func buildTestService(t *testing.T) *service {
 
 	s, err := ProvideService(
 		logger,
-		config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+		Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 		&mockauth.Authenticator{},
-		&mockmodels.UserDataManager{},
-		&mockmodels.AuditLogDataManager{},
-		&mockmodels.OAuth2ClientDataServer{},
+		&mocktypes.UserDataManager{},
+		&mocktypes.AuditLogDataManager{},
+		&mocktypes.OAuth2ClientDataServer{},
 		scs.New(),
 		ed,
-		func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 	)
 	require.NoError(t, err)
 
@@ -48,14 +44,13 @@ func TestProvideAuthService(T *testing.T) {
 
 		service, err := ProvideService(
 			logger,
-			config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+			Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 			&mockauth.Authenticator{},
-			&mockmodels.UserDataManager{},
-			&mockmodels.AuditLogDataManager{},
-			&mockmodels.OAuth2ClientDataServer{},
+			&mocktypes.UserDataManager{},
+			&mocktypes.AuditLogDataManager{},
+			&mocktypes.OAuth2ClientDataServer{},
 			scs.New(),
 			ed,
-			func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		)
 		assert.NotNil(t, service)
 		assert.NoError(t, err)

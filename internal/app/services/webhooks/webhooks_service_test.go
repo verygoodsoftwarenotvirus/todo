@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
@@ -19,7 +19,7 @@ func buildTestService() *service {
 	return &service{
 		logger:             noop.NewLogger(),
 		webhookCounter:     &mockmetrics.UnitCounter{},
-		webhookDataManager: &mockmodels.WebhookDataManager{},
+		webhookDataManager: &mocktypes.WebhookDataManager{},
 		sessionInfoFetcher: func(req *http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
@@ -38,10 +38,8 @@ func TestProvideWebhooksService(T *testing.T) {
 
 		actual, err := ProvideWebhooksService(
 			noop.NewLogger(),
-			&mockmodels.WebhookDataManager{},
-			&mockmodels.AuditLogDataManager{},
-			func(req *http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-			func(req *http.Request) uint64 { return 0 },
+			&mocktypes.WebhookDataManager{},
+			&mocktypes.AuditLogDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 		)
@@ -58,10 +56,8 @@ func TestProvideWebhooksService(T *testing.T) {
 
 		actual, err := ProvideWebhooksService(
 			noop.NewLogger(),
-			&mockmodels.WebhookDataManager{},
-			&mockmodels.AuditLogDataManager{},
-			func(req *http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-			func(req *http.Request) uint64 { return 0 },
+			&mocktypes.WebhookDataManager{},
+			&mocktypes.AuditLogDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 		)

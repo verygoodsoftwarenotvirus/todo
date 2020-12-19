@@ -11,11 +11,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	oauth2models "github.com/go-oauth2/oauth2/v4/models"
 	"github.com/stretchr/testify/assert"
@@ -346,7 +346,7 @@ func TestService_CreateHandler(T *testing.T) {
 		uc.On("Increment", mock.Anything).Return()
 		s.oauth2ClientCounter = uc
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogOAuth2ClientCreationEvent", mock.Anything, exampleOAuth2Client)
 		s.auditLog = auditLog
 
@@ -734,7 +734,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		uc.On("Decrement", mock.Anything).Return()
 		s.oauth2ClientCounter = uc
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogOAuth2ClientArchiveEvent", mock.Anything, exampleUser.ID, exampleOAuth2Client.ID)
 		s.auditLog = auditLog
 

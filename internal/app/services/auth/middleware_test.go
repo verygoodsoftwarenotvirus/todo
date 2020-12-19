@@ -15,7 +15,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,7 +32,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
 
-		md := &mockmodels.UserDataManager{}
+		md := &mocktypes.UserDataManager{}
 		md.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, nil)
 		s.userDB = md
 
@@ -59,7 +59,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
 
-		md := &mockmodels.UserDataManager{}
+		md := &mocktypes.UserDataManager{}
 		md.On("GetUser", mock.Anything, mock.Anything).Return((*types.User)(nil), nil)
 		s.userDB = md
 
@@ -110,7 +110,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		ocv := &mockmodels.OAuth2ClientDataServer{}
+		ocv := &mocktypes.OAuth2ClientDataServer{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 
@@ -198,7 +198,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		ocv := &mockmodels.OAuth2ClientDataServer{}
+		ocv := &mocktypes.OAuth2ClientDataServer{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 
@@ -232,7 +232,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		ocv := &mockmodels.OAuth2ClientDataServer{}
+		ocv := &mocktypes.OAuth2ClientDataServer{}
 		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 

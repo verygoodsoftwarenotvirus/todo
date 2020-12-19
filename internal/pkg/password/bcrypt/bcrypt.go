@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"math"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
 	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"

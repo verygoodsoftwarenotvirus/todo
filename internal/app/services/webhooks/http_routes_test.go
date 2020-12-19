@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -37,7 +37,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
@@ -73,7 +73,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
@@ -109,7 +109,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
@@ -200,7 +200,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.webhookCounter = mc
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.Anything,
@@ -208,7 +208,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		).Return(exampleWebhook, nil)
 		s.webhookDataManager = wd
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogWebhookCreationEvent", mock.Anything, exampleWebhook)
 		s.auditLog = auditLog
 
@@ -309,7 +309,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		exampleWebhook.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.Anything,
@@ -362,7 +362,7 @@ func TestWebhooksService_Read(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.Anything,
@@ -405,7 +405,7 @@ func TestWebhooksService_Read(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.Anything,
@@ -448,7 +448,7 @@ func TestWebhooksService_Read(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.Anything,
@@ -501,7 +501,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.Anything,
@@ -516,7 +516,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		).Return(nil)
 		s.webhookDataManager = wd
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogWebhookUpdateEvent", mock.Anything, exampleUser.ID, exampleWebhook.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
@@ -584,7 +584,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.Anything,
@@ -630,7 +630,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.Anything,
@@ -676,7 +676,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.Anything,
@@ -740,7 +740,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
 			mock.Anything,
@@ -749,7 +749,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		).Return(nil)
 		s.webhookDataManager = wd
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogWebhookArchiveEvent", mock.Anything, exampleUser.ID, exampleWebhook.ID)
 		s.auditLog = auditLog
 
@@ -783,7 +783,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
 			mock.Anything,
@@ -826,7 +826,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 			return exampleWebhook.ID
 		}
 
-		wd := &mockmodels.WebhookDataManager{}
+		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
 			mock.Anything,

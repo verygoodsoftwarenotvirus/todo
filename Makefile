@@ -158,7 +158,7 @@ frontend_tests:
 ## Integration tests
 
 .PHONY: lintegration_tests # this is just a handy lil' helper I use sometimes
-lintegration_tests: integration_tests lint
+lintegration_tests: lint integration_tests
 
 .PHONY: integration_tests
 integration_tests: integration_tests_sqlite integration_tests_postgres integration_tests_mariadb

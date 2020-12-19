@@ -1,8 +1,8 @@
 package frontend
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 
 	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -15,6 +15,6 @@ var Providers = wire.NewSet(
 )
 
 // ProvideMetricsInstrumentationHandlerForServer provides a metrics.InstrumentationHandler from a config for our server.
-func ProvideMetricsInstrumentationHandlerForServer(cfg *config.ServerConfig, logger logging.Logger) metrics.InstrumentationHandler {
+func ProvideMetricsInstrumentationHandlerForServer(cfg *observability.Config, logger logging.Logger) metrics.InstrumentationHandler {
 	return cfg.ProvideInstrumentationHandler(logger)
 }

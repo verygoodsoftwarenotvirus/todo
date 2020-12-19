@@ -33,6 +33,7 @@ require (
 	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pquerna/otp v1.2.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3
@@ -42,6 +43,7 @@ require (
 	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
 	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.1
 	go.opencensus.io v0.22.5
+	go.opentelemetry.io/otel v0.15.0
 	gocloud.dev v0.21.0
 	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c
 	golang.org/x/oauth2 v0.0.0-20201203001011-0b49973bad19

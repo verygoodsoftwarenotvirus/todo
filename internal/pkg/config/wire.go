@@ -7,13 +7,17 @@ import (
 var (
 	// Providers represents this package's offering to the dependency manager.
 	Providers = wire.NewSet(
-		ProvideSessionManager,
 		wire.FieldsOf(new(*ServerConfig),
-			"Server",
 			"Auth",
 			"Database",
+			"Observability",
+			"Meta",
 			"Frontend",
+			"Upload",
 			"Search",
+			"Server",
+			"Webhooks",
+			"AuditLog",
 		),
 	)
 )

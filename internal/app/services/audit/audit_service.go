@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -22,31 +23,23 @@ type (
 	service struct {
 		logger                 logging.Logger
 		auditLog               types.AuditLogDataManager
-		auditLogEntryIDFetcher EntryIDFetcher
-		sessionInfoFetcher     SessionInfoFetcher
+		auditLogEntryIDFetcher func(*http.Request) uint64
+		sessionInfoFetcher     func(*http.Request) (*types.SessionInfo, error)
 		encoderDecoder         encoding.EncoderDecoder
 	}
-
-	// SessionInfoFetcher is a function that fetches user IDs.
-	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
-
-	// EntryIDFetcher is a function that fetches entry IDs.
-	EntryIDFetcher func(*http.Request) uint64
 )
 
 // ProvideService builds a new service.
 func ProvideService(
 	logger logging.Logger,
 	auditLog types.AuditLogDataManager,
-	auditLogEntryIDFetcher EntryIDFetcher,
-	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 ) types.AuditLogDataService {
 	svc := &service{
 		logger:                 logger.WithName(serviceName),
 		auditLog:               auditLog,
-		auditLogEntryIDFetcher: auditLogEntryIDFetcher,
-		sessionInfoFetcher:     sessionInfoFetcher,
+		auditLogEntryIDFetcher: routeparams.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
+		sessionInfoFetcher:     routeparams.SessionInfoFetcherFromRequestContext,
 		encoderDecoder:         encoder,
 	}
 

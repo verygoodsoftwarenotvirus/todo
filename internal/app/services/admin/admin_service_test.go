@@ -1,14 +1,12 @@
 package admin
 
 import (
-	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/assert"
@@ -16,26 +14,24 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
-func buildTestService(t *testing.T) *Service {
+func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	logger := noop.NewLogger()
 	ed := encoding.ProvideResponseEncoder(logger)
 
-	service, err := ProvideService(
+	s, err := ProvideService(
 		logger,
-		config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+		authservice.Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 		&mockauth.Authenticator{},
-		&mockmodels.AdminUserDataManager{},
-		&mockmodels.AuditLogDataManager{},
+		&mocktypes.AdminUserDataManager{},
+		&mocktypes.AuditLogDataManager{},
 		scs.New(),
 		ed,
-		func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-		func(*http.Request) uint64 { return 0 },
 	)
 	require.NoError(t, err)
 
-	return service
+	return s.(*service)
 }
 
 func TestProvideAdminService(T *testing.T) {
@@ -48,14 +44,12 @@ func TestProvideAdminService(T *testing.T) {
 
 		service, err := ProvideService(
 			logger,
-			config.AuthSettings{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+			authservice.Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 			&mockauth.Authenticator{},
-			&mockmodels.AdminUserDataManager{},
-			&mockmodels.AuditLogDataManager{},
+			&mocktypes.AdminUserDataManager{},
+			&mocktypes.AuditLogDataManager{},
 			scs.New(),
 			ed,
-			func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-			func(*http.Request) uint64 { return 0 },
 		)
 		assert.NotNil(t, service)
 		assert.NoError(t, err)

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/go-chi/chi/middleware"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"

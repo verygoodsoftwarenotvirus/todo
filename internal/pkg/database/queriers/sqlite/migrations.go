@@ -8,7 +8,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
@@ -134,7 +133,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (q *Sqlite) Migrate(ctx context.Context, authenticator password.Authenticator, testUserConfig *database.UserCreationConfig) error {
+func (q *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
 	q.logger.Info("migrating db")
 
 	if !q.IsReady(ctx) {
@@ -144,11 +143,6 @@ func (q *Sqlite) Migrate(ctx context.Context, authenticator password.Authenticat
 	q.migrateOnce.Do(buildMigrationFunc(q.db))
 
 	if testUserConfig != nil {
-		hp, err := authenticator.HashPassword(ctx, testUserConfig.Password)
-		if err != nil {
-			return err
-		}
-
 		query, args, err := q.sqlBuilder.
 			Insert(queriers.UsersTableName).
 			Columns(
@@ -163,7 +157,7 @@ func (q *Sqlite) Migrate(ctx context.Context, authenticator password.Authenticat
 			).
 			Values(
 				testUserConfig.Username,
-				hp,
+				testUserConfig.HashedPassword,
 				[]byte("aaaaaaaaaaaaaaaa"),
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",

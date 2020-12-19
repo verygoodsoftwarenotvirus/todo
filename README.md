@@ -26,7 +26,7 @@ Assuming you have go installed, you can install these by running `make dev-tools
 - `coverage` - will display the total test coverage in the aforementioned selection of packages
 - `quicktest` - runs unit tests in almost all packages, with `-failfast` turned on (skips integration/load tests, mock packages, and the `cmd` folder)
 - `integration_tests` - runs integration tests for all supported databases
-- `lintegration_tests` - runs the integration tests and lint
+- `lintegration_tests` - runs the linter, followed by the integration tests
 - `integration_tests_<provider>` - runs the integration tests suite against an instance of the server connected to the given database. So, for instance, `integration-tests-postgres` would run the integration test suite against a Postgres database
 - `load_tests_<provider>` - similar to the integration tests, runs the load test suite against an instance of the server connected to the given database
 - `frontend_tests` - selenium webdriver tests against the frontend

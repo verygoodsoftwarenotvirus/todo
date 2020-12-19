@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"sync"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
@@ -15,8 +16,8 @@ import (
 )
 
 const (
-	loggerName       = "sqlite"
-	sqliteDriverName = "wrapped-sqlite-driver"
+	loggerName = "sqlite"
+	driverName = "wrapped-sqlite-driverName"
 
 	// columnCountQueryTemplate is a generic counter query used in a few query builders.
 	columnCountQueryTemplate = `COUNT(%s.id)`
@@ -31,18 +32,18 @@ const (
 )
 
 func init() {
-	// Explicitly wrap the Sqlite driver with ocsql.
-	driver := ocsql.Wrap(
-		&sqlite.SQLiteDriver{},
-		ocsql.WithQuery(true),
-		ocsql.WithAllowRoot(false),
-		ocsql.WithRowsNext(true),
-		ocsql.WithRowsClose(true),
-		ocsql.WithQueryParams(true),
+	// Register our ocsql wrapper as a db driverName.
+	sql.Register(
+		driverName,
+		ocsql.Wrap(
+			&sqlite.SQLiteDriver{},
+			ocsql.WithQuery(true),
+			ocsql.WithAllowRoot(false),
+			ocsql.WithRowsNext(true),
+			ocsql.WithRowsClose(true),
+			ocsql.WithQueryParams(true),
+		),
 	)
-
-	// Register our ocsql wrapper as a db driver.
-	sql.Register(sqliteDriverName, driver)
 }
 
 var _ database.DataManager = (*Sqlite)(nil)
@@ -70,9 +71,18 @@ type (
 )
 
 // ProvideSqliteDB provides an instrumented sqlite db.
-func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
+func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to sqlite")
-	return sql.Open(sqliteDriverName, string(connectionDetails))
+
+	db, err := sql.Open(driverName, string(connectionDetails))
+	if err != nil {
+		return nil, err
+	}
+
+	ocsql.RegisterAllViews()
+	ocsql.RecordStats(db, metricsCollectionInterval)
+
+	return db, nil
 }
 
 // ProvideSqlite provides a sqlite db controller.

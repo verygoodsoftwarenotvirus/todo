@@ -5,8 +5,8 @@ import (
 	"math"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -61,6 +61,18 @@ type (
 		AdminPermissions          bitmask.AdminPermissionsBitmask `json:"adminPermissions"`
 		IsAdmin                   bool                            `json:"isAdmin"`
 		RequiresPasswordChange    bool                            `json:"requiresPasswordChange"`
+	}
+
+	// TestUserCreationConfig is a helper struct because of cyclical imports.
+	TestUserCreationConfig struct {
+		// Username defines our test user's username we create in the event we create them.
+		Username string `json:"username" mapstructure:"username" toml:"username,omitempty"`
+		// Password defines our test user's password we create in the event we create them.
+		Password string `json:"password" mapstructure:"password" toml:"password,omitempty"`
+		// HashedPassword is the hashed form of the above password.
+		HashedPassword string `json:"hashed_password" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
+		// IsAdmin defines our test user's admin status we create in the event we create them.
+		IsAdmin bool `json:"is_admin" mapstructure:"is_admin" toml:"is_admin,omitempty"`
 	}
 
 	// UserList represents a list of users.

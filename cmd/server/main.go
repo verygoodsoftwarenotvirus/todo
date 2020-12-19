@@ -7,10 +7,9 @@ import (
 	"os"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
@@ -44,8 +43,8 @@ func main() {
 		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("error parsing configuration file: %w", err))
 	}
 
-	if initializeTracerErr := cfg.InitializeTracer(logger); errors.Is(initializeTracerErr, config.ErrInvalidTracingProvider) {
-		logger.Fatal(fmt.Errorf("error providing tracer: %w", initializeTracerErr))
+	if initializeTracerErr := cfg.Observability.InitializeTracer(logger); initializeTracerErr != nil {
+		logger.Error(initializeTracerErr, "initializing tracer")
 	}
 
 	// only allow initialization to take so long.
@@ -57,7 +56,7 @@ func main() {
 	// connect to database
 	ctx, databaseConnectionSpan := tracing.StartSpan(ctx)
 
-	rawDB, err := cfg.ProvideDatabaseConnection(logger)
+	rawDB, err := cfg.Database.ProvideDatabaseConnection(logger)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error connecting to database: %w", err))
 	}
@@ -69,7 +68,7 @@ func main() {
 	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
 	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
 
-	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB, authenticator)
+	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB, cfg.Database.MetricsCollectionInterval)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))
 	}

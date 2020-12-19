@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -14,7 +14,7 @@ const (
 )
 
 // AccountStatusUpdateInputMiddleware is a middleware for fetching, parsing, and attaching a AccountStatusUpdateInput struct from a request.
-func (s *Service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Handler {
+func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.AccountStatusUpdateInput)
 		ctx, span := tracing.StartSpan(req.Context())

@@ -145,7 +145,7 @@ func (s *service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 	return func(res http.ResponseWriter, req *http.Request) {
 		rl := s.logger.WithRequest(req)
 
-		if s.logStaticFiles {
+		if s.config.LogStaticFiles {
 			rl.Debug("static file requested")
 		}
 
@@ -160,7 +160,7 @@ func (s *service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			webhooksUserFrontendPathRegex.MatchString(req.URL.Path) ||
 			oauth2ClientsAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			oauth2ClientsUserFrontendPathRegex.MatchString(req.URL.Path) {
-			if s.logStaticFiles {
+			if s.config.LogStaticFiles {
 				rl.Debug("rerouting request")
 			}
 

@@ -7,8 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
@@ -75,7 +73,7 @@ func TestService_buildStaticFileServer(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 		s := &service{
-			config: config.FrontendSettings{
+			config: Config{
 				CacheStaticFiles: true,
 			},
 		}

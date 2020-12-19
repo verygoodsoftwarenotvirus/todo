@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +48,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
-		udb := &mockmodels.AdminUserDataManager{}
+		udb := &mocktypes.AdminUserDataManager{}
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
@@ -57,7 +57,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(nil)
 		s.userDB = udb
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
@@ -93,7 +93,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
-		udb := &mockmodels.AdminUserDataManager{}
+		udb := &mocktypes.AdminUserDataManager{}
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
@@ -102,7 +102,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(nil)
 		s.userDB = udb
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogAccountTerminationEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
@@ -249,7 +249,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
-		udb := &mockmodels.AdminUserDataManager{}
+		udb := &mocktypes.AdminUserDataManager{}
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
@@ -290,7 +290,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
-		udb := &mockmodels.AdminUserDataManager{}
+		udb := &mocktypes.AdminUserDataManager{}
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
@@ -335,11 +335,11 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
-		udb := &mockmodels.AdminUserDataManager{}
+		udb := &mocktypes.AdminUserDataManager{}
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,

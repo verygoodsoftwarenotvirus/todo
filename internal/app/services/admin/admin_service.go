@@ -3,9 +3,10 @@ package admin
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/alexedwards/scs/v2"
@@ -17,39 +18,31 @@ const (
 )
 
 type (
-	// SessionInfoFetcher is a function that fetches user IDs.
-	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
-
-	// UserIDFetcher is a function that fetches item IDs.
-	UserIDFetcher func(*http.Request) uint64
-
-	// Service handles authentication service-wide.
-	Service struct {
-		config             config.AuthSettings
+	// service handles authentication service-wide.
+	service struct {
+		config             authservice.Config
 		logger             logging.Logger
 		authenticator      password.Authenticator
 		userDB             types.AdminUserDataManager
 		auditLog           types.AdminAuditManager
 		encoderDecoder     encoding.EncoderDecoder
 		sessionManager     *scs.SessionManager
-		sessionInfoFetcher SessionInfoFetcher
-		userIDFetcher      UserIDFetcher
+		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
+		userIDFetcher      func(*http.Request) uint64
 	}
 )
 
 // ProvideService builds a new AuthService.
 func ProvideService(
 	logger logging.Logger,
-	cfg config.AuthSettings,
+	cfg authservice.Config,
 	authenticator password.Authenticator,
 	userDataManager types.AdminUserDataManager,
 	auditLog types.AdminAuditManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
-	sessionInfoFetcher SessionInfoFetcher,
-	userIDFetcher UserIDFetcher,
-) (*Service, error) {
-	svc := &Service{
+) (types.AdminService, error) {
+	svc := &service{
 		logger:             logger.WithName(serviceName),
 		encoderDecoder:     encoder,
 		config:             cfg,
@@ -57,8 +50,8 @@ func ProvideService(
 		auditLog:           auditLog,
 		authenticator:      authenticator,
 		sessionManager:     sessionManager,
-		sessionInfoFetcher: sessionInfoFetcher,
-		userIDFetcher:      userIDFetcher,
+		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
+		userIDFetcher:      routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
 	}
 	svc.sessionManager.Lifetime = cfg.CookieLifetime
 

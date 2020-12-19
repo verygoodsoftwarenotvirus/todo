@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/go-chi/chi"
@@ -39,8 +39,8 @@ type (
 
 		// infra things.
 		db               database.DataManager
-		serverSettings   config.ServerSettings
-		frontendSettings config.FrontendSettings
+		serverSettings   Config
+		frontendSettings frontendservice.Config
 		router           *chi.Mux
 		httpServer       *http.Server
 		logger           logging.Logger
@@ -50,8 +50,8 @@ type (
 
 // ProvideServer builds a new Server instance.
 func ProvideServer(
-	serverSettings config.ServerSettings,
-	frontendSettings config.FrontendSettings,
+	serverSettings Config,
+	frontendSettings frontendservice.Config,
 	metricsHandler metrics.InstrumentationHandler,
 	authService types.AuthService,
 	frontendService types.FrontendService,

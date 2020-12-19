@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	oauth2 "github.com/go-oauth2/oauth2/v4"
 	validation "github.com/go-ozzo/ozzo-validation/v4"

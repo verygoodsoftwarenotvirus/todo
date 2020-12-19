@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )

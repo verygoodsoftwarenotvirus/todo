@@ -18,7 +18,7 @@ import (
 
 const (
 	loggerName                 = "postgres"
-	postgresDriverName         = "wrapped-postgres-driver"
+	driverName                 = "wrapped-postgres-driver"
 	postgresRowExistsErrorCode = "23505"
 
 	// columnCountQueryTemplate is a generic counter query used in a few query builders.
@@ -35,18 +35,18 @@ const (
 )
 
 func init() {
-	// Explicitly wrap the Postgres driver for telemetry.
-	driver := ocsql.Wrap(
-		&postgres.Driver{},
-		ocsql.WithQuery(true),
-		ocsql.WithAllowRoot(false),
-		ocsql.WithRowsNext(true),
-		ocsql.WithRowsClose(true),
-		ocsql.WithQueryParams(true),
-	)
-
 	// Register our ocsql wrapper as a db driver.
-	sql.Register(postgresDriverName, driver)
+	sql.Register(
+		driverName,
+		ocsql.Wrap(
+			&postgres.Driver{},
+			ocsql.WithQuery(true),
+			ocsql.WithAllowRoot(false),
+			ocsql.WithRowsNext(true),
+			ocsql.WithRowsClose(true),
+			ocsql.WithQueryParams(true),
+		),
+	)
 }
 
 var _ database.DataManager = (*Postgres)(nil)
@@ -73,9 +73,18 @@ type (
 )
 
 // ProvidePostgresDB provides an instrumented postgres db.
-func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
+func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
 	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
-	return sql.Open(postgresDriverName, string(connectionDetails))
+
+	db, err := sql.Open(driverName, string(connectionDetails))
+	if err != nil {
+		return nil, err
+	}
+
+	ocsql.RegisterAllViews()
+	ocsql.RecordStats(db, metricsCollectionInterval)
+
+	return db, nil
 }
 
 // ProvidePostgres provides a postgres db controller.

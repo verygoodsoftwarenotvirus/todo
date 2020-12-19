@@ -1,7 +1,7 @@
 package httpserver
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 
 	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/newsman"

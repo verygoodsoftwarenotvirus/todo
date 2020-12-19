@@ -6,13 +6,15 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
@@ -20,7 +22,7 @@ func buildTestService() *service {
 	return &service{
 		logger:             noop.NewLogger(),
 		itemCounter:        &mockmetrics.UnitCounter{},
-		itemDataManager:    &mockmodels.ItemDataManager{},
+		itemDataManager:    &mocktypes.ItemDataManager{},
 		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
@@ -39,13 +41,14 @@ func TestProvideItemsService(T *testing.T) {
 
 		s, err := ProvideService(
 			noop.NewLogger(),
-			&mockmodels.ItemDataManager{},
-			&mockmodels.AuditLogDataManager{},
-			func(req *http.Request) uint64 { return 0 },
-			func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
+			&mocktypes.ItemDataManager{},
+			&mocktypes.AuditLogDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			&mocksearch.IndexManager{},
+			search.Config{ItemsIndexPath: "example/path"},
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return &mocksearch.IndexManager{}, nil
+			},
 		)
 
 		assert.NotNil(t, s)
@@ -60,13 +63,14 @@ func TestProvideItemsService(T *testing.T) {
 
 		s, err := ProvideService(
 			noop.NewLogger(),
-			&mockmodels.ItemDataManager{},
-			&mockmodels.AuditLogDataManager{},
-			func(req *http.Request) uint64 { return 0 },
-			func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
+			&mocktypes.ItemDataManager{},
+			&mocktypes.AuditLogDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			&mocksearch.IndexManager{},
+			search.Config{ItemsIndexPath: "example/path"},
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return &mocksearch.IndexManager{}, nil
+			},
 		)
 
 		assert.Nil(t, s)

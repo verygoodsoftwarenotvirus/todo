@@ -14,10 +14,12 @@
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
   debug = false
+  metrics_collection_interval = "2s"
   provider = "postgres"
   run_migrations = true
 
   [database.create_test_user]
+    hashed_password = "$2a$11$eULMZaX08Bwb/cN3JelXlOUpdk1BBf7B6ziHZnRqbNoPcX.GGVJnO"
     is_admin = false
     password = "password"
     username = "coverageUser"
@@ -33,11 +35,11 @@
   startup_deadline = "1m0s"
 
 [metrics]
-  database_metrics_collection_interval = "2s"
   runtime_metrics_collection_interval = "2s"
 
 [search]
   items_index_path = "items.bleve"
+  provider = "bleve"
 
 [server]
   debug = true

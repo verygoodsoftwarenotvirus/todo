@@ -6,8 +6,12 @@ import (
 	"errors"
 	"fmt"
 
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
 	"github.com/spf13/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -62,8 +66,6 @@ const (
 	ConfigKeyMetricsProvider = "metrics.metrics_provider"
 	// ConfigKeyMetricsTracer is the key viper will use to refer to the MetricsSettings.TracingProvider setting.
 	ConfigKeyMetricsTracer = "metrics.tracing_provider"
-	// ConfigKeyMetricsDBCollectionInterval is the key viper will use to refer to the MetricsSettings.DBCollectionInterval setting.
-	ConfigKeyMetricsDBCollectionInterval = "metrics.database_metrics_collection_interval"
 	// ConfigKeyMetricsRuntimeCollectionInterval is the key viper will use to refer to the MetricsSettings.RuntimeCollectionInterval setting.
 	ConfigKeyMetricsRuntimeCollectionInterval = "metrics.runtime_metrics_collection_interval"
 
@@ -73,15 +75,21 @@ const (
 	ConfigKeyDatabaseProvider = "database.provider"
 	// ConfigKeyDatabaseConnectionDetails is the key viper will use to refer to the DatabaseSettings.ConnectionDetails setting.
 	ConfigKeyDatabaseConnectionDetails = "database.connection_details"
-	// ConfigKeyDatabaseCreateTestUserUsername is the key viper will use to refer to the DatabaseSettings.CreateTestUserUsername setting.
+	// ConfigKeyDatabaseCreateTestUserUsername is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.Username setting.
 	ConfigKeyDatabaseCreateTestUserUsername = "database.create_test_user.username"
-	// ConfigKeyDatabaseCreateTestUserPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserPassword setting.
+	// ConfigKeyDatabaseCreateTestUserPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.Password setting.
 	ConfigKeyDatabaseCreateTestUserPassword = "database.create_test_user.password"
-	// ConfigKeyDatabaseCreateTestUserIsAdmin is the key viper will use to refer to the DatabaseSettings.CreateTestUserIsAdmin setting.
+	// ConfigKeyDatabaseCreateTestUserIsAdmin is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.IsAdmin setting.
 	ConfigKeyDatabaseCreateTestUserIsAdmin = "database.create_test_user.is_admin"
+	// ConfigKeyDatabaseCreateTestUserHashedPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.HashedPassword setting.
+	ConfigKeyDatabaseCreateTestUserHashedPassword = "database.create_test_user.hashed_password"
 	// ConfigKeyDatabaseRunMigrations is the key viper will use to refer to the DatabaseSettings.RunMigrations setting.
 	ConfigKeyDatabaseRunMigrations = "database.run_migrations"
+	// ConfigKeyDatabaseMetricsCollectionInterval is the key viper will use to refer to the database.MetricsCollectionInterval setting.
+	ConfigKeyDatabaseMetricsCollectionInterval = "database.metrics_collection_interval"
 
+	// ConfigKeySearchProvider is the key viper will use to refer to the SearchSettings.Provider setting.
+	ConfigKeySearchProvider = "search.provider"
 	// ConfigKeyItemsSearchIndexPath is the key viper will use to refer to the SearchSettings.ItemsSearchIndexPath setting.
 	ConfigKeyItemsSearchIndexPath = "search.items_index_path"
 
@@ -100,8 +108,8 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault(ConfigKeyMetaStartupDeadline, config.DefaultStartupDeadline)
 
 	// auth stuff.
-	cfg.SetDefault(ConfigKeyAuthCookieDomain, config.DefaultCookieDomain)
-	cfg.SetDefault(ConfigKeyAuthCookieLifetime, config.DefaultCookieLifetime)
+	cfg.SetDefault(ConfigKeyAuthCookieDomain, authservice.DefaultCookieDomain)
+	cfg.SetDefault(ConfigKeyAuthCookieLifetime, authservice.DefaultCookieLifetime)
 	cfg.SetDefault(ConfigKeyAuthEnableUserSignup, true)
 
 	// database stuff
@@ -110,11 +118,14 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault(ConfigKeyAuthMinimumPasswordLength, 8)
 
 	// metrics stuff.
-	cfg.SetDefault(ConfigKeyMetricsDBCollectionInterval, config.DefaultMetricsCollectionInterval)
-	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, config.DefaultDatabaseMetricsCollectionInterval)
+	cfg.SetDefault(ConfigKeyDatabaseMetricsCollectionInterval, observability.DefaultMetricsCollectionInterval)
+	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, dbconfig.DefaultMetricsCollectionInterval)
 
 	// audit log stuff.
 	cfg.SetDefault(ConfigKeyAuditLogEnabled, true)
+
+	// search stuff
+	cfg.SetDefault(ConfigKeySearchProvider, search.BleveProvider)
 
 	// webhooks stuff.
 	cfg.SetDefault(ConfigKeyWebhooksEnabled, false)

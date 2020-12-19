@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/alexedwards/scs/v2"
@@ -30,12 +30,9 @@ type (
 		Decode(name, value string, dst interface{}) error
 	}
 
-	// SessionInfoFetcher is a function that fetches user IDs.
-	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
-
 	// service handles authentication service-wide.
 	service struct {
-		config               config.AuthSettings
+		config               Config
 		logger               logging.Logger
 		authenticator        password.Authenticator
 		userDB               types.UserDataManager
@@ -44,21 +41,20 @@ type (
 		encoderDecoder       encoding.EncoderDecoder
 		cookieManager        cookieEncoderDecoder
 		sessionManager       *scs.SessionManager
-		sessionInfoFetcher   SessionInfoFetcher
+		sessionInfoFetcher   func(*http.Request) (*types.SessionInfo, error)
 	}
 )
 
 // ProvideService builds a new AuthService.
 func ProvideService(
 	logger logging.Logger,
-	cfg config.AuthSettings,
+	cfg Config,
 	authenticator password.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
 	oauth2ClientsService types.OAuth2ClientDataService,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
-	sessionInfoFetcher SessionInfoFetcher,
 ) (types.AuthService, error) {
 	svc := &service{
 		logger:               logger.WithName(serviceName),
@@ -69,7 +65,7 @@ func ProvideService(
 		oauth2ClientsService: oauth2ClientsService,
 		authenticator:        authenticator,
 		sessionManager:       sessionManager,
-		sessionInfoFetcher:   sessionInfoFetcher,
+		sessionInfoFetcher:   routeparams.SessionInfoFetcherFromRequestContext,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.CookieSigningKey),

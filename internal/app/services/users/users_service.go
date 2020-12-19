@@ -1,14 +1,14 @@
 package users
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -22,8 +22,6 @@ const (
 
 var _ types.UserDataService = (*service)(nil)
 
-var errNoUserIDFetcherProvided = errors.New("userIDFetcher must be provided")
-
 type (
 	// RequestValidator validates request.
 	RequestValidator interface {
@@ -35,22 +33,16 @@ type (
 		GenerateSalt() ([]byte, error)
 	}
 
-	// UserIDFetcher fetches usernames from requests.
-	UserIDFetcher func(*http.Request) uint64
-
-	// SessionInfoFetcher is a function that fetches user IDs.
-	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
-
 	// service handles our users.
 	service struct {
 		userDataManager    types.UserDataManager
 		auditLog           types.UserAuditManager
-		authSettings       config.AuthSettings
+		authSettings       authservice.Config
 		authenticator      password.Authenticator
 		logger             logging.Logger
 		encoderDecoder     encoding.EncoderDecoder
-		userIDFetcher      UserIDFetcher
-		sessionInfoFetcher SessionInfoFetcher
+		userIDFetcher      func(*http.Request) uint64
+		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		userCounter        metrics.UnitCounter
 		secretGenerator    secretGenerator
 	}
@@ -58,20 +50,14 @@ type (
 
 // ProvideUsersService builds a new UsersService.
 func ProvideUsersService(
-	authSettings config.AuthSettings,
+	authSettings authservice.Config,
 	logger logging.Logger,
 	userDataManager types.UserDataManager,
 	auditLog types.UserAuditManager,
 	authenticator password.Authenticator,
-	userIDFetcher UserIDFetcher,
-	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (types.UserDataService, error) {
-	if userIDFetcher == nil {
-		return nil, errNoUserIDFetcherProvided
-	}
-
 	counter, err := counterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing counter: %w", err)
@@ -82,8 +68,8 @@ func ProvideUsersService(
 		userDataManager:    userDataManager,
 		auditLog:           auditLog,
 		authenticator:      authenticator,
-		userIDFetcher:      userIDFetcher,
-		sessionInfoFetcher: sessionInfoFetcher,
+		userIDFetcher:      routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
 		encoderDecoder:     encoder,
 		authSettings:       authSettings,
 		userCounter:        counter,

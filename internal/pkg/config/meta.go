@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )

@@ -15,12 +15,16 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/gorilla/securecookie"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	testURL = "http://todo.verygoodsoftwarenotvirus.ru/testing"
 )
 
 func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request) {
@@ -58,7 +62,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 			return exampleUser.ToSessionInfo(), nil
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -75,7 +79,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -102,7 +106,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/api/v1/something", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -124,7 +128,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		oacv := &mockmodels.OAuth2ClientDataServer{}
+		oacv := &mocktypes.OAuth2ClientDataServer{}
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
@@ -132,7 +136,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = oacv
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -154,7 +158,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		}
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		oacv := &mockmodels.OAuth2ClientDataServer{}
+		oacv := &mocktypes.OAuth2ClientDataServer{}
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
@@ -162,7 +166,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		).Return(exampleOAuth2Client, errors.New("blah"))
 		s.oauth2ClientsService = oacv
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -182,7 +186,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		oacv := &mockmodels.OAuth2ClientDataServer{}
+		oacv := &mocktypes.OAuth2ClientDataServer{}
 		oacv.On(
 			"ExtractOAuth2ClientFromRequest",
 			mock.Anything,
@@ -190,7 +194,7 @@ func TestService_WebsocketAuthFunction(T *testing.T) {
 		).Return(exampleOAuth2Client, errors.New("blah"))
 		s.oauth2ClientsService = oacv
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -215,13 +219,13 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 			return exampleUser.ToSessionInfo(), nil
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
 		ctx, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
 			mock.Anything,
@@ -242,7 +246,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -262,14 +266,14 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 			return exampleUser.ToSessionInfo(), nil
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		expectedError := errors.New("blah")
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
 			mock.Anything,
@@ -301,7 +305,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx := context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, exampleLoginData)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -321,12 +325,12 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogSuccessfulLoginEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -344,7 +348,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -369,7 +373,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx := context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, exampleLoginData)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -378,7 +382,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.userDB = udb
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -405,7 +409,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx := context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, exampleLoginData)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -413,12 +417,12 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(exampleUser, nil)
 		s.userDB = udb
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogBannedUserLoginAttemptEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -444,7 +448,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, exampleLoginData)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -464,11 +468,11 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = authr
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 		res := httptest.NewRecorder()
@@ -495,7 +499,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, exampleLoginData)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -515,7 +519,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, errors.New("blah"))
 		s.authenticator = authr
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 		res := httptest.NewRecorder()
@@ -550,7 +554,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -570,7 +574,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 		res := httptest.NewRecorder()
@@ -605,7 +609,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
 			mock.Anything,
@@ -625,7 +629,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 		res := httptest.NewRecorder()
@@ -653,11 +657,11 @@ func TestService_LogoutHandler(T *testing.T) {
 			return exampleUser.ToSessionInfo(), nil
 		}
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogLogoutEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -679,7 +683,19 @@ func TestService_LogoutHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		exampleUser := fakes.BuildFakeUser()
+		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+			return exampleUser.ToSessionInfo(), nil
+		}
+
+		ctx, sessionErr := s.sessionManager.Load(ctx, "")
+		require.NoError(t, sessionErr)
+		require.NoError(t, s.sessionManager.RenewToken(ctx))
+
+		// Then make the privilege-level change.
+		s.sessionManager.Put(ctx, sessionInfoKey, exampleUser.ToSessionInfo())
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -700,7 +716,7 @@ func TestService_LogoutHandler(T *testing.T) {
 			return exampleUser.ToSessionInfo(), nil
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://todo.verygoodsoftwarenotvirus.ru/testing", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
@@ -782,7 +798,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleLoginData.Password,
 		).Return("blah", nil)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"UpdateUser",
 			mock.Anything,
@@ -867,7 +883,7 @@ func TestService_validateLogin(T *testing.T) {
 		).Return("blah", nil)
 		s.authenticator = authr
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"UpdateUser",
 			mock.Anything,
@@ -967,7 +983,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
 			mock.Anything,
@@ -999,7 +1015,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		udb := &mockmodels.UserDataManager{}
+		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
 			mock.Anything,
@@ -1034,7 +1050,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 

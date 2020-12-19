@@ -13,11 +13,11 @@ import (
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics/mock"
+	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -345,7 +345,7 @@ func TestService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.userCounter = mc
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUserCreationEvent", mock.Anything, exampleUser)
 		s.auditLog = auditLog
 
@@ -718,7 +718,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUserUpdateTwoFactorSecretEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -946,7 +946,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUserVerifyTwoFactorSecretEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -1149,7 +1149,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
 		s.userDataManager = mockDB
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUserUpdatePasswordEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -1378,7 +1378,7 @@ func TestService_Archive(T *testing.T) {
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
-		auditLog := &mockmodels.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogDataManager{}
 		auditLog.On("LogUserArchiveEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
-	mockmodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -15,12 +15,12 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		AuditLogDataManager:     &mockmodels.AuditLogDataManager{},
-		ItemDataManager:         &mockmodels.ItemDataManager{},
-		UserDataManager:         &mockmodels.UserDataManager{},
-		AdminUserDataManager:    &mockmodels.AdminUserDataManager{},
-		OAuth2ClientDataManager: &mockmodels.OAuth2ClientDataManager{},
-		WebhookDataManager:      &mockmodels.WebhookDataManager{},
+		AuditLogDataManager:     &mocktypes.AuditLogDataManager{},
+		ItemDataManager:         &mocktypes.ItemDataManager{},
+		UserDataManager:         &mocktypes.UserDataManager{},
+		AdminUserDataManager:    &mocktypes.AdminUserDataManager{},
+		OAuth2ClientDataManager: &mocktypes.OAuth2ClientDataManager{},
+		WebhookDataManager:      &mocktypes.WebhookDataManager{},
 	}
 }
 
@@ -28,17 +28,17 @@ func BuildMockDatabase() *MockDatabase {
 type MockDatabase struct {
 	mock.Mock
 
-	*mockmodels.AuditLogDataManager
-	*mockmodels.ItemDataManager
-	*mockmodels.UserDataManager
-	*mockmodels.AdminUserDataManager
-	*mockmodels.OAuth2ClientDataManager
-	*mockmodels.WebhookDataManager
+	*mocktypes.AuditLogDataManager
+	*mocktypes.ItemDataManager
+	*mocktypes.UserDataManager
+	*mocktypes.AdminUserDataManager
+	*mocktypes.OAuth2ClientDataManager
+	*mocktypes.WebhookDataManager
 }
 
 // Migrate satisfies the DataManager interface.
-func (m *MockDatabase) Migrate(ctx context.Context, authenticator password.Authenticator, ucc *UserCreationConfig) error {
-	return m.Called(ctx, authenticator, ucc).Error(0)
+func (m *MockDatabase) Migrate(ctx context.Context, ucc *types.TestUserCreationConfig) error {
+	return m.Called(ctx, ucc).Error(0)
 }
 
 // IsReady satisfies the DataManager interface.

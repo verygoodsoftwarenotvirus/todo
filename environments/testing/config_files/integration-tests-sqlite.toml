@@ -13,10 +13,12 @@
 [database]
   connection_details = "/tmp/db"
   debug = false
+  metrics_collection_interval = "2s"
   provider = "sqlite"
   run_migrations = true
 
   [database.create_test_user]
+    hashed_password = "$2a$11$09lj8J7Nf3CLOS8KJy/j3uS7SQTBCUWSe0r/wKto5jXKh/08Fccgm"
     is_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
@@ -30,13 +32,13 @@
   startup_deadline = "1m0s"
 
 [metrics]
-  database_metrics_collection_interval = "2s"
   metrics_provider = "prometheus"
   runtime_metrics_collection_interval = "2s"
   tracing_provider = "jaeger"
 
 [search]
   items_index_path = "items.bleve"
+  provider = "bleve"
 
 [server]
   debug = false

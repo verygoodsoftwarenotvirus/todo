@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -30,8 +30,8 @@ type (
 		logger             logging.Logger
 		itemDataManager    types.ItemDataManager
 		auditLog           types.ItemAuditManager
-		itemIDFetcher      ItemIDFetcher
-		sessionInfoFetcher SessionInfoFetcher
+		itemIDFetcher      func(*http.Request) uint64
+		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		itemCounter        metrics.UnitCounter
 		encoderDecoder     encoding.EncoderDecoder
 		search             SearchIndex
@@ -49,21 +49,28 @@ func ProvideService(
 	logger logging.Logger,
 	itemDataManager types.ItemDataManager,
 	auditLog types.ItemAuditManager,
-	itemIDFetcher ItemIDFetcher,
-	sessionInfoFetcher SessionInfoFetcher,
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
-	searchIndexManager SearchIndex,
+	searchSettings search.Config,
+	indexProvider search.IndexManagerProvider,
 ) (types.ItemDataService, error) {
 	itemCounter, err := itemCounterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing counter: %w", err)
 	}
 
+	logger.WithValue("index_path", searchSettings.ItemsIndexPath).Debug("setting up items search index")
+
+	searchIndexManager, indexInitErr := indexProvider(searchSettings.ItemsIndexPath, types.ItemsSearchIndexName, logger)
+	if indexInitErr != nil {
+		logger.Error(indexInitErr, "setting up items search index")
+		return nil, indexInitErr
+	}
+
 	svc := &service{
 		logger:             logger.WithName(serviceName),
-		itemIDFetcher:      itemIDFetcher,
-		sessionInfoFetcher: sessionInfoFetcher,
+		itemIDFetcher:      routeparams.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
+		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
 		itemDataManager:    itemDataManager,
 		auditLog:           auditLog,
 		encoderDecoder:     encoder,
@@ -72,21 +79,4 @@ func ProvideService(
 	}
 
 	return svc, nil
-}
-
-// ProvideItemsServiceSearchIndex provides a search index for the service.
-func ProvideItemsServiceSearchIndex(
-	searchSettings config.SearchSettings,
-	indexProvider search.IndexManagerProvider,
-	logger logging.Logger,
-) (SearchIndex, error) {
-	logger.WithValue("index_path", searchSettings.ItemsIndexPath).Debug("setting up items search index")
-
-	searchIndex, indexInitErr := indexProvider(searchSettings.ItemsIndexPath, types.ItemsSearchIndexName, logger)
-	if indexInitErr != nil {
-		logger.Error(indexInitErr, "setting up items search index")
-		return nil, indexInitErr
-	}
-
-	return searchIndex, nil
 }

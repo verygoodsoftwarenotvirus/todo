@@ -8,7 +8,16 @@ import (
 	"io/ioutil"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/tracing"
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	uploadconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/config"
 )
 
 const (
@@ -38,27 +47,19 @@ type (
 	// runMode describes what method of operation the server is under.
 	runMode string
 
-	// ServerSettings describes the settings pertinent to the HTTP serving portion of the service.
-	ServerSettings struct {
-		// Debug determines if debug logging or other development conditions are active.
-		Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
-		// HTTPPort indicates which port to serve HTTP traffic on.
-		HTTPPort uint16 `json:"http_port" mapstructure:"http_port" toml:"http_port,omitempty"`
-	}
-
 	// ServerConfig is our server configuration struct. It is comprised of all the other setting structs
 	// For information on this structs fields, refer to their definitions.
 	ServerConfig struct {
-		Auth     AuthSettings     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Database DatabaseSettings `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Metrics  MetricsSettings  `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
-		Meta     MetaSettings     `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Frontend FrontendSettings `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
-		Upload   UploadSettings   `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
-		Search   SearchSettings   `json:"search" mapstructure:"search" toml:"search,omitempty"`
-		Server   ServerSettings   `json:"server" mapstructure:"server" toml:"server,omitempty"`
-		Webhooks WebhooksSettings `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		AuditLog AuditLogSettings `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
+		Auth          authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Observability observability.Config   `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
+		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
+		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+		Upload        uploadconfig.Config    `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Server        httpserver.Config      `json:"server" mapstructure:"server" toml:"server,omitempty"`
+		Webhooks      webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		AuditLog      audit.Config           `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 	}
 )
 
@@ -89,8 +90,8 @@ func (cfg *ServerConfig) Validate(ctx context.Context) error {
 		return fmt.Errorf("error validating the Frontend portion of config: %w", err)
 	}
 
-	if err := cfg.Metrics.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating the Metrics portion of config: %w", err)
+	if err := cfg.Observability.Validate(ctx); err != nil {
+		return fmt.Errorf("error validating the Observability portion of config: %w", err)
 	}
 
 	if err := cfg.Meta.Validate(ctx); err != nil {

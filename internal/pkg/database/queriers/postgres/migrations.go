@@ -8,6 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
@@ -176,7 +177,7 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 			return fmt.Errorf("error creating test user: %w", dbErr)
 		}
 
-		q.logger.WithValue("username", testUserConfig.Username).Debug("created test user")
+		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user")
 	}
 
 	return nil

@@ -49,9 +49,8 @@ type V1Client struct {
 	tracer       tracing.Tracer
 	adminMode    bool
 
-	Debug  bool
-	URL    *url.URL
-	Scopes []string
+	Debug bool
+	URL   *url.URL
 }
 
 // EnableAdminMode enables admin mode.
@@ -95,11 +94,13 @@ func NewClient(
 	hclient *http.Client,
 	scopes []string,
 	debug bool,
+	options ...option,
 ) (*V1Client, error) {
 	var client = hclient
 	if client == nil {
 		client = &http.Client{
-			Timeout: defaultTimeout,
+			Timeout:   defaultTimeout,
+			Transport: buildDefaultTransport(),
 		}
 	}
 
@@ -107,7 +108,7 @@ func NewClient(
 		client.Timeout = defaultTimeout
 	}
 
-	client.Transport = otelhttp.NewTransport(client.Transport)
+	client.Transport = otelhttp.NewTransport(buildDefaultTransport())
 
 	if debug {
 		logger.SetLevel(logging.DebugLevel)
@@ -124,6 +125,10 @@ func NewClient(
 		Debug:        debug,
 		logger:       logger.WithName(clientName),
 		tracer:       tracing.NewTracer(clientName),
+	}
+
+	for _, opt := range options {
+		opt(c)
 	}
 
 	logger.WithValue("url", address.String()).Debug("returning client")
@@ -191,14 +196,7 @@ func (c *V1Client) closeResponseBody(res *http.Response) {
 
 // BuildURL builds standard service URLs.
 func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
-	var u *url.URL
-	if qp != nil {
-		u = c.buildRawURL(qp, parts...)
-	} else {
-		u = c.buildRawURL(nil, parts...)
-	}
-
-	if u != nil {
+	if u := c.buildRawURL(qp, parts...); u != nil {
 		return u.String()
 	}
 

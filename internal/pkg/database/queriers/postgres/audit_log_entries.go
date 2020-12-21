@@ -8,6 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -208,7 +209,6 @@ func (q *Postgres) GetAuditLogEntries(ctx context.Context, filter *types.QueryFi
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		q.logger.WithValue("query", query).Error(err, "fuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuck")
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
@@ -263,6 +263,6 @@ func (q *Postgres) createAuditLogEntry(ctx context.Context, input *types.AuditLo
 
 	// create the audit log entry.
 	if err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
-		q.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
+		q.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

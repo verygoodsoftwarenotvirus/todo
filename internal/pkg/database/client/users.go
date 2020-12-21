@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -21,7 +22,7 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue("user_id", userID)
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
 	user, err := c.querier.GetUser(ctx, userID)
 	if err != nil {
@@ -40,7 +41,7 @@ func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue("user_id", userID)
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
 	user, err := c.querier.GetUserWithUnverifiedTwoFactorSecret(ctx, userID)
 	if err != nil {
@@ -59,7 +60,7 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("VerifyUserTwoFactorSecret called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("VerifyUserTwoFactorSecret called")
 
 	return c.querier.VerifyUserTwoFactorSecret(ctx, userID)
 }
@@ -70,7 +71,7 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, username)
-	logger := c.logger.WithValue("username", username)
+	logger := c.logger.WithValue(keys.UsernameKey, username)
 
 	user, err := c.querier.GetUserByUsername(ctx, username)
 	if err != nil {
@@ -131,7 +132,7 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, input.Username)
-	logger := c.logger.WithValue("username", input.Username)
+	logger := c.logger.WithValue(keys.UsernameKey, input.Username)
 
 	user, err := c.querier.CreateUser(ctx, input)
 	if err != nil {
@@ -151,7 +152,7 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, updated.Username)
-	c.logger.WithValue("username", updated.Username).Debug("UpdateUser called")
+	c.logger.WithValue(keys.UsernameKey, updated.Username).Debug("UpdateUser called")
 
 	return c.querier.UpdateUser(ctx, updated)
 }
@@ -162,7 +163,7 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("UpdateUserPassword called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserPassword called")
 
 	return c.querier.UpdateUserPassword(ctx, userID, newHash)
 }
@@ -173,7 +174,7 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("ArchiveUser called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("ArchiveUser called")
 
 	return c.querier.ArchiveUser(ctx, userID)
 }
@@ -183,7 +184,7 @@ func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("GetAuditLogEntriesForUser called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetAuditLogEntriesForUser called")
 
 	return c.querier.GetAuditLogEntriesForUser(ctx, userID)
 }

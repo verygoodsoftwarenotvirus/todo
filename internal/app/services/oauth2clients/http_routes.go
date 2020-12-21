@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -99,7 +100,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user.
 	userID := s.fetchUserID(req)
 	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	// fetch oauth2 clients.
 	oauth2Clients, err := s.clientDataManager.GetOAuth2Clients(ctx, userID, filter)
@@ -201,7 +202,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine subject of request.
 	userID := s.fetchUserID(req)
 	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	// determine relevant oauth2 client ID.
 	oauth2ClientID := s.urlClientIDExtractor(req)
@@ -234,7 +235,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine subject of request.
 	userID := s.fetchUserID(req)
 	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	// determine relevant oauth2 client ID.
 	oauth2ClientID := s.urlClientIDExtractor(req)
@@ -269,7 +270,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	userID := s.fetchUserID(req)
 	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	// determine item ID.
 	oauth2ClientID := s.urlClientIDExtractor(req)

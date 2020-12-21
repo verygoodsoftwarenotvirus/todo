@@ -3,6 +3,7 @@ package dbclient
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -16,7 +17,7 @@ func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.A
 	defer span.End()
 
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
-	c.logger.WithValue("audit_log_entry_id", entryID).Debug("GetAuditLogEntry called")
+	c.logger.WithValue(keys.AuditLogEntryIDKey, entryID).Debug("GetAuditLogEntry called")
 
 	return c.querier.GetAuditLogEntry(ctx, entryID)
 }
@@ -60,7 +61,7 @@ func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogCycleCookieSecretEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogCycleCookieSecretEvent called")
 
 	c.querier.LogCycleCookieSecretEvent(ctx, userID)
 }
@@ -70,7 +71,7 @@ func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogSuccessfulLoginEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogSuccessfulLoginEvent called")
 
 	c.querier.LogSuccessfulLoginEvent(ctx, userID)
 }
@@ -80,7 +81,7 @@ func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogBannedUserLoginAttemptEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogBannedUserLoginAttemptEvent called")
 
 	c.querier.LogBannedUserLoginAttemptEvent(ctx, userID)
 }
@@ -90,7 +91,7 @@ func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userI
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogUnsuccessfulLoginBadPasswordEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUnsuccessfulLoginBadPasswordEvent called")
 
 	c.querier.LogUnsuccessfulLoginBadPasswordEvent(ctx, userID)
 }
@@ -100,7 +101,7 @@ func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userI
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogUnsuccessfulLoginBad2FATokenEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUnsuccessfulLoginBad2FATokenEvent called")
 
 	c.querier.LogUnsuccessfulLoginBad2FATokenEvent(ctx, userID)
 }
@@ -110,7 +111,7 @@ func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogLogoutEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogLogoutEvent called")
 
 	c.querier.LogLogoutEvent(ctx, userID)
 }
@@ -120,7 +121,7 @@ func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", item.BelongsToUser).Debug("LogItemCreationEvent called")
+	c.logger.WithValue(keys.UserIDKey, item.BelongsToUser).Debug("LogItemCreationEvent called")
 
 	c.querier.LogItemCreationEvent(ctx, item)
 }
@@ -130,7 +131,7 @@ func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, 
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogItemUpdateEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemUpdateEvent called")
 
 	c.querier.LogItemUpdateEvent(ctx, userID, itemID, changes)
 }
@@ -140,7 +141,7 @@ func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogItemArchiveEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemArchiveEvent called")
 
 	c.querier.LogItemArchiveEvent(ctx, userID, itemID)
 }
@@ -150,7 +151,7 @@ func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
+	c.logger.WithValue(keys.UserIDKey, client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
 
 	c.querier.LogOAuth2ClientCreationEvent(ctx, client)
 }
@@ -160,7 +161,7 @@ func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, client
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogOAuth2ClientArchiveEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogOAuth2ClientArchiveEvent called")
 
 	c.querier.LogOAuth2ClientArchiveEvent(ctx, userID, clientID)
 }
@@ -170,7 +171,7 @@ func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Web
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
+	c.logger.WithValue(keys.UserIDKey, webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
 
 	c.querier.LogWebhookCreationEvent(ctx, webhook)
 }
@@ -180,7 +181,7 @@ func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID ui
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogWebhookUpdateEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookUpdateEvent called")
 
 	c.querier.LogWebhookUpdateEvent(ctx, userID, webhookID, changes)
 }
@@ -190,7 +191,7 @@ func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogWebhookArchiveEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookArchiveEvent called")
 
 	c.querier.LogWebhookArchiveEvent(ctx, userID, webhookID)
 }
@@ -200,7 +201,7 @@ func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", user.ID).Debug("LogUserCreationEvent called")
+	c.logger.WithValue(keys.UserIDKey, user.ID).Debug("LogUserCreationEvent called")
 
 	c.querier.LogUserCreationEvent(ctx, user)
 }
@@ -210,7 +211,7 @@ func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID u
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogUserVerifyTwoFactorSecretEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserVerifyTwoFactorSecretEvent called")
 
 	c.querier.LogUserVerifyTwoFactorSecretEvent(ctx, userID)
 }
@@ -220,7 +221,7 @@ func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID u
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogUserUpdateTwoFactorSecretEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdateTwoFactorSecretEvent called")
 
 	c.querier.LogUserUpdateTwoFactorSecretEvent(ctx, userID)
 }
@@ -230,7 +231,7 @@ func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) 
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogUserUpdatePasswordEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdatePasswordEvent called")
 
 	c.querier.LogUserUpdatePasswordEvent(ctx, userID)
 }
@@ -240,7 +241,7 @@ func (c *Client) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("user_id", userID).Debug("LogUserArchiveEvent called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserArchiveEvent called")
 
 	c.querier.LogUserArchiveEvent(ctx, userID)
 }

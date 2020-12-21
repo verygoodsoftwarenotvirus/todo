@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -33,7 +34,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	var (
 		entries *types.AuditLogEntryList
@@ -71,12 +72,12 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine audit log entry ID.
 	entryID := s.auditLogEntryIDFetcher(req)
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
-	logger = logger.WithValue("audit_log_entry_id", entryID)
+	logger = logger.WithValue(keys.AuditLogEntryIDKey, entryID)
 
 	// fetch audit log entry from database.
 	x, err := s.auditLog.GetAuditLogEntry(ctx, entryID)

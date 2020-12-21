@@ -3,6 +3,7 @@ package dbclient
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -82,7 +83,7 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *ty
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 	}
 
-	c.logger.WithValue("user_id", userID).Debug("GetOAuth2Clients called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetOAuth2Clients called")
 
 	return c.querier.GetOAuth2Clients(ctx, userID, filter)
 }

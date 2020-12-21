@@ -8,6 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -261,6 +262,6 @@ func (q *MariaDB) createAuditLogEntry(ctx context.Context, input *types.AuditLog
 
 	// create the audit log entry.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		q.logger.WithValue("event_type", input.EventType).Error(err, "executing audit log entry creation query")
+		q.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

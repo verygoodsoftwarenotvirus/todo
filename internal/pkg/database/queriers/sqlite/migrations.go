@@ -8,6 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
@@ -173,7 +174,7 @@ func (q *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 			return dbErr
 		}
 
-		q.logger.WithValue("username", testUserConfig.Username).Debug("created user")
+		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created user")
 	}
 
 	return nil

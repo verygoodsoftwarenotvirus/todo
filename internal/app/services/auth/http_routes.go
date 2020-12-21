@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
@@ -120,7 +121,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger = logger.WithValue("username", loginData.Username)
+	logger = logger.WithValue(keys.UsernameKey, loginData.Username)
 
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
 	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {
@@ -139,7 +140,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	loginValid, err := s.validateLogin(ctx, user, loginData)
-	logger = logger.WithValue("user_id", user.ID).WithValue("login_valid", loginValid)
+	logger = logger.WithValue(keys.UserIDKey, user.ID).WithValue("login_valid", loginValid)
 
 	if err != nil {
 		if errors.Is(err, password.ErrInvalidTwoFactorCode) {
@@ -295,7 +296,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 	defer span.End()
 
 	// alias the relevant data.
-	logger := s.logger.WithValue("username", user.Username)
+	logger := s.logger.WithValue(keys.UsernameKey, user.Username)
 
 	// check for login validity.
 	loginValid, err := s.authenticator.ValidateLogin(

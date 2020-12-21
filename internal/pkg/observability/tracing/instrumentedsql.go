@@ -65,5 +65,5 @@ type instrumentedSQLLoggerWrapper struct {
 }
 
 func (w *instrumentedSQLLoggerWrapper) Log(_ context.Context, msg string, keyvals ...interface{}) {
-	w.logger.Printf(msg, keyvals...)
+	// this is noisy AF, log at your own peril
 }

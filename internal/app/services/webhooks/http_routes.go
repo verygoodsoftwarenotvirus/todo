@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -58,7 +59,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// try to pluck the parsed input from the request context.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.WebhookCreationInput)
@@ -115,7 +116,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, si.UserID, filter)
@@ -149,7 +150,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -189,7 +190,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -251,7 +252,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -296,7 +297,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)

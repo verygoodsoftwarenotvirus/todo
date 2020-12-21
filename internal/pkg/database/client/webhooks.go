@@ -3,6 +3,7 @@ package dbclient
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -36,7 +37,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 	}
 
-	c.logger.WithValue("user_id", userID).Debug("GetWebhookCount called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetWebhookCount called")
 
 	return c.querier.GetWebhooks(ctx, userID, filter)
 }
@@ -67,7 +68,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
-	c.logger.WithValue("user_id", input.BelongsToUser).Debug("CreateWebhook called")
+	c.logger.WithValue(keys.UserIDKey, input.BelongsToUser).Debug("CreateWebhook called")
 
 	return c.querier.CreateWebhook(ctx, input)
 }

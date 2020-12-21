@@ -3,6 +3,7 @@ package dbclient
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -25,7 +26,7 @@ func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, inp
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue("user_id", userID).Debug("UpdateUserAccountStatus called")
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserAccountStatus called")
 
 	return c.querier.UpdateUserAccountStatus(ctx, userID, input)
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -43,7 +44,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
@@ -95,7 +96,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
@@ -165,7 +166,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 	input.BelongsToUser = si.UserID
 
 	// create item in database.
@@ -177,7 +178,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachItemIDToSpan(span, x.ID)
-	logger = logger.WithValue("item_id", x.ID)
+	logger = logger.WithValue(keys.ItemIDKey, x.ID)
 
 	// notify relevant parties.
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
@@ -204,12 +205,12 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
 	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue("item_id", itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.UserID)
@@ -237,12 +238,12 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
 	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue("item_id", itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
 	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
@@ -282,12 +283,12 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 	input.BelongsToUser = si.UserID
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
-	logger = logger.WithValue("item_id", itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// fetch item from database.
@@ -337,11 +338,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
-	logger = logger.WithValue("item_id", itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
@@ -383,12 +384,12 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
 	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue("item_id", itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	x, err := s.auditLog.GetAuditLogEntriesForItem(ctx, itemID)
 	if errors.Is(err, sql.ErrNoRows) {

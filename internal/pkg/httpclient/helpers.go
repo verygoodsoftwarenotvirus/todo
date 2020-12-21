@@ -9,10 +9,21 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"reflect"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
+
+// MustParseURL parses a URL or otherwise panics.
+func MustParseURL(raw string) *url.URL {
+	u, err := url.Parse(raw)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
+}
 
 // argIsNotPointer checks an argument and returns whether or not it is a pointer.
 func argIsNotPointer(i interface{}) (notAPointer bool, err error) {

@@ -12,6 +12,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -42,7 +43,7 @@ func (s *service) validateCredentialChangeRequest(
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := s.logger.WithValue("user_id", userID)
+	logger := s.logger.WithValue(keys.UserIDKey, userID)
 
 	// fetch user data.
 	user, err := s.userDataManager.GetUser(ctx, userID)
@@ -140,7 +141,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// NOTE: I feel comfortable letting username be in the logger, since
 	// the logging statements below are only in the event of errors. If
 	// and when that changes, this can/should be removed.
-	logger = logger.WithValue("username", userInput.Username)
+	logger = logger.WithValue(keys.UsernameKey, userInput.Username)
 	tracing.AttachUsernameToSpan(span, userInput.Username)
 
 	// ensure the password isn't garbage-tier
@@ -259,7 +260,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 
 	// figure out who this is all for.
 	userID := si.UserID
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// fetch user data.
@@ -287,7 +288,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// figure out who this is all for.
 	userID := s.userIDFetcher(req)
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// fetch user data.
@@ -453,7 +454,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// determine relevant user ID.
 	tracing.AttachUserIDToSpan(span, si.UserID)
-	logger = logger.WithValue("user_id", si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// make sure everything's on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
@@ -517,7 +518,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// figure out who this is for.
 	userID := s.userIDFetcher(req)
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// do the deed.
@@ -545,7 +546,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	// figure out who this is for.
 	userID := s.userIDFetcher(req)
-	logger = logger.WithValue("user_id", userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
 	x, err := s.auditLog.GetAuditLogEntriesForUser(ctx, userID)

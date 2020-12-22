@@ -82,7 +82,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error 
 	tracing.AttachWebhookIDToSpan(span, input.ID)
 	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
 
-	c.logger.WithValue("webhook_id", input.ID).Debug("UpdateWebhook called")
+	c.logger.WithValue(keys.WebhookIDKey, input.ID).Debug("UpdateWebhook called")
 
 	return c.querier.UpdateWebhook(ctx, input)
 }

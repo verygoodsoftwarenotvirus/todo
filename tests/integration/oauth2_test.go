@@ -217,17 +217,21 @@ func TestOAuth2Clients(test *testing.T) {
 			// archive oauth2Client.
 			require.NoError(t, testClient.ArchiveOAuth2Client(ctx, premade.ID))
 
-			c2, err := httpclient.NewClient(
-				ctx,
-				premade.ClientID,
-				premade.ClientSecret,
-				testClient.URL,
-				noop.NewLogger(),
-				buildHTTPClient(),
-				premade.Scopes,
-				true,
+			c2 := httpclient.NewClient(
+				httpclient.WithHTTPClient(buildHTTPClient()),
+				httpclient.WithURL(testClient.URL),
+				httpclient.WithLogger(noop.NewLogger()),
+				httpclient.WithOAuth2ClientCredentials(
+					httpclient.BuildClientCredentialsConfig(
+						testClient.URL,
+						premade.ClientID,
+						premade.ClientSecret,
+						premade.Scopes...,
+					),
+				),
+				httpclient.WithDebugEnabled(),
 			)
-			checkValueAndError(test, c2, err)
+			checkValueAndError(test, c2, nil)
 
 			_, err = c2.GetOAuth2Clients(ctx, nil)
 			assert.Error(t, err, "expected error from what should be an unauthorized client")

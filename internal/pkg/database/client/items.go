@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -135,7 +136,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue("input", input).Debug("CreateItem called")
+	c.logger.Debug("CreateItem called")
 
 	return c.querier.CreateItem(ctx, input)
 }
@@ -147,7 +148,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, updated.ID)
-	c.logger.WithValue("item_id", updated.ID).Debug("UpdateItem called")
+	c.logger.WithValue(keys.ItemIDKey, updated.ID).Debug("UpdateItem called")
 
 	return c.querier.UpdateItem(ctx, updated)
 }

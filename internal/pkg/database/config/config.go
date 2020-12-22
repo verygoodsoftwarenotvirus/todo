@@ -69,7 +69,7 @@ func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, er
 	case PostgresProviderKey:
 		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails)
 	case MariaDBProviderKey:
-		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
+		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails)
 	case SqliteProviderKey:
 		return sqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
 	default:

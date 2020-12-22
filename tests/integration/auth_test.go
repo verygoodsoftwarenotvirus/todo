@@ -39,7 +39,7 @@ func TestAuth(test *testing.T) {
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		assert.Equal(t, authservice.CookieName, cookie.Name)
+		assert.Equal(t, authservice.DefaultCookieName, cookie.Name)
 		assert.NotEmpty(t, cookie.Value)
 		assert.NotZero(t, cookie.MaxAge)
 		assert.True(t, cookie.HttpOnly)
@@ -154,7 +154,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testClient := buildSimpleClient(ctx, t)
+		testClient := buildSimpleClient()
 
 		// create a user.
 		exampleUser := fakes.BuildFakeUser()
@@ -185,7 +185,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testClient := buildSimpleClient(ctx, t)
+		testClient := buildSimpleClient()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testClient.BuildURL(nil, "webhooks"), nil)
 		assert.NoError(t, err)
@@ -245,7 +245,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testClient := buildSimpleClient(ctx, t)
+		testClient := buildSimpleClient()
 
 		// create user.
 		userInput := fakes.BuildFakeUserCreationInput()
@@ -268,7 +268,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testClient := buildSimpleClient(ctx, t)
+		testClient := buildSimpleClient()
 
 		// create user.
 		userInput := fakes.BuildFakeUserCreationInput()
@@ -365,17 +365,20 @@ func TestAuth(test *testing.T) {
 		premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
 		checkValueAndError(test, premade, err)
 
-		c, err := httpclient.NewClient(
-			ctx,
-			premade.ClientID,
-			premade.ClientSecret,
-			testClient.URL,
-			noop.NewLogger(),
-			buildHTTPClient(),
-			premade.Scopes,
-			true,
+		c := httpclient.NewClient(
+			httpclient.WithURL(testClient.URL),
+			httpclient.WithLogger(noop.NewLogger()),
+			httpclient.WithOAuth2ClientCredentials(
+				httpclient.BuildClientCredentialsConfig(
+					testClient.URL,
+					premade.ClientID,
+					premade.ClientSecret,
+					premade.Scopes...,
+				),
+			),
+			httpclient.WithDebugEnabled(),
 		)
-		checkValueAndError(test, c, err)
+		checkValueAndError(test, c, nil)
 
 		i, err := c.GetOAuth2Clients(ctx, nil)
 		assert.Nil(t, i)

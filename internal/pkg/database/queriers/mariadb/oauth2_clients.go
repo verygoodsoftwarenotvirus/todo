@@ -283,8 +283,6 @@ func (q *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *t
 
 	list, count, err := q.scanOAuth2Clients(rows, true)
 	if err != nil {
-		q.logger.WithValue("query", query).Debug("!!!!!! ERROR GETTING OAUTH2 CLIENTS !!!!!!")
-
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 

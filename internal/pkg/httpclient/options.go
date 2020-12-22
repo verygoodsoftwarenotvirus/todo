@@ -19,6 +19,13 @@ func (c *V1Client) SetOption(opt option) {
 	opt(c)
 }
 
+// WithRawURL sets the URL on the client.
+func WithRawURL(raw string) func(*V1Client) {
+	return func(c *V1Client) {
+		c.URL = MustParseURL(raw)
+	}
+}
+
 // WithURL sets the URL on the client.
 func WithURL(u *url.URL) func(*V1Client) {
 	return func(c *V1Client) {
@@ -37,8 +44,8 @@ func WithLogger(logger logging.Logger) func(*V1Client) {
 	}
 }
 
-// WithPlainClient sets the logger on the client.
-func WithPlainClient(client *http.Client) func(*V1Client) {
+// WithHTTPClient sets the plainClient value on the client.
+func WithHTTPClient(client *http.Client) func(*V1Client) {
 	return func(c *V1Client) {
 		if client == nil {
 			return
@@ -50,21 +57,6 @@ func WithPlainClient(client *http.Client) func(*V1Client) {
 
 		client.Transport = otelhttp.NewTransport(buildDefaultTransport())
 		c.plainClient = client
-	}
-}
-
-// WithAuthenticatedClient sets the logger on the client.
-func WithAuthenticatedClient(client *http.Client) func(*V1Client) {
-	return func(c *V1Client) {
-		if client == nil {
-			return
-		}
-
-		if client.Timeout == 0 {
-			client.Timeout = defaultTimeout
-		}
-
-		client.Transport = otelhttp.NewTransport(buildDefaultTransport())
 		c.authedClient = client
 	}
 }
@@ -76,23 +68,39 @@ func WithDebugEnabled() func(*V1Client) {
 	}
 }
 
-// WithOAuth2ClientCredentials sets the debug value on the client.
-func WithOAuth2ClientCredentials(
-	conf *clientcredentials.Config,
-	timeout time.Duration,
-) func(*V1Client) {
+// WithTimeout sets the debug value on the client.
+func WithTimeout(timeout time.Duration) func(*V1Client) {
 	return func(c *V1Client) {
 		if timeout == 0 {
 			timeout = defaultTimeout
 		}
 
+		c.authedClient.Timeout = timeout
+		c.plainClient.Timeout = timeout
+	}
+}
+
+// WithCookieCredentials sets the authCookie value on the client.
+func WithCookieCredentials(cookie *http.Cookie) func(*V1Client) {
+	return func(c *V1Client) {
+		if cookie == nil {
+			return
+		}
+
+		c.authCookie = cookie
+	}
+}
+
+// WithOAuth2ClientCredentials sets the oauth2 credentials for the client.
+func WithOAuth2ClientCredentials(conf *clientcredentials.Config) func(*V1Client) {
+	return func(c *V1Client) {
 		c.tokenSource = oauth2.ReuseTokenSource(nil, conf.TokenSource(context.Background()))
 		c.authedClient = &http.Client{
 			Transport: &oauth2.Transport{
 				Base:   otelhttp.NewTransport(newDefaultRoundTripper()),
 				Source: c.tokenSource,
 			},
-			Timeout: timeout,
+			Timeout: defaultTimeout,
 		}
 	}
 }

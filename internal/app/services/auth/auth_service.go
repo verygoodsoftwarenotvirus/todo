@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	// CookieName is the name of the cookie we attach to requests.
-	CookieName         = "todocookie"
 	serviceName        = "auth_service"
 	sessionInfoKey     = string(types.SessionInfoKey)
 	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
@@ -76,8 +74,8 @@ func ProvideService(
 	}
 	svc.sessionManager.Lifetime = cfg.CookieLifetime
 
-	if _, err := svc.cookieManager.Encode(CookieName, "blah"); err != nil {
-		logger.WithValue("cookie_signing_key", cfg.CookieSigningKey).Error(err, "building test cookie")
+	if _, err := svc.cookieManager.Encode(cfg.CookieName, "blah"); err != nil {
+		logger.WithValue("cookie_signing_key_length", len(cfg.CookieSigningKey)).Error(err, "building test cookie")
 		return nil, fmt.Errorf("error building test cookie: %w", err)
 	}
 

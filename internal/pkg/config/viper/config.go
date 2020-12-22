@@ -45,6 +45,8 @@ const (
 
 	// ConfigKeyAuthDebug is the key viper will use to refer to the AuthSettings.Debug setting.
 	ConfigKeyAuthDebug = "auth.debug"
+	// ConfigKeyAuthCookieName is the key viper will use to refer to the AuthSettings.CookieName setting.
+	ConfigKeyAuthCookieName = "auth.cookie_name"
 	// ConfigKeyAuthCookieDomain is the key viper will use to refer to the AuthSettings.CookieDomain setting.
 	ConfigKeyAuthCookieDomain = "auth.cookie_domain"
 	// ConfigKeyAuthCookieSigningKey is the key viper will use to refer to the AuthSettings.CookieSecret setting.

@@ -414,6 +414,25 @@ func (q *MariaDB) buildUpdateUserQuery(input *types.User) (query string, args []
 // incomplete types at your peril.
 func (q *MariaDB) UpdateUser(ctx context.Context, input *types.User) error {
 	query, args := q.buildUpdateUserQuery(input)
+
+	q.logger.WithValues(map[string]interface{}{
+		"ID":                        input.ID,
+		"Salt":                      input.Salt,
+		"Username":                  input.Username,
+		"HashedPassword":            input.HashedPassword,
+		"TwoFactorSecret":           input.TwoFactorSecret,
+		"AccountStatus":             input.AccountStatus,
+		"AccountStatusExplanation":  input.AccountStatusExplanation,
+		"PasswordLastChangedOn":     input.PasswordLastChangedOn,
+		"TwoFactorSecretVerifiedOn": input.TwoFactorSecretVerifiedOn,
+		"CreatedOn":                 input.CreatedOn,
+		"LastUpdatedOn":             input.LastUpdatedOn,
+		"ArchivedOn":                input.ArchivedOn,
+		"AdminPermissions":          input.AdminPermissions,
+		"IsAdmin":                   input.IsAdmin,
+		"RequiresPasswordChange":    input.RequiresPasswordChange,
+	}).Debug("MariaDB.UpdateUser called")
+
 	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err

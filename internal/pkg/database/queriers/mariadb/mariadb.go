@@ -8,6 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
@@ -60,8 +61,8 @@ type (
 var instrumentedDriverRegistration sync.Once
 
 // ProvideMariaDBConnection provides an instrumented maria DB db.
-func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
-	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to maria DB")
+func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
+	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to maria DB")
 
 	instrumentedDriverRegistration.Do(func() {
 		sql.Register(
@@ -75,7 +76,7 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 		)
 	})
 
-	db, err := sql.Open(driverName, string(connectionDetails))
+	db, err := sql.Open("mysql", string(connectionDetails))
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func (q *MariaDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, er
 // with the utmost priority.
 func (q *MariaDB) logQueryBuildingError(err error) {
 	if err != nil {
-		q.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
+		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
 }
 
@@ -146,6 +147,6 @@ func (q *MariaDB) logQueryBuildingError(err error) {
 // with the utmost priority.
 func (q *MariaDB) logIDRetrievalError(err error) {
 	if err != nil {
-		q.logger.WithValue("ROW_ID_ERROR", true).Error(err, "fetching row ID")
+		q.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
 	}
 }

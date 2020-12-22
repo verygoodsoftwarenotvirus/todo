@@ -87,7 +87,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		// NOTE: any code here is duplicated from service.buildAuthCookie
 		// any changes made there might need to be reflected here.
 		c := &http.Cookie{
-			Name:     CookieName,
+			Name:     s.config.CookieName,
 			Value:    "blah blah blah this is not a real cookie",
 			Path:     "/",
 			HttpOnly: true,
@@ -549,7 +549,8 @@ func TestService_LoginHandler(T *testing.T) {
 		cb := &mockCookieEncoderDecoder{}
 		cb.On(
 			"Encode",
-			CookieName,
+
+			s.config.CookieName,
 			mock.AnythingOfType("string"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
@@ -604,7 +605,7 @@ func TestService_LoginHandler(T *testing.T) {
 		cb := &mockCookieEncoderDecoder{}
 		cb.On(
 			"Encode",
-			CookieName,
+			s.config.CookieName,
 			mock.AnythingOfType("string"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
@@ -1058,12 +1059,12 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		c := req.Cookies()[0]
 
 		var token string
-		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
 
 		s.CycleCookieSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
-		assert.Error(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+		assert.Error(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
 
 		mock.AssertExpectationsForObjects(t, auditLog)
 	})
@@ -1088,12 +1089,12 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		c := req.Cookies()[0]
 
 		var token string
-		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
 
 		s.CycleCookieSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
-		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
 	})
 
 	T.Run("with invalid permissions", func(t *testing.T) {
@@ -1116,12 +1117,12 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		c := req.Cookies()[0]
 
 		var token string
-		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
 
 		s.CycleCookieSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusForbidden, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
-		assert.NoError(t, s.cookieManager.Decode(CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
 	})
 }
 

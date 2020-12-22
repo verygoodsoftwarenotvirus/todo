@@ -21,7 +21,10 @@ func buildTestService(t *testing.T) *service {
 
 	s, err := ProvideService(
 		logger,
-		Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+		Config{
+			CookieName:       DefaultCookieName,
+			CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
+		},
 		&mockauth.Authenticator{},
 		&mocktypes.UserDataManager{},
 		&mocktypes.AuditLogDataManager{},
@@ -44,7 +47,10 @@ func TestProvideAuthService(T *testing.T) {
 
 		s, err := ProvideService(
 			logger,
-			Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
+			Config{
+				CookieName:       DefaultCookieName,
+				CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
+			},
 			&mockauth.Authenticator{},
 			&mocktypes.UserDataManager{},
 			&mocktypes.AuditLogDataManager{},

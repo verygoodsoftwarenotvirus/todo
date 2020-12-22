@@ -5,6 +5,7 @@
 [auth]
   cookie_domain = "localhost"
   cookie_lifetime = "24h0m0s"
+  cookie_name = "todocookie"
   cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   debug = true
   enable_user_signup = true
@@ -20,7 +21,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$Azqcba2lh4JFNfGOatcs1OxZYSjEXyBDbP/GLtPQ/1RccH303E3G."
+    hashed_password = "$2a$11$.HeUmROn6/toe.KSOnMgaOaDauMrB/2AgbOCQlAl4P0jKPnyLSK66"
     is_admin = true
     password = "password"
     username = "username"

@@ -119,15 +119,10 @@ func CreateServiceUser(ctx context.Context, address, username string, debug bool
 		username = fake.Password(true, true, true, false, false, 32)
 	}
 
-	tu, parseErr := url.Parse(address)
-	if parseErr != nil {
-		return nil, parseErr
-	}
-
-	c, clientInitErr := httpclient.NewSimpleClient(ctx, tu, debug)
-	if clientInitErr != nil {
-		return nil, clientInitErr
-	}
+	tu := httpclient.MustParseURL(address)
+	c := httpclient.NewClient(
+		httpclient.WithURL(tu),
+	)
 
 	in := &types.UserCreationInput{
 		Username: username,

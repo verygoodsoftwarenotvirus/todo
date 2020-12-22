@@ -5,6 +5,7 @@
 [auth]
   cookie_domain = "localhost"
   cookie_lifetime = "24h0m0s"
+  cookie_name = "todocookie"
   cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   debug = true
   enable_user_signup = true

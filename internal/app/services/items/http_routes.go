@@ -86,7 +86,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	// we only parse the filter here because it will contain the limit
 	filter := types.ExtractQueryFilter(req)
 	query := req.URL.Query().Get(types.SearchQueryKey)
-	logger = logger.WithValue("search_query", query)
+	logger = logger.WithValue(keys.SearchQueryKey, query)
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)

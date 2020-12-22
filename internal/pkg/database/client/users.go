@@ -89,15 +89,13 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("query", usernameQuery)
-
 	user, err := c.querier.SearchForUsersByUsername(ctx, usernameQuery)
 	if err != nil {
-		logger.Error(err, "querying database for user")
+		c.logger.Error(err, "querying database for user")
 		return nil, err
 	}
 
-	logger.Debug("SearchForUsersByUsername called")
+	c.logger.Debug("SearchForUsersByUsername called")
 
 	return user, nil
 }
@@ -121,7 +119,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 	}
 
-	c.logger.WithValue("filter", filter).Debug("GetUsers called")
+	c.logger.WithValue(keys.FilterIsNilKey, filter == nil).Debug("GetUsers called")
 
 	return c.querier.GetUsers(ctx, filter)
 }

@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -438,7 +439,7 @@ func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) 
 func (q *Postgres) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
 
-	q.logger.WithValue("client_id", clientID).Debug("GetAuditLogEntriesForOAuth2Client invoked")
+	q.logger.WithValue(keys.OAuth2ClientIDKey, clientID).Debug("GetAuditLogEntriesForOAuth2Client invoked")
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

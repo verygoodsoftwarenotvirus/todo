@@ -1,15 +1,17 @@
 version: "3.3"
 services:
     database:
-        image: postgres:latest
-        environment:
-            POSTGRES_DB: 'todo'
-            POSTGRES_PASSWORD: 'hunter2'
-            POSTGRES_USER: 'dbuser'
-        logging:
-            driver: none
-        ports:
-            - 2345:5432
+      image: "mariadb:latest"
+      environment:
+        MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+        MYSQL_DATABASE: 'todo'
+        MYSQL_PASSWORD: 'hunter2'
+        MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+        MYSQL_USER: 'dbuser'
+      logging:
+        driver: none
+      ports:
+        - 3306:3306
     todo-server:
         environment:
             CONFIGURATION_FILEPATH: '/etc/config.toml'

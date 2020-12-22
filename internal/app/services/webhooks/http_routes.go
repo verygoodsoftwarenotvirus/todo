@@ -155,7 +155,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
-	logger = logger.WithValue("webhook_id", webhookID)
+	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// fetch the webhook from the database.
 	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.UserID)
@@ -195,7 +195,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
-	logger = logger.WithValue("webhook_id", webhookID)
+	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// fetch parsed creation input from request context.
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.WebhookUpdateInput)
@@ -257,7 +257,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
-	logger = logger.WithValue("webhook_id", webhookID)
+	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// do the deed.
 	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, si.UserID)
@@ -302,7 +302,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
-	logger = logger.WithValue("webhook_id", webhookID)
+	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	x, err := s.auditLog.GetAuditLogEntriesForWebhook(ctx, webhookID)
 	if errors.Is(err, sql.ErrNoRows) {

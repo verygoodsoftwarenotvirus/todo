@@ -8,6 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
@@ -60,7 +61,7 @@ var instrumentedDriverRegistration sync.Once
 
 // ProvideSqliteDB provides an instrumented sqlite db.
 func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
-	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to sqlite")
+	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to sqlite")
 
 	instrumentedDriverRegistration.Do(func() {
 		sql.Register(
@@ -110,7 +111,7 @@ func (q *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, err
 // with the utmost priority.
 func (q *Sqlite) logQueryBuildingError(err error) {
 	if err != nil {
-		q.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
+		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
 }
 
@@ -121,6 +122,6 @@ func (q *Sqlite) logQueryBuildingError(err error) {
 // with the utmost priority.
 func (q *Sqlite) logIDRetrievalError(err error) {
 	if err != nil {
-		q.logger.WithValue("ROW_ID_ERROR", true).Error(err, "fetching row ID")
+		q.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
 	}
 }

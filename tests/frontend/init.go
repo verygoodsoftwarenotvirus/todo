@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
@@ -22,7 +23,7 @@ func init() {
 	urlToUse = testutil.DetermineServiceURL()
 
 	logger := zerolog.NewLogger()
-	logger.WithValue("url", urlToUse).Info("checking server")
+	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(context.Background(), urlToUse)
 
 	// NOTE: this is sad, but also the only thing that consistently works

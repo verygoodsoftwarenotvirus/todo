@@ -10,7 +10,6 @@ import (
 	"image/png"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -397,7 +396,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// document who this is for.
 	tracing.AttachUserIDToSpan(span, si.UserID)
 	tracing.AttachUsernameToSpan(span, user.Username)
-	logger = logger.WithValue("user", user.ID)
+	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
 	// set the two factor secret.
 	tfs, err := s.secretGenerator.GenerateTwoFactorSecret()
@@ -494,7 +493,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// we're all good, log the user out
-	cookie, cookieRetrievalErr := req.Cookie(auth.CookieName)
+	cookie, cookieRetrievalErr := req.Cookie(s.authSettings.CookieName)
 	if cookieRetrievalErr != nil {
 		// this should never occur in production
 		logger.Error(cookieRetrievalErr, "retrieving cookie to invalidate upon request")

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -65,7 +66,7 @@ func (s *service) OAuth2ClientInfoMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		if v := req.URL.Query().Get(oauth2ClientIDURIParamKey); v != "" {
-			logger := s.logger.WithValue("oauth2_client_id", v)
+			logger := s.logger.WithValue(keys.OAuth2ClientDatabaseIDKey, v)
 
 			client, err := s.clientDataManager.GetOAuth2ClientByClientID(ctx, v)
 			if err != nil {

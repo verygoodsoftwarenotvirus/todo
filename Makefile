@@ -203,7 +203,7 @@ load_tests_%:
 ## Running
 
 .PHONY: dev
-dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) configs
+dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR)
 	docker-compose --file environments/local/docker-compose.yaml up \
 	--build \
 	--force-recreate \

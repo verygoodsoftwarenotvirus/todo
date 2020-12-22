@@ -8,6 +8,8 @@ import (
 )
 
 const (
+	// DefaultCookieName is the default Cookie.Name.
+	DefaultCookieName = "todocookie"
 	// DefaultCookieDomain is the default Cookie.Domain.
 	DefaultCookieDomain = "localhost"
 	// DefaultCookieLifetime is the how long a cookie is valid.
@@ -16,6 +18,8 @@ const (
 
 // Config represents our authentication configuration.
 type Config struct {
+	// CookieName indicates what the cookies' name will be.
+	CookieName string `json:"cookie_name" mapstructure:"cookie_name" toml:"cookie_name,omitempty"`
 	// CookieDomain indicates what domain the cookies will have set for them.
 	CookieDomain string `json:"cookie_domain" mapstructure:"cookie_domain" toml:"cookie_domain,omitempty"`
 	// CookieSigningKey indicates the secret the cookie builder should use.
@@ -37,6 +41,7 @@ type Config struct {
 // Validate validates an AuthSettings struct.
 func (cfg *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
+		validation.Field(&cfg.CookieName, validation.Required),
 		validation.Field(&cfg.CookieDomain, validation.Required),
 		validation.Field(&cfg.CookieLifetime, validation.Required),
 		validation.Field(&cfg.MinimumUsernameLength, validation.Required),

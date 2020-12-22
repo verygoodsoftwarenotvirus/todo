@@ -40,7 +40,7 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	defer span.End()
 
 	tracing.AttachOAuth2ClientIDToSpan(span, clientID)
-	logger := c.logger.WithValue("oauth2client_client_id", clientID)
+	logger := c.logger.WithValue(keys.OAuth2ClientIDKey, clientID)
 	logger.Debug("GetOAuth2ClientByClientID called")
 
 	client, err := c.querier.GetOAuth2ClientByClientID(ctx, clientID)
@@ -104,7 +104,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 		return nil, err
 	}
 
-	logger.WithValue("client_id", client.ID).Debug("new oauth2 client created successfully")
+	logger.WithValue(keys.OAuth2ClientIDKey, client.ID).Debug("new oauth2 client created successfully")
 
 	return client, nil
 }

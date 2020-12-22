@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
@@ -62,7 +63,7 @@ var instrumentedDriverRegistration sync.Once
 
 // ProvidePostgresDB provides an instrumented postgres db.
 func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
-	logger.WithValue("connection_details", connectionDetails).Debug("Establishing connection to postgres")
+	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to postgres")
 
 	instrumentedDriverRegistration.Do(func() {
 		sql.Register(
@@ -135,7 +136,7 @@ func (q *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, e
 // with the utmost priority.
 func (q *Postgres) logQueryBuildingError(err error) {
 	if err != nil {
-		q.logger.WithValue("QUERY_ERROR", true).Error(err, "building query")
+		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
 }
 

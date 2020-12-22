@@ -49,7 +49,7 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			testClient := buildSimpleClient(ctx, t)
+			testClient := buildSimpleClient()
 
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
@@ -173,7 +173,7 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			testClient := buildSimpleClient(ctx, t)
+			testClient := buildSimpleClient()
 
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
@@ -219,7 +219,7 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			testClient := buildSimpleClient(ctx, t)
+			testClient := buildSimpleClient()
 
 			// Create user.
 			exampleUser := fakes.BuildFakeUser()
@@ -242,7 +242,7 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			testClient := buildSimpleClient(ctx, t)
+			testClient := buildSimpleClient()
 
 			// Create user.
 			exampleUser := fakes.BuildFakeUser()

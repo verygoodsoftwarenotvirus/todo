@@ -12,6 +12,8 @@ import (
 	"net/url"
 	"reflect"
 
+	"golang.org/x/oauth2/clientcredentials"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -23,6 +25,22 @@ func MustParseURL(raw string) *url.URL {
 	}
 
 	return u
+}
+
+// BuildClientCredentialsConfig builds a clientcredentials.Config.
+func BuildClientCredentialsConfig(u *url.URL, clientID, clientSecret string, scopes ...string) *clientcredentials.Config {
+	conf := &clientcredentials.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       scopes,
+		EndpointParams: url.Values{
+			"client_id":     []string{clientID},
+			"client_secret": []string{clientSecret},
+		},
+		TokenURL: tokenEndpoint(u).TokenURL,
+	}
+
+	return conf
 }
 
 // argIsNotPointer checks an argument and returns whether or not it is a pointer.

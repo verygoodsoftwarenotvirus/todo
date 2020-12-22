@@ -4,18 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
-	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
 )
 
@@ -46,7 +45,7 @@ func init() {
 	urlToUse = testutil.DetermineServiceURL()
 	logger := zerolog.NewLogger()
 
-	logger.WithValue("url", urlToUse).Info("checking server")
+	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
 	adminOAuth2Client, err := testutil.CreateObligatoryOAuth2Client(ctx, urlToUse, premadeAdminUser)
@@ -69,41 +68,34 @@ func buildHTTPClient() *http.Client {
 }
 
 func initializeClient(oa2Client *types.OAuth2Client) *httpclient.V1Client {
-	uri, err := url.Parse(urlToUse)
-	if err != nil {
-		panic(err)
-	}
+	uri := httpclient.MustParseURL(urlToUse)
 
-	logger := zerolog.NewLogger()
-	if !debug {
-		logger = noop.NewLogger()
-	}
-
-	c, err := httpclient.NewClient(
-		context.Background(),
-		oa2Client.ClientID,
-		oa2Client.ClientSecret,
-		uri,
-		logger,
-		buildHTTPClient(),
-		oa2Client.Scopes,
-		debug,
+	c := httpclient.NewClient(
+		httpclient.WithHTTPClient(buildHTTPClient()),
+		httpclient.WithURL(uri),
+		httpclient.WithOAuth2ClientCredentials(
+			httpclient.BuildClientCredentialsConfig(
+				uri,
+				oa2Client.ClientID,
+				oa2Client.ClientSecret,
+				oa2Client.Scopes...,
+			),
+		),
 	)
-	if err != nil {
-		panic(err)
+
+	if debug {
+		c.SetOption(httpclient.WithDebugEnabled())
+	} else {
+		l := zerolog.NewLogger()
+		if !debug {
+			l.SetLevel(logging.InfoLevel)
+		}
+		c.SetOption(httpclient.WithLogger(l))
 	}
 
 	return c
 }
 
-func buildSimpleClient(ctx context.Context, t *testing.T) *httpclient.V1Client {
-	t.Helper()
-
-	uri, err := url.Parse(urlToUse)
-	require.NoError(t, err)
-
-	c, err := httpclient.NewSimpleClient(ctx, uri, false)
-	require.NoError(t, err)
-
-	return c
+func buildSimpleClient() *httpclient.V1Client {
+	return httpclient.NewClient(httpclient.WithURL(httpclient.MustParseURL(urlToUse)))
 }

@@ -65,7 +65,7 @@ func (s *service) ExtractOAuth2ClientFromRequest(ctx context.Context, req *http.
 
 	// fetch client ID.
 	clientID := token.GetClientID()
-	logger = logger.WithValue("client_id", clientID)
+	logger = logger.WithValue(keys.OAuth2ClientIDKey, clientID)
 
 	// fetch client by client ID.
 	c, err := s.clientDataManager.GetOAuth2ClientByClientID(ctx, clientID)
@@ -207,7 +207,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine relevant oauth2 client ID.
 	oauth2ClientID := s.urlClientIDExtractor(req)
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
-	logger = logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger = logger.WithValue(keys.OAuth2ClientDatabaseIDKey, oauth2ClientID)
 
 	// fetch oauth2 client.
 	x, err := s.clientDataManager.GetOAuth2Client(ctx, oauth2ClientID, userID)
@@ -240,7 +240,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine relevant oauth2 client ID.
 	oauth2ClientID := s.urlClientIDExtractor(req)
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
-	logger = logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger = logger.WithValue(keys.OAuth2ClientDatabaseIDKey, oauth2ClientID)
 
 	// mark client as archived.
 	err := s.clientDataManager.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
@@ -272,10 +272,10 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachUserIDToSpan(span, userID)
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
-	// determine item ID.
+	// determine relevant oauth2 client ID.
 	oauth2ClientID := s.urlClientIDExtractor(req)
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
-	logger = logger.WithValue("oauth2_client_id", oauth2ClientID)
+	logger = logger.WithValue(keys.OAuth2ClientDatabaseIDKey, oauth2ClientID)
 
 	x, err := s.auditLog.GetAuditLogEntriesForOAuth2Client(ctx, oauth2ClientID)
 	if errors.Is(err, sql.ErrNoRows) {

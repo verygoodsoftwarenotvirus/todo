@@ -11,14 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/moul/http2curl"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
@@ -44,6 +43,7 @@ var (
 type V1Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
+	authCookie   *http.Cookie
 	logger       logging.Logger
 	tokenSource  oauth2.TokenSource
 	tracer       tracing.Tracer
@@ -85,45 +85,14 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 }
 
 // NewClient builds a new API client for us.
-func NewClient(
-	ctx context.Context,
-	clientID,
-	clientSecret string,
-	address *url.URL,
-	logger logging.Logger,
-	hclient *http.Client,
-	scopes []string,
-	debug bool,
-	options ...option,
-) (*V1Client, error) {
-	var client = hclient
-	if client == nil {
-		client = &http.Client{
-			Timeout:   defaultTimeout,
-			Transport: buildDefaultTransport(),
-		}
-	}
-
-	if client.Timeout == 0 {
-		client.Timeout = defaultTimeout
-	}
-
-	client.Transport = otelhttp.NewTransport(buildDefaultTransport())
-
-	if debug {
-		logger.SetLevel(logging.DebugLevel)
-		logger.Debug("log level set to debug!")
-	}
-
-	ac, ts := buildOAuthClient(ctx, address, clientID, clientSecret, scopes, client.Timeout)
-
+func NewClient(options ...option) *V1Client {
 	c := &V1Client{
-		URL:          address,
-		tokenSource:  ts,
-		authedClient: ac,
-		plainClient:  client,
-		Debug:        debug,
-		logger:       logger.WithName(clientName),
+		URL:          nil,
+		tokenSource:  nil,
+		authedClient: http.DefaultClient,
+		plainClient:  http.DefaultClient,
+		Debug:        false,
+		logger:       noop.NewLogger(),
 		tracer:       tracing.NewTracer(clientName),
 	}
 
@@ -131,58 +100,7 @@ func NewClient(
 		opt(c)
 	}
 
-	logger.WithValue("url", address.String()).Debug("returning client")
-
-	return c, nil
-}
-
-// NewSimpleClient is a client that is capable of much less than the normal client
-// and has noops or empty values for most of its authentication and debug parts.
-// Its purpose at the time of this writing is merely so I can make users (which
-// is a route that doesn't require authentication.)
-func NewSimpleClient(ctx context.Context, address *url.URL, debug bool) (*V1Client, error) {
-	return NewClient(
-		ctx,
-		"",
-		"",
-		address,
-		noop.NewLogger(),
-		&http.Client{Timeout: defaultTimeout},
-		[]string{"*"},
-		debug,
-	)
-}
-
-// buildOAuthClient takes care of all the OAuth2 noise and returns a nice pretty *http.Client for us to use.
-func buildOAuthClient(
-	ctx context.Context,
-	uri *url.URL,
-	clientID,
-	clientSecret string,
-	scopes []string,
-	timeout time.Duration,
-) (*http.Client, oauth2.TokenSource) {
-	conf := clientcredentials.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scopes:       scopes,
-		EndpointParams: url.Values{
-			"client_id":     []string{clientID},
-			"client_secret": []string{clientSecret},
-		},
-		TokenURL: tokenEndpoint(uri).TokenURL,
-	}
-
-	ts := oauth2.ReuseTokenSource(nil, conf.TokenSource(ctx))
-	client := &http.Client{
-		Transport: &oauth2.Transport{
-			Base:   otelhttp.NewTransport(newDefaultRoundTripper()),
-			Source: ts,
-		},
-		Timeout: timeout,
-	}
-
-	return client, ts
+	return c
 }
 
 // closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
@@ -346,7 +264,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 		}
 	}
 
-	logger.WithValue("status", res.StatusCode).Debug("request executed")
+	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
 
 	return res, nil
 }

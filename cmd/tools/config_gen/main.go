@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"log"
 	"time"
 
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
 	defaultFrontendFilepath  = "/frontend"
+	defaultCookieName        = authservice.DefaultCookieName
 
 	// run modes.
 	developmentEnv = "development"
@@ -74,10 +76,10 @@ func localDevelopmentConfig(filePath string) error {
 	cfg.Set(viper.ConfigKeyFrontendCacheStatics, false)
 
 	cfg.Set(viper.ConfigKeyAuthDebug, true)
-	cfg.Set(viper.ConfigKeyAuthCookieDomain, "localhost")
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+	cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-	cfg.Set(viper.ConfigKeyAuthCookieLifetime, auth.DefaultCookieLifetime)
+	cfg.Set(viper.ConfigKeyAuthCookieLifetime, authservice.DefaultCookieLifetime)
 	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
 	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
 
@@ -119,10 +121,10 @@ func frontendTestsConfig(filePath string) error {
 	cfg.Set(viper.ConfigKeyFrontendCacheStatics, false)
 
 	cfg.Set(viper.ConfigKeyAuthDebug, true)
-	cfg.Set(viper.ConfigKeyAuthCookieDomain, "localhost")
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+	cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-	cfg.Set(viper.ConfigKeyAuthCookieLifetime, auth.DefaultCookieLifetime)
+	cfg.Set(viper.ConfigKeyAuthCookieLifetime, authservice.DefaultCookieLifetime)
 	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
 	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
 
@@ -160,6 +162,7 @@ func coverageConfig(filePath string) error {
 
 	cfg.Set(viper.ConfigKeyAuthDebug, false)
 	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+	cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
 	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
 
 	cfg.Set(viper.ConfigKeyDatabaseDebug, false)
@@ -200,6 +203,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 
 		cfg.Set(viper.ConfigKeyFrontendStaticFilesDir, defaultFrontendFilepath)
 		cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
+		cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
 		cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
 
 		cfg.Set(viper.ConfigKeyMetricsProvider, "prometheus")

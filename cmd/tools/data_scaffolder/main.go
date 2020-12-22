@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -119,21 +120,20 @@ func main() {
 			if oauth2ClientCreationErr != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("error creating oauth2 client for user #%d: %w", x, oauth2ClientCreationErr))
 			}
-			userLogger.WithValue("client_id", createdOAuth2Client.ClientID).Debug("created oauth2 client")
+			userLogger.WithValue(keys.OAuth2ClientIDKey, createdOAuth2Client.ClientID).Debug("created oauth2 client")
 
-			userClient, userClientInitErr := httpclient.NewClient(
-				ctx,
-				createdOAuth2Client.ClientID,
-				createdOAuth2Client.ClientSecret,
-				parsedURI,
-				userLogger,
-				nil,
-				[]string{"*"},
-				debug,
+			userClient := httpclient.NewClient(
+				httpclient.WithURL(parsedURI),
+				httpclient.WithLogger(userLogger),
+				httpclient.WithOAuth2ClientCredentials(
+					httpclient.BuildClientCredentialsConfig(
+						parsedURI,
+						createdOAuth2Client.ClientID,
+						createdOAuth2Client.ClientSecret,
+						"*",
+					),
+				),
 			)
-			if userClientInitErr != nil {
-				quitter.ComplainAndQuit(fmt.Errorf("error initializing API client for user #%d: %w", x, userClientInitErr))
-			}
 			userLogger.Debug("assigned user API client")
 
 			wg.Add(1)
@@ -146,7 +146,7 @@ func main() {
 						quitter.ComplainAndQuit(fmt.Errorf("error creating oauth2 client #%d for user #%d: %w", j, x, oauth2ClientCreationErr))
 					}
 
-					iterationLogger.WithValue("client_id", createdOAuth2Client.ClientID).Debug("created oauth2 client")
+					iterationLogger.WithValue(keys.OAuth2ClientIDKey, createdOAuth2Client.ClientID).Debug("created oauth2 client")
 				}
 				wg.Done()
 			}(wg)
@@ -160,7 +160,7 @@ func main() {
 					if webhookCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("error creating webhook #%d: %w", j, webhookCreationErr))
 					}
-					iterationLogger.WithValue("webhook_id", createdWebhook.ID).Debug("created webhook")
+					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhook.ID).Debug("created webhook")
 				}
 				wg.Done()
 			}(wg)
@@ -175,7 +175,7 @@ func main() {
 					if itemCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("error creating item #%d: %w", j, itemCreationErr))
 					}
-					iterationLogger.WithValue("webhook_id", createdItem.ID).Debug("created item")
+					iterationLogger.WithValue(keys.WebhookIDKey, createdItem.ID).Debug("created item")
 				}
 				wg.Done()
 			}(wg)

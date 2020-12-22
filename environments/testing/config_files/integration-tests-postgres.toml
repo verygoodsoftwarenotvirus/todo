@@ -5,6 +5,7 @@
 [auth]
   cookie_domain = "localhost"
   cookie_lifetime = "24h0m0s"
+  cookie_name = "todocookie"
   cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   enable_user_signup = true
   minimum_password_length = 8
@@ -18,7 +19,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$JwKoX8zv05fYZ/0PLpb1J.5SHnBu/3lzaT6dKTrMbPYQONQ3ojFee"
+    hashed_password = "$2a$11$dYRU5TPlsSbXw5ZGAELdGOodbEjJ2g2QoxLKu2U184jFnU3ZZUC0G"
     is_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

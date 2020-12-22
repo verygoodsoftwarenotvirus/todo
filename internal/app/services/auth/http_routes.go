@@ -31,11 +31,11 @@ func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	cookie, err := req.Cookie(CookieName)
+	cookie, err := req.Cookie(s.config.CookieName)
 	if !errors.Is(err, http.ErrNoCookie) && cookie != nil {
 		var token string
 
-		decodeErr := s.cookieManager.Decode(CookieName, cookie.Value, &token)
+		decodeErr := s.cookieManager.Decode(s.config.CookieName, cookie.Value, &token)
 		if decodeErr != nil {
 			return nil, fmt.Errorf("decoding request cookie: %w", decodeErr)
 		}
@@ -227,7 +227,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if cookie, cookieRetrievalErr := req.Cookie(CookieName); cookieRetrievalErr == nil && cookie != nil {
+	if cookie, cookieRetrievalErr := req.Cookie(s.config.CookieName); cookieRetrievalErr == nil && cookie != nil {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
@@ -341,7 +341,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 
 // buildCookie provides a consistent way of constructing an HTTP cookie.
 func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
-	encoded, err := s.cookieManager.Encode(CookieName, value)
+	encoded, err := s.cookieManager.Encode(s.config.CookieName, value)
 	if err != nil {
 		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
 		s.logger.WithName(cookieErrorLogName).Error(err, "error encoding cookie")
@@ -350,7 +350,7 @@ func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, err
 
 	// https://www.calhoun.io/securing-cookies-in-go/
 	cookie := &http.Cookie{
-		Name:     CookieName,
+		Name:     s.config.CookieName,
 		Value:    encoded,
 		Path:     "/",
 		HttpOnly: true,

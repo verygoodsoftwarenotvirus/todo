@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -129,7 +130,7 @@ func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
-	logger := sm.logger.WithValue("search_query", query)
+	logger := sm.logger.WithValue(keys.SearchQueryKey, query)
 	logger.Debug("performing search for admin")
 
 	q := bleve.NewFuzzyQuery(query)

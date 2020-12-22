@@ -81,15 +81,6 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec requestSpec) {
 
 // begin helper funcs
 
-func mustParseURL(uri string) *url.URL {
-	u, err := url.Parse(uri)
-	if err != nil {
-		panic(err)
-	}
-
-	return u
-}
-
 func buildTestClient(t *testing.T, ts *httptest.Server) *V1Client {
 	t.Helper()
 
@@ -100,7 +91,7 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *V1Client {
 	)
 
 	if ts != nil {
-		u = mustParseURL(ts.URL)
+		u = MustParseURL(ts.URL)
 		c = ts.Client()
 	}
 
@@ -118,7 +109,7 @@ func buildTestClientWithInvalidURL(t *testing.T) *V1Client {
 	t.Helper()
 
 	l := noop.NewLogger()
-	u := mustParseURL("https://verygoodsoftwarenotvirus.ru")
+	u := MustParseURL("https://verygoodsoftwarenotvirus.ru")
 	u.Scheme = fmt.Sprintf(`%s://`, asciiControlChar)
 
 	return &V1Client{
@@ -177,25 +168,37 @@ func TestV1Client_TokenSource(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		ts := httptest.NewTLSServer(nil)
-
-		c, err := NewClient(
-			ctx,
-			"",
-			"",
-			mustParseURL(exampleURI),
-			noop.NewLogger(),
-			ts.Client(),
-			[]string{"*"},
-			false,
+		c := NewClient(
+			WithURL(MustParseURL(exampleURI)),
+			WithLogger(noop.NewLogger()),
+			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
+			WithOAuth2ClientCredentials(
+				BuildClientCredentialsConfig(
+					MustParseURL(exampleURI),
+					"clientID",
+					"clientSecret",
+				),
+			),
 		)
-		require.NoError(t, err)
 
 		actual := c.TokenSource()
 
 		assert.NotNil(t, actual)
+	})
+
+	T.Run("nil without oauth2 credentials", func(t *testing.T) {
+		t.Parallel()
+
+		c := NewClient(
+			WithURL(MustParseURL(exampleURI)),
+			WithLogger(noop.NewLogger()),
+			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
+		)
+
+		actual := c.TokenSource()
+
+		assert.Nil(t, actual)
 	})
 }
 
@@ -204,62 +207,14 @@ func TestNewClient(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		ts := httptest.NewTLSServer(nil)
-
-		c, err := NewClient(
-			ctx,
-			"",
-			"",
-			mustParseURL(exampleURI),
-			noop.NewLogger(),
-			ts.Client(),
-			[]string{"*"},
-			false,
+		c := NewClient(
+			WithURL(MustParseURL(exampleURI)),
+			WithLogger(noop.NewLogger()),
+			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
 		)
 
 		require.NotNil(t, c)
-		require.NoError(t, err)
-	})
-
-	T.Run("with client but invalid timeout", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		c, err := NewClient(
-			ctx,
-			"",
-			"",
-			mustParseURL(exampleURI),
-			noop.NewLogger(),
-			&http.Client{
-				Timeout: 0,
-			},
-			[]string{"*"},
-			true,
-		)
-
-		require.NotNil(t, c)
-		require.NoError(t, err)
-		assert.Equal(t, c.plainClient.Timeout, defaultTimeout, "NewClient should set the default timeout")
-	})
-}
-
-func TestNewSimpleClient(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		c, err := NewSimpleClient(
-			ctx,
-			mustParseURL(exampleURI),
-			true,
-		)
-		assert.NotNil(t, c)
-		assert.NoError(t, err)
 	})
 }
 
@@ -268,7 +223,6 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 
 	T.Run("with error", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		rc := newMockReadCloser()
 		rc.On("Close").Return(errors.New("blah"))
@@ -278,13 +232,8 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 			StatusCode: http.StatusOK,
 		}
 
-		c, err := NewSimpleClient(
-			ctx,
-			mustParseURL(exampleURI),
-			true,
-		)
+		c := NewClient(WithURL(MustParseURL(exampleURI)))
 		assert.NotNil(t, c)
-		assert.NoError(t, err)
 
 		c.closeResponseBody(res)
 
@@ -297,21 +246,10 @@ func TestBuildURL(T *testing.T) {
 
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		u, _ := url.Parse(exampleURI)
-
-		c, err := NewClient(
-			ctx,
-			"",
-			"",
-			u,
-			noop.NewLogger(),
-			nil,
-			[]string{"*"},
-			false,
+		c := NewClient(
+			WithURL(MustParseURL(exampleURI)),
 		)
-		require.NoError(t, err)
 
 		testCases := []struct {
 			expectation string
@@ -355,21 +293,10 @@ func TestBuildVersionlessURL(T *testing.T) {
 
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		u, _ := url.Parse(exampleURI)
-
-		c, err := NewClient(
-			ctx,
-			"",
-			"",
-			u,
-			noop.NewLogger(),
-			nil,
-			[]string{"*"},
-			false,
+		c := NewClient(
+			WithURL(MustParseURL(exampleURI)),
 		)
-		require.NoError(t, err)
 
 		testCases := []struct {
 			expectation string
@@ -413,21 +340,10 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		u, _ := url.Parse(exampleURI)
-
-		c, err := NewClient(
-			ctx,
-			"",
-			"",
-			u,
-			noop.NewLogger(),
-			nil,
-			[]string{"*"},
-			false,
+		c := NewClient(
+			WithURL(MustParseURL(exampleURI)),
 		)
-		require.NoError(t, err)
 
 		expected := "ws://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff"
 		actual := c.BuildWebsocketURL("things", "and", "stuff")

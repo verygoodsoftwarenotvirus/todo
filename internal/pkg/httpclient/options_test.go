@@ -1,7 +1,6 @@
 package httpclient
 
 import (
-	"context"
 	"net/url"
 	"testing"
 
@@ -41,21 +40,11 @@ func TestWithURL(T *testing.T) {
 		expectedURL, err := url.Parse("https://todo.verygoodsoftwarenotvirus.ru")
 		require.NoError(t, err)
 
-		c, err := NewClient(
-			context.Background(),
-			"exampleClientID",
-			"exampleClientSecret",
-			MustParseURL("https://unexpected.value"),
-			noop.NewLogger(),
-			nil,
-			nil,
-			false,
+		c := NewClient(
 			WithURL(expectedURL),
 		)
 
 		assert.NotNil(t, c)
-		assert.NoError(t, err)
-
 		assert.Equal(t, expectedURL, c.URL, "expected and actual URLs do not match")
 	})
 }
@@ -66,19 +55,10 @@ func TestWithLogger(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := NewClient(
-			context.Background(),
-			"exampleClientID",
-			"exampleClientSecret",
-			MustParseURL("https://todo.verygoodsoftwarenotvirus.ru"),
-			noop.NewLogger(),
-			nil,
-			nil,
-			false,
+		c := NewClient(
 			WithLogger(noop.NewLogger()),
 		)
 
 		assert.NotNil(t, c)
-		assert.NoError(t, err)
 	})
 }

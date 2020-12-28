@@ -53,6 +53,11 @@ var (
 		},
 		{
 			Version:     0.02,
+			Description: "create default plan",
+			Script:      "INSERT INTO plans (name,price,period) VALUES ('free', 0, 0);",
+		},
+		{
+			Version:     0.03,
 			Description: "create users table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
@@ -68,21 +73,23 @@ var (
 				"    `admin_permissions` BIGINT NOT NULL DEFAULT 0,",
 				"    `account_status` VARCHAR(32) NOT NULL DEFAULT 'created',",
 				"    `status_explanation` VARCHAR(32) NOT NULL DEFAULT '',",
+				"    `plan_id` BIGINT UNSIGNED NOT NULL DEFAULT 1,",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    PRIMARY KEY (`id`),",
+				"    FOREIGN KEY(`plan_id`) REFERENCES plans(`id`),",
 				"    UNIQUE (`username`)",
 				");",
 			}, "\n"),
 		},
 		{
-			Version:     0.03,
+			Version:     0.04,
 			Description: "create users table creation trigger",
 			Script:      buildCreationTriggerScript("users"),
 		},
 		{
-			Version:     0.04,
+			Version:     0.05,
 			Description: "create sessions table for session manager",
 			Script: strings.Join([]string{
 				"CREATE TABLE sessions (",
@@ -93,12 +100,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.05,
+			Version:     0.06,
 			Description: "create sessions table for session manager",
 			Script:      "CREATE INDEX sessions_expiry_idx ON sessions (expiry);",
 		},
 		{
-			Version:     0.06,
+			Version:     0.07,
 			Description: "create oauth2_clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS oauth2_clients (",
@@ -119,12 +126,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.07,
+			Version:     0.08,
 			Description: "create oauth2_clients table creation trigger",
 			Script:      buildCreationTriggerScript("oauth2_clients"),
 		},
 		{
-			Version:     0.08,
+			Version:     0.09,
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -146,12 +153,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.09,
+			Version:     0.10,
 			Description: "create webhooks table creation trigger",
 			Script:      buildCreationTriggerScript("webhooks"),
 		},
 		{
-			Version:     0.10,
+			Version:     0.11,
 			Description: "create audit log table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS audit_log (",
@@ -164,12 +171,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.11,
+			Version:     0.12,
 			Description: "create audit_log table creation trigger",
 			Script:      buildCreationTriggerScript("audit_log"),
 		},
 		{
-			Version:     0.12,
+			Version:     0.13,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -186,7 +193,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.13,
+			Version:     0.14,
 			Description: "create items table creation trigger",
 			Script:      buildCreationTriggerScript("items"),
 		},

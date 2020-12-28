@@ -51,9 +51,11 @@ var (
 				"admin_permissions" BIGINT NOT NULL DEFAULT 0,
 				"account_status" TEXT NOT NULL DEFAULT 'created',
 				"status_explanation" TEXT NOT NULL DEFAULT '',
+				"plan_id" INTEGER NOT NULL DEFAULT 1,
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
+				FOREIGN KEY("plan_id") REFERENCES plans(id),
 				UNIQUE ("username")
 			);`,
 		},

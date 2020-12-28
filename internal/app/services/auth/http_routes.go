@@ -115,13 +115,15 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("LoginHandler called")
 
 	loginData, ok := ctx.Value(userLoginInputMiddlewareCtxKey).(*types.UserLoginInput)
-	if !ok {
+	if !ok || loginData == nil {
 		logger.Error(nil, "no UserLoginInput found for /login request")
 		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
 		return
 	}
 
 	logger = logger.WithValue(keys.UsernameKey, loginData.Username)
+
+	logger.Info(fmt.Sprintf("userDB is nil: %v", s.userDB == nil))
 
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
 	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {

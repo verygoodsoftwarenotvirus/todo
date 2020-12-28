@@ -73,7 +73,7 @@ func ProvideServer(
 		serverSettings:   serverSettings,
 		frontendSettings: frontendSettings,
 		encoder:          encoder,
-		httpServer:       provideHTTPServer(),
+		httpServer:       provideHTTPServer(serverSettings.HTTPPort),
 		logger:           logger.WithName(loggerName),
 		// services,
 		adminService:         adminService,
@@ -96,14 +96,15 @@ func ProvideServer(
 
 // Serve serves HTTP traffic.
 func (s *Server) Serve() {
-	s.httpServer.Addr = fmt.Sprintf(":%d", s.serverSettings.HTTPPort)
-	s.logger.Debug(fmt.Sprintf("Listening for HTTP requests on %q", s.httpServer.Addr))
+	s.logger.Debug("setting up opentelemetry handler")
 
 	s.httpServer.Handler = otelhttp.NewHandler(
 		s.router,
 		serverNamespace,
 		otelhttp.WithSpanNameFormatter(formatSpanNameForRequest),
 	)
+
+	s.logger.WithValue("listening_on", s.httpServer.Addr).Debug("Listening for HTTP requests")
 
 	// returns ErrServerClosed on graceful close.
 	if err := s.httpServer.ListenAndServe(); err != nil {
@@ -125,9 +126,10 @@ const (
 )
 
 // provideHTTPServer provides an HTTP httpServer.
-func provideHTTPServer() *http.Server {
+func provideHTTPServer(port uint16) *http.Server {
 	// heavily inspired by https://blog.cloudflare.com/exposing-go-on-the-internet/
 	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 		IdleTimeout:  idleTimeout,

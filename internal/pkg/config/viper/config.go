@@ -28,11 +28,11 @@ const (
 	ConfigKeyMetaDebug = "meta.debug"
 	// ConfigKeyMetaRunMode is the key viper will use to refer to the MetaSettings.RunMode setting.
 	ConfigKeyMetaRunMode = "meta.run_mode"
-	// ConfigKeyMetaStartupDeadline is the key viper will use to refer to the MetaSettings.StartupDeadline setting.
-	ConfigKeyMetaStartupDeadline = "meta.startup_deadline"
 
 	// ConfigKeyServerHTTPPort is the key viper will use to refer to the ServerSettings.HTTPPort setting.
 	ConfigKeyServerHTTPPort = "server.http_port"
+	// ConfigKeyServerStartupDeadline is the key viper will use to refer to the ServerSettings.StartupDeadline setting.
+	ConfigKeyServerStartupDeadline = "server.startup_deadline"
 	// ConfigKeyServerDebug is the key viper will use to refer to the ServerSettings.Debug setting.
 	ConfigKeyServerDebug = "server.debug"
 
@@ -94,6 +94,51 @@ const (
 	// ConfigKeyItemsSearchIndexPath is the key viper will use to refer to the SearchSettings.ItemsSearchIndexPath setting.
 	ConfigKeyItemsSearchIndexPath = "search.items_index_path"
 
+	// ConfigKeyUploaderProvider is the key viper will use to refer to the UploadSettings.Provider value.
+	ConfigKeyUploaderProvider = "uploads.storage_config.provider"
+	// ConfigKeyUploaderDebug is the key viper will use to refer to the UploadSettings.Debug value.
+	ConfigKeyUploaderDebug = "uploads.storage_config.debug"
+	// ConfigKeyUploaderName is the key viper will use to refer to the UploadSettings.Name value.
+	ConfigKeyUploaderName = "uploads.storage_config.name"
+
+	// ConfigKeyUploaderAzureAuthMethod is the key viper will use to refer to UploadSettings.Azure.AuthMethod.
+	ConfigKeyUploaderAzureAuthMethod = "uploads.storage_config.azure.auth_method"
+	// ConfigKeyUploaderAzureAccountName is the key viper will use to refer to UploadSettings.Azure.AccountName.
+	ConfigKeyUploaderAzureAccountName = "uploads.storage_config.azure.account_name"
+	// ConfigKeyUploaderAzureContainerName is the key viper will use to refer to UploadSettings.Azure.ContainerName.
+	ConfigKeyUploaderAzureContainerName = "uploads.storage_config.azure.container_name"
+	// ConfigKeyUploaderAzureMaxTries is the key viper will use to refer to UploadSettings.Azure.Retrying.MaxTries.
+	ConfigKeyUploaderAzureMaxTries = "uploads.storage_config.azure.retrying.max_tries"
+	// ConfigKeyUploaderAzureTryTimeout is the key viper will use to refer to UploadSettings.Azure.Retrying.TryTimeout.
+	ConfigKeyUploaderAzureTryTimeout = "uploads.storage_config.azure.retrying.try_timeout"
+	// ConfigKeyUploaderAzureRetryDelay is the key viper will use to refer to UploadSettings.Azure.Retrying.RetryDelay.
+	ConfigKeyUploaderAzureRetryDelay = "uploads.storage_config.azure.retrying.retry_delay"
+	// ConfigKeyUploaderAzureMaxRetryDelay is the key viper will use to refer to UploadSettings.Azure.Retrying.MaxRetryDelay.
+	ConfigKeyUploaderAzureMaxRetryDelay = "uploads.storage_config.azure.retrying.max_retry_delay"
+	// ConfigKeyUploaderAzureRetryReadsFromSecondaryHost is the key viper will use to refer to UploadSettings.Azure.Retrying.RetryReadsFromSecondaryHost.
+	ConfigKeyUploaderAzureRetryReadsFromSecondaryHost = "uploads.storage_config.azure.retrying.retry_reads_from_secondary_host"
+	// ConfigKeyUploaderAzureTokenCredentialsInitialToken is the key viper will use to refer to UploadSettings.Azure.TokenCredentialsInitialToken.
+	ConfigKeyUploaderAzureTokenCredentialsInitialToken = "uploads.storage_config.azure.token_creds_initial_token"
+	// ConfigKeyUploaderAzureSharedKeyAccountKey is the key viper will use to refer to UploadSettings.Azure.SharedKeyAccountKey.
+	ConfigKeyUploaderAzureSharedKeyAccountKey = "uploads.storage_config.azure.shared_key_account_key"
+
+	// ConfigKeyUploaderGCSAccountKeyFilepath is the key viper will use to refer to UploadSettings.GCS.ServiceAccountKeyFilepath.
+	ConfigKeyUploaderGCSAccountKeyFilepath = "uploads.storage_config.gcs.service_account_key_filepath"
+	// ConfigKeyUploaderGCSScopes is the key viper will use to refer to UploadSettings.GCS.Scopes.
+	ConfigKeyUploaderGCSScopes = "uploads.storage_config.gcs.scopes"
+	// ConfigKeyUploaderGCSBucketName is the key viper will use to refer to UploadSettings.GCS.BucketName.
+	ConfigKeyUploaderGCSBucketName = "uploads.storage_config.gcs.bucket_name"
+	// ConfigKeyUploaderGCSGoogleAccessID is the key viper will use to refer to UploadSettings.GCS.BlobSettingsGoogleAccessID.
+	ConfigKeyUploaderGCSGoogleAccessID = "uploads.storage_config.gcs.blob_settings.google_access_id"
+	// ConfigKeyUploaderGCSPrivateKeyFilepath is the key viper will use to refer to UploadSettings.GCS.BlobSettings.PrivateKeyFilepath.
+	ConfigKeyUploaderGCSPrivateKeyFilepath = "uploads.storage_config.gcs.blob_settings.private_key_filepath"
+
+	// ConfigKeyUploaderS3BucketName is the key viper will use to refer to Uploads.S3.BucketName.
+	ConfigKeyUploaderS3BucketName = "uploads.storage_config.s3.bucket_name"
+
+	// ConfigKeyUploaderFilesystemRootDirectory is the key viper will use to refer to Uploads.Filesystem.RootDirectory.
+	ConfigKeyUploaderFilesystemRootDirectory = "uploads.storage_config.filesystem.root_directory"
+
 	// ConfigKeyAuditLogEnabled is the key viper will use to refer to the AuditLogSettings.Enabled setting.
 	ConfigKeyAuditLogEnabled = "audit_log.enabled"
 	// ConfigKeyWebhooksEnabled is the key viper will use to refer to the AuditLogSettings.Enabled setting.
@@ -106,7 +151,7 @@ func BuildViperConfig() *viper.Viper {
 
 	// meta stuff.
 	cfg.SetDefault(ConfigKeyMetaRunMode, config.DefaultRunMode)
-	cfg.SetDefault(ConfigKeyMetaStartupDeadline, config.DefaultStartupDeadline)
+	cfg.SetDefault(ConfigKeyServerStartupDeadline, config.DefaultStartupDeadline)
 
 	// auth stuff.
 	cfg.SetDefault(ConfigKeyAuthCookieDomain, authservice.DefaultCookieDomain)
@@ -137,6 +182,90 @@ func BuildViperConfig() *viper.Viper {
 	return cfg
 }
 
+// FromConfig returns a viper instance from a config struct.
+func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
+	if input == nil {
+		return nil, errors.New("nil input provided")
+	}
+
+	if err := input.Validate(context.Background()); err != nil {
+		return nil, err
+	}
+
+	cfg := BuildViperConfig()
+
+	cfg.Set(ConfigKeyMetaDebug, input.Meta.Debug)
+	cfg.Set(ConfigKeyMetaRunMode, string(input.Meta.RunMode))
+	cfg.Set(ConfigKeyServerStartupDeadline, input.Server.StartupDeadline)
+	cfg.Set(ConfigKeyServerHTTPPort, input.Server.HTTPPort)
+	cfg.Set(ConfigKeyServerDebug, input.Server.Debug)
+	cfg.Set(ConfigKeyFrontendDebug, input.Frontend.Debug)
+	cfg.Set(ConfigKeyFrontendStaticFilesDir, input.Frontend.StaticFilesDirectory)
+	cfg.Set(ConfigKeyFrontendCacheStatics, input.Frontend.CacheStaticFiles)
+	cfg.Set(ConfigKeyAuthDebug, input.Auth.Debug)
+	cfg.Set(ConfigKeyAuthCookieName, input.Auth.CookieName)
+	cfg.Set(ConfigKeyAuthCookieDomain, input.Auth.CookieDomain)
+	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Auth.CookieSigningKey)
+	cfg.Set(ConfigKeyAuthCookieLifetime, input.Auth.CookieLifetime)
+	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.SecureCookiesOnly)
+	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Auth.EnableUserSignup)
+	cfg.Set(ConfigKeyAuthMinimumUsernameLength, input.Auth.MinimumUsernameLength)
+	cfg.Set(ConfigKeyAuthMinimumPasswordLength, input.Auth.MinimumPasswordLength)
+	cfg.Set(ConfigKeyMetricsProvider, string(input.Observability.MetricsProvider))
+	cfg.Set(ConfigKeyMetricsTracer, string(input.Observability.TracingProvider))
+	cfg.Set(ConfigKeyMetricsRuntimeCollectionInterval, input.Observability.RuntimeMetricsCollectionInterval)
+	cfg.Set(ConfigKeyDatabaseDebug, input.Database.Debug)
+	cfg.Set(ConfigKeyDatabaseProvider, input.Database.Provider)
+	cfg.Set(ConfigKeyDatabaseConnectionDetails, string(input.Database.ConnectionDetails))
+
+	if input.Database.CreateTestUser != nil {
+		cfg.Set(ConfigKeyDatabaseCreateTestUserUsername, input.Database.CreateTestUser.Username)
+		cfg.Set(ConfigKeyDatabaseCreateTestUserPassword, input.Database.CreateTestUser.Password)
+		cfg.Set(ConfigKeyDatabaseCreateTestUserIsAdmin, input.Database.CreateTestUser.IsAdmin)
+		cfg.Set(ConfigKeyDatabaseCreateTestUserHashedPassword, input.Database.CreateTestUser.HashedPassword)
+	}
+
+	cfg.Set(ConfigKeyDatabaseRunMigrations, input.Database.RunMigrations)
+	cfg.Set(ConfigKeyDatabaseMetricsCollectionInterval, input.Database.MetricsCollectionInterval)
+	cfg.Set(ConfigKeySearchProvider, input.Search.Provider)
+	cfg.Set(ConfigKeyItemsSearchIndexPath, string(input.Search.ItemsIndexPath))
+	cfg.Set(ConfigKeyUploaderProvider, input.Uploads.Provider)
+	cfg.Set(ConfigKeyUploaderDebug, input.Uploads.Debug)
+	cfg.Set(ConfigKeyUploaderName, input.Uploads.Storage.Name)
+	cfg.Set(ConfigKeyAuditLogEnabled, input.AuditLog.Enabled)
+	cfg.Set(ConfigKeyWebhooksEnabled, input.Webhooks.Enabled)
+
+	switch {
+	case input.Uploads.Storage.AzureConfig != nil:
+		cfg.Set(ConfigKeyUploaderProvider, "azure")
+		cfg.Set(ConfigKeyUploaderAzureAuthMethod, input.Uploads.Storage.AzureConfig.AuthMethod)
+		cfg.Set(ConfigKeyUploaderAzureAccountName, input.Uploads.Storage.AzureConfig.AccountName)
+		cfg.Set(ConfigKeyUploaderAzureContainerName, input.Uploads.Storage.AzureConfig.ContainerName)
+		cfg.Set(ConfigKeyUploaderAzureMaxTries, input.Uploads.Storage.AzureConfig.Retrying.MaxTries)
+		cfg.Set(ConfigKeyUploaderAzureTryTimeout, input.Uploads.Storage.AzureConfig.Retrying.TryTimeout)
+		cfg.Set(ConfigKeyUploaderAzureRetryDelay, input.Uploads.Storage.AzureConfig.Retrying.RetryDelay)
+		cfg.Set(ConfigKeyUploaderAzureMaxRetryDelay, input.Uploads.Storage.AzureConfig.Retrying.MaxRetryDelay)
+		cfg.Set(ConfigKeyUploaderAzureRetryReadsFromSecondaryHost, input.Uploads.Storage.AzureConfig.Retrying.RetryReadsFromSecondaryHost)
+		cfg.Set(ConfigKeyUploaderAzureTokenCredentialsInitialToken, input.Uploads.Storage.AzureConfig.TokenCredentialsInitialToken)
+		cfg.Set(ConfigKeyUploaderAzureSharedKeyAccountKey, input.Uploads.Storage.AzureConfig.SharedKeyAccountKey)
+	case input.Uploads.Storage.GCSConfig != nil:
+		cfg.Set(ConfigKeyUploaderProvider, "gcs")
+		cfg.Set(ConfigKeyUploaderGCSAccountKeyFilepath, input.Uploads.Storage.GCSConfig.ServiceAccountKeyFilepath)
+		cfg.Set(ConfigKeyUploaderGCSScopes, input.Uploads.Storage.GCSConfig.Scopes)
+		cfg.Set(ConfigKeyUploaderGCSBucketName, input.Uploads.Storage.GCSConfig.BucketName)
+		cfg.Set(ConfigKeyUploaderGCSGoogleAccessID, input.Uploads.Storage.GCSConfig.BlobSettings.GoogleAccessID)
+		cfg.Set(ConfigKeyUploaderGCSPrivateKeyFilepath, input.Uploads.Storage.GCSConfig.BlobSettings.PrivateKeyFilepath)
+	case input.Uploads.Storage.S3Config != nil:
+		cfg.Set(ConfigKeyUploaderProvider, "s3")
+		cfg.Set(ConfigKeyUploaderS3BucketName, input.Uploads.Storage.S3Config.BucketName)
+	case input.Uploads.Storage.FilesystemConfig != nil:
+		cfg.Set(ConfigKeyUploaderProvider, "filesystem")
+		cfg.Set(ConfigKeyUploaderFilesystemRootDirectory, input.Uploads.Storage.FilesystemConfig.RootDirectory)
+	}
+
+	return cfg, nil
+}
+
 var errInvalidTestUserRunModeConfiguration = errors.New("requested test user in production run mode")
 
 // ParseConfigFile parses a configuration file.
@@ -162,6 +291,10 @@ func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string
 
 	if serverConfig.Database.CreateTestUser != nil && serverConfig.Meta.RunMode == config.ProductionRunMode {
 		return nil, errInvalidTestUserRunModeConfiguration
+	}
+
+	if validationErr := serverConfig.Validate(ctx); validationErr != nil {
+		return nil, validationErr
 	}
 
 	return serverConfig, nil

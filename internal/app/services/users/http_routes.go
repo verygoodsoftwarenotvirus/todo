@@ -133,7 +133,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*types.UserCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to UsersService CreateHandler request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 		return
 	}
 
@@ -318,7 +318,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	input, ok := req.Context().Value(totpSecretVerificationMiddlewareCtxKey).(*types.TOTPSecretVerificationInput)
 	if !ok || input == nil {
 		logger.Debug("no input found on TOTP secret refresh request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 		return
 	}
 
@@ -367,7 +367,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	input, ok := req.Context().Value(totpSecretRefreshMiddlewareCtxKey).(*types.TOTPSecretRefreshInput)
 	if !ok {
 		logger.Debug("no input found on TOTP secret refresh request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 		return
 	}
 
@@ -375,7 +375,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to TOTP secret refresh request")
-		s.encoderDecoder.EncodeErrorResponse(res, "invalid request", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeUnauthorizedResponse(res)
 		return
 	}
 
@@ -439,7 +439,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	input, ok := ctx.Value(passwordChangeMiddlewareCtxKey).(*types.PasswordUpdateInput)
 	if !ok {
 		logger.Debug("no input found on UpdatePasswordHandler request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 		return
 	}
 
@@ -447,7 +447,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdatePasswordHandler request")
-		s.encoderDecoder.EncodeErrorResponse(res, "invalid request", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeUnauthorizedResponse(res)
 		return
 	}
 
@@ -506,6 +506,57 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
 	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
+}
+
+func (s *service) determineAvatarWebPath(storageProviderPath string) *string {
+	x := "TODO"
+	return &x
+}
+
+// UpdateAvatarHandler updates a user's avatar.
+func (s *service) UpdateAvatarHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// check request context for user ID.
+	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
+	if !ok || si == nil {
+		logger.Debug("no user ID attached to UpdateAvatarHandler request")
+		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		return
+	}
+
+	user, userFetchErr := s.userDataManager.GetUser(ctx, si.UserID)
+	if userFetchErr != nil {
+		logger.Error(userFetchErr, "fetching associated user")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		return
+	}
+
+	img, imageProcessErr := s.imageUploadProcessor.Process(req, "avatar")
+	if imageProcessErr != nil || img == nil {
+		logger.Error(imageProcessErr, "processing provided avatar upload file")
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		return
+	}
+
+	internalPath := fmt.Sprintf("avatar_%d", si.UserID)
+
+	if saveErr := s.uploadManager.SaveFile(ctx, internalPath, img.Data); saveErr != nil {
+		logger.WithValue("file_size", len(img.Data)).Error(saveErr, "saving provided avatar")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		return
+	}
+
+	user.Avatar = s.determineAvatarWebPath(internalPath)
+
+	if userUpdateErr := s.userDataManager.UpdateUser(ctx, user); userUpdateErr != nil {
+		logger.WithValue("file_size", len(img.Data)).Error(userUpdateErr, "updating user info")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		return
+	}
 }
 
 // ArchiveHandler is a handler for archiving a user.

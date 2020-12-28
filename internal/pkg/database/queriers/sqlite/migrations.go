@@ -18,7 +18,23 @@ import (
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     1,
+			Version:     0.00,
+			Description: "create plans table and default plan",
+			Script: `
+			CREATE TABLE IF NOT EXISTS plans (
+				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name" TEXT NOT NULL,
+				"price" INTEGER NOT NULL,
+				"period" INTEGER NOT NULL,
+				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+				"last_updated_on" INTEGER,
+				"archived_on" INTEGER DEFAULT NULL
+			);
+
+			INSERT INTO plans (name,price,period) VALUES ('free', 0, 0);`,
+		},
+		{
+			Version:     0.01,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -34,14 +50,16 @@ var (
 				"admin_permissions" INTEGER NOT NULL DEFAULT 0,
 				"account_status" TEXT NOT NULL DEFAULT 'created',
 				"status_explanation" TEXT NOT NULL DEFAULT '',
+				"plan_id" INTEGER NOT NULL DEFAULT 1,
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"last_updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
-				CONSTRAINT username_unique UNIQUE (username)
+				CONSTRAINT username_unique UNIQUE (username),
+				FOREIGN KEY(plan_id) REFERENCES plans(id)
 			);`,
 		},
 		{
-			Version:     2,
+			Version:     0.02,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -49,12 +67,11 @@ var (
 				data BLOB NOT NULL,
 				expiry REAL NOT NULL
 			);
-
 			CREATE INDEX sessions_expiry_idx ON sessions(expiry);
 			`,
 		},
 		{
-			Version:     3,
+			Version:     0.03,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -73,7 +90,7 @@ var (
 			);`,
 		},
 		{
-			Version:     4,
+			Version:     0.04,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -93,7 +110,7 @@ var (
 			);`,
 		},
 		{
-			Version:     5,
+			Version:     0.05,
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
@@ -104,7 +121,7 @@ var (
 			);`,
 		},
 		{
-			Version:     6,
+			Version:     0.06,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -125,8 +142,8 @@ var (
 // migrate a sqlite database.
 func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
-		driver := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
-		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
+		d := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
+		if err := darwin.Migrate(d, migrations, nil); err != nil {
 			panic(fmt.Errorf("error migrating database: %w", err))
 		}
 	}

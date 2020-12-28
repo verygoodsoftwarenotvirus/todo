@@ -279,7 +279,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNoInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -550,7 +550,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNoInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

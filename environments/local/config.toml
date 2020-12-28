@@ -21,7 +21,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$.HeUmROn6/toe.KSOnMgaOaDauMrB/2AgbOCQlAl4P0jKPnyLSK66"
+    hashed_password = "$2a$11$02MIymBMT36kizQpDT9o.uNLXijQh.60cXrQYufUtWOlqWg5I2A12"
     is_admin = true
     password = "password"
     username = "username"
@@ -34,7 +34,6 @@
 [meta]
   debug = true
   run_mode = "development"
-  startup_deadline = "1m0s"
 
 [metrics]
   metrics_provider = "prometheus"
@@ -48,6 +47,17 @@
 [server]
   debug = true
   http_port = 8888
+  startup_deadline = "1m0s"
+
+[uploads]
+
+  [uploads.storage_config]
+    debug = true
+    name = "avatars"
+    provider = "filesystem"
+
+    [uploads.storage_config.filesystem]
+      root_directory = "artifacts"
 
 [webhooks]
   enabled = false

@@ -13,7 +13,7 @@ var (
 			"Observability",
 			"Meta",
 			"Frontend",
-			"Upload",
+			"Uploads",
 			"Search",
 			"Server",
 			"Webhooks",

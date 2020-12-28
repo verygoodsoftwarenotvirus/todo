@@ -65,7 +65,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.WebhookCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 
 		return
 	}
@@ -201,7 +201,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.WebhookUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 
 		return
 	}

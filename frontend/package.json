@@ -7,10 +7,10 @@
     "build:fontawesome": "mkdir -p dist/assets/third-party/@fortawesome/fontawesome-free/webfonts && mkdir -p dist/assets/third-party/@fortawesome/fontawesome-free/css && cp -a ./node_modules/@fortawesome/fontawesome-free/webfonts dist/assets/third-party/@fortawesome/fontawesome-free/ && cp ./node_modules/@fortawesome/fontawesome-free/css/all.min.css dist/assets/third-party/@fortawesome/fontawesome-free/css/all.min.css",
     "build:tailwind": "tailwind build dist/assets/styles/index.css -o dist/assets/styles/tailwind.css",
     "format": "npx prettier --write .",
-    "format_check": "npx prettier --check .",
-    "frontend_only": "cross-env FRONTEND_ONLY_MODE=true rollup --watch --config rollup.config.js",
+    "format:check": "npx prettier --check .",
     "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && rm -rf dist/build && npm install && npm run build:tailwind && npm run build:fontawesome && npm run build",
     "start": "sirv dist --single --host=localhost --port=5000",
+    "start:frontend-only": "cross-env FRONTEND_ONLY_MODE=true rollup --watch --config rollup.config.js",
     "validate": "svelte-check"
   },
   "dependencies": {

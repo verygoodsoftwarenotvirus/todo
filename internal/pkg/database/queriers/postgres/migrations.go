@@ -18,7 +18,24 @@ import (
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     1,
+			Version:     0.00,
+			Description: "create plans table and default plan",
+			Script: `
+			CREATE TABLE IF NOT EXISTS plans (
+				"id" BIGSERIAL NOT NULL PRIMARY KEY,
+				"name" TEXT NOT NULL,
+				"price" INTEGER NOT NULL,
+				"period" INTEGER NOT NULL,
+				"created_on" INTEGER NOT NULL DEFAULT extract(epoch FROM NOW()),
+				"last_updated_on" INTEGER,
+				"archived_on" INTEGER DEFAULT NULL
+			);
+
+			INSERT INTO plans (name,price,period) VALUES ('free', 0, 0);
+		`,
+		},
+		{
+			Version:     0.01,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -26,8 +43,8 @@ var (
 				"username" TEXT NOT NULL,
 				"hashed_password" TEXT NOT NULL,
 				"salt" BYTEA NOT NULL,
-				"password_last_changed_on" integer,
-				"requires_password_change" boolean NOT NULL DEFAULT 'false',
+				"password_last_changed_on" INTEGER,
+				"requires_password_change" BOOLEAN NOT NULL DEFAULT 'false',
 				"two_factor_secret" TEXT NOT NULL,
 				"two_factor_secret_verified_on" BIGINT DEFAULT NULL,
 				"is_admin" BOOLEAN NOT NULL DEFAULT 'false',
@@ -41,7 +58,7 @@ var (
 			);`,
 		},
 		{
-			Version:     2,
+			Version:     0.02,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -54,7 +71,7 @@ var (
 		`,
 		},
 		{
-			Version:     3,
+			Version:     0.03,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -64,7 +81,7 @@ var (
 				"client_secret" TEXT NOT NULL,
 				"redirect_uri" TEXT DEFAULT '',
 				"scopes" TEXT NOT NULL,
-				"implicit_allowed" boolean NOT NULL DEFAULT 'false',
+				"implicit_allowed" BOOLEAN NOT NULL DEFAULT 'false',
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
@@ -73,7 +90,7 @@ var (
 			);`,
 		},
 		{
-			Version:     4,
+			Version:     0.04,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -93,7 +110,7 @@ var (
 			);`,
 		},
 		{
-			Version:     5,
+			Version:     0.05,
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
@@ -104,7 +121,7 @@ var (
 			);`,
 		},
 		{
-			Version:     6,
+			Version:     0.06,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

@@ -54,15 +54,15 @@ func TestParseConfigFile(T *testing.T) {
 
 		exampleConfig := &config.ServerConfig{
 			Server: httpserver.Config{
-				HTTPPort: 1234,
-				Debug:    false,
+				HTTPPort:        1234,
+				Debug:           false,
+				StartupDeadline: time.Minute,
 			},
 			AuditLog: audit.Config{
 				Enabled: true,
 			},
 			Meta: config.MetaSettings{
-				StartupDeadline: time.Minute,
-				RunMode:         "development",
+				RunMode: "development",
 			},
 			Auth: authservice.Config{
 				CookieName:            "todocookie",

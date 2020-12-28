@@ -101,7 +101,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 	})
 }
 
-func TestEncodeNoInputResponse(T *testing.T) {
+func TestEncodeInvalidInputResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestEncodeNoInputResponse(T *testing.T) {
 		res := httptest.NewRecorder()
 
 		ed := ProvideResponseEncoder(noop.NewLogger())
-		ed.EncodeNoInputResponse(res)
+		ed.EncodeInvalidInputResponse(res)
 
 		expectedCode := http.StatusBadRequest
 		assert.EqualValues(t, expectedCode, res.Code, "expected code to be %d, got %d instead", expectedCode, res.Code)

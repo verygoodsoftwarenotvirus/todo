@@ -20,16 +20,16 @@ const (
 type (
 	// GCSBlobConfig configures a gcs blob authentication method.
 	GCSBlobConfig struct {
-		GoogleAccessID     string
-		PrivateKeyFilepath string
+		GoogleAccessID     string `json:"google_access_id" mapstructure:"google_access_id" toml:"google_access_id,omitempty"`
+		PrivateKeyFilepath string `json:"private_key_filepath" mapstructure:"private_key_filepath" toml:"private_key_filepath,omitempty"`
 	}
 
 	// GCSConfig configures a gcs based storage provider.
 	GCSConfig struct {
-		ServiceAccountKeyFilepath string
-		Scopes                    []string
-		BucketName                string
-		BlobSettings              GCSBlobConfig
+		ServiceAccountKeyFilepath string        `json:"service_account_key_filepath" mapstructure:"service_account_key_filepath" toml:"service_account_key_filepath,omitempty"`
+		Scopes                    []string      `json:"scopes" mapstructure:"scopes" toml:"scopes,omitempty"`
+		BucketName                string        `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
+		BlobSettings              GCSBlobConfig `json:"blob_settings" mapstructure:"blob_settings" toml:"blob_settings,omitempty"`
 	}
 )
 

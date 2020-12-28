@@ -48,7 +48,7 @@ func main() {
 	}
 
 	// only allow initialization to take so long.
-	ctx, cancel := context.WithTimeout(ctx, cfg.Meta.StartupDeadline)
+	ctx, cancel := context.WithTimeout(ctx, cfg.Server.StartupDeadline)
 	ctx, initSpan := tracing.StartSpan(ctx)
 
 	logger.Debug("connecting to database")

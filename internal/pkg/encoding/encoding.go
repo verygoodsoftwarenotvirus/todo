@@ -38,7 +38,7 @@ type (
 		EncodeResponse(res http.ResponseWriter, val interface{})
 		EncodeResponseWithStatus(res http.ResponseWriter, val interface{}, statusCode int)
 		EncodeErrorResponse(res http.ResponseWriter, msg string, statusCode int)
-		EncodeNoInputResponse(res http.ResponseWriter)
+		EncodeInvalidInputResponse(res http.ResponseWriter)
 		EncodeNotFoundResponse(res http.ResponseWriter)
 		EncodeUnspecifiedInternalServerErrorResponse(res http.ResponseWriter)
 		EncodeUnauthorizedResponse(res http.ResponseWriter)
@@ -84,9 +84,9 @@ func (ed *ServerEncoderDecoder) EncodeErrorResponse(res http.ResponseWriter, msg
 	}
 }
 
-// EncodeNoInputResponse encodes a generic 400 error to a response.
-func (ed *ServerEncoderDecoder) EncodeNoInputResponse(res http.ResponseWriter) {
-	ed.EncodeErrorResponse(res, "no input attached to request", http.StatusBadRequest)
+// EncodeInvalidInputResponse encodes a generic 400 error to a response.
+func (ed *ServerEncoderDecoder) EncodeInvalidInputResponse(res http.ResponseWriter) {
+	ed.EncodeErrorResponse(res, "invalid input attached to request", http.StatusBadRequest)
 }
 
 // EncodeNotFoundResponse encodes a generic 404 error to a response.

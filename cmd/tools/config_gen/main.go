@@ -6,9 +6,21 @@ import (
 	"log"
 	"time"
 
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	uploadconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage/gocloud"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
@@ -62,45 +74,85 @@ func mustHashPass(password string) string {
 }
 
 func localDevelopmentConfig(filePath string) error {
-	cfg := viper.BuildViperConfig()
+	cfg := &config.ServerConfig{
+		Meta: config.MetaSettings{
+			Debug:   true,
+			RunMode: developmentEnv,
+		},
+		Server: httpserver.Config{
+			Debug:           true,
+			HTTPPort:        defaultPort,
+			StartupDeadline: time.Minute,
+		},
+		Frontend: frontendservice.Config{
+			StaticFilesDirectory: defaultFrontendFilepath,
+			Debug:                true,
+			LogStaticFiles:       false,
+			CacheStaticFiles:     false,
+		},
+		Auth: authservice.Config{
+			CookieName:            defaultCookieName,
+			CookieDomain:          defaultCookieDomain,
+			CookieSigningKey:      debugCookieSecret,
+			CookieLifetime:        authservice.DefaultCookieLifetime,
+			Debug:                 true,
+			SecureCookiesOnly:     false,
+			EnableUserSignup:      true,
+			MinimumUsernameLength: 4,
+			MinimumPasswordLength: 8,
+		},
+		Database: dbconfig.Config{
+			Debug:         true,
+			RunMigrations: true,
+			CreateTestUser: &types.TestUserCreationConfig{
+				Username:       "username",
+				Password:       defaultPassword,
+				HashedPassword: mustHashPass(defaultPassword),
+				IsAdmin:        true,
+			},
+			Provider:                  postgres,
+			ConnectionDetails:         devPostgresDBConnDetails,
+			MetricsCollectionInterval: time.Second,
+		},
+		Observability: observability.Config{
+			MetricsProvider:                  "prometheus",
+			TracingProvider:                  "jaeger",
+			RuntimeMetricsCollectionInterval: time.Second,
+		},
+		Uploads: uploadconfig.Config{
+			Debug:    true,
+			Provider: "filesystem",
+			Storage: gocloud.UploaderConfig{
+				Provider:    "filesystem",
+				Name:        "avatars",
+				AzureConfig: nil,
+				GCSConfig:   nil,
+				S3Config:    nil,
+				FilesystemConfig: &gocloud.FilesystemConfig{
+					RootDirectory: "artifacts",
+				},
+			},
+		},
+		Search: search.Config{
+			Provider:       "bleve",
+			ItemsIndexPath: "/search_indices/items.bleve",
+		},
+		Webhooks: webhooksservice.Config{
+			Debug:   true,
+			Enabled: false,
+		},
+		AuditLog: audit.Config{
+			Debug:   true,
+			Enabled: true,
+		},
+	}
 
-	cfg.Set(viper.ConfigKeyMetaRunMode, developmentEnv)
-	cfg.Set(viper.ConfigKeyMetaDebug, true)
-	cfg.Set(viper.ConfigKeyMetaStartupDeadline, time.Minute)
+	vConfig, err := viper.FromConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("error converting config object: %w", err)
+	}
 
-	cfg.Set(viper.ConfigKeyServerHTTPPort, defaultPort)
-	cfg.Set(viper.ConfigKeyServerDebug, true)
-
-	cfg.Set(viper.ConfigKeyFrontendDebug, true)
-	cfg.Set(viper.ConfigKeyFrontendStaticFilesDir, defaultFrontendFilepath)
-	cfg.Set(viper.ConfigKeyFrontendCacheStatics, false)
-
-	cfg.Set(viper.ConfigKeyAuthDebug, true)
-	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
-	cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
-	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-	cfg.Set(viper.ConfigKeyAuthCookieLifetime, authservice.DefaultCookieLifetime)
-	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
-	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
-
-	cfg.Set(viper.ConfigKeyMetricsProvider, "prometheus")
-	cfg.Set(viper.ConfigKeyMetricsTracer, "jaeger")
-	cfg.Set(viper.ConfigKeyDatabaseMetricsCollectionInterval, time.Second)
-	cfg.Set(viper.ConfigKeyMetricsRuntimeCollectionInterval, time.Second)
-
-	cfg.Set(viper.ConfigKeyDatabaseDebug, true)
-	cfg.Set(viper.ConfigKeyDatabaseRunMigrations, true)
-	cfg.Set(viper.ConfigKeyDatabaseProvider, postgres)
-	cfg.Set(viper.ConfigKeyDatabaseConnectionDetails, devPostgresDBConnDetails)
-
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "username")
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, defaultPassword)
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserHashedPassword, mustHashPass(defaultPassword))
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserIsAdmin, true)
-
-	cfg.Set(viper.ConfigKeyItemsSearchIndexPath, "/search_indices/items.bleve")
-
-	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
+	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
 	}
 
@@ -108,39 +160,79 @@ func localDevelopmentConfig(filePath string) error {
 }
 
 func frontendTestsConfig(filePath string) error {
-	cfg := viper.BuildViperConfig()
+	cfg := &config.ServerConfig{
+		Meta: config.MetaSettings{
+			Debug:   false,
+			RunMode: developmentEnv,
+		},
+		Server: httpserver.Config{
+			Debug:           true,
+			HTTPPort:        defaultPort,
+			StartupDeadline: time.Minute,
+		},
+		Frontend: frontendservice.Config{
+			StaticFilesDirectory: defaultFrontendFilepath,
+			Debug:                true,
+			LogStaticFiles:       false,
+			CacheStaticFiles:     false,
+		},
+		Auth: authservice.Config{
+			CookieName:            defaultCookieName,
+			CookieDomain:          defaultCookieDomain,
+			CookieSigningKey:      debugCookieSecret,
+			CookieLifetime:        authservice.DefaultCookieLifetime,
+			Debug:                 true,
+			SecureCookiesOnly:     false,
+			EnableUserSignup:      true,
+			MinimumUsernameLength: 4,
+			MinimumPasswordLength: 8,
+		},
+		Database: dbconfig.Config{
+			Debug:                     true,
+			RunMigrations:             true,
+			Provider:                  postgres,
+			ConnectionDetails:         devPostgresDBConnDetails,
+			MetricsCollectionInterval: time.Second,
+		},
+		Observability: observability.Config{
+			MetricsProvider:                  "prometheus",
+			TracingProvider:                  "jaeger",
+			RuntimeMetricsCollectionInterval: time.Second,
+		},
+		Uploads: uploadconfig.Config{
+			Debug:    true,
+			Provider: "filesystem",
+			Storage: gocloud.UploaderConfig{
+				Provider:    "filesystem",
+				Name:        "avatars",
+				AzureConfig: nil,
+				GCSConfig:   nil,
+				S3Config:    nil,
+				FilesystemConfig: &gocloud.FilesystemConfig{
+					RootDirectory: "artifacts",
+				},
+			},
+		},
+		Search: search.Config{
+			Provider:       "bleve",
+			ItemsIndexPath: defaultItemsSearchIndexPath,
+		},
+		Webhooks: webhooksservice.Config{
+			Debug:   true,
+			Enabled: false,
+		},
+		AuditLog: audit.Config{
+			Debug:   true,
+			Enabled: true,
+		},
+	}
 
-	cfg.Set(viper.ConfigKeyMetaRunMode, developmentEnv)
-	cfg.Set(viper.ConfigKeyMetaStartupDeadline, time.Minute)
+	vConfig, err := viper.FromConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("error converting config object: %w", err)
+	}
 
-	cfg.Set(viper.ConfigKeyServerHTTPPort, defaultPort)
-	cfg.Set(viper.ConfigKeyServerDebug, true)
-
-	cfg.Set(viper.ConfigKeyFrontendDebug, true)
-	cfg.Set(viper.ConfigKeyFrontendStaticFilesDir, defaultFrontendFilepath)
-	cfg.Set(viper.ConfigKeyFrontendCacheStatics, false)
-
-	cfg.Set(viper.ConfigKeyAuthDebug, true)
-	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
-	cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
-	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-	cfg.Set(viper.ConfigKeyAuthCookieLifetime, authservice.DefaultCookieLifetime)
-	cfg.Set(viper.ConfigKeyAuthSecureCookiesOnly, false)
-	cfg.Set(viper.ConfigKeyAuthEnableUserSignup, true)
-
-	cfg.Set(viper.ConfigKeyMetricsProvider, "prometheus")
-	cfg.Set(viper.ConfigKeyMetricsTracer, "jaeger")
-	cfg.Set(viper.ConfigKeyDatabaseMetricsCollectionInterval, time.Second)
-	cfg.Set(viper.ConfigKeyMetricsRuntimeCollectionInterval, time.Second)
-
-	cfg.Set(viper.ConfigKeyDatabaseDebug, true)
-	cfg.Set(viper.ConfigKeyDatabaseProvider, postgres)
-	cfg.Set(viper.ConfigKeyDatabaseRunMigrations, true)
-	cfg.Set(viper.ConfigKeyDatabaseConnectionDetails, devPostgresDBConnDetails)
-
-	cfg.Set(viper.ConfigKeyItemsSearchIndexPath, defaultItemsSearchIndexPath)
-
-	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
+	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
 		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
 	}
 
@@ -148,37 +240,86 @@ func frontendTestsConfig(filePath string) error {
 }
 
 func coverageConfig(filePath string) error {
-	cfg := viper.BuildViperConfig()
+	cfg := &config.ServerConfig{
+		Meta: config.MetaSettings{
+			Debug:   true,
+			RunMode: testingEnv,
+		},
+		Server: httpserver.Config{
+			Debug:           true,
+			HTTPPort:        defaultPort,
+			StartupDeadline: time.Minute,
+		},
+		Frontend: frontendservice.Config{
+			StaticFilesDirectory: defaultFrontendFilepath,
+			Debug:                true,
+			LogStaticFiles:       false,
+			CacheStaticFiles:     false,
+		},
+		Auth: authservice.Config{
+			CookieName:            defaultCookieName,
+			CookieDomain:          defaultCookieDomain,
+			CookieSigningKey:      debugCookieSecret,
+			CookieLifetime:        authservice.DefaultCookieLifetime,
+			Debug:                 false,
+			SecureCookiesOnly:     false,
+			EnableUserSignup:      true,
+			MinimumUsernameLength: 4,
+			MinimumPasswordLength: 8,
+		},
+		Database: dbconfig.Config{
+			Debug:                     false,
+			RunMigrations:             true,
+			Provider:                  postgres,
+			ConnectionDetails:         devPostgresDBConnDetails,
+			MetricsCollectionInterval: 2 * time.Second,
+			CreateTestUser: &types.TestUserCreationConfig{
+				Username:       "coverageUser",
+				Password:       defaultPassword,
+				HashedPassword: mustHashPass(defaultPassword),
+				IsAdmin:        false,
+			},
+		},
+		Observability: observability.Config{
+			MetricsProvider:                  "",
+			TracingProvider:                  "",
+			RuntimeMetricsCollectionInterval: 2 * time.Second,
+		},
+		Uploads: uploadconfig.Config{
+			Debug:    true,
+			Provider: "filesystem",
+			Storage: gocloud.UploaderConfig{
+				Provider:    "filesystem",
+				Name:        "avatars",
+				AzureConfig: nil,
+				GCSConfig:   nil,
+				S3Config:    nil,
+				FilesystemConfig: &gocloud.FilesystemConfig{
+					RootDirectory: "artifacts",
+				},
+			},
+		},
+		Search: search.Config{
+			Provider:       "bleve",
+			ItemsIndexPath: defaultItemsSearchIndexPath,
+		},
+		Webhooks: webhooksservice.Config{
+			Debug:   true,
+			Enabled: false,
+		},
+		AuditLog: audit.Config{
+			Debug:   true,
+			Enabled: true,
+		},
+	}
 
-	cfg.Set(viper.ConfigKeyMetaRunMode, testingEnv)
-	cfg.Set(viper.ConfigKeyMetaDebug, true)
+	vConfig, err := viper.FromConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("error converting config object: %w", err)
+	}
 
-	cfg.Set(viper.ConfigKeyServerHTTPPort, defaultPort)
-	cfg.Set(viper.ConfigKeyServerDebug, true)
-
-	cfg.Set(viper.ConfigKeyFrontendDebug, true)
-	cfg.Set(viper.ConfigKeyFrontendStaticFilesDir, defaultFrontendFilepath)
-	cfg.Set(viper.ConfigKeyFrontendCacheStatics, false)
-
-	cfg.Set(viper.ConfigKeyAuthDebug, false)
-	cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
-	cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
-	cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-
-	cfg.Set(viper.ConfigKeyDatabaseDebug, false)
-	cfg.Set(viper.ConfigKeyDatabaseProvider, postgres)
-	cfg.Set(viper.ConfigKeyDatabaseRunMigrations, true)
-	cfg.Set(viper.ConfigKeyDatabaseConnectionDetails, devPostgresDBConnDetails)
-
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "coverageUser")
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, defaultPassword)
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserHashedPassword, mustHashPass(defaultPassword))
-	cfg.Set(viper.ConfigKeyDatabaseCreateTestUserIsAdmin, false)
-
-	cfg.Set(viper.ConfigKeyItemsSearchIndexPath, defaultItemsSearchIndexPath)
-
-	if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("error writing coverage config: %w", writeErr)
+	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
+		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
 	}
 
 	return nil
@@ -186,45 +327,91 @@ func coverageConfig(filePath string) error {
 
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
 	return func(filePath string) error {
-		cfg := viper.BuildViperConfig()
-
-		cfg.Set(viper.ConfigKeyMetaRunMode, testingEnv)
-		cfg.Set(viper.ConfigKeyMetaDebug, false)
-
-		sd := time.Minute
-		if dbVendor == mariadb {
-			sd = 5 * time.Minute
+		cfg := &config.ServerConfig{
+			Meta: config.MetaSettings{
+				Debug:   false,
+				RunMode: testingEnv,
+			},
+			Server: httpserver.Config{
+				Debug:    false,
+				HTTPPort: defaultPort,
+				StartupDeadline: func() time.Duration {
+					if dbVendor == mariadb {
+						return 5 * time.Minute
+					}
+					return time.Minute
+				}(),
+			},
+			Frontend: frontendservice.Config{
+				StaticFilesDirectory: defaultFrontendFilepath,
+				Debug:                false,
+				LogStaticFiles:       false,
+				CacheStaticFiles:     false,
+			},
+			Auth: authservice.Config{
+				CookieName:            defaultCookieName,
+				CookieDomain:          defaultCookieDomain,
+				CookieSigningKey:      debugCookieSecret,
+				CookieLifetime:        authservice.DefaultCookieLifetime,
+				Debug:                 false,
+				SecureCookiesOnly:     false,
+				EnableUserSignup:      true,
+				MinimumUsernameLength: 4,
+				MinimumPasswordLength: 8,
+			},
+			Database: dbconfig.Config{
+				Debug:                     false,
+				RunMigrations:             true,
+				Provider:                  dbVendor,
+				ConnectionDetails:         database.ConnectionDetails(dbDetails),
+				MetricsCollectionInterval: 2 * time.Second,
+				CreateTestUser: &types.TestUserCreationConfig{
+					Username:       "exampleUser",
+					Password:       "integration-tests-are-cool",
+					HashedPassword: mustHashPass("integration-tests-are-cool"),
+					IsAdmin:        true,
+				},
+			},
+			Observability: observability.Config{
+				MetricsProvider:                  "prometheus",
+				TracingProvider:                  "jaeger",
+				RuntimeMetricsCollectionInterval: 2 * time.Second,
+			},
+			Uploads: uploadconfig.Config{
+				Debug:    false,
+				Provider: "filesystem",
+				Storage: gocloud.UploaderConfig{
+					Provider:    "filesystem",
+					Name:        "avatars",
+					AzureConfig: nil,
+					GCSConfig:   nil,
+					S3Config:    nil,
+					FilesystemConfig: &gocloud.FilesystemConfig{
+						RootDirectory: "artifacts",
+					},
+				},
+			},
+			Search: search.Config{
+				Provider:       "bleve",
+				ItemsIndexPath: defaultItemsSearchIndexPath,
+			},
+			Webhooks: webhooksservice.Config{
+				Debug:   false,
+				Enabled: false,
+			},
+			AuditLog: audit.Config{
+				Debug:   false,
+				Enabled: true,
+			},
 		}
 
-		cfg.Set(viper.ConfigKeyMetaStartupDeadline, sd)
+		vConfig, err := viper.FromConfig(cfg)
+		if err != nil {
+			return fmt.Errorf("error converting config object: %w", err)
+		}
 
-		cfg.Set(viper.ConfigKeyServerHTTPPort, defaultPort)
-		cfg.Set(viper.ConfigKeyServerDebug, false)
-
-		cfg.Set(viper.ConfigKeyFrontendStaticFilesDir, defaultFrontendFilepath)
-		cfg.Set(viper.ConfigKeyAuthCookieSigningKey, debugCookieSecret)
-		cfg.Set(viper.ConfigKeyAuthCookieName, defaultCookieName)
-		cfg.Set(viper.ConfigKeyAuthCookieDomain, defaultCookieDomain)
-
-		cfg.Set(viper.ConfigKeyMetricsProvider, "prometheus")
-		cfg.Set(viper.ConfigKeyMetricsTracer, "jaeger")
-
-		cfg.Set(viper.ConfigKeyDatabaseDebug, false)
-		cfg.Set(viper.ConfigKeyDatabaseProvider, dbVendor)
-		cfg.Set(viper.ConfigKeyDatabaseRunMigrations, true)
-		cfg.Set(viper.ConfigKeyDatabaseConnectionDetails, dbDetails)
-
-		pw := "integration-tests-are-cool"
-
-		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserUsername, "exampleUser")
-		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserPassword, pw)
-		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserHashedPassword, mustHashPass(pw))
-		cfg.Set(viper.ConfigKeyDatabaseCreateTestUserIsAdmin, true)
-
-		cfg.Set(viper.ConfigKeyItemsSearchIndexPath, defaultItemsSearchIndexPath)
-
-		if writeErr := cfg.WriteConfigAs(filePath); writeErr != nil {
-			return fmt.Errorf("error writing integration test config for %s: %w", dbVendor, writeErr)
+		if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
+			return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
 		}
 
 		return nil

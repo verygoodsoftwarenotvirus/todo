@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 
@@ -25,6 +27,12 @@ var Providers = wire.NewSet(
 
 // ProvideServer builds a new Server instance.
 func ProvideServer(cfg *config.ServerConfig, httpServer *httpserver.Server) (*Server, error) {
+	if cfg == nil {
+		return nil, errors.New("provided config was nil")
+	} else if httpServer == nil {
+		return nil, errors.New("provided http server was nil")
+	}
+
 	srv := &Server{
 		config:     cfg,
 		httpServer: httpServer,

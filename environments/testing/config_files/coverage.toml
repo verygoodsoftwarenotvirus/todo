@@ -11,6 +11,7 @@
   enable_user_signup = true
   minimum_password_length = 8
   minimum_username_length = 4
+  secure_cookies_only = false
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
@@ -20,7 +21,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$RwltB4lKs1vwmI3L/Ete7eqqzQ8J93a64jH2e00EIFbOdN3npNVSS"
+    hashed_password = "$2a$11$DEtNVwow8XDRL1aDMJ36J.1HNdzLa6GROcHNU8DYnHNRa9jK5e.12"
     is_admin = false
     password = "password"
     username = "coverageUser"
@@ -33,10 +34,11 @@
 [meta]
   debug = true
   run_mode = "testing"
-  startup_deadline = "1m0s"
 
 [metrics]
+  metrics_provider = ""
   runtime_metrics_collection_interval = "2s"
+  tracing_provider = ""
 
 [search]
   items_index_path = "items.bleve"
@@ -45,6 +47,17 @@
 [server]
   debug = true
   http_port = 8888
+  startup_deadline = "1m0s"
+
+[uploads]
+
+  [uploads.storage_config]
+    debug = true
+    name = "avatars"
+    provider = "filesystem"
+
+    [uploads.storage_config.filesystem]
+      root_directory = "artifacts"
 
 [webhooks]
   enabled = false

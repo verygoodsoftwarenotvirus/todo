@@ -15,3 +15,7 @@
 ## General Pointers
 
 - When building new frontend features, start in frontend-only mode by running `make frontend-only` and build out all the elements, mocking their behavior with log statements, but simulating data with fakes, and keeping page transitions real. It means you'll think through most of the interaction logic, where you can focus on implementation details (like making proper API calls) later.
+
+## Onerous bugs
+
+- When darwin reports that there is an issue with the checksum in your migrations, it's because the existing database was migrated with an older set of migration scripts. Delete your database and start again.

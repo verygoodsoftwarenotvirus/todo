@@ -11,6 +11,8 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -37,6 +39,8 @@ func buildTestService(t *testing.T) *service {
 		func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return uc, nil
 		},
+		&images.MockImageUploadProcessor{},
+		&uploads.MockUploadManager{},
 	)
 	require.NoError(t, err)
 
@@ -60,6 +64,8 @@ func TestProvideUsersService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return &mockmetrics.UnitCounter{}, nil
 			},
+			&images.MockImageUploadProcessor{},
+			&uploads.MockUploadManager{},
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -79,6 +85,8 @@ func TestProvideUsersService(T *testing.T) {
 			&mockauth.Authenticator{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
+			&images.MockImageUploadProcessor{},
+			&uploads.MockUploadManager{},
 		)
 		assert.Error(t, err)
 		assert.Nil(t, s)

@@ -23,39 +23,21 @@ const (
 type (
 	// AzureRetryConfig configures storage retries.
 	AzureRetryConfig struct {
-		MaxTries                    int32
-		TryTimeout                  time.Duration
-		RetryDelay                  time.Duration
-		MaxRetryDelay               time.Duration
-		RetryReadsFromSecondaryHost string
-	}
-
-	// AzureTokenCreds configures using a token to authenticate.
-	AzureTokenCreds struct {
-		InitialToken string
-	}
-
-	// AzureSharedKeyConfig configures using a shared key to authenticate.
-	AzureSharedKeyConfig struct {
-		AccountName string
-		AccountKey  string
-	}
-
-	// AzureUserDelegationConfig configures using a user delegation key to authenticate.
-	AzureUserDelegationConfig struct {
-		AccountName               string
-		UserDelegationKeyFilepath string
+		MaxTries                    int32         `json:"max_tries" mapstructure:"max_tries" toml:"max_tries,omitempty"`
+		TryTimeout                  time.Duration `json:"try_timeout" mapstructure:"try_timeout" toml:"try_timeout,omitempty"`
+		RetryDelay                  time.Duration `json:"retry_delay" mapstructure:"retry_delay" toml:"retry_delay,omitempty"`
+		MaxRetryDelay               time.Duration `json:"max_retry_delay" mapstructure:"max_retry_delay" toml:"max_retry_delay,omitempty"`
+		RetryReadsFromSecondaryHost string        `json:"retry_reads_from_secondary_host" mapstructure:"retry_reads_from_secondary_host" toml:"retry_reads_from_secondary_host,omitempty"`
 	}
 
 	// AzureConfig configures an azure instance of an UploadManager.
 	AzureConfig struct {
-		AuthMethod           string
-		AccountName          string
-		ContainerName        string
-		Retrying             *AzureRetryConfig
-		TokenCreds           *AzureTokenCreds
-		SharedKeyConfig      *AzureSharedKeyConfig
-		UserDelegationConfig *AzureUserDelegationConfig
+		AuthMethod                   string            `json:"auth_method" mapstructure:"auth_method" toml:"auth_method,omitempty"`
+		AccountName                  string            `json:"account_name" mapstructure:"account_name" toml:"account_name,omitempty"`
+		ContainerName                string            `json:"container_name" mapstructure:"container_name" toml:"container_name,omitempty"`
+		Retrying                     *AzureRetryConfig `json:"retrying" mapstructure:"retrying" toml:"retrying,omitempty"`
+		TokenCredentialsInitialToken string            `json:"token_creds_initial_token" mapstructure:"token_creds_initial_token" toml:"token_creds_initial_token,omitempty"`
+		SharedKeyAccountKey          string            `json:"shared_key_account_key" mapstructure:"shared_key_aaccount_key" toml:"shared_key_account_key,omitempty"`
 	}
 )
 
@@ -70,26 +52,11 @@ func (cfg *AzureRetryConfig) buildRetryOptions() azblob.RetryOptions {
 	}
 }
 
-// Validate validates the AzureTokenCreds.
-func (c *AzureTokenCreds) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, c,
-		validation.Field(&c.InitialToken, validation.Required),
-	)
-}
-
-// Validate validates the AzureSharedKeyConfig.
-func (c *AzureSharedKeyConfig) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, c,
-		validation.Field(&c.AccountName, validation.Required),
-		validation.Field(&c.AccountKey, validation.Required),
-	)
-}
-
-// Validate validates the AzureUserDelegationConfig.
-func (c *AzureUserDelegationConfig) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, c,
-		validation.Field(&c, validation.Required),
-	)
+func (c *AzureConfig) authMethodIsSharedKey() bool {
+	return c.AuthMethod == azureSharedKeyAuthMethod1 ||
+		c.AuthMethod == azureSharedKeyAuthMethod2 ||
+		c.AuthMethod == azureSharedKeyAuthMethod3 ||
+		c.AuthMethod == azureSharedKeyAuthMethod4
 }
 
 // Validate validates the AzureConfig.
@@ -99,11 +66,8 @@ func (c *AzureConfig) Validate(ctx context.Context) error {
 		validation.Field(&c.AccountName, validation.Required),
 		validation.Field(&c.ContainerName, validation.Required),
 		validation.Field(&c.Retrying, validation.When(c.Retrying != nil, validation.Required)),
-		validation.Field(&c.SharedKeyConfig, validation.When(c.AuthMethod == azureSharedKeyAuthMethod1, validation.Required).Else(validation.Nil)),
-		validation.Field(&c.SharedKeyConfig, validation.When(c.AuthMethod == azureSharedKeyAuthMethod2, validation.Required).Else(validation.Nil)),
-		validation.Field(&c.SharedKeyConfig, validation.When(c.AuthMethod == azureSharedKeyAuthMethod3, validation.Required).Else(validation.Nil)),
-		validation.Field(&c.SharedKeyConfig, validation.When(c.AuthMethod == azureSharedKeyAuthMethod4, validation.Required).Else(validation.Nil)),
-		validation.Field(&c.TokenCreds, validation.When(c.AuthMethod == azureTokenAuthMethod, validation.Required).Else(validation.Nil)),
+		validation.Field(&c.SharedKeyAccountKey, validation.When(c.authMethodIsSharedKey(), validation.Required).Else(validation.Nil)),
+		validation.Field(&c.TokenCredentialsInitialToken, validation.When(c.AuthMethod == azureTokenAuthMethod, validation.Required).Else(validation.Nil)),
 	)
 }
 
@@ -124,22 +88,22 @@ func provideAzureBucket(ctx context.Context, cfg *AzureConfig, logger logging.Lo
 
 	switch strings.TrimSpace(strings.ToLower(cfg.AuthMethod)) {
 	case azureSharedKeyAuthMethod1, azureSharedKeyAuthMethod2, azureSharedKeyAuthMethod3, azureSharedKeyAuthMethod4:
-		if cfg.SharedKeyConfig == nil {
+		if cfg.SharedKeyAccountKey == "" {
 			return nil, ErrInvalidConfiguration
 		}
 
 		if cred, err = azblob.NewSharedKeyCredential(
-			cfg.SharedKeyConfig.AccountName,
-			cfg.SharedKeyConfig.AccountKey,
+			cfg.AccountName,
+			cfg.SharedKeyAccountKey,
 		); err != nil {
 			return nil, fmt.Errorf("error reading shared key credential: %w", err)
 		}
 	case azureTokenAuthMethod:
-		if cfg.TokenCreds == nil {
+		if cfg.TokenCredentialsInitialToken == "" {
 			return nil, ErrInvalidConfiguration
 		}
 
-		cred = azblob.NewTokenCredential(cfg.TokenCreds.InitialToken, nil)
+		cred = azblob.NewTokenCredential(cfg.TokenCredentialsInitialToken, nil)
 	default:
 		cred = azblob.NewAnonymousCredential()
 	}

@@ -375,7 +375,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNoInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)

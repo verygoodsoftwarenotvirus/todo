@@ -16,15 +16,48 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
+func buildCreationTriggerScript(tableName string) string {
+	return strings.Join([]string{
+		fmt.Sprintf("CREATE TRIGGER IF NOT EXISTS %s_creation_trigger BEFORE INSERT ON %s FOR EACH ROW", tableName, tableName),
+		"BEGIN",
+		"  IF (new.created_on is null)",
+		"  THEN",
+		"    SET new.created_on = UNIX_TIMESTAMP();",
+		"  END IF;",
+		"END;",
+	}, "\n")
+}
+
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     1,
+			Version:     0.00,
+			Description: "create plans table and default plan",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS plans (",
+				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `name` VARCHAR(128) NOT NULL,",
+				"    `price` INT UNSIGNED NOT NULL,",
+				"    `period` INT UNSIGNED NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    PRIMARY KEY (`id`)",
+				");",
+			}, "\n"),
+		},
+		{
+			Version:     0.01,
+			Description: "create plans table creation trigger",
+			Script:      buildCreationTriggerScript("plans"),
+		},
+		{
+			Version:     0.02,
 			Description: "create users table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
-				"    `username` VARCHAR(150) NOT NULL,",
+				"    `username` VARCHAR(128) NOT NULL,",
 				"    `hashed_password` VARCHAR(100) NOT NULL,",
 				"    `salt` BINARY(16) NOT NULL,",
 				"    `requires_password_change` BOOLEAN NOT NULL DEFAULT false,",
@@ -44,20 +77,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     2,
+			Version:     0.03,
 			Description: "create users table creation trigger",
-			Script: strings.Join([]string{
-				"CREATE TRIGGER IF NOT EXISTS users_creation_trigger BEFORE INSERT ON users FOR EACH ROW",
-				"BEGIN",
-				"  IF (new.created_on is null)",
-				"  THEN",
-				"    SET new.created_on = UNIX_TIMESTAMP();",
-				"  END IF;",
-				"END;",
-			}, "\n"),
+			Script:      buildCreationTriggerScript("users"),
 		},
 		{
-			Version:     3,
+			Version:     0.04,
 			Description: "create sessions table for session manager",
 			Script: strings.Join([]string{
 				"CREATE TABLE sessions (",
@@ -68,12 +93,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     4,
+			Version:     0.05,
 			Description: "create sessions table for session manager",
 			Script:      "CREATE INDEX sessions_expiry_idx ON sessions (expiry);",
 		},
 		{
-			Version:     5,
+			Version:     0.06,
 			Description: "create oauth2_clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS oauth2_clients (",
@@ -94,20 +119,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     6,
+			Version:     0.07,
 			Description: "create oauth2_clients table creation trigger",
-			Script: strings.Join([]string{
-				"CREATE TRIGGER IF NOT EXISTS oauth2_clients_creation_trigger BEFORE INSERT ON oauth2_clients FOR EACH ROW",
-				"BEGIN",
-				"  IF (new.created_on is null)",
-				"  THEN",
-				"    SET new.created_on = UNIX_TIMESTAMP();",
-				"  END IF;",
-				"END;",
-			}, "\n"),
+			Script:      buildCreationTriggerScript("oauth2_clients"),
 		},
 		{
-			Version:     7,
+			Version:     0.08,
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -129,20 +146,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     8,
+			Version:     0.09,
 			Description: "create webhooks table creation trigger",
-			Script: strings.Join([]string{
-				"CREATE TRIGGER IF NOT EXISTS webhooks_creation_trigger BEFORE INSERT ON webhooks FOR EACH ROW",
-				"BEGIN",
-				"  IF (new.created_on is null)",
-				"  THEN",
-				"    SET new.created_on = UNIX_TIMESTAMP();",
-				"  END IF;",
-				"END;",
-			}, "\n"),
+			Script:      buildCreationTriggerScript("webhooks"),
 		},
 		{
-			Version:     9,
+			Version:     0.10,
 			Description: "create audit log table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS audit_log (",
@@ -155,20 +164,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     10,
+			Version:     0.11,
 			Description: "create audit_log table creation trigger",
-			Script: strings.Join([]string{
-				"CREATE TRIGGER IF NOT EXISTS audit_log_creation_trigger BEFORE INSERT ON audit_log FOR EACH ROW",
-				"BEGIN",
-				"  IF (new.created_on is null)",
-				"  THEN",
-				"    SET new.created_on = UNIX_TIMESTAMP();",
-				"  END IF;",
-				"END;",
-			}, "\n"),
+			Script:      buildCreationTriggerScript("audit_log"),
 		},
 		{
-			Version:     11,
+			Version:     0.12,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -185,17 +186,9 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     12,
+			Version:     0.13,
 			Description: "create items table creation trigger",
-			Script: strings.Join([]string{
-				"CREATE TRIGGER IF NOT EXISTS items_creation_trigger BEFORE INSERT ON items FOR EACH ROW",
-				"BEGIN",
-				"  IF (new.created_on is null)",
-				"  THEN",
-				"    SET new.created_on = UNIX_TIMESTAMP();",
-				"  END IF;",
-				"END;",
-			}, "\n"),
+			Script:      buildCreationTriggerScript("items"),
 		},
 	}
 )

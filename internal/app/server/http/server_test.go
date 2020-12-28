@@ -22,7 +22,7 @@ func buildTestServer() *Server {
 		serverSettings:       Config{},
 		frontendSettings:     frontendservice.Config{},
 		encoder:              &mockencoding.EncoderDecoder{},
-		httpServer:           provideHTTPServer(),
+		httpServer:           provideHTTPServer(8888),
 		frontendService:      &mocktypes.FrontendService{},
 		webhooksService:      &mocktypes.WebhookDataServer{},
 		usersService:         &mocktypes.UserDataServer{},

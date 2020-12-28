@@ -32,8 +32,8 @@ func (m *EncoderDecoder) EncodeErrorResponse(res http.ResponseWriter, msg string
 	res.WriteHeader(statusCode)
 }
 
-// EncodeNoInputResponse satisfies our EncoderDecoder interface.
-func (m *EncoderDecoder) EncodeNoInputResponse(res http.ResponseWriter) {
+// EncodeInvalidInputResponse satisfies our EncoderDecoder interface.
+func (m *EncoderDecoder) EncodeInvalidInputResponse(res http.ResponseWriter) {
 	m.Called(res)
 	res.WriteHeader(http.StatusBadRequest)
 }

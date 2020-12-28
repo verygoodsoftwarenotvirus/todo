@@ -397,7 +397,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNoInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -739,7 +739,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNoInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -754,7 +754,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeErrorResponse", mock.Anything, "invalid request", http.StatusUnauthorized)
+		ed.On("EncodeUnauthorizedResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
@@ -972,7 +972,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNoInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		s.TOTPSecretVerificationHandler(res, req)
@@ -1179,7 +1179,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNoInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -1196,7 +1196,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeErrorResponse", mock.Anything, "invalid request", http.StatusUnauthorized)
+		ed.On("EncodeUnauthorizedResponse", mock.Anything)
 		s.encoderDecoder = ed
 
 		exampleInput := fakes.BuildFakePasswordUpdateInput()

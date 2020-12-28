@@ -7,9 +7,11 @@
   cookie_lifetime = "24h0m0s"
   cookie_name = "todocookie"
   cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
+  debug = false
   enable_user_signup = true
   minimum_password_length = 8
   minimum_username_length = 4
+  secure_cookies_only = false
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
@@ -19,18 +21,19 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$dYRU5TPlsSbXw5ZGAELdGOodbEjJ2g2QoxLKu2U184jFnU3ZZUC0G"
+    hashed_password = "$2a$11$r2MhtJME8wJEU4N5Fwd89.Noaw9.IB5qMi51r5J.hIvJT57ylai2y"
     is_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
 
 [frontend]
+  cache_static_files = false
+  debug = false
   static_files_directory = "/frontend"
 
 [meta]
   debug = false
   run_mode = "testing"
-  startup_deadline = "1m0s"
 
 [metrics]
   metrics_provider = "prometheus"
@@ -44,6 +47,17 @@
 [server]
   debug = false
   http_port = 8888
+  startup_deadline = "1m0s"
+
+[uploads]
+
+  [uploads.storage_config]
+    debug = false
+    name = "avatars"
+    provider = "filesystem"
+
+    [uploads.storage_config.filesystem]
+      root_directory = "artifacts"
 
 [webhooks]
   enabled = false

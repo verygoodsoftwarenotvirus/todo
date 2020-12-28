@@ -54,7 +54,7 @@ type (
 		Observability observability.Config   `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
 		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
-		Upload        uploadconfig.Config    `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Uploads       uploadconfig.Config    `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Server        httpserver.Config      `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		Webhooks      webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`

@@ -24,7 +24,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	input, ok := ctx.Value(accountStatusUpdateMiddlewareCtxKey).(*types.AccountStatusUpdateInput)
 	if !ok || input == nil {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 		return
 	}
 

@@ -130,7 +130,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.OAuth2ClientCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeNoInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(res)
 		return
 	}
 

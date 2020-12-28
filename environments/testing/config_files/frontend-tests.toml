@@ -26,8 +26,8 @@
   static_files_directory = "/frontend"
 
 [meta]
+  debug = false
   run_mode = "development"
-  startup_deadline = "1m0s"
 
 [metrics]
   metrics_provider = "prometheus"
@@ -41,6 +41,17 @@
 [server]
   debug = true
   http_port = 8888
+  startup_deadline = "1m0s"
+
+[uploads]
+
+  [uploads.storage_config]
+    debug = true
+    name = "avatars"
+    provider = "filesystem"
+
+    [uploads.storage_config.filesystem]
+      root_directory = "artifacts"
 
 [webhooks]
   enabled = false

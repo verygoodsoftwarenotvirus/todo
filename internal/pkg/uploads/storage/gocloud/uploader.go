@@ -61,7 +61,7 @@ func (c *UploaderConfig) Validate(ctx context.Context) error {
 }
 
 // NewUploadManager provides a new uploads.UploadManager.
-func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *UploaderConfig) (uploads.UploadManager, error) {
+func NewUploadManager(ctx context.Context, logger logging.Logger, cfg UploaderConfig) (uploads.UploadManager, error) {
 	serviceName := fmt.Sprintf("%s_uploader", cfg.Name)
 	u := &Uploader{
 		logger: logger.WithName(serviceName),
@@ -81,7 +81,7 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *UploaderC
 	return u, nil
 }
 
-func selectBucket(ctx context.Context, logger logging.Logger, cfg *UploaderConfig) (bucket *blob.Bucket, err error) {
+func selectBucket(ctx context.Context, logger logging.Logger, cfg UploaderConfig) (bucket *blob.Bucket, err error) {
 	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
 	case AzureProvider:
 		if cfg.AzureConfig == nil {

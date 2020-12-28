@@ -20,13 +20,20 @@ const (
 	imageGIF  = "image/gif"
 )
 
-// Image is a helper struct for handling images.
-type Image struct {
-	Filename    string
-	ContentType string
-	Data        []byte
-	Size        int
-}
+type (
+	// Image is a helper struct for handling images.
+	Image struct {
+		Filename    string
+		ContentType string
+		Data        []byte
+		Size        int
+	}
+
+	// ImageUploadProcessor process image uploads.
+	ImageUploadProcessor interface {
+		Process(r *http.Request, filename string) (*Image, error)
+	}
+)
 
 // DataURI converts image to base64 data URI.
 func (i *Image) DataURI() string {
@@ -53,11 +60,6 @@ func (i *Image) Thumbnail(width, height uint, quality int, filename string) (*Im
 	}
 
 	return t.Thumbnail(i, width, height, filename)
-}
-
-// ImageUploadProcessor process image uploads.
-type ImageUploadProcessor interface {
-	Process(r *http.Request, filename string) (*Image, error)
 }
 
 type imageUploadProcessor struct {

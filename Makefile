@@ -13,23 +13,26 @@ FRONTEND_TOOL                 := pnpm
 
 ## non-PHONY folders/files
 
+clear:
+	@printf "\033[2J\033[3J\033[1;1H"
+
 clean:
 	rm --recursive --force $(ARTIFACTS_DIR)
 
 $(ARTIFACTS_DIR):
 	@mkdir --parents $(ARTIFACTS_DIR)
 
-clean_$(ARTIFACTS_DIR):
+clean-$(ARTIFACTS_DIR):
 	@rm --recursive --force $(ARTIFACTS_DIR)
 
 $(SEARCH_INDICES_DIR):
 	@mkdir --parents $(SEARCH_INDICES_DIR)
 
-clean_search_indices:
+clean-search-indices:
 	@rm --recursive --force $(SEARCH_INDICES_DIR)
 
 .PHONY: setup
-setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend_vendor rewire configs
+setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend-vendor rewire configs
 
 .PHONY: configs
 configs:
@@ -37,18 +40,18 @@ configs:
 
 ## Go-specific prerequisite stuff
 
-ensure_wire:
+ensure-wire:
 ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go get -u github.com/google/wire/cmd/wire)
 endif
 
-ensure_pnpm:
+ensure-pnpm:
 ifndef $(shell command -v pnpm 2> /dev/null)
 	$(shell npm install -g pnpm)
 endif
 
-.PHONY: clean_vendor
-clean_vendor:
+.PHONY: clean-vendor
+clean-vendor:
 	rm --recursive --force vendor go.sum
 
 vendor:
@@ -56,70 +59,70 @@ vendor:
 	go mod vendor
 
 .PHONY: revendor
-revendor: clean_vendor vendor frontend_vendor
+revendor: clean-vendor vendor frontend-vendor
 
 ## dependency injection
 
-.PHONY: clean_wire
-clean_wire:
+.PHONY: clean-wire
+clean-wire:
 	rm -f cmd/server/wire_gen.go
 
 .PHONY: wire
-wire: ensure_wire vendor
+wire: ensure-wire vendor
 	wire gen $(THIS)/cmd/server
 
 .PHONY: rewire
-rewire: ensure_wire clean_wire wire
+rewire: ensure-wire clean-wire wire
 
 ## Frontend stuff
 
-.PHONY: clean_frontend
-clean_frontend:
+.PHONY: clean-frontend
+clean-frontend:
 	@(cd $(FRONTEND_DIR) && rm --recursive --force dist/build/)
 
-.PHONY: frontend_vendor
-frontend_vendor:
+.PHONY: frontend-vendor
+frontend-vendor:
 	@(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) install)
 
-.PHONY: dev_frontend
-dev_frontend: ensure_pnpm clean_frontend
+.PHONY: dev-frontend
+dev-frontend: ensure-pnpm clean-frontend
 	@(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run autobuild)
 
-# frontend_only runs a simple static server that powers the frontend of the application. In this mode, all API calls are
+# frontend-only runs a simple static server that powers the frontend of the application. In this mode, all API calls are
 # skipped, and data on the page is faked. This is useful for making changes that don't require running the entire service.
-.PHONY: frontend_only
-frontend_only: ensure_pnpm clean_frontend
-	@(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run frontend_only)
+.PHONY: frontend-only
+frontend-only: ensure-pnpm clean-frontend
+	@(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run start:frontend-only)
 
 ## formatting
 
-.PHONY: format_frontend
-format_frontend:
+.PHONY: format-frontend
+format-frontend:
 	(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run format)
 
-.PHONY: format_backend
-format_backend:
+.PHONY: format-backend
+format-backend:
 	for file in `find $(PWD) -name '*.go'`; do $(GO_FORMAT) $$file; done
 
 .PHONY: format
-format: format_backend format_frontend
+format: format-backend format-frontend
 
-.PHONY: check_backend_formatting
-check_backend_formatting: vendor
-	docker build --tag check_formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
-	docker run --rm check_formatting:latest
+.PHONY: check-backend-formatting
+check-backend-formatting: vendor
+	docker build --tag check-formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
+	docker run --rm check-formatting:latest
 
-.PHONY: check_frontend_formatting
-check_frontend_formatting:
-	(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run format_check)
+.PHONY: check-frontend-formatting
+check-frontend-formatting:
+	(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run format:check)
 
-.PHONY: check_formatting
-check_formatting: check_backend_formatting check_frontend_formatting
+.PHONY: check-formatting
+check-formatting: check-backend-formatting check-frontend-formatting
 
 ## Testing things
 
-.PHONY: docker_security_lint
-docker_security_lint:
+.PHONY: docker-security-lint
+docker-security-lint:
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:latest test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
 
 .PHONY: lint
@@ -132,12 +135,12 @@ lint:
 		--env=GO111MODULE=on \
 		golangci/golangci-lint:latest golangci-lint run --config=.golangci.yml ./...
 
-.PHONY: clean_coverage
-clean_coverage:
+.PHONY: clean-coverage
+clean-coverage:
 	@rm -f $(COVERAGE_OUT) profile.out;
 
 .PHONY: coverage
-coverage: clean_coverage $(ARTIFACTS_DIR)
+coverage: clean-coverage $(ARTIFACTS_DIR)
 	@go test -coverprofile=$(COVERAGE_OUT) -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
 	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
 
@@ -145,8 +148,8 @@ coverage: clean_coverage $(ARTIFACTS_DIR)
 quicktest: $(ARTIFACTS_DIR) vendor
 	go test -cover -race -failfast $(PACKAGE_LIST)
 
-.PHONY: frontend_tests
-frontend_tests:
+.PHONY: frontend-tests
+frontend-tests:
 	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/frontend-tests.yaml up \
 	--build \
 	--force-recreate \
@@ -157,14 +160,14 @@ frontend_tests:
 
 ## Integration tests
 
-.PHONY: lintegration_tests # this is just a handy lil' helper I use sometimes
-lintegration_tests: lint integration_tests
+.PHONY: lintegration-tests # this is just a handy lil' helper I use sometimes
+lintegration-tests: lint clear integration-tests
 
-.PHONY: integration_tests
-integration_tests: integration_tests_sqlite integration_tests_postgres integration_tests_mariadb
+.PHONY: integration-tests
+integration-tests: integration-tests-sqlite integration-tests-postgres integration-tests-mariadb
 
-.PHONY: integration_tests_
-integration_tests_%:
+.PHONY: integration-tests-
+integration-tests-%:
 	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-$*.yaml up \
 	--build \
 	--force-recreate \
@@ -172,8 +175,8 @@ integration_tests_%:
 	--renew-anon-volumes \
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
-.PHONY: integration_coverage
-integration_coverage: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) configs
+.PHONY: integration-coverage
+integration-coverage: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) configs
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f $(ARTIFACTS_DIR)/integration-coverage.out
 	@mkdir --parents $(ARTIFACTS_DIR)
@@ -188,11 +191,11 @@ integration_coverage: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_D
 
 ## Load tests
 
-.PHONY: load_tests
-load_tests: load_tests_sqlite load_tests_postgres load_tests_mariadb
+.PHONY: load-tests
+load-tests: load-tests-sqlite load-tests-postgres load-tests-mariadb
 
-.PHONY: load_tests_
-load_tests_%:
+.PHONY: load-tests-
+load-tests-%:
 	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-$*.yaml up \
 	--build \
 	--force-recreate \
@@ -203,7 +206,7 @@ load_tests_%:
 ## Running
 
 .PHONY: dev
-dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR)
+dev: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR)
 	docker-compose --file environments/local/docker-compose.yaml up \
 	--build \
 	--force-recreate \
@@ -211,12 +214,12 @@ dev: clean_$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR)
 	--renew-anon-volumes \
 	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
 
-.PHONY: dev_user
-dev_user:
+.PHONY: dev-user
+dev-user:
 	go run $(THIS)/cmd/tools/data_scaffolder --url=http://localhost --count=1 --single-user-mode --debug
 
-.PHONY: load_data_for_admin
-load_data_for_admin:
+.PHONY: load-data-for-admin
+load-data-for-admin:
 	go run $(THIS)/cmd/tools/data_scaffolder --url=http://localhost --count=5 --debug
 
 ## misc

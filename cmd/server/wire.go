@@ -23,6 +23,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
+	uploadconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage/gocloud"
 
 	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -48,6 +51,9 @@ func BuildServer(
 		httpserver.Providers,
 		metrics.Providers,
 		dbconfig.Providers,
+		images.Providers,
+		uploadconfig.Providers,
+		gocloud.Providers,
 		// services,
 		adminservice.Providers,
 		auditservice.Providers,

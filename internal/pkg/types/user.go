@@ -60,6 +60,8 @@ type (
 		AdminPermissions          bitmask.AdminPermissionsBitmask `json:"adminPermissions"`
 		IsAdmin                   bool                            `json:"isAdmin"`
 		RequiresPasswordChange    bool                            `json:"requiresPasswordChange"`
+		Avatar                    *string                         `json:"avatar"`
+		PlanID                    uint64                          `json:"planID"`
 	}
 
 	// TestUserCreationConfig is a helper struct because of cyclical imports.

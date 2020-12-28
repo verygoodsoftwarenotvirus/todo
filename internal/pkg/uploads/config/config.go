@@ -14,13 +14,14 @@ type Config struct {
 	Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 	// Provider indicates what database we'll connect to (postgres, mysql, etc.)
 	Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-	// StorageConfig configures our storage provider
-	StorageConfig *gocloud.UploaderConfig `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
+	// Storage configures our storage provider
+	Storage gocloud.UploaderConfig `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
 }
 
 // Validate validates an Config struct.
-func (cfg Config) Validate(ctx context.Context) error {
+func (cfg *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &cfg,
-		validation.Field(&cfg.StorageConfig),
+		validation.Field(&cfg.Provider),
+		validation.Field(&cfg.Storage),
 	)
 }

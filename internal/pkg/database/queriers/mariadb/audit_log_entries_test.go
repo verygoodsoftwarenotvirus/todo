@@ -474,7 +474,6 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-
 		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).

@@ -177,6 +177,56 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	return c.querier.ArchiveUser(ctx, userID)
 }
 
+// LogUserCreationEvent implements our AuditLogDataManager interface.
+func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, user.ID).Debug("LogUserCreationEvent called")
+
+	c.querier.LogUserCreationEvent(ctx, user)
+}
+
+// LogUserVerifyTwoFactorSecretEvent implements our AuditLogDataManager interface.
+func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserVerifyTwoFactorSecretEvent called")
+
+	c.querier.LogUserVerifyTwoFactorSecretEvent(ctx, userID)
+}
+
+// LogUserUpdateTwoFactorSecretEvent implements our AuditLogDataManager interface.
+func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdateTwoFactorSecretEvent called")
+
+	c.querier.LogUserUpdateTwoFactorSecretEvent(ctx, userID)
+}
+
+// LogUserUpdatePasswordEvent implements our AuditLogDataManager interface.
+func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdatePasswordEvent called")
+
+	c.querier.LogUserUpdatePasswordEvent(ctx, userID)
+}
+
+// LogUserArchiveEvent implements our AuditLogDataManager interface.
+func (c *Client) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserArchiveEvent called")
+
+	c.querier.LogUserArchiveEvent(ctx, userID)
+}
+
 // GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.
 func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)

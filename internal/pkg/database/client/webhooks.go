@@ -103,6 +103,36 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 	return c.querier.ArchiveWebhook(ctx, webhookID, userID)
 }
 
+// LogWebhookCreationEvent implements our AuditLogDataManager interface.
+func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
+
+	c.querier.LogWebhookCreationEvent(ctx, webhook)
+}
+
+// LogWebhookUpdateEvent implements our AuditLogDataManager interface.
+func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookUpdateEvent called")
+
+	c.querier.LogWebhookUpdateEvent(ctx, userID, webhookID, changes)
+}
+
+// LogWebhookArchiveEvent implements our AuditLogDataManager interface.
+func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookArchiveEvent called")
+
+	c.querier.LogWebhookArchiveEvent(ctx, userID, webhookID)
+}
+
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.
 func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)

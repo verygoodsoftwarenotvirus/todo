@@ -257,7 +257,7 @@ func (q *MariaDB) GetItems(ctx context.Context, userID uint64, filter *types.Que
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("fetching items from database: %w", err)
+		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
 	items, count, err := q.scanItems(rows, true)

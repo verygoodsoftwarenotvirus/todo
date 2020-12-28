@@ -3,7 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
+	sqldriver "database/sql/driver"
 	"errors"
 	"testing"
 	"time"
@@ -29,7 +29,7 @@ func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*typ
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, x := range auditLogEntries {
-		rowValues := []driver.Value{
+		rowValues := []sqldriver.Value{
 			x.ID,
 			x.EventType,
 			x.Context,

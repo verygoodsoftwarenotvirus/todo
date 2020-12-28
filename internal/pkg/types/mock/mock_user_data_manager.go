@@ -77,3 +77,34 @@ func (m *UserDataManager) UpdateUserPassword(ctx context.Context, userID uint64,
 func (m *UserDataManager) ArchiveUser(ctx context.Context, userID uint64) error {
 	return m.Called(ctx, userID).Error(0)
 }
+
+// LogUserCreationEvent implements our interface.
+func (m *AuditLogDataManager) LogUserCreationEvent(ctx context.Context, user *types.User) {
+	m.Called(ctx, user)
+}
+
+// LogUserVerifyTwoFactorSecretEvent implements our interface.
+func (m *AuditLogDataManager) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUserUpdateTwoFactorSecretEvent implements our interface.
+func (m *AuditLogDataManager) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUserUpdatePasswordEvent implements our interface.
+func (m *AuditLogDataManager) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// LogUserArchiveEvent implements our interface.
+func (m *AuditLogDataManager) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	m.Called(ctx, userID)
+}
+
+// GetAuditLogEntriesForUser is a mock function.
+func (m *AuditLogDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
+}

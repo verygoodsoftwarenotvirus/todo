@@ -17,6 +17,12 @@ const (
 	UnsuccessfulLoginBadPasswordEvent = "user_login_failed_bad_password"
 	// UnsuccessfulLoginBad2FATokenEvent events indicate a user attempted to authenticate into the service, but failed because of a faulty two factor token.
 	UnsuccessfulLoginBad2FATokenEvent = "user_login_failed_bad_2FA_token"
+	// PlanCreationEvent events indicate a user created a plan.
+	PlanCreationEvent = "plan_created"
+	// PlanUpdateEvent events indicate a user updated a plan.
+	PlanUpdateEvent = "plan_updated"
+	// PlanArchiveEvent events indicate a user deleted a plan.
+	PlanArchiveEvent = "plan_archived"
 	// ItemCreationEvent events indicate a user created an item.
 	ItemCreationEvent = "item_created"
 	// ItemUpdateEvent events indicate a user updated an item.

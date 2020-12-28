@@ -53,6 +53,7 @@ type (
 		BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 
 		types.AdminUserDataManager
+		types.PlanDataManager
 		types.UserDataManager
 		types.AuditLogDataManager
 		types.OAuth2ClientDataManager
@@ -60,6 +61,7 @@ type (
 		types.ItemDataManager
 
 		types.AdminAuditManager
+		types.PlanAuditManager
 		types.AuthAuditManager
 		types.UserAuditManager
 		types.OAuth2ClientAuditManager

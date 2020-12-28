@@ -209,7 +209,7 @@ func (q *MariaDB) GetAuditLogEntries(ctx context.Context, filter *types.QueryFil
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("fetching audit log entries from database: %w", err)
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
 	auditLogEntries, count, err := q.scanAuditLogEntries(rows, true)

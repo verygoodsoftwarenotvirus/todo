@@ -34,15 +34,15 @@ type (
 
 	// ItemCreationInput represents what a User could set as input for creating items.
 	ItemCreationInput struct {
-		Name          string `validate:"required" json:"name"`
-		Details       string `validate:"required" json:"details"`
+		Name          string `json:"name"`
+		Details       string `json:"details"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
 	// ItemUpdateInput represents what a User could set as input for updating items.
 	ItemUpdateInput struct {
-		Name          string `validate:"required" json:"name"`
-		Details       string `validate:"required" json:"details"`
+		Name          string `json:"name"`
+		Details       string `json:"details"`
 		BelongsToUser uint64 `json:"-"`
 	}
 

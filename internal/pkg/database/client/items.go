@@ -169,6 +169,36 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	return c.querier.ArchiveItem(ctx, itemID, userID)
 }
 
+// LogItemCreationEvent implements our AuditLogDataManager interface.
+func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, item.BelongsToUser).Debug("LogItemCreationEvent called")
+
+	c.querier.LogItemCreationEvent(ctx, item)
+}
+
+// LogItemUpdateEvent implements our AuditLogDataManager interface.
+func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []types.FieldChangeSummary) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemUpdateEvent called")
+
+	c.querier.LogItemUpdateEvent(ctx, userID, itemID, changes)
+}
+
+// LogItemArchiveEvent implements our AuditLogDataManager interface.
+func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemArchiveEvent called")
+
+	c.querier.LogItemArchiveEvent(ctx, userID, itemID)
+}
+
 // GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.
 func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)

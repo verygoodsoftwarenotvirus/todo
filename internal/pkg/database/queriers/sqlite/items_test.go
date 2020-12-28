@@ -129,8 +129,8 @@ func TestSqlite_ItemExists(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		q, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := q.buildItemExistsQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
-		expectedQuery, expectedArgs := q.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
@@ -151,8 +151,8 @@ func TestSqlite_ItemExists(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		q, mockDB := buildTestService(t)
+		expectedQuery, expectedArgs := q.buildItemExistsQuery(exampleItem.ID, exampleItem.BelongsToUser)
 
-		expectedQuery, expectedArgs := q.buildItemExistsQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)

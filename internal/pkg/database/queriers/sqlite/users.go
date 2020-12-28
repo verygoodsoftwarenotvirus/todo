@@ -38,6 +38,7 @@ func (q *Sqlite) scanUser(scan database.Scanner, includeCount bool) (*types.User
 		&perms,
 		&x.AccountStatus,
 		&x.AccountStatusExplanation,
+		&x.PlanID,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,

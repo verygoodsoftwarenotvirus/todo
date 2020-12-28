@@ -3,7 +3,7 @@ package mariadb
 import (
 	"context"
 	"database/sql"
-	sqldriver "database/sql/driver"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"testing"
@@ -29,7 +29,7 @@ func buildMockRowsFromItems(includeCount bool, items ...*types.Item) *sqlmock.Ro
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, x := range items {
-		rowValues := []sqldriver.Value{
+		rowValues := []driver.Value{
 			x.ID,
 			x.Name,
 			x.Details,
@@ -257,9 +257,10 @@ func TestMariaDB_GetAllItemsCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
+		expectedQuery := q.buildGetAllItemsCountQuery()
 		expectedCount := uint64(123)
 
 		q, mockDB := buildTestService(t)
@@ -305,17 +306,16 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
 		exampleItemList := fakes.BuildFakeItemList()
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedGetQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromItems(
@@ -351,9 +351,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
@@ -368,16 +366,15 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedGetQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
@@ -394,16 +391,15 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedGetQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
@@ -426,11 +422,11 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedGetQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
+		expectedQuery, expectedArgs := q.buildGetBatchOfItemsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedGetQuery)).
+		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
@@ -564,7 +560,6 @@ func TestMariaDB_GetItems(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 
 		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
-
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))

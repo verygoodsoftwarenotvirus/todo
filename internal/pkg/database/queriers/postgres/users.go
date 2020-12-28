@@ -40,6 +40,7 @@ func (q *Postgres) scanUser(scan database.Scanner, includeCount bool) (*types.Us
 		&perms,
 		&x.AccountStatus,
 		&x.AccountStatusExplanation,
+		&x.PlanID,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,

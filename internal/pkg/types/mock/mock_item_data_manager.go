@@ -78,3 +78,24 @@ func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item) e
 func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	return m.Called(ctx, itemID, userID).Error(0)
 }
+
+// LogItemCreationEvent implements our interface.
+func (m *AuditLogDataManager) LogItemCreationEvent(ctx context.Context, item *types.Item) {
+	m.Called(ctx, item)
+}
+
+// LogItemUpdateEvent implements our interface.
+func (m *AuditLogDataManager) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []types.FieldChangeSummary) {
+	m.Called(ctx, userID, itemID, changes)
+}
+
+// LogItemArchiveEvent implements our interface.
+func (m *AuditLogDataManager) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
+	m.Called(ctx, userID, itemID)
+}
+
+// GetAuditLogEntriesForItem is a mock function.
+func (m *AuditLogDataManager) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
+	args := m.Called(ctx, itemID)
+	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
+}

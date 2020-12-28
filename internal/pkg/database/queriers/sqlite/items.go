@@ -18,9 +18,10 @@ var _ types.ItemDataManager = (*Sqlite)(nil)
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
 func (q *Sqlite) scanItem(scan database.Scanner, includeCount bool) (*types.Item, uint64, error) {
-	x := &types.Item{}
-
-	var count uint64
+	var (
+		x     = &types.Item{}
+		count uint64
+	)
 
 	targetVars := []interface{}{
 		&x.ID,
@@ -231,7 +232,7 @@ func (q *Sqlite) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) (q
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
 	q.logQueryBuildingError(err)
 
-	itemsQueryBuilder := q.sqlBuilder.
+	builder := q.sqlBuilder.
 		Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
@@ -241,10 +242,10 @@ func (q *Sqlite) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) (q
 		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
 
 	if filter != nil {
-		itemsQueryBuilder = queriers.ApplyFilterToQueryBuilder(filter, itemsQueryBuilder, queriers.ItemsTableName)
+		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.ItemsTableName)
 	}
 
-	query, selectArgs, err := itemsQueryBuilder.ToSql()
+	query, selectArgs, err := builder.ToSql()
 	q.logQueryBuildingError(err)
 
 	return query, append(countQueryArgs, selectArgs...)
@@ -505,9 +506,9 @@ func (q *Sqlite) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	id, err := res.LastInsertId()
 	q.logIDRetrievalError(err)
 
-	x.ID = uint64(id)
 	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = q.timeTeller.Now()
+	x.ID = uint64(id)
 
 	return x, nil
 }

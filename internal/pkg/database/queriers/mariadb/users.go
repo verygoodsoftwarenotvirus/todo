@@ -38,6 +38,7 @@ func (q *MariaDB) scanUser(scan database.Scanner, includeCount bool) (*types.Use
 		&perms,
 		&x.AccountStatus,
 		&x.AccountStatusExplanation,
+		&x.PlanID,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,

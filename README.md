@@ -10,7 +10,7 @@ The following tools are prerequisites for development work:
 - [go](https://golang.org/)
 - [node.js](https://nodejs.org/)
 - [pnpm](https://pnpm.js.org/)
-- [docker](https://docs.docker.com/get-docker/)
+- [docker](https://docs.docker.com/get-docker/) or [podman](https://podman.io/)
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [wire](https://github.com/google/wire) for dependency management
 

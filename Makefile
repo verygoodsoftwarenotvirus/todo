@@ -3,13 +3,13 @@ GOPATH                        := $(GOPATH)
 ARTIFACTS_DIR                 := artifacts
 COVERAGE_OUT                  := $(ARTIFACTS_DIR)/coverage.out
 SEARCH_INDICES_DIR            := $(ARTIFACTS_DIR)/search_indices
-DOCKER_GO                     := docker run --interactive --tty --rm --volume $(PWD):$(PWD) --user `whoami`:`whoami` --workdir=$(PWD) golang:latest go
 GO_FORMAT                     := gofmt -s -w
 THIS                          := gitlab.com/verygoodsoftwarenotvirus/todo
 PACKAGE_LIST                  := `go list $(THIS)/... | grep -Ev '(cmd|tests|testutil|mock|fake)'`
 TEST_DOCKER_COMPOSE_FILES_DIR := environments/testing/compose_files
 FRONTEND_DIR                  := frontend
 FRONTEND_TOOL                 := pnpm
+CONTAINER_RUNNER              := $(if $(shell command -v podman 2> /dev/null),podman,docker)
 
 ## non-PHONY folders/files
 
@@ -38,7 +38,7 @@ setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend-vendor rewire co
 configs:
 	go run cmd/tools/config_gen/main.go
 
-## Go-specific prerequisite stuff
+## prerequisites
 
 ensure-wire:
 ifndef $(shell command -v wire 2> /dev/null)
@@ -109,8 +109,8 @@ format: format-backend format-frontend
 
 .PHONY: check-backend-formatting
 check-backend-formatting: vendor
-	docker build --tag check-formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
-	docker run --rm check-formatting:latest
+	$(CONTAINER_RUNNER) build --tag check-formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
+	$(CONTAINER_RUNNER) run --rm check-formatting:latest
 
 .PHONY: check-frontend-formatting
 check-frontend-formatting:
@@ -123,12 +123,12 @@ check-formatting: check-backend-formatting check-frontend-formatting
 
 .PHONY: docker-security-lint
 docker-security-lint:
-	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:latest test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
+	$(CONTAINER_RUNNER) run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:v0.21.0 test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
 
 .PHONY: lint
 lint:
-	@docker pull golangci/golangci-lint:latest
-	docker run \
+	@podman pull golangci/golangci-lint:latest
+	$(CONTAINER_RUNNER) run \
 		--rm \
 		--volume `pwd`:`pwd` \
 		--workdir=`pwd` \

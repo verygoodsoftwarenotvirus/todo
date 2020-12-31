@@ -21,7 +21,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$0mOTsJorKV4zXUI5BpCO4.Ll09s0gZ8pVOFYSQyMrBlxGYZYLnc52"
+    hashed_password = "$2a$11$B1zVrpAZODufhxEFf6EaZOl1nbv.BwUs73N7fgBBkeiHzg8/RYtoC"
     is_admin = false
     password = "password"
     username = "coverageUser"

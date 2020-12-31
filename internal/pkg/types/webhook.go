@@ -6,7 +6,6 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/newsman"
 )
 
 type (
@@ -167,23 +166,6 @@ func buildErrorLogFunc(w *Webhook, logger logging.Logger) func(error) {
 			"content_type": w.ContentType,
 		}).Error(err, "error executing webhook")
 	}
-}
-
-// ToListener creates a newsman Listener from a Webhook.
-func (w *Webhook) ToListener(logger logging.Logger) newsman.Listener {
-	return newsman.NewWebhookListener(
-		buildErrorLogFunc(w, logger),
-		&newsman.WebhookConfig{
-			Method:      w.Method,
-			URL:         w.URL,
-			ContentType: w.ContentType,
-		},
-		&newsman.ListenerConfig{
-			Events:    w.Events,
-			DataTypes: w.DataTypes,
-			Topics:    w.Topics,
-		},
-	)
 }
 
 // Validate validates a WebhookCreationInput.

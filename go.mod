@@ -42,7 +42,6 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/tebeka/selenium v0.9.9
 	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
-	gitlab.com/verygoodsoftwarenotvirus/newsman v1.0.1
 	go.opencensus.io v0.22.5
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.15.1
 	go.opentelemetry.io/otel v0.15.0

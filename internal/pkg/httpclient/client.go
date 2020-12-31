@@ -76,7 +76,7 @@ func (c *Client) TokenSource() oauth2.TokenSource {
 	return c.tokenSource
 }
 
-// TokenSource provides the client's token source.
+// URL provides the client's URL.
 func (c *Client) URL() *url.URL {
 	return c.url
 }

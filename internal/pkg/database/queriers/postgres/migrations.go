@@ -40,6 +40,7 @@ var (
 			CREATE TABLE IF NOT EXISTS users (
 				"id" BIGSERIAL NOT NULL PRIMARY KEY,
 				"username" TEXT NOT NULL,
+				"avatar_src" TEXT,
 				"hashed_password" TEXT NOT NULL,
 				"salt" BYTEA NOT NULL,
 				"password_last_changed_on" INTEGER,

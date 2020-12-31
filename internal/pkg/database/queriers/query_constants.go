@@ -68,6 +68,8 @@ const (
 	UsersTableStatusExplanationColumn = "status_explanation"
 	// UsersTablePlanIDColumn is what the users table calls the <> column.
 	UsersTablePlanIDColumn = "plan_id"
+	// UsersTableAvatarColumn is what the users table calls the <> column.
+	UsersTableAvatarColumn = "avatar_src"
 
 	//
 	// Audit Log Entries Table.
@@ -168,6 +170,7 @@ var (
 	UsersTableColumns = []string{
 		fmt.Sprintf("%s.%s", UsersTableName, IDColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableUsernameColumn),
+		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAvatarColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableHashedPasswordColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableSaltColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableRequiresPasswordChangeColumn),

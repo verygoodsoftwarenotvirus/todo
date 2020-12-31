@@ -550,7 +550,7 @@ func (s *service) UpdateAvatarHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	user.Avatar = s.determineAvatarWebPath(internalPath)
+	user.AvatarSrc = s.determineAvatarWebPath(internalPath)
 
 	if userUpdateErr := s.userDataManager.UpdateUser(ctx, user); userUpdateErr != nil {
 		logger.WithValue("file_size", len(img.Data)).Error(userUpdateErr, "updating user info")

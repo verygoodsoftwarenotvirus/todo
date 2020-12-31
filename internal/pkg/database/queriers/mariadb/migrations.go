@@ -60,6 +60,7 @@ var (
 				"CREATE TABLE IF NOT EXISTS users (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `username` VARCHAR(128) NOT NULL,",
+				"    `avatar_src` VARCHAR(4096) NOT NULL DEFAULT '',",
 				"    `hashed_password` VARCHAR(100) NOT NULL,",
 				"    `salt` BINARY(16) NOT NULL,",
 				"    `requires_password_change` BOOLEAN NOT NULL DEFAULT false,",

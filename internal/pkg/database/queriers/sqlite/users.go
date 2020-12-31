@@ -28,6 +28,7 @@ func (q *Sqlite) scanUser(scan database.Scanner, includeCount bool) (*types.User
 	targetVars := []interface{}{
 		&x.ID,
 		&x.Username,
+		&x.AvatarSrc,
 		&x.HashedPassword,
 		&x.Salt,
 		&x.RequiresPasswordChange,

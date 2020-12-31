@@ -40,6 +40,7 @@ var (
 			CREATE TABLE IF NOT EXISTS users (
 				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				"username" TEXT NOT NULL,
+				"avatar_src" TEXT,
 				"hashed_password" TEXT NOT NULL,
 				"salt" TINYBLOB NOT NULL,
 				"password_last_changed_on" INTEGER,

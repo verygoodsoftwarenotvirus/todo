@@ -30,6 +30,7 @@ func (q *Postgres) scanUser(scan database.Scanner, includeCount bool) (*types.Us
 	targetVars := []interface{}{
 		&x.ID,
 		&x.Username,
+		&x.AvatarSrc,
 		&x.HashedPassword,
 		&x.Salt,
 		&x.RequiresPasswordChange,

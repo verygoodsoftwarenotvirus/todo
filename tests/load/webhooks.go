@@ -11,7 +11,7 @@ import (
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks.
-func fetchRandomWebhook(c *httpclient.V1Client) *types.Webhook {
+func fetchRandomWebhook(c *httpclient.Client) *types.Webhook {
 	webhooks, err := c.GetWebhooks(context.Background(), nil)
 	if err != nil || webhooks == nil || len(webhooks.Webhooks) == 0 {
 		return nil
@@ -22,7 +22,7 @@ func fetchRandomWebhook(c *httpclient.V1Client) *types.Webhook {
 	return &webhooks.Webhooks[randIndex]
 }
 
-func buildWebhookActions(c *httpclient.V1Client) map[string]*Action {
+func buildWebhookActions(c *httpclient.Client) map[string]*Action {
 	return map[string]*Action{
 		"GetWebhooks": {
 			Name: "GetWebhooks",

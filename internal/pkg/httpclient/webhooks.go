@@ -15,7 +15,7 @@ const (
 )
 
 // BuildGetWebhookRequest builds an HTTP request for fetching a webhook.
-func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
+func (c *Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -25,7 +25,7 @@ func (c *V1Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http
 }
 
 // GetWebhook retrieves a webhook.
-func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *types.Webhook, err error) {
+func (c *Client) GetWebhook(ctx context.Context, id uint64) (webhook *types.Webhook, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -40,7 +40,7 @@ func (c *V1Client) GetWebhook(ctx context.Context, id uint64) (webhook *types.We
 }
 
 // BuildGetWebhooksRequest builds an HTTP request for fetching webhooks.
-func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
+func (c *Client) BuildGetWebhooksRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -50,7 +50,7 @@ func (c *V1Client) BuildGetWebhooksRequest(ctx context.Context, filter *types.Qu
 }
 
 // GetWebhooks gets a list of webhooks.
-func (c *V1Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (webhooks *types.WebhookList, err error) {
+func (c *Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (webhooks *types.WebhookList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -65,7 +65,7 @@ func (c *V1Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (
 }
 
 // BuildCreateWebhookRequest builds an HTTP request for creating a webhook.
-func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *types.WebhookCreationInput) (*http.Request, error) {
+func (c *Client) BuildCreateWebhookRequest(ctx context.Context, body *types.WebhookCreationInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -75,7 +75,7 @@ func (c *V1Client) BuildCreateWebhookRequest(ctx context.Context, body *types.We
 }
 
 // CreateWebhook creates a webhook.
-func (c *V1Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (webhook *types.Webhook, err error) {
+func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (webhook *types.Webhook, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -90,7 +90,7 @@ func (c *V1Client) CreateWebhook(ctx context.Context, input *types.WebhookCreati
 }
 
 // BuildUpdateWebhookRequest builds an HTTP request for updating a webhook.
-func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *types.Webhook) (*http.Request, error) {
+func (c *Client) BuildUpdateWebhookRequest(ctx context.Context, updated *types.Webhook) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -100,7 +100,7 @@ func (c *V1Client) BuildUpdateWebhookRequest(ctx context.Context, updated *types
 }
 
 // UpdateWebhook updates a webhook.
-func (c *V1Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
+func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -113,7 +113,7 @@ func (c *V1Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) er
 }
 
 // BuildArchiveWebhookRequest builds an HTTP request for updating a webhook.
-func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
+func (c *Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -123,7 +123,7 @@ func (c *V1Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*
 }
 
 // ArchiveWebhook archives a webhook.
-func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
+func (c *Client) ArchiveWebhook(ctx context.Context, id uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -136,7 +136,7 @@ func (c *V1Client) ArchiveWebhook(ctx context.Context, id uint64) error {
 }
 
 // BuildGetAuditLogForWebhookRequest builds an HTTP request for fetching a list of audit log entries pertaining to a webhook.
-func (c *V1Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookID uint64) (*http.Request, error) {
+func (c *Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -153,7 +153,7 @@ func (c *V1Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhoo
 }
 
 // GetAuditLogForWebhook retrieves a list of audit log entries pertaining to a webhook.
-func (c *V1Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) (entries []types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) (entries []types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

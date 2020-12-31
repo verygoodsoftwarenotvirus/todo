@@ -63,7 +63,7 @@ func checkOAuth2ClientEquality(t *testing.T, expected, actual *types.OAuth2Clien
 	assert.Nil(t, actual.ArchivedOn)
 }
 
-func createOAuth2Client(ctx context.Context, t *testing.T, testUser *types.User, testClient *httpclient.V1Client) (*types.OAuth2ClientCreationInput, *types.OAuth2Client) {
+func createOAuth2Client(ctx context.Context, t *testing.T, testUser *types.User, testClient *httpclient.Client) (*types.OAuth2ClientCreationInput, *types.OAuth2Client) {
 	cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 		Username:  testUser.Username,
 		Password:  testUser.HashedPassword,
@@ -219,11 +219,11 @@ func TestOAuth2Clients(test *testing.T) {
 
 			c2 := httpclient.NewClient(
 				httpclient.WithHTTPClient(buildHTTPClient()),
-				httpclient.WithURL(testClient.URL),
+				httpclient.WithURL(testClient.URL()),
 				httpclient.WithLogger(noop.NewLogger()),
 				httpclient.WithOAuth2ClientCredentials(
 					httpclient.BuildClientCredentialsConfig(
-						testClient.URL,
+						testClient.URL(),
 						premade.ClientID,
 						premade.ClientSecret,
 						premade.Scopes...,

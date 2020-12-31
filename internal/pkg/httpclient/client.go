@@ -39,38 +39,46 @@ var (
 	ErrNilInputProvided = errors.New("nil input provided")
 )
 
-// V1Client is a client for interacting with v1 of our HTTP API.
-type V1Client struct {
+// Client is a client for interacting with v1 of our HTTP API.
+type Client struct {
+	url          *url.URL
 	plainClient  *http.Client
 	authedClient *http.Client
-	authCookie   *http.Cookie
-	logger       logging.Logger
-	tokenSource  oauth2.TokenSource
-	tracer       tracing.Tracer
-	adminMode    bool
 
-	Debug bool
-	URL   *url.URL
+	logger logging.Logger
+	tracer tracing.Tracer
+
+	debug     bool
+	adminMode bool
+
+	authMode    *authMode
+	authCookie  *http.Cookie
+	tokenSource oauth2.TokenSource
 }
 
 // EnableAdminMode enables admin mode.
-func (c *V1Client) EnableAdminMode() {
+func (c *Client) EnableAdminMode() {
 	c.adminMode = true
 }
 
 // AuthenticatedClient returns the authenticated *http.Client that we use to make most requests.
-func (c *V1Client) AuthenticatedClient() *http.Client {
+func (c *Client) AuthenticatedClient() *http.Client {
 	return c.authedClient
 }
 
 // PlainClient returns the unauthenticated *http.Client that we use to make certain requests.
-func (c *V1Client) PlainClient() *http.Client {
+func (c *Client) PlainClient() *http.Client {
 	return c.plainClient
 }
 
 // TokenSource provides the client's token source.
-func (c *V1Client) TokenSource() oauth2.TokenSource {
+func (c *Client) TokenSource() oauth2.TokenSource {
 	return c.tokenSource
+}
+
+// TokenSource provides the client's token source.
+func (c *Client) URL() *url.URL {
+	return c.url
 }
 
 // tokenEndpoint provides the oauth2 Endpoint for a given host.
@@ -85,13 +93,13 @@ func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
 }
 
 // NewClient builds a new API client for us.
-func NewClient(options ...option) *V1Client {
-	c := &V1Client{
-		URL:          nil,
+func NewClient(options ...option) *Client {
+	c := &Client{
+		url:          MustParseURL(""),
 		tokenSource:  nil,
 		authedClient: http.DefaultClient,
 		plainClient:  http.DefaultClient,
-		Debug:        false,
+		debug:        false,
 		logger:       noop.NewLogger(),
 		tracer:       tracing.NewTracer(clientName),
 	}
@@ -104,7 +112,7 @@ func NewClient(options ...option) *V1Client {
 }
 
 // closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
-func (c *V1Client) closeResponseBody(res *http.Response) {
+func (c *Client) closeResponseBody(res *http.Response) {
 	if res != nil {
 		if err := res.Body.Close(); err != nil {
 			c.logger.Error(err, "closing response body")
@@ -113,7 +121,7 @@ func (c *V1Client) closeResponseBody(res *http.Response) {
 }
 
 // BuildURL builds standard service URLs.
-func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
+func (c *Client) BuildURL(qp url.Values, parts ...string) string {
 	if u := c.buildRawURL(qp, parts...); u != nil {
 		return u.String()
 	}
@@ -121,16 +129,16 @@ func (c *V1Client) BuildURL(qp url.Values, parts ...string) string {
 	return ""
 }
 
-// buildRawURL takes a given set of query parameters and URL parts, and returns.
-// a parsed URL object from them.
-func (c *V1Client) buildRawURL(queryParams url.Values, parts ...string) *url.URL {
-	tu := *c.URL
+// buildRawURL takes a given set of query parameters and url parts, and returns.
+// a parsed url object from them.
+func (c *Client) buildRawURL(queryParams url.Values, parts ...string) *url.URL {
+	tu := *c.url
 
 	parts = append([]string{"api", "v1"}, parts...)
 
 	u, err := url.Parse(strings.Join(parts, "/"))
 	if err != nil {
-		c.logger.Error(err, "building URL")
+		c.logger.Error(err, "building url")
 		return nil
 	}
 
@@ -141,14 +149,14 @@ func (c *V1Client) buildRawURL(queryParams url.Values, parts ...string) *url.URL
 	return tu.ResolveReference(u)
 }
 
-// buildVersionlessURL builds a URL without the `/api/v1/` prefix. It should
+// buildVersionlessURL builds a url without the `/api/v1/` prefix. It should
 // otherwise be identical to buildRawURL.
-func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
-	tu := *c.URL
+func (c *Client) buildVersionlessURL(qp url.Values, parts ...string) string {
+	tu := *c.url
 
 	u, err := url.Parse(path.Join(parts...))
 	if err != nil {
-		c.logger.Error(err, "building URL")
+		c.logger.Error(err, "building url")
 		return ""
 	}
 
@@ -159,8 +167,8 @@ func (c *V1Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
-// BuildWebsocketURL builds a standard URL and then converts its scheme to the websocket protocol.
-func (c *V1Client) BuildWebsocketURL(parts ...string) string {
+// BuildWebsocketURL builds a standard url and then converts its scheme to the websocket protocol.
+func (c *Client) BuildWebsocketURL(parts ...string) string {
 	u := c.buildRawURL(nil, parts...)
 	u.Scheme = "ws"
 
@@ -168,15 +176,15 @@ func (c *V1Client) BuildWebsocketURL(parts ...string) string {
 }
 
 // BuildHealthCheckRequest builds a health check HTTP request.
-func (c *V1Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
-	u := *c.URL
+func (c *Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
+	u := *c.url
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // IsUp returns whether or not the service's health endpoint is returning 200s.
-func (c *V1Client) IsUp(ctx context.Context) bool {
+func (c *Client) IsUp(ctx context.Context) bool {
 	req, err := c.BuildHealthCheckRequest(ctx)
 	if err != nil {
 		c.logger.Error(err, "building request")
@@ -194,8 +202,8 @@ func (c *V1Client) IsUp(ctx context.Context) bool {
 	return res.StatusCode == http.StatusOK
 }
 
-// buildDataRequest builds an HTTP request for a given method, URL, and body data.
-func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
+// buildDataRequest builds an HTTP request for a given method, url, and body data.
+func (c *Client) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -209,6 +217,10 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 		return nil, err
 	}
 
+	if c.authMode == cookieAuthMode && c.authCookie != nil {
+		req.AddCookie(c.authCookie)
+	}
+
 	req.Header.Set("Content-type", "application/json")
 
 	return req, nil
@@ -216,12 +228,19 @@ func (c *V1Client) buildDataRequest(ctx context.Context, method, uri string, in 
 
 // executeRequest takes a given request and executes it with the auth client. It returns some errors
 // upon receiving certain status codes, but otherwise will return nil upon success.
-func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
+func (c *Client) executeRequest(ctx context.Context, req *http.Request, out interface{}) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithRequest(req)
 	logger.Debug("executing request")
+
+	// ensure cookie is attached
+	if c.authMode == cookieAuthMode && c.authCookie != nil {
+		if _, err := req.Cookie(c.authCookie.Name); err == nil {
+			req.AddCookie(c.authCookie)
+		}
+	}
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
@@ -248,12 +267,21 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 
 // executeRawRequest takes a given *http.Request and executes it with the provided.
 // client, alongside some debugging logging.
-func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+func (c *Client) executeRawRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithRequest(req)
-	if command, err := http2curl.GetCurlCommand(req); err == nil && c.Debug {
+	logger.Debug("executing request")
+
+	// ensure cookie is attached
+	if c.authMode == cookieAuthMode && c.authCookie != nil {
+		if _, err := req.Cookie(c.authCookie.Name); err == nil {
+			req.AddCookie(c.authCookie)
+		}
+	}
+
+	if command, err := http2curl.GetCurlCommand(req); err == nil && c.debug {
 		logger = c.logger.WithValue("curl", command.String())
 	}
 
@@ -272,7 +300,7 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 }
 
 // checkExistence executes an HTTP request and loads the response content into a bool.
-func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
+func (c *Client) checkExistence(ctx context.Context, req *http.Request) (bool, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -288,7 +316,7 @@ func (c *V1Client) checkExistence(ctx context.Context, req *http.Request) (bool,
 
 // retrieve executes an HTTP request and loads the response content into a struct. In the event of a 404,
 // the provided ErrNotFound is returned.
-func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
+func (c *Client) retrieve(ctx context.Context, req *http.Request, obj interface{}) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -309,7 +337,7 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 }
 
 // executeUnauthenticatedDataRequest takes a given request and loads the response into an interface value.
-func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
+func (c *Client) executeUnauthenticatedDataRequest(ctx context.Context, req *http.Request, out interface{}) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

@@ -12,7 +12,7 @@ import (
 )
 
 // fetchRandomPlan retrieves a random plan from the list of available plans.
-func fetchRandomPlan(ctx context.Context, c *httpclient.V1Client) *types.Plan {
+func fetchRandomPlan(ctx context.Context, c *httpclient.Client) *types.Plan {
 	plansRes, err := c.GetPlans(ctx, nil)
 	if err != nil || plansRes == nil || len(plansRes.Plans) == 0 {
 		return nil
@@ -23,7 +23,7 @@ func fetchRandomPlan(ctx context.Context, c *httpclient.V1Client) *types.Plan {
 	return &plansRes.Plans[randIndex]
 }
 
-func buildPlanActions(shouldUse bool, c *httpclient.V1Client) map[string]*Action {
+func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 	if shouldUse {
 		return nil
 	}

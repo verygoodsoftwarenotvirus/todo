@@ -91,7 +91,7 @@ func TestV1Client_Login(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -248,7 +248,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

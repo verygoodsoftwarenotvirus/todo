@@ -8,5 +8,4 @@ services:
     test:
         environment:
             TARGET_ADDRESS: 'http://todo-server:8888'
-            DB_VENDOR: 'sqlite'
         container_name: 'sqlite_integration_tests'

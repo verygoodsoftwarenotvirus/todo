@@ -49,7 +49,7 @@ func BuildNoAdminPerms() permissions.AdminPermissionChecker {
 	return bitmask.NewPermissionBitmask(0)
 }
 
-// DetermineServiceURL returns the URL, if properly configured.
+// DetermineServiceURL returns the url, if properly configured.
 func DetermineServiceURL() string {
 	ta := os.Getenv("TARGET_ADDRESS")
 	if ta == "" {

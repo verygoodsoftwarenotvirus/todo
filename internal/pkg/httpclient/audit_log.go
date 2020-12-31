@@ -15,7 +15,7 @@ const (
 )
 
 // BuildGetAuditLogEntriesRequest builds an HTTP request for fetching entries.
-func (c *V1Client) BuildGetAuditLogEntriesRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
+func (c *Client) BuildGetAuditLogEntriesRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -30,7 +30,7 @@ func (c *V1Client) BuildGetAuditLogEntriesRequest(ctx context.Context, filter *t
 }
 
 // GetAuditLogEntries retrieves a list of entries.
-func (c *V1Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (entries *types.AuditLogEntryList, err error) {
+func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (entries *types.AuditLogEntryList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -49,7 +49,7 @@ func (c *V1Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFi
 }
 
 // BuildGetAuditLogEntryRequest builds an HTTP request for fetching entries.
-func (c *V1Client) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uint64) (*http.Request, error) {
+func (c *Client) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -65,7 +65,7 @@ func (c *V1Client) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uin
 }
 
 // GetAuditLogEntry retrieves an entry.
-func (c *V1Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (entry *types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (entry *types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

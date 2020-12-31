@@ -27,7 +27,7 @@ const (
 	OAuth2ClientIDKey = "oauth2_client_clientID"
 	// WebhookIDKey is the standard key for referring to a webhook's ID.
 	WebhookIDKey = "webhook_id"
-	// URLKey is the standard key for referring to a URL.
+	// URLKey is the standard key for referring to a url.
 	URLKey = "url"
 	// RequestURIKey is the standard key for referring to an http.Request's URI.
 	RequestURIKey = "request_uri"

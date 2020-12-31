@@ -74,7 +74,7 @@ func TestV1Client_GetUser(T *testing.T) {
 		assert.Equal(t, exampleUser, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -154,7 +154,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 		assert.Equal(t, exampleUserList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -233,7 +233,7 @@ func TestV1Client_SearchForUsersByUsername(T *testing.T) {
 		assert.Equal(t, exampleUsers, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		exampleUsername := fakes.BuildFakeUser().Username
@@ -307,7 +307,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -368,7 +368,7 @@ func TestV1Client_ArchiveUser(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -435,7 +435,7 @@ func TestV1Client_GetAuditLogForUser(T *testing.T) {
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User, *httpclient.V1Client) {
+func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User, *httpclient.Client) {
 	t.Helper()
 
 	user, err := testutil.CreateServiceUser(ctx, urlToUse, "", debug)

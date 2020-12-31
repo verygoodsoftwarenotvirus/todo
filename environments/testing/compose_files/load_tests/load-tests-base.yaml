@@ -8,6 +8,9 @@ services:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/load-tests.Dockerfile'
     todo-server:
+        build:
+            context: '../../../../'
+            dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
         environment:
             CONFIGURATION_FILEPATH: '/etc/config.toml'
         ports:
@@ -44,6 +47,7 @@ services:
               type: 'bind'
         links:
             - grafana
+            - promtail
     promtail:
         image: grafana/promtail:1.6.0
         command: -config.file=/etc/promtail/config.yaml
@@ -53,7 +57,7 @@ services:
               target: '/etc/promtail/config.yaml'
               type: 'bind'
         links:
-            - loki
+            - prometheus
     grafana:
         image: grafana/grafana
         logging:

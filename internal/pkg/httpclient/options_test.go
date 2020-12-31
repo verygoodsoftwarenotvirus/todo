@@ -19,15 +19,15 @@ func TestV1Client_SetOption(T *testing.T) {
 		require.NoError(t, err)
 
 		c := buildTestClient(t, nil)
-		assert.NotEqual(t, expectedURL, c.URL, "expected and actual URLs match somehow")
+		assert.NotEqual(t, expectedURL, c.URL(), "expected and actual URLs match somehow")
 
-		exampleOption := func(client *V1Client) {
-			client.URL = expectedURL
+		exampleOption := func(client *Client) {
+			client.url = expectedURL
 		}
 
 		c.SetOption(exampleOption)
 
-		assert.Equal(t, expectedURL, c.URL, "expected and actual URLs do not match")
+		assert.Equal(t, expectedURL, c.URL(), "expected and actual URLs do not match")
 	})
 }
 
@@ -45,7 +45,7 @@ func TestWithURL(T *testing.T) {
 		)
 
 		assert.NotNil(t, c)
-		assert.Equal(t, expectedURL, c.URL, "expected and actual URLs do not match")
+		assert.Equal(t, expectedURL, c.URL(), "expected and actual URLs do not match")
 	})
 }
 

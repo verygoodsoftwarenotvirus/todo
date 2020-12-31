@@ -66,7 +66,7 @@ func TestV1Client_GetWebhook(T *testing.T) {
 		assert.Equal(t, exampleWebhook, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -131,7 +131,7 @@ func TestV1Client_GetWebhooks(T *testing.T) {
 		assert.Equal(t, exampleWebhookList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -203,7 +203,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 		assert.Equal(t, exampleWebhook, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -264,7 +264,7 @@ func TestV1Client_UpdateWebhook(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -321,7 +321,7 @@ func TestV1Client_ArchiveWebhook(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -388,7 +388,7 @@ func TestV1Client_GetAuditLogForWebhook(T *testing.T) {
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

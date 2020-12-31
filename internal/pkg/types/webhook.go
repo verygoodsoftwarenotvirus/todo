@@ -112,7 +112,7 @@ func (w *Webhook) Update(input *WebhookUpdateInput) []FieldChangeSummary {
 
 	if input.URL != "" {
 		changes = append(changes, FieldChangeSummary{
-			FieldName: "URL",
+			FieldName: "url",
 			OldValue:  w.URL,
 			NewValue:  input.URL,
 		})

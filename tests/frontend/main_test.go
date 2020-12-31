@@ -63,7 +63,7 @@ func TestLoginPage(T *testing.T) {
 			reqURI := urlToUse + "/auth/login"
 			require.NoError(t, driver.Get(reqURI))
 
-			t.Logf("USING URL: %q", reqURI)
+			t.Logf("USING url: %q", reqURI)
 
 			time.Sleep(time.Second)
 
@@ -263,7 +263,7 @@ func TestRegistrationFlow(T *testing.T) {
 			expectedURL = urlToUse + "/"
 			actualURL, err = driver.CurrentURL()
 			require.NoError(t, err)
-			assert.Equal(t, expectedURL, actualURL, "expected final URL %q to equal %q", actualURL, expectedURL)
+			assert.Equal(t, expectedURL, actualURL, "expected final url %q to equal %q", actualURL, expectedURL)
 		}
 	})
 }

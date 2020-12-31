@@ -16,8 +16,8 @@ import (
 
 // ServiceAttacker implements hazana's Attacker interface.
 type ServiceAttacker struct {
-	regularClient *httpclient.V1Client
-	adminClient   *httpclient.V1Client
+	regularClient *httpclient.Client
+	adminClient   *httpclient.Client
 }
 
 // Setup implements hazana's Attacker interface.

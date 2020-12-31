@@ -64,7 +64,7 @@ func TestV1Client_GetOAuth2Client(T *testing.T) {
 		assert.Equal(t, exampleOAuth2Client, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -129,7 +129,7 @@ func TestV1Client_GetOAuth2Clients(T *testing.T) {
 		assert.Equal(t, exampleOAuth2ClientList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -194,7 +194,7 @@ func TestV1Client_CreateOAuth2Client(T *testing.T) {
 		assert.Equal(t, exampleOAuth2Client, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -292,7 +292,7 @@ func TestV1Client_ArchiveOAuth2Client(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -359,7 +359,7 @@ func TestV1Client_GetAuditLogForOAuth2Client(T *testing.T) {
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

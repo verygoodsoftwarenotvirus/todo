@@ -109,7 +109,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

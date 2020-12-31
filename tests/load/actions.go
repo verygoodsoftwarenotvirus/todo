@@ -29,7 +29,7 @@ type (
 )
 
 // RandomAction takes a httpclient and returns a closure which is an action.
-func RandomAction(regularClient, adminClient *httpclient.V1Client) *Action {
+func RandomAction(regularClient, adminClient *httpclient.Client) *Action {
 	allActions := map[string]*Action{
 		"GetHealthCheck": {
 			Name: "GetHealthCheck",

@@ -12,7 +12,7 @@ import (
 )
 
 // fetchRandomItem retrieves a random item from the list of available items.
-func fetchRandomItem(ctx context.Context, c *httpclient.V1Client) *types.Item {
+func fetchRandomItem(ctx context.Context, c *httpclient.Client) *types.Item {
 	itemsRes, err := c.GetItems(ctx, nil)
 	if err != nil || itemsRes == nil || len(itemsRes.Items) == 0 {
 		return nil
@@ -23,7 +23,7 @@ func fetchRandomItem(ctx context.Context, c *httpclient.V1Client) *types.Item {
 	return &itemsRes.Items[randIndex]
 }
 
-func buildItemActions(c *httpclient.V1Client) map[string]*Action {
+func buildItemActions(c *httpclient.Client) map[string]*Action {
 	return map[string]*Action{
 		"CreateItem": {
 			Name: "CreateItem",

@@ -24,7 +24,7 @@ var errInvalidMethod = errors.New("invalid method provided")
 func validateWebhook(input *types.WebhookCreationInput) error {
 	_, err := url.Parse(input.URL)
 	if err != nil {
-		return fmt.Errorf("invalid URL provided: %w", err)
+		return fmt.Errorf("invalid url provided: %w", err)
 	}
 
 	input.Method = strings.ToUpper(input.Method)

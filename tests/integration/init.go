@@ -29,7 +29,7 @@ var (
 	urlToUse string
 
 	adminClientLock sync.Mutex
-	adminClient     *httpclient.V1Client
+	adminClient     *httpclient.Client
 
 	premadeAdminUser = &types.User{
 		ID:              1,
@@ -68,7 +68,7 @@ func buildHTTPClient() *http.Client {
 	}
 }
 
-func initializeClient(oa2Client *types.OAuth2Client) *httpclient.V1Client {
+func initializeClient(oa2Client *types.OAuth2Client) *httpclient.Client {
 	uri := httpclient.MustParseURL(urlToUse)
 
 	c := httpclient.NewClient(
@@ -97,6 +97,6 @@ func initializeClient(oa2Client *types.OAuth2Client) *httpclient.V1Client {
 	return c
 }
 
-func buildSimpleClient() *httpclient.V1Client {
+func buildSimpleClient() *httpclient.Client {
 	return httpclient.NewClient(httpclient.WithURL(httpclient.MustParseURL(urlToUse)))
 }

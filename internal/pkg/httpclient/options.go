@@ -12,30 +12,30 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-type option func(*V1Client)
+type option func(*Client)
 
 // SetOption sets a new option on the client.
-func (c *V1Client) SetOption(opt option) {
+func (c *Client) SetOption(opt option) {
 	opt(c)
 }
 
-// WithRawURL sets the URL on the client.
-func WithRawURL(raw string) func(*V1Client) {
-	return func(c *V1Client) {
-		c.URL = MustParseURL(raw)
+// WithRawURL sets the url on the client.
+func WithRawURL(raw string) func(*Client) {
+	return func(c *Client) {
+		c.url = MustParseURL(raw)
 	}
 }
 
-// WithURL sets the URL on the client.
-func WithURL(u *url.URL) func(*V1Client) {
-	return func(c *V1Client) {
-		c.URL = u
+// WithURL sets the url on the client.
+func WithURL(u *url.URL) func(*Client) {
+	return func(c *Client) {
+		c.url = u
 	}
 }
 
 // WithLogger sets the logger on the client.
-func WithLogger(logger logging.Logger) func(*V1Client) {
-	return func(c *V1Client) {
+func WithLogger(logger logging.Logger) func(*Client) {
+	return func(c *Client) {
 		if logger == nil {
 			return
 		}
@@ -45,8 +45,8 @@ func WithLogger(logger logging.Logger) func(*V1Client) {
 }
 
 // WithHTTPClient sets the plainClient value on the client.
-func WithHTTPClient(client *http.Client) func(*V1Client) {
-	return func(c *V1Client) {
+func WithHTTPClient(client *http.Client) func(*Client) {
+	return func(c *Client) {
 		if client == nil {
 			return
 		}
@@ -62,15 +62,15 @@ func WithHTTPClient(client *http.Client) func(*V1Client) {
 }
 
 // WithDebugEnabled sets the debug value on the client.
-func WithDebugEnabled() func(*V1Client) {
-	return func(c *V1Client) {
-		c.Debug = true
+func WithDebugEnabled() func(*Client) {
+	return func(c *Client) {
+		c.debug = true
 	}
 }
 
 // WithTimeout sets the debug value on the client.
-func WithTimeout(timeout time.Duration) func(*V1Client) {
-	return func(c *V1Client) {
+func WithTimeout(timeout time.Duration) func(*Client) {
+	return func(c *Client) {
 		if timeout == 0 {
 			timeout = defaultTimeout
 		}
@@ -81,19 +81,20 @@ func WithTimeout(timeout time.Duration) func(*V1Client) {
 }
 
 // WithCookieCredentials sets the authCookie value on the client.
-func WithCookieCredentials(cookie *http.Cookie) func(*V1Client) {
-	return func(c *V1Client) {
+func WithCookieCredentials(cookie *http.Cookie) func(*Client) {
+	return func(c *Client) {
 		if cookie == nil {
 			return
 		}
 
+		c.authMode = cookieAuthMode
 		c.authCookie = cookie
 	}
 }
 
 // WithOAuth2ClientCredentials sets the oauth2 credentials for the client.
-func WithOAuth2ClientCredentials(conf *clientcredentials.Config) func(*V1Client) {
-	return func(c *V1Client) {
+func WithOAuth2ClientCredentials(conf *clientcredentials.Config) func(*Client) {
+	return func(c *Client) {
 		c.tokenSource = oauth2.ReuseTokenSource(nil, conf.TokenSource(context.Background()))
 		c.authedClient = &http.Client{
 			Transport: &oauth2.Transport{
@@ -102,5 +103,7 @@ func WithOAuth2ClientCredentials(conf *clientcredentials.Config) func(*V1Client)
 			},
 			Timeout: defaultTimeout,
 		}
+
+		c.authMode = oauth2AuthMode
 	}
 }

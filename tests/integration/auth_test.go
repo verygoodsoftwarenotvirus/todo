@@ -366,11 +366,11 @@ func TestAuth(test *testing.T) {
 		checkValueAndError(test, premade, err)
 
 		c := httpclient.NewClient(
-			httpclient.WithURL(testClient.URL),
+			httpclient.WithURL(testClient.URL()),
 			httpclient.WithLogger(noop.NewLogger()),
 			httpclient.WithOAuth2ClientCredentials(
 				httpclient.BuildClientCredentialsConfig(
-					testClient.URL,
+					testClient.URL(),
 					premade.ClientID,
 					premade.ClientSecret,
 					premade.Scopes...,

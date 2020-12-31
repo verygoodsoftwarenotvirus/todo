@@ -17,7 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-// MustParseURL parses a URL or otherwise panics.
+// MustParseURL parses a url or otherwise panics.
 func MustParseURL(raw string) *url.URL {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -97,7 +97,7 @@ func argIsNotPointerOrNil(i interface{}) error {
 // pointer to an object. Ideally, response is also not nil.
 // The error returned here should only ever be received in
 // testing, and should never be encountered by an end-user.
-func (c *V1Client) unmarshalBody(ctx context.Context, res *http.Response, dest interface{}) error {
+func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest interface{}) error {
 	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

@@ -41,7 +41,7 @@ func init() {
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
 }
 
-func initializeClient(oa2Client *types.OAuth2Client) *httpclient.V1Client {
+func initializeClient(oa2Client *types.OAuth2Client) *httpclient.Client {
 	uri := httpclient.MustParseURL(urlToUse)
 
 	c := httpclient.NewClient(

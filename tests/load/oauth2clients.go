@@ -15,7 +15,7 @@ import (
 )
 
 // fetchRandomOAuth2Client retrieves a random OAuth2Client from the list of available clients.
-func fetchRandomOAuth2Client(c *httpclient.V1Client) *types.OAuth2Client {
+func fetchRandomOAuth2Client(c *httpclient.Client) *types.OAuth2Client {
 	clientsRes, err := c.GetOAuth2Clients(context.Background(), nil)
 	if err != nil || clientsRes == nil || len(clientsRes.Clients) <= 1 {
 		return nil
@@ -43,7 +43,7 @@ func mustBuildCode(totpSecret string) string {
 	return code
 }
 
-func buildOAuth2ClientActions(c *httpclient.V1Client) map[string]*Action {
+func buildOAuth2ClientActions(c *httpclient.Client) map[string]*Action {
 	return map[string]*Action{
 		"CreateOAuth2Client": {
 			Name: "CreateOAuth2Client",

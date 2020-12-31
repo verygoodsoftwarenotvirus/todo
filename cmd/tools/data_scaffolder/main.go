@@ -81,7 +81,7 @@ func main() {
 
 	parsedURI, uriParseErr := url.Parse(uri)
 	if uriParseErr != nil {
-		quitter.ComplainAndQuit(fmt.Errorf("error parsing provided URL: %w", uriParseErr))
+		quitter.ComplainAndQuit(fmt.Errorf("error parsing provided url: %w", uriParseErr))
 	}
 	if parsedURI.Scheme == "" {
 		quitter.ComplainAndQuit("provided URI missing scheme")

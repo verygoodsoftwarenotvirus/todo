@@ -35,11 +35,6 @@ var (
 		},
 		{
 			Version:     0.01,
-			Description: "create plans table and default plan",
-			Script:      `INSERT INTO plans (id,name,price,period) VALUES (1,'free', 0, 0); SELECT nextval('plans_id_seq');`,
-		},
-		{
-			Version:     0.02,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -55,7 +50,7 @@ var (
 				"admin_permissions" BIGINT NOT NULL DEFAULT 0,
 				"account_status" TEXT NOT NULL DEFAULT 'created',
 				"status_explanation" TEXT NOT NULL DEFAULT '',
-				"plan_id" INTEGER NOT NULL DEFAULT 1,
+				"plan_id" INTEGER,
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
@@ -64,7 +59,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.03,
+			Version:     0.02,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -75,12 +70,12 @@ var (
 			`,
 		},
 		{
-			Version:     0.04,
+			Version:     0.03,
 			Description: "create sessions table for session manager",
 			Script:      `CREATE INDEX sessions_expiry_idx ON sessions (expiry);`,
 		},
 		{
-			Version:     0.05,
+			Version:     0.04,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -99,7 +94,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.06,
+			Version:     0.05,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -119,7 +114,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.07,
+			Version:     0.06,
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
@@ -130,7 +125,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.08,
+			Version:     0.07,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -183,7 +178,6 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 				queriers.UsersTableAccountStatusColumn,
 				queriers.UsersTableAdminPermissionsColumn,
 				queriers.UsersTableTwoFactorVerifiedOnColumn,
-				queriers.UsersTablePlanIDColumn,
 			).
 			Values(
 				testUserConfig.Username,
@@ -195,7 +189,6 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 				types.GoodStandingAccountStatus,
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
-				1,
 			).
 			ToSql()
 		q.logQueryBuildingError(err)

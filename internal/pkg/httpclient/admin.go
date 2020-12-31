@@ -13,7 +13,7 @@ const (
 )
 
 // BuildAccountStatusUpdateInputRequest builds a request to ban a user.
-func (c *V1Client) BuildAccountStatusUpdateInputRequest(ctx context.Context, input *types.AccountStatusUpdateInput) (*http.Request, error) {
+func (c *Client) BuildAccountStatusUpdateInputRequest(ctx context.Context, input *types.AccountStatusUpdateInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -28,7 +28,7 @@ func (c *V1Client) BuildAccountStatusUpdateInputRequest(ctx context.Context, inp
 }
 
 // UpdateAccountStatus executes a request to ban a user.
-func (c *V1Client) UpdateAccountStatus(ctx context.Context, input *types.AccountStatusUpdateInput) error {
+func (c *Client) UpdateAccountStatus(ctx context.Context, input *types.AccountStatusUpdateInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

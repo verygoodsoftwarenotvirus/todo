@@ -81,7 +81,7 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec requestSpec) {
 
 // begin helper funcs
 
-func buildTestClient(t *testing.T, ts *httptest.Server) *V1Client {
+func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	t.Helper()
 
 	var (
@@ -95,28 +95,28 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *V1Client {
 		c = ts.Client()
 	}
 
-	return &V1Client{
-		URL:          u,
+	return &Client{
+		url:          u,
 		plainClient:  c,
 		logger:       l,
-		Debug:        true,
+		debug:        true,
 		authedClient: c,
 		tracer:       tracing.NewTracer("test"),
 	}
 }
 
-func buildTestClientWithInvalidURL(t *testing.T) *V1Client {
+func buildTestClientWithInvalidURL(t *testing.T) *Client {
 	t.Helper()
 
 	l := noop.NewLogger()
 	u := MustParseURL("https://verygoodsoftwarenotvirus.ru")
 	u.Scheme = fmt.Sprintf(`%s://`, asciiControlChar)
 
-	return &V1Client{
-		URL:          u,
+	return &Client{
+		url:          u,
 		plainClient:  http.DefaultClient,
 		logger:       l,
-		Debug:        true,
+		debug:        true,
 		authedClient: http.DefaultClient,
 		tracer:       tracing.NewTracer("test"),
 	}
@@ -281,7 +281,7 @@ func TestBuildURL(T *testing.T) {
 		}
 	})
 
-	T.Run("with invalid URL parts", func(t *testing.T) {
+	T.Run("with invalid url parts", func(t *testing.T) {
 		t.Parallel()
 		c := buildTestClientWithInvalidURL(t)
 		assert.Empty(t, c.BuildURL(nil, asciiControlChar))
@@ -328,7 +328,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 		}
 	})
 
-	T.Run("with invalid URL parts", func(t *testing.T) {
+	T.Run("with invalid url parts", func(t *testing.T) {
 		t.Parallel()
 		c := buildTestClientWithInvalidURL(t)
 		assert.Empty(t, c.buildVersionlessURL(nil, asciiControlChar))
@@ -392,7 +392,7 @@ func TestV1Client_IsUp(T *testing.T) {
 		assert.True(t, actual)
 	})
 
-	T.Run("returns error with invalid URL", func(t *testing.T) {
+	T.Run("returns error with invalid url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -474,12 +474,12 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		c := buildTestClientWithInvalidURL(t)
-		req, err := c.buildDataRequest(ctx, http.MethodPost, c.URL.String(), exampleData)
+		req, err := c.buildDataRequest(ctx, http.MethodPost, c.url.String(), exampleData)
 
 		require.Nil(t, req)
 		assert.Error(t, err)

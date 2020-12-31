@@ -50,16 +50,6 @@ func TestWebhook_Update(T *testing.T) {
 	})
 }
 
-func TestWebhook_ToListener(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		w := &Webhook{}
-		w.ToListener(noop.NewLogger())
-	})
-}
-
 func Test_buildErrorLogFunc(T *testing.T) {
 	T.Parallel()
 
@@ -99,7 +89,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 		assert.Error(t, exampleInput.Validate(context.Background()))
 	})
 
-	T.Run("bad URL", func(t *testing.T) {
+	T.Run("bad url", func(t *testing.T) {
 		t.Parallel()
 		exampleInput := buildValidWebhookCreationInput()
 		// much as we'd like to use testutil.InvalidRawURL here, it causes a cyclical import :'(
@@ -169,7 +159,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		assert.Error(t, exampleInput.Validate(context.Background()))
 	})
 
-	T.Run("bad URL", func(t *testing.T) {
+	T.Run("bad url", func(t *testing.T) {
 		t.Parallel()
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.URL = fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127)))

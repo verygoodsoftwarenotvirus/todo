@@ -15,7 +15,7 @@ const (
 )
 
 // BuildGetPlanRequest builds an HTTP request for fetching an plan.
-func (c *V1Client) BuildGetPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
+func (c *Client) BuildGetPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -30,7 +30,7 @@ func (c *V1Client) BuildGetPlanRequest(ctx context.Context, planID uint64) (*htt
 }
 
 // GetPlan retrieves an plan.
-func (c *V1Client) GetPlan(ctx context.Context, planID uint64) (plan *types.Plan, err error) {
+func (c *Client) GetPlan(ctx context.Context, planID uint64) (plan *types.Plan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -47,7 +47,7 @@ func (c *V1Client) GetPlan(ctx context.Context, planID uint64) (plan *types.Plan
 }
 
 // BuildGetPlansRequest builds an HTTP request for fetching plans.
-func (c *V1Client) BuildGetPlansRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
+func (c *Client) BuildGetPlansRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -61,7 +61,7 @@ func (c *V1Client) BuildGetPlansRequest(ctx context.Context, filter *types.Query
 }
 
 // GetPlans retrieves a list of plans.
-func (c *V1Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (plans *types.PlanList, err error) {
+func (c *Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (plans *types.PlanList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -78,7 +78,7 @@ func (c *V1Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (pla
 }
 
 // BuildCreatePlanRequest builds an HTTP request for creating an plan.
-func (c *V1Client) BuildCreatePlanRequest(ctx context.Context, input *types.PlanCreationInput) (*http.Request, error) {
+func (c *Client) BuildCreatePlanRequest(ctx context.Context, input *types.PlanCreationInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -92,7 +92,7 @@ func (c *V1Client) BuildCreatePlanRequest(ctx context.Context, input *types.Plan
 }
 
 // CreatePlan creates an plan.
-func (c *V1Client) CreatePlan(ctx context.Context, input *types.PlanCreationInput) (plan *types.Plan, err error) {
+func (c *Client) CreatePlan(ctx context.Context, input *types.PlanCreationInput) (plan *types.Plan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -107,7 +107,7 @@ func (c *V1Client) CreatePlan(ctx context.Context, input *types.PlanCreationInpu
 }
 
 // BuildUpdatePlanRequest builds an HTTP request for updating an plan.
-func (c *V1Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.Plan) (*http.Request, error) {
+func (c *Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.Plan) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -122,7 +122,7 @@ func (c *V1Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.Plan)
 }
 
 // UpdatePlan updates an plan.
-func (c *V1Client) UpdatePlan(ctx context.Context, plan *types.Plan) error {
+func (c *Client) UpdatePlan(ctx context.Context, plan *types.Plan) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -135,7 +135,7 @@ func (c *V1Client) UpdatePlan(ctx context.Context, plan *types.Plan) error {
 }
 
 // BuildArchivePlanRequest builds an HTTP request for updating an plan.
-func (c *V1Client) BuildArchivePlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
+func (c *Client) BuildArchivePlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -150,7 +150,7 @@ func (c *V1Client) BuildArchivePlanRequest(ctx context.Context, planID uint64) (
 }
 
 // ArchivePlan archives an plan.
-func (c *V1Client) ArchivePlan(ctx context.Context, planID uint64) error {
+func (c *Client) ArchivePlan(ctx context.Context, planID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -163,7 +163,7 @@ func (c *V1Client) ArchivePlan(ctx context.Context, planID uint64) error {
 }
 
 // BuildGetAuditLogForPlanRequest builds an HTTP request for fetching a list of audit log entries pertaining to an plan.
-func (c *V1Client) BuildGetAuditLogForPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
+func (c *Client) BuildGetAuditLogForPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -179,7 +179,7 @@ func (c *V1Client) BuildGetAuditLogForPlanRequest(ctx context.Context, planID ui
 }
 
 // GetAuditLogForPlan retrieves a list of audit log entries pertaining to an plan.
-func (c *V1Client) GetAuditLogForPlan(ctx context.Context, planID uint64) (entries []types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForPlan(ctx context.Context, planID uint64) (entries []types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

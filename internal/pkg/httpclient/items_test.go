@@ -129,7 +129,7 @@ func TestV1Client_GetItem(T *testing.T) {
 		assert.Equal(t, exampleItem, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -220,7 +220,7 @@ func TestV1Client_GetItems(T *testing.T) {
 		assert.Equal(t, exampleItemList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -311,7 +311,7 @@ func TestV1Client_SearchItems(T *testing.T) {
 		assert.Equal(t, exampleItemList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -411,7 +411,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 		assert.Equal(t, exampleItem, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -473,7 +473,7 @@ func TestV1Client_UpdateItem(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -531,7 +531,7 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -598,7 +598,7 @@ func TestV1Client_GetAuditLogForItem(T *testing.T) {
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

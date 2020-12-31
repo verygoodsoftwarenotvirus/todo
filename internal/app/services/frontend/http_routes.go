@@ -18,7 +18,7 @@ const (
 
 var (
 	// Here is where you should put route regexes that need to be ignored by the static file server.
-	// For instance, if you allow someone to see an event in the frontend via a URL that contains dynamic.
+	// For instance, if you allow someone to see an event in the frontend via a url that contains dynamic.
 	// information, such as `/event/123`, you would want to put something like this below:
 	// 		eventsFrontendPathRegex = regexp.MustCompile(`/event/\d+`)
 

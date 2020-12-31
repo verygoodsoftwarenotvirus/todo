@@ -66,7 +66,7 @@ func TestV1Client_GetPlan(T *testing.T) {
 		assert.Equal(t, examplePlan, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -157,7 +157,7 @@ func TestV1Client_GetPlans(T *testing.T) {
 		assert.Equal(t, examplePlanList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -255,7 +255,7 @@ func TestV1Client_CreatePlan(T *testing.T) {
 		assert.Equal(t, examplePlan, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -317,7 +317,7 @@ func TestV1Client_UpdatePlan(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -375,7 +375,7 @@ func TestV1Client_ArchivePlan(T *testing.T) {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -442,7 +442,7 @@ func TestV1Client_GetAuditLogForPlan(T *testing.T) {
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client URL", func(t *testing.T) {
+	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

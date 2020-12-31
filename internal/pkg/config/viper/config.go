@@ -24,7 +24,7 @@ func init() {
 }
 
 const (
-	// ConfigKeyMetaDebug is the key viper will use to refer to the MetaSettings.Debug setting.
+	// ConfigKeyMetaDebug is the key viper will use to refer to the MetaSettings.debug setting.
 	ConfigKeyMetaDebug = "meta.debug"
 	// ConfigKeyMetaRunMode is the key viper will use to refer to the MetaSettings.RunMode setting.
 	ConfigKeyMetaRunMode = "meta.run_mode"
@@ -33,17 +33,17 @@ const (
 	ConfigKeyServerHTTPPort = "server.http_port"
 	// ConfigKeyServerStartupDeadline is the key viper will use to refer to the ServerSettings.StartupDeadline setting.
 	ConfigKeyServerStartupDeadline = "server.startup_deadline"
-	// ConfigKeyServerDebug is the key viper will use to refer to the ServerSettings.Debug setting.
+	// ConfigKeyServerDebug is the key viper will use to refer to the ServerSettings.debug setting.
 	ConfigKeyServerDebug = "server.debug"
 
-	// ConfigKeyFrontendDebug is the key viper will use to refer to the FrontendSettings.Debug setting.
+	// ConfigKeyFrontendDebug is the key viper will use to refer to the FrontendSettings.debug setting.
 	ConfigKeyFrontendDebug = "frontend.debug"
 	// ConfigKeyFrontendStaticFilesDir is the key viper will use to refer to the FrontendSettings.StaticFilesDir setting.
 	ConfigKeyFrontendStaticFilesDir = "frontend.static_files_directory"
 	// ConfigKeyFrontendCacheStatics is the key viper will use to refer to the FrontendSettings.CacheStatics setting.
 	ConfigKeyFrontendCacheStatics = "frontend.cache_static_files"
 
-	// ConfigKeyAuthDebug is the key viper will use to refer to the AuthSettings.Debug setting.
+	// ConfigKeyAuthDebug is the key viper will use to refer to the AuthSettings.debug setting.
 	ConfigKeyAuthDebug = "auth.debug"
 	// ConfigKeyAuthCookieName is the key viper will use to refer to the AuthSettings.CookieName setting.
 	ConfigKeyAuthCookieName = "auth.cookie_name"
@@ -72,7 +72,7 @@ const (
 	// ConfigKeyMetricsRuntimeCollectionInterval is the key viper will use to refer to the MetricsSettings.RuntimeCollectionInterval setting.
 	ConfigKeyMetricsRuntimeCollectionInterval = "observability.runtime_metrics_collection_interval"
 
-	// ConfigKeyDatabaseDebug is the key viper will use to refer to the DatabaseSettings.Debug setting.
+	// ConfigKeyDatabaseDebug is the key viper will use to refer to the DatabaseSettings.debug setting.
 	ConfigKeyDatabaseDebug = "database.debug"
 	// ConfigKeyDatabaseProvider is the key viper will use to refer to the DatabaseSettings.Provider setting.
 	ConfigKeyDatabaseProvider = "database.provider"
@@ -98,7 +98,7 @@ const (
 
 	// ConfigKeyUploaderProvider is the key viper will use to refer to the UploadSettings.Provider value.
 	ConfigKeyUploaderProvider = "uploads.storage_config.provider"
-	// ConfigKeyUploaderDebug is the key viper will use to refer to the UploadSettings.Debug value.
+	// ConfigKeyUploaderDebug is the key viper will use to refer to the UploadSettings.debug value.
 	ConfigKeyUploaderDebug = "uploads.storage_config.debug"
 	// ConfigKeyUploaderName is the key viper will use to refer to the UploadSettings.Name value.
 	ConfigKeyUploaderName = "uploads.storage_config.name"

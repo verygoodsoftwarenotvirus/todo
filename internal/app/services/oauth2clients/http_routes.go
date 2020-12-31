@@ -44,7 +44,7 @@ func (s *service) fetchUserID(req *http.Request) uint64 {
 	return 0
 }
 
-// determineScope determines the scope of a request by its URL.
+// determineScope determines the scope of a request by its url.
 func determineScope(req *http.Request) string {
 	_, scope := filepath.Split(req.URL.Path)
 	return scope

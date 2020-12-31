@@ -33,6 +33,7 @@ type (
 		frontendService      types.FrontendService
 		auditService         types.AuditLogDataService
 		usersService         types.UserDataService
+		plansService         types.PlanDataService
 		adminService         types.AdminService
 		oauth2ClientsService types.OAuth2ClientDataService
 		webhooksService      types.WebhookDataService
@@ -60,6 +61,7 @@ func ProvideServer(
 	auditService types.AuditLogDataService,
 	itemsService types.ItemDataService,
 	usersService types.UserDataService,
+	plansService types.PlanDataService,
 	oauth2Service types.OAuth2ClientDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,
@@ -84,6 +86,7 @@ func ProvideServer(
 		authService:          authService,
 		itemsService:         itemsService,
 		oauth2ClientsService: oauth2Service,
+		plansService:         plansService,
 		tracer:               tracing.NewTracer(loggerName),
 	}
 

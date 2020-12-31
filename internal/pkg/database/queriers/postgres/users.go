@@ -290,7 +290,7 @@ func (q *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, 
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.UsersTableName)
@@ -563,7 +563,7 @@ func (q *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query str
 			squirrel.Eq{userIDKey: userID},
 			squirrel.Eq{performedByIDKey: userID},
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

@@ -145,7 +145,7 @@ coverage: clean-coverage $(ARTIFACTS_DIR)
 	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
-quicktest: $(ARTIFACTS_DIR) vendor
+quicktest: $(ARTIFACTS_DIR) vendor clear
 	go test -cover -race -failfast $(PACKAGE_LIST)
 
 .PHONY: frontend-tests
@@ -168,19 +168,23 @@ integration-tests: integration-tests-sqlite integration-tests-postgres integrati
 
 .PHONY: integration-tests-
 integration-tests-%:
-	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-$*.yaml up \
+	docker-compose \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-base.yaml \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-$*.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
+	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(LET_HANG)),, --abort-on-container-exit)
 
 .PHONY: integration-coverage
 integration-coverage: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) configs
 	@# big thanks to https://blog.cloudflare.com/go-coverage-with-external-tests/
 	rm -f $(ARTIFACTS_DIR)/integration-coverage.out
 	@mkdir --parents $(ARTIFACTS_DIR)
-	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-coverage.yaml up \
+	docker-compose \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-base.yaml \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-coverage.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
@@ -196,12 +200,14 @@ load-tests: load-tests-sqlite load-tests-postgres load-tests-mariadb
 
 .PHONY: load-tests-
 load-tests-%:
-	docker-compose --file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-$*.yaml up \
+	docker-compose \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-base.yaml \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-$*.yaml up \
 	--build \
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
+	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(LET_HANG)),, --abort-on-container-exit)
 
 ## Running
 
@@ -212,7 +218,7 @@ dev: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR)
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(KEEP_RUNNING)),, --abort-on-container-exit)
+	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(LET_HANG)),, --abort-on-container-exit)
 
 .PHONY: dev-user
 dev-user:

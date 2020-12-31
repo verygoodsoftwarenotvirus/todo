@@ -372,7 +372,7 @@ func TestPostgres_buildGetAuditLogEntriesQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -496,7 +496,7 @@ func TestPostgres_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.id"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.created_on"
 		expectedArgs := []interface{}{
 			exampleItem.ID,
 		}

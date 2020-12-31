@@ -288,7 +288,7 @@ func (q *MariaDB) buildGetUsersQuery(filter *types.QueryFilter) (query string, a
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.ArchivedOnColumn): nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.UsersTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.UsersTableName)
@@ -377,13 +377,8 @@ func (q *MariaDB) CreateUser(ctx context.Context, input types.UserDataStoreCreat
 		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
-	// fetch the last inserted ID.
-	id, err := res.LastInsertId()
-	q.logIDRetrievalError(err)
-
-	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = q.timeTeller.Now()
-	x.ID = uint64(id)
+	x.ID = q.getIDFromResult(res)
 
 	return x, nil
 }
@@ -595,7 +590,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForUserQuery(userID uint64) (query stri
 				),
 			),
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

@@ -235,7 +235,7 @@ func (q *Postgres) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) 
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.ItemsTableName)
@@ -303,7 +303,7 @@ func (q *Postgres) buildGetItemsForAdminQuery(filter *types.QueryFilter) (query 
 			Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 			From(queriers.ItemsTableName).
 			Where(where).
-			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)),
+			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn)),
 		queriers.ItemsTableName,
 	)
 
@@ -565,7 +565,7 @@ func (q *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query str
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{itemIDKey: itemID}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

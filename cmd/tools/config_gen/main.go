@@ -16,6 +16,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -115,8 +117,17 @@ func localDevelopmentConfig(filePath string) error {
 			MetricsCollectionInterval: time.Second,
 		},
 		Observability: observability.Config{
-			MetricsProvider:                  "prometheus",
-			TracingProvider:                  "jaeger",
+			Metrics: metrics.Config{
+				Provider: "prometheus",
+				RouteAuth: metrics.AuthConfig{
+					Method:    "",
+					BasicAuth: nil,
+				},
+			},
+			Tracing: tracing.Config{
+				Provider:                  "jaeger",
+				SpanCollectionProbability: 1,
+			},
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploadconfig.Config{
@@ -195,8 +206,17 @@ func frontendTestsConfig(filePath string) error {
 			MetricsCollectionInterval: time.Second,
 		},
 		Observability: observability.Config{
-			MetricsProvider:                  "prometheus",
-			TracingProvider:                  "jaeger",
+			Metrics: metrics.Config{
+				Provider: "prometheus",
+				RouteAuth: metrics.AuthConfig{
+					Method:    "",
+					BasicAuth: nil,
+				},
+			},
+			Tracing: tracing.Config{
+				Provider:                  "jaeger",
+				SpanCollectionProbability: 1,
+			},
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploadconfig.Config{
@@ -281,9 +301,18 @@ func coverageConfig(filePath string) error {
 			},
 		},
 		Observability: observability.Config{
-			MetricsProvider:                  "",
-			TracingProvider:                  "",
-			RuntimeMetricsCollectionInterval: 2 * time.Second,
+			Metrics: metrics.Config{
+				Provider: "",
+				RouteAuth: metrics.AuthConfig{
+					Method:    "",
+					BasicAuth: nil,
+				},
+			},
+			Tracing: tracing.Config{
+				Provider:                  "",
+				SpanCollectionProbability: 1,
+			},
+			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploadconfig.Config{
 			Debug:    true,
@@ -373,9 +402,18 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 			},
 			Observability: observability.Config{
-				MetricsProvider:                  "prometheus",
-				TracingProvider:                  "jaeger",
-				RuntimeMetricsCollectionInterval: 2 * time.Second,
+				Metrics: metrics.Config{
+					Provider: "",
+					RouteAuth: metrics.AuthConfig{
+						Method:    "",
+						BasicAuth: nil,
+					},
+				},
+				Tracing: tracing.Config{
+					Provider:                  "",
+					SpanCollectionProbability: 1,
+				},
+				RuntimeMetricsCollectionInterval: time.Second,
 			},
 			Uploads: uploadconfig.Config{
 				Debug:    false,

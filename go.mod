@@ -3,8 +3,8 @@ module gitlab.com/verygoodsoftwarenotvirus/todo
 go 1.15
 
 require (
-	contrib.go.opencensus.io/exporter/jaeger v0.2.0
-	contrib.go.opencensus.io/exporter/prometheus v0.1.0
+	contrib.go.opencensus.io/exporter/jaeger v0.2.0 // indirect
+	contrib.go.opencensus.io/exporter/prometheus v0.1.0 // indirect
 	contrib.go.opencensus.io/integrations/ocsql v0.1.7 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-storage-blob-go v0.11.0
@@ -46,6 +46,7 @@ require (
 	go.opencensus.io v0.22.5
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.15.1
 	go.opentelemetry.io/otel v0.15.0
+	go.opentelemetry.io/otel/exporters/metric/prometheus v0.15.0
 	go.opentelemetry.io/otel/exporters/trace/jaeger v0.15.0
 	go.opentelemetry.io/otel/sdk v0.15.0
 	gocloud.dev v0.21.0

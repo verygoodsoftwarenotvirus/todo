@@ -10,7 +10,7 @@ import (
 // BuildFakeAuditLogEntry builds a faked item.
 func BuildFakeAuditLogEntry() *types.AuditLogEntry {
 	return &types.AuditLogEntry{
-		ID:        fake.Uint64(),
+		ID:        uint64(fake.Uint32()),
 		EventType: audit.SuccessfulLoginEvent,
 		Context:   map[string]interface{}{"fakes": "true"},
 		CreatedOn: uint64(uint32(fake.Date().Unix())),

@@ -29,10 +29,14 @@
   debug = false
   run_mode = "development"
 
-[metrics]
-  metrics_provider = "prometheus"
+[observability]
   runtime_metrics_collection_interval = "1s"
-  tracing_provider = "jaeger"
+
+  [observability.metrics]
+    provider = "prometheus"
+
+  [observability.tracing]
+    provider = "jaeger"
 
 [search]
   items_index_path = "items.bleve"

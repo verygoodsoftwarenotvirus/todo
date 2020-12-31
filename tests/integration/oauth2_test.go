@@ -299,7 +299,10 @@ func TestOAuth2Clients(test *testing.T) {
 			exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 			exampleOAuth2Client.ID = nonexistentID
 
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			x, err := adminClient.GetAuditLogForOAuth2Client(ctx, exampleOAuth2Client.ID)
+
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
@@ -316,7 +319,10 @@ func TestOAuth2Clients(test *testing.T) {
 			_, createdClient := createOAuth2Client(ctx, t, testUser, testClient)
 
 			// fetch audit log entries
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			actual, err := adminClient.GetAuditLogForOAuth2Client(ctx, createdClient.ID)
+
 			assert.NoError(t, err)
 			assert.Len(t, actual, 1)
 

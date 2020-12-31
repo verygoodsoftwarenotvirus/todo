@@ -191,7 +191,7 @@ func (q *Postgres) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (quer
 	builder := q.sqlBuilder.
 		Select(append(queriers.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.AuditLogEntriesTableName).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.AuditLogEntriesTableName)
@@ -259,7 +259,7 @@ func (q *Postgres) createAuditLogEntry(ctx context.Context, input *types.AuditLo
 	}
 
 	query, args := q.buildCreateAuditLogEntryQuery(x)
-	q.logger.Debug("createAuditLogEntry called")
+	q.logger.WithValue("event_type", input.EventType).Debug("createAuditLogEntry called")
 
 	// create the audit log entry.
 	if err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {

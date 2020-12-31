@@ -26,6 +26,8 @@ func TestAdmin(test *testing.T) {
 			input.TargetAccountID = nonexistentID
 
 			// Ban user.
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			assert.Error(t, adminClient.UpdateAccountStatus(ctx, input))
 		})
 
@@ -47,6 +49,8 @@ func TestAdmin(test *testing.T) {
 				Reason:          "testing",
 			}
 
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			assert.NoError(t, adminClient.UpdateAccountStatus(ctx, input))
 
 			// Assert user can no longer access service

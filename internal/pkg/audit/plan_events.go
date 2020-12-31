@@ -5,40 +5,40 @@ import (
 )
 
 const (
-	// PlanAssignmentKey is the key we use to indicate that an audit log entry is associated with an item.
-	PlanAssignmentKey = "item_id"
+	// PlanAssignmentKey is the key we use to indicate that an audit log entry is associated with an plan.
+	PlanAssignmentKey = "plan_id"
 )
 
-// BuildPlanCreationEventEntry builds an entry creation input for when an item is created.
-func BuildPlanCreationEventEntry(item *types.Plan) *types.AuditLogEntryCreationInput {
+// BuildPlanCreationEventEntry builds an entry creation input for when an plan is created.
+func BuildPlanCreationEventEntry(plan *types.Plan) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: PlanCreationEvent,
 		Context: map[string]interface{}{
-			PlanAssignmentKey:     item.ID,
-			CreationAssignmentKey: item,
+			PlanAssignmentKey:     plan.ID,
+			CreationAssignmentKey: plan,
 		},
 	}
 }
 
-// BuildPlanUpdateEventEntry builds an entry creation input for when an item is updated.
-func BuildPlanUpdateEventEntry(userID, itemID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+// BuildPlanUpdateEventEntry builds an entry creation input for when an plan is updated.
+func BuildPlanUpdateEventEntry(userID, planID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: PlanUpdateEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:   userID,
-			PlanAssignmentKey:    itemID,
+			PlanAssignmentKey:    planID,
 			ChangesAssignmentKey: changes,
 		},
 	}
 }
 
-// BuildPlanArchiveEventEntry builds an entry creation input for when an item is archived.
-func BuildPlanArchiveEventEntry(userID, itemID uint64) *types.AuditLogEntryCreationInput {
+// BuildPlanArchiveEventEntry builds an entry creation input for when an plan is archived.
+func BuildPlanArchiveEventEntry(userID, planID uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: PlanArchiveEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
-			PlanAssignmentKey:  itemID,
+			PlanAssignmentKey:  planID,
 		},
 	}
 }

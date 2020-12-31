@@ -9,7 +9,7 @@ import (
 // BuildFakeAccountStatusUpdateInput builds a faked ItemCreationInput.
 func BuildFakeAccountStatusUpdateInput() *types.AccountStatusUpdateInput {
 	return &types.AccountStatusUpdateInput{
-		TargetAccountID: fake.Uint64(),
+		TargetAccountID: uint64(fake.Uint32()),
 		NewStatus:       types.GoodStandingAccountStatus,
 		Reason:          fake.Sentence(10),
 	}

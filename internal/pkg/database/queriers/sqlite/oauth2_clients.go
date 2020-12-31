@@ -256,7 +256,7 @@ func (q *Sqlite) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *types.
 			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.OAuth2ClientsTableName)
@@ -344,13 +344,7 @@ func (q *Sqlite) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 		return nil, fmt.Errorf("error executing client creation query: %w", err)
 	}
 
-	// fetch the last inserted ID.
-	id, err := res.LastInsertId()
-	q.logIDRetrievalError(err)
-
-	x.ID = uint64(id)
-
-	// this won't be completely accurate, but it will suffice.
+	x.ID = q.getIDFromResult(res)
 	x.CreatedOn = q.timeTeller.Now()
 
 	return x, nil
@@ -438,7 +432,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (q
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{oauth2ClientIDKey: clientID}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

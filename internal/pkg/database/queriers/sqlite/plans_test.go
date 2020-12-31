@@ -6,7 +6,6 @@ import (
 	"database/sql/driver"
 	"errors"
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Rows {
@@ -34,7 +34,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Ro
 			x.Name,
 			x.Description,
 			x.Price,
-			x.Period,
+			x.Period.String(),
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,
@@ -56,7 +56,7 @@ func buildErroneousMockRowFromPlan(x *types.Plan) *sqlmock.Rows {
 		x.ID,
 		x.Description,
 		x.Price,
-		x.Period,
+		x.Period.String(),
 		x.CreatedOn,
 		x.LastUpdatedOn,
 		x.ArchivedOn,
@@ -206,7 +206,7 @@ func TestSqlite_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ?) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ? ORDER BY plans.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ?) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ? ORDER BY plans.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -330,9 +330,12 @@ func TestSqlite_buildCreatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "INSERT INTO plans (name) VALUES (?) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO plans (name,description,price,period) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
+			examplePlan.Description,
+			examplePlan.Price,
+			examplePlan.Period.String(),
 		}
 		actualQuery, actualArgs := q.buildCreatePlanQuery(examplePlan)
 
@@ -354,15 +357,19 @@ func TestSqlite_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.buildCreatePlanQuery(examplePlan)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(examplePlan.ID, examplePlan.CreatedOn)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+			WillReturnResult(sqlmock.NewResult(int64(examplePlan.ID), 1))
+
+		mtt := &queriers.MockTimeTeller{}
+		mtt.On("Now").Return(examplePlan.CreatedOn)
+		q.timeTeller = mtt
 
 		actual, err := q.CreatePlan(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
+		mock.AssertExpectationsForObjects(t, mtt)
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
@@ -375,7 +382,7 @@ func TestSqlite_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.buildCreatePlanQuery(examplePlan)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
@@ -396,9 +403,12 @@ func TestSqlite_buildUpdatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET name = ?, last_updated_on = (strftime('%s','now')) WHERE id = ? RETURNING last_updated_on"
+		expectedQuery := "UPDATE plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
+			examplePlan.Description,
+			examplePlan.Price,
+			examplePlan.Period.String(),
 			examplePlan.ID,
 		}
 		actualQuery, actualArgs := q.buildUpdatePlanQuery(examplePlan)
@@ -422,10 +432,9 @@ func TestSqlite_UpdatePlan(T *testing.T) {
 
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
-		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+			WillReturnResult(sqlmock.NewResult(int64(examplePlan.ID), 1))
 
 		err := q.UpdatePlan(ctx, examplePlan)
 		assert.NoError(t, err)
@@ -443,7 +452,7 @@ func TestSqlite_UpdatePlan(T *testing.T) {
 
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
@@ -463,7 +472,7 @@ func TestSqlite_buildArchivePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ? RETURNING archived_on"
+		expectedQuery := "UPDATE plans SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}

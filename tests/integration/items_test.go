@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
@@ -18,8 +19,8 @@ func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected Name for ID %d to be %v, but it was %v ", expected.ID, expected.Name, actual.Name)
-	assert.Equal(t, expected.Details, actual.Details, "expected Details for ID %d to be %v, but it was %v ", expected.ID, expected.Details, actual.Details)
+	assert.Equal(t, expected.Name, actual.Name, "expected Name for item #%d to be %v, but it was %v ", expected.ID, expected.Name, actual.Name)
+	assert.Equal(t, expected.Details, actual.Details, "expected Details for item #%d to be %v, but it was %v ", expected.ID, expected.Details, actual.Details)
 	assert.NotZero(t, actual.CreatedOn)
 }
 
@@ -55,6 +56,27 @@ func TestItems(test *testing.T) {
 			checkItemEquality(t, exampleItem, actual)
 			assert.NotNil(t, actual.ArchivedOn)
 			assert.NotZero(t, actual.ArchivedOn)
+
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+			auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
+
+			require.Len(t, auditLogEntries, 2)
+			require.NoError(t, err)
+
+			expectedEventTypes := []string{
+				audit.ItemCreationEvent,
+				audit.ItemArchiveEvent,
+			}
+			actualEventTypes := []string{}
+
+			for _, e := range auditLogEntries {
+				actualEventTypes = append(actualEventTypes, e.EventType)
+				require.Contains(t, e.Context, audit.ItemAssignmentKey)
+				assert.EqualValues(t, createdItem.ID, e.Context[audit.ItemAssignmentKey])
+			}
+
+			assert.Subset(t, expectedEventTypes, actualEventTypes)
 		})
 	})
 
@@ -338,6 +360,28 @@ func TestItems(test *testing.T) {
 
 			// Clean up item.
 			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+			auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
+
+			require.Len(t, auditLogEntries, 3)
+			require.NoError(t, err)
+
+			expectedEventTypes := []string{
+				audit.ItemCreationEvent,
+				audit.ItemUpdateEvent,
+				audit.ItemArchiveEvent,
+			}
+			actualEventTypes := []string{}
+
+			for _, e := range auditLogEntries {
+				actualEventTypes = append(actualEventTypes, e.EventType)
+				require.Contains(t, e.Context, audit.ItemAssignmentKey)
+				assert.EqualValues(t, createdItem.ID, e.Context[audit.ItemAssignmentKey])
+			}
+
+			assert.Subset(t, expectedEventTypes, actualEventTypes)
 		})
 	})
 
@@ -386,40 +430,12 @@ func TestItems(test *testing.T) {
 			exampleItem := fakes.BuildFakeItem()
 			exampleItem.ID = nonexistentID
 
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			x, err := adminClient.GetAuditLogForItem(ctx, exampleItem.ID)
+
 			assert.NoError(t, err)
 			assert.Empty(t, x)
-		})
-
-		subtest.Run("it should be auditable", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartSpan(context.Background())
-			defer span.End()
-
-			_, testClient := createUserAndClientForTest(ctx, t)
-
-			// Create item.
-			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			updateTo := fakes.BuildFakeItem()
-			updateToInput := fakes.BuildFakeItemUpdateInputFromItem(updateTo)
-			createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
-
-			// Change item.
-			expectedChanges := createdItem.Update(updateToInput)
-			require.NotEmpty(t, expectedChanges)
-			err = testClient.UpdateItem(ctx, createdItem)
-			assert.NoError(t, err)
-
-			// fetch audit log entries
-			actual, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
-			assert.NoError(t, err)
-			assert.Len(t, actual, 2)
-
-			// Clean up item.
-			assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 		})
 
 		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {

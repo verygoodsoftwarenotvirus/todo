@@ -43,7 +43,7 @@ func main() {
 		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("error parsing configuration file: %w", err))
 	}
 
-	if initializeTracerErr := cfg.Observability.InitializeTracer(logger); initializeTracerErr != nil {
+	if initializeTracerErr := cfg.Observability.Tracing.Initialize(logger); initializeTracerErr != nil {
 		logger.Error(initializeTracerErr, "initializing tracer")
 	}
 

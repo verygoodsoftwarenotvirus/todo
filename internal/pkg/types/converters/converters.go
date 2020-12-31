@@ -19,3 +19,13 @@ func ConvertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
 		Details: x.Details,
 	}
 }
+
+// ConvertPlanToPlanUpdateInput creates an PlanUpdateInput struct from a plan.
+func ConvertPlanToPlanUpdateInput(x *types.Plan) *types.PlanUpdateInput {
+	return &types.PlanUpdateInput{
+		Name:        x.Name,
+		Description: x.Description,
+		Price:       x.Price,
+		Period:      x.Period,
+	}
+}

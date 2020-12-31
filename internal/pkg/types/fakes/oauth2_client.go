@@ -11,7 +11,7 @@ import (
 // BuildFakeOAuth2Client builds a faked OAuth2Client.
 func BuildFakeOAuth2Client() *types.OAuth2Client {
 	return &types.OAuth2Client{
-		ID:           fake.Uint64(),
+		ID:           uint64(fake.Uint32()),
 		Name:         fake.Word(),
 		ClientID:     fake.UUID(),
 		ClientSecret: fake.UUID(),

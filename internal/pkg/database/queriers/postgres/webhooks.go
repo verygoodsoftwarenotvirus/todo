@@ -230,7 +230,7 @@ func (q *Postgres) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilte
 			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn):             nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.WebhooksTableName)
@@ -417,7 +417,7 @@ func (q *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (que
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{webhookIDKey: webhookID}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

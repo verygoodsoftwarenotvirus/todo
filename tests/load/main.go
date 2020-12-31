@@ -16,7 +16,8 @@ import (
 
 // ServiceAttacker implements hazana's Attacker interface.
 type ServiceAttacker struct {
-	todoClient *httpclient.V1Client
+	regularClient *httpclient.V1Client
+	adminClient   *httpclient.V1Client
 }
 
 // Setup implements hazana's Attacker interface.
@@ -28,7 +29,7 @@ func (a *ServiceAttacker) Setup(_ hazana.Config) error {
 func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 	// Do performs one request and is executed in a separate goroutine.
 	// The context is used to cancel the request on timeout.
-	act := RandomAction(a.todoClient)
+	act := RandomAction(a.regularClient, a.adminClient)
 
 	req, err := act.Action()
 	if err != nil || req == nil {
@@ -61,7 +62,7 @@ func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 		req.Body = rdr
 	}
 
-	res, err := a.todoClient.AuthenticatedClient().Do(req)
+	res, err := a.regularClient.AuthenticatedClient().Do(req)
 	if res != nil {
 		sc = res.StatusCode
 		bo = res.ContentLength
@@ -101,7 +102,11 @@ func main() {
 		runTime = _rt
 	}
 
-	attacker := &ServiceAttacker{todoClient: todoClient}
+	attacker := &ServiceAttacker{
+		adminClient:   todoClient,
+		regularClient: todoClient,
+	}
+
 	cfg := hazana.Config{
 		RPS:           50,
 		AttackTimeSec: int(runTime.Seconds()),

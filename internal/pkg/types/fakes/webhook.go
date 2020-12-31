@@ -11,7 +11,7 @@ import (
 // BuildFakeWebhook builds a faked Webhook.
 func BuildFakeWebhook() *types.Webhook {
 	return &types.Webhook{
-		ID:            fake.Uint64(),
+		ID:            uint64(fake.Uint32()),
 		Name:          fake.Word(),
 		ContentType:   "application/json",
 		URL:           fake.URL(),

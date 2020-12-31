@@ -115,13 +115,11 @@ func (q *Sqlite) logQueryBuildingError(err error) {
 	}
 }
 
-// logIDRetrievalError logs errors that may occur during created db row ID retrieval.
-// Such errors should be few and far between, as the generally only occur with
-// type discrepancies or other misuses of SQL. An alert should be set up for
-// any log entries with the given name, and those alerts should be investigated
-// with the utmost priority.
-func (q *Sqlite) logIDRetrievalError(err error) {
+func (q *Sqlite) getIDFromResult(res sql.Result) uint64 {
+	id, err := res.LastInsertId()
 	if err != nil {
 		q.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
 	}
+
+	return uint64(id)
 }

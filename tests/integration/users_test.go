@@ -60,6 +60,9 @@ func TestUsers(test *testing.T) {
 			checkUserCreationEquality(t, exampleUserInput, actual)
 
 			// Clean up.
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
 			assert.NoError(t, adminClient.ArchiveUser(ctx, actual.ID))
 		})
 	})
@@ -74,6 +77,9 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Fetch user.
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
 			actual, err := adminClient.GetUser(ctx, nonexistentID)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
@@ -88,6 +94,9 @@ func TestUsers(test *testing.T) {
 			createdUser, _ := createUserAndClientForTest(ctx, t)
 
 			// Fetch user.
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
 			actual, err := adminClient.GetUser(ctx, createdUser.ID)
 			if err != nil {
 				t.Logf("error encountered trying to fetch user %q: %v\n", createdUser.Username, err)
@@ -112,6 +121,8 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			// Search For user.
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			actual, err := adminClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
 			assert.Nil(t, actual)
 			assert.NoError(t, err)
@@ -148,6 +159,8 @@ func TestUsers(test *testing.T) {
 			}
 
 			// execute search
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			actual, err := adminClient.SearchForUsersByUsername(ctx, exampleUsername)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, actual)
@@ -187,8 +200,9 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Execute.
-			err = adminClient.ArchiveUser(ctx, u.ID)
-			assert.NoError(t, err)
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+			assert.NoError(t, adminClient.ArchiveUser(ctx, u.ID))
 		})
 	})
 
@@ -206,6 +220,8 @@ func TestUsers(test *testing.T) {
 			input.TargetAccountID = nonexistentID
 
 			// Ban user.
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			assert.Error(t, adminClient.UpdateAccountStatus(ctx, input))
 
 			x, err := adminClient.GetAuditLogForUser(ctx, nonexistentID)
@@ -228,6 +244,8 @@ func TestUsers(test *testing.T) {
 			checkValueAndError(t, createdUser, err)
 
 			// fetch audit log entries
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			actual, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
 			assert.NoError(t, err)
 			assert.Len(t, actual, 1)
@@ -256,6 +274,8 @@ func TestUsers(test *testing.T) {
 			assert.Nil(t, actual)
 
 			// Clean up item.
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
 		})
 	})

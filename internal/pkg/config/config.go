@@ -51,7 +51,7 @@ type (
 	ServerConfig struct {
 		Auth          authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Observability observability.Config   `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
+		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
 		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 		Uploads       uploadconfig.Config    `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`

@@ -220,6 +220,9 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger.WithRequest(req)
+	logger.Debug("executing request")
+
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
 		return fmt.Errorf("executing request: %w", err)
@@ -232,9 +235,11 @@ func (c *V1Client) executeRequest(ctx context.Context, req *http.Request, out in
 		return ErrUnauthorized
 	}
 
+	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
+
 	if out != nil {
 		if resErr := c.unmarshalBody(ctx, res, out); resErr != nil {
-			return fmt.Errorf("loading response from server: %w", err)
+			return fmt.Errorf("loading %s %d response from server: %w", res.Request.Method, res.StatusCode, resErr)
 		}
 	}
 
@@ -257,11 +262,8 @@ func (c *V1Client) executeRawRequest(ctx context.Context, client *http.Client, r
 		return nil, fmt.Errorf("executing request: %w", err)
 	}
 
-	if c.Debug {
-		/* if req.Method != http.MethodGet { */
-		if bdump, err := httputil.DumpResponse(res, true); err == nil {
-			logger = logger.WithValue("response_body", string(bdump))
-		}
+	if bdump, resDumpErr := httputil.DumpResponse(res, true); resDumpErr == nil {
+		logger = logger.WithValue("response_body", string(bdump))
 	}
 
 	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
@@ -299,8 +301,8 @@ func (c *V1Client) retrieve(ctx context.Context, req *http.Request, obj interfac
 		return fmt.Errorf("executing request: %w", err)
 	}
 
-	if res.StatusCode == http.StatusNotFound {
-		return ErrNotFound
+	if resErr := errorFromResponse(res); resErr != nil {
+		return resErr
 	}
 
 	return c.unmarshalBody(ctx, res, &obj)
@@ -316,16 +318,13 @@ func (c *V1Client) executeUnauthenticatedDataRequest(ctx context.Context, req *h
 		return fmt.Errorf("executing request: %w", err)
 	}
 
-	switch res.StatusCode {
-	case http.StatusNotFound:
-		return ErrNotFound
-	case http.StatusUnauthorized:
-		return ErrUnauthorized
+	if resErr := errorFromResponse(res); resErr != nil {
+		return resErr
 	}
 
 	if out != nil {
 		if resErr := c.unmarshalBody(ctx, res, out); resErr != nil {
-			return fmt.Errorf("loading response from server: %w", err)
+			return fmt.Errorf("loading %s %d response from server: %w", res.Request.Method, res.StatusCode, err)
 		}
 	}
 

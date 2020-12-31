@@ -9,7 +9,7 @@ import (
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
 	"github.com/spf13/viper"
@@ -63,12 +63,14 @@ const (
 	/* #nosec G101 */
 	ConfigKeyAuthMinimumPasswordLength = "auth.minimum_password_length"
 
-	// ConfigKeyMetricsProvider is the key viper will use to refer to the MetricsSettings.MetricsProvider setting.
-	ConfigKeyMetricsProvider = "metrics.metrics_provider"
-	// ConfigKeyMetricsTracer is the key viper will use to refer to the MetricsSettings.TracingProvider setting.
-	ConfigKeyMetricsTracer = "metrics.tracing_provider"
+	// ConfigKeyMetricsProvider is the key viper will use to refer to the MetricsProvider setting.
+	ConfigKeyMetricsProvider = "observability.metrics.provider"
+	// ConfigKeyMetricsTracer is the key viper will use to refer to the TracingProvider setting.
+	ConfigKeyMetricsTracer = "observability.tracing.provider"
+	// ConfigKeyObservabilityTracingSpanCollectionProbability is the key viper will use to refer to the SpanCollectionProbability setting.
+	ConfigKeyObservabilityTracingSpanCollectionProbability = "observability.tracing.span_collection_probability"
 	// ConfigKeyMetricsRuntimeCollectionInterval is the key viper will use to refer to the MetricsSettings.RuntimeCollectionInterval setting.
-	ConfigKeyMetricsRuntimeCollectionInterval = "metrics.runtime_metrics_collection_interval"
+	ConfigKeyMetricsRuntimeCollectionInterval = "observability.runtime_metrics_collection_interval"
 
 	// ConfigKeyDatabaseDebug is the key viper will use to refer to the DatabaseSettings.Debug setting.
 	ConfigKeyDatabaseDebug = "database.debug"
@@ -164,7 +166,7 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault(ConfigKeyAuthMinimumPasswordLength, 8)
 
 	// metrics stuff.
-	cfg.SetDefault(ConfigKeyDatabaseMetricsCollectionInterval, observability.DefaultMetricsCollectionInterval)
+	cfg.SetDefault(ConfigKeyDatabaseMetricsCollectionInterval, metrics.DefaultMetricsCollectionInterval)
 	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, dbconfig.DefaultMetricsCollectionInterval)
 
 	// audit log stuff.
@@ -211,8 +213,8 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Auth.EnableUserSignup)
 	cfg.Set(ConfigKeyAuthMinimumUsernameLength, input.Auth.MinimumUsernameLength)
 	cfg.Set(ConfigKeyAuthMinimumPasswordLength, input.Auth.MinimumPasswordLength)
-	cfg.Set(ConfigKeyMetricsProvider, string(input.Observability.MetricsProvider))
-	cfg.Set(ConfigKeyMetricsTracer, string(input.Observability.TracingProvider))
+	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)
+	cfg.Set(ConfigKeyMetricsTracer, input.Observability.Tracing.Provider)
 	cfg.Set(ConfigKeyMetricsRuntimeCollectionInterval, input.Observability.RuntimeMetricsCollectionInterval)
 	cfg.Set(ConfigKeyDatabaseDebug, input.Database.Debug)
 	cfg.Set(ConfigKeyDatabaseProvider, input.Database.Provider)

@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-
-	//
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"io/ioutil"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const exampleConfig = ``

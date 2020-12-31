@@ -453,7 +453,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND webhooks.created_on > $2 AND webhooks.created_on < $3 AND webhooks.last_updated_on > $4 AND webhooks.last_updated_on < $5) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $6 AND webhooks.created_on > $7 AND webhooks.created_on < $8 AND webhooks.last_updated_on > $9 AND webhooks.last_updated_on < $10 ORDER BY webhooks.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND webhooks.created_on > $2 AND webhooks.created_on < $3 AND webhooks.last_updated_on > $4 AND webhooks.last_updated_on < $5) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $6 AND webhooks.created_on > $7 AND webhooks.created_on < $8 AND webhooks.last_updated_on > $9 AND webhooks.last_updated_on < $10 ORDER BY webhooks.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,

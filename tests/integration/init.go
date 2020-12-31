@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -22,13 +23,13 @@ const (
 	debug         = false
 	timeout       = 5 * time.Second
 	nonexistentID = 999999999
-
-	clientsDebug = debug
 )
 
 var (
-	urlToUse    string
-	adminClient *httpclient.V1Client
+	urlToUse string
+
+	adminClientLock sync.Mutex
+	adminClient     *httpclient.V1Client
 
 	premadeAdminUser = &types.User{
 		ID:              1,
@@ -54,7 +55,7 @@ func init() {
 	}
 
 	adminClient = initializeClient(adminOAuth2Client)
-	adminClient.Debug = clientsDebug
+	adminClient.SetOption(httpclient.WithDebugEnabled())
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

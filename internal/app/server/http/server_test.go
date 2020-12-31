@@ -50,6 +50,7 @@ func TestProvideServer(T *testing.T) {
 			&mocktypes.AuditLogDataService{},
 			&mocktypes.ItemDataServer{},
 			&mocktypes.UserDataServer{},
+			&mocktypes.PlanDataServer{},
 			&mocktypes.OAuth2ClientDataServer{},
 			&mocktypes.WebhookDataServer{},
 			&mocktypes.AdminServer{},

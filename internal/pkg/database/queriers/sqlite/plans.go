@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -18,8 +19,9 @@ var _ types.PlanDataManager = (*Sqlite)(nil)
 // scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an Plan struct.
 func (q *Sqlite) scanPlan(scan database.Scanner, includeCount bool) (*types.Plan, uint64, error) {
 	var (
-		x     = &types.Plan{}
-		count uint64
+		x         = &types.Plan{}
+		count     uint64
+		rawPeriod string
 	)
 
 	targetVars := []interface{}{
@@ -27,7 +29,7 @@ func (q *Sqlite) scanPlan(scan database.Scanner, includeCount bool) (*types.Plan
 		&x.Name,
 		&x.Description,
 		&x.Price,
-		&x.Period,
+		&rawPeriod,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -40,6 +42,13 @@ func (q *Sqlite) scanPlan(scan database.Scanner, includeCount bool) (*types.Plan
 	if err := scan.Scan(targetVars...); err != nil {
 		return nil, 0, err
 	}
+
+	p, err := time.ParseDuration(rawPeriod)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	x.Period = p
 
 	return x, count, nil
 }
@@ -146,7 +155,7 @@ func (q *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, ar
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.ArchivedOnColumn): nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.PlansTableName)
@@ -192,11 +201,16 @@ func (q *Sqlite) buildCreatePlanQuery(input *types.Plan) (query string, args []i
 		Insert(queriers.PlansTableName).
 		Columns(
 			queriers.PlansTableNameColumn,
+			queriers.PlansTableDescriptionColumn,
+			queriers.PlansTablePriceColumn,
+			queriers.PlansTablePeriodColumn,
 		).
 		Values(
 			input.Name,
+			input.Description,
+			input.Price,
+			input.Period.String(),
 		).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
 		ToSql()
 
 	q.logQueryBuildingError(err)
@@ -216,10 +230,13 @@ func (q *Sqlite) CreatePlan(ctx context.Context, input *types.PlanCreationInput)
 	query, args := q.buildCreatePlanQuery(x)
 
 	// create the plan.
-	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
+	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing plan creation query: %w", err)
+		return nil, fmt.Errorf("error executing item creation query: %w", err)
 	}
+
+	x.CreatedOn = q.timeTeller.Now()
+	x.ID = q.getIDFromResult(res)
 
 	return x, nil
 }
@@ -231,11 +248,13 @@ func (q *Sqlite) buildUpdatePlanQuery(input *types.Plan) (query string, args []i
 	query, args, err = q.sqlBuilder.
 		Update(queriers.PlansTableName).
 		Set(queriers.PlansTableNameColumn, input.Name).
+		Set(queriers.PlansTableDescriptionColumn, input.Description).
+		Set(queriers.PlansTablePriceColumn, input.Price).
+		Set(queriers.PlansTablePeriodColumn, input.Period.String()).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			queriers.IDColumn: input.ID,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
 		ToSql()
 
 	q.logQueryBuildingError(err)
@@ -246,7 +265,9 @@ func (q *Sqlite) buildUpdatePlanQuery(input *types.Plan) (query string, args []i
 // UpdatePlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
 func (q *Sqlite) UpdatePlan(ctx context.Context, input *types.Plan) error {
 	query, args := q.buildUpdatePlanQuery(input)
-	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
+	_, err := q.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // buildArchivePlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
@@ -261,7 +282,6 @@ func (q *Sqlite) buildArchivePlanQuery(planID uint64) (query string, args []inte
 			queriers.IDColumn:         planID,
 			queriers.ArchivedOnColumn: nil,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)).
 		ToSql()
 
 	q.logQueryBuildingError(err)
@@ -308,7 +328,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query strin
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{planIDKey: planID}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

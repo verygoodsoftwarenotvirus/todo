@@ -14,12 +14,14 @@ import (
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
+	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
@@ -53,11 +55,13 @@ func BuildServer(
 		dbconfig.Providers,
 		images.Providers,
 		uploadconfig.Providers,
+		observability.Providers,
 		gocloud.Providers,
 		// services,
 		adminservice.Providers,
 		auditservice.Providers,
 		authservice.Providers,
+		plansservice.Providers,
 		usersservice.Providers,
 		itemsservice.Providers,
 		frontendservice.Providers,

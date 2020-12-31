@@ -727,7 +727,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
+		mock.AssertExpectationsForObjects(t, itemDataManager, si, ed)
 	})
 
 	T.Run("without update input", func(t *testing.T) {
@@ -937,7 +937,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc)
+		mock.AssertExpectationsForObjects(t, itemDataManager, si, mc)
 	})
 
 	T.Run("with no item in database", func(t *testing.T) {
@@ -1059,6 +1059,6 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc)
+		mock.AssertExpectationsForObjects(t, itemDataManager, si, mc)
 	})
 }

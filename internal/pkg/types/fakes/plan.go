@@ -11,10 +11,10 @@ import (
 // BuildFakePlan builds a faked plan.
 func BuildFakePlan() *types.Plan {
 	return &types.Plan{
-		ID:          fake.Uint64(),
-		Name:        fake.Word(),
+		ID:          uint64(fake.Uint32()),
+		Name:        fake.Password(true, true, false, false, false, 32),
 		Description: fake.Word(),
-		Price:       func(u uint32) *uint32 { return &u }(uint32(fake.Price(10, 20) * 100)),
+		Price:       uint32(fake.Price(10, 20) * 100),
 		Period:      24 * time.Hour * 30,
 		CreatedOn:   uint64(uint32(fake.Date().Unix())),
 	}

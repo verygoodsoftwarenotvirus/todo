@@ -38,12 +38,6 @@ type (
 		tracer             tracing.Tracer
 		search             SearchIndex
 	}
-
-	// SessionInfoFetcher is a function that fetches user IDs.
-	SessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
-
-	// ItemIDFetcher is a function that fetches item IDs.
-	ItemIDFetcher func(*http.Request) uint64
 )
 
 // ProvideService builds a new ItemsService.

@@ -124,7 +124,7 @@ func (c *V1Client) CreateOAuth2Client(
 	}
 
 	if resErr := c.executeUnauthenticatedDataRequest(ctx, req, &oauth2Client); resErr != nil {
-		return nil, fmt.Errorf("loading response from server: %w", resErr)
+		return nil, fmt.Errorf("executing request: %w", resErr)
 	}
 
 	return oauth2Client, nil

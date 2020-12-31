@@ -100,16 +100,6 @@ func TestMariaDB_logQueryBuildingError(T *testing.T) {
 	})
 }
 
-func TestMariaDB_logIDRetrievalError(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-		q.logIDRetrievalError(errors.New("blah"))
-	})
-}
-
 func TestProvideMariaDBConnection(T *testing.T) {
 	T.Parallel()
 

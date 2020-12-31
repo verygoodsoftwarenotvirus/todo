@@ -34,7 +34,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Ro
 			x.Name,
 			x.Description,
 			x.Price,
-			x.Period,
+			x.Period.String(),
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,
@@ -56,7 +56,7 @@ func buildErroneousMockRowFromPlan(x *types.Plan) *sqlmock.Rows {
 		x.ID,
 		x.Description,
 		x.Price,
-		x.Period,
+		x.Period.String(),
 		x.CreatedOn,
 		x.LastUpdatedOn,
 		x.ArchivedOn,
@@ -206,7 +206,7 @@ func TestPostgres_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $1 AND plans.created_on < $2 AND plans.last_updated_on > $3 AND plans.last_updated_on < $4) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $5 AND plans.created_on < $6 AND plans.last_updated_on > $7 AND plans.last_updated_on < $8 ORDER BY plans.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $1 AND plans.created_on < $2 AND plans.last_updated_on > $3 AND plans.last_updated_on < $4) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $5 AND plans.created_on < $6 AND plans.last_updated_on > $7 AND plans.last_updated_on < $8 ORDER BY plans.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -330,9 +330,12 @@ func TestPostgres_buildCreatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "INSERT INTO plans (name) VALUES ($1) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO plans (name,description,price,period) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
+			examplePlan.Description,
+			examplePlan.Price,
+			examplePlan.Period.String(),
 		}
 		actualQuery, actualArgs := q.buildCreatePlanQuery(examplePlan)
 
@@ -396,9 +399,12 @@ func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET name = $1, last_updated_on = extract(epoch FROM NOW()) WHERE id = $2 RETURNING last_updated_on"
+		expectedQuery := "UPDATE plans SET name = $1, description = $2, price = $3, period = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING last_updated_on"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
+			examplePlan.Description,
+			examplePlan.Price,
+			examplePlan.Period.String(),
 			examplePlan.ID,
 		}
 		actualQuery, actualArgs := q.buildUpdatePlanQuery(examplePlan)

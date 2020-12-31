@@ -87,13 +87,14 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
+		logger.Debug("serving request")
+
 		if user != nil {
 			tracing.AttachUserIDToSpan(span, user.ID)
 			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, user.ToSessionInfo())))
 			return
 		}
 
-		logger.Debug("serving request")
 		next.ServeHTTP(res, req)
 	})
 }

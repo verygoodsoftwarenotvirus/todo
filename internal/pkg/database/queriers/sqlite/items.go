@@ -239,7 +239,7 @@ func (q *Sqlite) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) (q
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.ItemsTableName)
@@ -307,7 +307,7 @@ func (q *Sqlite) buildGetItemsForAdminQuery(filter *types.QueryFilter) (query st
 			Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 			From(queriers.ItemsTableName).
 			Where(where).
-			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)),
+			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn)),
 		queriers.ItemsTableName,
 	)
 
@@ -502,13 +502,8 @@ func (q *Sqlite) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 		return nil, fmt.Errorf("error executing item creation query: %w", err)
 	}
 
-	// fetch the last inserted ID.
-	id, err := res.LastInsertId()
-	q.logIDRetrievalError(err)
-
-	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = q.timeTeller.Now()
-	x.ID = uint64(id)
+	x.ID = q.getIDFromResult(res)
 
 	return x, nil
 }
@@ -599,7 +594,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query strin
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{itemIDKey: itemID}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

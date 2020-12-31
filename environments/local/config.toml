@@ -21,7 +21,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$02MIymBMT36kizQpDT9o.uNLXijQh.60cXrQYufUtWOlqWg5I2A12"
+    hashed_password = "$2a$11$DUhvI/ZcuEkUs0H35WQIR.gzvsWRwh4EuxoIs.Gr2inum5RLVELXe"
     is_admin = true
     password = "password"
     username = "username"
@@ -35,10 +35,14 @@
   debug = true
   run_mode = "development"
 
-[metrics]
-  metrics_provider = "prometheus"
+[observability]
   runtime_metrics_collection_interval = "1s"
-  tracing_provider = "jaeger"
+
+  [observability.metrics]
+    provider = "prometheus"
+
+  [observability.tracing]
+    provider = "jaeger"
 
 [search]
   items_index_path = "/search_indices/items.bleve"

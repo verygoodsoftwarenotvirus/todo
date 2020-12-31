@@ -19,6 +19,8 @@ func TestAuditLogEntries(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 
@@ -33,12 +35,14 @@ func TestAuditLogEntries(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 
 			for _, x := range actual.Entries {
-				y, err := adminClient.GetAuditLogEntry(ctx, x.ID)
-				checkValueAndError(t, y, err)
+				y, entryFetchErr := adminClient.GetAuditLogEntry(ctx, x.ID)
+				checkValueAndError(t, y, entryFetchErr)
 			}
 
 			assert.NotEmpty(t, actual.Entries)

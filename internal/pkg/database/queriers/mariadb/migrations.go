@@ -37,24 +37,26 @@ var (
 				"CREATE TABLE IF NOT EXISTS plans (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `name` VARCHAR(128) NOT NULL,",
+				"    `description` VARCHAR(128) NOT NULL DEFAULT '',",
 				"    `price` INT UNSIGNED NOT NULL,",
-				"    `period` INT UNSIGNED NOT NULL,",
+				"    `period` VARCHAR(128) NOT NULL DEFAULT '0m0s',",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    PRIMARY KEY (`id`)",
+				"    PRIMARY KEY (`id`),",
+				"    UNIQUE (`name`, `archived_on`)",
 				");",
 			}, "\n"),
 		},
 		{
 			Version:     0.01,
 			Description: "create plans table creation trigger",
-			Script:      buildCreationTriggerScript("plans"),
+			Script:      buildCreationTriggerScript(queriers.PlansTableName),
 		},
 		{
 			Version:     0.02,
 			Description: "create default plan",
-			Script:      "INSERT INTO plans (name,price,period) VALUES ('free', 0, 0);",
+			Script:      `INSERT INTO plans (id,name,price,period) VALUES (1,'free', 0, 0);`,
 		},
 		{
 			Version:     0.03,
@@ -79,14 +81,14 @@ var (
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    PRIMARY KEY (`id`),",
 				"    FOREIGN KEY(`plan_id`) REFERENCES plans(`id`),",
-				"    UNIQUE (`username`)",
+				"    UNIQUE (`username`, `archived_on`)",
 				");",
 			}, "\n"),
 		},
 		{
 			Version:     0.04,
 			Description: "create users table creation trigger",
-			Script:      buildCreationTriggerScript("users"),
+			Script:      buildCreationTriggerScript(queriers.UsersTableName),
 		},
 		{
 			Version:     0.05,
@@ -128,7 +130,7 @@ var (
 		{
 			Version:     0.08,
 			Description: "create oauth2_clients table creation trigger",
-			Script:      buildCreationTriggerScript("oauth2_clients"),
+			Script:      buildCreationTriggerScript(queriers.OAuth2ClientsTableName),
 		},
 		{
 			Version:     0.09,
@@ -155,7 +157,7 @@ var (
 		{
 			Version:     0.10,
 			Description: "create webhooks table creation trigger",
-			Script:      buildCreationTriggerScript("webhooks"),
+			Script:      buildCreationTriggerScript(queriers.WebhooksTableName),
 		},
 		{
 			Version:     0.11,
@@ -173,7 +175,7 @@ var (
 		{
 			Version:     0.12,
 			Description: "create audit_log table creation trigger",
-			Script:      buildCreationTriggerScript("audit_log"),
+			Script:      buildCreationTriggerScript(queriers.AuditLogEntriesTableName),
 		},
 		{
 			Version:     0.13,
@@ -195,7 +197,7 @@ var (
 		{
 			Version:     0.14,
 			Description: "create items table creation trigger",
-			Script:      buildCreationTriggerScript("items"),
+			Script:      buildCreationTriggerScript(queriers.ItemsTableName),
 		},
 	}
 )

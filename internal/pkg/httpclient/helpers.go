@@ -43,6 +43,22 @@ func BuildClientCredentialsConfig(u *url.URL, clientID, clientSecret string, sco
 	return conf
 }
 
+// errorFromResponse returns library errors according to a response's status code.
+func errorFromResponse(res *http.Response) error {
+	if res == nil {
+		return errors.New("nil response")
+	}
+
+	switch res.StatusCode {
+	case http.StatusNotFound:
+		return ErrNotFound
+	case http.StatusUnauthorized:
+		return ErrUnauthorized
+	default:
+		return nil
+	}
+}
+
 // argIsNotPointer checks an argument and returns whether or not it is a pointer.
 func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
@@ -95,7 +111,9 @@ func (c *V1Client) unmarshalBody(ctx context.Context, res *http.Response, dest i
 	}
 
 	if res.StatusCode >= http.StatusBadRequest {
-		apiErr := &types.ErrorResponse{}
+		apiErr := &types.ErrorResponse{
+			Code: res.StatusCode,
+		}
 
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
 			return fmt.Errorf("unmarshaling error: %w", err)

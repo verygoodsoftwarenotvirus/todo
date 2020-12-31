@@ -9,7 +9,7 @@ import (
 // BuildFakeItem builds a faked item.
 func BuildFakeItem() *types.Item {
 	return &types.Item{
-		ID:            fake.Uint64(),
+		ID:            uint64(fake.Uint32()),
 		Name:          fake.Word(),
 		Details:       fake.Word(),
 		CreatedOn:     uint64(uint32(fake.Date().Unix())),

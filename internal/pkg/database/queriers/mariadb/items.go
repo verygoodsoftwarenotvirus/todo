@@ -239,7 +239,7 @@ func (q *MariaDB) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) (
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.ItemsTableName)
@@ -307,7 +307,7 @@ func (q *MariaDB) buildGetItemsForAdminQuery(filter *types.QueryFilter) (query s
 			Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 			From(queriers.ItemsTableName).
 			Where(where).
-			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)),
+			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn)),
 		queriers.ItemsTableName,
 	)
 
@@ -502,13 +502,8 @@ func (q *MariaDB) CreateItem(ctx context.Context, input *types.ItemCreationInput
 		return nil, fmt.Errorf("error executing item creation query: %w", err)
 	}
 
-	// fetch the last inserted ID.
-	id, err := res.LastInsertId()
-	q.logIDRetrievalError(err)
-
-	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = q.timeTeller.Now()
-	x.ID = uint64(id)
+	x.ID = q.getIDFromResult(res)
 
 	return x, nil
 }
@@ -606,7 +601,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query stri
 				audit.ItemAssignmentKey,
 			),
 		)).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

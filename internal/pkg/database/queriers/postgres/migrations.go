@@ -24,18 +24,22 @@ var (
 			CREATE TABLE IF NOT EXISTS plans (
 				"id" BIGSERIAL NOT NULL PRIMARY KEY,
 				"name" TEXT NOT NULL,
+				"description" TEXT NOT NULL DEFAULT '',
 				"price" INTEGER NOT NULL,
-				"period" INTEGER NOT NULL,
-				"created_on" INTEGER NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"last_updated_on" INTEGER,
-				"archived_on" INTEGER DEFAULT NULL
-			);
-
-			INSERT INTO plans (name,price,period) VALUES ('free', 0, 0);
-		`,
+				"period" TEXT NOT NULL DEFAULT '0m0s',
+				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
+				"last_updated_on" BIGINT DEFAULT NULL,
+				"archived_on" BIGINT DEFAULT NULL,
+				UNIQUE("name", "archived_on")
+			);`,
 		},
 		{
 			Version:     0.01,
+			Description: "create plans table and default plan",
+			Script:      `INSERT INTO plans (id,name,price,period) VALUES (1,'free', 0, 0); SELECT nextval('plans_id_seq');`,
+		},
+		{
+			Version:     0.02,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -56,11 +60,11 @@ var (
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				FOREIGN KEY("plan_id") REFERENCES plans(id),
-				UNIQUE ("username")
+				UNIQUE("username", "archived_on")
 			);`,
 		},
 		{
-			Version:     0.02,
+			Version:     0.03,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -68,12 +72,15 @@ var (
 				data BYTEA NOT NULL,
 				expiry TIMESTAMPTZ NOT NULL
 			);
-
-			CREATE INDEX sessions_expiry_idx ON sessions (expiry);
-		`,
+			`,
 		},
 		{
-			Version:     0.03,
+			Version:     0.04,
+			Description: "create sessions table for session manager",
+			Script:      `CREATE INDEX sessions_expiry_idx ON sessions (expiry);`,
+		},
+		{
+			Version:     0.05,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -92,7 +99,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.04,
+			Version:     0.06,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -112,7 +119,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.05,
+			Version:     0.07,
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
@@ -123,7 +130,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.06,
+			Version:     0.08,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -176,6 +183,7 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 				queriers.UsersTableAccountStatusColumn,
 				queriers.UsersTableAdminPermissionsColumn,
 				queriers.UsersTableTwoFactorVerifiedOnColumn,
+				queriers.UsersTablePlanIDColumn,
 			).
 			Values(
 				testUserConfig.Username,
@@ -187,6 +195,7 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 				types.GoodStandingAccountStatus,
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
+				1,
 			).
 			ToSql()
 		q.logQueryBuildingError(err)

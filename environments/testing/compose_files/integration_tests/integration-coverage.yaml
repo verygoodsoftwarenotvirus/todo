@@ -17,7 +17,7 @@ services:
             - source: '../../../../artifacts/'
               target: '/home/'
               type: 'bind'
-            - source: '../../../../environments/testing/config_files/coverage.toml'
+            - source: '../../../../../../environments/testing/config_files/coverage.toml'
               target: '/etc/config.toml'
               type: 'bind'
         build:

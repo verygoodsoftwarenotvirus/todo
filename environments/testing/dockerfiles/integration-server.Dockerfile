@@ -30,7 +30,6 @@ RUN chown appuser /home/appuser
 WORKDIR /home/appuser
 USER appuser
 
-COPY environments/testing/config_files/integration-tests-sqlite.toml /etc/config.toml
 COPY --from=build-stage /todo /todo
 COPY --from=frontend-build-stage /app/dist /frontend
 

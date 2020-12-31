@@ -41,8 +41,8 @@ run:
   # directory holds the correct copies of dependencies and ignores
   # the dependency descriptions in go.mod.
   #
-  # available options: readonly|release|vendor
-  modules-download-mode: vendor
+  # available options: readonly|vendor
+  # modules-download-mode: release
 
 # output configuration options
 output:
@@ -83,7 +83,15 @@ linters-settings:
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
     # enable or disable analyzers by name
     enable-all: true
-
+#  goheader:
+#    values:
+#      const:
+#      # define here const type values in format k:v, for example:
+#      # COMPANY: MY COMPANY
+#      regexp:
+#      # define here regexp type values, for example
+#      # AUTHOR: .*@mycompany\.com
+#    template-path: development/header_template.md
   golint:
     # minimal confidence for issues, default is 0.8
     min-confidence: 0.8

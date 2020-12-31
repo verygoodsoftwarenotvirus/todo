@@ -461,7 +461,7 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $6 AND items.created_on > $7 AND items.created_on < $8 AND items.last_updated_on > $9 AND items.last_updated_on < $10 ORDER BY items.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $6 AND items.created_on > $7 AND items.created_on < $8 AND items.last_updated_on > $9 AND items.last_updated_on < $10 ORDER BY items.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -592,7 +592,7 @@ func TestPostgres_buildGetItemsForAdminQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.created_on > $1 AND items.created_on < $2 AND items.last_updated_on > $3 AND items.last_updated_on < $4) FROM items WHERE items.archived_on IS NULL AND items.created_on > $5 AND items.created_on < $6 AND items.last_updated_on > $7 AND items.last_updated_on < $8 ORDER BY items.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.created_on > $1 AND items.created_on < $2 AND items.last_updated_on > $3 AND items.last_updated_on < $4) FROM items WHERE items.archived_on IS NULL AND items.created_on > $5 AND items.created_on < $6 AND items.last_updated_on > $7 AND items.last_updated_on < $8 ORDER BY items.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,

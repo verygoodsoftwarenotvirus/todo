@@ -29,13 +29,13 @@ type (
 )
 
 // RandomAction takes a httpclient and returns a closure which is an action.
-func RandomAction(c *httpclient.V1Client) *Action {
+func RandomAction(regularClient, adminClient *httpclient.V1Client) *Action {
 	allActions := map[string]*Action{
 		"GetHealthCheck": {
 			Name: "GetHealthCheck",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				return c.BuildHealthCheckRequest(ctx)
+				return regularClient.BuildHealthCheckRequest(ctx)
 			},
 			Weight: 100,
 		},
@@ -44,21 +44,25 @@ func RandomAction(c *httpclient.V1Client) *Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 				ui := fakes.BuildFakeUserCreationInput()
-				return c.BuildCreateUserRequest(ctx, ui)
+				return regularClient.BuildCreateUserRequest(ctx, ui)
 			},
 			Weight: 100,
 		},
 	}
 
-	for k, v := range buildItemActions(c) {
+	for k, v := range buildPlanActions(false, adminClient) {
 		allActions[k] = v
 	}
 
-	for k, v := range buildWebhookActions(c) {
+	for k, v := range buildItemActions(regularClient) {
 		allActions[k] = v
 	}
 
-	for k, v := range buildOAuth2ClientActions(c) {
+	for k, v := range buildWebhookActions(regularClient) {
+		allActions[k] = v
+	}
+
+	for k, v := range buildOAuth2ClientActions(regularClient) {
 		allActions[k] = v
 	}
 

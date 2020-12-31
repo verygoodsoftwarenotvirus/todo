@@ -7,6 +7,7 @@ import (
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
+	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
@@ -119,14 +120,16 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 	})
 
 	authenticatedRouter.With(s.authService.AuthorizationMiddleware).Route("/api/v1", func(v1Router chi.Router) {
+		adminRouter := v1Router.With(s.authService.AdminMiddleware)
+
 		// Users
 		v1Router.Route("/users", func(usersRouter chi.Router) {
 			singleUserRoute := fmt.Sprintf("/"+numericIDPattern, usersservice.UserIDURIParamKey)
-			usersRouter.Get("/self", s.usersService.SelfHandler)
 
 			usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 			usersRouter.With(s.authService.AdminMiddleware).Get("/search", s.usersService.UsernameSearchHandler)
 
+			usersRouter.Get("/self", s.usersService.SelfHandler)
 			usersRouter.Route(singleUserRoute, func(singleUserRouter chi.Router) {
 				singleUserRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
 				singleUserRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
@@ -135,8 +138,22 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			})
 		})
 
+		// Plans
+		adminRouter.Route("/plans", func(plansRouter chi.Router) {
+			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.PlanIDURIParamKey)
+
+			plansRouter.With(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)
+			plansRouter.Get(root, s.plansService.ListHandler)
+			plansRouter.Route(singlePlanRoute, func(singlePlanRouter chi.Router) {
+				singlePlanRouter.Get(root, s.plansService.ReadHandler)
+				singlePlanRouter.Get(auditRoute, s.plansService.AuditEntryHandler)
+				singlePlanRouter.Delete(root, s.plansService.ArchiveHandler)
+				singlePlanRouter.With(s.plansService.UpdateInputMiddleware).Put(root, s.plansService.UpdateHandler)
+			})
+		})
+
 		// Admin
-		v1Router.With(s.authService.AdminMiddleware).Route("/_admin_", func(adminRouter chi.Router) {
+		adminRouter.Route("/_admin_", func(adminRouter chi.Router) {
 			adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
 			adminRouter.With(s.adminService.AccountStatusUpdateInputMiddleware).
 				Post("/users/status", s.adminService.UserAccountStatusChangeHandler)

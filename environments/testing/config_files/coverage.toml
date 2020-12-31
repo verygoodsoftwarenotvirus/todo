@@ -21,7 +21,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$DEtNVwow8XDRL1aDMJ36J.1HNdzLa6GROcHNU8DYnHNRa9jK5e.12"
+    hashed_password = "$2a$11$0mOTsJorKV4zXUI5BpCO4.Ll09s0gZ8pVOFYSQyMrBlxGYZYLnc52"
     is_admin = false
     password = "password"
     username = "coverageUser"
@@ -35,10 +35,14 @@
   debug = true
   run_mode = "testing"
 
-[metrics]
-  metrics_provider = ""
-  runtime_metrics_collection_interval = "2s"
-  tracing_provider = ""
+[observability]
+  runtime_metrics_collection_interval = "1s"
+
+  [observability.metrics]
+    provider = ""
+
+  [observability.tracing]
+    provider = ""
 
 [search]
   items_index_path = "items.bleve"

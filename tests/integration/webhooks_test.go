@@ -254,6 +254,10 @@ func TestWebhooks(test *testing.T) {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhook.ID = nonexistentID
 
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
+			// fetch audit log entries
 			x, err := adminClient.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
@@ -277,6 +281,9 @@ func TestWebhooks(test *testing.T) {
 			premade.Name = reverse(premade.Name)
 			exampleWebhook.Name = premade.Name
 			assert.NoError(t, testClient.UpdateWebhook(ctx, premade))
+
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
 
 			// fetch audit log entries
 			actual, err := adminClient.GetAuditLogForWebhook(ctx, premade.ID)

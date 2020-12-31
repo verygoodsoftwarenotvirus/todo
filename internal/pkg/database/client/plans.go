@@ -111,7 +111,7 @@ func (c *Client) LogPlanArchiveEvent(ctx context.Context, userID, planID uint64)
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogPlanArchiveEvent called")
 
-	c.querier.LogItemArchiveEvent(ctx, userID, planID)
+	c.querier.LogPlanArchiveEvent(ctx, userID, planID)
 }
 
 // GetAuditLogEntriesForPlan fetches a list of audit log entries from the database that relate to a given plan.
@@ -119,7 +119,7 @@ func (c *Client) GetAuditLogEntriesForPlan(ctx context.Context, planID uint64) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAuditLogEntriesForPlan called")
+	c.logger.WithValue(keys.PlanIDKey, planID).Debug("GetAuditLogEntriesForPlan called")
 
 	return c.querier.GetAuditLogEntriesForPlan(ctx, planID)
 }

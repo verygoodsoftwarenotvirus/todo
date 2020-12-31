@@ -191,7 +191,7 @@ func (q *MariaDB) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query
 	builder := q.sqlBuilder.
 		Select(append(queriers.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.AuditLogEntriesTableName).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.AuditLogEntriesTableName)
@@ -258,7 +258,10 @@ func (q *MariaDB) createAuditLogEntry(ctx context.Context, input *types.AuditLog
 	}
 
 	query, args := q.buildCreateAuditLogEntryQuery(x)
-	q.logger.Debug("createAuditLogEntry called")
+	q.logger.WithValues(map[string]interface{}{
+		"EventType": input.EventType,
+		"Context":   input.Context,
+	}).Info("createAuditLogEntry called")
 
 	// create the audit log entry.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {

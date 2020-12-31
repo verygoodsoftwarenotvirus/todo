@@ -461,6 +461,8 @@ func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
 		done      = make(chan struct{})
 	)
 
+	const m = 2 << 7
+
 	go func() {
 		for {
 			select {
@@ -495,8 +497,8 @@ func RecordRuntimeStats(interval time.Duration) (stopFn func()) {
 					RuntimeOtherSysMeasurement.M(int64(ms.OtherSys)),
 					RuntimeNextGCMeasurement.M(int64(ms.NextGC)),
 					RuntimePauseTotalNsMeasurement.M(int64(ms.PauseTotalNs)),
-					RuntimePauseNsMeasurement.M(int64(ms.PauseNs[(ms.NumGC+255)%256])),
-					RuntimePauseEndMeasurement.M(int64(ms.PauseEnd[(ms.NumGC+255)%256])),
+					RuntimePauseNsMeasurement.M(int64(ms.PauseNs[(ms.NumGC+(m-1))%m])),
+					RuntimePauseEndMeasurement.M(int64(ms.PauseEnd[(ms.NumGC+(m-1))%m])),
 					RuntimeNumGCMeasurement.M(int64(ms.NumGC)),
 					RuntimeNumForcedGCMeasurement.M(int64(ms.NumForcedGC)),
 					RuntimeGCCPUFractionMeasurement.M(ms.GCCPUFraction),

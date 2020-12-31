@@ -191,7 +191,7 @@ func (q *Sqlite) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query 
 	builder := q.sqlBuilder.
 		Select(append(queriers.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.AuditLogEntriesTableName).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.AuditLogEntriesTableName)

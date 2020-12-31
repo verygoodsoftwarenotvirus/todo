@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -34,7 +36,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Ro
 			x.Name,
 			x.Description,
 			x.Price,
-			x.Period,
+			x.Period.String(),
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,
@@ -56,7 +58,7 @@ func buildErroneousMockRowFromPlan(x *types.Plan) *sqlmock.Rows {
 		x.ID,
 		x.Description,
 		x.Price,
-		x.Period,
+		x.Period.String(),
 		x.CreatedOn,
 		x.LastUpdatedOn,
 		x.ArchivedOn,
@@ -206,7 +208,7 @@ func TestMariaDB_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ?) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ? ORDER BY plans.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ?) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ? ORDER BY plans.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -330,9 +332,12 @@ func TestMariaDB_buildCreatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "INSERT INTO plans (name) VALUES (?) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO plans (name,description,price,period) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
+			examplePlan.Description,
+			examplePlan.Price,
+			examplePlan.Period.String(),
 		}
 		actualQuery, actualArgs := q.buildCreatePlanQuery(examplePlan)
 
@@ -354,15 +359,19 @@ func TestMariaDB_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.buildCreatePlanQuery(examplePlan)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(examplePlan.ID, examplePlan.CreatedOn)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+			WillReturnResult(sqlmock.NewResult(int64(examplePlan.ID), 1))
+
+		mtt := &queriers.MockTimeTeller{}
+		mtt.On("Now").Return(examplePlan.CreatedOn)
+		q.timeTeller = mtt
 
 		actual, err := q.CreatePlan(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
+		mock.AssertExpectationsForObjects(t, mtt)
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
@@ -375,7 +384,7 @@ func TestMariaDB_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.buildCreatePlanQuery(examplePlan)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
@@ -396,9 +405,12 @@ func TestMariaDB_buildUpdatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET name = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ? RETURNING last_updated_on"
+		expectedQuery := "UPDATE plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
+			examplePlan.Description,
+			examplePlan.Price,
+			examplePlan.Period.String(),
 			examplePlan.ID,
 		}
 		actualQuery, actualArgs := q.buildUpdatePlanQuery(examplePlan)
@@ -415,17 +427,13 @@ func TestMariaDB_UpdatePlan(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
-
 		examplePlan := fakes.BuildFakePlan()
-
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
-		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+			WillReturnResult(sqlmock.NewResult(int64(examplePlan.ID), 1))
 
 		err := q.UpdatePlan(ctx, examplePlan)
 		assert.NoError(t, err)
@@ -436,14 +444,11 @@ func TestMariaDB_UpdatePlan(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
-
 		examplePlan := fakes.BuildFakePlan()
-
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
@@ -463,7 +468,7 @@ func TestMariaDB_buildArchivePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ? RETURNING archived_on"
+		expectedQuery := "UPDATE plans SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
@@ -603,5 +608,24 @@ func TestMariaDB_LogPlanArchiveEvent(T *testing.T) {
 		q.LogPlanArchiveEvent(ctx, exampleUser.ID, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_buildGetAuditLogEntriesForPlanQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		examplePlan := fakes.BuildFakePlan()
+
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.plan_id') ORDER BY audit_log.created_on", examplePlan.ID)
+		expectedArgs := []interface{}(nil)
+		actualQuery, actualArgs := q.buildGetAuditLogEntriesForPlanQuery(examplePlan.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }

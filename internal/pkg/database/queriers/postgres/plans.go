@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -18,8 +19,9 @@ var _ types.PlanDataManager = (*Postgres)(nil)
 // scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an Plan struct.
 func (q *Postgres) scanPlan(scan database.Scanner, includeCount bool) (*types.Plan, uint64, error) {
 	var (
-		x     = &types.Plan{}
-		count uint64
+		x         = &types.Plan{}
+		rawPeriod string
+		count     uint64
 	)
 
 	targetVars := []interface{}{
@@ -27,7 +29,7 @@ func (q *Postgres) scanPlan(scan database.Scanner, includeCount bool) (*types.Pl
 		&x.Name,
 		&x.Description,
 		&x.Price,
-		&x.Period,
+		&rawPeriod,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -40,6 +42,13 @@ func (q *Postgres) scanPlan(scan database.Scanner, includeCount bool) (*types.Pl
 	if err := scan.Scan(targetVars...); err != nil {
 		return nil, 0, err
 	}
+
+	p, err := time.ParseDuration(rawPeriod)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	x.Period = p
 
 	return x, count, nil
 }
@@ -146,7 +155,7 @@ func (q *Postgres) buildGetPlansQuery(filter *types.QueryFilter) (query string, 
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.ArchivedOnColumn): nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.PlansTableName)
@@ -192,9 +201,15 @@ func (q *Postgres) buildCreatePlanQuery(input *types.Plan) (query string, args [
 		Insert(queriers.PlansTableName).
 		Columns(
 			queriers.PlansTableNameColumn,
+			queriers.PlansTableDescriptionColumn,
+			queriers.PlansTablePriceColumn,
+			queriers.PlansTablePeriodColumn,
 		).
 		Values(
 			input.Name,
+			input.Description,
+			input.Price,
+			input.Period.String(),
 		).
 		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
 		ToSql()
@@ -231,6 +246,9 @@ func (q *Postgres) buildUpdatePlanQuery(input *types.Plan) (query string, args [
 	query, args, err = q.sqlBuilder.
 		Update(queriers.PlansTableName).
 		Set(queriers.PlansTableNameColumn, input.Name).
+		Set(queriers.PlansTableDescriptionColumn, input.Description).
+		Set(queriers.PlansTablePriceColumn, input.Price).
+		Set(queriers.PlansTablePeriodColumn, input.Period.String()).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			queriers.IDColumn: input.ID,
@@ -308,7 +326,7 @@ func (q *Postgres) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query str
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{planIDKey: planID}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

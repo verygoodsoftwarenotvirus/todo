@@ -17,6 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
@@ -37,7 +38,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	httpserverConfig := cfg.Server
 	frontendConfig := cfg.Frontend
 	observabilityConfig := &cfg.Observability
-	instrumentationHandler := frontend.ProvideMetricsInstrumentationHandlerForServer(observabilityConfig, logger)
+	metricsConfig := &observabilityConfig.Metrics
+	instrumentationHandler := metrics.ProvideMetricsInstrumentationHandlerForServer(metricsConfig, logger)
 	authConfig := cfg.Auth
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
@@ -81,6 +83,12 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
+	planDataManager := database.ProvidePlanDataManager(dbm)
+	planAuditManager := database.ProvidePlanAuditManager(dbm)
+	planDataService, err := plans.ProvideService(logger, planDataManager, planAuditManager, encoderDecoder, unitCounterProvider)
+	if err != nil {
+		return nil, err
+	}
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
 	webhookAuditManager := database.ProvideWebhookAuditManager(dbm)
 	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, encoderDecoder, unitCounterProvider)
@@ -93,7 +101,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, instrumentationHandler, authService, frontendService, auditLogDataService, itemDataService, userDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder)
+	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, instrumentationHandler, authService, frontendService, auditLogDataService, itemDataService, userDataService, planDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

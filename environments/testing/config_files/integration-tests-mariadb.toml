@@ -21,7 +21,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$dMi7FZZpv.PXPdT4fWl4b.2L4yrmeOaliNLVpaKG0DVr8rDmGK/qW"
+    hashed_password = "$2a$11$sAl1Iwbr6X4vo0ar16SqSe4CqqtQCrDsptKnTR.UTD/WR2inLMIg."
     is_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
@@ -35,10 +35,14 @@
   debug = false
   run_mode = "testing"
 
-[metrics]
-  metrics_provider = "prometheus"
-  runtime_metrics_collection_interval = "2s"
-  tracing_provider = "jaeger"
+[observability]
+  runtime_metrics_collection_interval = "1s"
+
+  [observability.metrics]
+    provider = ""
+
+  [observability.tracing]
+    provider = ""
 
 [search]
   items_index_path = "items.bleve"

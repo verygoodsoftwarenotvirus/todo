@@ -230,7 +230,7 @@ func (q *MariaDB) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter
 			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn):             nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.WebhooksTableName)
@@ -324,13 +324,8 @@ func (q *MariaDB) CreateWebhook(ctx context.Context, input *types.WebhookCreatio
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
 	}
 
-	// fetch the last inserted ID.
-	id, err := res.LastInsertId()
-	q.logIDRetrievalError(err)
-
-	// this won't be completely accurate, but it will suffice.
 	x.CreatedOn = q.timeTeller.Now()
-	x.ID = uint64(id)
+	x.ID = q.getIDFromResult(res)
 
 	return x, nil
 }
@@ -429,7 +424,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (quer
 				),
 			),
 		).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.IDColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
 	q.logQueryBuildingError(err)

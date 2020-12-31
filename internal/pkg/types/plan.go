@@ -21,7 +21,7 @@ type (
 		ID            uint64        `json:"id"`
 		Name          string        `json:"name"`
 		Description   string        `json:"description"`
-		Price         *uint32       `json:"price"`
+		Price         uint32        `json:"price"`
 		Period        time.Duration `json:"period"`
 		CreatedOn     uint64        `json:"createdOn"`
 		LastUpdatedOn *uint64       `json:"lastUpdatedOn"`
@@ -38,7 +38,7 @@ type (
 	PlanCreationInput struct {
 		Name        string        `json:"name"`
 		Description string        `json:"description"`
-		Price       *uint32       `json:"price"`
+		Price       uint32        `json:"price"`
 		Period      time.Duration `json:"period"`
 	}
 
@@ -46,7 +46,7 @@ type (
 	PlanUpdateInput struct {
 		Name        string        `json:"name"`
 		Description string        `json:"description"`
-		Price       *uint32       `json:"price"`
+		Price       uint32        `json:"price"`
 		Period      time.Duration `json:"period"`
 	}
 

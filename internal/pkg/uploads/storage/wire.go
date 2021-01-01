@@ -1,4 +1,4 @@
-package gocloud
+package storage
 
 import "github.com/google/wire"
 

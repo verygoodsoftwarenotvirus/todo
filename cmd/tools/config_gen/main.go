@@ -21,8 +21,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	uploadconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage/gocloud"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
 
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
@@ -130,16 +130,16 @@ func localDevelopmentConfig(filePath string) error {
 			},
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
-		Uploads: uploadconfig.Config{
+		Uploads: uploads.Config{
 			Debug:    true,
 			Provider: "filesystem",
-			Storage: gocloud.UploaderConfig{
+			Storage: storage.Config{
 				Provider:    "filesystem",
 				Name:        "avatars",
 				AzureConfig: nil,
 				GCSConfig:   nil,
 				S3Config:    nil,
-				FilesystemConfig: &gocloud.FilesystemConfig{
+				FilesystemConfig: &storage.FilesystemConfig{
 					RootDirectory: "artifacts",
 				},
 			},
@@ -219,16 +219,16 @@ func frontendTestsConfig(filePath string) error {
 			},
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
-		Uploads: uploadconfig.Config{
+		Uploads: uploads.Config{
 			Debug:    true,
 			Provider: "filesystem",
-			Storage: gocloud.UploaderConfig{
+			Storage: storage.Config{
 				Provider:    "filesystem",
 				Name:        "avatars",
 				AzureConfig: nil,
 				GCSConfig:   nil,
 				S3Config:    nil,
-				FilesystemConfig: &gocloud.FilesystemConfig{
+				FilesystemConfig: &storage.FilesystemConfig{
 					RootDirectory: "artifacts",
 				},
 			},
@@ -314,16 +314,16 @@ func coverageConfig(filePath string) error {
 			},
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
-		Uploads: uploadconfig.Config{
+		Uploads: uploads.Config{
 			Debug:    true,
 			Provider: "filesystem",
-			Storage: gocloud.UploaderConfig{
+			Storage: storage.Config{
 				Provider:    "filesystem",
 				Name:        "avatars",
 				AzureConfig: nil,
 				GCSConfig:   nil,
 				S3Config:    nil,
-				FilesystemConfig: &gocloud.FilesystemConfig{
+				FilesystemConfig: &storage.FilesystemConfig{
 					RootDirectory: "artifacts",
 				},
 			},
@@ -415,16 +415,16 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 				RuntimeMetricsCollectionInterval: time.Second,
 			},
-			Uploads: uploadconfig.Config{
+			Uploads: uploads.Config{
 				Debug:    false,
 				Provider: "filesystem",
-				Storage: gocloud.UploaderConfig{
+				Storage: storage.Config{
 					Provider:    "filesystem",
 					Name:        "avatars",
 					AzureConfig: nil,
 					GCSConfig:   nil,
 					S3Config:    nil,
-					FilesystemConfig: &gocloud.FilesystemConfig{
+					FilesystemConfig: &storage.FilesystemConfig{
 						RootDirectory: "artifacts",
 					},
 				},

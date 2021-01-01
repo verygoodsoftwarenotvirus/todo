@@ -1,4 +1,4 @@
-package gocloud
+package storage
 
 import (
 	"context"
@@ -7,9 +7,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
-
 	"github.com/aws/aws-sdk-go/aws/session"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
@@ -17,6 +14,8 @@ import (
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"gocloud.dev/blob/s3blob"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 const (
@@ -37,8 +36,8 @@ type (
 		tracer tracing.Tracer
 	}
 
-	// UploaderConfig configures our UploadManager.
-	UploaderConfig struct {
+	// Config configures our UploadManager.
+	Config struct {
 		Provider         string            `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		Name             string            `json:"name" mapstructure:"name" toml:"name,omitempty"`
 		AzureConfig      *AzureConfig      `json:"azure" mapstructure:"azure" toml:"azure,omitempty"`
@@ -48,8 +47,8 @@ type (
 	}
 )
 
-// Validate validates the UploaderConfig.
-func (c *UploaderConfig) Validate(ctx context.Context) error {
+// Validate validates the Config.
+func (c *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.Name, validation.Required),
 		validation.Field(&c.Provider, validation.In(AzureProvider, GCSProvider, S3Provider, FilesystemProvider, MemoryProvider)),
@@ -61,7 +60,7 @@ func (c *UploaderConfig) Validate(ctx context.Context) error {
 }
 
 // NewUploadManager provides a new uploads.UploadManager.
-func NewUploadManager(ctx context.Context, logger logging.Logger, cfg UploaderConfig) (uploads.UploadManager, error) {
+func NewUploadManager(ctx context.Context, logger logging.Logger, cfg Config) (*Uploader, error) {
 	serviceName := fmt.Sprintf("%s_uploader", cfg.Name)
 	u := &Uploader{
 		logger: logger.WithName(serviceName),
@@ -72,16 +71,17 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg UploaderCo
 		return nil, fmt.Errorf("upload manager provided invalid config: %w", err)
 	}
 
-	var err error
-
-	if u.bucket, err = selectBucket(ctx, logger, cfg); err != nil {
+	bucket, err := selectBucket(ctx, logger, cfg)
+	if err != nil {
 		return nil, fmt.Errorf("error initializing bucket: %w", err)
 	}
+
+	u.bucket = bucket
 
 	return u, nil
 }
 
-func selectBucket(ctx context.Context, logger logging.Logger, cfg UploaderConfig) (bucket *blob.Bucket, err error) {
+func selectBucket(ctx context.Context, logger logging.Logger, cfg Config) (bucket *blob.Bucket, err error) {
 	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
 	case AzureProvider:
 		if cfg.AzureConfig == nil {

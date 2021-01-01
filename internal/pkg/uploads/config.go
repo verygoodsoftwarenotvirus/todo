@@ -1,11 +1,11 @@
-package config
+package uploads
 
 import (
 	"context"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage/gocloud"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
 )
 
 // Config contains settings regarding search indices.
@@ -15,7 +15,7 @@ type Config struct {
 	// Provider indicates what database we'll connect to (postgres, mysql, etc.)
 	Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 	// Storage configures our storage provider
-	Storage gocloud.UploaderConfig `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
+	Storage storage.Config `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
 }
 
 // Validate validates an Config struct.

@@ -27,8 +27,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage/gocloud"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
 )
 
 // Injectors from wire.go:
@@ -73,12 +74,13 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	}
 	userAuditManager := database.ProvideUserAuditManager(dbm)
 	imageUploadProcessor := images.NewImageUploadProcessor()
-	config3 := &cfg.Uploads
-	uploaderConfig := config3.Storage
-	uploadManager, err := gocloud.NewUploadManager(ctx, logger, uploaderConfig)
+	uploadsConfig := &cfg.Uploads
+	storageConfig := uploadsConfig.Storage
+	uploader, err := storage.NewUploadManager(ctx, logger, storageConfig)
 	if err != nil {
 		return nil, err
 	}
+	uploadManager := uploads.ProvideUploadManager(uploader)
 	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, userAuditManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager)
 	if err != nil {
 		return nil, err

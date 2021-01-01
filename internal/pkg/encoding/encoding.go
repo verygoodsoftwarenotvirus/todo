@@ -1,11 +1,13 @@
 package encoding
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/google/wire"
@@ -26,7 +28,7 @@ const (
 var (
 	// Providers provides ResponseEncoders for dependency injection.
 	Providers = wire.NewSet(
-		ProvideResponseEncoder,
+		ProvideEncoderDecoder,
 	)
 
 	_ EncoderDecoder = (*ServerEncoderDecoder)(nil)
@@ -35,20 +37,21 @@ var (
 type (
 	// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats.
 	EncoderDecoder interface {
-		EncodeResponse(res http.ResponseWriter, val interface{})
-		EncodeResponseWithStatus(res http.ResponseWriter, val interface{}, statusCode int)
-		EncodeErrorResponse(res http.ResponseWriter, msg string, statusCode int)
-		EncodeInvalidInputResponse(res http.ResponseWriter)
-		EncodeNotFoundResponse(res http.ResponseWriter)
-		EncodeUnspecifiedInternalServerErrorResponse(res http.ResponseWriter)
-		EncodeUnauthorizedResponse(res http.ResponseWriter)
-		EncodeInvalidPermissionsResponse(res http.ResponseWriter)
-		DecodeRequest(req *http.Request, dest interface{}) error
+		EncodeResponse(ctx context.Context, res http.ResponseWriter, val interface{})
+		EncodeResponseWithStatus(ctx context.Context, res http.ResponseWriter, val interface{}, statusCode int)
+		EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int)
+		EncodeInvalidInputResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeNotFoundResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeUnspecifiedInternalServerErrorResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeUnauthorizedResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeInvalidPermissionsResponse(ctx context.Context, res http.ResponseWriter)
+		DecodeRequest(ctx context.Context, req *http.Request, dest interface{}) error
 	}
 
 	// ServerEncoderDecoder is our concrete implementation of EncoderDecoder.
 	ServerEncoderDecoder struct {
 		logger logging.Logger
+		tracer tracing.Tracer
 	}
 
 	encoder interface {
@@ -61,7 +64,10 @@ type (
 )
 
 // EncodeErrorResponse encodes errors to responses.
-func (ed *ServerEncoderDecoder) EncodeErrorResponse(res http.ResponseWriter, msg string, statusCode int) {
+func (ed *ServerEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int) {
+	_, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
 	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
 	if ct == "" {
 		ct = DefaultContentType
@@ -85,32 +91,49 @@ func (ed *ServerEncoderDecoder) EncodeErrorResponse(res http.ResponseWriter, msg
 }
 
 // EncodeInvalidInputResponse encodes a generic 400 error to a response.
-func (ed *ServerEncoderDecoder) EncodeInvalidInputResponse(res http.ResponseWriter) {
-	ed.EncodeErrorResponse(res, "invalid input attached to request", http.StatusBadRequest)
+func (ed *ServerEncoderDecoder) EncodeInvalidInputResponse(ctx context.Context, res http.ResponseWriter) {
+	ed.tracer.StartSpan(ctx)
+
+	ed.EncodeErrorResponse(ctx, res, "invalid input attached to request", http.StatusBadRequest)
 }
 
 // EncodeNotFoundResponse encodes a generic 404 error to a response.
-func (ed *ServerEncoderDecoder) EncodeNotFoundResponse(res http.ResponseWriter) {
-	ed.EncodeErrorResponse(res, "resource not found", http.StatusNotFound)
+func (ed *ServerEncoderDecoder) EncodeNotFoundResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
+	ed.EncodeErrorResponse(ctx, res, "resource not found", http.StatusNotFound)
 }
 
 // EncodeUnspecifiedInternalServerErrorResponse encodes a generic 500 error to a response.
-func (ed *ServerEncoderDecoder) EncodeUnspecifiedInternalServerErrorResponse(res http.ResponseWriter) {
-	ed.EncodeErrorResponse(res, "something has gone awry", http.StatusInternalServerError)
+func (ed *ServerEncoderDecoder) EncodeUnspecifiedInternalServerErrorResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
+	ed.EncodeErrorResponse(ctx, res, "something has gone awry", http.StatusInternalServerError)
 }
 
 // EncodeUnauthorizedResponse encodes a generic 401 error to a response.
-func (ed *ServerEncoderDecoder) EncodeUnauthorizedResponse(res http.ResponseWriter) {
-	ed.EncodeErrorResponse(res, "invalid credentials provided", http.StatusUnauthorized)
+func (ed *ServerEncoderDecoder) EncodeUnauthorizedResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
+	ed.EncodeErrorResponse(ctx, res, "invalid credentials provided", http.StatusUnauthorized)
 }
 
 // EncodeInvalidPermissionsResponse encodes a generic 403 error to a response.
-func (ed *ServerEncoderDecoder) EncodeInvalidPermissionsResponse(res http.ResponseWriter) {
-	ed.EncodeErrorResponse(res, "invalid permissions", http.StatusForbidden)
+func (ed *ServerEncoderDecoder) EncodeInvalidPermissionsResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
+	ed.EncodeErrorResponse(ctx, res, "invalid permissions", http.StatusForbidden)
 }
 
 // EncodeResponse encodes responses.
-func (ed *ServerEncoderDecoder) encodeResponse(res http.ResponseWriter, v interface{}, statusCode int) {
+func (ed *ServerEncoderDecoder) encodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}, statusCode int) {
+	_, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
 	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
 	if ct == "" {
 		ct = DefaultContentType
@@ -134,17 +157,26 @@ func (ed *ServerEncoderDecoder) encodeResponse(res http.ResponseWriter, v interf
 }
 
 // EncodeResponse encodes successful responses.
-func (ed *ServerEncoderDecoder) EncodeResponse(res http.ResponseWriter, v interface{}) {
-	ed.encodeResponse(res, v, http.StatusOK)
+func (ed *ServerEncoderDecoder) EncodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}) {
+	ctx, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
+	ed.encodeResponse(ctx, res, v, http.StatusOK)
 }
 
 // EncodeResponseWithStatus encodes responses and writes the provided status to the response.
-func (ed *ServerEncoderDecoder) EncodeResponseWithStatus(res http.ResponseWriter, v interface{}, statusCode int) {
-	ed.encodeResponse(res, v, statusCode)
+func (ed *ServerEncoderDecoder) EncodeResponseWithStatus(ctx context.Context, res http.ResponseWriter, v interface{}, statusCode int) {
+	ctx, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
+	ed.encodeResponse(ctx, res, v, statusCode)
 }
 
 // DecodeRequest decodes responses.
-func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) error {
+func (ed *ServerEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Request, v interface{}) error {
+	_, span := ed.tracer.StartSpan(ctx)
+	defer span.End()
+
 	var ct = strings.ToLower(req.Header.Get(ContentTypeHeader))
 	if ct == "" {
 		ct = DefaultContentType
@@ -165,9 +197,12 @@ func (ed *ServerEncoderDecoder) DecodeRequest(req *http.Request, v interface{}) 
 	return d.Decode(v)
 }
 
-// ProvideResponseEncoder provides a jsonResponseEncoder.
-func ProvideResponseEncoder(logger logging.Logger) EncoderDecoder {
+const name = "response_encoder"
+
+// ProvideEncoderDecoder provides an EncoderDecoder.
+func ProvideEncoderDecoder(logger logging.Logger) EncoderDecoder {
 	return &ServerEncoderDecoder{
-		logger: logger.WithName("response_encoder"),
+		logger: logger.WithName(name),
+		tracer: tracing.NewTracer(name),
 	}
 }

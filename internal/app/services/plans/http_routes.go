@@ -29,7 +29,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -43,12 +43,12 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		plans = &types.PlanList{Plans: []types.Plan{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching plans")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, plans)
+	s.encoderDecoder.EncodeResponse(ctx, res, plans)
 }
 
 // CreateHandler is our plan creation route.
@@ -63,14 +63,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.PlanCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -81,7 +81,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.planDataManager.CreatePlan(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating plan")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -99,7 +99,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	s.planCounter.Increment(ctx)
 	s.auditLog.LogPlanCreationEvent(ctx, x)
-	s.encoderDecoder.EncodeResponseWithStatus(res, x, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
 }
 
 // ReadHandler returns a GET handler that returns an plan.
@@ -112,7 +112,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -127,16 +127,16 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch plan from database.
 	x, err := s.planDataManager.GetPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching plan from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // UpdateHandler returns a handler that updates an plan.
@@ -150,14 +150,14 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.PlanUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -172,11 +172,11 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch plan from database.
 	x, err := s.planDataManager.GetPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered getting plan")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -186,14 +186,14 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// update plan in database.
 	if err = s.planDataManager.UpdatePlan(ctx, x); err != nil {
 		logger.Error(err, "error encountered updating plan")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	s.auditLog.LogPlanUpdateEvent(ctx, si.UserID, x.ID, changeReport)
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // ArchiveHandler returns a handler that archives an plan.
@@ -206,7 +206,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -221,11 +221,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// archive the plan in the database.
 	err := s.planDataManager.ArchivePlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered deleting plan")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -248,7 +248,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -262,16 +262,16 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	x, err := s.auditLog.GetAuditLogEntriesForPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching audit log entries")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }

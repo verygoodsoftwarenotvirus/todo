@@ -128,7 +128,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 
 			usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 			usersRouter.With(s.authService.AdminMiddleware).Get("/search", s.usersService.UsernameSearchHandler)
-
+			usersRouter.With(s.usersService.AvatarUploadMiddleware).Post("/avatar/upload", s.usersService.AvatarUploadHandler)
 			usersRouter.Get("/self", s.usersService.SelfHandler)
 			usersRouter.Route(singleUserRoute, func(singleUserRouter chi.Router) {
 				singleUserRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)

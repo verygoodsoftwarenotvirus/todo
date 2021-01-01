@@ -45,7 +45,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
 	oAuth2ClientDataManager := database.ProvideOAuth2ClientDataManager(dbm)
 	oAuth2ClientAuditManager := database.ProvideOAuth2ClientAuditManager(dbm)
-	encoderDecoder := encoding.ProvideResponseEncoder(logger)
+	encoderDecoder := encoding.ProvideEncoderDecoder(logger)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	oAuth2ClientDataService, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, oAuth2ClientAuditManager, authenticator, encoderDecoder, unitCounterProvider)
 	if err != nil {

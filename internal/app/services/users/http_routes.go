@@ -84,12 +84,12 @@ func (s *service) UsernameSearchHandler(res http.ResponseWriter, req *http.Reque
 	users, err := s.userDataManager.SearchForUsersByUsername(ctx, query)
 	if err != nil {
 		logger.Error(err, "error fetching users for UsernameSearchHandler route")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response.
-	s.encoderDecoder.EncodeResponse(res, users)
+	s.encoderDecoder.EncodeResponse(ctx, res, users)
 }
 
 // ListHandler is a handler for responding with a list of users.
@@ -106,12 +106,12 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	users, err := s.userDataManager.GetUsers(ctx, qf)
 	if err != nil {
 		logger.Error(err, "error fetching users for ListHandler route")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response.
-	s.encoderDecoder.EncodeResponse(res, users)
+	s.encoderDecoder.EncodeResponse(ctx, res, users)
 }
 
 // CreateHandler is our user creation route.
@@ -125,7 +125,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// just decline the request from the get-go
 	if !s.authSettings.EnableUserSignup {
 		logger.Info("disallowing user creation")
-		s.encoderDecoder.EncodeErrorResponse(res, "user creation is disabled", http.StatusForbidden)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "user creation is disabled", http.StatusForbidden)
 		return
 	}
 
@@ -133,7 +133,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*types.UserCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to UsersService CreateHandler request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
@@ -145,7 +145,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// ensure the password isn't garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "password too weak!", http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "password too weak!", http.StatusBadRequest)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
 	if err != nil {
 		logger.Error(err, "valid input not attached to request")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret()
 	if err != nil {
 		logger.Error(err, "error generating TOTP secret")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.Salt, err = s.secretGenerator.GenerateSalt()
 	if err != nil {
 		logger.Error(err, "error generating salt")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -185,12 +185,12 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		if errors.Is(err, dbclient.ErrUserExists) {
 			logger.Info("duplicate username attempted")
-			s.encoderDecoder.EncodeErrorResponse(res, "username already taken", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "username already taken", http.StatusBadRequest)
 			return
 		}
 
 		logger.Error(err, "error creating user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -209,7 +209,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	s.auditLog.LogUserCreationEvent(ctx, user)
 
 	// encode and peace.
-	s.encoderDecoder.EncodeResponseWithStatus(res, ucr, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, ucr, http.StatusCreated)
 }
 
 // buildQRCode builds a QR code for a given username and secret.
@@ -253,7 +253,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 	si, err := s.sessionInfoFetcher(req)
 	if err != nil {
 		logger.Error(err, "session info missing from request context")
-		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
@@ -266,16 +266,16 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.userDataManager.GetUser(ctx, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no such user")
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching user from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // ReadHandler is our read route.
@@ -294,16 +294,16 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.userDataManager.GetUser(ctx, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no such user")
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching user from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // TOTPSecretVerificationHandler accepts a TOTP token as input and returns 200 if the TOTP token
@@ -318,14 +318,14 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	input, ok := req.Context().Value(totpSecretVerificationMiddlewareCtxKey).(*types.TOTPSecretVerificationInput)
 	if !ok || input == nil {
 		logger.Debug("no input found on TOTP secret refresh request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
 	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
 	if err != nil {
 		logger.Error(err, "fetching user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -334,7 +334,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 	if user.TwoFactorSecretVerifiedOn != nil {
 		// I suppose if this happens too many times, we'll want to keep track of that
-		s.encoderDecoder.EncodeErrorResponse(res, "TOTP secret already verified", http.StatusAlreadyReported)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "TOTP secret already verified", http.StatusAlreadyReported)
 		return
 	}
 
@@ -345,7 +345,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
 			logger.Error(updateUserErr, "updating user to indicate their 2FA secret is validated")
-			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return
 		}
 
@@ -367,7 +367,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	input, ok := req.Context().Value(totpSecretRefreshMiddlewareCtxKey).(*types.TOTPSecretRefreshInput)
 	if !ok {
 		logger.Debug("no input found on TOTP secret refresh request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
@@ -375,7 +375,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to TOTP secret refresh request")
-		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
@@ -402,7 +402,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	tfs, err := s.secretGenerator.GenerateTwoFactorSecret()
 	if err != nil {
 		logger.Error(err, "error encountered generating random TOTP string")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -412,7 +412,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// update the user in the database.
 	if err := s.userDataManager.UpdateUser(ctx, user); err != nil {
 		logger.Error(err, "error encountered updating TOTP token")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -424,7 +424,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 
 	s.auditLog.LogUserUpdateTwoFactorSecretEvent(ctx, user.ID)
 
-	s.encoderDecoder.EncodeResponseWithStatus(res, result, http.StatusAccepted)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, result, http.StatusAccepted)
 }
 
 // UpdatePasswordHandler updates a user's password, after validating that information received
@@ -439,7 +439,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	input, ok := ctx.Value(passwordChangeMiddlewareCtxKey).(*types.PasswordUpdateInput)
 	if !ok {
 		logger.Debug("no input found on UpdatePasswordHandler request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
@@ -447,7 +447,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdatePasswordHandler request")
-		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
@@ -473,7 +473,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// ensure the password isn't garbage-tier
 	if err := passwordvalidator.Validate(input.NewPassword, minimumPasswordEntropy); err != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "new password is too weak!", http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "new password is too weak!", http.StatusBadRequest)
 		return
 	}
 
@@ -481,14 +481,14 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
 		logger.Error(err, "error hashing password")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// update the user.
 	if err = s.userDataManager.UpdateUserPassword(ctx, user.ID, newPasswordHash); err != nil {
 		logger.Error(err, "error encountered updating user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -509,12 +509,12 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 }
 
 func (s *service) determineAvatarWebPath(storageProviderPath string) *string {
-	x := "TODO"
+	x := storageProviderPath
 	return &x
 }
 
-// UpdateAvatarHandler updates a user's avatar.
-func (s *service) UpdateAvatarHandler(res http.ResponseWriter, req *http.Request) {
+// AvatarUploadHandler updates a user's avatar.
+func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -524,21 +524,21 @@ func (s *service) UpdateAvatarHandler(res http.ResponseWriter, req *http.Request
 	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdateAvatarHandler request")
-		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	user, userFetchErr := s.userDataManager.GetUser(ctx, si.UserID)
 	if userFetchErr != nil {
 		logger.Error(userFetchErr, "fetching associated user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	img, imageProcessErr := s.imageUploadProcessor.Process(req, "avatar")
+	img, imageProcessErr := s.imageUploadProcessor.Process(ctx, req, "avatar")
 	if imageProcessErr != nil || img == nil {
 		logger.Error(imageProcessErr, "processing provided avatar upload file")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
@@ -546,7 +546,7 @@ func (s *service) UpdateAvatarHandler(res http.ResponseWriter, req *http.Request
 
 	if saveErr := s.uploadManager.SaveFile(ctx, internalPath, img.Data); saveErr != nil {
 		logger.WithValue("file_size", len(img.Data)).Error(saveErr, "saving provided avatar")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -554,7 +554,7 @@ func (s *service) UpdateAvatarHandler(res http.ResponseWriter, req *http.Request
 
 	if userUpdateErr := s.userDataManager.UpdateUser(ctx, user); userUpdateErr != nil {
 		logger.WithValue("file_size", len(img.Data)).Error(userUpdateErr, "updating user info")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 }
@@ -574,7 +574,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// do the deed.
 	if err := s.userDataManager.ArchiveUser(ctx, userID); err != nil {
 		logger.Error(err, "deleting user from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -601,16 +601,16 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	x, err := s.auditLog.GetAuditLogEntriesForUser(ctx, userID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }

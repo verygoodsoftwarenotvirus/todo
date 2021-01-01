@@ -223,7 +223,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.OAuth2ClientList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.OAuth2ClientList"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -255,7 +255,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.OAuth2ClientList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.OAuth2ClientList"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -286,7 +286,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -351,7 +351,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*types.OAuth2Client"), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.Anything, mock.AnythingOfType("*types.OAuth2Client"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -375,7 +375,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeInvalidInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -406,7 +406,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -460,7 +460,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = a
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnauthorizedResponse", mock.Anything)
+		ed.On("EncodeUnauthorizedResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -514,7 +514,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = a
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -568,7 +568,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = a
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -614,7 +614,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.OAuth2Client"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.OAuth2Client"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -651,7 +651,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -688,7 +688,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -772,7 +772,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -809,7 +809,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)

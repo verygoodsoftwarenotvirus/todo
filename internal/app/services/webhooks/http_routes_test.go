@@ -47,7 +47,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.WebhookList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.WebhookList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -83,7 +83,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.WebhookList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.WebhookList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -119,7 +119,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -213,7 +213,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*types.Webhook"), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Webhook"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -250,6 +250,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		ed.On(
 			"EncodeErrorResponse",
 			mock.Anything,
+			mock.Anything,
 			fmt.Sprintf(`invalid url provided: parse %q: invalid URL escape "%%zz"`, exampleWebhook.URL),
 			http.StatusBadRequest,
 		)
@@ -279,7 +280,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeInvalidInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -318,7 +319,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -372,7 +373,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.Webhook"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Webhook"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -415,7 +416,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -458,7 +459,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -521,7 +522,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.Webhook"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Webhook"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -550,7 +551,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeInvalidInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -594,7 +595,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -640,7 +641,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -692,7 +693,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -793,7 +794,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -836,7 +837,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

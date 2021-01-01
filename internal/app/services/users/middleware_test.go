@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
@@ -23,7 +25,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -45,9 +47,10 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
+			mock.Anything,
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,
@@ -74,7 +77,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -100,9 +103,10 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
+			mock.Anything,
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,
@@ -129,7 +133,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -154,10 +158,11 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		ed.On(
 			"EncodeErrorResponse",
 			mock.Anything,
+			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -180,7 +185,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -202,9 +207,10 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
+			mock.Anything,
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,

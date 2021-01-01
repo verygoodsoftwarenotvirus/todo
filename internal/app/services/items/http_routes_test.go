@@ -43,7 +43,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.ItemList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.ItemList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -75,7 +75,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.ItemList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.ItemList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -107,7 +107,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -160,7 +160,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]types.Item"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("[]types.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -195,7 +195,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.search = si
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -239,7 +239,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("[]types.Item"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("[]types.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -283,7 +283,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -340,7 +340,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponseWithStatus", mock.Anything, mock.AnythingOfType("*types.Item"), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Item"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -370,7 +370,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeInvalidInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -406,7 +406,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -489,7 +489,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -527,7 +527,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -574,7 +574,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.Item"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -612,7 +612,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -650,7 +650,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -708,7 +708,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.Item"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Item"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -738,7 +738,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeInvalidInputResponse", mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -778,7 +778,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -820,7 +820,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -863,7 +863,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -958,7 +958,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -996,7 +996,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

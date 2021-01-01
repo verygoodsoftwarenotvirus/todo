@@ -39,7 +39,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -67,12 +67,12 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		items = &types.ItemList{Items: []types.Item{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, items)
+	s.encoderDecoder.EncodeResponse(ctx, res, items)
 }
 
 // SearchHandler is our search route.
@@ -91,7 +91,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 
 	if searchErr != nil {
 		logger.Error(searchErr, "error encountered executing search query")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -135,12 +135,12 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		items = []types.Item{}
 	} else if dbErr != nil {
 		logger.Error(dbErr, "error encountered fetching items")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, items)
+	s.encoderDecoder.EncodeResponse(ctx, res, items)
 }
 
 // CreateHandler is our item creation route.
@@ -154,14 +154,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.ItemCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -173,7 +173,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.itemDataManager.CreateItem(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -187,7 +187,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	s.itemCounter.Increment(ctx)
 	s.auditLog.LogItemCreationEvent(ctx, x)
-	s.encoderDecoder.EncodeResponseWithStatus(res, x, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
 }
 
 // ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
@@ -200,7 +200,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if !exists || errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 	}
 }
 
@@ -233,7 +233,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -248,16 +248,16 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch item from database.
 	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching item from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // UpdateHandler returns a handler that updates an item.
@@ -271,14 +271,14 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.ItemUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -294,11 +294,11 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch item from database.
 	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered getting item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -308,7 +308,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// update item in database.
 	if err = s.itemDataManager.UpdateItem(ctx, x); err != nil {
 		logger.Error(err, "error encountered updating item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -320,7 +320,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	s.auditLog.LogItemUpdateEvent(ctx, si.UserID, x.ID, changeReport)
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // ArchiveHandler returns a handler that archives an item.
@@ -333,7 +333,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -348,11 +348,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// archive the item in the database.
 	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered deleting item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -379,7 +379,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -393,16 +393,16 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	x, err := s.auditLog.GetAuditLogEntriesForItem(ctx, itemID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching audit log entries")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }

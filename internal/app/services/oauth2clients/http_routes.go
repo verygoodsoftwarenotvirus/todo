@@ -111,12 +111,12 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "encountered error getting list of oauth2 clients from clientDataManager")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(res, oauth2Clients)
+	s.encoderDecoder.EncodeResponse(ctx, res, oauth2Clients)
 }
 
 // CreateHandler is our OAuth2 client creation route.
@@ -130,7 +130,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.OAuth2ClientCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
@@ -149,7 +149,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	user, err := s.userDataManager.GetUserByUsername(ctx, input.Username)
 	if err != nil {
 		logger.Error(err, "fetching user by username")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -168,11 +168,11 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	if !valid {
 		logger.Debug("invalid credentials provided")
-		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "validating user credentials")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -180,7 +180,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	client, err := s.clientDataManager.CreateOAuth2Client(ctx, input)
 	if err != nil {
 		logger.Error(err, "creating oauth2Client in the clientDataManager")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -189,7 +189,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	s.oauth2ClientCounter.Increment(ctx)
 	s.auditLog.LogOAuth2ClientCreationEvent(ctx, client)
 
-	s.encoderDecoder.EncodeResponseWithStatus(res, client, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, client, http.StatusCreated)
 }
 
 // ReadHandler is a route handler for retrieving an OAuth2 client.
@@ -213,16 +213,16 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.clientDataManager.GetOAuth2Client(ctx, oauth2ClientID, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("ReadHandler called on nonexistent client")
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error fetching oauth2Client from clientDataManager")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // ArchiveHandler is a route handler for archiving an OAuth2 client.
@@ -245,11 +245,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// mark client as archived.
 	err := s.clientDataManager.ArchiveOAuth2Client(ctx, oauth2ClientID, userID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "encountered error deleting oauth2 client")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
@@ -279,16 +279,16 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	x, err := s.auditLog.GetAuditLogEntriesForOAuth2Client(ctx, oauth2ClientID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }

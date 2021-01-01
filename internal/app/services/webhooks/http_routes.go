@@ -54,7 +54,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -65,7 +65,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.WebhookCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 
 		return
 	}
@@ -75,7 +75,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// ensure everything's on the up-and-up
 	if err := validateWebhook(input); err != nil {
 		logger.Info("invalid method provided")
-		s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 
 		return
 	}
@@ -84,7 +84,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	wh, err := s.webhookDataManager.CreateWebhook(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		return
 	}
@@ -95,7 +95,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	s.auditLog.LogWebhookCreationEvent(ctx, wh)
 
 	// let everybody know we're good.
-	s.encoderDecoder.EncodeResponseWithStatus(res, wh, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, wh, http.StatusCreated)
 }
 
 // ListHandler is our list route.
@@ -111,7 +111,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -126,13 +126,13 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching webhooks")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		return
 	}
 
 	// encode the response.
-	s.encoderDecoder.EncodeResponse(res, webhooks)
+	s.encoderDecoder.EncodeResponse(ctx, res, webhooks)
 }
 
 // ReadHandler returns a GET handler that returns an webhook.
@@ -145,7 +145,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -161,18 +161,18 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("No rows found in webhook database")
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 
 		return
 	} else if err != nil {
 		logger.Error(err, "Error fetching webhook from webhook database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		return
 	}
 
 	// encode the response.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // UpdateHandler returns a handler that updates an webhook.
@@ -185,7 +185,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -201,7 +201,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.WebhookUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 
 		return
 	}
@@ -210,12 +210,12 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	wh, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered getting webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		return
 	}
@@ -226,7 +226,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// save the update in the database.
 	if err = s.webhookDataManager.UpdateWebhook(ctx, wh); err != nil {
 		logger.Error(err, "error encountered updating webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		return
 	}
@@ -234,7 +234,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	s.auditLog.LogWebhookUpdateEvent(ctx, si.UserID, webhookID, changes)
 
 	// let everybody know we're good.
-	s.encoderDecoder.EncodeResponse(res, wh)
+	s.encoderDecoder.EncodeResponse(ctx, res, wh)
 }
 
 // ArchiveHandler returns a handler that archives an webhook.
@@ -247,7 +247,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine relevant user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -263,12 +263,12 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered deleting webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		return
 	}
@@ -292,7 +292,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	// determine user ID.
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -306,16 +306,16 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	x, err := s.auditLog.GetAuditLogEntriesForWebhook(ctx, webhookID)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(res)
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching audit log entries")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(res, x)
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }

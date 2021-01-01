@@ -24,7 +24,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	input, ok := ctx.Value(accountStatusUpdateMiddlewareCtxKey).(*types.AccountStatusUpdateInput)
 	if !ok || input == nil {
 		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(res)
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
@@ -33,12 +33,12 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	if !si.UserIsAdmin {
-		s.encoderDecoder.EncodeUnauthorizedResponse(res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
@@ -56,7 +56,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	if !allowed {
 		logger.Info("ban attempt made by admin without appropriate permissions")
-		s.encoderDecoder.EncodeInvalidPermissionsResponse(res)
+		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}
 
@@ -66,9 +66,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 		logger.Error(err, "error banning user")
 
 		if errors.Is(err, sql.ErrNoRows) {
-			s.encoderDecoder.EncodeNotFoundResponse(res)
+			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		} else {
-			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		}
 
 		return
@@ -82,5 +82,5 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 
-	s.encoderDecoder.EncodeResponseWithStatus(res, nil, http.StatusAccepted)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, nil, http.StatusAccepted)
 }

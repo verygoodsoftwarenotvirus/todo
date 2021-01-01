@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -37,7 +39,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
 		exampleUpdateInput := fakes.BuildFakeWebhookCreationInput()
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
@@ -64,7 +66,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
 		exampleUpdateInput := &types.WebhookCreationInput{}
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
@@ -88,9 +90,10 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
+			mock.Anything,
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,
@@ -120,7 +123,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = &encoding.ServerEncoderDecoder{}
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(fakes.BuildFakeWebhook())
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
@@ -149,9 +152,10 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		s := buildTestService()
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
+			mock.Anything,
 			mock.Anything,
 			"invalid request content",
 			http.StatusBadRequest,

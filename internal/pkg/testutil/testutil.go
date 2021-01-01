@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
 	"image/png"
 	"io"
 	"io/ioutil"
@@ -327,4 +329,18 @@ func CreateBodyFromStruct(t *testing.T, in interface{}) io.ReadCloser {
 	require.NoError(t, err)
 
 	return ioutil.NopCloser(bytes.NewReader(out))
+}
+
+// BuildArbitraryImage builds an image with a bunch of colors in it.
+func BuildArbitraryImage(width, height int) image.Image {
+	img := image.NewRGBA(image.Rectangle{Min: image.Point{}, Max: image.Point{X: width, Y: height}})
+
+	// Set color for each pixel.
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			img.Set(x, y, color.RGBA{R: uint8(x % math.MaxUint8), G: uint8(y % math.MaxUint8), B: uint8(x + y%math.MaxUint8), A: math.MaxUint8})
+		}
+	}
+
+	return img
 }

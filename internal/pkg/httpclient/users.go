@@ -1,9 +1,14 @@
 package httpclient
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -176,4 +181,47 @@ func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries
 	}
 
 	return entries, nil
+}
+
+// BuildAvatarUploadRequest builds a new avatar upload request.
+func (c *Client) BuildAvatarUploadRequest(ctx context.Context, filename string) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	avatarBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading avatar file: %w", err)
+	}
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	part, err := writer.CreateFormFile("avatar", fmt.Sprintf("avatar.%s", filepath.Ext(filename)))
+	if err != nil {
+		return nil, fmt.Errorf("error writing to form file: %w", err)
+	}
+
+	if _, copyErr := io.Copy(part, bytes.NewReader(avatarBytes)); copyErr != nil {
+		return nil, fmt.Errorf("error copying file contents to request: %w", copyErr)
+	}
+
+	if closeErr := writer.Close(); closeErr != nil {
+		return nil, fmt.Errorf("error closing avatar file: %w", closeErr)
+	}
+
+	uri := c.BuildURL(
+		nil,
+		usersBasePath,
+		"avatar",
+		"upload",
+	)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, body)
+	if err != nil {
+		return nil, fmt.Errorf("error building HTTP request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	return req, nil
 }

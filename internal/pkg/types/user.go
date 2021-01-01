@@ -190,6 +190,7 @@ type (
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
+		AvatarUploadMiddleware(next http.Handler) http.Handler
 
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
@@ -200,6 +201,7 @@ type (
 		NewTOTPSecretHandler(res http.ResponseWriter, req *http.Request)
 		TOTPSecretVerificationHandler(res http.ResponseWriter, req *http.Request)
 		UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)
+		AvatarUploadHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 	}
 )

@@ -17,7 +17,7 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	logger := noop.NewLogger()
-	ed := encoding.ProvideResponseEncoder(logger)
+	ed := encoding.ProvideEncoderDecoder(logger)
 
 	s, err := ProvideService(
 		logger,
@@ -43,7 +43,7 @@ func TestProvideAuthService(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		logger := noop.NewLogger()
-		ed := encoding.ProvideResponseEncoder(logger)
+		ed := encoding.ProvideEncoderDecoder(logger)
 
 		s, err := ProvideService(
 			logger,

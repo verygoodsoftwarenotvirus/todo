@@ -21,15 +21,15 @@ func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Han
 
 		logger := s.logger.WithRequest(req)
 
-		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			logger.Error(err, "error encountered decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
 			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 

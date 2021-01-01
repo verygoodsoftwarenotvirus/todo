@@ -77,17 +77,17 @@ func (s *service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Error(err, "error fetching OAuth2 Client")
-			s.encoderDecoder.EncodeErrorResponse(res, "no such oauth2 client", http.StatusUnauthorized)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "no such oauth2 client", http.StatusUnauthorized)
 			return "", err
 		} else if err != nil {
 			logger.Error(err, "error fetching OAuth2 Client")
-			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(res)
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return "", err
 		}
 
 		// authorization check.
 		if !client.HasScope(scope) {
-			s.encoderDecoder.EncodeErrorResponse(res, "not authorized for scope", http.StatusUnauthorized)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "not authorized for scope", http.StatusUnauthorized)
 			return "", errUnauthorizedForScope
 		}
 
@@ -95,7 +95,7 @@ func (s *service) AuthorizeScopeHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// invalid credentials.
-	s.encoderDecoder.EncodeErrorResponse(res, "no scope information found", http.StatusBadRequest)
+	s.encoderDecoder.EncodeErrorResponse(ctx, res, "no scope information found", http.StatusBadRequest)
 	return "", errNoScopeInformation
 }
 

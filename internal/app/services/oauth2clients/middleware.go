@@ -24,9 +24,9 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		x := new(types.OAuth2ClientCreationInput)
 
 		// decode value from request.
-		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 

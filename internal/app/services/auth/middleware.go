@@ -30,7 +30,7 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		user, err := s.fetchUserFromCookie(ctx, req)
 		if err != nil {
 			// we deliberately aren't logging here because it's done in fetchUserFromCookie
-			s.encoderDecoder.EncodeErrorResponse(res, "cookie required", http.StatusUnauthorized)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "cookie required", http.StatusUnauthorized)
 			return
 		}
 
@@ -138,13 +138,13 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 
 		if !ok || si == nil {
 			logger.Debug("AdminMiddleware called without user attached to context")
-			s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
 		}
 
 		if !si.UserIsAdmin {
 			logger.Debug("AdminMiddleware called by non-admin user")
-			s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
 		}
 
@@ -179,17 +179,17 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		logger.Debug("UserLoginInputMiddleware called")
 
 		x := new(types.UserLoginInput)
-		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			if x = parseLoginInputFromForm(req); x == nil {
 				logger.Error(err, "error encountered decoding request body")
-				s.encoderDecoder.EncodeErrorResponse(res, "attached input is invalid", http.StatusBadRequest)
+				s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
 				return
 			}
 		}
 
 		if err := x.Validate(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
 			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 

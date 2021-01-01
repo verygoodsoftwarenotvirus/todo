@@ -45,6 +45,12 @@ func (m *UserDataServer) TOTPSecretRefreshInputMiddleware(next http.Handler) htt
 	return args.Get(0).(http.Handler)
 }
 
+// AvatarUploadMiddleware is a mock method to satisfy our interface requirements.
+func (m *UserDataServer) AvatarUploadMiddleware(next http.Handler) http.Handler {
+	args := m.Called(next)
+	return args.Get(0).(http.Handler)
+}
+
 // ListHandler is a mock method to satisfy our interface requirements.
 func (m *UserDataServer) ListHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
@@ -82,6 +88,11 @@ func (m *UserDataServer) NewTOTPSecretHandler(res http.ResponseWriter, req *http
 
 // UpdatePasswordHandler is a mock method to satisfy our interface requirements.
 func (m *UserDataServer) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
+// AvatarUploadHandler is a mock method to satisfy our interface requirements.
+func (m *UserDataServer) AvatarUploadHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 

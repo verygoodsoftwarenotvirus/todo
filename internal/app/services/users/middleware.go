@@ -31,15 +31,15 @@ func (s *service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		// decode the request.
-		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			logger.Error(err, "error encountered decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx, s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
 			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -59,15 +59,15 @@ func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 		logger := s.logger.WithRequest(req)
 
 		// decode the request.
-		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			logger.Error(err, "error encountered decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx, s.authSettings.MinimumPasswordLength); err != nil {
 			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -87,15 +87,15 @@ func (s *service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 		logger := s.logger.WithRequest(req)
 
 		// decode the request.
-		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			logger.Error(err, "error encountered decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
 			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -115,15 +115,15 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		logger := s.logger.WithRequest(req)
 
 		// decode the request.
-		if err := s.encoderDecoder.DecodeRequest(req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			logger.Error(err, "error encountered decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
 			logger.Error(err, "provided input was invalid")
-			s.encoderDecoder.EncodeErrorResponse(res, err.Error(), http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -131,4 +131,9 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		ctx = context.WithValue(ctx, totpSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
+}
+
+// AvatarUploadMiddleware fetches 2FA update input from requests.
+func (s *service) AvatarUploadMiddleware(next http.Handler) http.Handler {
+	return s.imageUploadProcessor.BuildAvatarUploadMiddleware(next, s.logger, s.encoderDecoder, "avatar")
 }

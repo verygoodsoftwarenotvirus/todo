@@ -40,7 +40,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.AuditLogEntryList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AuditLogEntryList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -71,7 +71,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.AuditLogEntryList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AuditLogEntryList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -102,7 +102,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -147,7 +147,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.AnythingOfType("*types.AuditLogEntry"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AuditLogEntry"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -183,7 +183,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -219,7 +219,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

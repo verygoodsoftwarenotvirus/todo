@@ -115,7 +115,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeErrorResponse", mock.Anything, "no such oauth2 client", http.StatusUnauthorized)
+		ed.On("EncodeErrorResponse", mock.Anything, mock.Anything, "no such oauth2 client", http.StatusUnauthorized)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -147,7 +147,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -169,7 +169,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeErrorResponse", mock.Anything, "no scope information found", http.StatusBadRequest)
+		ed.On("EncodeErrorResponse", mock.Anything, mock.Anything, "no scope information found", http.StatusBadRequest)
 		s.encoderDecoder = ed
 
 		req, res := buildRequest(t), httptest.NewRecorder()
@@ -197,7 +197,7 @@ func TestService_AuthorizeScopeHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeErrorResponse", mock.Anything, "not authorized for scope", http.StatusUnauthorized)
+		ed.On("EncodeErrorResponse", mock.Anything, mock.Anything, "not authorized for scope", http.StatusUnauthorized)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)

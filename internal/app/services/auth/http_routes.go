@@ -117,7 +117,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	loginData, ok := ctx.Value(userLoginInputMiddlewareCtxKey).(*types.UserLoginInput)
 	if !ok || loginData == nil {
 		logger.Error(nil, "no UserLoginInput found for /login request")
-		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
 		return
 	}
 
@@ -128,7 +128,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
 	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {
 		logger.WithValue("user_is_nil", user == nil).Error(err, "error fetching user")
-		s.encoderDecoder.EncodeErrorResponse(res, "error validating request", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	if user.IsBanned() {
 		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
-		s.encoderDecoder.EncodeErrorResponse(res, user.AccountStatusExplanation, http.StatusForbidden)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, user.AccountStatusExplanation, http.StatusForbidden)
 		return
 	}
 
@@ -152,26 +152,26 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		}
 
 		logger.Error(err, "error encountered validating login")
-		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 
 		return
 	} else if !loginValid {
 		logger.Debug("login was invalid")
 		s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
-		s.encoderDecoder.EncodeErrorResponse(res, "login was invalid", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "login was invalid", http.StatusUnauthorized)
 		return
 	}
 
 	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
 		logger.Error(sessionErr, "error loading token")
-		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
 	if renewTokenErr := s.sessionManager.RenewToken(ctx); renewTokenErr != nil {
 		logger.Error(err, "error encountered renewing token")
-		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
@@ -180,14 +180,14 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
 		logger.Error(err, "error encountered writing to session store")
-		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
 	cookie, err := s.buildCookie(token, expiry)
 	if err != nil {
 		logger.Error(err, "error encountered building cookie")
-		s.encoderDecoder.EncodeErrorResponse(res, staticError, http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
@@ -198,7 +198,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	statusResponse := user.ToStatusResponse()
 	statusResponse.UserIsAuthenticated = true
 
-	s.encoderDecoder.EncodeResponseWithStatus(res, statusResponse, http.StatusAccepted)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
 }
 
 // LogoutHandler is our logout route.
@@ -212,20 +212,20 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
 		logger.Error(sessionErr, "error loading token")
-		s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
 
 	if sessionClearErr := s.sessionManager.Clear(ctx); sessionClearErr != nil {
 		logger.Error(sessionClearErr, "clearing user session")
-		s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
 
@@ -236,7 +236,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 			s.auditLog.LogLogoutEvent(ctx, si.UserID)
 		} else {
 			logger.Error(cookieBuildingErr, "error encountered building cookie")
-			s.encoderDecoder.EncodeErrorResponse(res, "error encountered, please try again later", http.StatusInternalServerError)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 			return
 		}
 	} else {
@@ -256,7 +256,7 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 		statusResponse.UserIsAuthenticated = true
 	}
 
-	s.encoderDecoder.EncodeResponse(res, statusResponse)
+	s.encoderDecoder.EncodeResponse(ctx, res, statusResponse)
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.
@@ -271,13 +271,13 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
-		s.encoderDecoder.EncodeErrorResponse(res, "unauthenticated", http.StatusUnauthorized)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	if !si.AdminPermissions.CanCycleCookieSecrets() {
 		logger.WithValue("admin_permissions", si.AdminPermissions).Debug("invalid permissions")
-		s.encoderDecoder.EncodeInvalidPermissionsResponse(res)
+		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}
 

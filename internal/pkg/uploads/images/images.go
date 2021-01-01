@@ -2,14 +2,23 @@ package images
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"image"
+	"io/ioutil"
+	"mime"
+	"net/http"
+	"path/filepath"
+	"strconv"
 	"strings"
 
-	"io/ioutil"
-	"net/http"
-	"strconv"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 const (
@@ -18,6 +27,14 @@ const (
 	imagePNG  = "image/png"
 	imageJPEG = "image/jpeg"
 	imageGIF  = "image/gif"
+
+	// ParsedImageContextKey is what we use to attach parsed images to requests.
+	ParsedImageContextKey types.ContextKey = "parsed_image"
+)
+
+var (
+	// ErrInvalidImageContentType is what we return to indicate the provided image was of the wrong type.
+	ErrInvalidImageContentType = errors.New("invalid content type")
 )
 
 type (
@@ -31,7 +48,12 @@ type (
 
 	// ImageUploadProcessor process image uploads.
 	ImageUploadProcessor interface {
-		Process(r *http.Request, filename string) (*Image, error)
+		Process(ctx context.Context, req *http.Request, filename string) (*Image, error)
+		BuildAvatarUploadMiddleware(next http.Handler, logger logging.Logger, encoderDecoder encoding.EncoderDecoder, filename string) http.Handler
+	}
+
+	uploadProcessor struct {
+		tracer tracing.Tracer
 	}
 )
 
@@ -62,33 +84,49 @@ func (i *Image) Thumbnail(width, height uint, quality int, filename string) (*Im
 	return t.Thumbnail(i, width, height, filename)
 }
 
-type imageUploadProcessor struct {
-}
-
 // NewImageUploadProcessor provides a new ImageUploadProcessor.
 func NewImageUploadProcessor() ImageUploadProcessor {
-	return &imageUploadProcessor{}
+	return &uploadProcessor{
+		tracer: tracing.NewTracer("image_upload_processor"),
+	}
 }
 
 // LimitFileSize limits the size of uploaded files, for use before Process.
-func (p *imageUploadProcessor) LimitFileSize(maxSize int64, res http.ResponseWriter, req *http.Request) {
-	req.Body = http.MaxBytesReader(res, req.Body, maxSize)
+func LimitFileSize(maxSize uint16, res http.ResponseWriter, req *http.Request) {
+	if maxSize == 0 {
+		maxSize = 4096
+	}
+
+	req.Body = http.MaxBytesReader(res, req.Body, int64(maxSize))
+}
+
+func contentTypeFromFilename(filename string) string {
+	return mime.TypeByExtension(filepath.Ext(filename))
+}
+
+func validateContentType(filename string) error {
+	contentType := contentTypeFromFilename(filename)
+
+	switch strings.TrimSpace(strings.ToLower(contentType)) {
+	case imagePNG, imageJPEG, imageGIF:
+		return nil
+	default:
+		return fmt.Errorf("invalid content type: %s", contentType)
+	}
 }
 
 // Process extracts an image from an *http.Request.
-func (p *imageUploadProcessor) Process(req *http.Request, filename string) (*Image, error) {
+func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filename string) (*Image, error) {
+	_, span := p.tracer.StartSpan(ctx)
+	defer span.End()
+
 	file, info, err := req.FormFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("error reading image from request: %w", err)
 	}
 
-	contentType := info.Header.Get(headerContentType)
-
-	switch strings.TrimSpace(strings.ToLower(contentType)) {
-	case imagePNG, imageJPEG, imageGIF:
-		// we good
-	default:
-		return nil, fmt.Errorf("invalid content type: %s", contentType)
+	if contentTypeErr := validateContentType(info.Filename); contentTypeErr != nil {
+		return nil, contentTypeErr
 	}
 
 	bs, err := ioutil.ReadAll(file)
@@ -102,10 +140,59 @@ func (p *imageUploadProcessor) Process(req *http.Request, filename string) (*Ima
 
 	i := &Image{
 		Filename:    info.Filename,
-		ContentType: contentType,
+		ContentType: contentTypeFromFilename(filename),
 		Data:        bs,
 		Size:        len(bs),
 	}
 
 	return i, nil
+}
+
+// BuildAvatarUploadMiddleware ensures that an image is attached to the request.
+func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, logger logging.Logger, encoderDecoder encoding.EncoderDecoder, filename string) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := p.tracer.StartSpan(req.Context())
+		defer span.End()
+
+		file, info, err := req.FormFile(filename)
+		if err != nil {
+			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+			return
+		}
+
+		contentType := info.Header.Get(headerContentType)
+
+		switch strings.TrimSpace(strings.ToLower(contentType)) {
+		case imagePNG, imageJPEG, imageGIF:
+			// we good
+		default:
+			logger.WithValue("invalid_content_type", contentType).Error(ErrInvalidImageContentType, "")
+			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+			return
+		}
+
+		bs, err := ioutil.ReadAll(file)
+		if err != nil {
+			logger.Error(err, "reading attached file")
+			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+			return
+		}
+
+		if _, _, err = image.Decode(bytes.NewReader(bs)); err != nil {
+			logger.Error(err, "decoding attached image")
+			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+			return
+		}
+
+		i := &Image{
+			Filename:    info.Filename,
+			ContentType: contentType,
+			Data:        bs,
+			Size:        len(bs),
+		}
+
+		req = req.WithContext(context.WithValue(ctx, ParsedImageContextKey, i))
+
+		next.ServeHTTP(res, req)
+	})
 }

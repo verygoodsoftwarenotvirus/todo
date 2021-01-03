@@ -19,8 +19,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
+	mockuploads "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -1390,7 +1390,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ip.On("Process", mock.Anything, mock.AnythingOfType("*http.Request"), "avatar").Return(returnImage, nil)
 		s.imageUploadProcessor = ip
 
-		um := &uploads.MockUploadManager{}
+		um := &mockuploads.UploadManager{}
 		um.On("SaveFile", mock.Anything, fmt.Sprintf("avatar_%d", exampleUser.ID), returnImage.Data).Return(nil)
 		s.uploadManager = um
 
@@ -1499,7 +1499,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ip.On("Process", mock.Anything, mock.AnythingOfType("*http.Request"), "avatar").Return(returnImage, nil)
 		s.imageUploadProcessor = ip
 
-		um := &uploads.MockUploadManager{}
+		um := &mockuploads.UploadManager{}
 		um.On("SaveFile", mock.Anything, fmt.Sprintf("avatar_%d", exampleUser.ID), returnImage.Data).Return(errors.New("blah"))
 		s.uploadManager = um
 
@@ -1536,7 +1536,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ip.On("Process", mock.Anything, mock.AnythingOfType("*http.Request"), "avatar").Return(returnImage, nil)
 		s.imageUploadProcessor = ip
 
-		um := &uploads.MockUploadManager{}
+		um := &mockuploads.UploadManager{}
 		um.On("SaveFile", mock.Anything, fmt.Sprintf("avatar_%d", exampleUser.ID), returnImage.Data).Return(nil)
 		s.uploadManager = um
 

@@ -51,7 +51,7 @@ func Test_uploadProcessor_Process(T *testing.T) {
 		expectedFieldName := "avatar"
 
 		b := new(bytes.Buffer)
-		exampleImage := testutil.BuildArbitraryImage(256, 256)
+		exampleImage := testutil.BuildArbitraryImage(256)
 		require.NoError(t, png.Encode(b, exampleImage))
 
 		expected := b.Bytes()
@@ -89,7 +89,7 @@ func Test_uploadProcessor_Process(T *testing.T) {
 		expectedFieldName := "avatar"
 
 		b := new(bytes.Buffer)
-		exampleImage := testutil.BuildArbitraryImage(256, 256)
+		exampleImage := testutil.BuildArbitraryImage(256)
 		require.NoError(t, png.Encode(b, exampleImage))
 
 		expected := b.Bytes()

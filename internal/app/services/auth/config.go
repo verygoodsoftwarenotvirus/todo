@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// DefaultCookieName is the default Cookie.Name.
+	// DefaultCookieName is the default Cookie.BucketName.
 	DefaultCookieName = "todocookie"
 	// DefaultCookieDomain is the default Cookie.Domain.
 	DefaultCookieDomain = "localhost"

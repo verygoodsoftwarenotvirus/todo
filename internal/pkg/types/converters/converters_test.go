@@ -31,7 +31,7 @@ func TestConvertItemToItemUpdateInput(T *testing.T) {
 		expected := fakes.BuildFakeItem()
 		actual := ConvertItemToItemUpdateInput(expected)
 
-		assert.Equal(t, expected.Name, actual.Name, "expected Name to equal %q, but encountered %q instead", expected.Name, actual.Name)
+		assert.Equal(t, expected.Name, actual.Name, "expected BucketName to equal %q, but encountered %q instead", expected.Name, actual.Name)
 		assert.Equal(t, expected.Details, actual.Details, "expected Details to equal %q, but encountered %q instead", expected.Name, actual.Name)
 	})
 }

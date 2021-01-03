@@ -18,7 +18,7 @@ func checkPlanEquality(t *testing.T, expected, actual *types.Plan) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected Name for plan #%d to be %q, but it was %q ", expected.ID, expected.Name, actual.Name)
+	assert.Equal(t, expected.Name, actual.Name, "expected BucketName for plan #%d to be %q, but it was %q ", expected.ID, expected.Name, actual.Name)
 	assert.Equal(t, expected.Description, actual.Description, "expected Description for plan #%d to be %q, but it was %q ", expected.ID, expected.Description, actual.Description)
 	assert.Equal(t, expected.Price, actual.Price, "expected Price for plan #%d to be %v, but it was %v ", expected.ID, expected.Price, actual.Price)
 	assert.Equal(t, expected.Period, actual.Period, "expected Period for plan #%d to be %v, but it was %v ", expected.ID, expected.Period, actual.Period)

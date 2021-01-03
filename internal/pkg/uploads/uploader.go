@@ -2,6 +2,7 @@ package uploads
 
 import (
 	"context"
+	"net/http"
 )
 
 type (
@@ -12,5 +13,6 @@ type (
 	UploadManager interface {
 		SaveFile(ctx context.Context, path string, content []byte) error
 		ReadFile(ctx context.Context, path string) ([]byte, error)
+		ServeFiles(res http.ResponseWriter, req *http.Request)
 	}
 )

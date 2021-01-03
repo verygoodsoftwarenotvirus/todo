@@ -100,8 +100,10 @@ const (
 	ConfigKeyUploaderProvider = "uploads.storage_config.provider"
 	// ConfigKeyUploaderDebug is the key viper will use to refer to the UploadSettings.debug value.
 	ConfigKeyUploaderDebug = "uploads.storage_config.debug"
-	// ConfigKeyUploaderName is the key viper will use to refer to the UploadSettings.Name value.
-	ConfigKeyUploaderName = "uploads.storage_config.name"
+	// ConfigKeyUploaderBucketName is the key viper will use to refer to the UploadSettings.BucketName value.
+	ConfigKeyUploaderBucketName = "uploads.storage_config.bucket_name"
+	// ConfigKeyUploaderUploadFilename is the key viper will use to refer to the UploadSettings.BucketName value.
+	ConfigKeyUploaderUploadFilename = "uploads.storage_config.upload_filename"
 
 	// ConfigKeyUploaderAzureAuthMethod is the key viper will use to refer to UploadSettings.Azure.AuthMethod.
 	ConfigKeyUploaderAzureAuthMethod = "uploads.storage_config.azure.auth_method"
@@ -233,7 +235,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyItemsSearchIndexPath, string(input.Search.ItemsIndexPath))
 	cfg.Set(ConfigKeyUploaderProvider, input.Uploads.Provider)
 	cfg.Set(ConfigKeyUploaderDebug, input.Uploads.Debug)
-	cfg.Set(ConfigKeyUploaderName, input.Uploads.Storage.Name)
+	cfg.Set(ConfigKeyUploaderBucketName, input.Uploads.Storage.BucketName)
 	cfg.Set(ConfigKeyAuditLogEnabled, input.AuditLog.Enabled)
 	cfg.Set(ConfigKeyWebhooksEnabled, input.Webhooks.Enabled)
 

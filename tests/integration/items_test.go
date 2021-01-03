@@ -19,7 +19,7 @@ func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected Name for item #%d to be %v, but it was %v ", expected.ID, expected.Name, actual.Name)
+	assert.Equal(t, expected.Name, actual.Name, "expected BucketName for item #%d to be %v, but it was %v ", expected.ID, expected.Name, actual.Name)
 	assert.Equal(t, expected.Details, actual.Details, "expected Details for item #%d to be %v, but it was %v ", expected.ID, expected.Details, actual.Details)
 	assert.NotZero(t, actual.CreatedOn)
 }

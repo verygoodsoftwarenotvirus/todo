@@ -91,7 +91,7 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 
 	if input.Name != "" && input.Name != x.Name {
 		out = append(out, FieldChangeSummary{
-			FieldName: "Name",
+			FieldName: "BucketName",
 			OldValue:  x.Name,
 			NewValue:  input.Name,
 		})

@@ -75,7 +75,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	userAuditManager := database.ProvideUserAuditManager(dbm)
 	imageUploadProcessor := images.NewImageUploadProcessor()
 	uploadsConfig := &cfg.Uploads
-	storageConfig := uploadsConfig.Storage
+	storageConfig := &uploadsConfig.Storage
 	uploader, err := storage.NewUploadManager(ctx, logger, storageConfig)
 	if err != nil {
 		return nil, err

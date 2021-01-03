@@ -1,0 +1,78 @@
+package storage
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+)
+
+// SaveFile saves a file to the blob.
+func (u *Uploader) SaveFile(ctx context.Context, path string, content []byte) error {
+	ctx, span := u.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if err := u.bucket.WriteAll(ctx, path, content, nil); err != nil {
+		return fmt.Errorf("error writing file content: %w", err)
+	}
+
+	return nil
+}
+
+// ReadFile reads a file from the blob.
+func (u *Uploader) ReadFile(ctx context.Context, path string) ([]byte, error) {
+	ctx, span := u.tracer.StartSpan(ctx)
+	defer span.End()
+
+	r, err := u.bucket.NewReader(ctx, path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching file: %w", err)
+	}
+
+	defer func() {
+		if closeErr := r.Close(); closeErr != nil {
+			u.logger.Error(closeErr, "error closing file reader")
+		}
+	}()
+
+	fileBytes, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file: %w", err)
+	}
+
+	return fileBytes, nil
+}
+
+// ServeFiles saves a file to the blob.
+func (u *Uploader) ServeFiles(res http.ResponseWriter, req *http.Request) {
+	ctx, span := u.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	fileName := u.filenameFetcher(req)
+
+	attrs, err := u.bucket.Attributes(ctx, fileName)
+	if err != nil {
+		u.logger.Error(err, "trying to read uploaded file")
+		res.WriteHeader(http.StatusNotFound)
+
+		return
+	}
+
+	fileBytes, err := u.ReadFile(ctx, fileName)
+	if err != nil {
+		u.logger.Error(err, "trying to read uploaded file")
+		res.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	res.Header().Set(encoding.ContentTypeHeader, attrs.ContentType)
+
+	if _, copyErr := io.Copy(res, bytes.NewReader(fileBytes)); copyErr != nil {
+		u.logger.Error(copyErr, "copying file bytes to response")
+	}
+}

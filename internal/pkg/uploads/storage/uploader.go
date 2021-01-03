@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,6 +16,7 @@ import (
 	"gocloud.dev/blob/s3blob"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 )
 
 const (
@@ -24,22 +25,27 @@ const (
 )
 
 var (
-	// ErrInvalidConfiguration denotes that the configuration is invalid.
+	// ErrNilConfig denotes that the provided configuration is nil.
+	ErrNilConfig = errors.New("nil config provided")
+
+	// ErrInvalidConfiguration denotes that the provided configuration is invalid.
 	ErrInvalidConfiguration = errors.New("configuration invalid")
 )
 
 type (
 	// Uploader implements our UploadManager struct.
 	Uploader struct {
-		bucket *blob.Bucket
-		logger logging.Logger
-		tracer tracing.Tracer
+		bucket          *blob.Bucket
+		logger          logging.Logger
+		tracer          tracing.Tracer
+		filenameFetcher func(req *http.Request) string
 	}
 
 	// Config configures our UploadManager.
 	Config struct {
 		Provider         string            `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-		Name             string            `json:"name" mapstructure:"name" toml:"name,omitempty"`
+		BucketName       string            `json:"name" mapstructure:"name" toml:"name,omitempty"`
+		UploadFilename   string            `json:"upload_filename" mapstructure:"upload_filename" toml:"upload_filename,omitempty"`
 		AzureConfig      *AzureConfig      `json:"azure" mapstructure:"azure" toml:"azure,omitempty"`
 		GCSConfig        *GCSConfig        `json:"gcs" mapstructure:"gcs" toml:"gcs,omitempty"`
 		S3Config         *S3Config         `json:"s3" mapstructure:"s3" toml:"s3,omitempty"`
@@ -50,7 +56,7 @@ type (
 // Validate validates the Config.
 func (c *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
-		validation.Field(&c.Name, validation.Required),
+		validation.Field(&c.BucketName, validation.Required),
 		validation.Field(&c.Provider, validation.In(AzureProvider, GCSProvider, S3Provider, FilesystemProvider, MemoryProvider)),
 		validation.Field(&c.AzureConfig, validation.When(c.Provider == AzureProvider, validation.Required).Else(validation.Nil)),
 		validation.Field(&c.GCSConfig, validation.When(c.Provider == GCSProvider, validation.Required).Else(validation.Nil)),
@@ -60,101 +66,78 @@ func (c *Config) Validate(ctx context.Context) error {
 }
 
 // NewUploadManager provides a new uploads.UploadManager.
-func NewUploadManager(ctx context.Context, logger logging.Logger, cfg Config) (*Uploader, error) {
-	serviceName := fmt.Sprintf("%s_uploader", cfg.Name)
+func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config) (*Uploader, error) {
+	if cfg == nil {
+		return nil, ErrNilConfig
+	}
+
+	serviceName := fmt.Sprintf("%s_uploader", cfg.BucketName)
 	u := &Uploader{
-		logger: logger.WithName(serviceName),
-		tracer: tracing.NewTracer(serviceName),
+		logger:          logger.WithName(serviceName),
+		tracer:          tracing.NewTracer(serviceName),
+		filenameFetcher: routeparams.BuildRouteParamStringIDFetcher(cfg.UploadFilename),
 	}
 
 	if err := cfg.Validate(ctx); err != nil {
 		return nil, fmt.Errorf("upload manager provided invalid config: %w", err)
 	}
 
-	bucket, err := selectBucket(ctx, logger, cfg)
-	if err != nil {
+	if err := u.selectBucket(ctx, cfg); err != nil {
 		return nil, fmt.Errorf("error initializing bucket: %w", err)
 	}
-
-	u.bucket = bucket
 
 	return u, nil
 }
 
-func selectBucket(ctx context.Context, logger logging.Logger, cfg Config) (bucket *blob.Bucket, err error) {
+func (u *Uploader) selectBucket(ctx context.Context, cfg *Config) (err error) {
 	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
 	case AzureProvider:
 		if cfg.AzureConfig == nil {
-			return nil, ErrInvalidConfiguration
+			return ErrNilConfig
 		}
 
-		if bucket, err = provideAzureBucket(ctx, cfg.AzureConfig, logger); err != nil {
-			return nil, fmt.Errorf("error initializing azure bucket: %w", err)
+		if u.bucket, err = provideAzureBucket(ctx, cfg.AzureConfig, u.logger); err != nil {
+			return fmt.Errorf("error initializing azure bucket: %w", err)
 		}
 	case GCSProvider:
 		if cfg.GCSConfig == nil {
-			return nil, ErrInvalidConfiguration
+			return ErrNilConfig
 		}
 
-		if bucket, err = buildGCSBucket(ctx, cfg.GCSConfig); err != nil {
-			return nil, fmt.Errorf("error initializing gcs bucket: %w", err)
+		if u.bucket, err = buildGCSBucket(ctx, cfg.GCSConfig); err != nil {
+			return fmt.Errorf("error initializing gcs bucket: %w", err)
 		}
 	case S3Provider:
 		if cfg.S3Config == nil {
-			return nil, ErrInvalidConfiguration
+			return ErrNilConfig
 		}
 
-		if bucket, err = s3blob.OpenBucket(ctx, session.Must(session.NewSession()), cfg.S3Config.BucketName, &s3blob.Options{
+		if u.bucket, err = s3blob.OpenBucket(ctx, session.Must(session.NewSession()), cfg.S3Config.BucketName, &s3blob.Options{
 			UseLegacyList: false,
 		}); err != nil {
-			return nil, fmt.Errorf("error initializing s3 bucket: %w", err)
+			return fmt.Errorf("error initializing s3 bucket: %w", err)
 		}
 	case MemoryProvider:
-		bucket = memblob.OpenBucket(&memblob.Options{})
+		u.bucket = memblob.OpenBucket(&memblob.Options{})
 	default:
 		if cfg.FilesystemConfig == nil {
-			return nil, ErrInvalidConfiguration
+			return ErrNilConfig
 		}
 
-		if bucket, err = fileblob.OpenBucket(cfg.FilesystemConfig.RootDirectory, &fileblob.Options{
+		if u.bucket, err = fileblob.OpenBucket(cfg.FilesystemConfig.RootDirectory, &fileblob.Options{
 			URLSigner: nil,
 			CreateDir: true,
 		}); err != nil {
-			return nil, fmt.Errorf("error initializing filesystem bucket: %w", err)
+			return fmt.Errorf("error initializing filesystem bucket: %w", err)
 		}
 	}
 
-	bucket = blob.PrefixedBucket(bucket, cfg.Name)
-
-	return bucket, err
-}
-
-// SaveFile saves a file to the blob.
-func (u *Uploader) SaveFile(ctx context.Context, path string, content []byte) error {
-	ctx, span := u.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if err := u.bucket.WriteAll(ctx, path, content, nil); err != nil {
-		return fmt.Errorf("error writing file content: %w", err)
+	bn := cfg.BucketName
+	if !strings.HasSuffix(bn, "_") {
+		bn = fmt.Sprintf("%s_", cfg.BucketName)
 	}
 
-	return nil
-}
+	u.bucket = blob.PrefixedBucket(u.bucket, bn)
 
-// ReadFile reads a file from the blob.
-func (u *Uploader) ReadFile(ctx context.Context, path string) ([]byte, error) {
-	ctx, span := u.tracer.StartSpan(ctx)
-	defer span.End()
-
-	r, err := u.bucket.NewReader(ctx, path, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching file: %w", err)
-	}
-
-	bytes, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("error reading file: %w", err)
-	}
-
-	return bytes, nil
+	return err
 }

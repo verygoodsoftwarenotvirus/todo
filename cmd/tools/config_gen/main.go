@@ -135,7 +135,7 @@ func localDevelopmentConfig(filePath string) error {
 			Provider: "filesystem",
 			Storage: storage.Config{
 				Provider:    "filesystem",
-				Name:        "avatars",
+				BucketName:  "avatars",
 				AzureConfig: nil,
 				GCSConfig:   nil,
 				S3Config:    nil,
@@ -224,7 +224,7 @@ func frontendTestsConfig(filePath string) error {
 			Provider: "filesystem",
 			Storage: storage.Config{
 				Provider:    "filesystem",
-				Name:        "avatars",
+				BucketName:  "avatars",
 				AzureConfig: nil,
 				GCSConfig:   nil,
 				S3Config:    nil,
@@ -319,7 +319,7 @@ func coverageConfig(filePath string) error {
 			Provider: "filesystem",
 			Storage: storage.Config{
 				Provider:    "filesystem",
-				Name:        "avatars",
+				BucketName:  "avatars",
 				AzureConfig: nil,
 				GCSConfig:   nil,
 				S3Config:    nil,
@@ -420,7 +420,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider: "filesystem",
 				Storage: storage.Config{
 					Provider:    "filesystem",
-					Name:        "avatars",
+					BucketName:  "avatars",
 					AzureConfig: nil,
 					GCSConfig:   nil,
 					S3Config:    nil,

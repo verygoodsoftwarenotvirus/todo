@@ -44,3 +44,10 @@ func BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string)
 		return u
 	}
 }
+
+// BuildRouteParamStringIDFetcher builds a function that fetches a given key from a path with variables added by a router.
+func BuildRouteParamStringIDFetcher(key string) func(req *http.Request) string {
+	return func(req *http.Request) string {
+		return routeParamRetrievalFunc(req, key)
+	}
+}

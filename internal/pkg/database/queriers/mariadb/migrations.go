@@ -32,29 +32,6 @@ var (
 	migrations = []darwin.Migration{
 		{
 			Version:     0.00,
-			Description: "create plans table and default plan",
-			Script: strings.Join([]string{
-				"CREATE TABLE IF NOT EXISTS plans (",
-				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
-				"    `name` VARCHAR(128) NOT NULL,",
-				"    `description` VARCHAR(128) NOT NULL DEFAULT '',",
-				"    `price` INT UNSIGNED NOT NULL,",
-				"    `period` VARCHAR(128) NOT NULL DEFAULT '0m0s',",
-				"    `created_on` BIGINT UNSIGNED,",
-				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    PRIMARY KEY (`id`),",
-				"    UNIQUE (`name`, `archived_on`)",
-				");",
-			}, "\n"),
-		},
-		{
-			Version:     0.01,
-			Description: "create plans table creation trigger",
-			Script:      buildCreationTriggerScript(queriers.PlansTableName),
-		},
-		{
-			Version:     0.02,
 			Description: "create users table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
@@ -80,9 +57,32 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.03,
+			Version:     0.01,
 			Description: "create users table creation trigger",
 			Script:      buildCreationTriggerScript(queriers.UsersTableName),
+		},
+		{
+			Version:     0.02,
+			Description: "create plans table and default plan",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS plans (",
+				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `name` VARCHAR(128) NOT NULL,",
+				"    `description` VARCHAR(128) NOT NULL DEFAULT '',",
+				"    `price` INT UNSIGNED NOT NULL,",
+				"    `period` VARCHAR(128) NOT NULL DEFAULT '0m0s',",
+				"    `created_on` BIGINT UNSIGNED,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    UNIQUE (`name`, `archived_on`)",
+				");",
+			}, "\n"),
+		},
+		{
+			Version:     0.03,
+			Description: "create plans table creation trigger",
+			Script:      buildCreationTriggerScript(queriers.PlansTableName),
 		},
 		{
 			Version:     0.04,
@@ -267,11 +267,27 @@ func (q *MariaDB) Migrate(ctx context.Context, testUserConfig *types.TestUserCre
 			ToSql()
 		q.logQueryBuildingError(err)
 
-		if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
-			return dbErr
+		res, userCreateErr := q.db.ExecContext(ctx, query, args...)
+		if userCreateErr != nil {
+			q.logger.Error(userCreateErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", userCreateErr)
 		}
 
-		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created user")
+		id, idRetErr := res.LastInsertId()
+		if idRetErr != nil {
+			q.logger.Error(idRetErr, "fetching insert ID")
+			return fmt.Errorf("fetching insert ID: %w", idRetErr)
+		}
+
+		if _, accountCreationErr := q.CreateAccount(ctx, &types.AccountCreationInput{
+			Name:          testUserConfig.Username,
+			BelongsToUser: uint64(id),
+		}); accountCreationErr != nil {
+			q.logger.Error(accountCreationErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", accountCreationErr)
+		}
+
+		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
 	}
 
 	return nil

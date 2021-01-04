@@ -19,22 +19,6 @@ var (
 	migrations = []darwin.Migration{
 		{
 			Version:     0.00,
-			Description: "create plans table and default plan",
-			Script: `
-			CREATE TABLE IF NOT EXISTS plans (
-				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				"name" TEXT NOT NULL,
-				"description" TEXT NOT NULL DEFAULT '',
-				"price" INTEGER NOT NULL,
-				"period" TEXT NOT NULL DEFAULT '0m0s',
-				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				"last_updated_on" INTEGER,
-				"archived_on" INTEGER DEFAULT NULL,
-				CONSTRAINT plan_name_unique UNIQUE (name, archived_on)
-			);`,
-		},
-		{
-			Version:     0.01,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -55,6 +39,22 @@ var (
 				"last_updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
 				CONSTRAINT username_unique UNIQUE (username, archived_on)
+			);`,
+		},
+		{
+			Version:     0.01,
+			Description: "create plans table and default plan",
+			Script: `
+			CREATE TABLE IF NOT EXISTS plans (
+				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name" TEXT NOT NULL,
+				"description" TEXT NOT NULL DEFAULT '',
+				"price" INTEGER NOT NULL,
+				"period" TEXT NOT NULL DEFAULT '0m0s',
+				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+				"last_updated_on" INTEGER,
+				"archived_on" INTEGER DEFAULT NULL,
+				CONSTRAINT plan_name_unique UNIQUE (name, archived_on)
 			);`,
 		},
 		{
@@ -205,11 +205,27 @@ func (q *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 			ToSql()
 		q.logQueryBuildingError(err)
 
-		if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
-			return dbErr
+		res, userCreateErr := q.db.ExecContext(ctx, query, args...)
+		if userCreateErr != nil {
+			q.logger.Error(userCreateErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", userCreateErr)
 		}
 
-		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created user")
+		id, idRetErr := res.LastInsertId()
+		if idRetErr != nil {
+			q.logger.Error(idRetErr, "fetching insert ID")
+			return fmt.Errorf("fetching insert ID: %w", idRetErr)
+		}
+
+		if _, accountCreationErr := q.CreateAccount(ctx, &types.AccountCreationInput{
+			Name:          testUserConfig.Username,
+			BelongsToUser: uint64(id),
+		}); accountCreationErr != nil {
+			q.logger.Error(accountCreationErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", accountCreationErr)
+		}
+
+		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
 	}
 
 	return nil

@@ -19,22 +19,6 @@ var (
 	migrations = []darwin.Migration{
 		{
 			Version:     0.00,
-			Description: "create plans table and default plan",
-			Script: `
-			CREATE TABLE IF NOT EXISTS plans (
-				"id" BIGSERIAL NOT NULL PRIMARY KEY,
-				"name" TEXT NOT NULL,
-				"description" TEXT NOT NULL DEFAULT '',
-				"price" INTEGER NOT NULL,
-				"period" TEXT NOT NULL DEFAULT '0m0s',
-				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				"last_updated_on" BIGINT DEFAULT NULL,
-				"archived_on" BIGINT DEFAULT NULL,
-				UNIQUE("name", "archived_on")
-			);`,
-		},
-		{
-			Version:     0.01,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -55,6 +39,22 @@ var (
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
 				UNIQUE("username", "archived_on")
+			);`,
+		},
+		{
+			Version:     0.01,
+			Description: "create plans table and default plan",
+			Script: `
+			CREATE TABLE IF NOT EXISTS plans (
+				"id" BIGSERIAL NOT NULL PRIMARY KEY,
+				"name" TEXT NOT NULL,
+				"description" TEXT NOT NULL DEFAULT '',
+				"price" INTEGER NOT NULL,
+				"period" TEXT NOT NULL DEFAULT '0m0s',
+				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
+				"last_updated_on" BIGINT DEFAULT NULL,
+				"archived_on" BIGINT DEFAULT NULL,
+				UNIQUE("name", "archived_on")
 			);`,
 		},
 		{
@@ -103,7 +103,9 @@ var (
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
+				"belongs_to_account" BIGINT,
 				"belongs_to_user" BIGINT NOT NULL,
+				FOREIGN KEY("belongs_to_account") REFERENCES accounts(id),
 				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
 			);`,
 		},
@@ -123,7 +125,9 @@ var (
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
+				"belongs_to_account" BIGINT,
 				"belongs_to_user" BIGINT NOT NULL,
+				FOREIGN KEY("belongs_to_account") REFERENCES accounts(id),
 				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
 			);`,
 		},
@@ -149,7 +153,9 @@ var (
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
+				"belongs_to_account" BIGINT,
 				"belongs_to_user" BIGINT NOT NULL,
+				FOREIGN KEY("belongs_to_account") REFERENCES accounts(id),
 				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
 			);`,
 		},
@@ -204,15 +210,25 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),
 			).
+			Suffix("RETURNING id").
 			ToSql()
 		q.logQueryBuildingError(err)
 
-		if _, dbErr := q.db.ExecContext(ctx, query, args...); dbErr != nil {
-			q.logger.Error(err, "creating user")
-			return fmt.Errorf("error creating test user: %w", dbErr)
+		var id uint64
+		if userCreateErr := q.db.QueryRowContext(ctx, query, args...).Scan(&id); userCreateErr != nil {
+			q.logger.Error(userCreateErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", userCreateErr)
 		}
 
-		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user")
+		if _, accountCreationErr := q.CreateAccount(ctx, &types.AccountCreationInput{
+			Name:          testUserConfig.Username,
+			BelongsToUser: uint64(id),
+		}); accountCreationErr != nil {
+			q.logger.Error(accountCreationErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", accountCreationErr)
+		}
+
+		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
 	}
 
 	return nil

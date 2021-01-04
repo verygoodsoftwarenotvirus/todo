@@ -33,14 +33,14 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
-	plans, err := s.planDataManager.GetPlans(ctx, filter)
+	plans, err := s.planDataManager.GetAccountSubscriptionPlans(ctx, filter)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		plans = &types.PlanList{Plans: []types.Plan{}}
+		plans = &types.AccountSubscriptionPlanList{Plans: []types.AccountSubscriptionPlan{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching plans")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -60,7 +60,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("CreateHandler called")
 
 	// check request context for parsed input struct.
-	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.PlanCreationInput)
+	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.AccountSubscriptionPlanCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
@@ -74,11 +74,11 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// create plan in database.
-	x, err := s.planDataManager.CreatePlan(ctx, input)
+	x, err := s.planDataManager.CreateAccountSubscriptionPlan(ctx, input)
 	if err != nil {
 		logger.Error(err, "error creating plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -98,7 +98,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("plan created")
 
 	s.planCounter.Increment(ctx)
-	s.auditLog.LogPlanCreationEvent(ctx, x)
+	s.auditLog.LogAccountSubscriptionPlanCreationEvent(ctx, x)
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
 }
 
@@ -116,7 +116,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.
@@ -125,7 +125,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.PlanIDKey, planID)
 
 	// fetch plan from database.
-	x, err := s.planDataManager.GetPlan(ctx, planID)
+	x, err := s.planDataManager.GetAccountSubscriptionPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -147,7 +147,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// check for parsed input attached to request context.
-	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.PlanUpdateInput)
+	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.AccountSubscriptionPlanUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
@@ -161,7 +161,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.
@@ -170,7 +170,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachPlanIDToSpan(span, planID)
 
 	// fetch plan from database.
-	x, err := s.planDataManager.GetPlan(ctx, planID)
+	x, err := s.planDataManager.GetAccountSubscriptionPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -184,13 +184,13 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update plan in database.
-	if err = s.planDataManager.UpdatePlan(ctx, x); err != nil {
+	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x); err != nil {
 		logger.Error(err, "error encountered updating plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	s.auditLog.LogPlanUpdateEvent(ctx, si.UserID, x.ID, changeReport)
+	s.auditLog.AccountSubscriptionLogPlanUpdateEvent(ctx, si.UserID, x.ID, changeReport)
 
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponse(ctx, res, x)
@@ -210,7 +210,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.
@@ -219,7 +219,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
-	err := s.planDataManager.ArchivePlan(ctx, planID)
+	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -231,7 +231,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.planCounter.Decrement(ctx)
-	s.auditLog.LogPlanArchiveEvent(ctx, si.UserID, planID)
+	s.auditLog.AccountSubscriptionLogPlanArchiveEvent(ctx, si.UserID, planID)
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
@@ -252,7 +252,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.
@@ -260,7 +260,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachPlanIDToSpan(span, planID)
 	logger = logger.WithValue(keys.PlanIDKey, planID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForPlan(ctx, planID)
+	x, err := s.auditLog.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

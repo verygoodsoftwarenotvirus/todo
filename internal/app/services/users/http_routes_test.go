@@ -336,6 +336,9 @@ func TestService_CreateHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+
 		auth := &mockauth.Authenticator{}
 		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
 		s.authenticator = auth
@@ -343,6 +346,9 @@ func TestService_CreateHandler(T *testing.T) {
 		db := database.BuildMockDatabase()
 		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDataStoreCreationInput")).Return(exampleUser, nil)
 		s.userDataManager = db
+
+		db.AccountDataManager.On("CreateAccount", mock.Anything, mock.AnythingOfType("*types.AccountCreationInput")).Return(exampleAccount, nil)
+		s.accountDataManager = db
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.Anything)
@@ -597,6 +603,53 @@ func TestService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
 		mock.AssertExpectationsForObjects(t, auth, db)
+	})
+
+	T.Run("with error creating account", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+
+		auth := &mockauth.Authenticator{}
+		auth.On("HashPassword", mock.Anything, exampleInput.Password).Return(exampleUser.HashedPassword, nil)
+		s.authenticator = auth
+
+		db := database.BuildMockDatabase()
+		db.UserDataManager.On("CreateUser", mock.Anything, mock.AnythingOfType("types.UserDataStoreCreationInput")).Return(exampleUser, nil)
+		s.userDataManager = db
+
+		db.AccountDataManager.On("CreateAccount", mock.Anything, mock.AnythingOfType("*types.AccountCreationInput")).Return((*types.Account)(nil), errors.New("blah"))
+		s.accountDataManager = db
+
+		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog.On("LogUserCreationEvent", mock.Anything, exampleUser)
+		s.auditLog = auditLog
+
+		ed := &mockencoding.EncoderDecoder{}
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
+		s.encoderDecoder = ed
+
+		res, req := httptest.NewRecorder(), buildRequest(t)
+		req = req.WithContext(
+			context.WithValue(
+				req.Context(),
+				userCreationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		s.authSettings.EnableUserSignup = true
+		s.CreateHandler(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, auth, db, ed)
 	})
 }
 

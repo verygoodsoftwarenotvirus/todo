@@ -85,13 +85,13 @@ type (
 	}
 )
 
-// Update merges an ItemInput with an item.
+// Update merges an ItemUpdateInput with an item.
 func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 	var out []FieldChangeSummary
 
 	if input.Name != "" && input.Name != x.Name {
 		out = append(out, FieldChangeSummary{
-			FieldName: "BucketName",
+			FieldName: "Name",
 			OldValue:  x.Name,
 			NewValue:  input.Name,
 		})

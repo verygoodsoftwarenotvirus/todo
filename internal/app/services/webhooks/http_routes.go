@@ -58,7 +58,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// try to pluck the parsed input from the request context.
@@ -115,7 +115,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// find the webhooks.
@@ -149,7 +149,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine relevant webhook ID.
@@ -189,7 +189,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine relevant webhook ID.
@@ -251,7 +251,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine relevant webhook ID.
@@ -296,7 +296,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.

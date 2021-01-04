@@ -30,7 +30,7 @@ func (c *Client) BuildGetPlanRequest(ctx context.Context, planID uint64) (*http.
 }
 
 // GetPlan retrieves an plan.
-func (c *Client) GetPlan(ctx context.Context, planID uint64) (plan *types.Plan, err error) {
+func (c *Client) GetPlan(ctx context.Context, planID uint64) (plan *types.AccountSubscriptionPlan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -61,7 +61,7 @@ func (c *Client) BuildGetPlansRequest(ctx context.Context, filter *types.QueryFi
 }
 
 // GetPlans retrieves a list of plans.
-func (c *Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (plans *types.PlanList, err error) {
+func (c *Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (plans *types.AccountSubscriptionPlanList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -78,7 +78,7 @@ func (c *Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (plans
 }
 
 // BuildCreatePlanRequest builds an HTTP request for creating an plan.
-func (c *Client) BuildCreatePlanRequest(ctx context.Context, input *types.PlanCreationInput) (*http.Request, error) {
+func (c *Client) BuildCreatePlanRequest(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -92,7 +92,7 @@ func (c *Client) BuildCreatePlanRequest(ctx context.Context, input *types.PlanCr
 }
 
 // CreatePlan creates an plan.
-func (c *Client) CreatePlan(ctx context.Context, input *types.PlanCreationInput) (plan *types.Plan, err error) {
+func (c *Client) CreatePlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (plan *types.AccountSubscriptionPlan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -107,7 +107,7 @@ func (c *Client) CreatePlan(ctx context.Context, input *types.PlanCreationInput)
 }
 
 // BuildUpdatePlanRequest builds an HTTP request for updating an plan.
-func (c *Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.Plan) (*http.Request, error) {
+func (c *Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.AccountSubscriptionPlan) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -122,7 +122,7 @@ func (c *Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.Plan) (
 }
 
 // UpdatePlan updates an plan.
-func (c *Client) UpdatePlan(ctx context.Context, plan *types.Plan) error {
+func (c *Client) UpdatePlan(ctx context.Context, plan *types.AccountSubscriptionPlan) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

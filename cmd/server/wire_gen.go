@@ -72,6 +72,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
+	accountDataManager := database.ProvideAccountDataManager(dbm)
 	userAuditManager := database.ProvideUserAuditManager(dbm)
 	imageUploadProcessor := images.NewImageUploadProcessor()
 	uploadsConfig := &cfg.Uploads
@@ -81,13 +82,13 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	uploadManager := uploads.ProvideUploadManager(uploader)
-	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, userAuditManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager)
+	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, userAuditManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager)
 	if err != nil {
 		return nil, err
 	}
-	planDataManager := database.ProvidePlanDataManager(dbm)
-	planAuditManager := database.ProvidePlanAuditManager(dbm)
-	planDataService, err := plans.ProvideService(logger, planDataManager, planAuditManager, encoderDecoder, unitCounterProvider)
+	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
+	accountSubscriptionPlanAuditManager := database.ProvidePlanAuditManager(dbm)
+	accountSubscriptionPlanDataService, err := plans.ProvideService(logger, accountSubscriptionPlanDataManager, accountSubscriptionPlanAuditManager, encoderDecoder, unitCounterProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, instrumentationHandler, authService, frontendService, auditLogDataService, itemDataService, userDataService, planDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder)
+	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, instrumentationHandler, authService, frontendService, auditLogDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

@@ -22,7 +22,7 @@ func TestItem_Update(T *testing.T) {
 
 		expected := []FieldChangeSummary{
 			{
-				FieldName: "BucketName",
+				FieldName: "Name",
 				OldValue:  i.Name,
 				NewValue:  updated.Name,
 			},

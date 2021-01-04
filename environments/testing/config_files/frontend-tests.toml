@@ -37,6 +37,7 @@
 
   [observability.tracing]
     provider = "jaeger"
+    span_collection_probability = 1.0
 
 [search]
   items_index_path = "items.bleve"
@@ -50,9 +51,10 @@
 [uploads]
 
   [uploads.storage_config]
+    bucket_name = "avatars"
     debug = true
-    name = "avatars"
     provider = "filesystem"
+    upload_filename = ""
 
     [uploads.storage_config.filesystem]
       root_directory = "artifacts"

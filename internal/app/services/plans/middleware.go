@@ -17,7 +17,7 @@ const (
 // CreationInputMiddleware is a middleware for fetching, parsing, and attaching an PlanInput struct from a request.
 func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		x := new(types.PlanCreationInput)
+		x := new(types.AccountSubscriptionPlanCreationInput)
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
@@ -44,7 +44,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 // This is the same as the creation one, but that won't always be the case.
 func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		x := new(types.PlanUpdateInput)
+		x := new(types.AccountSubscriptionPlanUpdateInput)
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 

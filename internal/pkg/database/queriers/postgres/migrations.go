@@ -51,16 +51,29 @@ var (
 				"admin_permissions" BIGINT NOT NULL DEFAULT 0,
 				"account_status" TEXT NOT NULL DEFAULT 'created',
 				"status_explanation" TEXT NOT NULL DEFAULT '',
-				"plan_id" INTEGER,
 				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				"last_updated_on" BIGINT DEFAULT NULL,
 				"archived_on" BIGINT DEFAULT NULL,
-				FOREIGN KEY("plan_id") REFERENCES plans(id),
 				UNIQUE("username", "archived_on")
 			);`,
 		},
 		{
 			Version:     0.02,
+			Description: "create accounts table",
+			Script: `
+			CREATE TABLE IF NOT EXISTS accounts (
+				"id" BIGSERIAL NOT NULL PRIMARY KEY,
+				"name" CHARACTER VARYING NOT NULL,
+				"plan_id" INTEGER,
+				"created_on" BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
+				"last_updated_on" BIGINT DEFAULT NULL,
+				"archived_on" BIGINT DEFAULT NULL,
+				"belongs_to_user" BIGINT NOT NULL,
+				FOREIGN KEY("belongs_to_user") REFERENCES users(id)
+			);`,
+		},
+		{
+			Version:     0.03,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -71,12 +84,12 @@ var (
 			`,
 		},
 		{
-			Version:     0.03,
+			Version:     0.04,
 			Description: "create sessions table for session manager",
 			Script:      `CREATE INDEX sessions_expiry_idx ON sessions (expiry);`,
 		},
 		{
-			Version:     0.04,
+			Version:     0.05,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -95,7 +108,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.05,
+			Version:     0.06,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -115,7 +128,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.06,
+			Version:     0.07,
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
@@ -126,7 +139,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.07,
+			Version:     0.08,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -186,7 +199,7 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 				[]byte("aaaaaaaaaaaaaaaa"),
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-				testUserConfig.IsAdmin,
+				testUserConfig.IsSiteAdmin,
 				types.GoodStandingAccountStatus,
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),

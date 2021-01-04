@@ -56,6 +56,11 @@ func AttachItemIDToSpan(span trace.Span, itemID uint64) {
 	attachUint64ToSpan(span, keys.ItemIDKey, itemID)
 }
 
+// AttachAccountIDToSpan provides a consistent way to attach an account's ID to a span.
+func AttachAccountIDToSpan(span trace.Span, accountID uint64) {
+	attachUint64ToSpan(span, keys.AccountIDKey, accountID)
+}
+
 // AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachUserIDToSpan(span trace.Span, userID uint64) {
 	attachUint64ToSpan(span, keys.UserIDKey, userID)
@@ -67,9 +72,9 @@ func AttachPlanIDToSpan(span trace.Span, planID uint64) {
 }
 
 // AttachSessionInfoToSpan provides a consistent way to attach a SessionInfo object to a span.
-func AttachSessionInfoToSpan(span trace.Span, userID uint64, userIsAdmin bool) {
+func AttachSessionInfoToSpan(span trace.Span, userID uint64, userIsSiteAdmin bool) {
 	attachUint64ToSpan(span, keys.UserIDKey, userID)
-	attachBooleanToSpan(span, keys.UserIsAdminKey, userIsAdmin)
+	attachBooleanToSpan(span, keys.UserIsAdminKey, userIsSiteAdmin)
 }
 
 // AttachOAuth2ClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span.

@@ -33,7 +33,7 @@ type (
 		frontendService      types.FrontendService
 		auditService         types.AuditLogDataService
 		usersService         types.UserDataService
-		plansService         types.PlanDataService
+		plansService         types.AccountSubscriptionPlanDataService
 		adminService         types.AdminService
 		oauth2ClientsService types.OAuth2ClientDataService
 		webhooksService      types.WebhookDataService
@@ -61,7 +61,7 @@ func ProvideServer(
 	auditService types.AuditLogDataService,
 	itemsService types.ItemDataService,
 	usersService types.UserDataService,
-	plansService types.PlanDataService,
+	plansService types.AccountSubscriptionPlanDataService,
 	oauth2Service types.OAuth2ClientDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,

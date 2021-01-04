@@ -19,14 +19,14 @@ const (
 	serviceName        string              = "plans_service"
 )
 
-var _ types.PlanDataService = (*service)(nil)
+var _ types.AccountSubscriptionPlanDataService = (*service)(nil)
 
 type (
 	// service handles to-do list plans.
 	service struct {
 		logger             logging.Logger
-		planDataManager    types.PlanDataManager
-		auditLog           types.PlanAuditManager
+		planDataManager    types.AccountSubscriptionPlanDataManager
+		auditLog           types.AccountSubscriptionPlanAuditManager
 		planIDFetcher      func(*http.Request) uint64
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		planCounter        metrics.UnitCounter
@@ -38,11 +38,11 @@ type (
 // ProvideService builds a new PlansService.
 func ProvideService(
 	logger logging.Logger,
-	planDataManager types.PlanDataManager,
-	auditLog types.PlanAuditManager,
+	planDataManager types.AccountSubscriptionPlanDataManager,
+	auditLog types.AccountSubscriptionPlanAuditManager,
 	encoder encoding.EncoderDecoder,
 	planCounterProvider metrics.UnitCounterProvider,
-) (types.PlanDataService, error) {
+) (types.AccountSubscriptionPlanDataService, error) {
 	planCounter, err := planCounterProvider(counterName, counterDescription)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing counter: %w", err)

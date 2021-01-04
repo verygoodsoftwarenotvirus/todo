@@ -165,31 +165,38 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// generate a two factor secret.
-	input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret()
-	if err != nil {
+	if input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret(); err != nil {
 		logger.Error(err, "error generating TOTP secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// generate a salt.
-	input.Salt, err = s.secretGenerator.GenerateSalt()
-	if err != nil {
+	if input.Salt, err = s.secretGenerator.GenerateSalt(); err != nil {
 		logger.Error(err, "error generating salt")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// create the user.
-	user, err := s.userDataManager.CreateUser(ctx, input)
-	if err != nil {
-		if errors.Is(err, dbclient.ErrUserExists) {
+	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
+	if userCreationErr != nil {
+		if errors.Is(userCreationErr, dbclient.ErrUserExists) {
 			logger.Info("duplicate username attempted")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "username already taken", http.StatusBadRequest)
 			return
 		}
 
-		logger.Error(err, "error creating user")
+		logger.Error(userCreationErr, "error creating user")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	if _, accountCreationErr := s.accountDataManager.CreateAccount(ctx, &types.AccountCreationInput{
+		Name:          user.Username,
+		BelongsToUser: user.ID,
+	}); accountCreationErr != nil {
+		logger.Error(accountCreationErr, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

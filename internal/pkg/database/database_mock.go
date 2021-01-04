@@ -15,13 +15,14 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		AuditLogDataManager:     &mocktypes.AuditLogDataManager{},
-		PlanDataManager:         &mocktypes.PlanDataManager{},
-		ItemDataManager:         &mocktypes.ItemDataManager{},
-		UserDataManager:         &mocktypes.UserDataManager{},
-		AdminUserDataManager:    &mocktypes.AdminUserDataManager{},
-		OAuth2ClientDataManager: &mocktypes.OAuth2ClientDataManager{},
-		WebhookDataManager:      &mocktypes.WebhookDataManager{},
+		AuditLogDataManager:                &mocktypes.AuditLogDataManager{},
+		AccountDataManager:                 &mocktypes.AccountDataManager{},
+		AccountSubscriptionPlanDataManager: &mocktypes.AccountSubscriptionPlanDataManager{},
+		ItemDataManager:                    &mocktypes.ItemDataManager{},
+		UserDataManager:                    &mocktypes.UserDataManager{},
+		AdminUserDataManager:               &mocktypes.AdminUserDataManager{},
+		OAuth2ClientDataManager:            &mocktypes.OAuth2ClientDataManager{},
+		WebhookDataManager:                 &mocktypes.WebhookDataManager{},
 	}
 }
 
@@ -30,12 +31,13 @@ type MockDatabase struct {
 	mock.Mock
 
 	*mocktypes.AuditLogDataManager
-	*mocktypes.PlanDataManager
+	*mocktypes.AccountSubscriptionPlanDataManager
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
 	*mocktypes.AdminUserDataManager
 	*mocktypes.OAuth2ClientDataManager
 	*mocktypes.WebhookDataManager
+	*mocktypes.AccountDataManager
 }
 
 // Migrate satisfies the DataManager interface.

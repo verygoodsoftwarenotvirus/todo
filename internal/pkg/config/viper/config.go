@@ -82,8 +82,8 @@ const (
 	ConfigKeyDatabaseCreateTestUserUsername = "database.create_test_user.username"
 	// ConfigKeyDatabaseCreateTestUserPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.Password setting.
 	ConfigKeyDatabaseCreateTestUserPassword = "database.create_test_user.password"
-	// ConfigKeyDatabaseCreateTestUserIsAdmin is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.IsAdmin setting.
-	ConfigKeyDatabaseCreateTestUserIsAdmin = "database.create_test_user.is_admin"
+	// ConfigKeyDatabaseCreateTestUserIsSiteAdmin is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.IsSiteAdmin setting.
+	ConfigKeyDatabaseCreateTestUserIsSiteAdmin = "database.create_test_user.is_site_admin"
 	// ConfigKeyDatabaseCreateTestUserHashedPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.HashedPassword setting.
 	ConfigKeyDatabaseCreateTestUserHashedPassword = "database.create_test_user.hashed_password"
 	// ConfigKeyDatabaseRunMigrations is the key viper will use to refer to the DatabaseSettings.RunMigrations setting.
@@ -109,8 +109,8 @@ const (
 	ConfigKeyUploaderAzureAuthMethod = "uploads.storage_config.azure.auth_method"
 	// ConfigKeyUploaderAzureAccountName is the key viper will use to refer to UploadSettings.Azure.AccountName.
 	ConfigKeyUploaderAzureAccountName = "uploads.storage_config.azure.account_name"
-	// ConfigKeyUploaderAzureContainerName is the key viper will use to refer to UploadSettings.Azure.ContainerName.
-	ConfigKeyUploaderAzureContainerName = "uploads.storage_config.azure.container_name"
+	// ConfigKeyUploaderAzureBucketName is the key viper will use to refer to UploadSettings.Azure.BucketName.
+	ConfigKeyUploaderAzureBucketName = "uploads.storage_config.azure.bucket_name"
 	// ConfigKeyUploaderAzureMaxTries is the key viper will use to refer to UploadSettings.Azure.Retrying.MaxTries.
 	ConfigKeyUploaderAzureMaxTries = "uploads.storage_config.azure.retrying.max_tries"
 	// ConfigKeyUploaderAzureTryTimeout is the key viper will use to refer to UploadSettings.Azure.Retrying.TryTimeout.
@@ -200,12 +200,15 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyMetaDebug, input.Meta.Debug)
 	cfg.Set(ConfigKeyMetaRunMode, string(input.Meta.RunMode))
+
 	cfg.Set(ConfigKeyServerStartupDeadline, input.Server.StartupDeadline)
 	cfg.Set(ConfigKeyServerHTTPPort, input.Server.HTTPPort)
 	cfg.Set(ConfigKeyServerDebug, input.Server.Debug)
+
 	cfg.Set(ConfigKeyFrontendDebug, input.Frontend.Debug)
 	cfg.Set(ConfigKeyFrontendStaticFilesDir, input.Frontend.StaticFilesDirectory)
 	cfg.Set(ConfigKeyFrontendCacheStatics, input.Frontend.CacheStaticFiles)
+
 	cfg.Set(ConfigKeyAuthDebug, input.Auth.Debug)
 	cfg.Set(ConfigKeyAuthCookieName, input.Auth.CookieName)
 	cfg.Set(ConfigKeyAuthCookieDomain, input.Auth.CookieDomain)
@@ -215,8 +218,12 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Auth.EnableUserSignup)
 	cfg.Set(ConfigKeyAuthMinimumUsernameLength, input.Auth.MinimumUsernameLength)
 	cfg.Set(ConfigKeyAuthMinimumPasswordLength, input.Auth.MinimumPasswordLength)
+
 	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)
+
 	cfg.Set(ConfigKeyMetricsTracer, input.Observability.Tracing.Provider)
+	cfg.Set(ConfigKeyObservabilityTracingSpanCollectionProbability, input.Observability.Tracing.SpanCollectionProbability)
+
 	cfg.Set(ConfigKeyMetricsRuntimeCollectionInterval, input.Observability.RuntimeMetricsCollectionInterval)
 	cfg.Set(ConfigKeyDatabaseDebug, input.Database.Debug)
 	cfg.Set(ConfigKeyDatabaseProvider, input.Database.Provider)
@@ -225,7 +232,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	if input.Database.CreateTestUser != nil {
 		cfg.Set(ConfigKeyDatabaseCreateTestUserUsername, input.Database.CreateTestUser.Username)
 		cfg.Set(ConfigKeyDatabaseCreateTestUserPassword, input.Database.CreateTestUser.Password)
-		cfg.Set(ConfigKeyDatabaseCreateTestUserIsAdmin, input.Database.CreateTestUser.IsAdmin)
+		cfg.Set(ConfigKeyDatabaseCreateTestUserIsSiteAdmin, input.Database.CreateTestUser.IsSiteAdmin)
 		cfg.Set(ConfigKeyDatabaseCreateTestUserHashedPassword, input.Database.CreateTestUser.HashedPassword)
 	}
 
@@ -233,9 +240,13 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyDatabaseMetricsCollectionInterval, input.Database.MetricsCollectionInterval)
 	cfg.Set(ConfigKeySearchProvider, input.Search.Provider)
 	cfg.Set(ConfigKeyItemsSearchIndexPath, string(input.Search.ItemsIndexPath))
+
 	cfg.Set(ConfigKeyUploaderProvider, input.Uploads.Provider)
 	cfg.Set(ConfigKeyUploaderDebug, input.Uploads.Debug)
+
 	cfg.Set(ConfigKeyUploaderBucketName, input.Uploads.Storage.BucketName)
+	cfg.Set(ConfigKeyUploaderUploadFilename, input.Uploads.Storage.UploadFilename)
+
 	cfg.Set(ConfigKeyAuditLogEnabled, input.AuditLog.Enabled)
 	cfg.Set(ConfigKeyWebhooksEnabled, input.Webhooks.Enabled)
 
@@ -244,7 +255,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyUploaderProvider, "azure")
 		cfg.Set(ConfigKeyUploaderAzureAuthMethod, input.Uploads.Storage.AzureConfig.AuthMethod)
 		cfg.Set(ConfigKeyUploaderAzureAccountName, input.Uploads.Storage.AzureConfig.AccountName)
-		cfg.Set(ConfigKeyUploaderAzureContainerName, input.Uploads.Storage.AzureConfig.ContainerName)
+		cfg.Set(ConfigKeyUploaderAzureBucketName, input.Uploads.Storage.AzureConfig.Bucketname)
 		cfg.Set(ConfigKeyUploaderAzureMaxTries, input.Uploads.Storage.AzureConfig.Retrying.MaxTries)
 		cfg.Set(ConfigKeyUploaderAzureTryTimeout, input.Uploads.Storage.AzureConfig.Retrying.TryTimeout)
 		cfg.Set(ConfigKeyUploaderAzureRetryDelay, input.Uploads.Storage.AzureConfig.Retrying.RetryDelay)

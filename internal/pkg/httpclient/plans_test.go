@@ -237,7 +237,7 @@ func TestV1Client_CreatePlan(T *testing.T) {
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					var x *types.PlanCreationInput
+					var x *types.AccountSubscriptionPlanCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 
 					assert.Equal(t, exampleInput, x)

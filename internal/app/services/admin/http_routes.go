@@ -37,7 +37,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	if !si.UserIsAdmin {
+	if !si.UserIsSiteAdmin {
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}

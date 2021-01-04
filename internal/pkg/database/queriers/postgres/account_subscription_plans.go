@@ -1,4 +1,4 @@
-package sqlite
+package postgres
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.PlanDataManager = (*Sqlite)(nil)
+var _ types.AccountSubscriptionPlanDataManager = (*Postgres)(nil)
 
-// scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an Plan struct.
-func (q *Sqlite) scanPlan(scan database.Scanner, includeCount bool) (*types.Plan, uint64, error) {
+// scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountSubscriptionPlan struct.
+func (q *Postgres) scanPlan(scan database.Scanner, includeCount bool) (*types.AccountSubscriptionPlan, uint64, error) {
 	var (
-		x         = &types.Plan{}
-		count     uint64
+		x         = &types.AccountSubscriptionPlan{}
 		rawPeriod string
+		count     uint64
 	)
 
 	targetVars := []interface{}{
@@ -54,9 +54,9 @@ func (q *Sqlite) scanPlan(scan database.Scanner, includeCount bool) (*types.Plan
 }
 
 // scanPlans takes a logger and some database rows and turns them into a slice of plans.
-func (q *Sqlite) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.Plan, uint64, error) {
+func (q *Postgres) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.AccountSubscriptionPlan, uint64, error) {
 	var (
-		list  []types.Plan
+		list  []types.AccountSubscriptionPlan
 		count uint64
 	)
 
@@ -85,7 +85,7 @@ func (q *Sqlite) scanPlans(rows database.ResultIterator, includeCount bool) ([]t
 }
 
 // buildGetPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
-func (q *Sqlite) buildGetPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildGetPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -101,8 +101,8 @@ func (q *Sqlite) buildGetPlanQuery(planID uint64) (query string, args []interfac
 	return query, args
 }
 
-// GetPlan fetches an plan from the database.
-func (q *Sqlite) GetPlan(ctx context.Context, planID uint64) (*types.Plan, error) {
+// GetAccountSubscriptionPlan fetches an plan from the database.
+func (q *Postgres) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*types.AccountSubscriptionPlan, error) {
 	query, args := q.buildGetPlanQuery(planID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
@@ -113,7 +113,7 @@ func (q *Sqlite) GetPlan(ctx context.Context, planID uint64) (*types.Plan, error
 
 // buildGetAllPlansCountQuery returns a query that fetches the total number of plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *Sqlite) buildGetAllPlansCountQuery() string {
+func (q *Postgres) buildGetAllPlansCountQuery() string {
 	allPlansCountQuery, _, err := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.PlansTableName)).
 		From(queriers.PlansTableName).
@@ -126,15 +126,15 @@ func (q *Sqlite) buildGetAllPlansCountQuery() string {
 	return allPlansCountQuery
 }
 
-// GetAllPlansCount will fetch the count of plans from the database.
-func (q *Sqlite) GetAllPlansCount(ctx context.Context) (count uint64, err error) {
+// GetAllAccountSubscriptionPlansCount will fetch the count of plans from the database.
+func (q *Postgres) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count uint64, err error) {
 	err = q.db.QueryRowContext(ctx, q.buildGetAllPlansCountQuery()).Scan(&count)
 	return count, err
 }
 
 // buildGetPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Postgres) buildGetPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
 		From(queriers.PlansTableName).
@@ -167,8 +167,8 @@ func (q *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, ar
 	return query, append(countQueryArgs, selectArgs...)
 }
 
-// GetPlans fetches a list of plans from the database that meet a particular filter.
-func (q *Sqlite) GetPlans(ctx context.Context, filter *types.QueryFilter) (*types.PlanList, error) {
+// GetAccountSubscriptionPlans fetches a list of plans from the database that meet a particular filter.
+func (q *Postgres) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (*types.AccountSubscriptionPlanList, error) {
 	query, args := q.buildGetPlansQuery(filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
@@ -181,7 +181,7 @@ func (q *Sqlite) GetPlans(ctx context.Context, filter *types.QueryFilter) (*type
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	list := &types.PlanList{
+	list := &types.AccountSubscriptionPlanList{
 		Pagination: types.Pagination{
 			Page:       filter.Page,
 			Limit:      filter.Limit,
@@ -194,7 +194,7 @@ func (q *Sqlite) GetPlans(ctx context.Context, filter *types.QueryFilter) (*type
 }
 
 // buildCreatePlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (q *Sqlite) buildCreatePlanQuery(input *types.Plan) (query string, args []interface{}) {
+func (q *Postgres) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -211,6 +211,7 @@ func (q *Sqlite) buildCreatePlanQuery(input *types.Plan) (query string, args []i
 			input.Price,
 			input.Period.String(),
 		).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
 		ToSql()
 
 	q.logQueryBuildingError(err)
@@ -218,9 +219,9 @@ func (q *Sqlite) buildCreatePlanQuery(input *types.Plan) (query string, args []i
 	return query, args
 }
 
-// CreatePlan creates an plan in the database.
-func (q *Sqlite) CreatePlan(ctx context.Context, input *types.PlanCreationInput) (*types.Plan, error) {
-	x := &types.Plan{
+// CreateAccountSubscriptionPlan creates an plan in the database.
+func (q *Postgres) CreateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*types.AccountSubscriptionPlan, error) {
+	x := &types.AccountSubscriptionPlan{
 		Name:        input.Name,
 		Description: input.Description,
 		Price:       input.Price,
@@ -230,19 +231,16 @@ func (q *Sqlite) CreatePlan(ctx context.Context, input *types.PlanCreationInput)
 	query, args := q.buildCreatePlanQuery(x)
 
 	// create the plan.
-	res, err := q.db.ExecContext(ctx, query, args...)
+	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, fmt.Errorf("error executing item creation query: %w", err)
+		return nil, fmt.Errorf("error executing plan creation query: %w", err)
 	}
-
-	x.CreatedOn = q.timeTeller.Now()
-	x.ID = q.getIDFromResult(res)
 
 	return x, nil
 }
 
 // buildUpdatePlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
-func (q *Sqlite) buildUpdatePlanQuery(input *types.Plan) (query string, args []interface{}) {
+func (q *Postgres) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -255,6 +253,7 @@ func (q *Sqlite) buildUpdatePlanQuery(input *types.Plan) (query string, args []i
 		Where(squirrel.Eq{
 			queriers.IDColumn: input.ID,
 		}).
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
 		ToSql()
 
 	q.logQueryBuildingError(err)
@@ -262,16 +261,14 @@ func (q *Sqlite) buildUpdatePlanQuery(input *types.Plan) (query string, args []i
 	return query, args
 }
 
-// UpdatePlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
-func (q *Sqlite) UpdatePlan(ctx context.Context, input *types.Plan) error {
+// UpdateAccountSubscriptionPlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
+func (q *Postgres) UpdateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlan) error {
 	query, args := q.buildUpdatePlanQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
-
-	return err
+	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
 // buildArchivePlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
-func (q *Sqlite) buildArchivePlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildArchivePlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -282,6 +279,7 @@ func (q *Sqlite) buildArchivePlanQuery(planID uint64) (query string, args []inte
 			queriers.IDColumn:         planID,
 			queriers.ArchivedOnColumn: nil,
 		}).
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)).
 		ToSql()
 
 	q.logQueryBuildingError(err)
@@ -289,8 +287,8 @@ func (q *Sqlite) buildArchivePlanQuery(planID uint64) (query string, args []inte
 	return query, args
 }
 
-// ArchivePlan marks an plan as archived in the database.
-func (q *Sqlite) ArchivePlan(ctx context.Context, planID uint64) error {
+// ArchiveAccountSubscriptionPlan marks an plan as archived in the database.
+func (q *Postgres) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
 	query, args := q.buildArchivePlanQuery(planID)
 
 	res, err := q.db.ExecContext(ctx, query, args...)
@@ -303,27 +301,27 @@ func (q *Sqlite) ArchivePlan(ctx context.Context, planID uint64) error {
 	return err
 }
 
-// LogPlanCreationEvent saves a PlanCreationEvent in the audit log table.
-func (q *Sqlite) LogPlanCreationEvent(ctx context.Context, plan *types.Plan) {
-	q.createAuditLogEntry(ctx, audit.BuildPlanCreationEventEntry(plan))
+// LogAccountSubscriptionPlanCreationEvent saves a AccountSubscriptionPlanCreationEvent in the audit log table.
+func (q *Postgres) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
+	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
 }
 
-// LogPlanUpdateEvent saves a PlanUpdateEvent in the audit log table.
-func (q *Sqlite) LogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildPlanUpdateEventEntry(userID, planID, changes))
+// AccountSubscriptionLogPlanUpdateEvent saves a AccountSubscriptionPlanUpdateEvent in the audit log table.
+func (q *Postgres) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
+	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID, changes))
 }
 
-// LogPlanArchiveEvent saves a PlanArchiveEvent in the audit log table.
-func (q *Sqlite) LogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildPlanArchiveEventEntry(userID, planID))
+// AccountSubscriptionLogPlanArchiveEvent saves a AccountSubscriptionPlanArchiveEvent in the audit log table.
+func (q *Postgres) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
 }
 
 // buildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
-func (q *Sqlite) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Postgres) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
-	planIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.PlanAssignmentKey)
+	planIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
@@ -336,8 +334,8 @@ func (q *Sqlite) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query strin
 	return query, args
 }
 
-// GetAuditLogEntriesForPlan fetches a audit log entries for a given plan from the database.
-func (q *Sqlite) GetAuditLogEntriesForPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
+// GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
+func (q *Postgres) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForPlanQuery(planID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

@@ -13,8 +13,8 @@ func TestSessionInfo_ToBytes(T *testing.T) {
 		t.Parallel()
 
 		x := &SessionInfo{
-			UserID:      123,
-			UserIsAdmin: true,
+			UserID:          123,
+			UserIsSiteAdmin: true,
 		}
 
 		assert.NotEmpty(t, x.ToBytes())

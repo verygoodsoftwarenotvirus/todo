@@ -1,4 +1,4 @@
-package postgres
+package sqlite
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"database/sql/driver"
 	"errors"
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -17,9 +16,10 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Rows {
+func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
 	columns := queriers.PlansTableColumns
 
 	if includeCount {
@@ -50,7 +50,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Ro
 	return exampleRows
 }
 
-func buildErroneousMockRowFromPlan(x *types.Plan) *sqlmock.Rows {
+func buildErroneousMockRowFromPlan(x *types.AccountSubscriptionPlan) *sqlmock.Rows {
 	exampleRows := sqlmock.NewRows(queriers.PlansTableColumns).AddRow(
 		x.Name,
 		x.ID,
@@ -65,7 +65,7 @@ func buildErroneousMockRowFromPlan(x *types.Plan) *sqlmock.Rows {
 	return exampleRows
 }
 
-func TestPostgres_ScanPlans(T *testing.T) {
+func TestSqlite_ScanPlans(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestPostgres_ScanPlans(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetPlanQuery(T *testing.T) {
+func TestSqlite_buildGetPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestPostgres_buildGetPlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on FROM plans WHERE plans.id = $1"
+		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on FROM plans WHERE plans.id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
@@ -115,7 +115,7 @@ func TestPostgres_buildGetPlanQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_GetPlan(T *testing.T) {
+func TestSqlite_GetPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestPostgres_GetPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromPlans(false, examplePlan))
 
-		actual, err := q.GetPlan(ctx, examplePlan.ID)
+		actual, err := q.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
@@ -151,7 +151,7 @@ func TestPostgres_GetPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := q.GetPlan(ctx, examplePlan.ID)
+		actual, err := q.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -160,7 +160,7 @@ func TestPostgres_GetPlan(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAllPlansCountQuery(T *testing.T) {
+func TestSqlite_buildGetAllPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestPostgres_buildGetAllPlansCountQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_GetAllPlansCount(T *testing.T) {
+func TestSqlite_GetAllPlansCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -189,7 +189,7 @@ func TestPostgres_GetAllPlansCount(T *testing.T) {
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := q.GetAllPlansCount(ctx)
+		actualCount, err := q.GetAllAccountSubscriptionPlansCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -197,7 +197,7 @@ func TestPostgres_GetAllPlansCount(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetPlansQuery(T *testing.T) {
+func TestSqlite_buildGetPlansQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -206,7 +206,7 @@ func TestPostgres_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $1 AND plans.created_on < $2 AND plans.last_updated_on > $3 AND plans.last_updated_on < $4) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $5 AND plans.created_on < $6 AND plans.last_updated_on > $7 AND plans.last_updated_on < $8 ORDER BY plans.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ?) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ? ORDER BY plans.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -225,7 +225,7 @@ func TestPostgres_buildGetPlansQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_GetPlans(T *testing.T) {
+func TestSqlite_GetPlans(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -249,7 +249,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 				),
 			)
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlanList, actual)
@@ -270,7 +270,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -291,7 +291,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -313,7 +313,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromPlan(examplePlan))
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -321,7 +321,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildCreatePlanQuery(T *testing.T) {
+func TestSqlite_buildCreatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -330,7 +330,7 @@ func TestPostgres_buildCreatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "INSERT INTO plans (name,description,price,period) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO plans (name,description,price,period) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
 			examplePlan.Description,
@@ -345,7 +345,7 @@ func TestPostgres_buildCreatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_CreatePlan(T *testing.T) {
+func TestSqlite_CreatePlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -357,15 +357,19 @@ func TestPostgres_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.buildCreatePlanQuery(examplePlan)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(examplePlan.ID, examplePlan.CreatedOn)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+			WillReturnResult(sqlmock.NewResult(int64(examplePlan.ID), 1))
 
-		actual, err := q.CreatePlan(ctx, exampleInput)
+		mtt := &queriers.MockTimeTeller{}
+		mtt.On("Now").Return(examplePlan.CreatedOn)
+		q.timeTeller = mtt
+
+		actual, err := q.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
+		mock.AssertExpectationsForObjects(t, mtt)
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 
@@ -378,11 +382,11 @@ func TestPostgres_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.buildCreatePlanQuery(examplePlan)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := q.CreatePlan(ctx, exampleInput)
+		actual, err := q.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -390,7 +394,7 @@ func TestPostgres_CreatePlan(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
+func TestSqlite_buildUpdatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -399,7 +403,7 @@ func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET name = $1, description = $2, price = $3, period = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING last_updated_on"
+		expectedQuery := "UPDATE plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
 			examplePlan.Description,
@@ -415,7 +419,7 @@ func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_UpdatePlan(T *testing.T) {
+func TestSqlite_UpdatePlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -428,12 +432,11 @@ func TestPostgres_UpdatePlan(T *testing.T) {
 
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
-		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+			WillReturnResult(sqlmock.NewResult(int64(examplePlan.ID), 1))
 
-		err := q.UpdatePlan(ctx, examplePlan)
+		err := q.UpdateAccountSubscriptionPlan(ctx, examplePlan)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -449,18 +452,18 @@ func TestPostgres_UpdatePlan(T *testing.T) {
 
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := q.UpdatePlan(ctx, examplePlan)
+		err := q.UpdateAccountSubscriptionPlan(ctx, examplePlan)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestPostgres_buildArchivePlanQuery(T *testing.T) {
+func TestSqlite_buildArchivePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -469,7 +472,7 @@ func TestPostgres_buildArchivePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $1 RETURNING archived_on"
+		expectedQuery := "UPDATE plans SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
@@ -481,7 +484,7 @@ func TestPostgres_buildArchivePlanQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_ArchivePlan(T *testing.T) {
+func TestSqlite_ArchivePlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -497,7 +500,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := q.ArchivePlan(ctx, examplePlan.ID)
+		err := q.ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -516,7 +519,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err := q.ArchivePlan(ctx, examplePlan.ID)
+		err := q.ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
@@ -536,14 +539,14 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := q.ArchivePlan(ctx, examplePlan.ID)
+		err := q.ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestPostgres_LogPlanCreationEvent(T *testing.T) {
+func TestSqlite_LogPlanCreationEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -552,22 +555,20 @@ func TestPostgres_LogPlanCreationEvent(T *testing.T) {
 		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakePlan()
-		exampleAuditLogEntryInput := audit.BuildPlanCreationEventEntry(exampleInput)
+		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		q.LogPlanCreationEvent(ctx, exampleInput)
+		q.LogAccountSubscriptionPlanCreationEvent(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestPostgres_LogPlanUpdateEvent(T *testing.T) {
+func TestSqlite_LogPlanUpdateEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -578,22 +579,20 @@ func TestPostgres_LogPlanUpdateEvent(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleInput := fakes.BuildFakePlan()
-		exampleAuditLogEntryInput := audit.BuildPlanUpdateEventEntry(exampleUser.ID, exampleInput.ID, exampleChanges)
+		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		q.LogPlanUpdateEvent(ctx, exampleUser.ID, exampleInput.ID, exampleChanges)
+		q.AccountSubscriptionLogPlanUpdateEvent(ctx, exampleUser.ID, exampleInput.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestPostgres_LogPlanArchiveEvent(T *testing.T) {
+func TestSqlite_LogPlanArchiveEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -603,16 +602,14 @@ func TestPostgres_LogPlanArchiveEvent(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakePlan()
-		exampleAuditLogEntryInput := audit.BuildPlanArchiveEventEntry(exampleUser.ID, exampleInput.ID)
+		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
-		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(exampleRows)
+		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
+			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		q.LogPlanArchiveEvent(ctx, exampleUser.ID, exampleInput.ID)
+		q.AccountSubscriptionLogPlanArchiveEvent(ctx, exampleUser.ID, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

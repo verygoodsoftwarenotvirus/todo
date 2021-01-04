@@ -35,11 +35,10 @@ func (q *MariaDB) scanUser(scan database.Scanner, includeCount bool) (*types.Use
 		&x.PasswordLastChangedOn,
 		&x.TwoFactorSecret,
 		&x.TwoFactorSecretVerifiedOn,
-		&x.IsAdmin,
+		&x.IsSiteAdmin,
 		&perms,
 		&x.AccountStatus,
 		&x.AccountStatusExplanation,
-		&x.PlanID,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -426,7 +425,7 @@ func (q *MariaDB) UpdateUser(ctx context.Context, input *types.User) error {
 		"LastUpdatedOn":             input.LastUpdatedOn,
 		"ArchivedOn":                input.ArchivedOn,
 		"AdminPermissions":          input.AdminPermissions,
-		"IsAdmin":                   input.IsAdmin,
+		"IsSiteAdmin":               input.IsSiteAdmin,
 		"RequiresPasswordChange":    input.RequiresPasswordChange,
 	}).Debug("MariaDB.UpdateUser called")
 

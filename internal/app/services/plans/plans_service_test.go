@@ -20,7 +20,7 @@ func buildTestService() *service {
 	return &service{
 		logger:             noop.NewLogger(),
 		planCounter:        &mockmetrics.UnitCounter{},
-		planDataManager:    &mocktypes.PlanDataManager{},
+		planDataManager:    &mocktypes.AccountSubscriptionPlanDataManager{},
 		planIDFetcher:      func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
@@ -39,7 +39,7 @@ func TestProvidePlansService(T *testing.T) {
 
 		s, err := ProvideService(
 			noop.NewLogger(),
-			&mocktypes.PlanDataManager{},
+			&mocktypes.AccountSubscriptionPlanDataManager{},
 			&mocktypes.AuditLogDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
@@ -57,7 +57,7 @@ func TestProvidePlansService(T *testing.T) {
 
 		s, err := ProvideService(
 			noop.NewLogger(),
-			&mocktypes.PlanDataManager{},
+			&mocktypes.AccountSubscriptionPlanDataManager{},
 			&mocktypes.AuditLogDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,

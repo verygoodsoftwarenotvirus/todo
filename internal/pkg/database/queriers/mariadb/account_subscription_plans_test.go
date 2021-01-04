@@ -1,11 +1,14 @@
-package sqlite
+package mariadb
 
 import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -16,10 +19,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Rows {
+func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
 	columns := queriers.PlansTableColumns
 
 	if includeCount {
@@ -50,7 +52,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.Plan) *sqlmock.Ro
 	return exampleRows
 }
 
-func buildErroneousMockRowFromPlan(x *types.Plan) *sqlmock.Rows {
+func buildErroneousMockRowFromPlan(x *types.AccountSubscriptionPlan) *sqlmock.Rows {
 	exampleRows := sqlmock.NewRows(queriers.PlansTableColumns).AddRow(
 		x.Name,
 		x.ID,
@@ -65,7 +67,7 @@ func buildErroneousMockRowFromPlan(x *types.Plan) *sqlmock.Rows {
 	return exampleRows
 }
 
-func TestSqlite_ScanPlans(T *testing.T) {
+func TestMariaDB_ScanPlans(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -94,7 +96,7 @@ func TestSqlite_ScanPlans(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetPlanQuery(T *testing.T) {
+func TestMariaDB_buildGetPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -115,7 +117,7 @@ func TestSqlite_buildGetPlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_GetPlan(T *testing.T) {
+func TestMariaDB_GetPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -131,7 +133,7 @@ func TestSqlite_GetPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildMockRowsFromPlans(false, examplePlan))
 
-		actual, err := q.GetPlan(ctx, examplePlan.ID)
+		actual, err := q.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
@@ -151,7 +153,7 @@ func TestSqlite_GetPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := q.GetPlan(ctx, examplePlan.ID)
+		actual, err := q.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -160,7 +162,7 @@ func TestSqlite_GetPlan(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetAllPlansCountQuery(T *testing.T) {
+func TestMariaDB_buildGetAllPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -175,7 +177,7 @@ func TestSqlite_buildGetAllPlansCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_GetAllPlansCount(T *testing.T) {
+func TestMariaDB_GetAllPlansCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -189,7 +191,7 @@ func TestSqlite_GetAllPlansCount(T *testing.T) {
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
-		actualCount, err := q.GetAllPlansCount(ctx)
+		actualCount, err := q.GetAllAccountSubscriptionPlansCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCount, actualCount)
 
@@ -197,7 +199,7 @@ func TestSqlite_GetAllPlansCount(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildGetPlansQuery(T *testing.T) {
+func TestMariaDB_buildGetPlansQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -225,7 +227,7 @@ func TestSqlite_buildGetPlansQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_GetPlans(T *testing.T) {
+func TestMariaDB_GetPlans(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -249,7 +251,7 @@ func TestSqlite_GetPlans(T *testing.T) {
 				),
 			)
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlanList, actual)
@@ -270,7 +272,7 @@ func TestSqlite_GetPlans(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -291,7 +293,7 @@ func TestSqlite_GetPlans(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -313,7 +315,7 @@ func TestSqlite_GetPlans(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromPlan(examplePlan))
 
-		actual, err := q.GetPlans(ctx, filter)
+		actual, err := q.GetAccountSubscriptionPlans(ctx, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -321,7 +323,7 @@ func TestSqlite_GetPlans(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildCreatePlanQuery(T *testing.T) {
+func TestMariaDB_buildCreatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -345,7 +347,7 @@ func TestSqlite_buildCreatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_CreatePlan(T *testing.T) {
+func TestMariaDB_CreatePlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -365,7 +367,7 @@ func TestSqlite_CreatePlan(T *testing.T) {
 		mtt.On("Now").Return(examplePlan.CreatedOn)
 		q.timeTeller = mtt
 
-		actual, err := q.CreatePlan(ctx, exampleInput)
+		actual, err := q.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
@@ -386,7 +388,7 @@ func TestSqlite_CreatePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := q.CreatePlan(ctx, exampleInput)
+		actual, err := q.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -394,7 +396,7 @@ func TestSqlite_CreatePlan(T *testing.T) {
 	})
 }
 
-func TestSqlite_buildUpdatePlanQuery(T *testing.T) {
+func TestMariaDB_buildUpdatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -403,7 +405,7 @@ func TestSqlite_buildUpdatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
 			examplePlan.Description,
@@ -419,24 +421,21 @@ func TestSqlite_buildUpdatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_UpdatePlan(T *testing.T) {
+func TestMariaDB_UpdatePlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
-
 		examplePlan := fakes.BuildFakePlan()
-
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(examplePlan.ID), 1))
 
-		err := q.UpdatePlan(ctx, examplePlan)
+		err := q.UpdateAccountSubscriptionPlan(ctx, examplePlan)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -445,25 +444,22 @@ func TestSqlite_UpdatePlan(T *testing.T) {
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
-
 		q, mockDB := buildTestService(t)
-
 		examplePlan := fakes.BuildFakePlan()
-
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := q.UpdatePlan(ctx, examplePlan)
+		err := q.UpdateAccountSubscriptionPlan(ctx, examplePlan)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestSqlite_buildArchivePlanQuery(T *testing.T) {
+func TestMariaDB_buildArchivePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -472,7 +468,7 @@ func TestSqlite_buildArchivePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
+		expectedQuery := "UPDATE plans SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
@@ -484,7 +480,7 @@ func TestSqlite_buildArchivePlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_ArchivePlan(T *testing.T) {
+func TestMariaDB_ArchivePlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -500,7 +496,7 @@ func TestSqlite_ArchivePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := q.ArchivePlan(ctx, examplePlan.ID)
+		err := q.ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -519,7 +515,7 @@ func TestSqlite_ArchivePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err := q.ArchivePlan(ctx, examplePlan.ID)
+		err := q.ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
 
@@ -539,14 +535,14 @@ func TestSqlite_ArchivePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := q.ArchivePlan(ctx, examplePlan.ID)
+		err := q.ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestSqlite_LogPlanCreationEvent(T *testing.T) {
+func TestMariaDB_LogPlanCreationEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -555,20 +551,20 @@ func TestSqlite_LogPlanCreationEvent(T *testing.T) {
 		q, mockDB := buildTestService(t)
 
 		exampleInput := fakes.BuildFakePlan()
-		exampleAuditLogEntryInput := audit.BuildPlanCreationEventEntry(exampleInput)
+		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		q.LogPlanCreationEvent(ctx, exampleInput)
+		q.LogAccountSubscriptionPlanCreationEvent(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestSqlite_LogPlanUpdateEvent(T *testing.T) {
+func TestMariaDB_LogPlanUpdateEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -579,20 +575,20 @@ func TestSqlite_LogPlanUpdateEvent(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleInput := fakes.BuildFakePlan()
-		exampleAuditLogEntryInput := audit.BuildPlanUpdateEventEntry(exampleUser.ID, exampleInput.ID, exampleChanges)
+		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		q.LogPlanUpdateEvent(ctx, exampleUser.ID, exampleInput.ID, exampleChanges)
+		q.AccountSubscriptionLogPlanUpdateEvent(ctx, exampleUser.ID, exampleInput.ID, exampleChanges)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
 }
 
-func TestSqlite_LogPlanArchiveEvent(T *testing.T) {
+func TestMariaDB_LogPlanArchiveEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -602,15 +598,34 @@ func TestSqlite_LogPlanArchiveEvent(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakePlan()
-		exampleAuditLogEntryInput := audit.BuildPlanArchiveEventEntry(exampleUser.ID, exampleInput.ID)
+		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
 		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
 
-		q.LogPlanArchiveEvent(ctx, exampleUser.ID, exampleInput.ID)
+		q.AccountSubscriptionLogPlanArchiveEvent(ctx, exampleUser.ID, exampleInput.ID)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+	})
+}
+
+func TestMariaDB_buildGetAuditLogEntriesForPlanQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		examplePlan := fakes.BuildFakePlan()
+
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.plan_id') ORDER BY audit_log.created_on", examplePlan.ID)
+		expectedArgs := []interface{}(nil)
+		actualQuery, actualArgs := q.buildGetAuditLogEntriesForPlanQuery(examplePlan.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }

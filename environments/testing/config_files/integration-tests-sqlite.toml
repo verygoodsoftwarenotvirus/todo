@@ -21,8 +21,8 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$zMZWEwvuqKB9Rlsb9Eh0FeUCL4p5l5SO1OVy1qAjdqwz.XSjpm2uC"
-    is_admin = true
+    hashed_password = "$2a$11$JGxH822e1ATr1nQ8YUa48e8hl.ynyumiPAHRdnU.qsLEZ7bVjenyG"
+    is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
 
@@ -43,6 +43,7 @@
 
   [observability.tracing]
     provider = ""
+    span_collection_probability = 1.0
 
 [search]
   items_index_path = "items.bleve"
@@ -56,9 +57,10 @@
 [uploads]
 
   [uploads.storage_config]
+    bucket_name = "avatars"
     debug = false
-    name = "avatars"
     provider = "filesystem"
+    upload_filename = ""
 
     [uploads.storage_config.filesystem]
       root_directory = "artifacts"

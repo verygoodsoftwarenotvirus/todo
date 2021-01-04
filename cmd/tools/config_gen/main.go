@@ -110,7 +110,7 @@ func localDevelopmentConfig(filePath string) error {
 				Username:       "username",
 				Password:       defaultPassword,
 				HashedPassword: mustHashPass(defaultPassword),
-				IsAdmin:        true,
+				IsSiteAdmin:    true,
 			},
 			Provider:                  postgres,
 			ConnectionDetails:         devPostgresDBConnDetails,
@@ -297,7 +297,7 @@ func coverageConfig(filePath string) error {
 				Username:       "coverageUser",
 				Password:       defaultPassword,
 				HashedPassword: mustHashPass(defaultPassword),
-				IsAdmin:        false,
+				IsSiteAdmin:    false,
 			},
 		},
 		Observability: observability.Config{
@@ -398,7 +398,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					Username:       "exampleUser",
 					Password:       "integration-tests-are-cool",
 					HashedPassword: mustHashPass("integration-tests-are-cool"),
-					IsAdmin:        true,
+					IsSiteAdmin:    true,
 				},
 			},
 			Observability: observability.Config{

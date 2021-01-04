@@ -9,6 +9,8 @@ const (
 	ItemIDKey = "item_id"
 	// PlanIDKey is the standard key for referring to a plan ID.
 	PlanIDKey = "plan_id"
+	// AccountIDKey is the standard key for referring to a user ID.
+	AccountIDKey = "account_id"
 	// UserIDKey is the standard key for referring to a user ID.
 	UserIDKey = "user_id"
 	// UserIsAdminKey is the standard key for referring to a user's admin status.

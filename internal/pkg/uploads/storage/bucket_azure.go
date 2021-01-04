@@ -34,7 +34,7 @@ type (
 	AzureConfig struct {
 		AuthMethod                   string            `json:"auth_method" mapstructure:"auth_method" toml:"auth_method,omitempty"`
 		AccountName                  string            `json:"account_name" mapstructure:"account_name" toml:"account_name,omitempty"`
-		ContainerName                string            `json:"container_name" mapstructure:"container_name" toml:"container_name,omitempty"`
+		Bucketname                   string            `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
 		Retrying                     *AzureRetryConfig `json:"retrying" mapstructure:"retrying" toml:"retrying,omitempty"`
 		TokenCredentialsInitialToken string            `json:"token_creds_initial_token" mapstructure:"token_creds_initial_token" toml:"token_creds_initial_token,omitempty"`
 		SharedKeyAccountKey          string            `json:"shared_key_account_key" mapstructure:"shared_key_aaccount_key" toml:"shared_key_account_key,omitempty"`
@@ -64,7 +64,7 @@ func (c *AzureConfig) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.AuthMethod, validation.Required),
 		validation.Field(&c.AccountName, validation.Required),
-		validation.Field(&c.ContainerName, validation.Required),
+		validation.Field(&c.Bucketname, validation.Required),
 		validation.Field(&c.Retrying, validation.When(c.Retrying != nil, validation.Required)),
 		validation.Field(&c.SharedKeyAccountKey, validation.When(c.authMethodIsSharedKey(), validation.Required).Else(validation.Nil)),
 		validation.Field(&c.TokenCredentialsInitialToken, validation.When(c.AuthMethod == azureTokenAuthMethod, validation.Required).Else(validation.Nil)),
@@ -112,7 +112,7 @@ func provideAzureBucket(ctx context.Context, cfg *AzureConfig, logger logging.Lo
 		ctx,
 		azureblob.NewPipeline(cred, buildPipelineOptions(logger, cfg.Retrying)),
 		azureblob.AccountName(cfg.AccountName),
-		cfg.ContainerName,
+		cfg.Bucketname,
 		nil,
 	); err != nil {
 		return nil, fmt.Errorf("error initializing azure bucket: %w", err)

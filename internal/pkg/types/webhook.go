@@ -94,7 +94,7 @@ func (w *Webhook) Update(input *WebhookUpdateInput) []FieldChangeSummary {
 
 	if input.Name != "" {
 		changes = append(changes, FieldChangeSummary{
-			FieldName: "BucketName",
+			FieldName: "Name",
 			OldValue:  w.Name,
 			NewValue:  input.Name,
 		})

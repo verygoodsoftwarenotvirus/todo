@@ -44,7 +44,7 @@ type (
 	// Config configures our UploadManager.
 	Config struct {
 		Provider         string            `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-		BucketName       string            `json:"name" mapstructure:"name" toml:"name,omitempty"`
+		BucketName       string            `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
 		UploadFilename   string            `json:"upload_filename" mapstructure:"upload_filename" toml:"upload_filename,omitempty"`
 		AzureConfig      *AzureConfig      `json:"azure" mapstructure:"azure" toml:"azure,omitempty"`
 		GCSConfig        *GCSConfig        `json:"gcs" mapstructure:"gcs" toml:"gcs,omitempty"`

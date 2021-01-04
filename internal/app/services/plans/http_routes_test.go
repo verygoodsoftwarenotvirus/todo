@@ -36,12 +36,12 @@ func TestPlansService_ListHandler(T *testing.T) {
 
 		examplePlanList := fakes.BuildFakePlanList()
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlans", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return(examplePlanList, nil)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlans", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return(examplePlanList, nil)
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.PlanList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlanList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -68,12 +68,12 @@ func TestPlansService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlans", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.PlanList)(nil), sql.ErrNoRows)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlans", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.AccountSubscriptionPlanList)(nil), sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.PlanList"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlanList"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -100,8 +100,8 @@ func TestPlansService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlans", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.PlanList)(nil), errors.New("blah"))
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlans", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.AccountSubscriptionPlanList)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -144,8 +144,8 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		examplePlan := fakes.BuildFakePlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("CreatePlan", mock.Anything, mock.AnythingOfType("*types.PlanCreationInput")).Return(examplePlan, nil)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("CreateAccountSubscriptionPlan", mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlanCreationInput")).Return(examplePlan, nil)
 		s.planDataManager = planDataManager
 
 		mc := &mockmetrics.UnitCounter{}
@@ -153,11 +153,11 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		s.planCounter = mc
 
 		auditLog := &mocktypes.AuditLogDataManager{}
-		auditLog.On("LogPlanCreationEvent", mock.Anything, examplePlan)
+		auditLog.On("LogAccountSubscriptionPlanCreationEvent", mock.Anything, examplePlan)
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponseWithStatus", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Plan"), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlan"), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -217,8 +217,8 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		examplePlan := fakes.BuildFakePlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("CreatePlan", mock.Anything, mock.AnythingOfType("*types.PlanCreationInput")).Return((*types.Plan)(nil), errors.New("blah"))
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("CreateAccountSubscriptionPlan", mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlanCreationInput")).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -265,12 +265,12 @@ func TestPlansService_ReadHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Plan"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlan"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -302,8 +302,8 @@ func TestPlansService_ReadHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return((*types.Plan)(nil), sql.ErrNoRows)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -339,8 +339,8 @@ func TestPlansService_ReadHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return((*types.Plan)(nil), errors.New("blah"))
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -387,17 +387,17 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
-		planDataManager.On("UpdatePlan", mock.Anything, mock.AnythingOfType("*types.Plan")).Return(nil)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
+		planDataManager.On("UpdateAccountSubscriptionPlan", mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlan")).Return(nil)
 		s.planDataManager = planDataManager
 
 		auditLog := &mocktypes.AuditLogDataManager{}
-		auditLog.On("LogPlanUpdateEvent", mock.Anything, exampleUser.ID, examplePlan.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
+		auditLog.On("AccountSubscriptionLogPlanUpdateEvent", mock.Anything, exampleUser.ID, examplePlan.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Plan"))
+		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlan"))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -461,8 +461,8 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return((*types.Plan)(nil), sql.ErrNoRows)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -502,8 +502,8 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return((*types.Plan)(nil), errors.New("blah"))
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -543,9 +543,9 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
-		planDataManager.On("UpdatePlan", mock.Anything, mock.AnythingOfType("*types.Plan")).Return(errors.New("blah"))
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
+		planDataManager.On("UpdateAccountSubscriptionPlan", mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlan")).Return(errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -592,12 +592,12 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("ArchivePlan", mock.Anything, examplePlan.ID).Return(nil)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(nil)
 		s.planDataManager = planDataManager
 
 		auditLog := &mocktypes.AuditLogDataManager{}
-		auditLog.On("LogPlanArchiveEvent", mock.Anything, exampleUser.ID, examplePlan.ID)
+		auditLog.On("AccountSubscriptionLogPlanArchiveEvent", mock.Anything, exampleUser.ID, examplePlan.ID)
 		s.auditLog = auditLog
 
 		mc := &mockmetrics.UnitCounter{}
@@ -633,8 +633,8 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("ArchivePlan", mock.Anything, examplePlan.ID).Return(sql.ErrNoRows)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -670,8 +670,8 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("ArchivePlan", mock.Anything, examplePlan.ID).Return(errors.New("blah"))
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := &mockencoding.EncoderDecoder{}
@@ -707,12 +707,12 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 			return examplePlan.ID
 		}
 
-		planDataManager := &mocktypes.PlanDataManager{}
-		planDataManager.On("ArchivePlan", mock.Anything, examplePlan.ID).Return(nil)
+		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(nil)
 		s.planDataManager = planDataManager
 
 		auditLog := &mocktypes.AuditLogDataManager{}
-		auditLog.On("LogPlanArchiveEvent", mock.Anything, exampleUser.ID, examplePlan.ID)
+		auditLog.On("AccountSubscriptionLogPlanArchiveEvent", mock.Anything, exampleUser.ID, examplePlan.ID)
 		s.auditLog = auditLog
 
 		mc := &mockmetrics.UnitCounter{}

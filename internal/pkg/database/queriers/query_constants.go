@@ -24,6 +24,19 @@ const (
 	userOwnershipColumn = "belongs_to_user"
 
 	//
+	// Accounts Table.
+	//
+
+	// AccountsTableName is what the accounts table calls itself.
+	AccountsTableName = "accounts"
+	// AccountsTableNameColumn is what the accounts table calls the name column.
+	AccountsTableNameColumn = "name"
+	// AccountsTablePlanIDColumn is what the accounts table calls the <> column.
+	AccountsTablePlanIDColumn = "plan_id"
+	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
+	AccountsTableUserOwnershipColumn = userOwnershipColumn
+
+	//
 	// Plans Table.
 	//
 
@@ -66,8 +79,6 @@ const (
 	UsersTableAccountStatusColumn = "account_status"
 	// UsersTableStatusExplanationColumn is what the users table calls the <> column.
 	UsersTableStatusExplanationColumn = "status_explanation"
-	// UsersTablePlanIDColumn is what the users table calls the <> column.
-	UsersTablePlanIDColumn = "plan_id"
 	// UsersTableAvatarColumn is what the users table calls the <> column.
 	UsersTableAvatarColumn = "avatar_src"
 
@@ -162,6 +173,22 @@ var (
 		fmt.Sprintf("%s.%s", PlansTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", PlansTableName, ArchivedOnColumn),
 	}
+
+	//
+	// Accounts Table.
+	//
+
+	// AccountsTableColumns are the columns for the items table.
+	AccountsTableColumns = []string{
+		fmt.Sprintf("%s.%s", AccountsTableName, IDColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableNameColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePlanIDColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, CreatedOnColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, LastUpdatedOnColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, ArchivedOnColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableUserOwnershipColumn),
+	}
+
 	//
 	// Users Table.
 	//
@@ -181,7 +208,6 @@ var (
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAdminPermissionsColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAccountStatusColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableStatusExplanationColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTablePlanIDColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, ArchivedOnColumn),

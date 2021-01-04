@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ types.PlanDataService = (*PlanDataServer)(nil)
+var _ types.AccountSubscriptionPlanDataService = (*PlanDataServer)(nil)
 
-// PlanDataServer is a mocked types.PlanDataService for testing.
+// PlanDataServer is a mocked types.AccountSubscriptionPlanDataService for testing.
 type PlanDataServer struct {
 	mock.Mock
 }

@@ -473,7 +473,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.IsAdmin = true
+		exampleUser.IsSiteAdmin = true
 
 		res := httptest.NewRecorder()
 		req = req.WithContext(
@@ -525,7 +525,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.IsAdmin = false
+		exampleUser.IsSiteAdmin = false
 
 		res := httptest.NewRecorder()
 		req = req.WithContext(

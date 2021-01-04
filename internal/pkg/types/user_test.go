@@ -59,13 +59,13 @@ func TestUser_ToSessionInfo(T *testing.T) {
 
 		exampleInput := User{
 			ID:               12345,
-			IsAdmin:          true,
+			IsSiteAdmin:      true,
 			AdminPermissions: bitmask.NewPermissionBitmask(1),
 		}
 
 		expected := &SessionInfo{
 			UserID:           exampleInput.ID,
-			UserIsAdmin:      exampleInput.IsAdmin,
+			UserIsSiteAdmin:  exampleInput.IsSiteAdmin,
 			AdminPermissions: exampleInput.AdminPermissions,
 		}
 		actual := exampleInput.ToSessionInfo()

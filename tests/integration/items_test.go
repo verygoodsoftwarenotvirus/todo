@@ -61,8 +61,8 @@ func TestItems(test *testing.T) {
 			defer adminClientLock.Unlock()
 			auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
 
-			require.Len(t, auditLogEntries, 2)
 			require.NoError(t, err)
+			require.Len(t, auditLogEntries, 2)
 
 			expectedEventTypes := []string{
 				audit.ItemCreationEvent,

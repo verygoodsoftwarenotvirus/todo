@@ -12,7 +12,7 @@ import (
 )
 
 // fetchRandomPlan retrieves a random plan from the list of available plans.
-func fetchRandomPlan(ctx context.Context, c *httpclient.Client) *types.Plan {
+func fetchRandomPlan(ctx context.Context, c *httpclient.Client) *types.AccountSubscriptionPlan {
 	plansRes, err := c.GetPlans(ctx, nil)
 	if err != nil || plansRes == nil || len(plansRes.Plans) == 0 {
 		return nil
@@ -29,8 +29,8 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 	}
 
 	return map[string]*Action{
-		"CreatePlan": {
-			Name: "CreatePlan",
+		"CreateAccountSubscriptionPlan": {
+			Name: "CreateAccountSubscriptionPlan",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
@@ -40,8 +40,8 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			},
 			Weight: 100,
 		},
-		"GetPlan": {
-			Name: "GetPlan",
+		"GetAccountSubscriptionPlan": {
+			Name: "GetAccountSubscriptionPlan",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
@@ -54,8 +54,8 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			},
 			Weight: 100,
 		},
-		"GetPlans": {
-			Name: "GetPlans",
+		"GetAccountSubscriptionPlans": {
+			Name: "GetAccountSubscriptionPlans",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
@@ -63,8 +63,8 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			},
 			Weight: 100,
 		},
-		"UpdatePlan": {
-			Name: "UpdatePlan",
+		"UpdateAccountSubscriptionPlan": {
+			Name: "UpdateAccountSubscriptionPlan",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
@@ -81,8 +81,8 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			},
 			Weight: 100,
 		},
-		"ArchivePlan": {
-			Name: "ArchivePlan",
+		"ArchiveAccountSubscriptionPlan": {
+			Name: "ArchiveAccountSubscriptionPlan",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 

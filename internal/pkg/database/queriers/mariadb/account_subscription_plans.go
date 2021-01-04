@@ -14,12 +14,12 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.PlanDataManager = (*MariaDB)(nil)
+var _ types.AccountSubscriptionPlanDataManager = (*MariaDB)(nil)
 
-// scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an Plan struct.
-func (q *MariaDB) scanPlan(scan database.Scanner, includeCount bool) (*types.Plan, uint64, error) {
+// scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountSubscriptionPlan struct.
+func (q *MariaDB) scanPlan(scan database.Scanner, includeCount bool) (*types.AccountSubscriptionPlan, uint64, error) {
 	var (
-		x         = &types.Plan{}
+		x         = &types.AccountSubscriptionPlan{}
 		count     uint64
 		rawPeriod string
 	)
@@ -54,9 +54,9 @@ func (q *MariaDB) scanPlan(scan database.Scanner, includeCount bool) (*types.Pla
 }
 
 // scanPlans takes a logger and some database rows and turns them into a slice of plans.
-func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.Plan, uint64, error) {
+func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.AccountSubscriptionPlan, uint64, error) {
 	var (
-		list  []types.Plan
+		list  []types.AccountSubscriptionPlan
 		count uint64
 	)
 
@@ -101,8 +101,8 @@ func (q *MariaDB) buildGetPlanQuery(planID uint64) (query string, args []interfa
 	return query, args
 }
 
-// GetPlan fetches an plan from the database.
-func (q *MariaDB) GetPlan(ctx context.Context, planID uint64) (*types.Plan, error) {
+// GetAccountSubscriptionPlan fetches an plan from the database.
+func (q *MariaDB) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*types.AccountSubscriptionPlan, error) {
 	query, args := q.buildGetPlanQuery(planID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
@@ -126,8 +126,8 @@ func (q *MariaDB) buildGetAllPlansCountQuery() string {
 	return allPlansCountQuery
 }
 
-// GetAllPlansCount will fetch the count of plans from the database.
-func (q *MariaDB) GetAllPlansCount(ctx context.Context) (count uint64, err error) {
+// GetAllAccountSubscriptionPlansCount will fetch the count of plans from the database.
+func (q *MariaDB) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count uint64, err error) {
 	err = q.db.QueryRowContext(ctx, q.buildGetAllPlansCountQuery()).Scan(&count)
 	return count, err
 }
@@ -167,8 +167,8 @@ func (q *MariaDB) buildGetPlansQuery(filter *types.QueryFilter) (query string, a
 	return query, append(countQueryArgs, selectArgs...)
 }
 
-// GetPlans fetches a list of plans from the database that meet a particular filter.
-func (q *MariaDB) GetPlans(ctx context.Context, filter *types.QueryFilter) (*types.PlanList, error) {
+// GetAccountSubscriptionPlans fetches a list of plans from the database that meet a particular filter.
+func (q *MariaDB) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (*types.AccountSubscriptionPlanList, error) {
 	query, args := q.buildGetPlansQuery(filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
@@ -181,7 +181,7 @@ func (q *MariaDB) GetPlans(ctx context.Context, filter *types.QueryFilter) (*typ
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	list := &types.PlanList{
+	list := &types.AccountSubscriptionPlanList{
 		Pagination: types.Pagination{
 			Page:       filter.Page,
 			Limit:      filter.Limit,
@@ -194,7 +194,7 @@ func (q *MariaDB) GetPlans(ctx context.Context, filter *types.QueryFilter) (*typ
 }
 
 // buildCreatePlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (q *MariaDB) buildCreatePlanQuery(input *types.Plan) (query string, args []interface{}) {
+func (q *MariaDB) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -218,9 +218,9 @@ func (q *MariaDB) buildCreatePlanQuery(input *types.Plan) (query string, args []
 	return query, args
 }
 
-// CreatePlan creates an plan in the database.
-func (q *MariaDB) CreatePlan(ctx context.Context, input *types.PlanCreationInput) (*types.Plan, error) {
-	x := &types.Plan{
+// CreateAccountSubscriptionPlan creates an plan in the database.
+func (q *MariaDB) CreateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*types.AccountSubscriptionPlan, error) {
+	x := &types.AccountSubscriptionPlan{
 		Name:        input.Name,
 		Description: input.Description,
 		Price:       input.Price,
@@ -242,7 +242,7 @@ func (q *MariaDB) CreatePlan(ctx context.Context, input *types.PlanCreationInput
 }
 
 // buildUpdatePlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
-func (q *MariaDB) buildUpdatePlanQuery(input *types.Plan) (query string, args []interface{}) {
+func (q *MariaDB) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -262,8 +262,8 @@ func (q *MariaDB) buildUpdatePlanQuery(input *types.Plan) (query string, args []
 	return query, args
 }
 
-// UpdatePlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
-func (q *MariaDB) UpdatePlan(ctx context.Context, input *types.Plan) error {
+// UpdateAccountSubscriptionPlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
+func (q *MariaDB) UpdateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlan) error {
 	query, args := q.buildUpdatePlanQuery(input)
 	_, err := q.db.ExecContext(ctx, query, args...)
 
@@ -289,8 +289,8 @@ func (q *MariaDB) buildArchivePlanQuery(planID uint64) (query string, args []int
 	return query, args
 }
 
-// ArchivePlan marks an plan as archived in the database.
-func (q *MariaDB) ArchivePlan(ctx context.Context, planID uint64) error {
+// ArchiveAccountSubscriptionPlan marks an plan as archived in the database.
+func (q *MariaDB) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
 	query, args := q.buildArchivePlanQuery(planID)
 
 	res, err := q.db.ExecContext(ctx, query, args...)
@@ -303,19 +303,19 @@ func (q *MariaDB) ArchivePlan(ctx context.Context, planID uint64) error {
 	return err
 }
 
-// LogPlanCreationEvent saves a PlanCreationEvent in the audit log table.
-func (q *MariaDB) LogPlanCreationEvent(ctx context.Context, plan *types.Plan) {
-	q.createAuditLogEntry(ctx, audit.BuildPlanCreationEventEntry(plan))
+// LogAccountSubscriptionPlanCreationEvent saves a AccountSubscriptionPlanCreationEvent in the audit log table.
+func (q *MariaDB) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
+	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
 }
 
-// LogPlanUpdateEvent saves a PlanUpdateEvent in the audit log table.
-func (q *MariaDB) LogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildPlanUpdateEventEntry(userID, planID, changes))
+// AccountSubscriptionLogPlanUpdateEvent saves a AccountSubscriptionPlanUpdateEvent in the audit log table.
+func (q *MariaDB) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
+	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID, changes))
 }
 
-// LogPlanArchiveEvent saves a PlanArchiveEvent in the audit log table.
-func (q *MariaDB) LogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildPlanArchiveEventEntry(userID, planID))
+// AccountSubscriptionLogPlanArchiveEvent saves a AccountSubscriptionPlanArchiveEvent in the audit log table.
+func (q *MariaDB) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
+	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
 }
 
 // buildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
@@ -332,7 +332,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query stri
 				queriers.AuditLogEntriesTableName,
 				queriers.AuditLogEntriesTableContextColumn,
 				planID,
-				audit.PlanAssignmentKey,
+				audit.AccountSubscriptionPlanAssignmentKey,
 			),
 		)).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
@@ -343,8 +343,8 @@ func (q *MariaDB) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query stri
 	return query, args
 }
 
-// GetAuditLogEntriesForPlan fetches a audit log entries for a given plan from the database.
-func (q *MariaDB) GetAuditLogEntriesForPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
+// GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
+func (q *MariaDB) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForPlanQuery(planID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

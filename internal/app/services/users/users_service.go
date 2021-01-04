@@ -39,6 +39,7 @@ type (
 	// service handles our users.
 	service struct {
 		userDataManager      types.UserDataManager
+		accountDataManager   types.AccountDataManager
 		auditLog             types.UserAuditManager
 		authSettings         authservice.Config
 		authenticator        password.Authenticator
@@ -59,6 +60,7 @@ func ProvideUsersService(
 	authSettings authservice.Config,
 	logger logging.Logger,
 	userDataManager types.UserDataManager,
+	accountDataManager types.AccountDataManager,
 	auditLog types.UserAuditManager,
 	authenticator password.Authenticator,
 	encoder encoding.EncoderDecoder,
@@ -74,6 +76,7 @@ func ProvideUsersService(
 	svc := &service{
 		logger:               logger.WithName(serviceName),
 		userDataManager:      userDataManager,
+		accountDataManager:   accountDataManager,
 		auditLog:             auditLog,
 		authenticator:        authenticator,
 		userIDFetcher:        routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),

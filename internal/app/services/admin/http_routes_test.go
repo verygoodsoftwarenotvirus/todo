@@ -33,7 +33,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      true,
+				UserIsSiteAdmin:  true,
 				AdminPermissions: testutil.BuildMaxAdminPerms(),
 			}, nil
 		}
@@ -78,7 +78,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      true,
+				UserIsSiteAdmin:  true,
 				AdminPermissions: testutil.BuildMaxAdminPerms(),
 			}, nil
 		}
@@ -123,7 +123,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      true,
+				UserIsSiteAdmin:  true,
 				AdminPermissions: testutil.BuildMaxAdminPerms(),
 			}, nil
 		}
@@ -174,7 +174,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      false,
+				UserIsSiteAdmin:  false,
 				AdminPermissions: testutil.BuildNoAdminPerms(),
 			}, nil
 		}
@@ -204,7 +204,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      true,
+				UserIsSiteAdmin:  true,
 				AdminPermissions: testutil.BuildNoAdminPerms(),
 			}, nil
 		}
@@ -234,7 +234,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      true,
+				UserIsSiteAdmin:  true,
 				AdminPermissions: testutil.BuildMaxAdminPerms(),
 			}, nil
 		}
@@ -275,7 +275,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      true,
+				UserIsSiteAdmin:  true,
 				AdminPermissions: testutil.BuildMaxAdminPerms(),
 			}, nil
 		}
@@ -320,7 +320,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
-				UserIsAdmin:      true,
+				UserIsSiteAdmin:  true,
 				AdminPermissions: testutil.BuildMaxAdminPerms(),
 			}, nil
 		}

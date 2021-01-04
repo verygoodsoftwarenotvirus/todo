@@ -58,10 +58,9 @@ type (
 		LastUpdatedOn             *uint64                         `json:"lastUpdatedOn"`
 		ArchivedOn                *uint64                         `json:"archivedOn"`
 		AdminPermissions          bitmask.AdminPermissionsBitmask `json:"adminPermissions"`
-		IsAdmin                   bool                            `json:"isAdmin"`
+		IsSiteAdmin               bool                            `json:"isSiteAdmin"`
 		RequiresPasswordChange    bool                            `json:"requiresPasswordChange"`
 		AvatarSrc                 *string                         `json:"avatar"`
-		PlanID                    *uint64                         `json:"planID"`
 	}
 
 	// TestUserCreationConfig is a helper struct because of cyclical imports.
@@ -72,8 +71,8 @@ type (
 		Password string `json:"password" mapstructure:"password" toml:"password,omitempty"`
 		// HashedPassword is the hashed form of the above password.
 		HashedPassword string `json:"hashed_password" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
-		// IsAdmin defines our test user's admin status we create in the event we create them.
-		IsAdmin bool `json:"is_admin" mapstructure:"is_admin" toml:"is_admin,omitempty"`
+		// IsSiteAdmin defines our test user's admin status we create in the event we create them.
+		IsSiteAdmin bool `json:"is_site_admin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
 	}
 
 	// UserList represents a list of users.
@@ -226,7 +225,7 @@ func (u *User) ToSessionInfo() *SessionInfo {
 	return &SessionInfo{
 		Username:          u.Username,
 		UserID:            u.ID,
-		UserIsAdmin:       u.IsAdmin,
+		UserIsSiteAdmin:   u.IsSiteAdmin,
 		UserAccountStatus: u.AccountStatus,
 		AdminPermissions:  u.AdminPermissions,
 	}
@@ -235,7 +234,7 @@ func (u *User) ToSessionInfo() *SessionInfo {
 // ToStatusResponse produces a UserStatusResponse object from a User's data.
 func (u *User) ToStatusResponse() *UserStatusResponse {
 	return &UserStatusResponse{
-		UserIsAdmin:              u.IsAdmin,
+		UserIsAdmin:              u.IsSiteAdmin,
 		UserAccountStatus:        u.AccountStatus,
 		AccountStatusExplanation: u.AccountStatusExplanation,
 		AdminPermissions:         u.AdminPermissions.Summary(),

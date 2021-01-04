@@ -51,16 +51,29 @@ var (
 				"admin_permissions" INTEGER NOT NULL DEFAULT 0,
 				"account_status" TEXT NOT NULL DEFAULT 'created',
 				"status_explanation" TEXT NOT NULL DEFAULT '',
-				"plan_id" INTEGER,
 				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				"last_updated_on" INTEGER,
 				"archived_on" INTEGER DEFAULT NULL,
-				CONSTRAINT username_unique UNIQUE (username, archived_on),
-				FOREIGN KEY(plan_id) REFERENCES plans(id)
+				CONSTRAINT username_unique UNIQUE (username, archived_on)
 			);`,
 		},
 		{
 			Version:     0.02,
+			Description: "create accounts table",
+			Script: `
+			CREATE TABLE IF NOT EXISTS accounts (
+				"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				"name" CHARACTER VARYING NOT NULL,
+				"plan_id" INTEGER,
+				"created_on" INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+				"last_updated_on" INTEGER DEFAULT NULL,
+				"archived_on" INTEGER DEFAULT NULL,
+				"belongs_to_user" INTEGER NOT NULL,
+				FOREIGN KEY(belongs_to_user) REFERENCES users(id)
+			);`,
+		},
+		{
+			Version:     0.03,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -71,12 +84,12 @@ var (
 			`,
 		},
 		{
-			Version:     0.03,
+			Version:     0.04,
 			Description: "create sessions table for session manager",
 			Script:      `CREATE INDEX sessions_expiry_idx ON sessions(expiry);`,
 		},
 		{
-			Version:     0.04,
+			Version:     0.05,
 			Description: "create oauth2_clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
@@ -95,7 +108,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.05,
+			Version:     0.06,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -115,7 +128,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.06,
+			Version:     0.07,
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
@@ -126,7 +139,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.07,
+			Version:     0.08,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -184,7 +197,7 @@ func (q *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 				[]byte("aaaaaaaaaaaaaaaa"),
 				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
 				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-				testUserConfig.IsAdmin,
+				testUserConfig.IsSiteAdmin,
 				types.GoodStandingAccountStatus,
 				math.MaxUint32,
 				squirrel.Expr(currentUnixTimeQuery),

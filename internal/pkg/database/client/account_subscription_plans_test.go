@@ -21,9 +21,9 @@ func TestClient_GetPlan(T *testing.T) {
 		examplePlan := fakes.BuildFakePlan()
 
 		c, mockDB := buildTestClient()
-		mockDB.PlanDataManager.On("GetPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
+		mockDB.AccountSubscriptionPlanDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
 
-		actual, err := c.GetPlan(ctx, examplePlan.ID)
+		actual, err := c.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
@@ -41,9 +41,9 @@ func TestClient_GetAllPlansCount(T *testing.T) {
 		exampleCount := uint64(123)
 
 		c, mockDB := buildTestClient()
-		mockDB.PlanDataManager.On("GetAllPlansCount", mock.Anything).Return(exampleCount, nil)
+		mockDB.AccountSubscriptionPlanDataManager.On("GetAllAccountSubscriptionPlansCount", mock.Anything).Return(exampleCount, nil)
 
-		actual, err := c.GetAllPlansCount(ctx)
+		actual, err := c.GetAllAccountSubscriptionPlansCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
 
@@ -62,9 +62,9 @@ func TestClient_GetPlans(T *testing.T) {
 		examplePlanList := fakes.BuildFakePlanList()
 
 		c, mockDB := buildTestClient()
-		mockDB.PlanDataManager.On("GetPlans", mock.Anything, filter).Return(examplePlanList, nil)
+		mockDB.AccountSubscriptionPlanDataManager.On("GetAccountSubscriptionPlans", mock.Anything, filter).Return(examplePlanList, nil)
 
-		actual, err := c.GetPlans(ctx, filter)
+		actual, err := c.GetAccountSubscriptionPlans(ctx, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlanList, actual)
 
@@ -79,9 +79,9 @@ func TestClient_GetPlans(T *testing.T) {
 		examplePlanList := fakes.BuildFakePlanList()
 
 		c, mockDB := buildTestClient()
-		mockDB.PlanDataManager.On("GetPlans", mock.Anything, filter).Return(examplePlanList, nil)
+		mockDB.AccountSubscriptionPlanDataManager.On("GetAccountSubscriptionPlans", mock.Anything, filter).Return(examplePlanList, nil)
 
-		actual, err := c.GetPlans(ctx, filter)
+		actual, err := c.GetAccountSubscriptionPlans(ctx, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlanList, actual)
 
@@ -100,9 +100,9 @@ func TestClient_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		c, mockDB := buildTestClient()
-		mockDB.PlanDataManager.On("CreatePlan", mock.Anything, exampleInput).Return(examplePlan, nil)
+		mockDB.AccountSubscriptionPlanDataManager.On("CreateAccountSubscriptionPlan", mock.Anything, exampleInput).Return(examplePlan, nil)
 
-		actual, err := c.CreatePlan(ctx, exampleInput)
+		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, examplePlan, actual)
 
@@ -122,9 +122,9 @@ func TestClient_UpdatePlan(T *testing.T) {
 
 		c, mockDB := buildTestClient()
 
-		mockDB.PlanDataManager.On("UpdatePlan", mock.Anything, examplePlan).Return(expected)
+		mockDB.AccountSubscriptionPlanDataManager.On("UpdateAccountSubscriptionPlan", mock.Anything, examplePlan).Return(expected)
 
-		err := c.UpdatePlan(ctx, examplePlan)
+		err := c.UpdateAccountSubscriptionPlan(ctx, examplePlan)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
@@ -143,9 +143,9 @@ func TestClient_ArchivePlan(T *testing.T) {
 		examplePlan := fakes.BuildFakePlan()
 
 		c, mockDB := buildTestClient()
-		mockDB.PlanDataManager.On("ArchivePlan", mock.Anything, examplePlan.ID).Return(expected)
+		mockDB.AccountSubscriptionPlanDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(expected)
 
-		err := c.ArchivePlan(ctx, examplePlan.ID)
+		err := c.ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

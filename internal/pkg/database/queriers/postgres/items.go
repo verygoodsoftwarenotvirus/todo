@@ -577,6 +577,11 @@ func (q *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query str
 func (q *Postgres) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForItemQuery(itemID)
 
+	q.logger.WithValues(map[string]interface{}{
+		"item_id": itemID,
+		"query":   query,
+	}).Debug("GetAuditLogEntriesForItem called")
+
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)

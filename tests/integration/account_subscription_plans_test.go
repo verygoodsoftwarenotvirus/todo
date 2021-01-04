@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func checkPlanEquality(t *testing.T, expected, actual *types.Plan) {
+func checkPlanEquality(t *testing.T, expected, actual *types.AccountSubscriptionPlan) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
@@ -66,15 +66,15 @@ func TestPlans(test *testing.T) {
 			require.NoError(t, err)
 
 			expectedEventTypes := []string{
-				audit.PlanCreationEvent,
-				audit.PlanArchiveEvent,
+				audit.AccountSubscriptionPlanCreationEvent,
+				audit.AccountSubscriptionPlanArchiveEvent,
 			}
 			actualEventTypes := []string{}
 
 			for _, e := range auditLogEntries {
 				actualEventTypes = append(actualEventTypes, e.EventType)
-				require.Contains(t, e.Context, audit.PlanAssignmentKey)
-				assert.EqualValues(t, createdPlan.ID, e.Context[audit.PlanAssignmentKey])
+				require.Contains(t, e.Context, audit.AccountSubscriptionPlanAssignmentKey)
+				assert.EqualValues(t, createdPlan.ID, e.Context[audit.AccountSubscriptionPlanAssignmentKey])
 			}
 
 			assert.Subset(t, expectedEventTypes, actualEventTypes)
@@ -94,7 +94,7 @@ func TestPlans(test *testing.T) {
 			defer adminClientLock.Unlock()
 
 			// Create plans.
-			var expected []*types.Plan
+			var expected []*types.AccountSubscriptionPlan
 			for i := 0; i < 5; i++ {
 				// Create plan.
 				examplePlan := fakes.BuildFakePlan()

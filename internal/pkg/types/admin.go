@@ -23,9 +23,9 @@ type (
 
 	// AccountStatusUpdateInput represents what an admin User could provide as input for changing statuses.
 	AccountStatusUpdateInput struct {
-		TargetAccountID uint64            `json:"accountID"`
-		NewStatus       userAccountStatus `json:"newStatus"`
-		Reason          string            `json:"reason"`
+		TargetAccountID uint64         `json:"accountID"`
+		NewStatus       userReputation `json:"newStatus"`
+		Reason          string         `json:"reason"`
 	}
 
 	// FrontendService serves static frontend files.

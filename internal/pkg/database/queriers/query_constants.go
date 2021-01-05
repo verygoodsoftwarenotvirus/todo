@@ -1,7 +1,5 @@
 package queriers
 
-import "fmt"
-
 const (
 	//
 	// Common Columns.
@@ -19,9 +17,12 @@ const (
 	// LastUpdatedOnColumn is a common column name for the latest row update column.
 	LastUpdatedOnColumn = "last_updated_on"
 	// ArchivedOnColumn is a common column name for the archive time column.
-	ArchivedOnColumn    = "archived_on"
-	commaSeparator      = ","
-	userOwnershipColumn = "belongs_to_user"
+	ArchivedOnColumn       = "archived_on"
+	commaSeparator         = ","
+	accountOwnershipColumn = "belongs_to_user"
+	userOwnershipColumn    = "belongs_to_user"
+
+	_ = accountOwnershipColumn // REMOVEME
 
 	//
 	// Accounts Table.
@@ -40,16 +41,16 @@ const (
 	// Plans Table.
 	//
 
-	// PlansTableName is what the users table calls the <> column.
-	PlansTableName = "plans"
-	// PlansTableNameColumn is what the users table calls the <> column.
-	PlansTableNameColumn = "name"
-	// PlansTableDescriptionColumn is what the users table calls the <> column.
-	PlansTableDescriptionColumn = "description"
-	// PlansTablePriceColumn is what the users table calls the <> column.
-	PlansTablePriceColumn = "price"
-	// PlansTablePeriodColumn is what the users table calls the <> column.
-	PlansTablePeriodColumn = "period"
+	// AccountSubscriptionPlansTableName is what the users table calls the <> column.
+	AccountSubscriptionPlansTableName = "account_subscription_plans"
+	// AccountSubscriptionPlansTableNameColumn is what the users table calls the <> column.
+	AccountSubscriptionPlansTableNameColumn = "name"
+	// AccountSubscriptionPlansTableDescriptionColumn is what the users table calls the <> column.
+	AccountSubscriptionPlansTableDescriptionColumn = "description"
+	// AccountSubscriptionPlansTablePriceColumn is what the users table calls the <> column.
+	AccountSubscriptionPlansTablePriceColumn = "price"
+	// AccountSubscriptionPlansTablePeriodColumn is what the users table calls the <> column.
+	AccountSubscriptionPlansTablePeriodColumn = "period"
 
 	//
 	// Users Table.
@@ -72,13 +73,13 @@ const (
 	// UsersTableTwoFactorVerifiedOnColumn is what the users table calls the <> column.
 	UsersTableTwoFactorVerifiedOnColumn = "two_factor_secret_verified_on"
 	// UsersTableIsAdminColumn is what the users table calls the <> column.
-	UsersTableIsAdminColumn = "is_admin"
+	UsersTableIsAdminColumn = "is_site_admin"
 	// UsersTableAdminPermissionsColumn is what the users table calls the <> column.
-	UsersTableAdminPermissionsColumn = "admin_permissions"
-	// UsersTableAccountStatusColumn is what the users table calls the <> column.
-	UsersTableAccountStatusColumn = "account_status"
+	UsersTableAdminPermissionsColumn = "site_admin_permissions"
+	// UsersTableReputationColumn is what the users table calls the <> column.
+	UsersTableReputationColumn = "reputation"
 	// UsersTableStatusExplanationColumn is what the users table calls the <> column.
-	UsersTableStatusExplanationColumn = "status_explanation"
+	UsersTableStatusExplanationColumn = "reputation_explanation"
 	// UsersTableAvatarColumn is what the users table calls the <> column.
 	UsersTableAvatarColumn = "avatar_src"
 
@@ -155,126 +156,4 @@ const (
 	ItemsTableDetailsColumn = "details"
 	// ItemsTableUserOwnershipColumn is what the items table calls the user ownership column.
 	ItemsTableUserOwnershipColumn = userOwnershipColumn
-)
-
-var (
-	//
-	// Plans Table.
-	//
-
-	// PlansTableColumns are the columns for the users table.
-	PlansTableColumns = []string{
-		fmt.Sprintf("%s.%s", PlansTableName, IDColumn),
-		fmt.Sprintf("%s.%s", PlansTableName, PlansTableNameColumn),
-		fmt.Sprintf("%s.%s", PlansTableName, PlansTableDescriptionColumn),
-		fmt.Sprintf("%s.%s", PlansTableName, PlansTablePriceColumn),
-		fmt.Sprintf("%s.%s", PlansTableName, PlansTablePeriodColumn),
-		fmt.Sprintf("%s.%s", PlansTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", PlansTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", PlansTableName, ArchivedOnColumn),
-	}
-
-	//
-	// Accounts Table.
-	//
-
-	// AccountsTableColumns are the columns for the items table.
-	AccountsTableColumns = []string{
-		fmt.Sprintf("%s.%s", AccountsTableName, IDColumn),
-		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableNameColumn),
-		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePlanIDColumn),
-		fmt.Sprintf("%s.%s", AccountsTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", AccountsTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", AccountsTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableUserOwnershipColumn),
-	}
-
-	//
-	// Users Table.
-	//
-
-	// UsersTableColumns are the columns for the users table.
-	UsersTableColumns = []string{
-		fmt.Sprintf("%s.%s", UsersTableName, IDColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableUsernameColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAvatarColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableHashedPasswordColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableSaltColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableRequiresPasswordChangeColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTablePasswordLastChangedOnColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorVerifiedOnColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableIsAdminColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAdminPermissionsColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAccountStatusColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableStatusExplanationColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, ArchivedOnColumn),
-	}
-
-	//
-	// Audit Log Entries Table.
-	//
-
-	// AuditLogEntriesTableColumns are the columns for the audit log entries table.
-	AuditLogEntriesTableColumns = []string{
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, IDColumn),
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, AuditLogEntriesTableEventTypeColumn),
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, AuditLogEntriesTableContextColumn),
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, CreatedOnColumn),
-	}
-
-	//
-	// OAuth2 Clients Table.
-	//
-
-	// OAuth2ClientsTableColumns are the columns for the oauth2 clients table.
-	OAuth2ClientsTableColumns = []string{
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, IDColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableNameColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableClientIDColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableScopesColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableRedirectURIColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableClientSecretColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableOwnershipColumn),
-	}
-
-	//
-	// Webhooks Table.
-	//
-
-	// WebhooksTableColumns are the columns for the webhooks table.
-	WebhooksTableColumns = []string{
-		fmt.Sprintf("%s.%s", WebhooksTableName, IDColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableNameColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableContentTypeColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableURLColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableMethodColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableEventsColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableDataTypesColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableTopicsColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableOwnershipColumn),
-	}
-
-	//
-	// Items Table.
-	//
-
-	// ItemsTableColumns are the columns for the items table.
-	ItemsTableColumns = []string{
-		fmt.Sprintf("%s.%s", ItemsTableName, IDColumn),
-		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableNameColumn),
-		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableDetailsColumn),
-		fmt.Sprintf("%s.%s", ItemsTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", ItemsTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", ItemsTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableUserOwnershipColumn),
-	}
 )

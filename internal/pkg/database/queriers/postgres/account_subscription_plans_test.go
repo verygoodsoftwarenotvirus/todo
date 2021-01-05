@@ -103,7 +103,7 @@ func TestPostgres_buildGetPlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on FROM plans WHERE plans.id = $1"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on FROM account_subscription_plans WHERE account_subscription_plans.id = $1"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
@@ -167,7 +167,7 @@ func TestPostgres_buildGetAllPlansCountQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		expectedQuery := "SELECT COUNT(plans.id) FROM plans WHERE plans.archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL"
 		actualQuery := q.buildGetAllPlansCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
@@ -206,7 +206,7 @@ func TestPostgres_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $1 AND plans.created_on < $2 AND plans.last_updated_on > $3 AND plans.last_updated_on < $4) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > $5 AND plans.created_on < $6 AND plans.last_updated_on > $7 AND plans.last_updated_on < $8 ORDER BY plans.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(*) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > $1 AND account_subscription_plans.created_on < $2 AND account_subscription_plans.last_updated_on > $3 AND account_subscription_plans.last_updated_on < $4) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > $5 AND account_subscription_plans.created_on < $6 AND account_subscription_plans.last_updated_on > $7 AND account_subscription_plans.last_updated_on < $8 ORDER BY account_subscription_plans.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -330,7 +330,7 @@ func TestPostgres_buildCreatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "INSERT INTO plans (name,description,price,period) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
+		expectedQuery := "INSERT INTO account_subscription_plans (name,description,price,period) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
 			examplePlan.Description,
@@ -399,7 +399,7 @@ func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET name = $1, description = $2, price = $3, period = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING last_updated_on"
+		expectedQuery := "UPDATE account_subscription_plans SET name = $1, description = $2, price = $3, period = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING last_updated_on"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
 			examplePlan.Description,
@@ -469,7 +469,7 @@ func TestPostgres_buildArchivePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $1 RETURNING archived_on"
+		expectedQuery := "UPDATE account_subscription_plans SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $1 RETURNING archived_on"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}

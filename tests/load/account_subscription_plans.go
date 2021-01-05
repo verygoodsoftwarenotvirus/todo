@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 )
 
 // fetchRandomPlan retrieves a random plan from the list of available plans.

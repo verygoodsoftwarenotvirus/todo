@@ -90,9 +90,9 @@ func (q *Postgres) buildGetPlanQuery(planID uint64) (query string, args []interf
 
 	query, args, err = q.sqlBuilder.
 		Select(queriers.PlansTableColumns...).
-		From(queriers.PlansTableName).
+		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.IDColumn): planID,
+			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.IDColumn): planID,
 		}).
 		ToSql()
 
@@ -115,10 +115,10 @@ func (q *Postgres) GetAccountSubscriptionPlan(ctx context.Context, planID uint64
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *Postgres) buildGetAllPlansCountQuery() string {
 	allPlansCountQuery, _, err := q.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.PlansTableName)).
-		From(queriers.PlansTableName).
+		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.AccountSubscriptionPlansTableName)).
+		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.ArchivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 	q.logQueryBuildingError(err)
@@ -137,13 +137,13 @@ func (q *Postgres) GetAllAccountSubscriptionPlansCount(ctx context.Context) (cou
 func (q *Postgres) buildGetPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
-		From(queriers.PlansTableName).
+		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.ArchivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		})
 
 	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.PlansTableName)
+		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.AccountSubscriptionPlansTableName)
 	}
 
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
@@ -151,14 +151,14 @@ func (q *Postgres) buildGetPlansQuery(filter *types.QueryFilter) (query string, 
 
 	builder := q.sqlBuilder.
 		Select(append(queriers.PlansTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.PlansTableName).
+		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.ArchivedOnColumn): nil,
+			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.PlansTableName, queriers.CreatedOnColumn))
+		OrderBy(fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
-		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.PlansTableName)
+		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.AccountSubscriptionPlansTableName)
 	}
 
 	query, selectArgs, err := builder.ToSql()
@@ -198,12 +198,12 @@ func (q *Postgres) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (q
 	var err error
 
 	query, args, err = q.sqlBuilder.
-		Insert(queriers.PlansTableName).
+		Insert(queriers.AccountSubscriptionPlansTableName).
 		Columns(
-			queriers.PlansTableNameColumn,
-			queriers.PlansTableDescriptionColumn,
-			queriers.PlansTablePriceColumn,
-			queriers.PlansTablePeriodColumn,
+			queriers.AccountSubscriptionPlansTableNameColumn,
+			queriers.AccountSubscriptionPlansTableDescriptionColumn,
+			queriers.AccountSubscriptionPlansTablePriceColumn,
+			queriers.AccountSubscriptionPlansTablePeriodColumn,
 		).
 		Values(
 			input.Name,
@@ -244,11 +244,11 @@ func (q *Postgres) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (q
 	var err error
 
 	query, args, err = q.sqlBuilder.
-		Update(queriers.PlansTableName).
-		Set(queriers.PlansTableNameColumn, input.Name).
-		Set(queriers.PlansTableDescriptionColumn, input.Description).
-		Set(queriers.PlansTablePriceColumn, input.Price).
-		Set(queriers.PlansTablePeriodColumn, input.Period.String()).
+		Update(queriers.AccountSubscriptionPlansTableName).
+		Set(queriers.AccountSubscriptionPlansTableNameColumn, input.Name).
+		Set(queriers.AccountSubscriptionPlansTableDescriptionColumn, input.Description).
+		Set(queriers.AccountSubscriptionPlansTablePriceColumn, input.Price).
+		Set(queriers.AccountSubscriptionPlansTablePeriodColumn, input.Period.String()).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			queriers.IDColumn: input.ID,
@@ -272,7 +272,7 @@ func (q *Postgres) buildArchivePlanQuery(planID uint64) (query string, args []in
 	var err error
 
 	query, args, err = q.sqlBuilder.
-		Update(queriers.PlansTableName).
+		Update(queriers.AccountSubscriptionPlansTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{

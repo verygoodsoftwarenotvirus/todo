@@ -19,7 +19,7 @@ func (q *MariaDB) buildSetUserStatusQuery(userID uint64, input types.AccountStat
 
 	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
-		Set(queriers.UsersTableAccountStatusColumn, input.NewStatus).
+		Set(queriers.UsersTableReputationColumn, input.NewStatus).
 		Set(queriers.UsersTableStatusExplanationColumn, input.Reason).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()

@@ -325,7 +325,7 @@ func (q *Sqlite) buildCreateUserQuery(input types.UserDataStoreCreationInput) (q
 			queriers.UsersTableHashedPasswordColumn,
 			queriers.UsersTableSaltColumn,
 			queriers.UsersTableTwoFactorColumn,
-			queriers.UsersTableAccountStatusColumn,
+			queriers.UsersTableReputationColumn,
 			queriers.UsersTableIsAdminColumn,
 			queriers.UsersTableAdminPermissionsColumn,
 		).
@@ -436,7 +436,7 @@ func (q *Sqlite) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query strin
 	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(queriers.UsersTableAccountStatusColumn, types.GoodStandingAccountStatus).
+		Set(queriers.UsersTableReputationColumn, types.GoodStandingAccountStatus).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 

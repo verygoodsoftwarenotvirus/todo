@@ -339,7 +339,7 @@ func (q *Postgres) buildCreateUserQuery(input types.UserDataStoreCreationInput) 
 			queriers.UsersTableHashedPasswordColumn,
 			queriers.UsersTableSaltColumn,
 			queriers.UsersTableTwoFactorColumn,
-			queriers.UsersTableAccountStatusColumn,
+			queriers.UsersTableReputationColumn,
 			queriers.UsersTableIsAdminColumn,
 			queriers.UsersTableAdminPermissionsColumn,
 		).
@@ -453,7 +453,7 @@ func (q *Postgres) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query str
 	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(queriers.UsersTableAccountStatusColumn, types.GoodStandingAccountStatus).
+		Set(queriers.UsersTableReputationColumn, types.GoodStandingAccountStatus).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 

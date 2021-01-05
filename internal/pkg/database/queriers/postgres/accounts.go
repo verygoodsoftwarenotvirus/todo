@@ -489,3 +489,10 @@ func (q *Postgres) GetAuditLogEntriesForAccount(ctx context.Context, accountID u
 
 	return auditLogEntries, nil
 }
+
+// account membership
+
+// UserIsMemberOfAccount returns whether or not a user is a member of a given account.
+func (q *Postgres) UserIsMemberOfAccount( /*ctx context.Context, userID, accountID uint64*/ ) (bool, error) {
+	return false, nil
+}

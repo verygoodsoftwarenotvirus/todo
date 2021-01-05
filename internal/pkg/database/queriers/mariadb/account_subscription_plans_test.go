@@ -105,7 +105,7 @@ func TestMariaDB_buildGetPlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on FROM plans WHERE plans.id = ?"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on FROM account_subscription_plans WHERE account_subscription_plans.id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
@@ -169,7 +169,7 @@ func TestMariaDB_buildGetAllPlansCountQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		expectedQuery := "SELECT COUNT(plans.id) FROM plans WHERE plans.archived_on IS NULL"
+		expectedQuery := "SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL"
 		actualQuery := q.buildGetAllPlansCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
@@ -208,7 +208,7 @@ func TestMariaDB_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT plans.id, plans.name, plans.description, plans.price, plans.period, plans.created_on, plans.last_updated_on, plans.archived_on, (SELECT COUNT(*) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ?) FROM plans WHERE plans.archived_on IS NULL AND plans.created_on > ? AND plans.created_on < ? AND plans.last_updated_on > ? AND plans.last_updated_on < ? ORDER BY plans.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(*) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ?) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ? ORDER BY account_subscription_plans.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -332,7 +332,7 @@ func TestMariaDB_buildCreatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "INSERT INTO plans (name,description,price,period) VALUES (?,?,?,?)"
+		expectedQuery := "INSERT INTO account_subscription_plans (name,description,price,period) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
 			examplePlan.Description,
@@ -405,7 +405,7 @@ func TestMariaDB_buildUpdatePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
+		expectedQuery := "UPDATE account_subscription_plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.Name,
 			examplePlan.Description,
@@ -468,7 +468,7 @@ func TestMariaDB_buildArchivePlanQuery(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery := "UPDATE plans SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?"
+		expectedQuery := "UPDATE account_subscription_plans SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}

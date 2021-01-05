@@ -25,7 +25,7 @@ type (
 		UserID            uint64                             `json:"-"`
 		ActiveAccountID   uint64                             `json:"-"`
 		UserIsSiteAdmin   bool                               `json:"-"`
-		UserAccountStatus userAccountStatus                  `json:"-"`
+		UserAccountStatus userReputation                     `json:"-"`
 		AdminPermissions  permissions.AdminPermissionChecker `json:"-"`
 	}
 
@@ -33,7 +33,7 @@ type (
 	UserStatusResponse struct {
 		UserIsAuthenticated      bool                                 `json:"isAuthenticated"`
 		UserIsAdmin              bool                                 `json:"isAdmin"`
-		UserAccountStatus        userAccountStatus                    `json:"accountStatus,omitempty"`
+		UserAccountStatus        userReputation                       `json:"accountStatus,omitempty"`
 		AccountStatusExplanation string                               `json:"statusExplanation,omitempty"`
 		AdminPermissions         *permissions.AdminPermissionsSummary `json:"permissions,omitempty"`
 	}

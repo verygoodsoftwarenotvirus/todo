@@ -12,13 +12,13 @@ import (
 
 const (
 	// GoodStandingAccountStatus indicates a User's account is in good standing.
-	GoodStandingAccountStatus userAccountStatus = "good"
+	GoodStandingAccountStatus userReputation = "good"
 	// UnverifiedAccountStatus indicates a User's account requires two factor secret verification.
-	UnverifiedAccountStatus userAccountStatus = "unverified"
+	UnverifiedAccountStatus userReputation = "unverified"
 	// BannedAccountStatus indicates a User's account is banned.
-	BannedAccountStatus userAccountStatus = "banned"
+	BannedAccountStatus userReputation = "banned"
 	// TerminatedAccountStatus indicates a User's account is banned.
-	TerminatedAccountStatus userAccountStatus = "terminated"
+	TerminatedAccountStatus userReputation = "terminated"
 
 	validTOTPTokenLength = 6
 )
@@ -27,7 +27,7 @@ var (
 	totpTokenLengthRule = validation.Length(validTOTPTokenLength, validTOTPTokenLength)
 )
 
-// IsValidAccountStatus returns whether or not the provided string is a valid userAccountStatus.
+// IsValidAccountStatus returns whether or not the provided string is a valid userReputation.
 func IsValidAccountStatus(s string) bool {
 	switch s {
 	case string(GoodStandingAccountStatus),
@@ -41,7 +41,7 @@ func IsValidAccountStatus(s string) bool {
 }
 
 type (
-	userAccountStatus string
+	userReputation string
 
 	// User represents a User.
 	User struct {
@@ -49,7 +49,7 @@ type (
 		Username                  string                          `json:"username"`
 		HashedPassword            string                          `json:"-"`
 		TwoFactorSecret           string                          `json:"-"`
-		AccountStatus             userAccountStatus               `json:"accountStatus"`
+		AccountStatus             userReputation                  `json:"accountStatus"`
 		AccountStatusExplanation  string                          `json:"accountStatusExplanation"`
 		ID                        uint64                          `json:"id"`
 		PasswordLastChangedOn     *uint64                         `json:"passwordLastChangedOn"`
@@ -97,12 +97,12 @@ type (
 
 	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret.
 	UserCreationResponse struct {
-		ID              uint64            `json:"id"`
-		Username        string            `json:"username"`
-		IsAdmin         bool              `json:"isAdmin"`
-		CreatedOn       uint64            `json:"createdOn"`
-		AccountStatus   userAccountStatus `json:"accountStatus"`
-		TwoFactorQRCode string            `json:"qrCode"`
+		ID              uint64         `json:"id"`
+		Username        string         `json:"username"`
+		IsAdmin         bool           `json:"isAdmin"`
+		CreatedOn       uint64         `json:"createdOn"`
+		AccountStatus   userReputation `json:"accountStatus"`
+		TwoFactorQRCode string         `json:"qrCode"`
 	}
 
 	// UserLoginInput represents the payload used to log in a User.

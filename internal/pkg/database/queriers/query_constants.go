@@ -19,10 +19,8 @@ const (
 	// ArchivedOnColumn is a common column name for the archive time column.
 	ArchivedOnColumn       = "archived_on"
 	commaSeparator         = ","
-	accountOwnershipColumn = "belongs_to_user"
 	userOwnershipColumn    = "belongs_to_user"
-
-	_ = accountOwnershipColumn // REMOVEME
+	accountOwnershipColumn = "belongs_to_account"
 
 	//
 	// Accounts Table.
@@ -36,6 +34,23 @@ const (
 	AccountsTablePlanIDColumn = "plan_id"
 	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
 	AccountsTableUserOwnershipColumn = userOwnershipColumn
+
+	//
+	// Accounts Membership Table.
+	//
+
+	// AccountsMembershipTableName is what the accounts table calls itself.
+	AccountsMembershipTableName = "accounts_membership"
+	// AccountsMembershipTablePrimaryUserAccountColumn is what the accounts table calls the column indicating primary status.
+	AccountsMembershipTablePrimaryUserAccountColumn = "is_primary_user_account"
+	// AccountsMembershipTablePersonalAccountColumn is what the accounts table calls the user account permissions column.
+	AccountsMembershipTablePersonalAccountColumn = "is_personal_account"
+	// AccountsMembershipTableUserAccountPermissionsColumn is what the accounts table calls the user account permissions column.
+	AccountsMembershipTableUserAccountPermissionsColumn = "user_account_permissions"
+	// AccountsMembershipTableAccountOwnershipColumn is what the accounts table calls the user ownership column.
+	AccountsMembershipTableAccountOwnershipColumn = accountOwnershipColumn
+	// AccountsMembershipTableUserOwnershipColumn is what the accounts table calls the user ownership column.
+	AccountsMembershipTableUserOwnershipColumn = userOwnershipColumn
 
 	//
 	// Plans Table.

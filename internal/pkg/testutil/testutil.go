@@ -41,13 +41,13 @@ func init() {
 	fake.Seed(time.Now().UnixNano())
 }
 
-// BuildMaxAdminPerms builds a helpful AdminPermissionChecker.
-func BuildMaxAdminPerms() permissions.AdminPermissionChecker {
+// BuildMaxAdminPerms builds a helpful SiteAdminPermissionChecker.
+func BuildMaxAdminPerms() permissions.SiteAdminPermissionChecker {
 	return bitmask.NewPermissionBitmask(math.MaxUint32)
 }
 
-// BuildNoAdminPerms builds a helpful AdminPermissionChecker.
-func BuildNoAdminPerms() permissions.AdminPermissionChecker {
+// BuildNoAdminPerms builds a helpful SiteAdminPermissionChecker.
+func BuildNoAdminPerms() permissions.SiteAdminPermissionChecker {
 	return bitmask.NewPermissionBitmask(0)
 }
 

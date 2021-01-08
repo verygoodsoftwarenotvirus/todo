@@ -22,20 +22,20 @@ type (
 	// SessionInfo represents what we encode in our authentication cookies.
 	SessionInfo struct {
 		Username          string
-		UserID            uint64                             `json:"-"`
-		ActiveAccountID   uint64                             `json:"-"`
-		UserIsSiteAdmin   bool                               `json:"-"`
-		UserAccountStatus userReputation                     `json:"-"`
-		AdminPermissions  permissions.AdminPermissionChecker `json:"-"`
+		UserID            uint64                                 `json:"-"`
+		ActiveAccountID   uint64                                 `json:"-"`
+		UserIsSiteAdmin   bool                                   `json:"-"`
+		UserAccountStatus userReputation                         `json:"-"`
+		AdminPermissions  permissions.SiteAdminPermissionChecker `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		UserIsAuthenticated      bool                                 `json:"isAuthenticated"`
-		UserIsAdmin              bool                                 `json:"isAdmin"`
-		UserAccountStatus        userReputation                       `json:"accountStatus,omitempty"`
-		AccountStatusExplanation string                               `json:"statusExplanation,omitempty"`
-		AdminPermissions         *permissions.AdminPermissionsSummary `json:"permissions,omitempty"`
+		UserIsAuthenticated      bool                                     `json:"isAuthenticated"`
+		UserIsAdmin              bool                                     `json:"isAdmin"`
+		UserAccountStatus        userReputation                           `json:"accountStatus,omitempty"`
+		AccountStatusExplanation string                                   `json:"statusExplanation,omitempty"`
+		AdminPermissions         *permissions.SiteAdminPermissionsSummary `json:"permissions,omitempty"`
 	}
 
 	// AuthService describes a structure capable of handling authentication and authorization requests.

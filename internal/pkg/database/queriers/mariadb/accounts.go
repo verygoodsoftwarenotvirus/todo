@@ -44,7 +44,7 @@ func (q *MariaDB) scanAccount(scan database.Scanner, includeCount bool) (*types.
 	return x, count, nil
 }
 
-// scanAccounts takes a logger and some database rows and turns them into a slice of accounts.
+// scanAccounts takes some database rows and turns them into a slice of accounts.
 func (q *MariaDB) scanAccounts(rows database.ResultIterator, includeCount bool) ([]types.Account, uint64, error) {
 	var (
 		list  []types.Account
@@ -87,6 +87,7 @@ func (q *MariaDB) buildAccountExistsQuery(accountID, userID uint64) (query strin
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.IDColumn):                         accountID,
 			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn):                 nil,
 		}).ToSql()
 
 	q.logQueryBuildingError(err)
@@ -116,6 +117,7 @@ func (q *MariaDB) buildGetAccountQuery(accountID, userID uint64) (query string, 
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.IDColumn):                         accountID,
 			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn):                 nil,
 		}).
 		ToSql()
 

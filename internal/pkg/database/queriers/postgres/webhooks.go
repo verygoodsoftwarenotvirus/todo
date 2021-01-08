@@ -405,9 +405,7 @@ func (q *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID
 
 // buildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries
 // associated with a given webhook.
-func (q *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
-	var err error
-
+func (q *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (string, []interface{}) {
 	webhookIDKey := fmt.Sprintf(jsonPluckQuery,
 		queriers.AuditLogEntriesTableName,
 		queriers.AuditLogEntriesTableContextColumn,
@@ -419,10 +417,7 @@ func (q *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (que
 		Where(squirrel.Eq{webhookIDKey: webhookID}).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
-	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, args
+	return q.buildQuery(builder)
 }
 
 // GetAuditLogEntriesForWebhook fetches a audit log entries for a given webhook from the database.

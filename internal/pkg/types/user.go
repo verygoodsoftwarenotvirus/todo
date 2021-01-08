@@ -45,22 +45,22 @@ type (
 
 	// User represents a User.
 	User struct {
-		Salt                      []byte                          `json:"-"`
-		Username                  string                          `json:"username"`
-		HashedPassword            string                          `json:"-"`
-		TwoFactorSecret           string                          `json:"-"`
-		AccountStatus             userReputation                  `json:"accountStatus"`
-		AccountStatusExplanation  string                          `json:"accountStatusExplanation"`
-		ID                        uint64                          `json:"id"`
-		PasswordLastChangedOn     *uint64                         `json:"passwordLastChangedOn"`
-		TwoFactorSecretVerifiedOn *uint64                         `json:"-"`
-		CreatedOn                 uint64                          `json:"createdOn"`
-		LastUpdatedOn             *uint64                         `json:"lastUpdatedOn"`
-		ArchivedOn                *uint64                         `json:"archivedOn"`
-		AdminPermissions          bitmask.AdminPermissionsBitmask `json:"adminPermissions"`
-		IsSiteAdmin               bool                            `json:"isSiteAdmin"`
-		RequiresPasswordChange    bool                            `json:"requiresPasswordChange"`
-		AvatarSrc                 *string                         `json:"avatar"`
+		Salt                      []byte                       `json:"-"`
+		Username                  string                       `json:"username"`
+		HashedPassword            string                       `json:"-"`
+		TwoFactorSecret           string                       `json:"-"`
+		AccountStatus             userReputation               `json:"accountStatus"`
+		AccountStatusExplanation  string                       `json:"accountStatusExplanation"`
+		ID                        uint64                       `json:"id"`
+		PasswordLastChangedOn     *uint64                      `json:"passwordLastChangedOn"`
+		TwoFactorSecretVerifiedOn *uint64                      `json:"-"`
+		CreatedOn                 uint64                       `json:"createdOn"`
+		LastUpdatedOn             *uint64                      `json:"lastUpdatedOn"`
+		ArchivedOn                *uint64                      `json:"archivedOn"`
+		AdminPermissions          bitmask.SiteAdminPermissions `json:"siteAdminPermissions"`
+		IsSiteAdmin               bool                         `json:"isSiteAdmin"`
+		RequiresPasswordChange    bool                         `json:"requiresPasswordChange"`
+		AvatarSrc                 *string                      `json:"avatar"`
 	}
 
 	// TestUserCreationConfig is a helper struct because of cyclical imports.
@@ -237,7 +237,7 @@ func (u *User) ToStatusResponse() *UserStatusResponse {
 		UserIsAdmin:              u.IsSiteAdmin,
 		UserAccountStatus:        u.AccountStatus,
 		AccountStatusExplanation: u.AccountStatusExplanation,
-		AdminPermissions:         u.AdminPermissions.Summary(),
+		AdminPermissions:         u.AdminPermissions.SiteAdminPermissionsSummary(),
 	}
 }
 

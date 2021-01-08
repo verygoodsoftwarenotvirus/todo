@@ -44,7 +44,7 @@ func (q *Postgres) scanItem(scan database.Scanner, includeCount bool) (*types.It
 	return x, count, nil
 }
 
-// scanItems takes a logger and some database rows and turns them into a slice of items.
+// scanItems takes some database rows and turns them into a slice of items.
 func (q *Postgres) scanItems(rows database.ResultIterator, includeCount bool) ([]types.Item, uint64, error) {
 	var (
 		list  []types.Item
@@ -76,8 +76,8 @@ func (q *Postgres) scanItems(rows database.ResultIterator, includeCount bool) ([
 }
 
 // buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
-func (q *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+func (q *Postgres) buildItemExistsQuery(itemID, userID uint64) (string, []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn)).
 		Prefix(queriers.ExistencePrefix).
 		From(queriers.ItemsTableName).
@@ -85,11 +85,9 @@ func (q *Postgres) buildItemExistsQuery(itemID, userID uint64) (query string, ar
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-		}).ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
+		}),
+	)
 }
 
 // ItemExists queries the database to see if a given item belonging to a given user exists.
@@ -105,21 +103,16 @@ func (q *Postgres) ItemExists(ctx context.Context, itemID, userID uint64) (exist
 }
 
 // buildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
-func (q *Postgres) buildGetItemQuery(itemID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+func (q *Postgres) buildGetItemQuery(itemID, userID uint64) (string, []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Select(queriers.ItemsTableColumns...).
 		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
+		}),
+	)
 }
 
 // GetItem fetches an item from the database.
@@ -135,16 +128,15 @@ func (q *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*types.I
 // buildGetAllItemsCountQuery returns a query that fetches the total number of items in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *Postgres) buildGetAllItemsCountQuery() string {
-	allItemsCountQuery, _, err := q.sqlBuilder.
+	query, _ := q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.ItemsTableName)).
 		From(queriers.ItemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn): nil,
-		}).
-		ToSql()
-	q.logQueryBuildingError(err)
+		}),
+	)
 
-	return allItemsCountQuery
+	return query
 }
 
 // GetAllItemsCount will fetch the count of items from the database.
@@ -154,8 +146,8 @@ func (q *Postgres) GetAllItemsCount(ctx context.Context) (count uint64, err erro
 }
 
 // buildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+func (q *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (string, []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Select(queriers.ItemsTableColumns...).
 		From(queriers.ItemsTableName).
 		Where(squirrel.Gt{
@@ -163,12 +155,8 @@ func (q *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (query strin
 		}).
 		Where(squirrel.Lt{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn): endID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
@@ -212,44 +200,46 @@ func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []types.I
 
 // buildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Postgres) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Postgres) buildGetItemsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (string, []interface{}) {
+	where := squirrel.Eq{}
+	if forAdmin {
+		if filter != nil && filter.IncludeArchived {
+			where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn)] = nil
+		}
+	} else {
+		where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn)] = userID
+	}
+
 	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
 		From(queriers.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-		})
+		Where(where)
 
 	if filter != nil {
 		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.ItemsTableName)
 	}
 
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
+	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
 
 	builder := q.sqlBuilder.
 		Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-		}).
+		Where(where).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.ItemsTableName)
 	}
 
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	query, selectArgs := q.buildQuery(builder)
 
 	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter.
 func (q *Postgres) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.ItemList, error) {
-	query, args := q.buildGetItemsQuery(userID, filter)
+	query, args := q.buildGetItemsQuery(userID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -273,49 +263,9 @@ func (q *Postgres) GetItems(ctx context.Context, userID uint64, filter *types.Qu
 	return list, nil
 }
 
-// buildGetItemsForAdminQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
-// and returns both the query and the relevant args to pass to the query executor.
-func (q *Postgres) buildGetItemsForAdminQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	if filter == nil {
-		filter = types.DefaultQueryFilter()
-	}
-
-	where := squirrel.Eq{}
-	if !filter.IncludeArchived {
-		where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn)] = nil
-	}
-
-	countQueryBuilder := queriers.ApplyFilterToSubCountQueryBuilder(
-		filter,
-		q.sqlBuilder.PlaceholderFormat(squirrel.Question).
-			Select(allCountQuery).
-			From(queriers.ItemsTableName).
-			Where(where),
-		queriers.ItemsTableName,
-	)
-
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
-
-	builder := queriers.ApplyFilterToQueryBuilder(
-		filter,
-		q.sqlBuilder.
-			Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-			From(queriers.ItemsTableName).
-			Where(where).
-			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn)),
-		queriers.ItemsTableName,
-	)
-
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, append(countQueryArgs, selectArgs...)
-}
-
 // GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
 func (q *Postgres) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.ItemList, error) {
-	query, args := q.buildGetItemsForAdminQuery(filter)
+	query, args := q.buildGetItemsQuery(0, true, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -346,8 +296,13 @@ func (q *Postgres) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilt
 // slice of uint64s instead of a slice of strings in order to ensure all the provided strings
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (q *Postgres) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64) (query string, args []interface{}) {
-	var err error
+func (q *Postgres) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64, forAdmin bool) (string, []interface{}) {
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn): nil,
+	}
+	if !forAdmin {
+		where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn)] = userID
+	}
 
 	subqueryBuilder := q.sqlBuilder.Select(queriers.ItemsTableColumns...).
 		From(queriers.ItemsTableName).
@@ -356,15 +311,9 @@ func (q *Postgres) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []u
 	builder := q.sqlBuilder.
 		Select(queriers.ItemsTableColumns...).
 		FromSelect(subqueryBuilder, queriers.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-		})
+		Where(where)
 
-	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, args
+	return q.buildQuery(builder)
 }
 
 // GetItemsWithIDs fetches a list of items from the database that exist within a given set of IDs.
@@ -373,7 +322,7 @@ func (q *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uin
 		limit = uint8(types.DefaultLimit)
 	}
 
-	query, args := q.buildGetItemsWithIDsQuery(userID, limit, ids)
+	query, args := q.buildGetItemsWithIDsQuery(userID, limit, ids, false)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -388,39 +337,13 @@ func (q *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uin
 	return items, nil
 }
 
-// buildGetItemsWithIDsForAdminQuery builds a SQL query selecting items that exist within a given set of IDs.
-// Returns both the query and the relevant args to pass to the query executor.
-// This function is primarily intended for use with a search index, which would provide a slice of string IDs to query against.
-// This function accepts a slice of uint64s instead of a slice of strings in order to ensure all the provided strings
-// are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
-// and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (q *Postgres) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (query string, args []interface{}) {
-	var err error
-
-	subqueryBuilder := q.sqlBuilder.Select(queriers.ItemsTableColumns...).
-		From(queriers.ItemsTableName).
-		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
-		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
-	builder := q.sqlBuilder.
-		Select(queriers.ItemsTableColumns...).
-		FromSelect(subqueryBuilder, queriers.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn): nil,
-		})
-
-	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, args
-}
-
 // GetItemsWithIDsForAdmin fetches a list of items from the database that exist within a given set of IDs.
 func (q *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
 
-	query, args := q.buildGetItemsWithIDsForAdminQuery(limit, ids)
+	query, args := q.buildGetItemsWithIDsQuery(0, limit, ids, true)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -436,10 +359,8 @@ func (q *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids
 }
 
 // buildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
-func (q *Postgres) buildCreateItemQuery(input *types.Item) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+func (q *Postgres) buildCreateItemQuery(input *types.Item) (string, []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Insert(queriers.ItemsTableName).
 		Columns(
 			queriers.ItemsTableNameColumn,
@@ -451,12 +372,8 @@ func (q *Postgres) buildCreateItemQuery(input *types.Item) (query string, args [
 			input.Details,
 			input.BelongsToUser,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Suffix(fmt.Sprintf("RETURNING %s, %s", queriers.IDColumn, queriers.CreatedOnColumn)),
+	)
 }
 
 // CreateItem creates an item in the database.
@@ -479,10 +396,8 @@ func (q *Postgres) CreateItem(ctx context.Context, input *types.ItemCreationInpu
 }
 
 // buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters.
-func (q *Postgres) buildUpdateItemQuery(input *types.Item) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+func (q *Postgres) buildUpdateItemQuery(input *types.Item) (string, []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.ItemsTableName).
 		Set(queriers.ItemsTableNameColumn, input.Name).
 		Set(queriers.ItemsTableDetailsColumn, input.Details).
@@ -491,12 +406,8 @@ func (q *Postgres) buildUpdateItemQuery(input *types.Item) (query string, args [
 			queriers.IDColumn:                      input.ID,
 			queriers.ItemsTableUserOwnershipColumn: input.BelongsToUser,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.LastUpdatedOnColumn)),
+	)
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
@@ -506,10 +417,8 @@ func (q *Postgres) UpdateItem(ctx context.Context, input *types.Item) error {
 }
 
 // buildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
-func (q *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+func (q *Postgres) buildArchiveItemQuery(itemID, userID uint64) (string, []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.ItemsTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -518,12 +427,8 @@ func (q *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 			queriers.ArchivedOnColumn:              nil,
 			queriers.ItemsTableUserOwnershipColumn: userID,
 		}).
-		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Suffix(fmt.Sprintf("RETURNING %s", queriers.ArchivedOnColumn)),
+	)
 }
 
 // ArchiveItem marks an item as archived in the database.
@@ -558,8 +463,6 @@ func (q *Postgres) LogItemArchiveEvent(ctx context.Context, userID, itemID uint6
 // buildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries
 // associated with a given item.
 func (q *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
-	var err error
-
 	itemIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
@@ -567,10 +470,7 @@ func (q *Postgres) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query str
 		Where(squirrel.Eq{itemIDKey: itemID}).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
-	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, args
+	return q.buildQuery(builder)
 }
 
 // GetAuditLogEntriesForItem fetches a audit log entries for a given item from the database.

@@ -41,7 +41,7 @@ func (q *MariaDB) scanAuditLogEntry(scan database.Scanner, includeCount bool) (*
 	return x, count, nil
 }
 
-// scanAuditLogEntries takes a logger and some database rows and turns them into a slice of .
+// scanAuditLogEntries takes some database rows and turns them into a slice of .
 func (q *MariaDB) scanAuditLogEntries(rows database.ResultIterator, includeCount bool) ([]types.AuditLogEntry, uint64, error) {
 	var (
 		list  []types.AuditLogEntry

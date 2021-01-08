@@ -102,6 +102,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts_membership (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				primary_user_account BOOLEAN NOT NULL DEFAULT 'false',
 				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
 				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),

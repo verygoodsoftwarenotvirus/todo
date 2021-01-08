@@ -44,7 +44,7 @@ func (q *Sqlite) scanItem(scan database.Scanner, includeCount bool) (*types.Item
 	return x, count, nil
 }
 
-// scanItems takes a logger and some database rows and turns them into a slice of items.
+// scanItems takes some database rows and turns them into a slice of items.
 func (q *Sqlite) scanItems(rows database.ResultIterator, includeCount bool) ([]types.Item, uint64, error) {
 	var (
 		list  []types.Item
@@ -87,6 +87,7 @@ func (q *Sqlite) buildItemExistsQuery(itemID, userID uint64) (query string, args
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
 		}).ToSql()
 
 	q.logQueryBuildingError(err)
@@ -116,6 +117,7 @@ func (q *Sqlite) buildGetItemQuery(itemID, userID uint64) (query string, args []
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
 		}).
 		ToSql()
 

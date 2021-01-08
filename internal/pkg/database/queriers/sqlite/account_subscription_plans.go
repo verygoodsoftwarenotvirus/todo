@@ -53,7 +53,7 @@ func (q *Sqlite) scanPlan(scan database.Scanner, includeCount bool) (*types.Acco
 	return x, count, nil
 }
 
-// scanPlans takes a logger and some database rows and turns them into a slice of plans.
+// scanPlans takes some database rows and turns them into a slice of plans.
 func (q *Sqlite) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.AccountSubscriptionPlan, uint64, error) {
 	var (
 		list  []types.AccountSubscriptionPlan
@@ -92,7 +92,8 @@ func (q *Sqlite) buildGetPlanQuery(planID uint64) (query string, args []interfac
 		Select(queriers.PlansTableColumns...).
 		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.IDColumn): planID,
+			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.IDColumn):         planID,
+			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
 

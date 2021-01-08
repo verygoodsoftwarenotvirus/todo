@@ -67,5 +67,12 @@ func ApplyFilterToSubCountQueryBuilder(qf *types.QueryFilter, queryBuilder squir
 		queryBuilder = queryBuilder.Where(squirrel.Lt{fmt.Sprintf("%s.%s", tableName, LastUpdatedOnColumn): qf.UpdatedBefore})
 	}
 
+	if qf.IncludeArchived {
+		queryBuilder = queryBuilder.Where(squirrel.Or{
+			squirrel.Eq{fmt.Sprintf("%s.%s", tableName, ArchivedOnColumn): nil},
+			squirrel.NotEq{fmt.Sprintf("%s.%s", tableName, ArchivedOnColumn): nil},
+		})
+	}
+
 	return queryBuilder
 }

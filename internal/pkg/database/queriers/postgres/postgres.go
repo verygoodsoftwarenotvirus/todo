@@ -129,6 +129,14 @@ func (q *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, e
 	return q.db.BeginTx(ctx, opts)
 }
 
+// buildQuery builds a given query, handles whatever errors and returns just the query and args.
+func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (string, []interface{}) {
+	zQuery, zArgs, zErr := builder.ToSql()
+	q.logQueryBuildingError(zErr)
+
+	return zQuery, zArgs
+}
+
 // logQueryBuildingError logs errors that may occur during query construction.
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for

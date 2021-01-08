@@ -419,9 +419,7 @@ func (q *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clie
 
 // buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching audit log entries
 // associated with a given oauth2 client.
-func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
-	var err error
-
+func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (string, []interface{}) {
 	clientIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.OAuth2ClientAssignmentKey)
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
@@ -429,10 +427,7 @@ func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) 
 		Where(squirrel.Eq{clientIDKey: clientID}).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
-	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, args
+	return q.buildQuery(builder)
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches a audit log entries for a given oauth2 client from the database.

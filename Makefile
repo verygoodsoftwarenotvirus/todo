@@ -121,13 +121,13 @@ check-formatting: check-backend-formatting check-frontend-formatting
 
 ## Testing things
 
-.PHONY: docker-security-lint
-docker-security-lint:
+.PHONY: docker-lint
+docker-lint:
 	$(CONTAINER_RUNNER) run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:v0.21.0 test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
 
 .PHONY: lint
 lint:
-	@podman pull golangci/golangci-lint:latest
+	@$(CONTAINER_RUNNER) pull golangci/golangci-lint:latest
 	$(CONTAINER_RUNNER) run \
 		--rm \
 		--volume `pwd`:`pwd` \

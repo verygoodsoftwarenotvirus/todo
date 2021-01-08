@@ -103,7 +103,7 @@ func TestMariaDB_buildItemExistsQuery(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.belongs_to_user = ? AND items.id = ? )"
+		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.id = ? )"
 		expectedArgs := []interface{}{
 			exampleItem.BelongsToUser,
 			exampleItem.ID,
@@ -175,7 +175,7 @@ func TestMariaDB_buildGetItemQuery(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.belongs_to_user = ? AND items.id = ?"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.id = ?"
 		expectedArgs := []interface{}{
 			exampleItem.BelongsToUser,
 			exampleItem.ID,

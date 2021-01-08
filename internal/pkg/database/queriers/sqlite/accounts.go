@@ -44,7 +44,7 @@ func (q *Sqlite) scanAccount(scan database.Scanner, includeCount bool) (*types.A
 	return x, count, nil
 }
 
-// scanAccounts takes a logger and some database rows and turns them into a slice of accounts.
+// scanAccounts takes some database rows and turns them into a slice of accounts.
 func (q *Sqlite) scanAccounts(rows database.ResultIterator, includeCount bool) ([]types.Account, uint64, error) {
 	var (
 		list  []types.Account

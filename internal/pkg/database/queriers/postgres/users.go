@@ -551,9 +551,7 @@ func (q *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 
 // buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries
 // associated with a given user.
-func (q *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
+func (q *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (string, []interface{}) {
 	userIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.UserAssignmentKey)
 	performedByIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
 	builder := q.sqlBuilder.
@@ -565,10 +563,7 @@ func (q *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query str
 		}).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
-	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, args
+	return q.buildQuery(builder)
 }
 
 // GetAuditLogEntriesForUser fetches a audit log entries for a given user from the database.

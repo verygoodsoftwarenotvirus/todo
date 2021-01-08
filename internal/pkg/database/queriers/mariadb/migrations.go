@@ -153,6 +153,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS accounts_membership (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `primary_user_account` BOOLEAN NOT NULL DEFAULT false,",
 				"    `belongs_to_account` BIGINT UNSIGNED NOT NULL,",
 				"    `belongs_to_user` BIGINT UNSIGNED NOT NULL,",
 				"    `created_on` BIGINT UNSIGNED,",

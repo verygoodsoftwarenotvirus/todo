@@ -103,7 +103,7 @@ func TestMariaDB_buildAccountExistsQuery(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "SELECT EXISTS ( SELECT accounts.id FROM accounts WHERE accounts.belongs_to_user = ? AND accounts.id = ? )"
+		expectedQuery := "SELECT EXISTS ( SELECT accounts.id FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.id = ? )"
 		expectedArgs := []interface{}{
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
@@ -175,7 +175,7 @@ func TestMariaDB_buildGetAccountQuery(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.belongs_to_user = ? AND accounts.id = ?"
+		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.id = ?"
 		expectedArgs := []interface{}{
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,

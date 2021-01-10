@@ -130,7 +130,7 @@ func (q *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, e
 }
 
 // buildQuery builds a given query, handles whatever errors and returns just the query and args.
-func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (string, []interface{}) {
+func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
 	zQuery, zArgs, zErr := builder.ToSql()
 	q.logQueryBuildingError(zErr)
 

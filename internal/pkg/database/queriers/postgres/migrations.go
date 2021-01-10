@@ -93,6 +93,7 @@ var (
 				name CHARACTER VARYING NOT NULL,
 				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
+				is_personal_account BOOLEAN NOT NULL DEFAULT 'false',
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
 				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE
@@ -106,8 +107,6 @@ var (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
 				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
 				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-				is_primary_user_account BOOLEAN NOT NULL DEFAULT 'false',
-				is_personal_account BOOLEAN NOT NULL DEFAULT 'false',
 				user_account_permissions BIGINT NOT NULL DEFAULT 0,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				archived_on BIGINT DEFAULT NULL,

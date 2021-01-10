@@ -6,11 +6,10 @@ import (
 
 	"github.com/Masterminds/squirrel"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
+/*
 func (q *Postgres) scanAccountMembership(scan database.Scanner) (*types.AccountMembership, error) {
 	var (
 		x = &types.AccountMembership{}
@@ -18,7 +17,6 @@ func (q *Postgres) scanAccountMembership(scan database.Scanner) (*types.AccountM
 
 	targetVars := []interface{}{
 		&x.ID,
-		&x.PrimaryUserAccount,
 		&x.BelongsToUser,
 		&x.BelongsToAccount,
 		&x.CreatedOn,
@@ -62,8 +60,9 @@ func (q *Postgres) scanAccountMemberships(rows database.ResultIterator, includeC
 
 	return list, count, nil
 }
+*/
 
-func (q *Postgres) buildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (string, []interface{}) {
+func (q *Postgres) buildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.AccountsMembershipTableName).
 		Set(queriers.AccountsMembershipTablePrimaryUserAccountColumn, squirrel.And{
@@ -79,7 +78,7 @@ func (q *Postgres) buildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) 
 	)
 }
 
-// MarkAccountAsUserPrimary marks an account as the primary account
+// MarkAccountAsUserPrimary marks an account as the primary account.
 func (q *Postgres) MarkAccountAsUserPrimary(ctx context.Context, userID, accountID uint64) error {
 	query, args := q.buildMarkAccountAsUserPrimaryQuery(userID, accountID)
 
@@ -91,7 +90,7 @@ func (q *Postgres) MarkAccountAsUserPrimary(ctx context.Context, userID, account
 	return nil
 }
 
-func (q *Postgres) buildUserIsMemberOfAccountQuery(userID, accountID uint64) (string, []interface{}) {
+func (q *Postgres) buildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", queriers.AccountsMembershipTableName, queriers.IDColumn)).
 		Prefix(queriers.ExistencePrefix).

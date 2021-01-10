@@ -207,44 +207,44 @@ func (q *Postgres) GetAllWebhooks(ctx context.Context, resultChannel chan []type
 }
 
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
-func (q *Postgres) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
-		Select(allCountQuery).
-		From(queriers.WebhooksTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn):             nil,
-		})
-
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.WebhooksTableName)
+func (q *Postgres) buildGetWebhooksQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn):             nil,
+		fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
 	}
 
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
+	countQueryBuilder := q.sqlBuilder.
+		PlaceholderFormat(squirrel.Question).
+		Select(allCountQuery).
+		From(queriers.WebhooksTableName)
 
+	if !forAdmin {
+		countQueryBuilder = countQueryBuilder.Where(where)
+	}
+
+	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
 	builder := q.sqlBuilder.
 		Select(append(queriers.WebhooksTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.WebhooksTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn):             nil,
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.CreatedOnColumn))
+		From(queriers.WebhooksTableName)
+
+	if !forAdmin {
+		builder = builder.Where(where)
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.WebhooksTableName)
 	}
 
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	query, selectArgs := q.buildQuery(builder)
 
 	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (q *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
-	query, args := q.buildGetWebhooksQuery(userID, filter)
+	query, args := q.buildGetWebhooksQuery(userID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -262,9 +262,10 @@ func (q *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *types
 
 	x := &types.WebhookList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Webhooks: list,
 	}
@@ -405,7 +406,7 @@ func (q *Postgres) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID
 
 // buildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries
 // associated with a given webhook.
-func (q *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (string, []interface{}) {
+func (q *Postgres) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	webhookIDKey := fmt.Sprintf(jsonPluckQuery,
 		queriers.AuditLogEntriesTableName,
 		queriers.AuditLogEntriesTableContextColumn,

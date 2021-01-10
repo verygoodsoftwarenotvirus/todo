@@ -268,7 +268,7 @@ func (q *Postgres) GetAllUsersCount(ctx context.Context) (count uint64, err erro
 }
 
 // buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
-// to a given filter's criteria.
+// to a given filter's criteria. It is assumed that this is only accessible to site administrators.
 func (q *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
@@ -318,9 +318,10 @@ func (q *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 
 	x := &types.UserList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Users: userList,
 	}
@@ -551,7 +552,7 @@ func (q *Postgres) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 
 // buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries
 // associated with a given user.
-func (q *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (string, []interface{}) {
+func (q *Postgres) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	userIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.UserAssignmentKey)
 	performedByIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
 	builder := q.sqlBuilder.

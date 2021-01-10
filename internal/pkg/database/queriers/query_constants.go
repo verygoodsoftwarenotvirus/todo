@@ -32,6 +32,8 @@ const (
 	AccountsTableNameColumn = "name"
 	// AccountsTablePlanIDColumn is what the accounts table calls the <> column.
 	AccountsTablePlanIDColumn = "plan_id"
+	// AccountsTablePersonalAccountColumn is what the accounts table calls the user account permissions column.
+	AccountsTablePersonalAccountColumn = "is_personal_account"
 	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
 	AccountsTableUserOwnershipColumn = userOwnershipColumn
 
@@ -39,17 +41,15 @@ const (
 	// Accounts Membership Table.
 	//
 
-	// AccountsMembershipTableName is what the accounts table calls itself.
+	// AccountsMembershipTableName is what the accounts membership table calls itself.
 	AccountsMembershipTableName = "accounts_membership"
-	// AccountsMembershipTablePrimaryUserAccountColumn is what the accounts table calls the column indicating primary status.
+	// AccountsMembershipTablePrimaryUserAccountColumn is what the accounts membership table calls the column indicating primary status.
 	AccountsMembershipTablePrimaryUserAccountColumn = "is_primary_user_account"
-	// AccountsMembershipTablePersonalAccountColumn is what the accounts table calls the user account permissions column.
-	AccountsMembershipTablePersonalAccountColumn = "is_personal_account"
-	// AccountsMembershipTableUserAccountPermissionsColumn is what the accounts table calls the user account permissions column.
+	// AccountsMembershipTableUserAccountPermissionsColumn is what the accounts membership table calls the user account permissions column.
 	AccountsMembershipTableUserAccountPermissionsColumn = "user_account_permissions"
-	// AccountsMembershipTableAccountOwnershipColumn is what the accounts table calls the user ownership column.
+	// AccountsMembershipTableAccountOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsMembershipTableAccountOwnershipColumn = accountOwnershipColumn
-	// AccountsMembershipTableUserOwnershipColumn is what the accounts table calls the user ownership column.
+	// AccountsMembershipTableUserOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsMembershipTableUserOwnershipColumn = userOwnershipColumn
 
 	//

@@ -254,7 +254,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_site_admin, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on, (SELECT COUNT(*) FROM users WHERE users.archived_on IS NULL AND items.created_on > $1 AND items.created_on < $2 AND items.last_updated_on > $3 AND items.last_updated_on < $4) FROM users WHERE users.archived_on IS NULL AND users.created_on > $5 AND users.created_on < $6 AND users.last_updated_on > $7 AND users.last_updated_on < $8 ORDER BY users.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.is_site_admin, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on, (SELECT COUNT(*) FROM users WHERE users.archived_on IS NULL AND items.created_on > $1 AND items.created_on < $2 AND items.last_updated_on > $3 AND items.last_updated_on < $4 AND items.archived_on IS NULL) FROM users WHERE users.archived_on IS NULL AND users.created_on > $5 AND users.created_on < $6 AND users.last_updated_on > $7 AND users.last_updated_on < $8 ORDER BY users.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,

@@ -18,7 +18,7 @@ func TestPostgres_buildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "UPDATE accounts_membership SET primary_user_account = (belongs_to_user = $1 AND belongs_to_account = $2) WHERE belongs_to_user = $3 AND archived_on IS NOT NULL"
+		expectedQuery := "UPDATE accounts_membership SET is_primary_user_account = (belongs_to_user = $1 AND belongs_to_account = $2) WHERE belongs_to_user = $3 AND archived_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,

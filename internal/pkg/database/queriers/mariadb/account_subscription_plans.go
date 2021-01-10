@@ -54,7 +54,7 @@ func (q *MariaDB) scanPlan(scan database.Scanner, includeCount bool) (*types.Acc
 }
 
 // scanPlans takes some database rows and turns them into a slice of plans.
-func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.AccountSubscriptionPlan, uint64, error) {
+func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.AccountSubscriptionPlan, error) {
 	var (
 		list  []types.AccountSubscriptionPlan
 		count uint64
@@ -63,7 +63,7 @@ func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCount bool) ([]
 	for rows.Next() {
 		x, c, err := q.scanPlan(rows, includeCount)
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 
 		if count == 0 && includeCount {
@@ -74,14 +74,14 @@ func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCount bool) ([]
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
 		q.logger.Error(closeErr, "closing database rows")
 	}
 
-	return list, count, nil
+	return list, nil
 }
 
 // buildGetPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
@@ -143,10 +143,6 @@ func (q *MariaDB) buildGetPlansQuery(filter *types.QueryFilter) (query string, a
 			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		})
 
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.AccountSubscriptionPlansTableName)
-	}
-
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
 	q.logQueryBuildingError(err)
 
@@ -177,16 +173,15 @@ func (q *MariaDB) GetAccountSubscriptionPlans(ctx context.Context, filter *types
 		return nil, fmt.Errorf("querying database for plans: %w", err)
 	}
 
-	plans, count, err := q.scanPlans(rows, true)
+	plans, err := q.scanPlans(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
 	list := &types.AccountSubscriptionPlanList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:  filter.Page,
+			Limit: filter.Limit,
 		},
 		Plans: plans,
 	}

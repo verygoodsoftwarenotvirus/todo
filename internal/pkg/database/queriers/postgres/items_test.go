@@ -24,7 +24,8 @@ func buildMockRowsFromItems(includeCount bool, items ...*types.Item) *sqlmock.Ro
 	columns := queriers.ItemsTableColumns
 
 	if includeCount {
-		columns = append(columns, "count")
+		columns = append(columns, "filtered_count")
+		columns = append(columns, "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -41,7 +42,7 @@ func buildMockRowsFromItems(includeCount bool, items ...*types.Item) *sqlmock.Ro
 		}
 
 		if includeCount {
-			rowValues = append(rowValues, len(items))
+			rowValues = append(rowValues, len(items)/2, len(items))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -461,7 +462,7 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $6 AND items.created_on > $7 AND items.created_on < $8 AND items.last_updated_on > $9 AND items.last_updated_on < $10 ORDER BY items.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, COUNT(items.id), (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $1 AND items.created_on > $2 AND items.created_on < $3 AND items.last_updated_on > $4 AND items.last_updated_on < $5 AND items.archived_on IS NULL) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = $6 AND items.created_on > $7 AND items.created_on < $8 AND items.last_updated_on > $9 AND items.last_updated_on < $10 ORDER BY items.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -475,6 +476,57 @@ func TestPostgres_buildGetItemsQuery(T *testing.T) {
 			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.buildGetItemsQuery(exampleUser.ID, false, filter)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+
+	T.Run("for admin without archived", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		filter := fakes.BuildFleshedOutQueryFilter()
+
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, COUNT(items.id), (SELECT COUNT(*) FROM items WHERE items.created_on > $1 AND items.created_on < $2 AND items.last_updated_on > $3 AND items.last_updated_on < $4 AND items.archived_on IS NULL) FROM items WHERE items.created_on > $5 AND items.created_on < $6 AND items.last_updated_on > $7 AND items.last_updated_on < $8 ORDER BY items.created_on LIMIT 20 OFFSET 180"
+		expectedArgs := []interface{}{
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
+		}
+		actualQuery, actualArgs := q.buildGetItemsQuery(exampleUser.ID, true, filter)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+
+	T.Run("for admin with archived", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		filter := fakes.BuildFleshedOutQueryFilter()
+		filter.IncludeArchived = true
+
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, COUNT(items.id), (SELECT COUNT(*) FROM items WHERE items.created_on > $1 AND items.created_on < $2 AND items.last_updated_on > $3 AND items.last_updated_on < $4) FROM items WHERE items.created_on > $5 AND items.created_on < $6 AND items.last_updated_on > $7 AND items.last_updated_on < $8 ORDER BY items.created_on LIMIT 20 OFFSET 180"
+		expectedArgs := []interface{}{
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
+		}
+		actualQuery, actualArgs := q.buildGetItemsQuery(exampleUser.ID, true, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

@@ -85,7 +85,7 @@ func (q *Postgres) scanPlans(rows database.ResultIterator, includeCount bool) ([
 }
 
 // buildGetPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
-func (q *Postgres) buildGetPlanQuery(planID uint64) (string, []interface{}) {
+func (q *Postgres) buildGetPlanQuery(planID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(queriers.PlansTableColumns...).
 		From(queriers.AccountSubscriptionPlansTableName).
@@ -128,17 +128,13 @@ func (q *Postgres) GetAllAccountSubscriptionPlansCount(ctx context.Context) (cou
 
 // buildGetPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Postgres) buildGetPlansQuery(filter *types.QueryFilter) (string, []interface{}) {
+func (q *Postgres) buildGetPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
 		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		})
-
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.AccountSubscriptionPlansTableName)
-	}
 
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
 	q.logQueryBuildingError(err)
@@ -177,9 +173,10 @@ func (q *Postgres) GetAccountSubscriptionPlans(ctx context.Context, filter *type
 
 	list := &types.AccountSubscriptionPlanList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Plans: plans,
 	}
@@ -188,7 +185,7 @@ func (q *Postgres) GetAccountSubscriptionPlans(ctx context.Context, filter *type
 }
 
 // buildCreatePlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (q *Postgres) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (string, []interface{}) {
+func (q *Postgres) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(queriers.AccountSubscriptionPlansTableName).
 		Columns(
@@ -228,7 +225,7 @@ func (q *Postgres) CreateAccountSubscriptionPlan(ctx context.Context, input *typ
 }
 
 // buildUpdatePlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
-func (q *Postgres) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (string, []interface{}) {
+func (q *Postgres) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.AccountSubscriptionPlansTableName).
 		Set(queriers.AccountSubscriptionPlansTableNameColumn, input.Name).
@@ -250,7 +247,7 @@ func (q *Postgres) UpdateAccountSubscriptionPlan(ctx context.Context, input *typ
 }
 
 // buildArchivePlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
-func (q *Postgres) buildArchivePlanQuery(planID uint64) (string, []interface{}) {
+func (q *Postgres) buildArchivePlanQuery(planID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.AccountSubscriptionPlansTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -294,7 +291,7 @@ func (q *Postgres) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, u
 
 // buildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
-func (q *Postgres) buildGetAuditLogEntriesForPlanQuery(planID uint64) (string, []interface{}) {
+func (q *Postgres) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
 	planIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)
 
 	return q.buildQuery(q.sqlBuilder.

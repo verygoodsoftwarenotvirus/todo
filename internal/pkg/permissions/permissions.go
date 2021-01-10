@@ -18,5 +18,5 @@ type SiteAdminPermissionsSummary struct {
 type UserAccountPermissionChecker interface {
 	CanCreateItems() bool
 	CanUpdateItems() bool
-	CanDeleteItems() bool
+	CanArchiveItems() bool
 }

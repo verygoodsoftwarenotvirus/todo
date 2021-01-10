@@ -497,7 +497,7 @@ func TestPostgres_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(*) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1 AND oauth2_clients.created_on > $2 AND oauth2_clients.created_on < $3 AND oauth2_clients.last_updated_on > $4 AND oauth2_clients.last_updated_on < $5) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $6 AND oauth2_clients.created_on > $7 AND oauth2_clients.created_on < $8 AND oauth2_clients.last_updated_on > $9 AND oauth2_clients.last_updated_on < $10 ORDER BY oauth2_clients.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT oauth2_clients.id, oauth2_clients.name, oauth2_clients.client_id, oauth2_clients.scopes, oauth2_clients.redirect_uri, oauth2_clients.client_secret, oauth2_clients.created_on, oauth2_clients.last_updated_on, oauth2_clients.archived_on, oauth2_clients.belongs_to_user, (SELECT COUNT(*) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $1) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL AND oauth2_clients.belongs_to_user = $2 AND oauth2_clients.created_on > $3 AND oauth2_clients.created_on < $4 AND oauth2_clients.last_updated_on > $5 AND oauth2_clients.last_updated_on < $6 ORDER BY oauth2_clients.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -510,7 +510,7 @@ func TestPostgres_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.buildGetOAuth2ClientsQuery(exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -532,7 +532,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -559,7 +559,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -579,7 +579,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -600,7 +600,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().

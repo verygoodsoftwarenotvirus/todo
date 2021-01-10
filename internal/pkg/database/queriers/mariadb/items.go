@@ -218,44 +218,44 @@ func (q *MariaDB) GetAllItems(ctx context.Context, resultChannel chan []types.It
 
 // buildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *MariaDB) buildGetItemsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	countQueryBuilder := q.sqlBuilder.
-		Select(allCountQuery).
-		From(queriers.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-		})
-
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.ItemsTableName)
+func (q *MariaDB) buildGetItemsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
+		fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
 	}
 
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
+	countQueryBuilder := q.sqlBuilder.
+		PlaceholderFormat(squirrel.Question).
+		Select(allCountQuery).
+		From(queriers.ItemsTableName)
 
+	if !forAdmin {
+		countQueryBuilder = countQueryBuilder.Where(where)
+	}
+
+	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
 	builder := q.sqlBuilder.
 		Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
-			fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn))
+		From(queriers.ItemsTableName)
+
+	if !forAdmin {
+		builder = builder.Where(where)
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.ItemsTableName)
 	}
 
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	query, selectArgs := q.buildQuery(builder)
 
 	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter.
 func (q *MariaDB) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.ItemList, error) {
-	query, args := q.buildGetItemsQuery(userID, filter)
+	query, args := q.buildGetItemsQuery(userID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -269,9 +269,10 @@ func (q *MariaDB) GetItems(ctx context.Context, userID uint64, filter *types.Que
 
 	list := &types.ItemList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Items: items,
 	}
@@ -279,49 +280,9 @@ func (q *MariaDB) GetItems(ctx context.Context, userID uint64, filter *types.Que
 	return list, nil
 }
 
-// buildGetItemsForAdminQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
-// and returns both the query and the relevant args to pass to the query executor.
-func (q *MariaDB) buildGetItemsForAdminQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	if filter == nil {
-		filter = types.DefaultQueryFilter()
-	}
-
-	where := squirrel.Eq{}
-	if !filter.IncludeArchived {
-		where[fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn)] = nil
-	}
-
-	countQueryBuilder := queriers.ApplyFilterToSubCountQueryBuilder(
-		filter,
-		q.sqlBuilder.
-			Select(allCountQuery).
-			From(queriers.ItemsTableName).
-			Where(where),
-		queriers.ItemsTableName,
-	)
-
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
-
-	builder := queriers.ApplyFilterToQueryBuilder(
-		filter,
-		q.sqlBuilder.
-			Select(append(queriers.ItemsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-			From(queriers.ItemsTableName).
-			Where(where).
-			OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn)),
-		queriers.ItemsTableName,
-	)
-
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, append(countQueryArgs, selectArgs...)
-}
-
 // GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
 func (q *MariaDB) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.ItemList, error) {
-	query, args := q.buildGetItemsForAdminQuery(filter)
+	query, args := q.buildGetItemsQuery(0, true, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -335,9 +296,10 @@ func (q *MariaDB) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilte
 
 	list := &types.ItemList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Items: items,
 	}

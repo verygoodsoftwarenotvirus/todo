@@ -316,9 +316,10 @@ func (q *MariaDB) GetUsers(ctx context.Context, filter *types.QueryFilter) (*typ
 
 	x := &types.UserList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Users: userList,
 	}

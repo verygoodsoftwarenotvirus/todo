@@ -509,7 +509,7 @@ func TestMariaDB_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -531,7 +531,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -558,7 +558,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -578,7 +578,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -598,7 +598,7 @@ func TestMariaDB_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetOAuth2ClientsForUserQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

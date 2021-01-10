@@ -143,10 +143,6 @@ func (q *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, ar
 			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		})
 
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.AccountSubscriptionPlansTableName)
-	}
-
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
 	q.logQueryBuildingError(err)
 
@@ -184,9 +180,10 @@ func (q *Sqlite) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 
 	list := &types.AccountSubscriptionPlanList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Plans: plans,
 	}

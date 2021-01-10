@@ -206,12 +206,8 @@ func TestPostgres_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(*) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > $1 AND account_subscription_plans.created_on < $2 AND account_subscription_plans.last_updated_on > $3 AND account_subscription_plans.last_updated_on < $4) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > $5 AND account_subscription_plans.created_on < $6 AND account_subscription_plans.last_updated_on > $7 AND account_subscription_plans.last_updated_on < $8 ORDER BY account_subscription_plans.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(*) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > $1 AND account_subscription_plans.created_on < $2 AND account_subscription_plans.last_updated_on > $3 AND account_subscription_plans.last_updated_on < $4 ORDER BY account_subscription_plans.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,

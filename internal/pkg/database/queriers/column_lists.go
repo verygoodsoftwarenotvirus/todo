@@ -30,6 +30,7 @@ var (
 		fmt.Sprintf("%s.%s", AccountsTableName, IDColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableNameColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePlanIDColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePersonalAccountColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, ArchivedOnColumn),

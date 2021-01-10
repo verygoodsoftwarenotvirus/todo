@@ -91,18 +91,18 @@ func (p *AccountUserPermissions) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// CanCycleCookieSecrets determines whether or not a user can cycle cookie secrets.
+// CanCreateItems determines whether or not a user can create items.
 func (p AccountUserPermissions) CanCreateItems() bool {
 	return p&canCreateItemPermissions != 0
 }
 
-// CanBanUsers determines whether or not a user can ban users.
+// CanUpdateItems determines whether or not a user can update items.
 func (p AccountUserPermissions) CanUpdateItems() bool {
 	return p&canUpdateItemPermissions != 0
 }
 
-// CanTerminateAccounts determines whether or not a user can terminate accounts.
-func (p AccountUserPermissions) CanDeleteItems() bool {
+// CanArchiveItems determines whether or not a user can archive items.
+func (p AccountUserPermissions) CanArchiveItems() bool {
 	return p&canDeleteItemPermissions != 0
 }
 

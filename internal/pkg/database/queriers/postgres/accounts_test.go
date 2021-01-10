@@ -33,6 +33,7 @@ func buildMockRowsFromAccounts(includeCount bool, accounts ...*types.Account) *s
 			x.ID,
 			x.Name,
 			x.PlanID,
+			x.PersonalAccount,
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,
@@ -54,6 +55,7 @@ func buildErroneousMockRowFromAccount(x *types.Account) *sqlmock.Rows {
 		x.ArchivedOn,
 		x.Name,
 		x.PlanID,
+		x.PersonalAccount,
 		x.CreatedOn,
 		x.LastUpdatedOn,
 		x.BelongsToUser,
@@ -175,7 +177,7 @@ func TestPostgres_buildGetAccountQuery(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1 AND accounts.id = $2"
+		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.is_personal_account, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1 AND accounts.id = $2"
 		expectedArgs := []interface{}{
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
@@ -283,7 +285,7 @@ func TestPostgres_buildGetBatchOfAccountsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.id > $1 AND accounts.id < $2"
+		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.is_personal_account, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.id > $1 AND accounts.id < $2"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -460,7 +462,7 @@ func TestPostgres_buildGetAccountsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, (SELECT COUNT(*) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1 AND accounts.created_on > $2 AND accounts.created_on < $3 AND accounts.last_updated_on > $4 AND accounts.last_updated_on < $5) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $6 AND accounts.created_on > $7 AND accounts.created_on < $8 AND accounts.last_updated_on > $9 AND accounts.last_updated_on < $10 ORDER BY accounts.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.is_personal_account, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, (SELECT COUNT(*) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $2 AND accounts.created_on > $3 AND accounts.created_on < $4 AND accounts.last_updated_on > $5 AND accounts.last_updated_on < $6 ORDER BY accounts.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -468,10 +470,6 @@ func TestPostgres_buildGetAccountsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 			exampleUser.ID,
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
 

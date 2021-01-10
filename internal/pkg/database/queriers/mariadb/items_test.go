@@ -464,7 +464,7 @@ func TestMariaDB_buildGetItemsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.buildGetItemsQuery(exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -484,7 +484,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItemList := fakes.BuildFakeItemList()
-		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -513,7 +513,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -535,7 +535,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -559,7 +559,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(exampleUser.ID, false, filter)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
@@ -569,34 +569,6 @@ func TestMariaDB_GetItems(T *testing.T) {
 		assert.Nil(t, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestMariaDB_buildGetItemsForAdminQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-
-		filter := fakes.BuildFleshedOutQueryFilter()
-
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) FROM items WHERE items.archived_on IS NULL AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? ORDER BY items.created_on LIMIT 20 OFFSET 180"
-		expectedArgs := []interface{}{
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
-		}
-		actualQuery, actualArgs := q.buildGetItemsForAdminQuery(filter)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
@@ -611,7 +583,7 @@ func TestMariaDB_GetItemsForAdmin(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleItemList := fakes.BuildFakeItemList()
-		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -639,7 +611,7 @@ func TestMariaDB_GetItemsForAdmin(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -661,7 +633,7 @@ func TestMariaDB_GetItemsForAdmin(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -685,7 +657,7 @@ func TestMariaDB_GetItemsForAdmin(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildGetItemsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetItemsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

@@ -232,46 +232,46 @@ func (q *Postgres) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error
 	return count, err
 }
 
-// buildGetOAuth2ClientsForUserQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
+// buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (q *Postgres) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
-		Select(allCountQuery).
-		From(queriers.OAuth2ClientsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
-		})
-
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.OAuth2ClientsTableName)
+func (q *Postgres) buildGetOAuth2ClientsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
+		fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
 	}
 
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
+	countQueryBuilder := q.sqlBuilder.
+		PlaceholderFormat(squirrel.Question).
+		Select(allCountQuery).
+		From(queriers.OAuth2ClientsTableName)
 
+	if !forAdmin {
+		countQueryBuilder = countQueryBuilder.Where(where)
+	}
+
+	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
 	builder := q.sqlBuilder.
 		Select(append(queriers.OAuth2ClientsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.OAuth2ClientsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.CreatedOnColumn))
+		From(queriers.OAuth2ClientsTableName)
+
+	if !forAdmin {
+		builder = builder.Where(where)
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.OAuth2ClientsTableName)
 	}
 
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	query, selectArgs := q.buildQuery(builder)
 
 	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
 func (q *Postgres) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
-	query, args := q.buildGetOAuth2ClientsForUserQuery(userID, filter)
+	query, args := q.buildGetOAuth2ClientsQuery(userID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -289,9 +289,10 @@ func (q *Postgres) GetOAuth2Clients(ctx context.Context, userID uint64, filter *
 
 	ocl := &types.OAuth2ClientList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Clients: list,
 	}
@@ -419,7 +420,7 @@ func (q *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clie
 
 // buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching audit log entries
 // associated with a given oauth2 client.
-func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (string, []interface{}) {
+func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
 	clientIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.OAuth2ClientAssignmentKey)
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).

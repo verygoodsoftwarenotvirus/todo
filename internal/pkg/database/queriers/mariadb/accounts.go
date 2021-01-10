@@ -27,6 +27,7 @@ func (q *MariaDB) scanAccount(scan database.Scanner, includeCount bool) (*types.
 		&x.ID,
 		&x.Name,
 		&x.PlanID,
+		&x.PersonalAccount,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -218,44 +219,44 @@ func (q *MariaDB) GetAllAccounts(ctx context.Context, resultChannel chan []types
 
 // buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *MariaDB) buildGetAccountsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	countQueryBuilder := q.sqlBuilder.
-		Select(allCountQuery).
-		From(queriers.AccountsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn):                 nil,
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
-		})
-
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.AccountsTableName)
+func (q *MariaDB) buildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn):                 nil,
+		fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
 	}
 
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
+	countQueryBuilder := q.sqlBuilder.
+		PlaceholderFormat(squirrel.Question).
+		Select(allCountQuery).
+		From(queriers.AccountsTableName)
 
+	if !forAdmin {
+		countQueryBuilder = countQueryBuilder.Where(where)
+	}
+
+	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
 	builder := q.sqlBuilder.
 		Select(append(queriers.AccountsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.AccountsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn):                 nil,
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.CreatedOnColumn))
+		From(queriers.AccountsTableName)
+
+	if !forAdmin {
+		builder = builder.Where(where)
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.AccountsTableName)
 	}
 
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	query, selectArgs := q.buildQuery(builder)
 
 	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetAccounts fetches a list of accounts from the database that meet a particular filter.
 func (q *MariaDB) GetAccounts(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.AccountList, error) {
-	query, args := q.buildGetAccountsQuery(userID, filter)
+	query, args := q.buildGetAccountsQuery(userID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -269,9 +270,10 @@ func (q *MariaDB) GetAccounts(ctx context.Context, userID uint64, filter *types.
 
 	list := &types.AccountList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Accounts: accounts,
 	}
@@ -279,49 +281,9 @@ func (q *MariaDB) GetAccounts(ctx context.Context, userID uint64, filter *types.
 	return list, nil
 }
 
-// buildGetAccountsForAdminQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
-// and returns both the query and the relevant args to pass to the query executor.
-func (q *MariaDB) buildGetAccountsForAdminQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	if filter == nil {
-		filter = types.DefaultQueryFilter()
-	}
-
-	where := squirrel.Eq{}
-	if !filter.IncludeArchived {
-		where[fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn)] = nil
-	}
-
-	countQueryBuilder := queriers.ApplyFilterToSubCountQueryBuilder(
-		filter,
-		q.sqlBuilder.
-			Select(allCountQuery).
-			From(queriers.AccountsTableName).
-			Where(where),
-		queriers.AccountsTableName,
-	)
-
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
-
-	builder := queriers.ApplyFilterToQueryBuilder(
-		filter,
-		q.sqlBuilder.
-			Select(append(queriers.AccountsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-			From(queriers.AccountsTableName).
-			Where(where).
-			OrderBy(fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.CreatedOnColumn)),
-		queriers.AccountsTableName,
-	)
-
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, append(countQueryArgs, selectArgs...)
-}
-
 // GetAccountsForAdmin fetches a list of accounts from the database that meet a particular filter for all users.
 func (q *MariaDB) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.AccountList, error) {
-	query, args := q.buildGetAccountsForAdminQuery(filter)
+	query, args := q.buildGetAccountsQuery(0, true, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -335,9 +297,10 @@ func (q *MariaDB) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFi
 
 	list := &types.AccountList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Accounts: accounts,
 	}

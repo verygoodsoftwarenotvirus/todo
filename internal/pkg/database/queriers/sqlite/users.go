@@ -304,9 +304,10 @@ func (q *Sqlite) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 
 	x := &types.UserList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Users: userList,
 	}

@@ -34,17 +34,17 @@ func TestAccountUserPermissions_CanUpdateItems(T *testing.T) {
 	})
 }
 
-func TestAccountUserPermissions_CanDeleteItems(T *testing.T) {
+func TestAccountUserPermissions_CanArchiveItems(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		x := AccountUserPermissions(0)
-		assert.False(t, x.CanDeleteItems())
+		assert.False(t, x.CanArchiveItems())
 
 		y := AccountUserPermissions(0 | uint32(canTerminateAccountsPermission))
-		assert.True(t, y.CanDeleteItems())
+		assert.True(t, y.CanArchiveItems())
 	})
 }
 

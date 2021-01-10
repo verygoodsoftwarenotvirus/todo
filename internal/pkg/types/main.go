@@ -20,14 +20,10 @@ type (
 
 	// Pagination represents a pagination request.
 	Pagination struct {
-		Page       uint64 `json:"page"`
-		Limit      uint8  `json:"limit"`
-		TotalCount uint64 `json:"totalCount"`
-	}
-
-	// CountResponse is what we respond with when a User requests a count of data types.
-	CountResponse struct {
-		Count uint64 `json:"count"`
+		Page          uint64 `json:"page"`
+		Limit         uint8  `json:"limit"`
+		FilteredCount uint64 `json:"filteredCount"`
+		TotalCount    uint64 `json:"totalCount"`
 	}
 
 	// ErrorResponse represents a response we might send to the User in the event of an error.

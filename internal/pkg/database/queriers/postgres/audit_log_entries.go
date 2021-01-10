@@ -181,10 +181,6 @@ func (q *Postgres) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (quer
 		Select(allCountQuery).
 		From(queriers.AuditLogEntriesTableName)
 
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.AuditLogEntriesTableName)
-	}
-
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
 	q.logQueryBuildingError(err)
 
@@ -219,9 +215,10 @@ func (q *Postgres) GetAuditLogEntries(ctx context.Context, filter *types.QueryFi
 
 	list := &types.AuditLogEntryList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Entries: auditLogEntries,
 	}

@@ -33,6 +33,7 @@ func buildMockRowsFromAccounts(includeCount bool, accounts ...*types.Account) *s
 			x.ID,
 			x.Name,
 			x.PlanID,
+			x.PersonalAccount,
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,
@@ -54,6 +55,7 @@ func buildErroneousMockRowFromAccount(x *types.Account) *sqlmock.Rows {
 		x.ArchivedOn,
 		x.Name,
 		x.PlanID,
+		x.PersonalAccount,
 		x.CreatedOn,
 		x.LastUpdatedOn,
 		x.BelongsToUser,
@@ -464,7 +466,7 @@ func TestMariaDB_buildGetAccountsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetAccountsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -484,7 +486,7 @@ func TestMariaDB_GetAccounts(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccountList := fakes.BuildFakeAccountList()
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -513,7 +515,7 @@ func TestMariaDB_GetAccounts(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -535,7 +537,7 @@ func TestMariaDB_GetAccounts(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -559,7 +561,7 @@ func TestMariaDB_GetAccounts(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromAccount(exampleAccount))
@@ -569,34 +571,6 @@ func TestMariaDB_GetAccounts(T *testing.T) {
 		assert.Nil(t, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
-func TestMariaDB_buildGetAccountsForAdminQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-
-		filter := fakes.BuildFleshedOutQueryFilter()
-
-		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, (SELECT COUNT(*) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.created_on > ? AND accounts.created_on < ? AND accounts.last_updated_on > ? AND accounts.last_updated_on < ?) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.created_on > ? AND accounts.created_on < ? AND accounts.last_updated_on > ? AND accounts.last_updated_on < ? ORDER BY accounts.created_on LIMIT 20 OFFSET 180"
-		expectedArgs := []interface{}{
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
-		}
-		actualQuery, actualArgs := q.buildGetAccountsForAdminQuery(filter)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
@@ -611,7 +585,7 @@ func TestMariaDB_GetAccountsForAdmin(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleAccountList := fakes.BuildFakeAccountList()
-		expectedQuery, expectedArgs := q.buildGetAccountsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -639,7 +613,7 @@ func TestMariaDB_GetAccountsForAdmin(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetAccountsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -661,7 +635,7 @@ func TestMariaDB_GetAccountsForAdmin(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetAccountsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -685,7 +659,7 @@ func TestMariaDB_GetAccountsForAdmin(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildGetAccountsForAdminQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

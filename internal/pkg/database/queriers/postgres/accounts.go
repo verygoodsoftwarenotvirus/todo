@@ -27,6 +27,7 @@ func (q *Postgres) scanAccount(scan database.Scanner, includeCount bool) (*types
 		&x.ID,
 		&x.Name,
 		&x.PlanID,
+		&x.PersonalAccount,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
@@ -215,32 +216,30 @@ func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []type
 // buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Postgres) buildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	where := squirrel.Eq{}
-	if forAdmin {
-		if filter != nil && filter.IncludeArchived {
-			where[fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn)] = nil
-		}
-	} else {
-		where[fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn)] = nil
-		where[fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ItemsTableUserOwnershipColumn)] = userID
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn):                 nil,
+		fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
 	}
 
-	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
+	countQueryBuilder := q.sqlBuilder.
+		PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
-		From(queriers.AccountsTableName).
-		Where(where)
+		From(queriers.AccountsTableName)
 
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.AccountsTableName)
+	if !forAdmin {
+		countQueryBuilder = countQueryBuilder.Where(where)
 	}
 
 	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
-
 	builder := q.sqlBuilder.
 		Select(append(queriers.AccountsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.AccountsTableName).
-		Where(where).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.CreatedOnColumn))
+		From(queriers.AccountsTableName)
+
+	if !forAdmin {
+		builder = builder.Where(where)
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.AccountsTableName)
@@ -267,9 +266,10 @@ func (q *Postgres) GetAccounts(ctx context.Context, userID uint64, filter *types
 
 	list := &types.AccountList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Accounts: accounts,
 	}
@@ -293,9 +293,10 @@ func (q *Postgres) GetAccountsForAdmin(ctx context.Context, filter *types.QueryF
 
 	list := &types.AccountList{
 		Pagination: types.Pagination{
-			Page:       filter.Page,
-			Limit:      filter.Limit,
-			TotalCount: count,
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: count,
+			TotalCount:    count,
 		},
 		Accounts: accounts,
 	}
@@ -421,7 +422,7 @@ func (q *Postgres) LogAccountArchiveEvent(ctx context.Context, userID, accountID
 
 // buildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries
 // associated with a given account.
-func (q *Postgres) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (string, []interface{}) {
+func (q *Postgres) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
 	accountIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountAssignmentKey)
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).

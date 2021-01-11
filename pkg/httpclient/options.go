@@ -65,6 +65,7 @@ func WithHTTPClient(client *http.Client) func(*Client) {
 func WithDebugEnabled() func(*Client) {
 	return func(c *Client) {
 		c.debug = true
+		c.logger.SetLevel(logging.DebugLevel)
 	}
 }
 

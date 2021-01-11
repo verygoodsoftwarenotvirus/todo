@@ -29,9 +29,10 @@ func BuildFakePlanList() *types.AccountSubscriptionPlanList {
 
 	return &types.AccountSubscriptionPlanList{
 		Pagination: types.Pagination{
-			Page:       1,
-			Limit:      20,
-			TotalCount: exampleQuantity,
+			Page:          1,
+			Limit:         20,
+			FilteredCount: exampleQuantity / 2,
+			TotalCount:    exampleQuantity,
 		},
 		Plans: examples,
 	}

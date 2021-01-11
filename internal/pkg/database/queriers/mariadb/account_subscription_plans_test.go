@@ -22,7 +22,7 @@ import (
 )
 
 func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
-	columns := queriers.PlansTableColumns
+	columns := queriers.AccountSubscriptionPlansTableColumns
 
 	if includeCount {
 		columns = append(columns, "count")
@@ -53,7 +53,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscripti
 }
 
 func buildErroneousMockRowFromPlan(x *types.AccountSubscriptionPlan) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(queriers.PlansTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.AccountSubscriptionPlansTableColumns).AddRow(
 		x.Name,
 		x.ID,
 		x.Description,
@@ -78,7 +78,7 @@ func TestMariaDB_ScanPlans(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanPlans(mockRows, false)
+		_, err := q.scanPlans(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -91,7 +91,7 @@ func TestMariaDB_ScanPlans(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanPlans(mockRows, false)
+		_, err := q.scanPlans(mockRows, false)
 		assert.NoError(t, err)
 	})
 }

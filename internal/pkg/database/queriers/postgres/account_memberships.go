@@ -9,59 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 )
 
-/*
-func (q *Postgres) scanAccountMembership(scan database.Scanner) (*types.AccountMembership, error) {
-	var (
-		x = &types.AccountMembership{}
-	)
-
-	targetVars := []interface{}{
-		&x.ID,
-		&x.BelongsToUser,
-		&x.BelongsToAccount,
-		&x.CreatedOn,
-		&x.ArchivedOn,
-	}
-
-	if err := scan.Scan(targetVars...); err != nil {
-		return nil, err
-	}
-
-	return x, nil
-}
-
-// scanAccountMemberships takes some database rows and turns them into a slice of accounts.
-func (q *Postgres) scanAccountMemberships(rows database.ResultIterator, includeCount bool) ([]types.Account, uint64, error) {
-	var (
-		list  []types.Account
-		count uint64
-	)
-
-	for rows.Next() {
-		x, c, err := q.scanAccount(rows, includeCount)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		if count == 0 && includeCount {
-			count = c
-		}
-
-		list = append(list, *x)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, 0, err
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing database rows")
-	}
-
-	return list, count, nil
-}
-*/
-
 func (q *Postgres) buildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.AccountsMembershipTableName).

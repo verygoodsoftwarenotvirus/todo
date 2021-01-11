@@ -17,11 +17,8 @@ import (
 var _ types.ItemDataManager = (*Postgres)(nil)
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
-func (q *Postgres) scanItem(scan database.Scanner, includeCounts bool) (*types.Item, *types.Pagination, error) {
-	var (
-		x        = &types.Item{}
-		pageInfo = &types.Pagination{}
-	)
+func (q *Postgres) scanItem(scan database.Scanner, includeCounts bool) (x *types.Item, filteredCount, totalCount uint64, err error) {
+	x = &types.Item{}
 
 	targetVars := []interface{}{
 		&x.ID,
@@ -34,45 +31,47 @@ func (q *Postgres) scanItem(scan database.Scanner, includeCounts bool) (*types.I
 	}
 
 	if includeCounts {
-		targetVars = append(targetVars, &pageInfo.FilteredCount, &pageInfo.TotalCount)
+		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if err := scan.Scan(targetVars...); err != nil {
-		return nil, nil, err
+	if scanErr := scan.Scan(targetVars...); scanErr != nil {
+		return nil, 0, 0, scanErr
 	}
 
-	return x, pageInfo, nil
+	return x, filteredCount, totalCount, nil
 }
 
 // scanItems takes some database rows and turns them into a slice of items.
-func (q *Postgres) scanItems(rows database.ResultIterator, includeCounts bool) ([]types.Item, *types.Pagination, error) {
-	var (
-		list []types.Item
-		p    *types.Pagination
-	)
-
+func (q *Postgres) scanItems(rows database.ResultIterator, includeCounts bool) (items []types.Item, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		x, pd, err := q.scanItem(rows, includeCounts)
-		if err != nil {
-			return nil, nil, err
+		x, fc, tc, scanErr := q.scanItem(rows, includeCounts)
+		if scanErr != nil {
+			return nil, 0, 0, scanErr
 		}
 
-		if p == nil {
-			p = pd
+		if includeCounts {
+			if filteredCount == 0 {
+				filteredCount = fc
+			}
+
+			if totalCount == 0 {
+				totalCount = tc
+			}
 		}
 
-		list = append(list, *x)
+		items = append(items, *x)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, nil, err
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, 0, 0, rowsErr
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
 		q.logger.Error(closeErr, "closing database rows")
+		return nil, 0, 0, closeErr
 	}
 
-	return list, p, nil
+	return items, filteredCount, totalCount, nil
 }
 
 // buildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
@@ -120,7 +119,7 @@ func (q *Postgres) GetItem(ctx context.Context, itemID, userID uint64) (*types.I
 	query, args := q.buildGetItemQuery(itemID, userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	item, _, err := q.scanItem(row, false)
+	item, _, _, err := q.scanItem(row, false)
 
 	return item, err
 }
@@ -162,9 +161,9 @@ func (q *Postgres) buildGetBatchOfItemsQuery(beginID, endID uint64) (query strin
 // GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
 func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []types.Item) error {
-	count, err := q.GetAllItemsCount(ctx)
-	if err != nil {
-		return fmt.Errorf("error fetching count of items: %w", err)
+	count, countErr := q.GetAllItemsCount(ctx)
+	if countErr != nil {
+		return fmt.Errorf("error fetching count of items: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
@@ -177,17 +176,17 @@ func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []types.I
 				"end":   end,
 			})
 
-			rows, err := q.db.Query(query, args...)
-			if errors.Is(err, sql.ErrNoRows) {
+			rows, queryErr := q.db.Query(query, args...)
+			if errors.Is(queryErr, sql.ErrNoRows) {
 				return
-			} else if err != nil {
-				logger.Error(err, "querying for database rows")
+			} else if queryErr != nil {
+				logger.Error(queryErr, "querying for database rows")
 				return
 			}
 
-			items, _, err := q.scanItems(rows, false)
-			if err != nil {
-				logger.Error(err, "scanning database rows")
+			items, _, _, scanErr := q.scanItems(rows, false)
+			if scanErr != nil {
+				logger.Error(scanErr, "scanning database rows")
 				return
 			}
 
@@ -198,49 +197,17 @@ func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []types.I
 	return nil
 }
 
-/* TODO:
-basically I think all the list query functions should look like this to properly accommodate the filteredCount vs totalCount.
-*/
-
 // buildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Postgres) buildGetItemsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	where := squirrel.Eq{
-		fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ArchivedOnColumn):              nil,
-		fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.ItemsTableUserOwnershipColumn): userID,
-	}
-
-	countQueryBuilder := q.sqlBuilder.
-		PlaceholderFormat(squirrel.Question).
-		Select(allCountQuery).
-		From(queriers.ItemsTableName)
-
-	if !forAdmin {
-		countQueryBuilder = countQueryBuilder.Where(where)
-	}
-
-	if filter != nil {
-		countQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, queriers.ItemsTableName)
-	}
-
-	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
-	builder := q.sqlBuilder.
-		Select(append(queriers.ItemsTableColumns, fmt.Sprintf(columnCountQueryTemplate, queriers.ItemsTableName), fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.ItemsTableName)
-
-	if !forAdmin {
-		builder = builder.Where(where)
-	}
-
-	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.ItemsTableName, queriers.CreatedOnColumn))
-
-	if filter != nil {
-		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.ItemsTableName)
-	}
-
-	query, selectArgs := q.buildQuery(builder)
-
-	return query, append(countQueryArgs, selectArgs...)
+	return q.buildListQuery(
+		queriers.ItemsTableName,
+		queriers.ItemsTableUserOwnershipColumn,
+		queriers.ItemsTableColumns,
+		userID,
+		forAdmin,
+		filter,
+	)
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter.
@@ -252,17 +219,19 @@ func (q *Postgres) GetItems(ctx context.Context, userID uint64, filter *types.Qu
 		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
-	items, pageData, err := q.scanItems(rows, true)
+	items, filteredCount, totalCount, err := q.scanItems(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	pageData.Page = filter.Page
-	pageData.Limit = filter.Limit
-
 	list := &types.ItemList{
-		Pagination: *pageData,
-		Items:      items,
+		Pagination: types.Pagination{
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: filteredCount,
+			TotalCount:    totalCount,
+		},
+		Items: items,
 	}
 
 	return list, nil
@@ -277,17 +246,19 @@ func (q *Postgres) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilt
 		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
-	items, pageData, err := q.scanItems(rows, true)
+	items, filteredCount, totalCount, err := q.scanItems(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
-	pageData.Page = filter.Page
-	pageData.Limit = filter.Limit
-
 	list := &types.ItemList{
-		Pagination: *pageData,
-		Items:      items,
+		Pagination: types.Pagination{
+			Page:          filter.Page,
+			Limit:         filter.Limit,
+			FilteredCount: filteredCount,
+			TotalCount:    totalCount,
+		},
+		Items: items,
 	}
 
 	return list, nil
@@ -333,7 +304,7 @@ func (q *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uin
 		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
-	items, _, err := q.scanItems(rows, false)
+	items, _, _, err := q.scanItems(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -354,7 +325,7 @@ func (q *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids
 		return nil, fmt.Errorf("querying database for items: %w", err)
 	}
 
-	items, _, err := q.scanItems(rows, false)
+	items, _, _, err := q.scanItems(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}

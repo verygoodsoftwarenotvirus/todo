@@ -21,6 +21,7 @@ func TestAuditLogEntries(test *testing.T) {
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
+
 			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 
@@ -37,6 +38,7 @@ func TestAuditLogEntries(test *testing.T) {
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
+
 			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 

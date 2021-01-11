@@ -465,7 +465,7 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -486,7 +486,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -513,7 +513,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -534,7 +534,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -555,7 +555,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 		exampleWebhook := fakes.BuildFakeWebhook()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

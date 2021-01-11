@@ -51,12 +51,6 @@ func TestItems(test *testing.T) {
 			err = testClient.ArchiveItem(ctx, createdItem.ID)
 			assert.NoError(t, err)
 
-			actual, err := testClient.GetItem(ctx, createdItem.ID)
-			checkValueAndError(t, actual, err)
-			checkItemEquality(t, exampleItem, actual)
-			assert.NotNil(t, actual.ArchivedOn)
-			assert.NotZero(t, actual.ArchivedOn)
-
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 			auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)

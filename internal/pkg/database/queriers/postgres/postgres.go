@@ -3,19 +3,17 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
 	"github.com/luna-duclos/instrumentedsql"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 const (
@@ -129,14 +127,6 @@ func (q *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, e
 	return q.db.BeginTx(ctx, opts)
 }
 
-// buildQuery builds a given query, handles whatever errors and returns just the query and args.
-func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
-	zQuery, zArgs, zErr := builder.ToSql()
-	q.logQueryBuildingError(zErr)
-
-	return zQuery, zArgs
-}
-
 // logQueryBuildingError logs errors that may occur during query construction.
 // Such errors should be few and far between, as the generally only occur with
 // type discrepancies or other misuses of SQL. An alert should be set up for
@@ -146,14 +136,4 @@ func (q *Postgres) logQueryBuildingError(err error) {
 	if err != nil {
 		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
-}
-
-func joinUint64s(in []uint64) string {
-	out := []string{}
-
-	for _, x := range in {
-		out = append(out, strconv.FormatUint(x, 10))
-	}
-
-	return strings.Join(out, ",")
 }

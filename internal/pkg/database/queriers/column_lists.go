@@ -9,8 +9,8 @@ var (
 	// Plans Table.
 	//
 
-	// PlansTableColumns are the columns for the users table.
-	PlansTableColumns = []string{
+	// AccountSubscriptionPlansTableColumns are the columns for the users table.
+	AccountSubscriptionPlansTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, IDColumn),
 		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableNameColumn),
 		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableDescriptionColumn),

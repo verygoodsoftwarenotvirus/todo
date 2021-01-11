@@ -104,6 +104,9 @@ format-frontend:
 format-backend:
 	for file in `find $(PWD) -name '*.go'`; do $(GO_FORMAT) $$file; done
 
+.PHONY: fmt
+fmt: format
+
 .PHONY: format
 format: format-backend format-frontend
 

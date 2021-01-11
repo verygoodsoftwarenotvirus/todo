@@ -233,7 +233,7 @@ func (q *MariaDB) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error)
 
 // buildGetOAuth2ClientsForUserQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (q *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
 		fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
@@ -242,20 +242,14 @@ func (q *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, forAdmin bool
 	countQueryBuilder := q.sqlBuilder.
 		PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
-		From(queriers.OAuth2ClientsTableName)
-
-	if !forAdmin {
-		countQueryBuilder = countQueryBuilder.Where(where)
-	}
+		From(queriers.OAuth2ClientsTableName).
+		Where(where)
 
 	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
 	builder := q.sqlBuilder.
 		Select(append(queriers.OAuth2ClientsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.OAuth2ClientsTableName)
-
-	if !forAdmin {
-		builder = builder.Where(where)
-	}
+		From(queriers.OAuth2ClientsTableName).
+		Where(where)
 
 	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.CreatedOnColumn))
 
@@ -270,7 +264,7 @@ func (q *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, forAdmin bool
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
 func (q *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
-	query, args := q.buildGetOAuth2ClientsForUserQuery(userID, false, filter)
+	query, args := q.buildGetOAuth2ClientsForUserQuery(userID, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

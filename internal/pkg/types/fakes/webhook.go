@@ -34,9 +34,10 @@ func BuildFakeWebhookList() *types.WebhookList {
 
 	return &types.WebhookList{
 		Pagination: types.Pagination{
-			Page:       1,
-			Limit:      20,
-			TotalCount: exampleQuantity,
+			Page:          1,
+			Limit:         20,
+			FilteredCount: exampleQuantity / 2,
+			TotalCount:    exampleQuantity,
 		},
 		Webhooks: examples,
 	}

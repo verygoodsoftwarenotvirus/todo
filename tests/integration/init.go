@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -72,8 +72,9 @@ func initializeClient(oa2Client *types.OAuth2Client) *httpclient.Client {
 	uri := httpclient.MustParseURL(urlToUse)
 
 	c := httpclient.NewClient(
-		httpclient.WithHTTPClient(buildHTTPClient()),
 		httpclient.WithURL(uri),
+		httpclient.WithLogger(noop.NewLogger()),
+		httpclient.WithHTTPClient(buildHTTPClient()),
 		httpclient.WithOAuth2ClientCredentials(
 			httpclient.BuildClientCredentialsConfig(
 				uri,
@@ -86,12 +87,6 @@ func initializeClient(oa2Client *types.OAuth2Client) *httpclient.Client {
 
 	if debug {
 		c.SetOption(httpclient.WithDebugEnabled())
-	} else {
-		l := zerolog.NewLogger()
-		if !debug {
-			l.SetLevel(logging.InfoLevel)
-		}
-		c.SetOption(httpclient.WithLogger(l))
 	}
 
 	return c

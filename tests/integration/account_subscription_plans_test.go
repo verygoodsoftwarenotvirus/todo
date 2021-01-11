@@ -18,14 +18,14 @@ func checkPlanEquality(t *testing.T, expected, actual *types.AccountSubscription
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected BucketName for plan #%d to be %q, but it was %q ", expected.ID, expected.Name, actual.Name)
-	assert.Equal(t, expected.Description, actual.Description, "expected Description for plan #%d to be %q, but it was %q ", expected.ID, expected.Description, actual.Description)
-	assert.Equal(t, expected.Price, actual.Price, "expected Price for plan #%d to be %v, but it was %v ", expected.ID, expected.Price, actual.Price)
-	assert.Equal(t, expected.Period, actual.Period, "expected Period for plan #%d to be %v, but it was %v ", expected.ID, expected.Period, actual.Period)
+	assert.Equal(t, expected.Name, actual.Name, "expected BucketName for account subscription plan #%d to be %q, but it was %q ", expected.ID, expected.Name, actual.Name)
+	assert.Equal(t, expected.Description, actual.Description, "expected Description for account subscription plan #%d to be %q, but it was %q ", expected.ID, expected.Description, actual.Description)
+	assert.Equal(t, expected.Price, actual.Price, "expected Price for account subscription plan #%d to be %v, but it was %v ", expected.ID, expected.Price, actual.Price)
+	assert.Equal(t, expected.Period, actual.Period, "expected Period for account subscription plan #%d to be %v, but it was %v ", expected.ID, expected.Period, actual.Period)
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func TestPlans(test *testing.T) {
+func TestAccountSubscriptionPlans(test *testing.T) {
 	test.Parallel()
 
 	test.Run("Creating", func(subtest *testing.T) {
@@ -53,12 +53,6 @@ func TestPlans(test *testing.T) {
 			// Clean up.
 			err = adminClient.ArchivePlan(ctx, createdPlan.ID)
 			assert.NoError(t, err)
-
-			actual, err := adminClient.GetPlan(ctx, createdPlan.ID)
-			checkValueAndError(t, actual, err)
-			checkPlanEquality(t, examplePlan, actual)
-			assert.NotNil(t, actual.ArchivedOn)
-			assert.NotZero(t, actual.ArchivedOn)
 
 			auditLogEntries, err := adminClient.GetAuditLogForPlan(ctx, createdPlan.ID)
 
@@ -94,7 +88,7 @@ func TestPlans(test *testing.T) {
 			defer adminClientLock.Unlock()
 
 			// Create plans.
-			var expected []*types.AccountSubscriptionPlan
+			var created []*types.AccountSubscriptionPlan
 			for i := 0; i < 5; i++ {
 				// Create plan.
 				examplePlan := fakes.BuildFakePlan()
@@ -102,7 +96,7 @@ func TestPlans(test *testing.T) {
 				createdPlan, planCreationErr := adminClient.CreatePlan(ctx, examplePlanInput)
 				checkValueAndError(t, createdPlan, planCreationErr)
 
-				expected = append(expected, createdPlan)
+				created = append(created, createdPlan)
 			}
 
 			// Assert plan list equality.
@@ -110,16 +104,15 @@ func TestPlans(test *testing.T) {
 			checkValueAndError(t, actual, err)
 			assert.True(
 				t,
-				len(expected) <= len(actual.Plans),
-				"expected %d to be <= %d",
-				len(expected),
+				len(created) <= len(actual.Plans),
+				"created %d to be <= %d",
+				len(created),
 				len(actual.Plans),
 			)
 
 			// Clean up.
-			for _, createdPlan := range actual.Plans {
-				err = adminClient.ArchivePlan(ctx, createdPlan.ID)
-				assert.NoError(t, err)
+			for _, plan := range created {
+				assert.NoError(t, adminClient.ArchivePlan(ctx, plan.ID))
 			}
 		})
 	})

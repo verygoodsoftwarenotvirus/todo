@@ -19,11 +19,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
-	columns := queriers.PlansTableColumns
+func buildMockRowsFromPlans(includeCounts bool, filteredCount uint64, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
+	columns := queriers.AccountSubscriptionPlansTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -40,8 +40,8 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscripti
 			x.ArchivedOn,
 		}
 
-		if includeCount {
-			rowValues = append(rowValues, len(plans))
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(plans))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -51,7 +51,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscripti
 }
 
 func buildErroneousMockRowFromPlan(x *types.AccountSubscriptionPlan) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(queriers.PlansTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.AccountSubscriptionPlansTableColumns).AddRow(
 		x.Name,
 		x.ID,
 		x.Description,
@@ -76,7 +76,7 @@ func TestPostgres_ScanPlans(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanPlans(mockRows, false)
+		_, _, _, err := q.scanAccountSubscriptionPlans(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -89,8 +89,8 @@ func TestPostgres_ScanPlans(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanPlans(mockRows, false)
-		assert.NoError(t, err)
+		_, _, _, err := q.scanAccountSubscriptionPlans(mockRows, false)
+		assert.Error(t, err)
 	})
 }
 
@@ -107,7 +107,7 @@ func TestPostgres_buildGetPlanQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
-		actualQuery, actualArgs := q.buildGetPlanQuery(examplePlan.ID)
+		actualQuery, actualArgs := q.buildGetAccountSubscriptionPlanQuery(examplePlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -125,11 +125,11 @@ func TestPostgres_GetPlan(T *testing.T) {
 		examplePlan := fakes.BuildFakePlan()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetPlanQuery(examplePlan.ID)
+		expectedQuery, expectedArgs := q.buildGetAccountSubscriptionPlanQuery(examplePlan.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromPlans(false, examplePlan))
+			WillReturnRows(buildMockRowsFromPlans(false, 0, examplePlan))
 
 		actual, err := q.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
@@ -146,7 +146,7 @@ func TestPostgres_GetPlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := q.buildGetPlanQuery(examplePlan.ID)
+		expectedQuery, expectedArgs := q.buildGetAccountSubscriptionPlanQuery(examplePlan.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
@@ -168,7 +168,7 @@ func TestPostgres_buildGetAllPlansCountQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL"
-		actualQuery := q.buildGetAllPlansCountQuery()
+		actualQuery := q.buildGetAllAccountSubscriptionPlansCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -185,7 +185,7 @@ func TestPostgres_GetAllPlansCount(T *testing.T) {
 		expectedCount := uint64(123)
 
 		q, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(q.buildGetAllPlansCountQuery())).
+		mockDB.ExpectQuery(formatQueryForSQLMock(q.buildGetAllAccountSubscriptionPlansCountQuery())).
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
@@ -206,14 +206,18 @@ func TestPostgres_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(*) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > $1 AND account_subscription_plans.created_on < $2 AND account_subscription_plans.last_updated_on > $3 AND account_subscription_plans.last_updated_on < $4 ORDER BY account_subscription_plans.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL) as total_count, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > $1 AND account_subscription_plans.created_on < $2 AND account_subscription_plans.last_updated_on > $3 AND account_subscription_plans.last_updated_on < $4) as filtered_count FROM account_subscription_plans WHERE account_subscription_plans.created_on > $5 AND account_subscription_plans.created_on < $6 AND account_subscription_plans.last_updated_on > $7 AND account_subscription_plans.last_updated_on < $8 GROUP BY account_subscription_plans.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetPlansQuery(filter)
+		actualQuery, actualArgs := q.buildGetAccountSubscriptionPlansQuery(filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -232,13 +236,14 @@ func TestPostgres_GetPlans(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		examplePlanList := fakes.BuildFakePlanList()
-		expectedQuery, expectedArgs := q.buildGetPlansQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountSubscriptionPlansQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromPlans(
 					true,
+					examplePlanList.FilteredCount,
 					&examplePlanList.Plans[0],
 					&examplePlanList.Plans[1],
 					&examplePlanList.Plans[2],
@@ -260,7 +265,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetPlansQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountSubscriptionPlansQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -281,7 +286,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetPlansQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountSubscriptionPlansQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -303,7 +308,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery, expectedArgs := q.buildGetPlansQuery(filter)
+		expectedQuery, expectedArgs := q.buildGetAccountSubscriptionPlansQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -403,7 +408,7 @@ func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
 			examplePlan.Period.String(),
 			examplePlan.ID,
 		}
-		actualQuery, actualArgs := q.buildUpdatePlanQuery(examplePlan)
+		actualQuery, actualArgs := q.buildUpdateAccountSubscriptionPlanQuery(examplePlan)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -422,7 +427,7 @@ func TestPostgres_UpdatePlan(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
+		expectedQuery, expectedArgs := q.buildUpdateAccountSubscriptionPlanQuery(examplePlan)
 
 		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -443,7 +448,7 @@ func TestPostgres_UpdatePlan(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
+		expectedQuery, expectedArgs := q.buildUpdateAccountSubscriptionPlanQuery(examplePlan)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -469,7 +474,7 @@ func TestPostgres_buildArchivePlanQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			examplePlan.ID,
 		}
-		actualQuery, actualArgs := q.buildArchivePlanQuery(examplePlan.ID)
+		actualQuery, actualArgs := q.buildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -488,7 +493,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery, expectedArgs := q.buildArchivePlanQuery(examplePlan.ID)
+		expectedQuery, expectedArgs := q.buildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
@@ -507,7 +512,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery, expectedArgs := q.buildArchivePlanQuery(examplePlan.ID)
+		expectedQuery, expectedArgs := q.buildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
@@ -527,7 +532,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 
 		examplePlan := fakes.BuildFakePlan()
 
-		expectedQuery, expectedArgs := q.buildArchivePlanQuery(examplePlan.ID)
+		expectedQuery, expectedArgs := q.buildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))

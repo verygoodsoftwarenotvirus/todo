@@ -20,11 +20,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromWebhooks(includeCount bool, webhooks ...*types.Webhook) *sqlmock.Rows {
+func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhooks ...*types.Webhook) *sqlmock.Rows {
 	columns := queriers.WebhooksTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -45,8 +45,8 @@ func buildMockRowsFromWebhooks(includeCount bool, webhooks ...*types.Webhook) *s
 			w.BelongsToUser,
 		}
 
-		if includeCount {
-			rowValues = append(rowValues, len(webhooks))
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(webhooks))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -85,7 +85,7 @@ func TestPostgres_ScanWebhooks(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanWebhooks(mockRows, false)
+		_, _, _, err := q.scanWebhooks(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -98,8 +98,8 @@ func TestPostgres_ScanWebhooks(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanWebhooks(mockRows, false)
-		assert.NoError(t, err)
+		_, _, _, err := q.scanWebhooks(mockRows, false)
+		assert.Error(t, err)
 	})
 }
 
@@ -139,7 +139,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromWebhooks(false, exampleWebhook))
+			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhook))
 
 		actual, err := q.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)
@@ -314,6 +314,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
 					false,
+					0,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -453,7 +454,7 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $2 AND webhooks.created_on > $3 AND webhooks.created_on < $4 AND webhooks.last_updated_on > $5 AND webhooks.last_updated_on < $6 ORDER BY webhooks.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1) as total_count, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $2 AND webhooks.created_on > $3 AND webhooks.created_on < $4 AND webhooks.last_updated_on > $5 AND webhooks.last_updated_on < $6) as filtered_count FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $7 AND webhooks.created_on > $8 AND webhooks.created_on < $9 AND webhooks.last_updated_on > $10 AND webhooks.last_updated_on < $11 GROUP BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -461,12 +462,13 @@ func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 			exampleUser.ID,
+			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -487,13 +489,14 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
 					true,
+					exampleWebhookList.FilteredCount,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -514,7 +517,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -535,7 +538,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -556,7 +559,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 		exampleWebhook := fakes.BuildFakeWebhook()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.buildGetWebhooksQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

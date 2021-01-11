@@ -17,10 +17,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
+func buildMockRowsFromAuditLogEntries(includeCounts bool, auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
 	columns := queriers.AuditLogEntriesTableColumns
 
-	if includeCount {
+	if includeCounts {
 		columns = append(columns, "count")
 	}
 
@@ -34,7 +34,7 @@ func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*typ
 			x.CreatedOn,
 		}
 
-		if includeCount {
+		if includeCounts {
 			rowValues = append(rowValues, len(auditLogEntries))
 		}
 
@@ -80,7 +80,7 @@ func TestPostgres_ScanAuditLogEntries(T *testing.T) {
 		mockRows.On("Close").Return(errors.New("blah"))
 
 		_, _, err := q.scanAuditLogEntries(mockRows, false)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 }
 
@@ -378,10 +378,6 @@ func TestPostgres_buildGetAuditLogEntriesQuery(T *testing.T) {
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.buildGetAuditLogEntriesQuery(filter)
 
@@ -402,6 +398,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
+		exampleAuditLogEntryList.FilteredCount = 0
 		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).

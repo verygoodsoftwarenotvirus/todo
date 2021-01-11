@@ -19,11 +19,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromAccounts(includeCount bool, accounts ...*types.Account) *sqlmock.Rows {
+func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, accounts ...*types.Account) *sqlmock.Rows {
 	columns := queriers.AccountsTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -40,8 +40,8 @@ func buildMockRowsFromAccounts(includeCount bool, accounts ...*types.Account) *s
 			x.BelongsToUser,
 		}
 
-		if includeCount {
-			rowValues = append(rowValues, len(accounts))
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(accounts))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -76,7 +76,7 @@ func TestPostgres_ScanAccounts(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanAccounts(mockRows, false)
+		_, _, _, err := q.scanAccounts(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -89,8 +89,8 @@ func TestPostgres_ScanAccounts(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanAccounts(mockRows, false)
-		assert.NoError(t, err)
+		_, _, _, err := q.scanAccounts(mockRows, false)
+		assert.Error(t, err)
 	})
 }
 
@@ -207,7 +207,7 @@ func TestPostgres_GetAccount(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromAccounts(false, exampleAccount))
+			WillReturnRows(buildMockRowsFromAccounts(false, 0, exampleAccount))
 
 		actual, err := q.GetAccount(ctx, exampleAccount.ID, exampleUser.ID)
 		assert.NoError(t, err)
@@ -323,6 +323,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAccounts(
 					false,
+					0,
 					&exampleAccountList.Accounts[0],
 					&exampleAccountList.Accounts[1],
 					&exampleAccountList.Accounts[2],
@@ -462,7 +463,7 @@ func TestPostgres_buildGetAccountsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.is_personal_account, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, (SELECT COUNT(*) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $2 AND accounts.created_on > $3 AND accounts.created_on < $4 AND accounts.last_updated_on > $5 AND accounts.last_updated_on < $6 ORDER BY accounts.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT accounts.id, accounts.name, accounts.plan_id, accounts.is_personal_account, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1) as total_count, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $2 AND accounts.created_on > $3 AND accounts.created_on < $4 AND accounts.last_updated_on > $5 AND accounts.last_updated_on < $6) as filtered_count FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $7 AND accounts.created_on > $8 AND accounts.created_on < $9 AND accounts.last_updated_on > $10 AND accounts.last_updated_on < $11 GROUP BY accounts.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -470,6 +471,11 @@ func TestPostgres_buildGetAccountsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 			exampleUser.ID,
+			exampleUser.ID,
+			filter.CreatedAfter,
+			filter.CreatedBefore,
+			filter.UpdatedAfter,
+			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
 
@@ -498,6 +504,7 @@ func TestPostgres_GetAccounts(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAccounts(
 					true,
+					exampleAccountList.FilteredCount,
 					&exampleAccountList.Accounts[0],
 					&exampleAccountList.Accounts[1],
 					&exampleAccountList.Accounts[2],
@@ -598,6 +605,7 @@ func TestPostgres_GetAccountsForAdmin(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAccounts(
 					true,
+					exampleAccountList.FilteredCount,
 					&exampleAccountList.Accounts[0],
 					&exampleAccountList.Accounts[1],
 					&exampleAccountList.Accounts[2],

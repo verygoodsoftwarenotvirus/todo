@@ -20,74 +20,74 @@ import (
 var _ types.UserDataManager = (*Postgres)(nil)
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (q *Postgres) scanUser(scan database.Scanner, includeCount bool) (*types.User, uint64, error) {
-	var (
-		x     = &types.User{}
-		perms uint32
-		count uint64
-	)
+func (q *Postgres) scanUser(scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
+	user = &types.User{}
+
+	var perms uint32
 
 	targetVars := []interface{}{
-		&x.ID,
-		&x.Username,
-		&x.AvatarSrc,
-		&x.HashedPassword,
-		&x.Salt,
-		&x.RequiresPasswordChange,
-		&x.PasswordLastChangedOn,
-		&x.TwoFactorSecret,
-		&x.TwoFactorSecretVerifiedOn,
-		&x.IsSiteAdmin,
+		&user.ID,
+		&user.Username,
+		&user.AvatarSrc,
+		&user.HashedPassword,
+		&user.Salt,
+		&user.RequiresPasswordChange,
+		&user.PasswordLastChangedOn,
+		&user.TwoFactorSecret,
+		&user.TwoFactorSecretVerifiedOn,
+		&user.IsSiteAdmin,
 		&perms,
-		&x.AccountStatus,
-		&x.AccountStatusExplanation,
-		&x.CreatedOn,
-		&x.LastUpdatedOn,
-		&x.ArchivedOn,
+		&user.AccountStatus,
+		&user.AccountStatusExplanation,
+		&user.CreatedOn,
+		&user.LastUpdatedOn,
+		&user.ArchivedOn,
 	}
 
-	if includeCount {
-		targetVars = append(targetVars, &count)
+	if includeCounts {
+		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if err := scan.Scan(targetVars...); err != nil {
-		return nil, 0, err
+	if scanErr := scan.Scan(targetVars...); scanErr != nil {
+		return nil, 0, 0, scanErr
 	}
 
-	x.AdminPermissions = bitmask.NewPermissionBitmask(perms)
+	user.AdminPermissions = bitmask.NewPermissionBitmask(perms)
 
-	return x, count, nil
+	return user, filteredCount, totalCount, nil
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (q *Postgres) scanUsers(rows database.ResultIterator, includeCount bool) ([]types.User, uint64, error) {
-	var (
-		list  []types.User
-		count uint64
-	)
-
+func (q *Postgres) scanUsers(rows database.ResultIterator, includeCounts bool) (users []types.User, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		user, c, err := q.scanUser(rows, includeCount)
-		if err != nil {
-			return nil, 0, fmt.Errorf("scanning user result: %w", err)
+		user, fc, tc, scanErr := q.scanUser(rows, includeCounts)
+		if scanErr != nil {
+			return nil, 0, 0, fmt.Errorf("scanning user result: %w", scanErr)
 		}
 
-		if count == 0 && includeCount {
-			count = c
+		if includeCounts {
+			if filteredCount == 0 {
+				filteredCount = fc
+			}
+
+			if totalCount == 0 {
+				totalCount = tc
+			}
 		}
 
-		list = append(list, *user)
+		users = append(users, *user)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, 0, err
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, 0, 0, rowsErr
 	}
 
-	if err := rows.Close(); err != nil {
-		q.logger.Error(err, "closing rows")
+	if closeErr := rows.Close(); closeErr != nil {
+		q.logger.Error(closeErr, "closing rows")
+		return nil, 0, 0, closeErr
 	}
 
-	return list, count, nil
+	return users, filteredCount, totalCount, nil
 }
 
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
@@ -116,7 +116,7 @@ func (q *Postgres) GetUser(ctx context.Context, userID uint64) (*types.User, err
 	query, args := q.buildGetUserQuery(userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, _, err := q.scanUser(row, false)
+	u, _, _, err := q.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -149,7 +149,7 @@ func (q *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, use
 	query, args := q.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, _, err := q.scanUser(row, false)
+	u, _, _, err := q.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -183,7 +183,7 @@ func (q *Postgres) GetUserByUsername(ctx context.Context, username string) (*typ
 	query, args := q.buildGetUserByUsernameQuery(username)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, _, err := q.scanUser(row, false)
+	u, _, _, err := q.scanUser(row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -228,7 +228,7 @@ func (q *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery s
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}
 
-	u, _, err := q.scanUsers(rows, false)
+	u, _, _, err := q.scanUsers(rows, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -311,7 +311,7 @@ func (q *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
-	userList, count, err := q.scanUsers(rows, true)
+	userList, filteredCount, totalCount, err := q.scanUsers(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
@@ -320,8 +320,8 @@ func (q *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 		Pagination: types.Pagination{
 			Page:          filter.Page,
 			Limit:         filter.Limit,
-			FilteredCount: count,
-			TotalCount:    count,
+			FilteredCount: filteredCount,
+			TotalCount:    totalCount,
 		},
 		Users: userList,
 	}

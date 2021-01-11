@@ -20,7 +20,7 @@ import (
 )
 
 func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
-	columns := queriers.PlansTableColumns
+	columns := queriers.AccountSubscriptionPlansTableColumns
 
 	if includeCount {
 		columns = append(columns, "count")
@@ -51,7 +51,7 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscripti
 }
 
 func buildErroneousMockRowFromPlan(x *types.AccountSubscriptionPlan) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(queriers.PlansTableColumns).AddRow(
+	exampleRows := sqlmock.NewRows(queriers.AccountSubscriptionPlansTableColumns).AddRow(
 		x.Name,
 		x.ID,
 		x.Description,

@@ -89,7 +89,7 @@ func (q *MariaDB) buildGetPlanQuery(planID uint64) (query string, args []interfa
 	var err error
 
 	query, args, err = q.sqlBuilder.
-		Select(queriers.PlansTableColumns...).
+		Select(queriers.AccountSubscriptionPlansTableColumns...).
 		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.IDColumn):         planID,
@@ -147,7 +147,7 @@ func (q *MariaDB) buildGetPlansQuery(filter *types.QueryFilter) (query string, a
 	q.logQueryBuildingError(err)
 
 	builder := q.sqlBuilder.
-		Select(append(queriers.PlansTableColumns, fmt.Sprintf("(%s)", countQuery))...).
+		Select(append(queriers.AccountSubscriptionPlansTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,

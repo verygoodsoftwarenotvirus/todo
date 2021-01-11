@@ -207,7 +207,7 @@ func (q *MariaDB) GetAllWebhooks(ctx context.Context, resultChannel chan []types
 }
 
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a query and arguments to retrieve a list of webhooks.
-func (q *MariaDB) buildGetWebhooksQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *MariaDB) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.ArchivedOnColumn):             nil,
 		fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
@@ -216,22 +216,15 @@ func (q *MariaDB) buildGetWebhooksQuery(userID uint64, forAdmin bool, filter *ty
 	countQueryBuilder := q.sqlBuilder.
 		PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
-		From(queriers.WebhooksTableName)
-
-	if !forAdmin {
-		countQueryBuilder = countQueryBuilder.Where(where)
-	}
+		From(queriers.WebhooksTableName).
+		Where(where)
 
 	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
 	builder := q.sqlBuilder.
 		Select(append(queriers.WebhooksTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.WebhooksTableName)
-
-	if !forAdmin {
-		builder = builder.Where(where)
-	}
-
-	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.CreatedOnColumn))
+		From(queriers.WebhooksTableName).
+		Where(where).
+		OrderBy(fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.CreatedOnColumn))
 
 	if filter != nil {
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.WebhooksTableName)
@@ -244,7 +237,7 @@ func (q *MariaDB) buildGetWebhooksQuery(userID uint64, forAdmin bool, filter *ty
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (q *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
-	query, args := q.buildGetWebhooksQuery(userID, false, filter)
+	query, args := q.buildGetWebhooksQuery(userID, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

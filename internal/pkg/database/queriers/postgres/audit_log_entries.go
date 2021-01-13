@@ -135,7 +135,7 @@ func (q *Postgres) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (q
 func (q *Postgres) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []types.AuditLogEntry) error {
 	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
-		return countErr
+		return fmt.Errorf("error fetching count of entries: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {

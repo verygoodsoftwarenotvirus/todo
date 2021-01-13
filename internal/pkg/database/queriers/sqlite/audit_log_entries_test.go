@@ -3,7 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	sqldriver "database/sql/driver"
+	"database/sql/driver"
 	"errors"
 	"testing"
 	"time"
@@ -19,24 +19,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
+func buildMockRowsFromAuditLogEntries(includeCounts bool, auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
 	columns := queriers.AuditLogEntriesTableColumns
 
-	if includeCount {
+	if includeCounts {
 		columns = append(columns, "count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, x := range auditLogEntries {
-		rowValues := []sqldriver.Value{
+		rowValues := []driver.Value{
 			x.ID,
 			x.EventType,
 			x.Context,
 			x.CreatedOn,
 		}
 
-		if includeCount {
+		if includeCounts {
 			rowValues = append(rowValues, len(auditLogEntries))
 		}
 
@@ -82,7 +82,7 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 		mockRows.On("Close").Return(errors.New("blah"))
 
 		_, _, err := q.scanAuditLogEntries(mockRows, false)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 }
 
@@ -374,12 +374,8 @@ func TestSqlite_buildGetAuditLogEntriesQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ?) FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log) FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
-			filter.CreatedAfter,
-			filter.CreatedBefore,
-			filter.UpdatedAfter,
-			filter.UpdatedBefore,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,

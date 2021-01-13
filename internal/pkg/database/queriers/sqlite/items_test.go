@@ -20,11 +20,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromItems(includeCount bool, items ...*types.Item) *sqlmock.Rows {
+func buildMockRowsFromItems(includeCounts bool, filteredCount uint64, items ...*types.Item) *sqlmock.Rows {
 	columns := queriers.ItemsTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -40,8 +40,8 @@ func buildMockRowsFromItems(includeCount bool, items ...*types.Item) *sqlmock.Ro
 			x.BelongsToUser,
 		}
 
-		if includeCount {
-			rowValues = append(rowValues, len(items))
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(items))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -75,7 +75,7 @@ func TestSqlite_ScanItems(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanItems(mockRows, false)
+		_, _, _, err := q.scanItems(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -88,8 +88,8 @@ func TestSqlite_ScanItems(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanItems(mockRows, false)
-		assert.NoError(t, err)
+		_, _, _, err := q.scanItems(mockRows, false)
+		assert.Error(t, err)
 	})
 }
 
@@ -206,7 +206,7 @@ func TestSqlite_GetItem(T *testing.T) {
 		expectedQuery, expectedArgs := q.buildGetItemQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromItems(false, exampleItem))
+			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItem))
 
 		actual, err := q.GetItem(ctx, exampleItem.ID, exampleUser.ID)
 		assert.NoError(t, err)
@@ -320,6 +320,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromItems(
 					false,
+					0,
 					&exampleItemList.Items[0],
 					&exampleItemList.Items[1],
 					&exampleItemList.Items[2],
@@ -450,13 +451,14 @@ func TestSqlite_buildGetItemsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(*) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? ORDER BY items.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ?) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? GROUP BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
+			exampleUser.ID,
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -491,6 +493,7 @@ func TestSqlite_GetItems(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromItems(
 					true,
+					exampleItemList.FilteredCount,
 					&exampleItemList.Items[0],
 					&exampleItemList.Items[1],
 					&exampleItemList.Items[2],
@@ -589,6 +592,7 @@ func TestSqlite_GetItemsForAdmin(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromItems(
 					true,
+					exampleItemList.FilteredCount,
 					&exampleItemList.Items[0],
 					&exampleItemList.Items[1],
 					&exampleItemList.Items[2],
@@ -722,6 +726,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromItems(
 					false,
+					0,
 					&exampleItemList.Items[0],
 					&exampleItemList.Items[1],
 					&exampleItemList.Items[2],

@@ -17,71 +17,71 @@ import (
 var _ types.AccountSubscriptionPlanDataManager = (*Sqlite)(nil)
 
 // scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountSubscriptionPlan struct.
-func (q *Sqlite) scanPlan(scan database.Scanner, includeCount bool) (*types.AccountSubscriptionPlan, uint64, error) {
-	var (
-		x         = &types.AccountSubscriptionPlan{}
-		count     uint64
-		rawPeriod string
-	)
+func (q *Sqlite) scanAccountSubscriptionPlan(scan database.Scanner, includeCounts bool) (plan *types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+	plan = &types.AccountSubscriptionPlan{}
+
+	var rawPeriod string
 
 	targetVars := []interface{}{
-		&x.ID,
-		&x.Name,
-		&x.Description,
-		&x.Price,
+		&plan.ID,
+		&plan.Name,
+		&plan.Description,
+		&plan.Price,
 		&rawPeriod,
-		&x.CreatedOn,
-		&x.LastUpdatedOn,
-		&x.ArchivedOn,
+		&plan.CreatedOn,
+		&plan.LastUpdatedOn,
+		&plan.ArchivedOn,
 	}
 
-	if includeCount {
-		targetVars = append(targetVars, &count)
+	if includeCounts {
+		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if err := scan.Scan(targetVars...); err != nil {
-		return nil, 0, err
+	if scanErr := scan.Scan(targetVars...); scanErr != nil {
+		return nil, 0, 0, scanErr
 	}
 
-	p, err := time.ParseDuration(rawPeriod)
-	if err != nil {
-		return nil, 0, err
+	p, parseErr := time.ParseDuration(rawPeriod)
+	if parseErr != nil {
+		return nil, 0, 0, parseErr
 	}
 
-	x.Period = p
+	plan.Period = p
 
-	return x, count, nil
+	return plan, filteredCount, totalCount, nil
 }
 
 // scanPlans takes some database rows and turns them into a slice of plans.
-func (q *Sqlite) scanPlans(rows database.ResultIterator, includeCount bool) ([]types.AccountSubscriptionPlan, uint64, error) {
-	var (
-		list  []types.AccountSubscriptionPlan
-		count uint64
-	)
-
+func (q *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		x, c, err := q.scanPlan(rows, includeCount)
-		if err != nil {
-			return nil, 0, err
+		x, fc, tc, scanErr := q.scanAccountSubscriptionPlan(rows, includeCounts)
+		if scanErr != nil {
+			return nil, 0, 0, scanErr
 		}
 
-		if count == 0 && includeCount {
-			count = c
+		if includeCounts {
+			if filteredCount == 0 {
+				filteredCount = fc
+			}
+
+			if totalCount == 0 {
+				totalCount = tc
+			}
 		}
 
-		list = append(list, *x)
+		plans = append(plans, *x)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, 0, err
+	if rowErr := rows.Err(); rowErr != nil {
+		return nil, 0, 0, rowErr
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
 		q.logger.Error(closeErr, "closing database rows")
+		return nil, 0, 0, closeErr
 	}
 
-	return list, count, nil
+	return plans, filteredCount, totalCount, nil
 }
 
 // buildGetPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
@@ -107,7 +107,7 @@ func (q *Sqlite) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) 
 	query, args := q.buildGetPlanQuery(planID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	plan, _, err := q.scanPlan(row, false)
+	plan, _, _, err := q.scanAccountSubscriptionPlan(row, false)
 
 	return plan, err
 }
@@ -136,32 +136,14 @@ func (q *Sqlite) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count
 // buildGetPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
-		Select(allCountQuery).
-		From(queriers.AccountSubscriptionPlansTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
-		})
-
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
-
-	builder := q.sqlBuilder.
-		Select(append(queriers.AccountSubscriptionPlansTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.AccountSubscriptionPlansTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.CreatedOnColumn))
-
-	if filter != nil {
-		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.AccountSubscriptionPlansTableName)
-	}
-
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, append(countQueryArgs, selectArgs...)
+	return q.buildListQuery(
+		queriers.AccountSubscriptionPlansTableName,
+		"",
+		queriers.AccountSubscriptionPlansTableColumns,
+		0,
+		true,
+		filter,
+	)
 }
 
 // GetAccountSubscriptionPlans fetches a list of plans from the database that meet a particular filter.
@@ -173,7 +155,7 @@ func (q *Sqlite) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 		return nil, fmt.Errorf("querying database for plans: %w", err)
 	}
 
-	plans, count, err := q.scanPlans(rows, true)
+	plans, filteredCount, totalCount, err := q.scanAccountSubscriptionPlans(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -182,8 +164,8 @@ func (q *Sqlite) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 		Pagination: types.Pagination{
 			Page:          filter.Page,
 			Limit:         filter.Limit,
-			FilteredCount: count,
-			TotalCount:    count,
+			FilteredCount: filteredCount,
+			TotalCount:    totalCount,
 		},
 		Plans: plans,
 	}

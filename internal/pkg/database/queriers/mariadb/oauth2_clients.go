@@ -18,70 +18,70 @@ import (
 var _ types.OAuth2ClientDataManager = (*MariaDB)(nil)
 
 // scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
-func (q *MariaDB) scanOAuth2Client(scan database.Scanner, includeCount bool) (*types.OAuth2Client, uint64, error) {
-	var (
-		x         = &types.OAuth2Client{}
-		rawScopes string
-		count     uint64
-	)
+func (q *MariaDB) scanOAuth2Client(scan database.Scanner, includeCounts bool) (client *types.OAuth2Client, filteredCount, totalCount uint64, err error) {
+	client = &types.OAuth2Client{}
+
+	var rawScopes string
 
 	targetVars := []interface{}{
-		&x.ID,
-		&x.Name,
-		&x.ClientID,
+		&client.ID,
+		&client.Name,
+		&client.ClientID,
 		&rawScopes,
-		&x.RedirectURI,
-		&x.ClientSecret,
-		&x.CreatedOn,
-		&x.LastUpdatedOn,
-		&x.ArchivedOn,
-		&x.BelongsToUser,
+		&client.RedirectURI,
+		&client.ClientSecret,
+		&client.CreatedOn,
+		&client.LastUpdatedOn,
+		&client.ArchivedOn,
+		&client.BelongsToUser,
 	}
 
-	if includeCount {
-		targetVars = append(targetVars, &count)
+	if includeCounts {
+		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if err := scan.Scan(targetVars...); err != nil {
-		return nil, 0, err
+	if scanErr := scan.Scan(targetVars...); scanErr != nil {
+		return nil, 0, 0, scanErr
 	}
 
 	if scopes := strings.Split(rawScopes, queriers.OAuth2ClientsTableScopeSeparator); len(scopes) >= 1 && scopes[0] != "" {
-		x.Scopes = scopes
+		client.Scopes = scopes
 	}
 
-	return x, count, nil
+	return client, filteredCount, totalCount, nil
 }
 
 // scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
-func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCount bool) ([]types.OAuth2Client, uint64, error) {
-	var (
-		list  []types.OAuth2Client
-		count uint64
-	)
-
+func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []types.OAuth2Client, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		client, c, err := q.scanOAuth2Client(rows, includeCount)
-		if err != nil {
-			return nil, 0, err
+		client, fc, tc, scanErr := q.scanOAuth2Client(rows, includeCounts)
+		if scanErr != nil {
+			return nil, 0, 0, scanErr
 		}
 
-		if count == 0 && includeCount {
-			count = c
+		if includeCounts {
+			if filteredCount == 0 {
+				filteredCount = fc
+			}
+
+			if totalCount == 0 {
+				totalCount = tc
+			}
 		}
 
-		list = append(list, *client)
+		clients = append(clients, *client)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, 0, err
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, 0, 0, rowsErr
 	}
 
-	if err := rows.Close(); err != nil {
-		q.logger.Error(err, "closing rows")
+	if closeErr := rows.Close(); closeErr != nil {
+		q.logger.Error(closeErr, "closing rows")
+		return nil, 0, 0, closeErr
 	}
 
-	return list, count, nil
+	return clients, filteredCount, totalCount, nil
 }
 
 // buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID.
@@ -108,7 +108,7 @@ func (q *MariaDB) GetOAuth2ClientByClientID(ctx context.Context, clientID string
 	query, args := q.buildGetOAuth2ClientByClientIDQuery(clientID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	client, _, err := q.scanOAuth2Client(row, false)
+	client, _, _, err := q.scanOAuth2Client(row, false)
 
 	return client, err
 }
@@ -134,9 +134,9 @@ func (q *MariaDB) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (quer
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
 func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []types.OAuth2Client) error {
-	count, err := q.GetTotalOAuth2ClientCount(ctx)
-	if err != nil {
-		return fmt.Errorf("error fetching count of items: %w", err)
+	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
+	if countErr != nil {
+		return fmt.Errorf("error fetching count of items: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
@@ -149,17 +149,17 @@ func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []
 				"end":   end,
 			})
 
-			rows, err := q.db.Query(query, args...)
-			if errors.Is(err, sql.ErrNoRows) {
+			rows, queryErr := q.db.Query(query, args...)
+			if errors.Is(queryErr, sql.ErrNoRows) {
 				return
-			} else if err != nil {
-				logger.Error(err, "querying for database rows")
+			} else if queryErr != nil {
+				logger.Error(queryErr, "querying for database rows")
 				return
 			}
 
-			clients, _, err := q.scanOAuth2Clients(rows, false)
-			if err != nil {
-				logger.Error(err, "scanning database rows")
+			clients, _, _, scanErr := q.scanOAuth2Clients(rows, false)
+			if scanErr != nil {
+				logger.Error(scanErr, "scanning database rows")
 				return
 			}
 
@@ -193,7 +193,7 @@ func (q *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) 
 	query, args := q.buildGetOAuth2ClientQuery(clientID, userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	client, _, err := q.scanOAuth2Client(row, false)
+	client, _, _, err := q.scanOAuth2Client(row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -231,40 +231,22 @@ func (q *MariaDB) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error)
 	return count, err
 }
 
-// buildGetOAuth2ClientsForUserQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
+// buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (q *MariaDB) buildGetOAuth2ClientsForUserQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	where := squirrel.Eq{
-		fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
-		fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.OAuth2ClientsTableOwnershipColumn): userID,
-	}
-
-	countQueryBuilder := q.sqlBuilder.
-		PlaceholderFormat(squirrel.Question).
-		Select(allCountQuery).
-		From(queriers.OAuth2ClientsTableName).
-		Where(where)
-
-	countQuery, countQueryArgs := q.buildQuery(countQueryBuilder)
-	builder := q.sqlBuilder.
-		Select(append(queriers.OAuth2ClientsTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(queriers.OAuth2ClientsTableName).
-		Where(where)
-
-	builder = builder.OrderBy(fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.CreatedOnColumn))
-
-	if filter != nil {
-		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, queriers.OAuth2ClientsTableName)
-	}
-
-	query, selectArgs := q.buildQuery(builder)
-
-	return query, append(countQueryArgs, selectArgs...)
+func (q *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+	return q.buildListQuery(
+		queriers.OAuth2ClientsTableName,
+		queriers.OAuth2ClientsTableOwnershipColumn,
+		queriers.OAuth2ClientsTableColumns,
+		userID,
+		false,
+		filter,
+	)
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
 func (q *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
-	query, args := q.buildGetOAuth2ClientsForUserQuery(userID, filter)
+	query, args := q.buildGetOAuth2ClientsQuery(userID, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -275,7 +257,7 @@ func (q *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *t
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
-	list, count, err := q.scanOAuth2Clients(rows, true)
+	list, filteredCount, totalCount, err := q.scanOAuth2Clients(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -284,8 +266,8 @@ func (q *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *t
 		Pagination: types.Pagination{
 			Page:          filter.Page,
 			Limit:         filter.Limit,
-			FilteredCount: count,
-			TotalCount:    count,
+			FilteredCount: filteredCount,
+			TotalCount:    totalCount,
 		},
 		Clients: list,
 	}

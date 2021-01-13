@@ -19,11 +19,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromWebhooks(includeCount bool, webhooks ...*types.Webhook) *sqlmock.Rows {
+func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhooks ...*types.Webhook) *sqlmock.Rows {
 	columns := queriers.WebhooksTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -44,8 +44,8 @@ func buildMockRowsFromWebhooks(includeCount bool, webhooks ...*types.Webhook) *s
 			w.BelongsToUser,
 		}
 
-		if includeCount {
-			rowValues = append(rowValues, len(webhooks))
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(webhooks))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -84,7 +84,7 @@ func TestSqlite_ScanWebhooks(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanWebhooks(mockRows, false)
+		_, _, _, err := q.scanWebhooks(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -97,8 +97,8 @@ func TestSqlite_ScanWebhooks(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanWebhooks(mockRows, false)
-		assert.NoError(t, err)
+		_, _, _, err := q.scanWebhooks(mockRows, false)
+		assert.Error(t, err)
 	})
 }
 
@@ -138,7 +138,7 @@ func TestSqlite_GetWebhook(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromWebhooks(false, exampleWebhook))
+			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhook))
 
 		actual, err := q.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, err)
@@ -313,6 +313,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
 					false,
+					0,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],
@@ -452,13 +453,14 @@ func TestSqlite_buildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(*) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ? ORDER BY webhooks.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ?) as total_count, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ?) as filtered_count FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ? GROUP BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
+			exampleUser.ID,
 			exampleUser.ID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -493,6 +495,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromWebhooks(
 					true,
+					exampleWebhookList.FilteredCount,
 					&exampleWebhookList.Webhooks[0],
 					&exampleWebhookList.Webhooks[1],
 					&exampleWebhookList.Webhooks[2],

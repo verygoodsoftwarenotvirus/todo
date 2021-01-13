@@ -19,11 +19,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
+func buildMockRowsFromPlans(includeCounts bool, filteredCount uint64, plans ...*types.AccountSubscriptionPlan) *sqlmock.Rows {
 	columns := queriers.AccountSubscriptionPlansTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -40,8 +40,8 @@ func buildMockRowsFromPlans(includeCount bool, plans ...*types.AccountSubscripti
 			x.ArchivedOn,
 		}
 
-		if includeCount {
-			rowValues = append(rowValues, len(plans))
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(plans))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -76,7 +76,7 @@ func TestSqlite_ScanPlans(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanPlans(mockRows, false)
+		_, _, _, err := q.scanAccountSubscriptionPlans(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -89,8 +89,8 @@ func TestSqlite_ScanPlans(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanPlans(mockRows, false)
-		assert.NoError(t, err)
+		_, _, _, err := q.scanAccountSubscriptionPlans(mockRows, false)
+		assert.Error(t, err)
 	})
 }
 
@@ -129,7 +129,7 @@ func TestSqlite_GetPlan(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromPlans(false, examplePlan))
+			WillReturnRows(buildMockRowsFromPlans(false, 0, examplePlan))
 
 		actual, err := q.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err)
@@ -206,7 +206,7 @@ func TestSqlite_buildGetPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(*) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ?) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ? ORDER BY account_subscription_plans.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL) as total_count, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ?) as filtered_count FROM account_subscription_plans WHERE account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ? GROUP BY account_subscription_plans.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -243,6 +243,7 @@ func TestSqlite_GetPlans(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromPlans(
 					true,
+					examplePlanList.FilteredCount,
 					&examplePlanList.Plans[0],
 					&examplePlanList.Plans[1],
 					&examplePlanList.Plans[2],

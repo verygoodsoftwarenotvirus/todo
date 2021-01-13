@@ -19,11 +19,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromUsers(includeCount bool, users ...*types.User) *sqlmock.Rows {
+func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*types.User) *sqlmock.Rows {
 	columns := queriers.UsersTableColumns
 
-	if includeCount {
-		columns = append(columns, "count")
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
 	}
 
 	exampleRows := sqlmock.NewRows(columns)
@@ -48,8 +48,8 @@ func buildMockRowsFromUsers(includeCount bool, users ...*types.User) *sqlmock.Ro
 			user.ArchivedOn,
 		}
 
-		if includeCount {
-			rowValues = append(rowValues, len(users))
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(users))
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -92,7 +92,7 @@ func TestSqlite_ScanUsers(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanUsers(mockRows, false)
+		_, _, _, err := q.scanUsers(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -105,8 +105,8 @@ func TestSqlite_ScanUsers(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanUsers(mockRows, false)
-		assert.NoError(t, err)
+		_, _, _, err := q.scanUsers(mockRows, false)
+		assert.Error(t, err)
 	})
 }
 
@@ -145,7 +145,7 @@ func TestSqlite_GetUser(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, 0, exampleUser))
 
 		actual, err := q.GetUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -212,7 +212,7 @@ func TestSqlite_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, 0, exampleUser))
 
 		actual, err := q.GetUserWithUnverifiedTwoFactorSecret(ctx, exampleUser.ID)
 		assert.NoError(t, err)
@@ -289,6 +289,7 @@ func TestSqlite_GetUsers(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromUsers(
 					true,
+					exampleUserList.FilteredCount,
 					&exampleUserList.Users[0],
 					&exampleUserList.Users[1],
 					&exampleUserList.Users[2],
@@ -400,7 +401,7 @@ func TestSqlite_GetUserByUsername(T *testing.T) {
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(buildMockRowsFromUsers(false, exampleUser))
+			WillReturnRows(buildMockRowsFromUsers(false, 0, exampleUser))
 
 		actual, err := q.GetUserByUsername(ctx, exampleUser.Username)
 		assert.NoError(t, err)
@@ -459,10 +460,10 @@ func TestSqlite_SearchForUsersByUsername(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUsername := fakes.BuildFakeUser().Username
-		exampleUsers := fakes.BuildFakeUserList().Users
-		exampleUsers[0].Salt = nil
-		exampleUsers[1].Salt = nil
-		exampleUsers[2].Salt = nil
+		exampleUsers := fakes.BuildFakeUserList()
+		exampleUsers.Users[0].Salt = nil
+		exampleUsers.Users[1].Salt = nil
+		exampleUsers.Users[2].Salt = nil
 
 		q, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := q.buildSearchForUserByUsernameQuery(exampleUsername)
@@ -472,15 +473,16 @@ func TestSqlite_SearchForUsersByUsername(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromUsers(
 					false,
-					&exampleUsers[0],
-					&exampleUsers[1],
-					&exampleUsers[2],
+					exampleUsers.FilteredCount,
+					&exampleUsers.Users[0],
+					&exampleUsers.Users[1],
+					&exampleUsers.Users[2],
 				),
 			)
 
 		actual, err := q.SearchForUsersByUsername(ctx, exampleUsername)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleUsers, actual)
+		assert.Equal(t, exampleUsers.Users, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

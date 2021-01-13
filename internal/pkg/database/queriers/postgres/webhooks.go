@@ -172,9 +172,9 @@ func (q *Postgres) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query st
 // GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
 func (q *Postgres) GetAllWebhooks(ctx context.Context, resultChannel chan []types.Webhook) error {
-	count, err := q.GetAllWebhooksCount(ctx)
-	if err != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", err)
+	count, countErr := q.GetAllWebhooksCount(ctx)
+	if countErr != nil {
+		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
@@ -187,17 +187,17 @@ func (q *Postgres) GetAllWebhooks(ctx context.Context, resultChannel chan []type
 				"end":   end,
 			})
 
-			rows, err := q.db.Query(query, args...)
-			if errors.Is(err, sql.ErrNoRows) {
+			rows, queryErr := q.db.Query(query, args...)
+			if errors.Is(queryErr, sql.ErrNoRows) {
 				return
-			} else if err != nil {
-				logger.Error(err, "querying for database rows")
+			} else if queryErr != nil {
+				logger.Error(queryErr, "querying for database rows")
 				return
 			}
 
-			webhooks, _, _, err := q.scanWebhooks(rows, false)
-			if err != nil {
-				logger.Error(err, "scanning database rows")
+			webhooks, _, _, scanErr := q.scanWebhooks(rows, false)
+			if scanErr != nil {
+				logger.Error(scanErr, "scanning database rows")
 				return
 			}
 

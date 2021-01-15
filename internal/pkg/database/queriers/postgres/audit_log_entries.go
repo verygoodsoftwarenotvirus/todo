@@ -14,7 +14,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.AuditLogDataManager = (*Postgres)(nil)
+var _ types.AuditLogEntryDataManager = (*Postgres)(nil)
 
 // scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
 func (q *Postgres) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
@@ -67,8 +67,8 @@ func (q *Postgres) scanAuditLogEntries(rows database.ResultIterator, includeCoun
 	return entries, totalCount, nil
 }
 
-// buildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *Postgres) buildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
+// BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+func (q *Postgres) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -86,7 +86,7 @@ func (q *Postgres) buildGetAuditLogEntryQuery(entryID uint64) (query string, arg
 
 // GetAuditLogEntry fetches an audit log entry from the database.
 func (q *Postgres) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntryQuery(entryID)
+	query, args := q.BuildGetAuditLogEntryQuery(entryID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	entry, _, err := q.scanAuditLogEntry(row, false)
@@ -94,9 +94,9 @@ func (q *Postgres) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types
 	return entry, err
 }
 
-// buildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
+// BuildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *Postgres) buildGetAllAuditLogEntriesCountQuery() string {
+func (q *Postgres) BuildGetAllAuditLogEntriesCountQuery() string {
 	allAuditLogEntriesCountQuery, _, err := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.AuditLogEntriesTableName)).
 		From(queriers.AuditLogEntriesTableName).
@@ -108,12 +108,12 @@ func (q *Postgres) buildGetAllAuditLogEntriesCountQuery() string {
 
 // GetAllAuditLogEntriesCount will fetch the count of  from the database.
 func (q *Postgres) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllAuditLogEntriesCountQuery()).Scan(&count)
+	err = q.db.QueryRowContext(ctx, q.BuildGetAllAuditLogEntriesCountQuery()).Scan(&count)
 	return count, err
 }
 
-// buildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
-func (q *Postgres) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
+// BuildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
+func (q *Postgres) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
@@ -132,16 +132,16 @@ func (q *Postgres) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (q
 
 // GetAllAuditLogEntries fetches every audit log entry from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []types.AuditLogEntry) error {
+func (q *Postgres) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []types.AuditLogEntry, bucketSize uint16) error {
 	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of entries: %w", countErr)
+		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
+		endID := beginID + uint64(bucketSize)
 		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+			query, args := q.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -169,9 +169,9 @@ func (q *Postgres) GetAllAuditLogEntries(ctx context.Context, resultChannel chan
 	return nil
 }
 
-// buildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Postgres) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Postgres) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.
 		Select(allCountQuery).
 		From(queriers.AuditLogEntriesTableName)
@@ -196,7 +196,7 @@ func (q *Postgres) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (quer
 
 // GetAuditLogEntries fetches a list of  from the database that meet a particular filter.
 func (q *Postgres) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (*types.AuditLogEntryList, error) {
-	query, args := q.buildGetAuditLogEntriesQuery(filter)
+	query, args := q.BuildGetAuditLogEntriesQuery(filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -220,8 +220,8 @@ func (q *Postgres) GetAuditLogEntries(ctx context.Context, filter *types.QueryFi
 	return list, nil
 }
 
-// buildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
-func (q *Postgres) buildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (query string, args []interface{}) {
+// BuildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
+func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -242,15 +242,15 @@ func (q *Postgres) buildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (qu
 	return query, args
 }
 
-// createAuditLogEntry creates an audit log entry in the database.
-func (q *Postgres) createAuditLogEntry(ctx context.Context, input *types.AuditLogEntryCreationInput) {
+// CreateAuditLogEntry creates an audit log entry in the database.
+func (q *Postgres) CreateAuditLogEntry(ctx context.Context, input *types.AuditLogEntryCreationInput) {
 	x := &types.AuditLogEntry{
 		EventType: input.EventType,
 		Context:   input.Context,
 	}
 
-	query, args := q.buildCreateAuditLogEntryQuery(x)
-	q.logger.WithValue("event_type", input.EventType).Debug("createAuditLogEntry called")
+	query, args := q.BuildCreateAuditLogEntryQuery(x)
+	q.logger.WithValue("event_type", input.EventType).Debug("CreateAuditLogEntry called")
 
 	// create the audit log entry.
 	if err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {

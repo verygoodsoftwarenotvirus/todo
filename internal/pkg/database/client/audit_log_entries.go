@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.AuditLogDataManager = (*Client)(nil)
+var _ types.AuditLogEntryDataManager = (*Client)(nil)
 
 // GetAuditLogEntry fetches an audit log entry from the database.
 func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
@@ -56,7 +56,7 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 	return c.querier.GetAuditLogEntries(ctx, filter)
 }
 
-// LogOAuth2ClientCreationEvent implements our AuditLogDataManager interface.
+// LogOAuth2ClientCreationEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -66,7 +66,7 @@ func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types
 	c.querier.LogOAuth2ClientCreationEvent(ctx, client)
 }
 
-// LogOAuth2ClientArchiveEvent implements our AuditLogDataManager interface.
+// LogOAuth2ClientArchiveEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

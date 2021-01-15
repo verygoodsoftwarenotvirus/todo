@@ -16,7 +16,7 @@ import (
 func buildTestService() *service {
 	return &service{
 		logger:                 noop.NewLogger(),
-		auditLog:               &mocktypes.AuditLogDataManager{},
+		auditLog:               &mocktypes.AuditLogEntryDataManager{},
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher:     func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		encoderDecoder:         &mockencoding.EncoderDecoder{},
@@ -31,7 +31,7 @@ func TestProvideAuditService(T *testing.T) {
 		t.Parallel()
 		s := ProvideService(
 			noop.NewLogger(),
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 		)
 

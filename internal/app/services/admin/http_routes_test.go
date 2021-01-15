@@ -57,7 +57,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(nil)
 		s.userDB = udb
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
@@ -102,7 +102,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(nil)
 		s.userDB = udb
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogAccountTerminationEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
@@ -335,7 +335,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 

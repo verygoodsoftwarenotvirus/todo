@@ -31,7 +31,7 @@ type (
 		// Services.
 		authService          types.AuthService
 		frontendService      types.FrontendService
-		auditService         types.AuditLogDataService
+		auditService         types.AuditLogEntryDataService
 		usersService         types.UserDataService
 		plansService         types.AccountSubscriptionPlanDataService
 		adminService         types.AdminService
@@ -58,7 +58,7 @@ func ProvideServer(
 	metricsHandler metrics.InstrumentationHandler,
 	authService types.AuthService,
 	frontendService types.FrontendService,
-	auditService types.AuditLogDataService,
+	auditService types.AuditLogEntryDataService,
 	itemsService types.ItemDataService,
 	usersService types.UserDataService,
 	plansService types.AccountSubscriptionPlanDataService,

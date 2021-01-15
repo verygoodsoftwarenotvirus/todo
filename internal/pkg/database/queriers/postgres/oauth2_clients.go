@@ -85,8 +85,8 @@ func (q *Postgres) scanOAuth2Clients(rows database.ResultIterator, includeCounts
 	return clients, filteredCount, totalCount, nil
 }
 
-// buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID.
-func (q *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
+// BuildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID.
+func (q *Postgres) BuildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
 
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
@@ -106,7 +106,7 @@ func (q *Postgres) buildGetOAuth2ClientByClientIDQuery(clientID string) (query s
 
 // GetOAuth2ClientByClientID gets an OAuth2 client.
 func (q *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*types.OAuth2Client, error) {
-	query, args := q.buildGetOAuth2ClientByClientIDQuery(clientID)
+	query, args := q.BuildGetOAuth2ClientByClientIDQuery(clientID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	client, _, _, err := q.scanOAuth2Client(row, false)
@@ -114,8 +114,8 @@ func (q *Postgres) GetOAuth2ClientByClientID(ctx context.Context, clientID strin
 	return client, err
 }
 
-// buildGetBatchOfOAuth2ClientsQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *Postgres) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
+// BuildGetBatchOfOAuth2ClientsQuery returns a query that fetches every item in the database within a bucketed range.
+func (q *Postgres) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.OAuth2ClientsTableColumns...).
 		From(queriers.OAuth2ClientsTableName).
@@ -134,16 +134,16 @@ func (q *Postgres) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (que
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []types.OAuth2Client) error {
+func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []types.OAuth2Client, bucketSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of items: %w", countErr)
+		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
+		endID := beginID + uint64(bucketSize)
 		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
+			query, args := q.BuildGetBatchOfOAuth2ClientsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -171,8 +171,8 @@ func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan [
 	return nil
 }
 
-// buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
-func (q *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+// BuildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
+func (q *Postgres) BuildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -191,7 +191,7 @@ func (q *Postgres) buildGetOAuth2ClientQuery(clientID, userID uint64) (query str
 
 // GetOAuth2Client retrieves an OAuth2 client from the database.
 func (q *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*types.OAuth2Client, error) {
-	query, args := q.buildGetOAuth2ClientQuery(clientID, userID)
+	query, args := q.BuildGetOAuth2ClientQuery(clientID, userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	client, _, _, err := q.scanOAuth2Client(row, false)
@@ -206,9 +206,9 @@ func (q *Postgres) GetOAuth2Client(ctx context.Context, clientID, userID uint64)
 	return client, nil
 }
 
-// buildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
+// BuildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
-func (q *Postgres) buildGetAllOAuth2ClientsCountQuery() string {
+func (q *Postgres) BuildGetAllOAuth2ClientsCountQuery() string {
 	var err error
 
 	getAllOAuth2ClientCountQuery, _, err := q.sqlBuilder.
@@ -227,14 +227,14 @@ func (q *Postgres) buildGetAllOAuth2ClientsCountQuery() string {
 // GetTotalOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
 func (q *Postgres) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
-	err := q.db.QueryRowContext(ctx, q.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
+	err := q.db.QueryRowContext(ctx, q.BuildGetAllOAuth2ClientsCountQuery()).Scan(&count)
 
 	return count, err
 }
 
-// buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
+// BuildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (q *Postgres) buildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Postgres) BuildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		queriers.OAuth2ClientsTableName,
 		queriers.OAuth2ClientsTableOwnershipColumn,
@@ -247,7 +247,7 @@ func (q *Postgres) buildGetOAuth2ClientsQuery(userID uint64, filter *types.Query
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
 func (q *Postgres) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
-	query, args := q.buildGetOAuth2ClientsQuery(userID, filter)
+	query, args := q.BuildGetOAuth2ClientsQuery(userID, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -276,8 +276,8 @@ func (q *Postgres) GetOAuth2Clients(ctx context.Context, userID uint64, filter *
 	return ocl, nil
 }
 
-// buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
-func (q *Postgres) buildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+// BuildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
+func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -316,7 +316,7 @@ func (q *Postgres) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Cl
 		Scopes:        input.Scopes,
 		BelongsToUser: input.BelongsToUser,
 	}
-	query, args := q.buildCreateOAuth2ClientQuery(x)
+	query, args := q.BuildCreateOAuth2ClientQuery(x)
 
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
@@ -356,8 +356,8 @@ func (q *Postgres) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Cl
 	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
-// buildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
-func (q *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+// BuildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
+func (q *Postgres) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -378,7 +378,7 @@ func (q *Postgres) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query
 
 // ArchiveOAuth2Client archives an OAuth2 client.
 func (q *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
-	query, args := q.buildArchiveOAuth2ClientQuery(clientID, userID)
+	query, args := q.BuildArchiveOAuth2ClientQuery(clientID, userID)
 	_, err := q.db.ExecContext(ctx, query, args...)
 
 	return err
@@ -386,17 +386,17 @@ func (q *Postgres) ArchiveOAuth2Client(ctx context.Context, clientID, userID uin
 
 // LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
 func (q *Postgres) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
-	q.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
+	q.CreateAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
 }
 
 // LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
 func (q *Postgres) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
+	q.CreateAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
 }
 
-// buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching audit log entries
+// BuildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching audit log entries
 // associated with a given oauth2 client.
-func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
 	clientIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.OAuth2ClientAssignmentKey)
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
@@ -409,7 +409,7 @@ func (q *Postgres) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) 
 
 // GetAuditLogEntriesForOAuth2Client fetches a audit log entries for a given oauth2 client from the database.
 func (q *Postgres) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
+	query, args := q.BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
 
 	q.logger.WithValue(keys.OAuth2ClientIDKey, clientID).Debug("GetAuditLogEntriesForOAuth2Client invoked")
 

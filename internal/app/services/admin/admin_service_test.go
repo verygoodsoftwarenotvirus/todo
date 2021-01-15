@@ -25,7 +25,7 @@ func buildTestService(t *testing.T) *service {
 		authservice.Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 		&mockauth.Authenticator{},
 		&mocktypes.AdminUserDataManager{},
-		&mocktypes.AuditLogDataManager{},
+		&mocktypes.AuditLogEntryDataManager{},
 		scs.New(),
 		ed,
 	)
@@ -47,7 +47,7 @@ func TestProvideAdminService(T *testing.T) {
 			authservice.Config{CookieSigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"},
 			&mockauth.Authenticator{},
 			&mocktypes.AdminUserDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			scs.New(),
 			ed,
 		)

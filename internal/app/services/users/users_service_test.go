@@ -34,7 +34,7 @@ func buildTestService(t *testing.T) *service {
 		noop.NewLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
-		&mocktypes.AuditLogDataManager{},
+		&mocktypes.AuditLogEntryDataManager{},
 		&mockauth.Authenticator{},
 		&mockencoding.EncoderDecoder{},
 		func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
@@ -60,7 +60,7 @@ func TestProvideUsersService(T *testing.T) {
 			noop.NewLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			&mockencoding.EncoderDecoder{},
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
@@ -84,7 +84,7 @@ func TestProvideUsersService(T *testing.T) {
 			noop.NewLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			&mockencoding.EncoderDecoder{},
 			ucp,

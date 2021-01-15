@@ -15,7 +15,7 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		AuditLogDataManager:                &mocktypes.AuditLogDataManager{},
+		AuditLogEntryDataManager:           &mocktypes.AuditLogEntryDataManager{},
 		AccountDataManager:                 &mocktypes.AccountDataManager{},
 		AccountSubscriptionPlanDataManager: &mocktypes.AccountSubscriptionPlanDataManager{},
 		ItemDataManager:                    &mocktypes.ItemDataManager{},
@@ -30,7 +30,7 @@ func BuildMockDatabase() *MockDatabase {
 type MockDatabase struct {
 	mock.Mock
 
-	*mocktypes.AuditLogDataManager
+	*mocktypes.AuditLogEntryDataManager
 	*mocktypes.AccountSubscriptionPlanDataManager
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
@@ -38,6 +38,32 @@ type MockDatabase struct {
 	*mocktypes.OAuth2ClientDataManager
 	*mocktypes.WebhookDataManager
 	*mocktypes.AccountDataManager
+}
+
+// BuildMockSQLQueryBuilder builds a MockSQLQueryBuilder.
+func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
+	return &MockSQLQueryBuilder{
+		AccountSQLQueryBuilder:                 &mocktypes.AccountSQLQueryBuilder{},
+		AccountSubscriptionPlanSQLQueryBuilder: &mocktypes.AccountSubscriptionPlanSQLQueryBuilder{},
+		AuditLogEntrySQLQueryBuilder:           &mocktypes.AuditLogEntrySQLQueryBuilder{},
+		ItemSQLQueryBuilder:                    &mocktypes.ItemSQLQueryBuilder{},
+		OAuth2ClientSQLQueryBuilder:            &mocktypes.OAuth2ClientSQLQueryBuilder{},
+		UserSQLQueryBuilder:                    &mocktypes.UserSQLQueryBuilder{},
+		WebhookSQLQueryBuilder:                 &mocktypes.WebhookSQLQueryBuilder{},
+	}
+}
+
+// MockSQLQueryBuilder is our mock database structure.
+type MockSQLQueryBuilder struct {
+	mock.Mock
+
+	*mocktypes.AccountSQLQueryBuilder
+	*mocktypes.AccountSubscriptionPlanSQLQueryBuilder
+	*mocktypes.AuditLogEntrySQLQueryBuilder
+	*mocktypes.ItemSQLQueryBuilder
+	*mocktypes.UserSQLQueryBuilder
+	*mocktypes.OAuth2ClientSQLQueryBuilder
+	*mocktypes.WebhookSQLQueryBuilder
 }
 
 // Migrate satisfies the DataManager interface.

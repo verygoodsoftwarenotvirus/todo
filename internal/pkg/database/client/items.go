@@ -169,7 +169,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	return c.querier.ArchiveItem(ctx, itemID, userID)
 }
 
-// LogItemCreationEvent implements our AuditLogDataManager interface.
+// LogItemCreationEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -179,7 +179,7 @@ func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
 	c.querier.LogItemCreationEvent(ctx, item)
 }
 
-// LogItemUpdateEvent implements our AuditLogDataManager interface.
+// LogItemUpdateEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []types.FieldChangeSummary) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -189,7 +189,7 @@ func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, 
 	c.querier.LogItemUpdateEvent(ctx, userID, itemID, changes)
 }
 
-// LogItemArchiveEvent implements our AuditLogDataManager interface.
+// LogItemArchiveEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

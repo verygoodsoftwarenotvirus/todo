@@ -72,17 +72,17 @@ func (m *OAuth2ClientDataServer) AuditEntryHandler(res http.ResponseWriter, req 
 }
 
 // LogOAuth2ClientCreationEvent implements our interface.
-func (m *AuditLogDataManager) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
+func (m *AuditLogEntryDataManager) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
 	m.Called(ctx, client)
 }
 
 // LogOAuth2ClientArchiveEvent implements our interface.
-func (m *AuditLogDataManager) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+func (m *AuditLogEntryDataManager) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
 	m.Called(ctx, userID, clientID)
 }
 
 // GetAuditLogEntriesForOAuth2Client is a mock function.
-func (m *AuditLogDataManager) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
 	args := m.Called(ctx, clientID)
 	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
 }

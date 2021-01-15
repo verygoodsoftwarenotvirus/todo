@@ -208,7 +208,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		).Return(exampleWebhook, nil)
 		s.webhookDataManager = wd
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogWebhookCreationEvent", mock.Anything, exampleWebhook)
 		s.auditLog = auditLog
 
@@ -517,7 +517,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		).Return(nil)
 		s.webhookDataManager = wd
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogWebhookUpdateEvent", mock.Anything, exampleUser.ID, exampleWebhook.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
@@ -750,7 +750,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		).Return(nil)
 		s.webhookDataManager = wd
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogWebhookArchiveEvent", mock.Anything, exampleUser.ID, exampleWebhook.ID)
 		s.auditLog = auditLog
 

@@ -38,12 +38,22 @@ type (
 		BelongsToUser uint64 `json:"-"`
 	}
 
+	AccountSQLQueryBuilder interface {
+		BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{})
+		BuildGetAllAccountsCountQuery() string
+		BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{})
+		BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
+		BuildCreateAccountQuery(input *Account) (query string, args []interface{})
+		BuildUpdateAccountQuery(input *Account) (query string, args []interface{})
+		BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{})
+		BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{})
+	}
+
 	// AccountDataManager describes a structure capable of storing accounts permanently.
 	AccountDataManager interface {
-		AccountExists(ctx context.Context, accountID, userID uint64) (bool, error)
 		GetAccount(ctx context.Context, accountID, userID uint64) (*Account, error)
 		GetAllAccountsCount(ctx context.Context) (uint64, error)
-		GetAllAccounts(ctx context.Context, resultChannel chan []Account) error
+		GetAllAccounts(ctx context.Context, resultChannel chan []Account, bucketSize uint16) error
 		GetAccounts(ctx context.Context, userID uint64, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
 		CreateAccount(ctx context.Context, input *AccountCreationInput) (*Account, error)

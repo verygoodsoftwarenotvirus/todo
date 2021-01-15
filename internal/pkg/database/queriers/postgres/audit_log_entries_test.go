@@ -97,7 +97,7 @@ func TestPostgres_buildGetAuditLogEntryQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
-		actualQuery, actualArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -115,7 +115,7 @@ func TestPostgres_GetAuditLogEntry(T *testing.T) {
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -136,7 +136,7 @@ func TestPostgres_GetAuditLogEntry(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
@@ -158,7 +158,7 @@ func TestPostgres_buildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(audit_log.id) FROM audit_log"
-		actualQuery := q.buildGetAllAuditLogEntriesCountQuery()
+		actualQuery := q.BuildGetAllAuditLogEntriesCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -175,7 +175,7 @@ func TestPostgres_GetAllAuditLogEntriesCount(T *testing.T) {
 		expectedCount := uint64(123)
 
 		q, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(q.buildGetAllAuditLogEntriesCountQuery())).
+		mockDB.ExpectQuery(formatQueryForSQLMock(q.BuildGetAllAuditLogEntriesCountQuery())).
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
@@ -201,7 +201,7 @@ func TestPostgres_buildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.buildGetBatchOfAuditLogEntriesQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfAuditLogEntriesQuery(beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -213,7 +213,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	_q, _ := buildTestService(T)
-	expectedCountQuery := _q.buildGetAllAuditLogEntriesCountQuery()
+	expectedCountQuery := _q.BuildGetAllAuditLogEntriesCountQuery()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -224,7 +224,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -288,7 +288,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -315,7 +315,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -343,7 +343,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -379,7 +379,7 @@ func TestPostgres_buildGetAuditLogEntriesQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetAuditLogEntriesQuery(filter)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesQuery(filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -399,7 +399,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		exampleAuditLogEntryList.FilteredCount = 0
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -427,7 +427,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -448,7 +448,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -470,7 +470,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntriesQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -497,7 +497,7 @@ func TestPostgres_buildGetAuditLogEntriesForItemQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -516,7 +516,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -544,7 +544,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -565,7 +565,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		expectedQuery, expectedArgs := q.BuildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -598,7 +598,7 @@ func TestPostgres_buildCreateAuditLogEntryQuery(T *testing.T) {
 			exampleAuditLogEntry.EventType,
 			exampleAuditLogEntry.Context,
 		}
-		actualQuery, actualArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		actualQuery, actualArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -618,13 +618,13 @@ func TestPostgres_createAuditLogEntry(T *testing.T) {
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleAuditLogEntry.ID, exampleAuditLogEntry.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(exampleRows)
 
-		q.createAuditLogEntry(ctx, exampleInput)
+		q.CreateAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})
@@ -638,12 +638,12 @@ func TestPostgres_createAuditLogEntry(T *testing.T) {
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		q.createAuditLogEntry(ctx, exampleInput)
+		q.CreateAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

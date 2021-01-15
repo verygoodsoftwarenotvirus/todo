@@ -46,16 +46,6 @@ type (
 		migrateOnce sync.Once
 		debug       bool
 	}
-
-	// ConnectionDetails is a string alias for a MariaDB url.
-	ConnectionDetails string
-
-	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects.
-	Querier interface {
-		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
-		QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
-		QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
-	}
 )
 
 var instrumentedDriverRegistration sync.Once

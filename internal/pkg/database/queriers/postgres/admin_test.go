@@ -21,7 +21,7 @@ func TestPostgres_BanUser(T *testing.T) {
 		exampleInput := *fakes.BuildFakeAccountStatusUpdateInput()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildSetUserStatusQuery(exampleUser.ID, exampleInput)
+		expectedQuery, expectedArgs := q.BuildSetUserStatusQuery(exampleUser.ID, exampleInput)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

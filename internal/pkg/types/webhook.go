@@ -55,12 +55,23 @@ type (
 		Webhooks []Webhook `json:"webhooks"`
 	}
 
+	WebhookSQLQueryBuilder interface {
+		BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{})
+		BuildGetAllWebhooksCountQuery() string
+		BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{})
+		BuildGetWebhooksQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
+		BuildCreateWebhookQuery(x *Webhook) (query string, args []interface{})
+		BuildUpdateWebhookQuery(input *Webhook) (query string, args []interface{})
+		BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{})
+		BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{})
+	}
+
 	// WebhookDataManager describes a structure capable of storing webhooks.
 	WebhookDataManager interface {
 		GetWebhook(ctx context.Context, webhookID, userID uint64) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
 		GetWebhooks(ctx context.Context, userID uint64, filter *QueryFilter) (*WebhookList, error)
-		GetAllWebhooks(ctx context.Context, resultChannel chan []Webhook) error
+		GetAllWebhooks(ctx context.Context, resultChannel chan []Webhook, bucketSize uint16) error
 		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
 		UpdateWebhook(ctx context.Context, updated *Webhook) error
 		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error

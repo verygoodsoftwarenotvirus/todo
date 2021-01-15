@@ -28,6 +28,7 @@ require (
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/lane-c-wagner/go-password-validator v0.1.0
 	github.com/lib/pq v1.9.0
 	github.com/luna-duclos/instrumentedsql v1.1.3

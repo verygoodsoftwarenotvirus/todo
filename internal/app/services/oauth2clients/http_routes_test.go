@@ -346,7 +346,7 @@ func TestService_CreateHandler(T *testing.T) {
 		uc.On("Increment", mock.Anything).Return()
 		s.oauth2ClientCounter = uc
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogOAuth2ClientCreationEvent", mock.Anything, exampleOAuth2Client)
 		s.auditLog = auditLog
 
@@ -734,7 +734,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		uc.On("Decrement", mock.Anything).Return()
 		s.oauth2ClientCounter = uc
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogOAuth2ClientArchiveEvent", mock.Anything, exampleUser.ID, exampleOAuth2Client.ID)
 		s.auditLog = auditLog
 

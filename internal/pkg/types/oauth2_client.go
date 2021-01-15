@@ -54,10 +54,21 @@ type (
 		Scopes      []string `json:"scopes"`
 	}
 
+	OAuth2ClientSQLQueryBuilder interface {
+		BuildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{})
+		BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{})
+		BuildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{})
+		BuildGetAllOAuth2ClientsCountQuery() string
+		BuildGetOAuth2ClientsQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
+		BuildCreateOAuth2ClientQuery(input *OAuth2Client) (query string, args []interface{})
+		BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{})
+		BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{})
+	}
+
 	// OAuth2ClientDataManager handles OAuth2 clients.
 	OAuth2ClientDataManager interface {
 		GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
-		GetAllOAuth2Clients(ctx context.Context, resultChannel chan []OAuth2Client) error
+		GetAllOAuth2Clients(ctx context.Context, resultChannel chan []OAuth2Client, bucketSize uint16) error
 		GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
 		GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error)
 		GetOAuth2Clients(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)

@@ -39,7 +39,7 @@ func ProvideAuthAuditManager(db DataManager) types.AuthAuditManager {
 }
 
 // ProvideAuditLogEntryDataManager is an arbitrary function for dependency injection's sake.
-func ProvideAuditLogEntryDataManager(db DataManager) types.AuditLogDataManager {
+func ProvideAuditLogEntryDataManager(db DataManager) types.AuditLogEntryDataManager {
 	return db
 }
 

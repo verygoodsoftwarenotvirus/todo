@@ -56,7 +56,7 @@ type (
 		types.AccountDataManager
 		types.AccountSubscriptionPlanDataManager
 		types.UserDataManager
-		types.AuditLogDataManager
+		types.AuditLogEntryDataManager
 		types.OAuth2ClientDataManager
 		types.WebhookDataManager
 		types.ItemDataManager
@@ -69,5 +69,16 @@ type (
 		types.OAuth2ClientAuditManager
 		types.WebhookAuditManager
 		types.ItemAuditManager
+	}
+
+	// SQLQueryBuilder describes anything that builds SQL queries to manage our data.
+	SQLQueryBuilder interface {
+		types.AccountSQLQueryBuilder
+		types.AccountSubscriptionPlanSQLQueryBuilder
+		types.UserSQLQueryBuilder
+		types.AuditLogEntrySQLQueryBuilder
+		types.OAuth2ClientSQLQueryBuilder
+		types.WebhookSQLQueryBuilder
+		types.ItemSQLQueryBuilder
 	}
 )

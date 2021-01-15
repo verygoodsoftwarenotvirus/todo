@@ -325,7 +325,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogSuccessfulLoginEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -417,7 +417,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(exampleUser, nil)
 		s.userDB = udb
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogBannedUserLoginAttemptEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -468,7 +468,7 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = authr
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -658,7 +658,7 @@ func TestService_LogoutHandler(T *testing.T) {
 			return exampleUser.ToSessionInfo(), nil
 		}
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogLogoutEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -1051,7 +1051,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 

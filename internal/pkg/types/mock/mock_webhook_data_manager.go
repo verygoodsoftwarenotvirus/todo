@@ -34,8 +34,8 @@ func (m *WebhookDataManager) GetWebhooks(ctx context.Context, userID uint64, fil
 }
 
 // GetAllWebhooks satisfies our WebhookDataManager interface.
-func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context, results chan []types.Webhook) error {
-	return m.Called(ctx, results).Error(0)
+func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context, results chan []types.Webhook, bucketSize uint16) error {
+	return m.Called(ctx, results, bucketSize).Error(0)
 }
 
 // CreateWebhook satisfies our WebhookDataManager interface.
@@ -55,22 +55,22 @@ func (m *WebhookDataManager) ArchiveWebhook(ctx context.Context, webhookID, user
 }
 
 // LogWebhookCreationEvent implements our interface.
-func (m *AuditLogDataManager) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
+func (m *AuditLogEntryDataManager) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
 	m.Called(ctx, webhook)
 }
 
 // LogWebhookUpdateEvent implements our interface.
-func (m *AuditLogDataManager) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
+func (m *AuditLogEntryDataManager) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
 	m.Called(ctx, userID, webhookID, changes)
 }
 
 // LogWebhookArchiveEvent implements our interface.
-func (m *AuditLogDataManager) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+func (m *AuditLogEntryDataManager) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
 	m.Called(ctx, userID, webhookID)
 }
 
 // GetAuditLogEntriesForWebhook is a mock function.
-func (m *AuditLogDataManager) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
 	args := m.Called(ctx, webhookID)
 	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
 }

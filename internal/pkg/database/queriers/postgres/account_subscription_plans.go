@@ -84,8 +84,8 @@ func (q *Postgres) scanAccountSubscriptionPlans(rows database.ResultIterator, in
 	return plans, filteredCount, totalCount, nil
 }
 
-// buildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
-func (q *Postgres) buildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+// BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
+func (q *Postgres) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(queriers.AccountSubscriptionPlansTableColumns...).
 		From(queriers.AccountSubscriptionPlansTableName).
@@ -98,7 +98,7 @@ func (q *Postgres) buildGetAccountSubscriptionPlanQuery(planID uint64) (query st
 
 // GetAccountSubscriptionPlan fetches an plan from the database.
 func (q *Postgres) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*types.AccountSubscriptionPlan, error) {
-	query, args := q.buildGetAccountSubscriptionPlanQuery(planID)
+	query, args := q.BuildGetAccountSubscriptionPlanQuery(planID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	plan, _, _, err := q.scanAccountSubscriptionPlan(row, false)
@@ -106,9 +106,9 @@ func (q *Postgres) GetAccountSubscriptionPlan(ctx context.Context, planID uint64
 	return plan, err
 }
 
-// buildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of plans in the database.
+// BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *Postgres) buildGetAllAccountSubscriptionPlansCountQuery() string {
+func (q *Postgres) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	allPlansCountQuery, _ := q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.AccountSubscriptionPlansTableName)).
 		From(queriers.AccountSubscriptionPlansTableName).
@@ -122,13 +122,13 @@ func (q *Postgres) buildGetAllAccountSubscriptionPlansCountQuery() string {
 
 // GetAllAccountSubscriptionPlansCount will fetch the count of plans from the database.
 func (q *Postgres) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count)
+	err = q.db.QueryRowContext(ctx, q.BuildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count)
 	return count, err
 }
 
-// buildGetAccountSubscriptionPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Postgres) buildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Postgres) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		queriers.AccountSubscriptionPlansTableName,
 		"",
@@ -141,7 +141,7 @@ func (q *Postgres) buildGetAccountSubscriptionPlansQuery(filter *types.QueryFilt
 
 // GetAccountSubscriptionPlans fetches a list of plans from the database that meet a particular filter.
 func (q *Postgres) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (*types.AccountSubscriptionPlanList, error) {
-	query, args := q.buildGetAccountSubscriptionPlansQuery(filter)
+	query, args := q.BuildGetAccountSubscriptionPlansQuery(filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -166,8 +166,8 @@ func (q *Postgres) GetAccountSubscriptionPlans(ctx context.Context, filter *type
 	return list, nil
 }
 
-// buildCreatePlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (q *Postgres) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+// BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
+func (q *Postgres) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(queriers.AccountSubscriptionPlansTableName).
 		Columns(
@@ -195,7 +195,7 @@ func (q *Postgres) CreateAccountSubscriptionPlan(ctx context.Context, input *typ
 		Period:      input.Period,
 	}
 
-	query, args := q.buildCreatePlanQuery(x)
+	query, args := q.BuildCreateAccountSubscriptionPlanQuery(x)
 
 	// create the plan.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
@@ -206,8 +206,8 @@ func (q *Postgres) CreateAccountSubscriptionPlan(ctx context.Context, input *typ
 	return x, nil
 }
 
-// buildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
-func (q *Postgres) buildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+// BuildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
+func (q *Postgres) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.AccountSubscriptionPlansTableName).
 		Set(queriers.AccountSubscriptionPlansTableNameColumn, input.Name).
@@ -224,12 +224,12 @@ func (q *Postgres) buildUpdateAccountSubscriptionPlanQuery(input *types.AccountS
 
 // UpdateAccountSubscriptionPlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
 func (q *Postgres) UpdateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlan) error {
-	query, args := q.buildUpdateAccountSubscriptionPlanQuery(input)
+	query, args := q.BuildUpdateAccountSubscriptionPlanQuery(input)
 	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
-// buildArchiveAccountSubscriptionPlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
-func (q *Postgres) buildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+// BuildArchiveAccountSubscriptionPlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
+func (q *Postgres) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.AccountSubscriptionPlansTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -244,7 +244,7 @@ func (q *Postgres) buildArchiveAccountSubscriptionPlanQuery(planID uint64) (quer
 
 // ArchiveAccountSubscriptionPlan marks an plan as archived in the database.
 func (q *Postgres) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
-	query, args := q.buildArchiveAccountSubscriptionPlanQuery(planID)
+	query, args := q.BuildArchiveAccountSubscriptionPlanQuery(planID)
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if res != nil {
@@ -258,22 +258,22 @@ func (q *Postgres) ArchiveAccountSubscriptionPlan(ctx context.Context, planID ui
 
 // LogAccountSubscriptionPlanCreationEvent saves a AccountSubscriptionPlanCreationEvent in the audit log table.
 func (q *Postgres) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
+	q.CreateAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
 }
 
 // AccountSubscriptionLogPlanUpdateEvent saves a AccountSubscriptionPlanUpdateEvent in the audit log table.
 func (q *Postgres) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID, changes))
+	q.CreateAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID, changes))
 }
 
 // AccountSubscriptionLogPlanArchiveEvent saves a AccountSubscriptionPlanArchiveEvent in the audit log table.
 func (q *Postgres) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
+	q.CreateAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
 }
 
-// buildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
+// BuildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
-func (q *Postgres) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
 	planIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)
 
 	return q.buildQuery(q.sqlBuilder.
@@ -286,7 +286,7 @@ func (q *Postgres) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query str
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
 func (q *Postgres) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForPlanQuery(planID)
+	query, args := q.BuildGetAuditLogEntriesForPlanQuery(planID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

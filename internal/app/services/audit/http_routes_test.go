@@ -35,7 +35,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
-		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return(exampleAuditLogEntryList, nil)
 		s.auditLog = auditLogEntryManager
 
@@ -66,7 +66,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
@@ -97,7 +97,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.Anything, mock.AnythingOfType("*types.QueryFilter")).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 
@@ -142,7 +142,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 			return exampleAuditLogEntry.ID
 		}
 
-		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
 		s.auditLog = auditLogEntryManager
 
@@ -178,7 +178,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 			return exampleAuditLogEntry.ID
 		}
 
-		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
@@ -214,7 +214,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 			return exampleAuditLogEntry.ID
 		}
 
-		auditLogEntryManager := &mocktypes.AuditLogDataManager{}
+		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntry", mock.Anything, exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 

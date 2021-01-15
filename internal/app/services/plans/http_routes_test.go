@@ -152,7 +152,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.planCounter = mc
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogAccountSubscriptionPlanCreationEvent", mock.Anything, examplePlan)
 		s.auditLog = auditLog
 
@@ -392,7 +392,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		planDataManager.On("UpdateAccountSubscriptionPlan", mock.Anything, mock.AnythingOfType("*types.AccountSubscriptionPlan")).Return(nil)
 		s.planDataManager = planDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("AccountSubscriptionLogPlanUpdateEvent", mock.Anything, exampleUser.ID, examplePlan.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
@@ -596,7 +596,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(nil)
 		s.planDataManager = planDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("AccountSubscriptionLogPlanArchiveEvent", mock.Anything, exampleUser.ID, examplePlan.ID)
 		s.auditLog = auditLog
 
@@ -711,7 +711,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(nil)
 		s.planDataManager = planDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("AccountSubscriptionLogPlanArchiveEvent", mock.Anything, exampleUser.ID, examplePlan.ID)
 		s.auditLog = auditLog
 

@@ -43,6 +43,16 @@ type (
 		Period      time.Duration `json:"period"`
 	}
 
+	AccountSubscriptionPlanSQLQueryBuilder interface {
+		BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
+		BuildGetAllAccountSubscriptionPlansCountQuery() string
+		BuildGetAccountSubscriptionPlansQuery(filter *QueryFilter) (query string, args []interface{})
+		BuildCreateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlan) (query string, args []interface{})
+		BuildUpdateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlan) (query string, args []interface{})
+		BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
+		BuildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{})
+	}
+
 	// AccountSubscriptionPlanDataManager describes a structure capable of storing plans permanently.
 	AccountSubscriptionPlanDataManager interface {
 		GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*AccountSubscriptionPlan, error)

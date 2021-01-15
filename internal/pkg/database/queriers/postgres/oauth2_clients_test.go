@@ -112,7 +112,7 @@ func TestPostgres_buildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.ClientID,
 		}
-		actualQuery, actualArgs := q.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
+		actualQuery, actualArgs := q.BuildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -130,7 +130,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
+		expectedQuery, expectedArgs := q.BuildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -150,7 +150,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
+		expectedQuery, expectedArgs := q.BuildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -171,7 +171,7 @@ func TestPostgres_GetOAuth2ClientByClientID(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
+		expectedQuery, expectedArgs := q.BuildGetOAuth2ClientByClientIDQuery(exampleOAuth2Client.ClientID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -199,7 +199,7 @@ func TestPostgres_buildGetBatchOfOAuth2ClientsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.buildGetBatchOfOAuth2ClientsQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfOAuth2ClientsQuery(beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -211,7 +211,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	_q, _ := buildTestService(T)
-	expectedCountQuery := _q.buildGetAllOAuth2ClientsCountQuery()
+	expectedCountQuery := _q.BuildGetAllOAuth2ClientsCountQuery()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -222,7 +222,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfOAuth2ClientsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -287,7 +287,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfOAuth2ClientsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -314,7 +314,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfOAuth2ClientsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -342,7 +342,7 @@ func TestPostgres_GetAllOAuth2Clients(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfOAuth2ClientsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -376,7 +376,7 @@ func TestPostgres_buildGetOAuth2ClientQuery(T *testing.T) {
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,
 		}
-		actualQuery, actualArgs := q.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
+		actualQuery, actualArgs := q.BuildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -394,7 +394,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
+		expectedQuery, expectedArgs := q.BuildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -414,7 +414,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
+		expectedQuery, expectedArgs := q.BuildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -435,7 +435,7 @@ func TestPostgres_GetOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
+		expectedQuery, expectedArgs := q.BuildGetOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -457,7 +457,7 @@ func TestPostgres_buildGetAllOAuth2ClientsCountQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(oauth2_clients.id) FROM oauth2_clients WHERE oauth2_clients.archived_on IS NULL"
-		actualQuery := q.buildGetAllOAuth2ClientsCountQuery()
+		actualQuery := q.BuildGetAllOAuth2ClientsCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -474,7 +474,7 @@ func TestPostgres_GetAllOAuth2ClientCount(T *testing.T) {
 		expectedCount := uint64(123)
 
 		q, mockDB := buildTestService(t)
-		expectedQuery := q.buildGetAllOAuth2ClientsCountQuery()
+		expectedQuery := q.BuildGetAllOAuth2ClientsCountQuery()
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -512,7 +512,7 @@ func TestPostgres_buildGetOAuth2ClientsForUserQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetOAuth2ClientsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.BuildGetOAuth2ClientsQuery(exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -534,7 +534,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.BuildGetOAuth2ClientsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -562,7 +562,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.BuildGetOAuth2ClientsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -582,7 +582,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.BuildGetOAuth2ClientsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -603,7 +603,7 @@ func TestPostgres_GetOAuth2ClientsForUser(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.buildGetOAuth2ClientsQuery(exampleUser.ID, filter)
+		expectedQuery, _ := q.BuildGetOAuth2ClientsQuery(exampleUser.ID, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs().
@@ -635,7 +635,7 @@ func TestPostgres_buildCreateOAuth2ClientQuery(T *testing.T) {
 			exampleOAuth2Client.RedirectURI,
 			exampleOAuth2Client.BelongsToUser,
 		}
-		actualQuery, actualArgs := q.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
+		actualQuery, actualArgs := q.BuildCreateOAuth2ClientQuery(exampleOAuth2Client)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -655,7 +655,7 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleOAuth2Client.ID, exampleOAuth2Client.CreatedOn)
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
+		expectedQuery, expectedArgs := q.BuildCreateOAuth2ClientQuery(exampleOAuth2Client)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -676,7 +676,7 @@ func TestPostgres_CreateOAuth2Client(T *testing.T) {
 		expectedInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildCreateOAuth2ClientQuery(exampleOAuth2Client)
+		expectedQuery, expectedArgs := q.BuildCreateOAuth2ClientQuery(exampleOAuth2Client)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -772,7 +772,7 @@ func TestPostgres_buildArchiveOAuth2ClientQuery(T *testing.T) {
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,
 		}
-		actualQuery, actualArgs := q.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
+		actualQuery, actualArgs := q.BuildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -790,7 +790,7 @@ func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
+		expectedQuery, expectedArgs := q.BuildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -809,7 +809,7 @@ func TestPostgres_ArchiveOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
+		expectedQuery, expectedArgs := q.BuildArchiveOAuth2ClientQuery(exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -835,7 +835,7 @@ func TestPostgres_LogOAuth2ClientCreationEvent(T *testing.T) {
 		exampleAuditLogEntryInput := audit.BuildOAuth2ClientCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -860,7 +860,7 @@ func TestPostgres_LogOAuth2ClientArchiveEvent(T *testing.T) {
 		exampleAuditLogEntryInput := audit.BuildOAuth2ClientArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

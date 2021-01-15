@@ -20,6 +20,7 @@ const (
 
 func buildTestClient() (*Client, *database.MockDatabase) {
 	db := database.BuildMockDatabase()
+
 	c := &Client{
 		logger:  noop.NewLogger(),
 		querier: db,

@@ -19,6 +19,8 @@ const (
 )
 
 func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
+	t.Helper()
+
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 

@@ -39,16 +39,24 @@ type (
 		Context   AuditLogContext `json:"context"`
 	}
 
-	// AuditLogDataManager describes a structure capable of managing audit log entries.
-	AuditLogDataManager interface {
+	AuditLogEntrySQLQueryBuilder interface {
+		BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{})
+		BuildGetAllAuditLogEntriesCountQuery() string
+		BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{})
+		BuildGetAuditLogEntriesQuery(filter *QueryFilter) (query string, args []interface{})
+		BuildCreateAuditLogEntryQuery(input *AuditLogEntry) (query string, args []interface{})
+	}
+
+	// AuditLogEntryDataManager describes a structure capable of managing audit log entries.
+	AuditLogEntryDataManager interface {
 		GetAuditLogEntry(ctx context.Context, eventID uint64) (*AuditLogEntry, error)
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
-		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry) error
+		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry, bucketSize uint16) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
 	}
 
-	// AuditLogDataService describes a structure capable of serving traffic related to audit log entries.
-	AuditLogDataService interface {
+	// AuditLogEntryDataService describes a structure capable of serving traffic related to audit log entries.
+	AuditLogEntryDataService interface {
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 	}

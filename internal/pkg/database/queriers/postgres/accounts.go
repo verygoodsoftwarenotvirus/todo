@@ -75,38 +75,8 @@ func (q *Postgres) scanAccounts(rows database.ResultIterator, includeCounts bool
 	return accounts, filteredCount, totalCount, nil
 }
 
-// buildAccountExistsQuery constructs a SQL query for checking if an account with a given ID belong to a user with a given ID exists.
-func (q *Postgres) buildAccountExistsQuery(accountID, userID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
-		Select(fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.IDColumn)).
-		Prefix(queriers.ExistencePrefix).
-		From(queriers.AccountsTableName).
-		Suffix(queriers.ExistenceSuffix).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.IDColumn):                         accountID,
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.ArchivedOnColumn):                 nil,
-		}).ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// AccountExists queries the database to see if a given account belonging to a given user exists.
-func (q *Postgres) AccountExists(ctx context.Context, accountID, userID uint64) (exists bool, err error) {
-	query, args := q.buildAccountExistsQuery(accountID, userID)
-
-	err = q.db.QueryRowContext(ctx, query, args...).Scan(&exists)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-
-	return exists, err
-}
-
-// buildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
-func (q *Postgres) buildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
+// BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
+func (q *Postgres) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -126,7 +96,7 @@ func (q *Postgres) buildGetAccountQuery(accountID, userID uint64) (query string,
 
 // GetAccount fetches an account from the database.
 func (q *Postgres) GetAccount(ctx context.Context, accountID, userID uint64) (*types.Account, error) {
-	query, args := q.buildGetAccountQuery(accountID, userID)
+	query, args := q.BuildGetAccountQuery(accountID, userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	account, _, _, err := q.scanAccount(row, false)
@@ -134,9 +104,9 @@ func (q *Postgres) GetAccount(ctx context.Context, accountID, userID uint64) (*t
 	return account, err
 }
 
-// buildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
+// BuildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *Postgres) buildGetAllAccountsCountQuery() string {
+func (q *Postgres) BuildGetAllAccountsCountQuery() string {
 	allAccountsCountQuery, _, err := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.AccountsTableName)).
 		From(queriers.AccountsTableName).
@@ -151,12 +121,12 @@ func (q *Postgres) buildGetAllAccountsCountQuery() string {
 
 // GetAllAccountsCount will fetch the count of accounts from the database.
 func (q *Postgres) GetAllAccountsCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllAccountsCountQuery()).Scan(&count)
+	err = q.db.QueryRowContext(ctx, q.BuildGetAllAccountsCountQuery()).Scan(&count)
 	return count, err
 }
 
-// buildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
-func (q *Postgres) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
+// BuildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
+func (q *Postgres) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.AccountsTableColumns...).
 		From(queriers.AccountsTableName).
@@ -175,16 +145,16 @@ func (q *Postgres) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query st
 
 // GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []types.Account) error {
+func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []types.Account, bucketSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of accounts: %w", countErr)
+		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
+		endID := beginID + uint64(bucketSize)
 		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfAccountsQuery(begin, end)
+			query, args := q.BuildGetBatchOfAccountsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -212,9 +182,9 @@ func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []type
 	return nil
 }
 
-// buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Postgres) buildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Postgres) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		queriers.AccountsTableName,
 		queriers.AccountsTableUserOwnershipColumn,
@@ -227,7 +197,7 @@ func (q *Postgres) buildGetAccountsQuery(userID uint64, forAdmin bool, filter *t
 
 // GetAccounts fetches a list of accounts from the database that meet a particular filter.
 func (q *Postgres) GetAccounts(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.AccountList, error) {
-	query, args := q.buildGetAccountsQuery(userID, false, filter)
+	query, args := q.BuildGetAccountsQuery(userID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -254,7 +224,7 @@ func (q *Postgres) GetAccounts(ctx context.Context, userID uint64, filter *types
 
 // GetAccountsForAdmin fetches a list of accounts from the database that meet a particular filter for all users.
 func (q *Postgres) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.AccountList, error) {
-	query, args := q.buildGetAccountsQuery(0, true, filter)
+	query, args := q.BuildGetAccountsQuery(0, true, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -279,8 +249,8 @@ func (q *Postgres) GetAccountsForAdmin(ctx context.Context, filter *types.QueryF
 	return list, nil
 }
 
-// buildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
-func (q *Postgres) buildCreateAccountQuery(input *types.Account) (query string, args []interface{}) {
+// BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
+func (q *Postgres) BuildCreateAccountQuery(input *types.Account) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -308,7 +278,7 @@ func (q *Postgres) CreateAccount(ctx context.Context, input *types.AccountCreati
 		BelongsToUser: input.BelongsToUser,
 	}
 
-	query, args := q.buildCreateAccountQuery(x)
+	query, args := q.BuildCreateAccountQuery(x)
 
 	// create the account.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
@@ -319,8 +289,8 @@ func (q *Postgres) CreateAccount(ctx context.Context, input *types.AccountCreati
 	return x, nil
 }
 
-// buildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
-func (q *Postgres) buildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
+// BuildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
+func (q *Postgres) BuildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -341,12 +311,12 @@ func (q *Postgres) buildUpdateAccountQuery(input *types.Account) (query string, 
 
 // UpdateAccount updates a particular account. Note that UpdateAccount expects the provided input to have a valid ID.
 func (q *Postgres) UpdateAccount(ctx context.Context, input *types.Account) error {
-	query, args := q.buildUpdateAccountQuery(input)
+	query, args := q.BuildUpdateAccountQuery(input)
 	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
-// buildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
-func (q *Postgres) buildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
+// BuildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
+func (q *Postgres) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -368,7 +338,7 @@ func (q *Postgres) buildArchiveAccountQuery(accountID, userID uint64) (query str
 
 // ArchiveAccount marks an account as archived in the database.
 func (q *Postgres) ArchiveAccount(ctx context.Context, accountID, userID uint64) error {
-	query, args := q.buildArchiveAccountQuery(accountID, userID)
+	query, args := q.BuildArchiveAccountQuery(accountID, userID)
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if res != nil {
@@ -382,22 +352,22 @@ func (q *Postgres) ArchiveAccount(ctx context.Context, accountID, userID uint64)
 
 // LogAccountCreationEvent saves a AccountCreationEvent in the audit log table.
 func (q *Postgres) LogAccountCreationEvent(ctx context.Context, account *types.Account) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountCreationEventEntry(account))
+	q.CreateAuditLogEntry(ctx, audit.BuildAccountCreationEventEntry(account))
 }
 
 // LogAccountUpdateEvent saves a AccountUpdateEvent in the audit log table.
 func (q *Postgres) LogAccountUpdateEvent(ctx context.Context, userID, accountID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountUpdateEventEntry(userID, accountID, changes))
+	q.CreateAuditLogEntry(ctx, audit.BuildAccountUpdateEventEntry(userID, accountID, changes))
 }
 
 // LogAccountArchiveEvent saves a AccountArchiveEvent in the audit log table.
 func (q *Postgres) LogAccountArchiveEvent(ctx context.Context, userID, accountID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountArchiveEventEntry(userID, accountID))
+	q.CreateAuditLogEntry(ctx, audit.BuildAccountArchiveEventEntry(userID, accountID))
 }
 
-// buildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries
+// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries
 // associated with a given account.
-func (q *Postgres) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
 	accountIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountAssignmentKey)
 	builder := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
@@ -410,7 +380,7 @@ func (q *Postgres) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (que
 
 // GetAuditLogEntriesForAccount fetches a audit log entries for a given account from the database.
 func (q *Postgres) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForAccountQuery(accountID)
+	query, args := q.BuildGetAuditLogEntriesForAccountQuery(accountID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

@@ -40,7 +40,7 @@ func TestProvidePlansService(T *testing.T) {
 		s, err := ProvideService(
 			noop.NewLogger(),
 			&mocktypes.AccountSubscriptionPlanDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 		)
@@ -58,7 +58,7 @@ func TestProvidePlansService(T *testing.T) {
 		s, err := ProvideService(
 			noop.NewLogger(),
 			&mocktypes.AccountSubscriptionPlanDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 		)

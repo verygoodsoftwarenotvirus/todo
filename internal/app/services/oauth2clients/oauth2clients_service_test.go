@@ -59,7 +59,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			&mockencoding.EncoderDecoder{},
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
@@ -80,7 +80,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			noop.NewLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
 			&mockencoding.EncoderDecoder{},
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {

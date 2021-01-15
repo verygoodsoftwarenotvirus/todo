@@ -3,16 +3,21 @@ package config
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/Masterminds/squirrel"
+	"github.com/go-sql-driver/mysql"
+	sqlite "github.com/mattn/go-sqlite3"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
+	zqlite "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/alexedwards/scs/mysqlstore"
@@ -20,6 +25,7 @@ import (
 	"github.com/alexedwards/scs/sqlite3store"
 	"github.com/alexedwards/scs/v2"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	postgresql "github.com/lib/pq"
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
@@ -71,7 +77,7 @@ func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, er
 	case MariaDBProviderKey:
 		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails)
 	case SqliteProviderKey:
-		return sqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
+		return zqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
 	default:
 		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
 	}
@@ -95,7 +101,7 @@ func (cfg *Config) ProvideDatabaseClient(
 	case MariaDBProviderKey:
 		dbManager = mariadb.ProvideMariaDB(cfg.Debug, rawDB, logger)
 	case SqliteProviderKey:
-		dbManager = sqlite.ProvideSqlite(cfg.Debug, rawDB, logger)
+		dbManager = zqlite.ProvideSqlite(cfg.Debug, rawDB, logger)
 	default:
 		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
 	}
@@ -109,6 +115,60 @@ func (cfg *Config) ProvideDatabaseClient(
 		cfg.RunMigrations,
 		cfg.Debug,
 	)
+}
+
+// ProvideDatabaseDriver provides .
+func (cfg *Config) ProvideDatabaseDriver() driver.Driver {
+	switch cfg.Provider {
+	case PostgresProviderKey:
+		return &postgresql.Driver{}
+	case MariaDBProviderKey:
+		return &mysql.MySQLDriver{}
+	case SqliteProviderKey:
+		return &sqlite.SQLiteDriver{}
+	default:
+		panic("aaaaaaaaaaaaaaaaaaaaaaaa")
+	}
+}
+
+// ProvideDatabasePlaceholderFormat provides .
+func (cfg *Config) ProvideDatabasePlaceholderFormat() (squirrel.PlaceholderFormat, error) {
+	switch cfg.Provider {
+	case PostgresProviderKey:
+		return squirrel.Dollar, nil
+	case MariaDBProviderKey, SqliteProviderKey:
+		return squirrel.Question, nil
+	default:
+		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
+	}
+}
+
+// ProvideDatabasePlaceholderFormat provides .
+func (cfg *Config) ProvideJSONPluckQuery() string {
+	switch cfg.Provider {
+	case PostgresProviderKey:
+		return `%s.%s->'%s'`
+	case MariaDBProviderKey:
+		return `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
+	case SqliteProviderKey:
+		return `json_extract(%s.%s, '$.%s')`
+	default:
+		return ""
+	}
+}
+
+// ProvideCurrentUnixTimestampQuery provides a database implementation dependent on the configuration.
+func (cfg *Config) ProvideCurrentUnixTimestampQuery() string {
+	switch cfg.Provider {
+	case PostgresProviderKey:
+		return `extract(epoch FROM NOW())`
+	case MariaDBProviderKey:
+		return `UNIX_TIMESTAMP()`
+	case SqliteProviderKey:
+		return `(strftime('%s','now'))`
+	default:
+		return ""
+	}
 }
 
 // ProvideSessionManager provides a session manager based on some settings.

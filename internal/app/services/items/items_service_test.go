@@ -44,7 +44,7 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideService(
 			noop.NewLogger(),
 			&mocktypes.ItemDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			search.Config{ItemsIndexPath: "example/path"},
@@ -66,7 +66,7 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideService(
 			noop.NewLogger(),
 			&mocktypes.ItemDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 			search.Config{ItemsIndexPath: "example/path"},

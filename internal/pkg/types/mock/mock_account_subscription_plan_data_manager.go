@@ -50,22 +50,22 @@ func (m *AccountSubscriptionPlanDataManager) ArchiveAccountSubscriptionPlan(ctx 
 }
 
 // LogAccountSubscriptionPlanCreationEvent implements our interface.
-func (m *AuditLogDataManager) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
+func (m *AuditLogEntryDataManager) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
 	m.Called(ctx, plan)
 }
 
 // AccountSubscriptionLogPlanUpdateEvent implements our interface.
-func (m *AuditLogDataManager) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
+func (m *AuditLogEntryDataManager) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
 	m.Called(ctx, userID, planID, changes)
 }
 
 // AccountSubscriptionLogPlanArchiveEvent implements our interface.
-func (m *AuditLogDataManager) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
+func (m *AuditLogEntryDataManager) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
 	m.Called(ctx, userID, planID)
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan is a mock function.
-func (m *AuditLogDataManager) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
 	args := m.Called(ctx, planID)
 	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
 }

@@ -34,8 +34,8 @@ func (m *OAuth2ClientDataManager) GetTotalOAuth2ClientCount(ctx context.Context)
 }
 
 // GetAllOAuth2Clients is a mock function.
-func (m *OAuth2ClientDataManager) GetAllOAuth2Clients(ctx context.Context, results chan []types.OAuth2Client) error {
-	return m.Called(ctx, results).Error(0)
+func (m *OAuth2ClientDataManager) GetAllOAuth2Clients(ctx context.Context, results chan []types.OAuth2Client, bucketSize uint16) error {
+	return m.Called(ctx, results, bucketSize).Error(0)
 }
 
 // GetOAuth2Clients is a mock function.

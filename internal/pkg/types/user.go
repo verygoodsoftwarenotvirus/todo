@@ -137,6 +137,20 @@ type (
 		TwoFactorSecret string `json:"twoFactorSecret"`
 	}
 
+	UserSQLQueryBuilder interface {
+		BuildGetUserQuery(userID uint64) (query string, args []interface{})
+		BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
+		BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{})
+		BuildGetAllUsersCountQuery() (query string)
+		BuildCreateUserQuery(input UserDataStoreCreationInput) (query string, args []interface{})
+		BuildUpdateUserQuery(input *User) (query string, args []interface{})
+		BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{})
+		BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
+		BuildArchiveUserQuery(userID uint64) (query string, args []interface{})
+		BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{})
+		BuildSetUserStatusQuery(userID uint64, input AccountStatusUpdateInput) (query string, args []interface{})
+	}
+
 	// AdminUserDataManager contains administrative User functions that we don't necessarily want to expose
 	// to, say, the collection of handlers.
 	AdminUserDataManager interface {

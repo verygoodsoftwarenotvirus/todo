@@ -14,7 +14,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.AuditLogDataManager = (*Sqlite)(nil)
+var _ types.AuditLogEntryDataManager = (*Sqlite)(nil)
 
 // scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
 func (q *Sqlite) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {

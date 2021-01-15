@@ -46,12 +46,23 @@ type (
 		BelongsToUser uint64 `json:"-"`
 	}
 
+	ItemSQLQueryBuilder interface {
+		BuildItemExistsQuery(itemID, userID uint64) (query string, args []interface{})
+		BuildGetItemQuery(itemID, userID uint64) (query string, args []interface{})
+		BuildGetAllItemsCountQuery() string
+		BuildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{})
+		BuildGetItemsQuery(userID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
+		BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{})
+		BuildCreateItemQuery(input *Item) (query string, args []interface{})
+		BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{})
+	}
+
 	// ItemDataManager describes a structure capable of storing items permanently.
 	ItemDataManager interface {
 		ItemExists(ctx context.Context, itemID, accountID uint64) (bool, error)
 		GetItem(ctx context.Context, itemID, accountID uint64) (*Item, error)
 		GetAllItemsCount(ctx context.Context) (uint64, error)
-		GetAllItems(ctx context.Context, resultChannel chan []Item) error
+		GetAllItems(ctx context.Context, resultChannel chan []Item, bucketSize uint16) error
 		GetItems(ctx context.Context, accountID uint64, filter *QueryFilter) (*ItemList, error)
 		GetItemsForAdmin(ctx context.Context, filter *QueryFilter) (*ItemList, error)
 		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]Item, error)

@@ -31,7 +31,7 @@ const (
 	currentUnixTimeQuery = `extract(epoch FROM NOW())`
 
 	maximumConnectionAttempts        = 50
-	defaultBucketSize         uint64 = 1000
+	defaultBucketSize         uint16 = 1000
 )
 
 var _ database.DataManager = (*Postgres)(nil)
@@ -44,16 +44,6 @@ type (
 		sqlBuilder  squirrel.StatementBuilderType
 		migrateOnce sync.Once
 		debug       bool
-	}
-
-	// ConnectionDetails is a string alias for a Postgres url.
-	ConnectionDetails string
-
-	// Querier is a subset interface for sql.{DB|Tx|Stmt} objects.
-	Querier interface {
-		ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
-		QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
-		QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
 	}
 )
 

@@ -84,7 +84,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint
 	return c.querier.ArchiveAccountSubscriptionPlan(ctx, planID)
 }
 
-// LogAccountSubscriptionPlanCreationEvent implements our AuditLogDataManager interface.
+// LogAccountSubscriptionPlanCreationEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -94,7 +94,7 @@ func (c *Client) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, pl
 	c.querier.LogAccountSubscriptionPlanCreationEvent(ctx, plan)
 }
 
-// AccountSubscriptionLogPlanUpdateEvent implements our AuditLogDataManager interface.
+// AccountSubscriptionLogPlanUpdateEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -104,7 +104,7 @@ func (c *Client) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, user
 	c.querier.AccountSubscriptionLogPlanUpdateEvent(ctx, userID, planID, changes)
 }
 
-// AccountSubscriptionLogPlanArchiveEvent implements our AuditLogDataManager interface.
+// AccountSubscriptionLogPlanArchiveEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

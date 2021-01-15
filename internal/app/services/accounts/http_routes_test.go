@@ -153,7 +153,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.accountCounter = mc
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogAccountCreationEvent", mock.Anything, exampleAccount)
 		s.auditLog = auditLog
 
@@ -517,7 +517,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager.On("UpdateAccount", mock.Anything, mock.AnythingOfType("*types.Account")).Return(nil)
 		s.accountDataManager = accountDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogAccountUpdateEvent", mock.Anything, exampleUser.ID, exampleAccount.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
@@ -725,7 +725,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On("ArchiveAccount", mock.Anything, exampleAccount.ID, exampleUser.ID).Return(nil)
 		s.accountDataManager = accountDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogAccountArchiveEvent", mock.Anything, exampleUser.ID, exampleAccount.ID)
 		s.auditLog = auditLog
 
@@ -843,7 +843,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On("ArchiveAccount", mock.Anything, exampleAccount.ID, exampleUser.ID).Return(nil)
 		s.accountDataManager = accountDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogAccountArchiveEvent", mock.Anything, exampleUser.ID, exampleAccount.ID)
 		s.auditLog = auditLog
 

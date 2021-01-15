@@ -354,7 +354,7 @@ func TestService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.Anything)
 		s.userCounter = mc
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserCreationEvent", mock.Anything, exampleUser)
 		s.auditLog = auditLog
 
@@ -627,7 +627,7 @@ func TestService_CreateHandler(T *testing.T) {
 		db.AccountDataManager.On("CreateAccount", mock.Anything, mock.AnythingOfType("*types.AccountCreationInput")).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = db
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserCreationEvent", mock.Anything, exampleUser)
 		s.auditLog = auditLog
 
@@ -775,7 +775,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserUpdateTwoFactorSecretEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -1003,7 +1003,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.Anything, exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserVerifyTwoFactorSecretEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -1207,7 +1207,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		mockDB.UserDataManager.On("UpdateUserPassword", mock.Anything, exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
 		s.userDataManager = mockDB
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserUpdatePasswordEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 
@@ -1623,7 +1623,7 @@ func TestService_Archive(T *testing.T) {
 		mockDB.UserDataManager.On("ArchiveUser", mock.Anything, exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogUserArchiveEvent", mock.Anything, exampleUser.ID)
 		s.auditLog = auditLog
 

@@ -182,7 +182,7 @@ func TestPostgres_buildGetAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.buildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -203,7 +203,7 @@ func TestPostgres_GetAccount(T *testing.T) {
 		exampleAccount.BelongsToUser = exampleUser.ID
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -225,7 +225,7 @@ func TestPostgres_GetAccount(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		expectedQuery, expectedArgs := q.buildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
@@ -247,7 +247,7 @@ func TestPostgres_buildGetAllAccountsCountQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 
 		expectedQuery := "SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL"
-		actualQuery := q.buildGetAllAccountsCountQuery()
+		actualQuery := q.BuildGetAllAccountsCountQuery()
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -264,7 +264,7 @@ func TestPostgres_GetAllAccountsCount(T *testing.T) {
 		expectedCount := uint64(123)
 
 		q, mockDB := buildTestService(t)
-		mockDB.ExpectQuery(formatQueryForSQLMock(q.buildGetAllAccountsCountQuery())).
+		mockDB.ExpectQuery(formatQueryForSQLMock(q.BuildGetAllAccountsCountQuery())).
 			WithArgs().
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
 
@@ -290,7 +290,7 @@ func TestPostgres_buildGetBatchOfAccountsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.buildGetBatchOfAccountsQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfAccountsQuery(beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -302,7 +302,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 	T.Parallel()
 
 	_q, _ := buildTestService(T)
-	expectedCountQuery := _q.buildGetAllAccountsCountQuery()
+	expectedCountQuery := _q.BuildGetAllAccountsCountQuery()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -313,7 +313,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAccountsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -378,7 +378,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAccountsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -405,7 +405,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAccountsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -433,7 +433,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
-		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
+		expectedQuery, expectedArgs := q.BuildGetBatchOfAccountsQuery(begin, end)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -477,7 +477,7 @@ func TestPostgres_buildGetAccountsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.BuildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -497,7 +497,7 @@ func TestPostgres_GetAccounts(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccountList := fakes.BuildFakeAccountList()
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -527,7 +527,7 @@ func TestPostgres_GetAccounts(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -549,7 +549,7 @@ func TestPostgres_GetAccounts(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleUser := fakes.BuildFakeUser()
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -573,7 +573,7 @@ func TestPostgres_GetAccounts(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(exampleUser.ID, false, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(exampleUser.ID, false, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -598,7 +598,7 @@ func TestPostgres_GetAccountsForAdmin(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		exampleAccountList := fakes.BuildFakeAccountList()
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -627,7 +627,7 @@ func TestPostgres_GetAccountsForAdmin(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -649,7 +649,7 @@ func TestPostgres_GetAccountsForAdmin(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -673,7 +673,7 @@ func TestPostgres_GetAccountsForAdmin(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildGetAccountsQuery(0, true, filter)
+		expectedQuery, expectedArgs := q.BuildGetAccountsQuery(0, true, filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -703,7 +703,7 @@ func TestPostgres_buildCreateAccountQuery(T *testing.T) {
 			exampleAccount.Name,
 			exampleAccount.BelongsToUser,
 		}
-		actualQuery, actualArgs := q.buildCreateAccountQuery(exampleAccount)
+		actualQuery, actualArgs := q.BuildCreateAccountQuery(exampleAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -725,7 +725,7 @@ func TestPostgres_CreateAccount(T *testing.T) {
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
-		expectedQuery, expectedArgs := q.buildCreateAccountQuery(exampleAccount)
+		expectedQuery, expectedArgs := q.BuildCreateAccountQuery(exampleAccount)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleAccount.ID, exampleAccount.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -749,7 +749,7 @@ func TestPostgres_CreateAccount(T *testing.T) {
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
-		expectedQuery, expectedArgs := q.buildCreateAccountQuery(exampleAccount)
+		expectedQuery, expectedArgs := q.BuildCreateAccountQuery(exampleAccount)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -779,7 +779,7 @@ func TestPostgres_buildUpdateAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.buildUpdateAccountQuery(exampleAccount)
+		actualQuery, actualArgs := q.BuildUpdateAccountQuery(exampleAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -800,7 +800,7 @@ func TestPostgres_UpdateAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildUpdateAccountQuery(exampleAccount)
+		expectedQuery, expectedArgs := q.BuildUpdateAccountQuery(exampleAccount)
 
 		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -823,7 +823,7 @@ func TestPostgres_UpdateAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildUpdateAccountQuery(exampleAccount)
+		expectedQuery, expectedArgs := q.BuildUpdateAccountQuery(exampleAccount)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -852,7 +852,7 @@ func TestPostgres_buildArchiveAccountQuery(T *testing.T) {
 			exampleUser.ID,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.buildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -873,7 +873,7 @@ func TestPostgres_ArchiveAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
@@ -894,7 +894,7 @@ func TestPostgres_ArchiveAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
@@ -916,7 +916,7 @@ func TestPostgres_ArchiveAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -940,7 +940,7 @@ func TestPostgres_LogAccountCreationEvent(T *testing.T) {
 		exampleAuditLogEntryInput := audit.BuildAccountCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -965,7 +965,7 @@ func TestPostgres_LogAccountUpdateEvent(T *testing.T) {
 		exampleAuditLogEntryInput := audit.BuildAccountUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -990,7 +990,7 @@ func TestPostgres_LogAccountArchiveEvent(T *testing.T) {
 		exampleAuditLogEntryInput := audit.BuildAccountArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.buildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

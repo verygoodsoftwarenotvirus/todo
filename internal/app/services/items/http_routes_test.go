@@ -335,7 +335,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogItemCreationEvent", mock.Anything, exampleItem)
 		s.auditLog = auditLog
 
@@ -703,7 +703,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		si.On("Index", mock.Anything, exampleItem.ID, exampleItem).Return(nil)
 		s.search = si
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogItemUpdateEvent", mock.Anything, exampleUser.ID, exampleItem.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
@@ -911,7 +911,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogItemArchiveEvent", mock.Anything, exampleUser.ID, exampleItem.ID)
 		s.auditLog = auditLog
 
@@ -1033,7 +1033,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.Anything, exampleItem.ID, exampleUser.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		auditLog := &mocktypes.AuditLogDataManager{}
+		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogItemArchiveEvent", mock.Anything, exampleUser.ID, exampleItem.ID)
 		s.auditLog = auditLog
 

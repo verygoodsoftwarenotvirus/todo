@@ -10,22 +10,6 @@ import (
 
 var _ types.AccountDataManager = (*Client)(nil)
 
-// AccountExists fetches whether or not an account exists from the database.
-func (c *Client) AccountExists(ctx context.Context, accountID, userID uint64) (bool, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachAccountIDToSpan(span, accountID)
-	tracing.AttachUserIDToSpan(span, userID)
-
-	c.logger.WithValues(map[string]interface{}{
-		"account_id": accountID,
-		"user_id":    userID,
-	}).Debug("AccountExists called")
-
-	return c.querier.AccountExists(ctx, accountID, userID)
-}
-
 // GetAccount fetches an account from the database.
 func (c *Client) GetAccount(ctx context.Context, accountID, userID uint64) (*types.Account, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
@@ -134,7 +118,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 	return c.querier.ArchiveAccount(ctx, accountID, userID)
 }
 
-// LogAccountCreationEvent implements our AuditLogDataManager interface.
+// LogAccountCreationEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogAccountCreationEvent(ctx context.Context, account *types.Account) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -144,7 +128,7 @@ func (c *Client) LogAccountCreationEvent(ctx context.Context, account *types.Acc
 	c.querier.LogAccountCreationEvent(ctx, account)
 }
 
-// LogAccountUpdateEvent implements our AuditLogDataManager interface.
+// LogAccountUpdateEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogAccountUpdateEvent(ctx context.Context, userID, accountID uint64, changes []types.FieldChangeSummary) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -154,7 +138,7 @@ func (c *Client) LogAccountUpdateEvent(ctx context.Context, userID, accountID ui
 	c.querier.LogAccountUpdateEvent(ctx, userID, accountID, changes)
 }
 
-// LogAccountArchiveEvent implements our AuditLogDataManager interface.
+// LogAccountArchiveEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogAccountArchiveEvent(ctx context.Context, userID, accountID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

@@ -177,7 +177,7 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	return c.querier.ArchiveUser(ctx, userID)
 }
 
-// LogUserCreationEvent implements our AuditLogDataManager interface.
+// LogUserCreationEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -187,7 +187,7 @@ func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
 	c.querier.LogUserCreationEvent(ctx, user)
 }
 
-// LogUserVerifyTwoFactorSecretEvent implements our AuditLogDataManager interface.
+// LogUserVerifyTwoFactorSecretEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -197,7 +197,7 @@ func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID u
 	c.querier.LogUserVerifyTwoFactorSecretEvent(ctx, userID)
 }
 
-// LogUserUpdateTwoFactorSecretEvent implements our AuditLogDataManager interface.
+// LogUserUpdateTwoFactorSecretEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -207,7 +207,7 @@ func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID u
 	c.querier.LogUserUpdateTwoFactorSecretEvent(ctx, userID)
 }
 
-// LogUserUpdatePasswordEvent implements our AuditLogDataManager interface.
+// LogUserUpdatePasswordEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -217,7 +217,7 @@ func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) 
 	c.querier.LogUserUpdatePasswordEvent(ctx, userID)
 }
 
-// LogUserArchiveEvent implements our AuditLogDataManager interface.
+// LogUserArchiveEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

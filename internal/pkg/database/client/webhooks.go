@@ -103,7 +103,7 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 	return c.querier.ArchiveWebhook(ctx, webhookID, userID)
 }
 
-// LogWebhookCreationEvent implements our AuditLogDataManager interface.
+// LogWebhookCreationEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -113,7 +113,7 @@ func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Web
 	c.querier.LogWebhookCreationEvent(ctx, webhook)
 }
 
-// LogWebhookUpdateEvent implements our AuditLogDataManager interface.
+// LogWebhookUpdateEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -123,7 +123,7 @@ func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID ui
 	c.querier.LogWebhookUpdateEvent(ctx, userID, webhookID, changes)
 }
 
-// LogWebhookArchiveEvent implements our AuditLogDataManager interface.
+// LogWebhookArchiveEvent implements our AuditLogEntryDataManager interface.
 func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ types.AuditLogDataService = (*AuditLogDataService)(nil)
+var _ types.AuditLogEntryDataService = (*AuditLogDataService)(nil)
 
-// AuditLogDataService is a mock types.AuditLogDataService.
+// AuditLogDataService is a mock types.AuditLogEntryDataService.
 type AuditLogDataService struct {
 	mock.Mock
 }

@@ -40,7 +40,7 @@ func TestProvideAccountsService(T *testing.T) {
 		s, err := ProvideService(
 			noop.NewLogger(),
 			&mocktypes.AccountDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 		)
@@ -58,7 +58,7 @@ func TestProvideAccountsService(T *testing.T) {
 		s, err := ProvideService(
 			noop.NewLogger(),
 			&mocktypes.AccountDataManager{},
-			&mocktypes.AuditLogDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
 		)

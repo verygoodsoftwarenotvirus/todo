@@ -38,7 +38,7 @@ func (m *AuditLogEntryDataManager) GetAllAuditLogEntriesCount(ctx context.Contex
 }
 
 // GetAllAuditLogEntries is a mock function.
-func (m *AuditLogEntryDataManager) GetAllAuditLogEntries(ctx context.Context, results chan []types.AuditLogEntry, bucketSize uint16) error {
+func (m *AuditLogEntryDataManager) GetAllAuditLogEntries(ctx context.Context, results chan []*types.AuditLogEntry, bucketSize uint16) error {
 	args := m.Called(ctx, results, bucketSize)
 	return args.Error(0)
 }

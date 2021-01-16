@@ -60,7 +60,7 @@ func TestClient_GetAllAccounts(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []types.Account)
+		results := make(chan []*types.Account)
 		exampleBucketSize := uint16(1000)
 
 		c, _, mockDB := buildTestClient(t)

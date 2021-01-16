@@ -132,7 +132,7 @@ func (q *Sqlite) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (que
 
 // GetAllAuditLogEntries fetches every audit log entry from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []types.AuditLogEntry) error {
+func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry) error {
 	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of entries: %w", countErr)

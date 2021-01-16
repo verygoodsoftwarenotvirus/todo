@@ -30,7 +30,7 @@ type (
 	// AuditLogEntryList represents a list of items.
 	AuditLogEntryList struct {
 		Pagination
-		Entries []AuditLogEntry `json:"entries"`
+		Entries []*AuditLogEntry `json:"entries"`
 	}
 
 	// AuditLogEntryCreationInput represents what a User could set as input for creating items.
@@ -51,7 +51,7 @@ type (
 	AuditLogEntryDataManager interface {
 		GetAuditLogEntry(ctx context.Context, eventID uint64) (*AuditLogEntry, error)
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
-		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []AuditLogEntry, bucketSize uint16) error
+		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*AuditLogEntry, bucketSize uint16) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
 	}
 

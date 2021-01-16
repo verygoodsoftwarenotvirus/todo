@@ -63,7 +63,7 @@ func (c *Client) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) 
 }
 
 // GetAllOAuth2Clients loads all OAuth2 clients into a channel.
-func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []types.OAuth2Client, bucketSize uint16) error {
+func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []*types.OAuth2Client, bucketSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

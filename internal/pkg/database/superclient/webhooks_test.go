@@ -127,7 +127,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []types.Webhook)
+		results := make(chan []*types.Webhook)
 		exampleBucketSize := uint16(1000)
 
 		c, _, mockDB := buildTestClient(t)
@@ -170,14 +170,22 @@ func TestClient_GetWebhooks(T *testing.T) {
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 		filter := (*types.QueryFilter)(nil)
 
-		c, _, mockDB := buildTestClient(t)
+		c, db, mockDB := buildTestClient(t)
 		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, exampleUser.ID, filter).Return(exampleWebhookList, nil)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildGetWebhooksQuery", exampleUser.ID, filter).Return(dummyQuery, dummyArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formattedDummyQuery).
+			WithArgs(interfaceToDriverValue(dummyArgs)...).
+			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhookList.Webhooks...))
 
 		actual, err := c.GetWebhooks(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhookList, actual)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mock.AssertExpectationsForObjects(t, mockQueryBuilder, mockDB)
 	})
 }
 

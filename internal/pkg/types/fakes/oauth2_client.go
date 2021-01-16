@@ -29,9 +29,9 @@ func BuildFakeOAuth2Client() *types.OAuth2Client {
 
 // BuildFakeOAuth2ClientList builds a faked OAuth2ClientList.
 func BuildFakeOAuth2ClientList() *types.OAuth2ClientList {
-	var examples []types.OAuth2Client
+	var examples []*types.OAuth2Client
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, *BuildFakeOAuth2Client())
+		examples = append(examples, BuildFakeOAuth2Client())
 	}
 
 	return &types.OAuth2ClientList{

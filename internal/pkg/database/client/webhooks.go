@@ -43,7 +43,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 }
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []types.Webhook) error {
+func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

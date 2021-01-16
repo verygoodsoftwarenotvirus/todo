@@ -145,7 +145,7 @@ func (q *Postgres) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query st
 
 // GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []types.Account, bucketSize uint16) error {
+func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, bucketSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)

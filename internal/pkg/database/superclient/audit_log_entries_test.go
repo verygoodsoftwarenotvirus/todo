@@ -38,7 +38,7 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []types.AuditLogEntry)
+		results := make(chan []*types.AuditLogEntry)
 		exampleBucketSize := uint16(1000)
 
 		c, _, mockDB := buildTestClient(t)

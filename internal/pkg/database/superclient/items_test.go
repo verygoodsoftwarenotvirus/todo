@@ -82,7 +82,7 @@ func TestClient_GetAllItems(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []types.Item)
+		results := make(chan []*types.Item)
 		exampleBucketSize := uint16(1000)
 
 		c, _, mockDB := buildTestClient(t)

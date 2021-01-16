@@ -40,9 +40,9 @@ func BuildUserCreationResponseFromUser(user *types.User) *types.UserCreationResp
 
 // BuildFakeUserList builds a faked UserList.
 func BuildFakeUserList() *types.UserList {
-	var examples []types.User
+	var examples []*types.User
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, *BuildFakeUser())
+		examples = append(examples, BuildFakeUser())
 	}
 
 	return &types.UserList{

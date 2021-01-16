@@ -78,7 +78,7 @@ type (
 	// UserList represents a list of users.
 	UserList struct {
 		Pagination
-		Users []User `json:"users"`
+		Users []*User `json:"users"`
 	}
 
 	// UserCreationInput represents the input required from users to register an account.

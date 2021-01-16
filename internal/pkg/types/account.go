@@ -23,7 +23,7 @@ type (
 	// AccountList represents a list of accounts.
 	AccountList struct {
 		Pagination
-		Accounts []Account `json:"accounts"`
+		Accounts []*Account `json:"accounts"`
 	}
 
 	// AccountCreationInput represents what a User could set as input for creating accounts.
@@ -53,7 +53,7 @@ type (
 	AccountDataManager interface {
 		GetAccount(ctx context.Context, accountID, userID uint64) (*Account, error)
 		GetAllAccountsCount(ctx context.Context) (uint64, error)
-		GetAllAccounts(ctx context.Context, resultChannel chan []Account, bucketSize uint16) error
+		GetAllAccounts(ctx context.Context, resultChannel chan []*Account, bucketSize uint16) error
 		GetAccounts(ctx context.Context, userID uint64, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
 		CreateAccount(ctx context.Context, input *AccountCreationInput) (*Account, error)

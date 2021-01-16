@@ -65,7 +65,7 @@ func (c *Client) scanWebhook(scan database.Scanner, includeCounts bool) (webhook
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
-func (c *Client) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []types.Webhook, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		webhook, fc, tc, scanErr := c.scanWebhook(rows, includeCounts)
 		if scanErr != nil {
@@ -82,7 +82,7 @@ func (c *Client) scanWebhooks(rows database.ResultIterator, includeCounts bool) 
 			}
 		}
 
-		webhooks = append(webhooks, *webhook)
+		webhooks = append(webhooks, webhook)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
@@ -154,7 +154,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 }
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []types.Webhook, bucketSize uint16) error {
+func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, bucketSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

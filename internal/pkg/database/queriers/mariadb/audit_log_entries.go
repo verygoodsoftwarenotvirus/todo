@@ -132,7 +132,7 @@ func (q *MariaDB) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (qu
 
 // GetAllAuditLogEntries fetches every audit log entry from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []types.AuditLogEntry) error {
+func (q *MariaDB) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry) error {
 	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of entries: %w", countErr)

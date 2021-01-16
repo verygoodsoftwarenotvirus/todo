@@ -19,9 +19,9 @@ func BuildFakeAuditLogEntry() *types.AuditLogEntry {
 
 // BuildFakeAuditLogEntryList builds a faked AuditLogEntryList.
 func BuildFakeAuditLogEntryList() *types.AuditLogEntryList {
-	var examples []types.AuditLogEntry
+	var examples []*types.AuditLogEntry
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, *BuildFakeAuditLogEntry())
+		examples = append(examples, BuildFakeAuditLogEntry())
 	}
 
 	return &types.AuditLogEntryList{

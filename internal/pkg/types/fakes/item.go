@@ -19,9 +19,9 @@ func BuildFakeItem() *types.Item {
 
 // BuildFakeItemList builds a faked ItemList.
 func BuildFakeItemList() *types.ItemList {
-	var examples []types.Item
+	var examples []*types.Item
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, *BuildFakeItem())
+		examples = append(examples, BuildFakeItem())
 	}
 
 	return &types.ItemList{

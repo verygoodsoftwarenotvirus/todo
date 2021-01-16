@@ -18,9 +18,9 @@ func BuildFakeAccount() *types.Account {
 
 // BuildFakeAccountList builds a faked AccountList.
 func BuildFakeAccountList() *types.AccountList {
-	var examples []types.Account
+	var examples []*types.Account
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, *BuildFakeAccount())
+		examples = append(examples, BuildFakeAccount())
 	}
 
 	return &types.AccountList{

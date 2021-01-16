@@ -24,7 +24,7 @@ type (
 	// AccountSubscriptionPlanList represents a list of plans.
 	AccountSubscriptionPlanList struct {
 		Pagination
-		Plans []AccountSubscriptionPlan `json:"accountSubscriptionPlans"`
+		Plans []*AccountSubscriptionPlan `json:"accountSubscriptionPlans"`
 	}
 
 	// AccountSubscriptionPlanCreationInput represents what a User could set as input for creating plans.

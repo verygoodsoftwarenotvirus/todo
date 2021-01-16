@@ -52,7 +52,7 @@ type (
 	// WebhookList represents a list of webhooks.
 	WebhookList struct {
 		Pagination
-		Webhooks []Webhook `json:"webhooks"`
+		Webhooks []*Webhook `json:"webhooks"`
 	}
 
 	WebhookSQLQueryBuilder interface {
@@ -71,7 +71,7 @@ type (
 		GetWebhook(ctx context.Context, webhookID, userID uint64) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
 		GetWebhooks(ctx context.Context, userID uint64, filter *QueryFilter) (*WebhookList, error)
-		GetAllWebhooks(ctx context.Context, resultChannel chan []Webhook, bucketSize uint16) error
+		GetAllWebhooks(ctx context.Context, resultChannel chan []*Webhook, bucketSize uint16) error
 		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
 		UpdateWebhook(ctx context.Context, updated *Webhook) error
 		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error

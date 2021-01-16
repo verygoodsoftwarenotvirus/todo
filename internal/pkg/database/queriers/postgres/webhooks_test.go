@@ -316,9 +316,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 				buildMockRowsFromWebhooks(
 					false,
 					0,
-					&exampleWebhookList.Webhooks[0],
-					&exampleWebhookList.Webhooks[1],
-					&exampleWebhookList.Webhooks[2],
+					exampleWebhookList.Webhooks...,
 				),
 			)
 
@@ -498,9 +496,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 				buildMockRowsFromWebhooks(
 					true,
 					exampleWebhookList.FilteredCount,
-					&exampleWebhookList.Webhooks[0],
-					&exampleWebhookList.Webhooks[1],
-					&exampleWebhookList.Webhooks[2],
+					exampleWebhookList.Webhooks...,
 				),
 			)
 

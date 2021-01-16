@@ -33,7 +33,7 @@ func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, 
 }
 
 // GetAllAuditLogEntries fetches a list of all audit log entries in the database.
-func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []types.AuditLogEntry, bucketSize uint16) error {
+func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*types.AuditLogEntry, bucketSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

@@ -133,7 +133,7 @@ func (q *Sqlite) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []types.OAuth2Client) error {
+func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of oauth2 clients: %w", countErr)

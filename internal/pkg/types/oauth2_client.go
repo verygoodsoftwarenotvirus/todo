@@ -34,7 +34,7 @@ type (
 	// OAuth2ClientList is a response struct containing a list of OAuth2Clients.
 	OAuth2ClientList struct {
 		Pagination
-		Clients []OAuth2Client `json:"clients"`
+		Clients []*OAuth2Client `json:"clients"`
 	}
 
 	// OAuth2ClientCreationInput is a struct for use when creating OAuth2 clients.
@@ -68,7 +68,7 @@ type (
 	// OAuth2ClientDataManager handles OAuth2 clients.
 	OAuth2ClientDataManager interface {
 		GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*OAuth2Client, error)
-		GetAllOAuth2Clients(ctx context.Context, resultChannel chan []OAuth2Client, bucketSize uint16) error
+		GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*OAuth2Client, bucketSize uint16) error
 		GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*OAuth2Client, error)
 		GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error)
 		GetOAuth2Clients(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)

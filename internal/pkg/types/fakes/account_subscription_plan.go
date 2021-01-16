@@ -22,9 +22,9 @@ func BuildFakePlan() *types.AccountSubscriptionPlan {
 
 // BuildFakePlanList builds a faked AccountSubscriptionPlanList.
 func BuildFakePlanList() *types.AccountSubscriptionPlanList {
-	var examples []types.AccountSubscriptionPlan
+	var examples []*types.AccountSubscriptionPlan
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, *BuildFakePlan())
+		examples = append(examples, BuildFakePlan())
 	}
 
 	return &types.AccountSubscriptionPlanList{

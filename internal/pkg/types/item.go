@@ -29,7 +29,7 @@ type (
 	// ItemList represents a list of items.
 	ItemList struct {
 		Pagination
-		Items []Item `json:"items"`
+		Items []*Item `json:"items"`
 	}
 
 	// ItemCreationInput represents what a User could set as input for creating items.
@@ -62,7 +62,7 @@ type (
 		ItemExists(ctx context.Context, itemID, accountID uint64) (bool, error)
 		GetItem(ctx context.Context, itemID, accountID uint64) (*Item, error)
 		GetAllItemsCount(ctx context.Context) (uint64, error)
-		GetAllItems(ctx context.Context, resultChannel chan []Item, bucketSize uint16) error
+		GetAllItems(ctx context.Context, resultChannel chan []*Item, bucketSize uint16) error
 		GetItems(ctx context.Context, accountID uint64, filter *QueryFilter) (*ItemList, error)
 		GetItemsForAdmin(ctx context.Context, filter *QueryFilter) (*ItemList, error)
 		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]Item, error)

@@ -52,7 +52,7 @@ func (q *MariaDB) scanOAuth2Client(scan database.Scanner, includeCounts bool) (c
 }
 
 // scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
-func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []types.OAuth2Client, filteredCount, totalCount uint64, err error) {
+func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []*types.OAuth2Client, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		client, fc, tc, scanErr := q.scanOAuth2Client(rows, includeCounts)
 		if scanErr != nil {
@@ -69,7 +69,7 @@ func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCounts 
 			}
 		}
 
-		clients = append(clients, *client)
+		clients = append(clients, client)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -133,7 +133,7 @@ func (q *MariaDB) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (quer
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []types.OAuth2Client) error {
+func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of items: %w", countErr)

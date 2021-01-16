@@ -178,7 +178,7 @@ func (q *Sqlite) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string,
 
 // GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []types.Item) error {
+func (q *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []*types.Item) error {
 	count, countErr := q.GetAllItemsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of items: %w", countErr)

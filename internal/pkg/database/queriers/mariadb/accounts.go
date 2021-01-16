@@ -179,7 +179,7 @@ func (q *MariaDB) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query str
 
 // GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllAccounts(ctx context.Context, resultChannel chan []types.Account) error {
+func (q *MariaDB) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of accounts: %w", countErr)

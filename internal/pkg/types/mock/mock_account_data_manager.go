@@ -34,7 +34,7 @@ func (m *AccountDataManager) GetAllAccountsCount(ctx context.Context) (uint64, e
 }
 
 // GetAllAccounts is a mock function.
-func (m *AccountDataManager) GetAllAccounts(ctx context.Context, results chan []types.Account, bucketSize uint16) error {
+func (m *AccountDataManager) GetAllAccounts(ctx context.Context, results chan []*types.Account, bucketSize uint16) error {
 	args := m.Called(ctx, results, bucketSize)
 	return args.Error(0)
 }

@@ -34,7 +34,7 @@ func (m *ItemDataManager) GetAllItemsCount(ctx context.Context) (uint64, error) 
 }
 
 // GetAllItems is a mock function.
-func (m *ItemDataManager) GetAllItems(ctx context.Context, results chan []types.Item, bucketSize uint16) error {
+func (m *ItemDataManager) GetAllItems(ctx context.Context, results chan []*types.Item, bucketSize uint16) error {
 	args := m.Called(ctx, results, bucketSize)
 	return args.Error(0)
 }

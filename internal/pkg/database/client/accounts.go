@@ -37,13 +37,13 @@ func (c *Client) GetAllAccountsCount(ctx context.Context) (count uint64, err err
 }
 
 // GetAllAccounts fetches a list of all accounts in the database.
-func (c *Client) GetAllAccounts(ctx context.Context, results chan []types.Account) error {
+func (c *Client) GetAllAccounts(ctx context.Context, results chan []*types.Account, bucketSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllAccounts called")
 
-	return c.querier.GetAllAccounts(ctx, results)
+	return c.querier.GetAllAccounts(ctx, results,, bucketSize)
 }
 
 // GetAccounts fetches a list of accounts from the database that meet a particular filter.

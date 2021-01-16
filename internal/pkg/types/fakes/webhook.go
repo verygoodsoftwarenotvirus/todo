@@ -27,9 +27,9 @@ func BuildFakeWebhook() *types.Webhook {
 
 // BuildFakeWebhookList builds a faked WebhookList.
 func BuildFakeWebhookList() *types.WebhookList {
-	var examples []types.Webhook
+	var examples []*types.Webhook
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, *BuildFakeWebhook())
+		examples = append(examples, BuildFakeWebhook())
 	}
 
 	return &types.WebhookList{

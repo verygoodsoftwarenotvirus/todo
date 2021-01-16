@@ -171,7 +171,7 @@ func (q *MariaDB) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query str
 
 // GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllWebhooks(ctx context.Context, resultChannel chan []types.Webhook) error {
+func (q *MariaDB) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook) error {
 	count, countErr := q.GetAllWebhooksCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)

@@ -134,7 +134,7 @@ func (q *Postgres) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (que
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []types.OAuth2Client, bucketSize uint16) error {
+func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, bucketSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)

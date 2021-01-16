@@ -54,7 +54,7 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 }
 
 // GetAllItems fetches a list of all items in the database.
-func (c *Client) GetAllItems(ctx context.Context, results chan []types.Item, bucketSize uint16) error {
+func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item, bucketSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

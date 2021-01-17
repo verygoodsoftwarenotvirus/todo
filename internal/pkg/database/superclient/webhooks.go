@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -14,7 +15,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.WebhookDataManager = (*Client)(nil)
+var (
+	_ types.WebhookDataManager  = (*Client)(nil)
+	_ types.WebhookAuditManager = (*Client)(nil)
+)
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
 func (c *Client) scanWebhook(scan database.Scanner, includeCounts bool) (webhook *types.Webhook, filteredCount, totalCount uint64, err error) {
@@ -248,7 +252,10 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error 
 
 	c.logger.WithValue(keys.WebhookIDKey, input.ID).Debug("UpdateWebhook called")
 
-	return c.querier.UpdateWebhook(ctx, input)
+	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(input)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // ArchiveWebhook archives a webhook from the database.
@@ -264,7 +271,10 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 		"user_id":    userID,
 	}).Debug("ArchiveWebhook called")
 
-	return c.querier.ArchiveWebhook(ctx, webhookID, userID)
+	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // LogWebhookCreationEvent implements our AuditLogEntryDataManager interface.
@@ -274,7 +284,7 @@ func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Web
 
 	c.logger.WithValue(keys.UserIDKey, webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
 
-	c.querier.LogWebhookCreationEvent(ctx, webhook)
+	c.createAuditLogEntry(ctx, audit.BuildWebhookCreationEventEntry(webhook))
 }
 
 // LogWebhookUpdateEvent implements our AuditLogEntryDataManager interface.
@@ -284,7 +294,7 @@ func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID ui
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookUpdateEvent called")
 
-	c.querier.LogWebhookUpdateEvent(ctx, userID, webhookID, changes)
+	c.createAuditLogEntry(ctx, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
 }
 
 // LogWebhookArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -294,7 +304,7 @@ func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookArchiveEvent called")
 
-	c.querier.LogWebhookArchiveEvent(ctx, userID, webhookID)
+	c.createAuditLogEntry(ctx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
 }
 
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.
@@ -303,6 +313,20 @@ func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uin
 	defer span.End()
 
 	c.logger.Debug("GetAuditLogEntriesForWebhook called")
+
+	//query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(webhookID)
+	//
+	//rows, err := c.db.QueryContext(ctx, query, args...)
+	//if err != nil {
+	//	return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	//}
+	//
+	//auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	//if err != nil {
+	//	return nil, fmt.Errorf("scanning response from database: %w", err)
+	//}
+	//
+	//return auditLogEntries, nil
 
 	return c.querier.GetAuditLogEntriesForWebhook(ctx, webhookID)
 }

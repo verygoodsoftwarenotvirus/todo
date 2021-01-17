@@ -40,9 +40,9 @@ func (m *UserDataManager) GetUserByUsername(ctx context.Context, username string
 }
 
 // SearchForUsersByUsername is a mock function.
-func (m *UserDataManager) SearchForUsersByUsername(ctx context.Context, query string) ([]types.User, error) {
-	args := m.Called(ctx, query)
-	return args.Get(0).([]types.User), args.Error(1)
+func (m *UserDataManager) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
+	args := m.Called(ctx, usernameQuery)
+	return args.Get(0).([]*types.User), args.Error(1)
 }
 
 // GetAllUsersCount is a mock function.

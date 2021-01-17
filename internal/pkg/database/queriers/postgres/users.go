@@ -220,7 +220,7 @@ func (q *Postgres) BuildSearchForUserByUsernameQuery(usernameQuery string) (quer
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
-func (q *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
+func (q *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
 	query, args := q.BuildSearchForUserByUsernameQuery(usernameQuery)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

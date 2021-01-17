@@ -52,7 +52,7 @@ func (q *Sqlite) scanOAuth2Client(scan database.Scanner, includeCounts bool) (cl
 }
 
 // scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
-func (q *Sqlite) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []types.OAuth2Client, filteredCount, totalCount uint64, err error) {
+func (q *Sqlite) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []*types.OAuth2Client, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		client, fc, tc, scanErr := q.scanOAuth2Client(rows, includeCounts)
 		if scanErr != nil {
@@ -69,7 +69,7 @@ func (q *Sqlite) scanOAuth2Clients(rows database.ResultIterator, includeCounts b
 			}
 		}
 
-		clients = append(clients, *client)
+		clients = append(clients, client)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -133,14 +133,14 @@ func (q *Sqlite) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client) error {
+func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, bucketSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of oauth2 clients: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
+		endID := beginID + uint64(bucketSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -418,7 +418,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (q
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
+func (q *Sqlite) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

@@ -172,7 +172,7 @@ type (
 		GetUserByUsername(ctx context.Context, username string) (*User, error)
 		// SearchForUsersByUsername is intended to be a SUPPORT ONLY function, used within an interface to find a
 		// User quickly while only typing the first few letters of their username. No search index is utilized.
-		SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]User, error)
+		SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*User, error)
 		// GetAllUsersCount fetches the current User count.
 		GetAllUsersCount(ctx context.Context) (uint64, error)
 		// GetUsers is intended to be a SUPPORT ONLY function, and fetches a page of users adhering to a given filter.

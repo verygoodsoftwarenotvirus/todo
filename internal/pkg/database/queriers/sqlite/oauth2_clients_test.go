@@ -240,7 +240,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 				),
 			)
 
-		out := make(chan []types.OAuth2Client)
+		out := make(chan []*types.OAuth2Client)
 		doneChan := make(chan bool, 1)
 
 		err := q.GetAllOAuth2Clients(ctx, out)
@@ -272,7 +272,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 			WithArgs().
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.OAuth2Client)
+		out := make(chan []*types.OAuth2Client)
 
 		err := q.GetAllOAuth2Clients(ctx, out)
 		assert.Error(t, err)
@@ -297,7 +297,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		out := make(chan []types.OAuth2Client)
+		out := make(chan []*types.OAuth2Client)
 
 		err := q.GetAllOAuth2Clients(ctx, out)
 		assert.NoError(t, err)
@@ -324,7 +324,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.OAuth2Client)
+		out := make(chan []*types.OAuth2Client)
 
 		err := q.GetAllOAuth2Clients(ctx, out)
 		assert.NoError(t, err)
@@ -352,7 +352,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromOAuth2Client(exampleOAuth2Client))
 
-		out := make(chan []types.OAuth2Client)
+		out := make(chan []*types.OAuth2Client)
 
 		err := q.GetAllOAuth2Clients(ctx, out)
 		assert.NoError(t, err)

@@ -42,7 +42,7 @@ func (q *Sqlite) scanItem(scan database.Scanner, includeCounts bool) (x *types.I
 }
 
 // scanItems takes some database rows and turns them into a slice of items.
-func (q *Sqlite) scanItems(rows database.ResultIterator, includeCounts bool) (items []types.Item, filteredCount, totalCount uint64, err error) {
+func (q *Sqlite) scanItems(rows database.ResultIterator, includeCounts bool) (items []*types.Item, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanItem(rows, includeCounts)
 		if scanErr != nil {
@@ -59,7 +59,7 @@ func (q *Sqlite) scanItems(rows database.ResultIterator, includeCounts bool) (it
 			}
 		}
 
-		items = append(items, *x)
+		items = append(items, x)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -323,7 +323,7 @@ func (q *Sqlite) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uin
 }
 
 // GetItemsWithIDs fetches a list of items from the database that exist within a given set of IDs.
-func (q *Sqlite) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]types.Item, error) {
+func (q *Sqlite) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
@@ -382,7 +382,7 @@ func (q *Sqlite) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (q
 }
 
 // GetItemsWithIDsForAdmin fetches a list of items from the database that exist within a given set of IDs.
-func (q *Sqlite) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
+func (q *Sqlite) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}

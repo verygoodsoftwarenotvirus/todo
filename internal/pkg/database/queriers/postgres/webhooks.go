@@ -66,7 +66,7 @@ func (q *Postgres) scanWebhook(scan database.Scanner, includeCounts bool) (webho
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
-func (q *Postgres) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []types.Webhook, filteredCount, totalCount uint64, err error) {
+func (q *Postgres) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		webhook, fc, tc, scanErr := q.scanWebhook(rows, includeCounts)
 		if scanErr != nil {
@@ -83,7 +83,7 @@ func (q *Postgres) scanWebhooks(rows database.ResultIterator, includeCounts bool
 			}
 		}
 
-		webhooks = append(webhooks, *webhook)
+		webhooks = append(webhooks, webhook)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {

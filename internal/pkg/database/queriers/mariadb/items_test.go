@@ -321,13 +321,11 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 				buildMockRowsFromItems(
 					false,
 					0,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 		doneChan := make(chan bool, 1)
 
 		err := q.GetAllItems(ctx, out)
@@ -356,7 +354,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.Error(t, err)
@@ -379,7 +377,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
@@ -404,7 +402,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
@@ -431,7 +429,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
@@ -494,9 +492,7 @@ func TestMariaDB_GetItems(T *testing.T) {
 				buildMockRowsFromItems(
 					true,
 					exampleItemList.FilteredCount,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -594,9 +590,7 @@ func TestMariaDB_GetItemsForAdmin(T *testing.T) {
 				buildMockRowsFromItems(
 					true,
 					exampleItemList.FilteredCount,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -729,9 +723,7 @@ func TestMariaDB_GetItemsWithIDs(T *testing.T) {
 				buildMockRowsFromItems(
 					false,
 					0,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -1110,7 +1102,7 @@ func TestMariaDB_GetAuditLogEntriesForItem(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleItem := fakes.BuildFakeItem()
 
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		expectedQuery, expectedArgs := q.buildGetAuditLogEntriesForItemQuery(exampleItem.ID)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -1118,9 +1110,7 @@ func TestMariaDB_GetAuditLogEntriesForItem(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					false,
-					&exampleAuditLogEntryList[0],
-					&exampleAuditLogEntryList[1],
-					&exampleAuditLogEntryList[2],
+					exampleAuditLogEntryList.Entries...,
 				),
 			)
 

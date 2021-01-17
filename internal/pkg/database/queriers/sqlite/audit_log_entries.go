@@ -39,7 +39,7 @@ func (q *Sqlite) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (e
 }
 
 // scanAuditLogEntries takes some database rows and turns them into a slice of .
-func (q *Sqlite) scanAuditLogEntries(rows database.ResultIterator, includeCounts bool) (entries []types.AuditLogEntry, totalCount uint64, err error) {
+func (q *Sqlite) scanAuditLogEntries(rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
 	for rows.Next() {
 		x, tc, scanErr := q.scanAuditLogEntry(rows, includeCounts)
 		if scanErr != nil {
@@ -52,7 +52,7 @@ func (q *Sqlite) scanAuditLogEntries(rows database.ResultIterator, includeCounts
 			}
 		}
 
-		entries = append(entries, *x)
+		entries = append(entries, x)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -132,14 +132,14 @@ func (q *Sqlite) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (que
 
 // GetAllAuditLogEntries fetches every audit log entry from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry) error {
+func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry, bucketSize uint16) error {
 	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of entries: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
+		endID := beginID + uint64(bucketSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{

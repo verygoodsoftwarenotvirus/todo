@@ -43,7 +43,7 @@ func (c *Client) GetAllAccounts(ctx context.Context, results chan []*types.Accou
 
 	c.logger.Debug("GetAllAccounts called")
 
-	return c.querier.GetAllAccounts(ctx, results,, bucketSize)
+	return c.querier.GetAllAccounts(ctx, results, bucketSize)
 }
 
 // GetAccounts fetches a list of accounts from the database that meet a particular filter.

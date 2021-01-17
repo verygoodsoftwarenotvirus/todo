@@ -52,7 +52,7 @@ func (q *Sqlite) scanAccountSubscriptionPlan(scan database.Scanner, includeCount
 }
 
 // scanPlans takes some database rows and turns them into a slice of plans.
-func (q *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+func (q *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanAccountSubscriptionPlan(rows, includeCounts)
 		if scanErr != nil {
@@ -69,7 +69,7 @@ func (q *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, incl
 			}
 		}
 
-		plans = append(plans, *x)
+		plans = append(plans, x)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {

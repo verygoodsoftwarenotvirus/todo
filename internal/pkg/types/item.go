@@ -65,8 +65,8 @@ type (
 		GetAllItems(ctx context.Context, resultChannel chan []*Item, bucketSize uint16) error
 		GetItems(ctx context.Context, accountID uint64, filter *QueryFilter) (*ItemList, error)
 		GetItemsForAdmin(ctx context.Context, filter *QueryFilter) (*ItemList, error)
-		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]Item, error)
-		GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]Item, error)
+		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*Item, error)
+		GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item) error
 		ArchiveItem(ctx context.Context, itemID, accountID uint64) error

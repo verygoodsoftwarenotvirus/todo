@@ -292,7 +292,7 @@ func (q *Postgres) BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []u
 }
 
 // GetItemsWithIDs fetches a list of items from the database that exist within a given set of IDs.
-func (q *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]types.Item, error) {
+func (q *Postgres) GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
@@ -313,7 +313,7 @@ func (q *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uin
 }
 
 // GetItemsWithIDsForAdmin fetches a list of items from the database that exist within a given set of IDs.
-func (q *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
+func (q *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}

@@ -23,11 +23,7 @@ const (
 	defaultLimit = uint8(20)
 )
 
-var (
-	dummyQuery          = "SELECT example FROM testing WHERE things = ? AND stuff = ?"
-	formattedDummyQuery = formatQueryForSQLMock(dummyQuery)
-	dummyArgs           = []interface{}{"things", "stuff"}
-)
+// begin helper funcs
 
 func formatQueryForSQLMock(query string) string {
 	return strings.NewReplacer(
@@ -56,8 +52,6 @@ func interfaceToDriverValue(in []interface{}) []driver.Value {
 	return out
 }
 
-// end helper funcs
-
 func buildTestClient(t *testing.T) (*Client, sqlmock.Sqlmock, *database.MockDatabase) {
 	t.Helper()
 
@@ -65,17 +59,18 @@ func buildTestClient(t *testing.T) (*Client, sqlmock.Sqlmock, *database.MockData
 	require.NoError(t, err)
 
 	mdb := database.BuildMockDatabase()
-
 	c := &Client{
-		logger:          noop.NewLogger(),
-		querier:         mdb,
 		db:              db,
-		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
+		querier:         mdb,
+		logger:          noop.NewLogger(),
 		tracer:          tracing.NewTracer("test"),
+		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
 	}
 
 	return c, sqlMock, mdb
 }
+
+// end helper funcs
 
 func TestMigrate(T *testing.T) {
 	T.Parallel()

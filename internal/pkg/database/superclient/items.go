@@ -98,7 +98,7 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 }
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
-func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]types.Item, error) {
+func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -116,7 +116,7 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 }
 
 // GetItemsWithIDsForAdmin fetches items from the database within a given set of IDs.
-func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
+func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

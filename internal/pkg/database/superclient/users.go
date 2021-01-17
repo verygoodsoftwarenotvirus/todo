@@ -85,7 +85,7 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
-func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
+func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

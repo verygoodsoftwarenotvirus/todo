@@ -327,7 +327,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 				),
 			)
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 		doneChan := make(chan bool, 1)
 
 		err := q.GetAllItems(ctx, out)
@@ -356,7 +356,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.Error(t, err)
@@ -379,7 +379,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
@@ -404,7 +404,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)
@@ -430,7 +430,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromItem(exampleItem))
 
-		out := make(chan []types.Item)
+		out := make(chan []*types.Item)
 
 		err := q.GetAllItems(ctx, out)
 		assert.NoError(t, err)

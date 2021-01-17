@@ -119,17 +119,21 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*typ
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
+func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.WebhookList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	x = &types.WebhookList{}
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
+
 	tracing.AttachUserIDToSpan(span, userID)
+	logger.Debug("GetWebhookCount called")
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+		x.Page = filter.Page
+		x.Limit = filter.Limit
 	}
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetWebhookCount called")
 
 	query, args := c.sqlQueryBuilder.BuildGetWebhooksQuery(userID, filter)
 
@@ -138,19 +142,25 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 		return nil, err
 	}
 
-	webhooks, filteredCount, totalCount, err := c.scanWebhooks(rows, false)
-
-	x := &types.WebhookList{
-		Pagination: types.Pagination{
-			Page:          filter.Page,
-			Limit:         filter.Limit,
-			FilteredCount: filteredCount,
-			TotalCount:    totalCount,
-		},
-		Webhooks: webhooks,
+	x.Webhooks, x.FilteredCount, x.TotalCount, err = c.scanWebhooks(rows, true)
+	if err != nil {
+		return nil, fmt.Errorf("error scanning database response: %w", err)
 	}
 
-	return x, err
+	return x, nil
+}
+
+// GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
+func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.Debug("GetAllWebhooksCount called")
+	query := c.sqlQueryBuilder.BuildGetAllWebhooksCountQuery()
+
+	err = c.db.QueryRowContext(ctx, query).Scan(&count)
+
+	return count, err
 }
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
@@ -194,16 +204,6 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 	}
 
 	return nil
-}
-
-// GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
-func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.Debug("GetAllWebhooksCount called")
-
-	return c.querier.GetAllWebhooksCount(ctx)
 }
 
 // CreateWebhook creates a webhook in a database.

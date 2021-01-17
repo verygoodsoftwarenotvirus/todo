@@ -242,7 +242,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 				),
 			)
 
-		out := make(chan []types.AuditLogEntry)
+		out := make(chan []*types.AuditLogEntry)
 		doneChan := make(chan bool, 1)
 
 		err := q.GetAllAuditLogEntries(ctx, out)
@@ -274,7 +274,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs().
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.AuditLogEntry)
+		out := make(chan []*types.AuditLogEntry)
 
 		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.Error(t, err)
@@ -299,7 +299,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		out := make(chan []types.AuditLogEntry)
+		out := make(chan []*types.AuditLogEntry)
 
 		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
@@ -326,7 +326,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.AuditLogEntry)
+		out := make(chan []*types.AuditLogEntry)
 
 		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)
@@ -354,7 +354,7 @@ func TestSqlite_GetAllAuditLogEntries(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromAuditLogEntry(exampleAuditLogEntry))
 
-		out := make(chan []types.AuditLogEntry)
+		out := make(chan []*types.AuditLogEntry)
 
 		err := q.GetAllAuditLogEntries(ctx, out)
 		assert.NoError(t, err)

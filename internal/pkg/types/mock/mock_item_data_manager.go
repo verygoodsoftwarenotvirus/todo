@@ -52,15 +52,15 @@ func (m *ItemDataManager) GetItemsForAdmin(ctx context.Context, filter *types.Qu
 }
 
 // GetItemsWithIDs is a mock function.
-func (m *ItemDataManager) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]types.Item, error) {
-	args := m.Called(ctx, userID, limit, ids)
-	return args.Get(0).([]types.Item), args.Error(1)
+func (m *ItemDataManager) GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
+	args := m.Called(ctx, accountID, limit, ids)
+	return args.Get(0).([]*types.Item), args.Error(1)
 }
 
 // GetItemsWithIDsForAdmin is a mock function.
-func (m *ItemDataManager) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
+func (m *ItemDataManager) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
 	args := m.Called(ctx, limit, ids)
-	return args.Get(0).([]types.Item), args.Error(1)
+	return args.Get(0).([]*types.Item), args.Error(1)
 }
 
 // CreateItem is a mock function.

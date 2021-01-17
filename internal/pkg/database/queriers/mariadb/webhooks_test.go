@@ -320,7 +320,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 				),
 			)
 
-		out := make(chan []types.Webhook)
+		out := make(chan []*types.Webhook)
 		doneChan := make(chan bool, 1)
 
 		err := q.GetAllWebhooks(ctx, out)
@@ -352,7 +352,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 			WithArgs().
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Webhook)
+		out := make(chan []*types.Webhook)
 
 		err := q.GetAllWebhooks(ctx, out)
 		assert.Error(t, err)
@@ -377,7 +377,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		out := make(chan []types.Webhook)
+		out := make(chan []*types.Webhook)
 
 		err := q.GetAllWebhooks(ctx, out)
 		assert.NoError(t, err)
@@ -404,7 +404,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Webhook)
+		out := make(chan []*types.Webhook)
 
 		err := q.GetAllWebhooks(ctx, out)
 		assert.NoError(t, err)
@@ -432,7 +432,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
 
-		out := make(chan []types.Webhook)
+		out := make(chan []*types.Webhook)
 
 		err := q.GetAllWebhooks(ctx, out)
 		assert.NoError(t, err)

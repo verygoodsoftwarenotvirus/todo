@@ -56,7 +56,7 @@ func (q *Sqlite) scanUser(scan database.Scanner, includeCounts bool) (user *type
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (q *Sqlite) scanUsers(rows database.ResultIterator, includeCounts bool) (users []types.User, filteredCount, totalCount uint64, err error) {
+func (q *Sqlite) scanUsers(rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		user, fc, tc, scanErr := q.scanUser(rows, includeCounts)
 		if scanErr != nil {
@@ -73,7 +73,7 @@ func (q *Sqlite) scanUsers(rows database.ResultIterator, includeCounts bool) (us
 			}
 		}
 
-		users = append(users, *user)
+		users = append(users, user)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -218,7 +218,7 @@ func (q *Sqlite) buildSearchForUserByUsernameQuery(usernameQuery string) (query 
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
-func (q *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]types.User, error) {
+func (q *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
 	query, args := q.buildSearchForUserByUsernameQuery(usernameQuery)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

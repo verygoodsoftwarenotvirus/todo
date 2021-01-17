@@ -43,7 +43,7 @@ func (q *Sqlite) scanAccount(scan database.Scanner, includeCounts bool) (account
 }
 
 // scanAccounts takes some database rows and turns them into a slice of accounts.
-func (q *Sqlite) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []types.Account, filteredCount, totalCount uint64, err error) {
+func (q *Sqlite) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []*types.Account, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanAccount(rows, includeCounts)
 		if scanErr != nil {
@@ -60,7 +60,7 @@ func (q *Sqlite) scanAccounts(rows database.ResultIterator, includeCounts bool) 
 			}
 		}
 
-		accounts = append(accounts, *x)
+		accounts = append(accounts, x)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -178,14 +178,14 @@ func (q *Sqlite) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query stri
 
 // GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account) error {
+func (q *Sqlite) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, bucketSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of accounts: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
+		endID := beginID + uint64(bucketSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfAccountsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{

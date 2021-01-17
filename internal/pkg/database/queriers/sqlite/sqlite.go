@@ -30,7 +30,7 @@ const (
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
 	currentUnixTimeQuery = `(strftime('%s','now'))`
 
-	defaultBucketSize uint64 = 1000
+	defaultBucketSize uint16 = 1000
 )
 
 var _ database.DataManager = (*Sqlite)(nil)

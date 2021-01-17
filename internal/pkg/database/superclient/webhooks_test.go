@@ -2,9 +2,12 @@ package superclient
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 
@@ -84,11 +87,15 @@ func TestClient_GetWebhook(T *testing.T) {
 		mockDB.WebhookDataManager.On("GetWebhook", mock.Anything, exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(exampleWebhook, nil)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildGetWebhookQuery", exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(dummyQuery, dummyArgs)
+
+		fakeWebhookQuery, fakeWebhookArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetWebhookQuery", exampleWebhook.ID, exampleWebhook.BelongsToUser).
+			Return(fakeWebhookQuery, fakeWebhookArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		db.ExpectQuery(formattedDummyQuery).
-			WithArgs(interfaceToDriverValue(dummyArgs)...).
+		db.ExpectQuery(formatQueryForSQLMock(fakeWebhookQuery)).
+			WithArgs(interfaceToDriverValue(fakeWebhookArgs)...).
 			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhook))
 
 		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
@@ -108,14 +115,25 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 		ctx := context.Background()
 
 		expected := uint64(123)
+		c, db, mockDB := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
-		c, _, mockDB := buildTestClient(t)
-		mockDB.WebhookDataManager.On("GetAllWebhooksCount", mock.Anything).Return(expected, nil)
+		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetAllWebhooksCountQuery").
+			Return(fakeCountQuery, ([]interface{})(nil))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expected))
 
 		actual, err := c.GetAllWebhooksCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
@@ -125,19 +143,204 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
+		ctx := context.Background()
 		results := make(chan []*types.Webhook)
+		doneChan := make(chan bool, 1)
+		expectedCount := uint64(20)
+		exampleWebhookList := fakes.BuildFakeWebhookList()
 		exampleBucketSize := uint16(1000)
 
-		c, _, mockDB := buildTestClient(t)
-		mockDB.WebhookDataManager.On("GetAllWebhooksCount", mock.Anything).Return(uint64(123), nil)
-		mockDB.WebhookDataManager.On("GetAllWebhooks", mock.Anything, results, exampleBucketSize).Return(nil)
+		c, db, mockDB := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetAllWebhooksCountQuery").
+			Return(fakeCountQuery, ([]interface{})(nil))
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+
+		fakeBatchQuery, fakeBatchArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetBatchOfWebhooksQuery", uint64(1), uint64(exampleBucketSize+1)).
+			Return(fakeBatchQuery, fakeBatchArgs)
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeBatchQuery)).
+			WithArgs(interfaceToDriverValue(fakeBatchArgs)...).
+			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhookList.Webhooks...))
+
+		c.sqlQueryBuilder = mockQueryBuilder
 
 		err := c.GetAllWebhooks(ctx, results, exampleBucketSize)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		stillQuerying := true
+		for stillQuerying {
+			select {
+			case batch := <-results:
+				assert.NotEmpty(t, batch)
+				doneChan <- true
+			case <-time.After(time.Second):
+				t.FailNow()
+			case <-doneChan:
+				stillQuerying = false
+			}
+		}
+
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
+		mock.AssertExpectationsForObjects(t, mockDB, mockQueryBuilder)
+	})
+
+	T.Run("with error fetching initial count", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		results := make(chan []*types.Webhook)
+		exampleBucketSize := uint16(1000)
+
+		c, db, mockDB := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetAllWebhooksCountQuery").
+			Return(fakeCountQuery, ([]interface{})(nil))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
+			WithArgs().
+			WillReturnError(errors.New("blah"))
+
+		err := c.GetAllWebhooks(ctx, results, exampleBucketSize)
+		assert.Error(t, err)
+
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
+		mock.AssertExpectationsForObjects(t, mockDB, mockQueryBuilder)
+	})
+
+	T.Run("with no rows returned", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		results := make(chan []*types.Webhook)
+		expectedCount := uint64(20)
+		exampleBucketSize := uint16(1000)
+
+		c, db, mockDB := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetAllWebhooksCountQuery").
+			Return(fakeCountQuery, ([]interface{})(nil))
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+
+		fakeBatchQuery, fakeBatchArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetBatchOfWebhooksQuery", uint64(1), uint64(exampleBucketSize+1)).
+			Return(fakeBatchQuery, fakeBatchArgs)
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeBatchQuery)).
+			WithArgs(interfaceToDriverValue(fakeBatchArgs)...).
+			WillReturnError(sql.ErrNoRows)
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		err := c.GetAllWebhooks(ctx, results, exampleBucketSize)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
+
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
+		mock.AssertExpectationsForObjects(t, mockDB, mockQueryBuilder)
+	})
+
+	T.Run("with error querying database", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		results := make(chan []*types.Webhook)
+		expectedCount := uint64(20)
+		exampleBucketSize := uint16(1000)
+
+		c, db, mockDB := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetAllWebhooksCountQuery").
+			Return(fakeCountQuery, ([]interface{})(nil))
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+
+		fakeBatchQuery, fakeBatchArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetBatchOfWebhooksQuery", uint64(1), uint64(exampleBucketSize+1)).
+			Return(fakeBatchQuery, fakeBatchArgs)
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeBatchQuery)).
+			WithArgs(interfaceToDriverValue(fakeBatchArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		err := c.GetAllWebhooks(ctx, results, exampleBucketSize)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
+
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
+		mock.AssertExpectationsForObjects(t, mockDB, mockQueryBuilder)
+	})
+
+	T.Run("with invalid response from database", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		results := make(chan []*types.Webhook)
+		expectedCount := uint64(20)
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleBucketSize := uint16(1000)
+
+		c, db, mockDB := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetAllWebhooksCountQuery").
+			Return(fakeCountQuery, ([]interface{})(nil))
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(expectedCount))
+
+		fakeBatchQuery, fakeBatchArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.
+			On("BuildGetBatchOfWebhooksQuery", uint64(1), uint64(exampleBucketSize+1)).
+			Return(fakeBatchQuery, fakeBatchArgs)
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeBatchQuery)).
+			WithArgs(interfaceToDriverValue(fakeBatchArgs)...).
+			WillReturnRows(buildErroneousMockRowFromWebhook(exampleWebhook))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		err := c.GetAllWebhooks(ctx, results, exampleBucketSize)
+		assert.NoError(t, err)
+
+		time.Sleep(time.Second)
+
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
+		mock.AssertExpectationsForObjects(t, mockDB, mockQueryBuilder)
 	})
 }
 
@@ -153,14 +356,29 @@ func TestClient_GetWebhooks(T *testing.T) {
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 		filter := types.DefaultQueryFilter()
 
-		c, _, mockDB := buildTestClient(t)
+		c, db, mockDB := buildTestClient(t)
 		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, exampleUser.ID, filter).Return(exampleWebhookList, nil)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeWebhooksQuery, fakeWebhooksArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildGetWebhooksQuery", exampleUser.ID, filter).Return(fakeWebhooksQuery, fakeWebhooksArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeWebhooksQuery)).
+			WithArgs(interfaceToDriverValue(fakeWebhooksArgs)...).
+			WillReturnRows(buildMockRowsFromWebhooks(
+				true,
+				exampleWebhookList.FilteredCount,
+				exampleWebhookList.Webhooks...,
+			))
 
 		actual, err := c.GetWebhooks(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhookList, actual)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
+		mock.AssertExpectationsForObjects(t, mockDB, mockQueryBuilder)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -168,23 +386,32 @@ func TestClient_GetWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
+		exampleWebhookList.Page = 0
+		exampleWebhookList.Limit = 0
 		filter := (*types.QueryFilter)(nil)
 
 		c, db, mockDB := buildTestClient(t)
 		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, exampleUser.ID, filter).Return(exampleWebhookList, nil)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildGetWebhooksQuery", exampleUser.ID, filter).Return(dummyQuery, dummyArgs)
+
+		fakeWebhooksQuery, fakeWebhooksArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildGetWebhooksQuery", exampleUser.ID, filter).Return(fakeWebhooksQuery, fakeWebhooksArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		db.ExpectQuery(formattedDummyQuery).
-			WithArgs(interfaceToDriverValue(dummyArgs)...).
-			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhookList.Webhooks...))
+		db.ExpectQuery(formatQueryForSQLMock(fakeWebhooksQuery)).
+			WithArgs(interfaceToDriverValue(fakeWebhooksArgs)...).
+			WillReturnRows(buildMockRowsFromWebhooks(
+				true,
+				exampleWebhookList.FilteredCount,
+				exampleWebhookList.Webhooks...,
+			))
 
 		actual, err := c.GetWebhooks(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhookList, actual)
 
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
 		mock.AssertExpectationsForObjects(t, mockQueryBuilder, mockDB)
 	})
 }

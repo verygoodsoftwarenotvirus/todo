@@ -329,7 +329,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 				),
 			)
 
-		out := make(chan []types.Account)
+		out := make(chan []*types.Account)
 		doneChan := make(chan bool, 1)
 
 		err := q.GetAllAccounts(ctx, out)
@@ -358,7 +358,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Account)
+		out := make(chan []*types.Account)
 
 		err := q.GetAllAccounts(ctx, out)
 		assert.Error(t, err)
@@ -381,7 +381,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		out := make(chan []types.Account)
+		out := make(chan []*types.Account)
 
 		err := q.GetAllAccounts(ctx, out)
 		assert.NoError(t, err)
@@ -406,7 +406,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		out := make(chan []types.Account)
+		out := make(chan []*types.Account)
 
 		err := q.GetAllAccounts(ctx, out)
 		assert.NoError(t, err)
@@ -433,7 +433,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnRows(buildErroneousMockRowFromAccount(exampleAccount))
 
-		out := make(chan []types.Account)
+		out := make(chan []*types.Account)
 
 		err := q.GetAllAccounts(ctx, out)
 		assert.NoError(t, err)

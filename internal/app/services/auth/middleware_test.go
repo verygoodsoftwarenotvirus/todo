@@ -13,6 +13,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -33,7 +34,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.Anything, mock.Anything).Return(exampleUser, nil)
+		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return(exampleUser, nil)
 		s.userDB = md
 
 		ms := &MockHTTPHandler{}
@@ -60,7 +61,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.Anything, mock.Anything).Return((*types.User)(nil), nil)
+		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return((*types.User)(nil), nil)
 		s.userDB = md
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -111,11 +112,11 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mocktypes.OAuth2ClientDataServer{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -144,7 +145,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -171,7 +172,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -199,11 +200,11 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mocktypes.OAuth2ClientDataServer{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleOAuth2Client.BelongsToUser).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -233,11 +234,11 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ocv := &mocktypes.OAuth2ClientDataServer{}
-		ocv.On("ExtractOAuth2ClientFromRequest", mock.Anything, mock.Anything).Return(exampleOAuth2Client, nil)
+		ocv.On("ExtractOAuth2ClientFromRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return(exampleOAuth2Client, nil)
 		s.oauth2ClientsService = ocv
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.Anything, exampleOAuth2Client.BelongsToUser).Return((*types.User)(nil), errors.New("blah"))
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleOAuth2Client.BelongsToUser).Return((*types.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -410,8 +411,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
-		ed.On("EncodeErrorResponse", mock.Anything, mock.Anything, "attached input is invalid", http.StatusBadRequest)
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), "attached input is invalid", http.StatusBadRequest)
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}
@@ -448,7 +449,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("DecodeRequest", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}

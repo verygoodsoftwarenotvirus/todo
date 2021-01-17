@@ -38,12 +38,13 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []types.AuditLogEntry)
+		results := make(chan []*types.AuditLogEntry)
+		batchSize := uint16(1000)
 
 		c, mockDB := buildTestClient()
-		mockDB.AuditLogEntryDataManager.On("GetAllAuditLogEntries", mock.Anything, results).Return(nil)
+		mockDB.AuditLogEntryDataManager.On("GetAllAuditLogEntries", mock.Anything, results, batchSize).Return(nil)
 
-		err := c.GetAllAuditLogEntries(ctx, results)
+		err := c.GetAllAuditLogEntries(ctx, results, batchSize)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

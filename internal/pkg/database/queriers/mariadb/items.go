@@ -42,7 +42,7 @@ func (q *MariaDB) scanItem(scan database.Scanner, includeCounts bool) (x *types.
 }
 
 // scanItems takes some database rows and turns them into a slice of items.
-func (q *MariaDB) scanItems(rows database.ResultIterator, includeCounts bool) (items []types.Item, filteredCount, totalCount uint64, err error) {
+func (q *MariaDB) scanItems(rows database.ResultIterator, includeCounts bool) (items []*types.Item, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanItem(rows, includeCounts)
 		if scanErr != nil {
@@ -59,7 +59,7 @@ func (q *MariaDB) scanItems(rows database.ResultIterator, includeCounts bool) (i
 			}
 		}
 
-		items = append(items, *x)
+		items = append(items, x)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -178,14 +178,14 @@ func (q *MariaDB) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string
 
 // GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllItems(ctx context.Context, resultChannel chan []*types.Item) error {
+func (q *MariaDB) GetAllItems(ctx context.Context, resultChannel chan []*types.Item, batchSize uint16) error {
 	count, countErr := q.GetAllItemsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of items: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfItemsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -323,7 +323,7 @@ func (q *MariaDB) buildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []ui
 }
 
 // GetItemsWithIDs fetches a list of items from the database that exist within a given set of IDs.
-func (q *MariaDB) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]types.Item, error) {
+func (q *MariaDB) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
@@ -382,7 +382,7 @@ func (q *MariaDB) buildGetItemsWithIDsForAdminQuery(limit uint8, ids []uint64) (
 }
 
 // GetItemsWithIDsForAdmin fetches a list of items from the database that exist within a given set of IDs.
-func (q *MariaDB) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
+func (q *MariaDB) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
@@ -549,7 +549,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query stri
 }
 
 // GetAuditLogEntriesForItem fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
+func (q *MariaDB) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForItemQuery(itemID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

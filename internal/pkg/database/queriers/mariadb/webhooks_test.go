@@ -293,6 +293,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.buildGetAllWebhooksCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -314,16 +315,14 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 				buildMockRowsFromWebhooks(
 					false,
 					0,
-					&exampleWebhookList.Webhooks[0],
-					&exampleWebhookList.Webhooks[1],
-					&exampleWebhookList.Webhooks[2],
+					exampleWebhookList.Webhooks...,
 				),
 			)
 
 		out := make(chan []*types.Webhook)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		stillQuerying := true
@@ -354,7 +353,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -379,7 +378,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -406,7 +405,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -434,7 +433,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -496,9 +495,7 @@ func TestMariaDB_GetWebhooks(T *testing.T) {
 				buildMockRowsFromWebhooks(
 					true,
 					exampleWebhookList.FilteredCount,
-					&exampleWebhookList.Webhooks[0],
-					&exampleWebhookList.Webhooks[1],
-					&exampleWebhookList.Webhooks[2],
+					exampleWebhookList.Webhooks...,
 				),
 			)
 

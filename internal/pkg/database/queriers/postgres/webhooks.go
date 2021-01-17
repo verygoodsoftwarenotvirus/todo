@@ -171,14 +171,14 @@ func (q *Postgres) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query st
 
 // GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, bucketSize uint16) error {
+func (q *Postgres) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	count, countErr := q.GetAllWebhooksCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.BuildGetBatchOfWebhooksQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -400,7 +400,7 @@ func (q *Postgres) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (que
 }
 
 // GetAuditLogEntriesForWebhook fetches a audit log entries for a given webhook from the database.
-func (q *Postgres) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
+func (q *Postgres) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.BuildGetAuditLogEntriesForWebhookQuery(webhookID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

@@ -302,6 +302,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.buildGetAllItemsCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -321,16 +322,14 @@ func TestSqlite_GetAllItems(T *testing.T) {
 				buildMockRowsFromItems(
 					false,
 					0,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
 		out := make(chan []*types.Item)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -358,7 +357,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -381,7 +380,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -406,7 +405,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -432,7 +431,7 @@ func TestSqlite_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -494,9 +493,7 @@ func TestSqlite_GetItems(T *testing.T) {
 				buildMockRowsFromItems(
 					true,
 					exampleItemList.FilteredCount,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -593,9 +590,7 @@ func TestSqlite_GetItemsForAdmin(T *testing.T) {
 				buildMockRowsFromItems(
 					true,
 					exampleItemList.FilteredCount,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -727,9 +722,7 @@ func TestSqlite_GetItemsWithIDs(T *testing.T) {
 				buildMockRowsFromItems(
 					false,
 					0,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -1103,9 +1096,7 @@ func TestSqlite_GetAuditLogEntriesForItem(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					false,
-					&exampleAuditLogEntryList[0],
-					&exampleAuditLogEntryList[1],
-					&exampleAuditLogEntryList[2],
+					exampleAuditLogEntryList...,
 				),
 			)
 

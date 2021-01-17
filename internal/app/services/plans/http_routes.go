@@ -40,7 +40,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		plans = &types.AccountSubscriptionPlanList{Plans: []types.AccountSubscriptionPlan{}}
+		plans = &types.AccountSubscriptionPlanList{Plans: []*types.AccountSubscriptionPlan{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching plans")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)

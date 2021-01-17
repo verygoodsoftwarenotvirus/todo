@@ -14,7 +14,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.AccountDataManager = (*Sqlite)(nil)
+var (
+	_ types.AccountDataManager  = (*Sqlite)(nil)
+	_ types.AccountAuditManager = (*Sqlite)(nil)
+)
 
 // scanAccount takes a database Scanner (i.e. *sql.Row) and scans the result into an Account struct.
 func (q *Sqlite) scanAccount(scan database.Scanner, includeCounts bool) (account *types.Account, filteredCount, totalCount uint64, err error) {
@@ -178,14 +181,14 @@ func (q *Sqlite) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query stri
 
 // GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, bucketSize uint16) error {
+func (q *Sqlite) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, batchSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of accounts: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfAccountsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -418,7 +421,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (query
 }
 
 // GetAuditLogEntriesForAccount fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]types.AuditLogEntry, error) {
+func (q *Sqlite) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForAccountQuery(accountID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

@@ -14,7 +14,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.AccountSubscriptionPlanDataManager = (*Sqlite)(nil)
+var (
+	_ types.AccountSubscriptionPlanDataManager  = (*Sqlite)(nil)
+	_ types.AccountSubscriptionPlanAuditManager = (*Sqlite)(nil)
+)
 
 // scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountSubscriptionPlan struct.
 func (q *Sqlite) scanAccountSubscriptionPlan(scan database.Scanner, includeCounts bool) (plan *types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
@@ -317,7 +320,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query strin
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
-func (q *Sqlite) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
+func (q *Sqlite) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForPlanQuery(planID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

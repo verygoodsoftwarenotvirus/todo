@@ -95,7 +95,7 @@ func (c *Client) BuildSearchItemsRequest(ctx context.Context, query string, limi
 }
 
 // SearchItems searches for a list of items.
-func (c *Client) SearchItems(ctx context.Context, query string, limit uint8) (items []types.Item, err error) {
+func (c *Client) SearchItems(ctx context.Context, query string, limit uint8) (items []*types.Item, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -244,7 +244,7 @@ func (c *Client) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint
 }
 
 // GetAuditLogForItem retrieves a list of audit log entries pertaining to an item.
-func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) (entries []types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

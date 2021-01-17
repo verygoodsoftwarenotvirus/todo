@@ -43,6 +43,7 @@ type (
 		Period      time.Duration `json:"period"`
 	}
 
+	// AccountSubscriptionPlanSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	AccountSubscriptionPlanSQLQueryBuilder interface {
 		BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
 		BuildGetAllAccountSubscriptionPlansCountQuery() string
@@ -65,7 +66,7 @@ type (
 
 	// AccountSubscriptionPlanAuditManager describes a structure capable of .
 	AccountSubscriptionPlanAuditManager interface {
-		GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]AuditLogEntry, error)
+		GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*AuditLogEntry, error)
 		LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *AccountSubscriptionPlan)
 		AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []FieldChangeSummary)
 		AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64)

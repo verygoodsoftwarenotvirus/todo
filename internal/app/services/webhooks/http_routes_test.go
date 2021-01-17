@@ -11,6 +11,7 @@ import (
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -42,12 +43,12 @@ func TestWebhooksService_List(T *testing.T) {
 			"GetWebhooks",
 			mock.Anything,
 			exampleUser.ID,
-			mock.AnythingOfType("*types.QueryFilter"),
+			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleWebhookList, nil)
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.WebhookList"))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -78,12 +79,12 @@ func TestWebhooksService_List(T *testing.T) {
 			"GetWebhooks",
 			mock.Anything,
 			exampleUser.ID,
-			mock.AnythingOfType("*types.QueryFilter"),
+			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), sql.ErrNoRows)
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.WebhookList"))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -114,12 +115,12 @@ func TestWebhooksService_List(T *testing.T) {
 			"GetWebhooks",
 			mock.Anything,
 			exampleUser.ID,
-			mock.AnythingOfType("*types.QueryFilter"),
+			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -197,23 +198,23 @@ func TestWebhooksService_Create(T *testing.T) {
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.Anything)
+		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher()))
 		s.webhookCounter = mc
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.Anything,
-			mock.AnythingOfType("*types.WebhookCreationInput"),
+			mock.IsType(&types.WebhookCreationInput{}),
 		).Return(exampleWebhook, nil)
 		s.webhookDataManager = wd
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogWebhookCreationEvent", mock.Anything, exampleWebhook)
+		auditLog.On("LogWebhookCreationEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleWebhook)
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponseWithStatus", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Webhook"), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -280,7 +281,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeInvalidInputResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -314,12 +315,12 @@ func TestWebhooksService_Create(T *testing.T) {
 		wd.On(
 			"CreateWebhook",
 			mock.Anything,
-			mock.AnythingOfType("*types.WebhookCreationInput"),
+			mock.IsType(&types.WebhookCreationInput{}),
 		).Return((*types.Webhook)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -373,7 +374,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Webhook"))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -416,7 +417,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -459,7 +460,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -513,16 +514,16 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd.On(
 			"UpdateWebhook",
 			mock.Anything,
-			mock.AnythingOfType("*types.Webhook"),
+			mock.IsType(&types.Webhook{}),
 		).Return(nil)
 		s.webhookDataManager = wd
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogWebhookUpdateEvent", mock.Anything, exampleUser.ID, exampleWebhook.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
+		auditLog.On("LogWebhookUpdateEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleWebhook.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
 		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeResponse", mock.Anything, mock.Anything, mock.AnythingOfType("*types.Webhook"))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -551,7 +552,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeInvalidInputResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -595,7 +596,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -641,7 +642,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -688,12 +689,12 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd.On(
 			"UpdateWebhook",
 			mock.Anything,
-			mock.AnythingOfType("*types.Webhook"),
+			mock.IsType(&types.Webhook{}),
 		).Return(errors.New("blah"))
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -734,7 +735,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		exampleWebhook.BelongsToUser = exampleUser.ID
 
 		mc := &mockmetrics.UnitCounter{}
-		mc.On("Decrement", mock.Anything).Return()
+		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()
 		s.webhookCounter = mc
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -751,7 +752,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s.webhookDataManager = wd
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogWebhookArchiveEvent", mock.Anything, exampleUser.ID, exampleWebhook.ID)
+		auditLog.On("LogWebhookArchiveEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleWebhook.ID)
 		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
@@ -794,7 +795,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeNotFoundResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -837,7 +838,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.Anything, mock.Anything)
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

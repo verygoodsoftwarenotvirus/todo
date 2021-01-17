@@ -43,7 +43,7 @@ func (q *MariaDB) scanAccount(scan database.Scanner, includeCounts bool) (accoun
 }
 
 // scanAccounts takes some database rows and turns them into a slice of accounts.
-func (q *MariaDB) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []types.Account, filteredCount, totalCount uint64, err error) {
+func (q *MariaDB) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []*types.Account, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanAccount(rows, includeCounts)
 		if scanErr != nil {
@@ -60,7 +60,7 @@ func (q *MariaDB) scanAccounts(rows database.ResultIterator, includeCounts bool)
 			}
 		}
 
-		accounts = append(accounts, *x)
+		accounts = append(accounts, x)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -179,14 +179,14 @@ func (q *MariaDB) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query str
 
 // GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account) error {
+func (q *MariaDB) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, batchSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of accounts: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfAccountsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -426,7 +426,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (quer
 }
 
 // GetAuditLogEntriesForAccount fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]types.AuditLogEntry, error) {
+func (q *MariaDB) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForAccountQuery(accountID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

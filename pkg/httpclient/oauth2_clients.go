@@ -176,7 +176,7 @@ func (c *Client) BuildGetAuditLogForOAuth2ClientRequest(ctx context.Context, cli
 }
 
 // GetAuditLogForOAuth2Client retrieves a list of audit log entries pertaining to an oauth2 client.
-func (c *Client) GetAuditLogForOAuth2Client(ctx context.Context, clientID uint64) (entries []types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForOAuth2Client(ctx context.Context, clientID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

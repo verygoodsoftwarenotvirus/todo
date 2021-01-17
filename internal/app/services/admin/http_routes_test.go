@@ -58,7 +58,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
 		s.UserAccountStatusChangeHandler(res, req)
@@ -103,7 +103,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogAccountTerminationEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		auditLog.On("LogAccountTerminationEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
 		s.UserAccountStatusChangeHandler(res, req)
@@ -336,7 +336,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserBanEvent", mock.Anything, exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
 		udb := &mocktypes.AdminUserDataManager{}

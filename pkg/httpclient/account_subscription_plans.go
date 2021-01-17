@@ -179,7 +179,7 @@ func (c *Client) BuildGetAuditLogForPlanRequest(ctx context.Context, planID uint
 }
 
 // GetAuditLogForPlan retrieves a list of audit log entries pertaining to an plan.
-func (c *Client) GetAuditLogForPlan(ctx context.Context, planID uint64) (entries []types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForPlan(ctx context.Context, planID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

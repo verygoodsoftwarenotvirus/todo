@@ -300,6 +300,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 		exampleWebhookList := fakes.BuildFakeWebhookList()
+		exampleBatchSize := uint16(1000)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -314,16 +315,14 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 				buildMockRowsFromWebhooks(
 					false,
 					0,
-					&exampleWebhookList.Webhooks[0],
-					&exampleWebhookList.Webhooks[1],
-					&exampleWebhookList.Webhooks[2],
+					exampleWebhookList.Webhooks...,
 				),
 			)
 
 		out := make(chan []*types.Webhook)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		stillQuerying := true
@@ -347,6 +346,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		q, mockDB := buildTestService(t)
+		exampleBatchSize := uint16(1000)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WithArgs().
@@ -354,7 +354,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -365,6 +365,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		q, mockDB := buildTestService(t)
+		exampleBatchSize := uint16(1000)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -379,7 +380,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -392,6 +393,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		q, mockDB := buildTestService(t)
+		exampleBatchSize := uint16(1000)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -406,7 +408,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -419,6 +421,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 		ctx := context.Background()
 
 		q, mockDB := buildTestService(t)
+		exampleBatchSize := uint16(1000)
 		exampleWebhook := fakes.BuildFakeWebhook()
 		expectedCount := uint64(20)
 
@@ -434,7 +437,7 @@ func TestMariaDB_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -496,9 +499,7 @@ func TestSqlite_GetWebhooks(T *testing.T) {
 				buildMockRowsFromWebhooks(
 					true,
 					exampleWebhookList.FilteredCount,
-					&exampleWebhookList.Webhooks[0],
-					&exampleWebhookList.Webhooks[1],
-					&exampleWebhookList.Webhooks[2],
+					exampleWebhookList.Webhooks...,
 				),
 			)
 

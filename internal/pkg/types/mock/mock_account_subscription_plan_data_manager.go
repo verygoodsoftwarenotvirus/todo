@@ -65,7 +65,7 @@ func (m *AuditLogEntryDataManager) AccountSubscriptionLogPlanArchiveEvent(ctx co
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, planID)
-	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
+	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

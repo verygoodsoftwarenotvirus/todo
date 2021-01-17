@@ -15,7 +15,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.WebhookDataManager = (*Sqlite)(nil)
+var (
+	_ types.WebhookDataManager  = (*Sqlite)(nil)
+	_ types.WebhookAuditManager = (*Sqlite)(nil)
+)
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
 func (q *Sqlite) scanWebhook(scan database.Scanner, includeCounts bool) (webhook *types.Webhook, filteredCount, totalCount uint64, err error) {
@@ -171,14 +174,14 @@ func (q *Sqlite) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query stri
 
 // GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, bucketSize uint16) error {
+func (q *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	count, countErr := q.GetAllWebhooksCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfWebhooksQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{

@@ -11,7 +11,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.AdminUserDataManager = (*Sqlite)(nil)
+var (
+	_ types.AdminUserDataManager = (*Sqlite)(nil)
+)
 
 // buildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
 func (q *Sqlite) buildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {

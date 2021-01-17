@@ -107,7 +107,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	if errors.Is(err, sql.ErrNoRows) {
 		// just return an empty list if there are no results.
 		oauth2Clients = &types.OAuth2ClientList{
-			Clients: []types.OAuth2Client{},
+			Clients: []*types.OAuth2Client{},
 		}
 	} else if err != nil {
 		logger.Error(err, "encountered error getting list of oauth2 clients from clientDataManager")

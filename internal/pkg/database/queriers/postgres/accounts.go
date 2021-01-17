@@ -43,7 +43,7 @@ func (q *Postgres) scanAccount(scan database.Scanner, includeCounts bool) (accou
 }
 
 // scanAccounts takes some database rows and turns them into a slice of accounts.
-func (q *Postgres) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []types.Account, filteredCount, totalCount uint64, err error) {
+func (q *Postgres) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []*types.Account, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanAccount(rows, includeCounts)
 		if scanErr != nil {
@@ -60,7 +60,7 @@ func (q *Postgres) scanAccounts(rows database.ResultIterator, includeCounts bool
 			}
 		}
 
-		accounts = append(accounts, *x)
+		accounts = append(accounts, x)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -145,14 +145,14 @@ func (q *Postgres) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query st
 
 // GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, bucketSize uint16) error {
+func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, batchSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.BuildGetBatchOfAccountsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -379,7 +379,7 @@ func (q *Postgres) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (que
 }
 
 // GetAuditLogEntriesForAccount fetches a audit log entries for a given account from the database.
-func (q *Postgres) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]types.AuditLogEntry, error) {
+func (q *Postgres) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.BuildGetAuditLogEntriesForAccountQuery(accountID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

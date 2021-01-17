@@ -38,6 +38,7 @@ type (
 		BelongsToUser uint64 `json:"-"`
 	}
 
+	// AccountSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	AccountSQLQueryBuilder interface {
 		BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{})
 		BuildGetAllAccountsCountQuery() string
@@ -63,7 +64,7 @@ type (
 
 	// AccountAuditManager describes a structure capable of .
 	AccountAuditManager interface {
-		GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]AuditLogEntry, error)
+		GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*AuditLogEntry, error)
 		LogAccountCreationEvent(ctx context.Context, account *Account)
 		LogAccountUpdateEvent(ctx context.Context, userID, accountID uint64, changes []FieldChangeSummary)
 		LogAccountArchiveEvent(ctx context.Context, userID, accountID uint64)

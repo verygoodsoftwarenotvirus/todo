@@ -296,9 +296,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 				buildMockRowsFromUsers(
 					true,
 					exampleUserList.FilteredCount,
-					&exampleUserList.Users[0],
-					&exampleUserList.Users[1],
-					&exampleUserList.Users[2],
+					exampleUserList.Users...,
 				),
 			)
 
@@ -501,9 +499,7 @@ func TestPostgres_SearchForUsersByUsername(T *testing.T) {
 				buildMockRowsFromUsers(
 					false,
 					exampleUserList.FilteredCount,
-					&exampleUserList.Users[0],
-					&exampleUserList.Users[1],
-					&exampleUserList.Users[2],
+					exampleUserList.Users...,
 				),
 			)
 

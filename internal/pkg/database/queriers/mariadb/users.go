@@ -56,7 +56,7 @@ func (q *MariaDB) scanUser(scan database.Scanner, includeCounts bool) (user *typ
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (q *MariaDB) scanUsers(rows database.ResultIterator, includeCounts bool) (users []types.User, filteredCount, totalCount uint64, err error) {
+func (q *MariaDB) scanUsers(rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		user, fc, tc, scanErr := q.scanUser(rows, includeCounts)
 		if scanErr != nil {
@@ -73,7 +73,7 @@ func (q *MariaDB) scanUsers(rows database.ResultIterator, includeCounts bool) (u
 			}
 		}
 
-		users = append(users, *user)
+		users = append(users, user)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -600,7 +600,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForUserQuery(userID uint64) (query stri
 }
 
 // GetAuditLogEntriesForUser fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
+func (q *MariaDB) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForUserQuery(userID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

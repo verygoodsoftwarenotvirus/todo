@@ -46,6 +46,7 @@ type (
 		BelongsToUser uint64 `json:"-"`
 	}
 
+	// ItemSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	ItemSQLQueryBuilder interface {
 		BuildItemExistsQuery(itemID, userID uint64) (query string, args []interface{})
 		BuildGetItemQuery(itemID, userID uint64) (query string, args []interface{})
@@ -74,7 +75,7 @@ type (
 
 	// ItemAuditManager describes a structure capable of .
 	ItemAuditManager interface {
-		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]AuditLogEntry, error)
+		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
 		LogItemCreationEvent(ctx context.Context, item *Item)
 		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeSummary)
 		LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)

@@ -52,7 +52,7 @@ func (q *Postgres) scanAccountSubscriptionPlan(scan database.Scanner, includeCou
 }
 
 // scanAccountSubscriptionPlans takes some database rows and turns them into a slice of plans.
-func (q *Postgres) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+func (q *Postgres) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanAccountSubscriptionPlan(rows, includeCounts)
 		if scanErr != nil {
@@ -69,7 +69,7 @@ func (q *Postgres) scanAccountSubscriptionPlans(rows database.ResultIterator, in
 			}
 		}
 
-		plans = append(plans, *x)
+		plans = append(plans, x)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
@@ -285,7 +285,7 @@ func (q *Postgres) BuildGetAuditLogEntriesForPlanQuery(planID uint64) (query str
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
-func (q *Postgres) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
+func (q *Postgres) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.BuildGetAuditLogEntriesForPlanQuery(planID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

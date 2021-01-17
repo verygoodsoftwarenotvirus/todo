@@ -302,6 +302,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.BuildGetAllItemsCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -323,16 +324,14 @@ func TestPostgres_GetAllItems(T *testing.T) {
 				buildMockRowsFromItems(
 					false,
 					0,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
 		out := make(chan []*types.Item)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		stillQuerying := true
@@ -363,7 +362,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -388,7 +387,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -415,7 +414,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -443,7 +442,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -504,9 +503,7 @@ func TestPostgres_GetItems(T *testing.T) {
 				buildMockRowsFromItems(
 					true,
 					exampleItemList.FilteredCount,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -605,9 +602,7 @@ func TestPostgres_GetItemsForAdmin(T *testing.T) {
 				buildMockRowsFromItems(
 					true,
 					exampleItemList.FilteredCount,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -738,9 +733,7 @@ func TestPostgres_GetItemsWithIDs(T *testing.T) {
 				buildMockRowsFromItems(
 					false,
 					0,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 
@@ -846,9 +839,7 @@ func TestPostgres_GetItemsWithIDsForAdmin(T *testing.T) {
 				buildMockRowsFromItems(
 					false,
 					0,
-					&exampleItemList.Items[0],
-					&exampleItemList.Items[1],
-					&exampleItemList.Items[2],
+					exampleItemList.Items...,
 				),
 			)
 

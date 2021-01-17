@@ -104,7 +104,7 @@ func (m *AuditLogEntryDataManager) LogUserArchiveEvent(ctx context.Context, user
 }
 
 // GetAuditLogEntriesForUser is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, userID)
-	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
+	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

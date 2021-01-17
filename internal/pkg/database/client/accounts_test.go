@@ -11,28 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestClient_AccountExists(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		c, mockDB := buildTestClient()
-		mockDB.AccountDataManager.On("AccountExists", mock.Anything, exampleAccount.ID, exampleAccount.BelongsToUser).Return(true, nil)
-
-		actual, err := c.AccountExists(ctx, exampleAccount.ID, exampleAccount.BelongsToUser)
-		assert.NoError(t, err)
-		assert.True(t, actual)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-}
-
 func TestClient_GetAccount(T *testing.T) {
 	T.Parallel()
 
@@ -82,12 +60,13 @@ func TestClient_GetAllAccounts(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []types.Account)
+		results := make(chan []*types.Account)
+		batchSize := uint16(1000)
 
 		c, mockDB := buildTestClient()
-		mockDB.AccountDataManager.On("GetAllAccounts", mock.Anything, results).Return(nil)
+		mockDB.AccountDataManager.On("GetAllAccounts", mock.Anything, results, batchSize).Return(nil)
 
-		err := c.GetAllAccounts(ctx, results)
+		err := c.GetAllAccounts(ctx, results, batchSize)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

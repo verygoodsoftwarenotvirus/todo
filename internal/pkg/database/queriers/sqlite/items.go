@@ -14,7 +14,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.ItemDataManager = (*Sqlite)(nil)
+var (
+	_ types.ItemDataManager  = (*Sqlite)(nil)
+	_ types.ItemAuditManager = (*Sqlite)(nil)
+)
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
 func (q *Sqlite) scanItem(scan database.Scanner, includeCounts bool) (x *types.Item, filteredCount, totalCount uint64, err error) {
@@ -178,14 +181,14 @@ func (q *Sqlite) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string,
 
 // GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []*types.Item) error {
+func (q *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []*types.Item, batchSize uint16) error {
 	count, countErr := q.GetAllItemsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of items: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfItemsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -542,7 +545,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForItemQuery(itemID uint64) (query strin
 }
 
 // GetAuditLogEntriesForItem fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
+func (q *Sqlite) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForItemQuery(itemID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

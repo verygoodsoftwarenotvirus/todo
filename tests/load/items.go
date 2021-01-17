@@ -20,7 +20,7 @@ func fetchRandomItem(ctx context.Context, c *httpclient.Client) *types.Item {
 
 	randIndex := rand.Intn(len(itemsRes.Items))
 
-	return &itemsRes.Items[randIndex]
+	return itemsRes.Items[randIndex]
 }
 
 func buildItemActions(c *httpclient.Client) map[string]*Action {

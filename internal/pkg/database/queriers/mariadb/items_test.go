@@ -302,6 +302,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.buildGetAllItemsCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -328,7 +329,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 		out := make(chan []*types.Item)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -356,7 +357,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -379,7 +380,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -404,7 +405,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -431,7 +432,7 @@ func TestMariaDB_GetAllItems(T *testing.T) {
 
 		out := make(chan []*types.Item)
 
-		err := q.GetAllItems(ctx, out)
+		err := q.GetAllItems(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -1117,7 +1118,7 @@ func TestMariaDB_GetAuditLogEntriesForItem(T *testing.T) {
 		actual, err := q.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
 
 		assert.NoError(t, err)
-		assert.Equal(t, exampleAuditLogEntryList, actual)
+		assert.Equal(t, exampleAuditLogEntryList.Entries, actual)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 	})

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -63,6 +64,7 @@ func buildTestClient(t *testing.T) (*Client, sqlmock.Sqlmock, *database.MockData
 		db:              db,
 		querier:         mdb,
 		logger:          noop.NewLogger(),
+		timeTeller:      &queriers.StandardTimeTeller{},
 		tracer:          tracing.NewTracer("test"),
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
 	}

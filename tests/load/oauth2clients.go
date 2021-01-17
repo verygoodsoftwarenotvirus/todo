@@ -15,8 +15,8 @@ import (
 )
 
 // fetchRandomOAuth2Client retrieves a random OAuth2Client from the list of available clients.
-func fetchRandomOAuth2Client(c *httpclient.Client) *types.OAuth2Client {
-	clientsRes, err := c.GetOAuth2Clients(context.Background(), nil)
+func fetchRandomOAuth2Client(ctx context.Context, client *httpclient.Client) *types.OAuth2Client {
+	clientsRes, err := client.GetOAuth2Clients(ctx, nil)
 	if err != nil || clientsRes == nil || len(clientsRes.Clients) <= 1 {
 		return nil
 	}
@@ -24,7 +24,7 @@ func fetchRandomOAuth2Client(c *httpclient.Client) *types.OAuth2Client {
 	var selectedClient *types.OAuth2Client
 	for selectedClient == nil {
 		ri := rand.Intn(len(clientsRes.Clients))
-		c := &clientsRes.Clients[ri]
+		c := clientsRes.Clients[ri]
 
 		if c.ClientID != "FIXME" {
 			selectedClient = c
@@ -85,7 +85,8 @@ func buildOAuth2ClientActions(c *httpclient.Client) map[string]*Action {
 		"GetOAuth2Client": {
 			Name: "GetOAuth2Client",
 			Action: func() (*http.Request, error) {
-				if randomOAuth2Client := fetchRandomOAuth2Client(c); randomOAuth2Client != nil {
+				ctx := context.Background()
+				if randomOAuth2Client := fetchRandomOAuth2Client(ctx, c); randomOAuth2Client != nil {
 					return c.BuildGetOAuth2ClientRequest(context.Background(), randomOAuth2Client.ID)
 				}
 				return nil, ErrUnavailableYet

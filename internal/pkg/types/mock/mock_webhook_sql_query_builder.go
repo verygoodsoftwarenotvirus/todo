@@ -13,46 +13,54 @@ type WebhookSQLQueryBuilder struct {
 	mock.Mock
 }
 
+// BuildGetWebhookQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(webhookID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildGetAllWebhooksCountQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildGetAllWebhooksCountQuery() string {
 	return m.Called().String(0)
 }
 
+// BuildGetBatchOfWebhooksQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(beginID, endID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildGetWebhooksQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	returnArgs := m.Called(userID, filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildCreateWebhookQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildCreateWebhookQuery(x *types.Webhook) (query string, args []interface{}) {
 	returnArgs := m.Called(x)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildUpdateWebhookQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildArchiveWebhookQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(webhookID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildGetAuditLogEntriesForWebhookQuery implements our interface.
 func (m *WebhookSQLQueryBuilder) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(webhookID)
 

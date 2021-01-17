@@ -13,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -326,7 +327,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.authenticator = authr
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogSuccessfulLoginEvent", mock.Anything, exampleUser.ID)
+		auditLog.On("LogSuccessfulLoginEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
 		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
@@ -418,7 +419,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogBannedUserLoginAttemptEvent", mock.Anything, exampleUser.ID)
+		auditLog.On("LogBannedUserLoginAttemptEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
 		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
@@ -469,7 +470,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.authenticator = authr
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.Anything, exampleUser.ID)
+		auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
 		s.auditLog = auditLog
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -659,7 +660,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		}
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogLogoutEvent", mock.Anything, exampleUser.ID)
+		auditLog.On("LogLogoutEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
 		s.auditLog = auditLog
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -803,7 +804,7 @@ func TestService_validateLogin(T *testing.T) {
 		udb.On(
 			"UpdateUser",
 			mock.Anything,
-			mock.AnythingOfType("*types.User"),
+			mock.IsType(&types.User{}),
 		).Return(nil)
 		s.userDB = udb
 
@@ -888,7 +889,7 @@ func TestService_validateLogin(T *testing.T) {
 		udb.On(
 			"UpdateUser",
 			mock.Anything,
-			mock.AnythingOfType("*types.User"),
+			mock.IsType(&types.User{}),
 		).Return(expectedErr)
 		s.userDB = udb
 
@@ -1052,7 +1053,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogCycleCookieSecretEvent", mock.Anything, exampleUser.ID)
+		auditLog.On("LogCycleCookieSecretEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
 		s.auditLog = auditLog
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)

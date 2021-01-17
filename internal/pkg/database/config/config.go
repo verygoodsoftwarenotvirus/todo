@@ -143,7 +143,7 @@ func (cfg *Config) ProvideDatabasePlaceholderFormat() (squirrel.PlaceholderForma
 	}
 }
 
-// ProvideDatabasePlaceholderFormat provides .
+// ProvideJSONPluckQuery provides a query for extracting a value out of a JSON dictionary for a given database.
 func (cfg *Config) ProvideJSONPluckQuery() string {
 	switch cfg.Provider {
 	case PostgresProviderKey:

@@ -14,7 +14,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.AuditLogEntryDataManager = (*Sqlite)(nil)
+var (
+	_ types.AuditLogEntryDataManager = (*Sqlite)(nil)
+)
 
 // scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
 func (q *Sqlite) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
@@ -132,14 +134,14 @@ func (q *Sqlite) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (que
 
 // GetAllAuditLogEntries fetches every audit log entry from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry, bucketSize uint16) error {
+func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry, batchSize uint16) error {
 	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of entries: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{

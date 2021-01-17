@@ -15,7 +15,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.UserDataManager = (*Sqlite)(nil)
+var (
+	_ types.UserDataManager  = (*Sqlite)(nil)
+	_ types.UserAuditManager = (*Sqlite)(nil)
+)
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
 func (q *Sqlite) scanUser(scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
@@ -564,7 +567,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query strin
 }
 
 // GetAuditLogEntriesForUser fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntriesForUser(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
+func (q *Sqlite) GetAuditLogEntriesForUser(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForUserQuery(itemID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

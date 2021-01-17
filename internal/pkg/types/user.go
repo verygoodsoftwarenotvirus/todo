@@ -137,6 +137,7 @@ type (
 		TwoFactorSecret string `json:"twoFactorSecret"`
 	}
 
+	// UserSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	UserSQLQueryBuilder interface {
 		BuildGetUserQuery(userID uint64) (query string, args []interface{})
 		BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
@@ -189,7 +190,7 @@ type (
 
 	// UserAuditManager describes a structure capable of logging audit events related to users.
 	UserAuditManager interface {
-		GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]AuditLogEntry, error)
+		GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*AuditLogEntry, error)
 		LogUserCreationEvent(ctx context.Context, user *User)
 		LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64)
 		LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64)

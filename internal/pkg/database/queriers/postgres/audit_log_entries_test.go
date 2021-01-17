@@ -214,6 +214,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.BuildGetAllAuditLogEntriesCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -234,16 +235,14 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					false,
-					&exampleAuditLogEntryList.Entries[0],
-					&exampleAuditLogEntryList.Entries[1],
-					&exampleAuditLogEntryList.Entries[2],
+					exampleAuditLogEntryList.Entries...,
 				),
 			)
 
 		out := make(chan []*types.AuditLogEntry)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		stillQuerying := true
@@ -274,7 +273,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -299,7 +298,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -326,7 +325,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -354,7 +353,7 @@ func TestPostgres_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -406,9 +405,7 @@ func TestPostgres_GetAuditLogEntries(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					true,
-					&exampleAuditLogEntryList.Entries[0],
-					&exampleAuditLogEntryList.Entries[1],
-					&exampleAuditLogEntryList.Entries[2],
+					exampleAuditLogEntryList.Entries...,
 				),
 			)
 
@@ -523,9 +520,7 @@ func TestPostgres_GetAuditLogEntriesForItem(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					false,
-					&exampleAuditLogEntryList[0],
-					&exampleAuditLogEntryList[1],
-					&exampleAuditLogEntryList[2],
+					exampleAuditLogEntryList...,
 				),
 			)
 

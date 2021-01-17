@@ -63,13 +63,13 @@ func (c *Client) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) 
 }
 
 // GetAllOAuth2Clients loads all OAuth2 clients into a channel.
-func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []*types.OAuth2Client) error {
+func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []*types.OAuth2Client, batchSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllItems called")
 
-	return c.querier.GetAllOAuth2Clients(ctx, results)
+	return c.querier.GetAllOAuth2Clients(ctx, results, batchSize)
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
@@ -142,7 +142,7 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches a list of audit log entries from the database that relate to a given client.
-func (c *Client) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
+func (c *Client) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

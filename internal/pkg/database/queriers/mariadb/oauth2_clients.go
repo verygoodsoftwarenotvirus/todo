@@ -133,14 +133,14 @@ func (q *MariaDB) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (quer
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client) error {
+func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of items: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -422,7 +422,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
+func (q *MariaDB) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

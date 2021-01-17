@@ -64,7 +64,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		accounts = &types.AccountList{Accounts: []types.Account{}}
+		accounts = &types.AccountList{Accounts: []*types.Account{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching accounts")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -117,39 +117,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	s.auditLog.LogAccountCreationEvent(ctx, x)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
-}
-
-// ExistenceHandler returns a HEAD handler that returns 200 if an account exists, 404 otherwise.
-func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
-
-	// determine account ID.
-	accountID := s.accountIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, accountID)
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
-
-	// fetch account from database.
-	exists, err := s.accountDataManager.AccountExists(ctx, accountID, si.UserID)
-	if errors.Is(err, sql.ErrNoRows) {
-		logger.Error(err, "error checking account existence in database")
-	}
-
-	if !exists || errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-	}
 }
 
 // ReadHandler returns a GET handler that returns an account.

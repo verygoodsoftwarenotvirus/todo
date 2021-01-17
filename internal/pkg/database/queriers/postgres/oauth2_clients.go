@@ -53,7 +53,7 @@ func (q *Postgres) scanOAuth2Client(scan database.Scanner, includeCounts bool) (
 }
 
 // scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
-func (q *Postgres) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []types.OAuth2Client, filteredCount, totalCount uint64, err error) {
+func (q *Postgres) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []*types.OAuth2Client, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		client, fc, tc, scanErr := q.scanOAuth2Client(rows, includeCounts)
 		if scanErr != nil {
@@ -70,7 +70,7 @@ func (q *Postgres) scanOAuth2Clients(rows database.ResultIterator, includeCounts
 			}
 		}
 
-		clients = append(clients, *client)
+		clients = append(clients, client)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -134,14 +134,14 @@ func (q *Postgres) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (que
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, bucketSize uint16) error {
+func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.BuildGetBatchOfOAuth2ClientsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -408,7 +408,7 @@ func (q *Postgres) BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) 
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches a audit log entries for a given oauth2 client from the database.
-func (q *Postgres) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
+func (q *Postgres) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
 
 	q.logger.WithValue(keys.OAuth2ClientIDKey, clientID).Debug("GetAuditLogEntriesForOAuth2Client invoked")

@@ -216,6 +216,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.buildGetAllAuditLogEntriesCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -236,16 +237,14 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					false,
-					&exampleAuditLogEntryList.Entries[0],
-					&exampleAuditLogEntryList.Entries[1],
-					&exampleAuditLogEntryList.Entries[2],
+					exampleAuditLogEntryList.Entries...,
 				),
 			)
 
 		out := make(chan []*types.AuditLogEntry)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -276,7 +275,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -301,7 +300,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -328,7 +327,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -356,7 +355,7 @@ func TestMariaDB_GetAllAuditLogEntries(T *testing.T) {
 
 		out := make(chan []*types.AuditLogEntry)
 
-		err := q.GetAllAuditLogEntries(ctx, out)
+		err := q.GetAllAuditLogEntries(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -407,9 +406,7 @@ func TestMariaDB_GetAuditLogEntries(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					true,
-					&exampleAuditLogEntryList.Entries[0],
-					&exampleAuditLogEntryList.Entries[1],
-					&exampleAuditLogEntryList.Entries[2],
+					exampleAuditLogEntryList.Entries...,
 				),
 			)
 

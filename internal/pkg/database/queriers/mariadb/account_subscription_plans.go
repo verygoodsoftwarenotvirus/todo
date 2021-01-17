@@ -52,7 +52,7 @@ func (q *MariaDB) scanAccountSubscriptionPlan(scan database.Scanner, includeCoun
 }
 
 // scanPlans takes some database rows and turns them into a slice of plans.
-func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCounts bool) (plans []types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanAccountSubscriptionPlan(rows, includeCounts)
 		if scanErr != nil {
@@ -69,7 +69,7 @@ func (q *MariaDB) scanPlans(rows database.ResultIterator, includeCounts bool) (p
 			}
 		}
 
-		plans = append(plans, *x)
+		plans = append(plans, x)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
@@ -324,7 +324,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query stri
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
-func (q *MariaDB) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]types.AuditLogEntry, error) {
+func (q *MariaDB) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForPlanQuery(planID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

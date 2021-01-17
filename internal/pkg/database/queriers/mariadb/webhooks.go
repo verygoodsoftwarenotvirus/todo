@@ -66,7 +66,7 @@ func (q *MariaDB) scanWebhook(scan database.Scanner, includeCounts bool) (webhoo
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
-func (q *MariaDB) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []types.Webhook, filteredCount, totalCount uint64, err error) {
+func (q *MariaDB) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		webhook, fc, tc, scanErr := q.scanWebhook(rows, includeCounts)
 		if scanErr != nil {
@@ -83,7 +83,7 @@ func (q *MariaDB) scanWebhooks(rows database.ResultIterator, includeCounts bool)
 			}
 		}
 
-		webhooks = append(webhooks, *webhook)
+		webhooks = append(webhooks, webhook)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
@@ -171,14 +171,14 @@ func (q *MariaDB) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query str
 
 // GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *MariaDB) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook) error {
+func (q *MariaDB) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	count, countErr := q.GetAllWebhooksCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += defaultBucketSize {
-		endID := beginID + defaultBucketSize
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfWebhooksQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -412,7 +412,7 @@ func (q *MariaDB) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (quer
 }
 
 // GetAuditLogEntriesForWebhook fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
+func (q *MariaDB) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.buildGetAuditLogEntriesForWebhookQuery(webhookID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)

@@ -82,12 +82,13 @@ func TestClient_GetAllItems(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []types.Item)
+		results := make(chan []*types.Item)
+		batchSize := uint16(1000)
 
 		c, mockDB := buildTestClient()
-		mockDB.ItemDataManager.On("GetAllItems", mock.Anything, results).Return(nil)
+		mockDB.ItemDataManager.On("GetAllItems", mock.Anything, results, batchSize).Return(nil)
 
-		err := c.GetAllItems(ctx, results)
+		err := c.GetAllItems(ctx, results, batchSize)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

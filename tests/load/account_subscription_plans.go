@@ -20,7 +20,7 @@ func fetchRandomPlan(ctx context.Context, c *httpclient.Client) *types.AccountSu
 
 	randIndex := rand.Intn(len(plansRes.Plans))
 
-	return &plansRes.Plans[randIndex]
+	return plansRes.Plans[randIndex]
 }
 
 func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {

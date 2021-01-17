@@ -30,8 +30,7 @@ const (
 	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
 	currentUnixTimeQuery = `extract(epoch FROM NOW())`
 
-	maximumConnectionAttempts        = 50
-	defaultBucketSize         uint16 = 1000
+	maximumConnectionAttempts = 50
 )
 
 var _ database.DataManager = (*Postgres)(nil)

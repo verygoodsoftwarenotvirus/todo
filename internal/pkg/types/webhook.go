@@ -55,6 +55,7 @@ type (
 		Webhooks []*Webhook `json:"webhooks"`
 	}
 
+	// WebhookSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	WebhookSQLQueryBuilder interface {
 		BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{})
 		BuildGetAllWebhooksCountQuery() string
@@ -79,7 +80,7 @@ type (
 
 	// WebhookAuditManager describes a structure capable of .
 	WebhookAuditManager interface {
-		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]AuditLogEntry, error)
+		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*AuditLogEntry, error)
 		LogWebhookCreationEvent(ctx context.Context, webhook *Webhook)
 		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeSummary)
 		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)

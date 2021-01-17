@@ -294,9 +294,7 @@ func TestMariaDB_GetUsers(T *testing.T) {
 				buildMockRowsFromUsers(
 					true,
 					exampleUserList.FilteredCount,
-					&exampleUserList.Users[0],
-					&exampleUserList.Users[1],
-					&exampleUserList.Users[2],
+					exampleUserList.Users...,
 				),
 			)
 
@@ -499,9 +497,7 @@ func TestMariaDB_SearchForUsersByUsername(T *testing.T) {
 				buildMockRowsFromUsers(
 					false,
 					exampleUsers.FilteredCount,
-					&exampleUsers.Users[0],
-					&exampleUsers.Users[1],
-					&exampleUsers.Users[2],
+					exampleUsers.Users...,
 				),
 			)
 

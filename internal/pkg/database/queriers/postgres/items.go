@@ -42,7 +42,7 @@ func (q *Postgres) scanItem(scan database.Scanner, includeCounts bool) (x *types
 }
 
 // scanItems takes some database rows and turns them into a slice of items.
-func (q *Postgres) scanItems(rows database.ResultIterator, includeCounts bool) (items []types.Item, filteredCount, totalCount uint64, err error) {
+func (q *Postgres) scanItems(rows database.ResultIterator, includeCounts bool) (items []*types.Item, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := q.scanItem(rows, includeCounts)
 		if scanErr != nil {
@@ -59,7 +59,7 @@ func (q *Postgres) scanItems(rows database.ResultIterator, includeCounts bool) (
 			}
 		}
 
-		items = append(items, *x)
+		items = append(items, x)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
@@ -160,14 +160,14 @@ func (q *Postgres) BuildGetBatchOfItemsQuery(beginID, endID uint64) (query strin
 
 // GetAllItems fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []*types.Item, bucketSize uint16) error {
+func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []*types.Item, batchSize uint16) error {
 	count, countErr := q.GetAllItemsCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.BuildGetBatchOfItemsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{
@@ -292,7 +292,7 @@ func (q *Postgres) BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []u
 }
 
 // GetItemsWithIDs fetches a list of items from the database that exist within a given set of IDs.
-func (q *Postgres) GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
+func (q *Postgres) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
@@ -449,7 +449,7 @@ func (q *Postgres) BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query str
 }
 
 // GetAuditLogEntriesForItem fetches a audit log entries for a given item from the database.
-func (q *Postgres) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
+func (q *Postgres) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
 	query, args := q.BuildGetAuditLogEntriesForItemQuery(itemID)
 
 	q.logger.WithValues(map[string]interface{}{

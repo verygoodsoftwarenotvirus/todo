@@ -82,7 +82,7 @@ func (m *AuditLogEntryDataManager) LogOAuth2ClientArchiveEvent(ctx context.Conte
 }
 
 // GetAuditLogEntriesForOAuth2Client is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, clientID)
-	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
+	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

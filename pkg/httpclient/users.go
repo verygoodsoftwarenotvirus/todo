@@ -86,7 +86,7 @@ func (c *Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, usern
 }
 
 // SearchForUsersByUsername retrieves a list of users.
-func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) (users []types.User, err error) {
+func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) (users []*types.User, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -167,7 +167,7 @@ func (c *Client) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint
 }
 
 // GetAuditLogForUser retrieves a list of audit log entries pertaining to a user.
-func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries []types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

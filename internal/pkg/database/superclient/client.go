@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -26,6 +28,7 @@ type Client struct {
 	db              *sql.DB
 	querier         database.DataManager
 	sqlQueryBuilder database.SQLQueryBuilder
+	timeTeller      queriers.TimeTeller
 	debug           bool
 	logger          logging.Logger
 	tracer          tracing.Tracer
@@ -68,6 +71,7 @@ func ProvideDatabaseClient(
 	c := &Client{
 		db:              db,
 		querier:         querier,
+		timeTeller:      &queriers.StandardTimeTeller{},
 		sqlQueryBuilder: nil,
 		debug:           debug,
 		logger:          logger.WithName("db_client"),
@@ -89,4 +93,13 @@ func ProvideDatabaseClient(
 	}
 
 	return c, nil
+}
+
+func (c *Client) getIDFromResult(res sql.Result) uint64 {
+	id, err := res.LastInsertId()
+	if err != nil {
+		c.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
+	}
+
+	return uint64(id)
 }

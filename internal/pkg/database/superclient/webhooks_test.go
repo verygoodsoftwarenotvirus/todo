@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -84,7 +86,7 @@ func TestClient_GetWebhook(T *testing.T) {
 		exampleWebhook := fakes.BuildFakeWebhook()
 
 		c, db, mockDB := buildTestClient(t)
-		mockDB.WebhookDataManager.On("GetWebhook", mock.Anything, exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(exampleWebhook, nil)
+		mockDB.WebhookDataManager.On("GetWebhook", mock.MatchedBy(testutil.ContextMatcher()), exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(exampleWebhook, nil)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -121,7 +123,7 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.
 			On("BuildGetAllWebhooksCountQuery").
-			Return(fakeCountQuery, ([]interface{})(nil))
+			Return(fakeCountQuery, []interface{}{})
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -157,7 +159,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.
 			On("BuildGetAllWebhooksCountQuery").
-			Return(fakeCountQuery, ([]interface{})(nil))
+			Return(fakeCountQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
 			WithArgs().
@@ -207,7 +209,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.
 			On("BuildGetAllWebhooksCountQuery").
-			Return(fakeCountQuery, ([]interface{})(nil))
+			Return(fakeCountQuery, []interface{}{})
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -236,7 +238,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.
 			On("BuildGetAllWebhooksCountQuery").
-			Return(fakeCountQuery, ([]interface{})(nil))
+			Return(fakeCountQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
 			WithArgs().
@@ -276,7 +278,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.
 			On("BuildGetAllWebhooksCountQuery").
-			Return(fakeCountQuery, ([]interface{})(nil))
+			Return(fakeCountQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
 			WithArgs().
@@ -317,7 +319,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.
 			On("BuildGetAllWebhooksCountQuery").
-			Return(fakeCountQuery, ([]interface{})(nil))
+			Return(fakeCountQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
 			WithArgs().
@@ -394,7 +396,6 @@ func TestClient_GetWebhooks(T *testing.T) {
 		mockDB.WebhookDataManager.On("GetWebhooks", mock.Anything, exampleUser.ID, filter).Return(exampleWebhookList, nil)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeWebhooksQuery, fakeWebhooksArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildGetWebhooksQuery", exampleUser.ID, filter).Return(fakeWebhooksQuery, fakeWebhooksArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -416,6 +417,22 @@ func TestClient_GetWebhooks(T *testing.T) {
 	})
 }
 
+func matchWebhook(t *testing.T, expected *types.Webhook) func(*types.Webhook) bool {
+	t.Helper()
+
+	require.NotNil(t, expected, "Webhook matcher invoked with nil webhook")
+
+	x := &types.Webhook{}
+	*x = *expected
+
+	return func(actual *types.Webhook) bool {
+		x.ID = actual.ID
+		x.CreatedOn = actual.CreatedOn
+
+		return assert.Equal(t, x, actual, "expected and actual webhooks do not match")
+	}
+}
+
 func TestClient_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
@@ -425,14 +442,29 @@ func TestClient_CreateWebhook(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleRows := sqlmock.NewResult(int64(exampleWebhook.ID), 1)
 
-		c, _, mockDB := buildTestClient(t)
+		c, db, mockDB := buildTestClient(t)
 		mockDB.WebhookDataManager.On("CreateWebhook", mock.Anything, exampleInput).Return(exampleWebhook, nil)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildCreateWebhookQuery", mock.MatchedBy(matchWebhook(t, exampleWebhook))).Return(fakeCreationQuery, fakeCreationArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
+			WillReturnResult(exampleRows)
+
+		stt := &queriers.MockTimeTeller{}
+		stt.On("Now").Return(exampleWebhook.CreatedOn)
+		c.timeTeller = stt
 
 		actual, err := c.CreateWebhook(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
+		assert.NoError(t, db.ExpectationsWereMet(), "not all database expectations were met")
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

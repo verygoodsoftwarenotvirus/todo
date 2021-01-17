@@ -39,6 +39,7 @@ type (
 		Context   AuditLogContext `json:"context"`
 	}
 
+	// AuditLogEntrySQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	AuditLogEntrySQLQueryBuilder interface {
 		BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{})
 		BuildGetAllAuditLogEntriesCountQuery() string

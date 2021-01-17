@@ -15,7 +15,8 @@ const (
 	exampleQuantity = 3
 )
 
-func BuildFakeSQLQuery() (string, []interface{}) {
+// BuildFakeSQLQuery builds a fake SQL query and arg pair.
+func BuildFakeSQLQuery() (query string, args []interface{}) {
 	s := fmt.Sprintf("%s %s WHERE things = ? AND stuff = ?",
 		fake.RandString([]string{"SELECT * FROM", "INSERT INTO", "UPDATE"}),
 		fake.Word(),

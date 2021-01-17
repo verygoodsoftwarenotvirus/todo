@@ -94,78 +94,6 @@ func TestPostgres_ScanAccounts(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildAccountExistsQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		expectedQuery := "SELECT EXISTS ( SELECT accounts.id FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1 AND accounts.id = $2 )"
-		expectedArgs := []interface{}{
-			exampleAccount.BelongsToUser,
-			exampleAccount.ID,
-		}
-		actualQuery, actualArgs := q.buildAccountExistsQuery(exampleAccount.ID, exampleUser.ID)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestPostgres_AccountExists(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildAccountExistsQuery(exampleAccount.ID, exampleUser.ID)
-
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
-
-		actual, err := q.AccountExists(ctx, exampleAccount.ID, exampleUser.ID)
-		assert.NoError(t, err)
-		assert.True(t, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("with no rows", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		q, mockDB := buildTestService(t)
-
-		expectedQuery, expectedArgs := q.buildAccountExistsQuery(exampleAccount.ID, exampleUser.ID)
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnError(sql.ErrNoRows)
-
-		actual, err := q.AccountExists(ctx, exampleAccount.ID, exampleUser.ID)
-		assert.NoError(t, err)
-		assert.False(t, actual)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
 func TestPostgres_buildGetAccountQuery(T *testing.T) {
 	T.Parallel()
 
@@ -303,6 +231,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.BuildGetAllAccountsCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -324,16 +253,14 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 				buildMockRowsFromAccounts(
 					false,
 					0,
-					&exampleAccountList.Accounts[0],
-					&exampleAccountList.Accounts[1],
-					&exampleAccountList.Accounts[2],
+					exampleAccountList.Accounts...,
 				),
 			)
 
 		out := make(chan []*types.Account)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		stillQuerying := true
@@ -364,7 +291,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -389,7 +316,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -416,7 +343,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -444,7 +371,7 @@ func TestPostgres_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -505,9 +432,7 @@ func TestPostgres_GetAccounts(T *testing.T) {
 				buildMockRowsFromAccounts(
 					true,
 					exampleAccountList.FilteredCount,
-					&exampleAccountList.Accounts[0],
-					&exampleAccountList.Accounts[1],
-					&exampleAccountList.Accounts[2],
+					exampleAccountList.Accounts...,
 				),
 			)
 
@@ -606,9 +531,7 @@ func TestPostgres_GetAccountsForAdmin(T *testing.T) {
 				buildMockRowsFromAccounts(
 					true,
 					exampleAccountList.FilteredCount,
-					&exampleAccountList.Accounts[0],
-					&exampleAccountList.Accounts[1],
-					&exampleAccountList.Accounts[2],
+					exampleAccountList.Accounts...,
 				),
 			)
 

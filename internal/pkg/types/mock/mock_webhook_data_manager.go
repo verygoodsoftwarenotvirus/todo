@@ -70,7 +70,7 @@ func (m *AuditLogEntryDataManager) LogWebhookArchiveEvent(ctx context.Context, u
 }
 
 // GetAuditLogEntriesForWebhook is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, webhookID)
-	return args.Get(0).([]types.AuditLogEntry), args.Error(1)
+	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

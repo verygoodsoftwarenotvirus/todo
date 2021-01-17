@@ -15,7 +15,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.OAuth2ClientDataManager = (*Sqlite)(nil)
+var (
+	_ types.OAuth2ClientDataManager  = (*Sqlite)(nil)
+	_ types.OAuth2ClientAuditManager = (*Sqlite)(nil)
+)
 
 // scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
 func (q *Sqlite) scanOAuth2Client(scan database.Scanner, includeCounts bool) (client *types.OAuth2Client, filteredCount, totalCount uint64, err error) {
@@ -133,14 +136,14 @@ func (q *Sqlite) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, bucketSize uint16) error {
+func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of oauth2 clients: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
 			logger := q.logger.WithValues(map[string]interface{}{

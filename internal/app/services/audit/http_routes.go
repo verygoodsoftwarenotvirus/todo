@@ -44,7 +44,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	if entries, err = s.auditLog.GetAuditLogEntries(ctx, filter); errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
 		entries = &types.AuditLogEntryList{
-			Entries: []types.AuditLogEntry{},
+			Entries: []*types.AuditLogEntry{},
 		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching entries")

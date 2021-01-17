@@ -310,6 +310,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
 		exampleAccountList := fakes.BuildFakeAccountList()
+		exampleBatchSize := uint16(1000)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -323,16 +324,14 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 				buildMockRowsFromAccounts(
 					false,
 					0,
-					&exampleAccountList.Accounts[0],
-					&exampleAccountList.Accounts[1],
-					&exampleAccountList.Accounts[2],
+					exampleAccountList.Accounts...,
 				),
 			)
 
 		out := make(chan []*types.Account)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -353,14 +352,17 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 
 	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
+		exampleBatchSize := uint16(1000)
+
 		q, mockDB := buildTestService(t)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -369,7 +371,9 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
+
 		q, mockDB := buildTestService(t)
+		exampleBatchSize := uint16(1000)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -383,7 +387,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -393,8 +397,10 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
+		exampleBatchSize := uint16(1000)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -408,7 +414,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -422,6 +428,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 		exampleAccount := fakes.BuildFakeAccount()
+		exampleBatchSize := uint16(1000)
 		expectedCount := uint64(20)
 
 		begin, end := uint64(1), uint64(1001)
@@ -435,7 +442,7 @@ func TestMariaDB_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -496,9 +503,7 @@ func TestMariaDB_GetAccounts(T *testing.T) {
 				buildMockRowsFromAccounts(
 					true,
 					exampleAccountList.FilteredCount,
-					&exampleAccountList.Accounts[0],
-					&exampleAccountList.Accounts[1],
-					&exampleAccountList.Accounts[2],
+					exampleAccountList.Accounts...,
 				),
 			)
 
@@ -596,9 +601,7 @@ func TestMariaDB_GetAccountsForAdmin(T *testing.T) {
 				buildMockRowsFromAccounts(
 					true,
 					exampleAccountList.FilteredCount,
-					&exampleAccountList.Accounts[0],
-					&exampleAccountList.Accounts[1],
-					&exampleAccountList.Accounts[2],
+					exampleAccountList.Accounts...,
 				),
 			)
 
@@ -962,9 +965,7 @@ func TestMariaDB_GetAuditLogEntriesForAccount(T *testing.T) {
 			WillReturnRows(
 				buildMockRowsFromAuditLogEntries(
 					false,
-					&exampleAuditLogEntryList[0],
-					&exampleAuditLogEntryList[1],
-					&exampleAuditLogEntryList[2],
+					exampleAuditLogEntryList...,
 				),
 			)
 

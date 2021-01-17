@@ -30,8 +30,7 @@ const (
 	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
 	currentUnixTimeQuery = `UNIX_TIMESTAMP()`
 
-	maximumConnectionAttempts        = 50
-	defaultBucketSize         uint64 = 1000
+	maximumConnectionAttempts = 50
 )
 
 var _ database.DataManager = (*MariaDB)(nil)

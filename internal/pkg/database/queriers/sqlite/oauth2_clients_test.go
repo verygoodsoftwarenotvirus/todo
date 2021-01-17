@@ -213,6 +213,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.buildGetAllOAuth2ClientsCountQuery()
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -234,16 +235,14 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 				buildMockRowsFromOAuth2Clients(
 					false,
 					0,
-					&exampleOAuth2ClientList.Clients[0],
-					&exampleOAuth2ClientList.Clients[1],
-					&exampleOAuth2ClientList.Clients[2],
+					exampleOAuth2ClientList.Clients...,
 				),
 			)
 
 		out := make(chan []*types.OAuth2Client)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllOAuth2Clients(ctx, out)
+		err := q.GetAllOAuth2Clients(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		stillQuerying := true
@@ -274,7 +273,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 
 		out := make(chan []*types.OAuth2Client)
 
-		err := q.GetAllOAuth2Clients(ctx, out)
+		err := q.GetAllOAuth2Clients(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -299,7 +298,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 
 		out := make(chan []*types.OAuth2Client)
 
-		err := q.GetAllOAuth2Clients(ctx, out)
+		err := q.GetAllOAuth2Clients(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -326,7 +325,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 
 		out := make(chan []*types.OAuth2Client)
 
-		err := q.GetAllOAuth2Clients(ctx, out)
+		err := q.GetAllOAuth2Clients(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -354,7 +353,7 @@ func TestMariDB_GetAllOAuth2Clients(T *testing.T) {
 
 		out := make(chan []*types.OAuth2Client)
 
-		err := q.GetAllOAuth2Clients(ctx, out)
+		err := q.GetAllOAuth2Clients(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -542,9 +541,7 @@ func TestSqlite_GetOAuth2ClientsForUser(T *testing.T) {
 				buildMockRowsFromOAuth2Clients(
 					true,
 					exampleOAuth2ClientList.FilteredCount,
-					&exampleOAuth2ClientList.Clients[0],
-					&exampleOAuth2ClientList.Clients[1],
-					&exampleOAuth2ClientList.Clients[2],
+					exampleOAuth2ClientList.Clients...,
 				),
 			)
 

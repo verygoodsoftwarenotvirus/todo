@@ -54,6 +54,7 @@ type (
 		Scopes      []string `json:"scopes"`
 	}
 
+	// OAuth2ClientSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	OAuth2ClientSQLQueryBuilder interface {
 		BuildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{})
 		BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{})
@@ -79,7 +80,7 @@ type (
 
 	// OAuth2ClientAuditManager describes a structure capable of .
 	OAuth2ClientAuditManager interface {
-		GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]AuditLogEntry, error)
+		GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*AuditLogEntry, error)
 		LogOAuth2ClientCreationEvent(ctx context.Context, client *OAuth2Client)
 		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
 	}

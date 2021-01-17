@@ -106,8 +106,8 @@ func main() {
 
 	switch typeName {
 	case "item":
-		outputChan := make(chan []types.Item)
-		if queryErr := dbClient.GetAllItems(ctx, outputChan); queryErr != nil {
+		outputChan := make(chan []*types.Item)
+		if queryErr := dbClient.GetAllItems(ctx, outputChan, 1000); queryErr != nil {
 			log.Fatalf("error fetching items from database: %v", err)
 		}
 

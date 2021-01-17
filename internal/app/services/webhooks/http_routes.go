@@ -122,7 +122,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, si.UserID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		webhooks = &types.WebhookList{
-			Webhooks: []types.Webhook{},
+			Webhooks: []*types.Webhook{},
 		}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching webhooks")

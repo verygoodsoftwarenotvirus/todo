@@ -64,7 +64,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		items = &types.ItemList{Items: []types.Item{}}
+		items = &types.ItemList{Items: []*types.Item{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching items")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -107,7 +107,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		relevantIDs []uint64
 		searchErr   error
 
-		items []types.Item
+		items []*types.Item
 		dbErr error
 	)
 
@@ -132,7 +132,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 
 	if errors.Is(dbErr, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		items = []types.Item{}
+		items = []*types.Item{}
 	} else if dbErr != nil {
 		logger.Error(dbErr, "error encountered fetching items")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)

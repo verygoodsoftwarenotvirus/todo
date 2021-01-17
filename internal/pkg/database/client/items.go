@@ -54,13 +54,13 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 }
 
 // GetAllItems fetches a list of all items in the database.
-func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item) error {
+func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item, batchSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllItems called")
 
-	return c.querier.GetAllItems(ctx, results)
+	return c.querier.GetAllItems(ctx, results, batchSize)
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter.
@@ -98,7 +98,7 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 }
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
-func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]types.Item, error) {
+func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -116,7 +116,7 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 }
 
 // GetItemsWithIDsForAdmin fetches items from the database within a given set of IDs.
-func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]types.Item, error) {
+func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -200,7 +200,7 @@ func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 }
 
 // GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.
-func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]types.AuditLogEntry, error) {
+func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

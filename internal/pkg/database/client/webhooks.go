@@ -43,13 +43,13 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 }
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook) error {
+func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllWebhooks called")
 
-	return c.querier.GetAllWebhooks(ctx, resultChannel)
+	return c.querier.GetAllWebhooks(ctx, resultChannel, batchSize)
 }
 
 // GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
@@ -134,7 +134,7 @@ func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 }
 
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.
-func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]types.AuditLogEntry, error) {
+func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

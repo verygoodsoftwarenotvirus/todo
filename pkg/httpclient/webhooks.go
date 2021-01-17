@@ -153,7 +153,7 @@ func (c *Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookI
 }
 
 // GetAuditLogForWebhook retrieves a list of audit log entries pertaining to a webhook.
-func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) (entries []types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

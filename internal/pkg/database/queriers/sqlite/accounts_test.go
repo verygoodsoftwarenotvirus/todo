@@ -311,7 +311,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleAccountList := fakes.BuildFakeAccountList()
 		expectedCount := uint64(20)
-		exampleBucketSize := defaultBucketSize
+		exampleBatchSize := defaultBatchSize
 
 		begin, end := uint64(1), uint64(1001)
 		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
@@ -331,7 +331,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 		out := make(chan []*types.Account)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllAccounts(ctx, out, exampleBucketSize)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -354,14 +354,14 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
-		exampleBucketSize := defaultBucketSize
+		exampleBatchSize := defaultBatchSize
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedCountQuery)).
 			WillReturnError(errors.New("blah"))
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out, exampleBucketSize)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -372,7 +372,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
-		exampleBucketSize := defaultBucketSize
+		exampleBatchSize := defaultBatchSize
 
 		begin, end := uint64(1), uint64(1001)
 		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
@@ -385,7 +385,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out, exampleBucketSize)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -398,7 +398,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
 		expectedCount := uint64(20)
-		exampleBucketSize := defaultBucketSize
+		exampleBatchSize := defaultBatchSize
 
 		begin, end := uint64(1), uint64(1001)
 		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
@@ -411,7 +411,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out, exampleBucketSize)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -425,7 +425,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleAccount := fakes.BuildFakeAccount()
 		expectedCount := uint64(20)
-		exampleBucketSize := defaultBucketSize
+		exampleBatchSize := defaultBatchSize
 
 		begin, end := uint64(1), uint64(1001)
 		expectedQuery, expectedArgs := q.buildGetBatchOfAccountsQuery(begin, end)
@@ -438,7 +438,7 @@ func TestSqlite_GetAllAccounts(T *testing.T) {
 
 		out := make(chan []*types.Account)
 
-		err := q.GetAllAccounts(ctx, out, exampleBucketSize)
+		err := q.GetAllAccounts(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)

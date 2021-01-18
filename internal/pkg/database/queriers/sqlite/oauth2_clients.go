@@ -21,7 +21,7 @@ var (
 )
 
 // scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
-func (q *Sqlite) scanOAuth2Client(scan database.Scanner, includeCounts bool) (client *types.OAuth2Client, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanOAuth2Client(scan database.Scanner, includeCounts bool) (client *types.OAuth2Client, filteredCount, totalCount uint64, err error) {
 	client = &types.OAuth2Client{}
 
 	var rawScopes string
@@ -55,9 +55,9 @@ func (q *Sqlite) scanOAuth2Client(scan database.Scanner, includeCounts bool) (cl
 }
 
 // scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
-func (q *Sqlite) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []*types.OAuth2Client, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []*types.OAuth2Client, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		client, fc, tc, scanErr := q.scanOAuth2Client(rows, includeCounts)
+		client, fc, tc, scanErr := c.scanOAuth2Client(rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, scanErr
 		}
@@ -80,7 +80,7 @@ func (q *Sqlite) scanOAuth2Clients(rows database.ResultIterator, includeCounts b
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing rows")
+		c.logger.Error(closeErr, "closing rows")
 		return nil, 0, 0, closeErr
 	}
 
@@ -88,12 +88,12 @@ func (q *Sqlite) scanOAuth2Clients(rows database.ResultIterator, includeCounts b
 }
 
 // buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID.
-func (q *Sqlite) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
+func (c *Sqlite) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
 
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
 	// care about ownership. It does still care about archived status
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.OAuth2ClientsTableColumns...).
 		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -101,24 +101,24 @@ func (q *Sqlite) buildGetOAuth2ClientByClientIDQuery(clientID string) (query str
 			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                 nil,
 		}).ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetOAuth2ClientByClientID gets an OAuth2 client.
-func (q *Sqlite) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*types.OAuth2Client, error) {
-	query, args := q.buildGetOAuth2ClientByClientIDQuery(clientID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*types.OAuth2Client, error) {
+	query, args := c.buildGetOAuth2ClientByClientIDQuery(clientID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	client, _, _, err := q.scanOAuth2Client(row, false)
+	client, _, _, err := c.scanOAuth2Client(row, false)
 
 	return client, err
 }
 
 // buildGetBatchOfOAuth2ClientsQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *Sqlite) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+func (c *Sqlite) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := c.sqlBuilder.
 		Select(queriers.OAuth2ClientsTableColumns...).
 		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Gt{
@@ -129,15 +129,15 @@ func (q *Sqlite) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
-	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
+func (c *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
+	count, countErr := c.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of oauth2 clients: %w", countErr)
 	}
@@ -145,14 +145,14 @@ func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
-			logger := q.logger.WithValues(map[string]interface{}{
+			query, args := c.buildGetBatchOfOAuth2ClientsQuery(begin, end)
+			logger := c.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
 			})
 
-			rows, queryErr := q.db.Query(query, args...)
+			rows, queryErr := c.db.Query(query, args...)
 			if errors.Is(queryErr, sql.ErrNoRows) {
 				return
 			} else if queryErr != nil {
@@ -160,7 +160,7 @@ func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*
 				return
 			}
 
-			clients, _, _, scanErr := q.scanOAuth2Clients(rows, false)
+			clients, _, _, scanErr := c.scanOAuth2Clients(rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -174,10 +174,10 @@ func (q *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*
 }
 
 // buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
-func (q *Sqlite) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.OAuth2ClientsTableColumns...).
 		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -186,17 +186,17 @@ func (q *Sqlite) buildGetOAuth2ClientQuery(clientID, userID uint64) (query strin
 			fmt.Sprintf("%s.%s", queriers.OAuth2ClientsTableName, queriers.ArchivedOnColumn):                  nil,
 		}).ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetOAuth2Client retrieves an OAuth2 client from the database.
-func (q *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*types.OAuth2Client, error) {
-	query, args := q.buildGetOAuth2ClientQuery(clientID, userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*types.OAuth2Client, error) {
+	query, args := c.buildGetOAuth2ClientQuery(clientID, userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	client, _, _, err := q.scanOAuth2Client(row, false)
+	client, _, _, err := c.scanOAuth2Client(row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -210,10 +210,10 @@ func (q *Sqlite) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 
 // buildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
-func (q *Sqlite) buildGetAllOAuth2ClientsCountQuery() string {
+func (c *Sqlite) buildGetAllOAuth2ClientsCountQuery() string {
 	var err error
 
-	getAllOAuth2ClientCountQuery, _, err := q.sqlBuilder.
+	getAllOAuth2ClientCountQuery, _, err := c.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.OAuth2ClientsTableName)).
 		From(queriers.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -221,23 +221,23 @@ func (q *Sqlite) buildGetAllOAuth2ClientsCountQuery() string {
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return getAllOAuth2ClientCountQuery
 }
 
 // GetTotalOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
-func (q *Sqlite) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
+func (c *Sqlite) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
 	var count uint64
-	err := q.db.QueryRowContext(ctx, q.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
+	err := c.db.QueryRowContext(ctx, c.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
 
 	return count, err
 }
 
 // buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (q *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	return q.buildListQuery(
+func (c *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+	return c.buildListQuery(
 		queriers.OAuth2ClientsTableName,
 		queriers.OAuth2ClientsTableOwnershipColumn,
 		queriers.OAuth2ClientsTableColumns,
@@ -248,10 +248,10 @@ func (q *Sqlite) buildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFi
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
-func (q *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
-	query, args := q.buildGetOAuth2ClientsQuery(userID, filter)
+func (c *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
+	query, args := c.buildGetOAuth2ClientsQuery(userID, filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -260,7 +260,7 @@ func (q *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *ty
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
-	list, filteredCount, totalCount, err := q.scanOAuth2Clients(rows, true)
+	list, filteredCount, totalCount, err := c.scanOAuth2Clients(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -279,10 +279,10 @@ func (q *Sqlite) GetOAuth2Clients(ctx context.Context, userID uint64, filter *ty
 }
 
 // buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
-func (q *Sqlite) buildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+func (c *Sqlite) buildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Insert(queriers.OAuth2ClientsTableName).
 		Columns(
 			queriers.OAuth2ClientsTableNameColumn,
@@ -302,13 +302,13 @@ func (q *Sqlite) buildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query 
 		).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // CreateOAuth2Client creates an OAuth2 client.
-func (q *Sqlite) CreateOAuth2Client(ctx context.Context, input *types.OAuth2ClientCreationInput) (*types.OAuth2Client, error) {
+func (c *Sqlite) CreateOAuth2Client(ctx context.Context, input *types.OAuth2ClientCreationInput) (*types.OAuth2Client, error) {
 	x := &types.OAuth2Client{
 		Name:          input.Name,
 		ClientID:      input.ClientID,
@@ -317,24 +317,24 @@ func (q *Sqlite) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 		Scopes:        input.Scopes,
 		BelongsToUser: input.BelongsToUser,
 	}
-	query, args := q.buildCreateOAuth2ClientQuery(x)
+	query, args := c.buildCreateOAuth2ClientQuery(x)
 
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing client creation query: %w", err)
 	}
 
-	x.ID = q.getIDFromResult(res)
-	x.CreatedOn = q.timeTeller.Now()
+	x.ID = c.getIDFromResult(res)
+	x.CreatedOn = c.timeTeller.Now()
 
 	return x, nil
 }
 
 // buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
-func (q *Sqlite) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+func (c *Sqlite) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.OAuth2ClientsTableName).
 		Set(queriers.OAuth2ClientsTableClientIDColumn, input.ClientID).
 		Set(queriers.OAuth2ClientsTableClientSecretColumn, input.ClientSecret).
@@ -347,25 +347,25 @@ func (q *Sqlite) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query 
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // UpdateOAuth2Client updates a OAuth2 client.
 // NOTE: this function expects the input's ID field to be valid and non-zero.
-func (q *Sqlite) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Client) error {
-	query, args := q.buildUpdateOAuth2ClientQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Client) error {
+	query, args := c.buildUpdateOAuth2ClientQuery(input)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
-func (q *Sqlite) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.OAuth2ClientsTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -375,31 +375,31 @@ func (q *Sqlite) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query s
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // ArchiveOAuth2Client archives an OAuth2 client.
-func (q *Sqlite) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
-	query, args := q.buildArchiveOAuth2ClientQuery(clientID, userID)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
+	query, args := c.buildArchiveOAuth2ClientQuery(clientID, userID)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
-func (q *Sqlite) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
-	q.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
+func (c *Sqlite) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
+	c.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
 }
 
 // LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
-func (q *Sqlite) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
+func (c *Sqlite) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
 }
 
 // buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *Sqlite) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
 	var err error
 
 	oauth2ClientIDKey := fmt.Sprintf(
@@ -408,28 +408,28 @@ func (q *Sqlite) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (q
 		queriers.AuditLogEntriesTableContextColumn,
 		audit.OAuth2ClientAssignmentKey,
 	)
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{oauth2ClientIDKey: clientID}).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
+func (c *Sqlite) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
+	query, args := c.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}

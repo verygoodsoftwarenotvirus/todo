@@ -21,7 +21,7 @@ var (
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
-func (q *Sqlite) scanWebhook(scan database.Scanner, includeCounts bool) (webhook *types.Webhook, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanWebhook(scan database.Scanner, includeCounts bool) (webhook *types.Webhook, filteredCount, totalCount uint64, err error) {
 	webhook = &types.Webhook{}
 
 	var (
@@ -69,9 +69,9 @@ func (q *Sqlite) scanWebhook(scan database.Scanner, includeCounts bool) (webhook
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
-func (q *Sqlite) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		webhook, fc, tc, scanErr := q.scanWebhook(rows, includeCounts)
+		webhook, fc, tc, scanErr := c.scanWebhook(rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, scanErr
 		}
@@ -94,7 +94,7 @@ func (q *Sqlite) scanWebhooks(rows database.ResultIterator, includeCounts bool) 
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing rows")
+		c.logger.Error(closeErr, "closing rows")
 		return nil, 0, 0, closeErr
 	}
 
@@ -102,10 +102,10 @@ func (q *Sqlite) scanWebhooks(rows database.ResultIterator, includeCounts bool) 
 }
 
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
-func (q *Sqlite) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.WebhooksTableColumns...).
 		From(queriers.WebhooksTableName).
 		Where(squirrel.Eq{
@@ -113,17 +113,17 @@ func (q *Sqlite) buildGetWebhookQuery(webhookID, userID uint64) (query string, a
 			fmt.Sprintf("%s.%s", queriers.WebhooksTableName, queriers.WebhooksTableOwnershipColumn): userID,
 		}).ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetWebhook fetches a webhook from the database.
-func (q *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*types.Webhook, error) {
-	query, args := q.buildGetWebhookQuery(webhookID, userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*types.Webhook, error) {
+	query, args := c.buildGetWebhookQuery(webhookID, userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	webhook, _, _, err := q.scanWebhook(row, false)
+	webhook, _, _, err := c.scanWebhook(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for webhook: %w", err)
 	}
@@ -132,10 +132,10 @@ func (q *Sqlite) GetWebhook(ctx context.Context, webhookID, userID uint64) (*typ
 }
 
 // buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
-func (q *Sqlite) buildGetAllWebhooksCountQuery() string {
+func (c *Sqlite) buildGetAllWebhooksCountQuery() string {
 	var err error
 
-	getAllWebhooksCountQuery, _, err := q.sqlBuilder.
+	getAllWebhooksCountQuery, _, err := c.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.WebhooksTableName)).
 		From(queriers.WebhooksTableName).
 		Where(squirrel.Eq{
@@ -143,20 +143,20 @@ func (q *Sqlite) buildGetAllWebhooksCountQuery() string {
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return getAllWebhooksCountQuery
 }
 
 // GetAllWebhooksCount will fetch the count of every active webhook in the database.
-func (q *Sqlite) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllWebhooksCountQuery()).Scan(&count)
+func (c *Sqlite) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
+	err = c.db.QueryRowContext(ctx, c.buildGetAllWebhooksCountQuery()).Scan(&count)
 	return count, err
 }
 
 // buildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *Sqlite) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+func (c *Sqlite) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := c.sqlBuilder.
 		Select(queriers.WebhooksTableColumns...).
 		From(queriers.WebhooksTableName).
 		Where(squirrel.Gt{
@@ -167,15 +167,15 @@ func (q *Sqlite) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query stri
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
-	count, countErr := q.GetAllWebhooksCount(ctx)
+func (c *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
+	count, countErr := c.GetAllWebhooksCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
@@ -183,14 +183,14 @@ func (q *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfWebhooksQuery(begin, end)
-			logger := q.logger.WithValues(map[string]interface{}{
+			query, args := c.buildGetBatchOfWebhooksQuery(begin, end)
+			logger := c.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
 			})
 
-			rows, queryErr := q.db.Query(query, args...)
+			rows, queryErr := c.db.Query(query, args...)
 			if errors.Is(queryErr, sql.ErrNoRows) {
 				return
 			} else if queryErr != nil {
@@ -198,7 +198,7 @@ func (q *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 				return
 			}
 
-			webhooks, _, _, scanErr := q.scanWebhooks(rows, false)
+			webhooks, _, _, scanErr := c.scanWebhooks(rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -212,8 +212,8 @@ func (q *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 }
 
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
-func (q *Sqlite) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	return q.buildListQuery(
+func (c *Sqlite) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+	return c.buildListQuery(
 		queriers.WebhooksTableName,
 		queriers.WebhooksTableOwnershipColumn,
 		queriers.WebhooksTableColumns,
@@ -224,10 +224,10 @@ func (q *Sqlite) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter)
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (q *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
-	query, args := q.buildGetWebhooksQuery(userID, filter)
+func (c *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
+	query, args := c.buildGetWebhooksQuery(userID, filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -236,7 +236,7 @@ func (q *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 		return nil, fmt.Errorf("querying database: %w", err)
 	}
 
-	list, filteredCount, totalCount, err := q.scanWebhooks(rows, true)
+	list, filteredCount, totalCount, err := c.scanWebhooks(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -255,10 +255,10 @@ func (q *Sqlite) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 }
 
 // buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
-func (q *Sqlite) buildCreateWebhookQuery(x *types.Webhook) (query string, args []interface{}) {
+func (c *Sqlite) buildCreateWebhookQuery(x *types.Webhook) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Insert(queriers.WebhooksTableName).
 		Columns(
 			queriers.WebhooksTableNameColumn,
@@ -282,13 +282,13 @@ func (q *Sqlite) buildCreateWebhookQuery(x *types.Webhook) (query string, args [
 		).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // CreateWebhook creates a webhook in the database.
-func (q *Sqlite) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
+func (c *Sqlite) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
 	x := &types.Webhook{
 		Name:          input.Name,
 		ContentType:   input.ContentType,
@@ -299,24 +299,24 @@ func (q *Sqlite) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 		Topics:        input.Topics,
 		BelongsToUser: input.BelongsToUser,
 	}
-	query, args := q.buildCreateWebhookQuery(x)
+	query, args := c.buildCreateWebhookQuery(x)
 
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
 	}
 
-	x.CreatedOn = q.timeTeller.Now()
-	x.ID = q.getIDFromResult(res)
+	x.CreatedOn = c.timeTeller.Now()
+	x.ID = c.getIDFromResult(res)
 
 	return x, nil
 }
 
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
-func (q *Sqlite) buildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
+func (c *Sqlite) buildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.WebhooksTableName).
 		Set(queriers.WebhooksTableNameColumn, input.Name).
 		Set(queriers.WebhooksTableContentTypeColumn, input.ContentType).
@@ -332,24 +332,24 @@ func (q *Sqlite) buildUpdateWebhookQuery(input *types.Webhook) (query string, ar
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // UpdateWebhook updates a particular webhook. Note that UpdateWebhook expects the provided input to have a valid ID.
-func (q *Sqlite) UpdateWebhook(ctx context.Context, input *types.Webhook) error {
-	query, args := q.buildUpdateWebhookQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) UpdateWebhook(ctx context.Context, input *types.Webhook) error {
+	query, args := c.buildUpdateWebhookQuery(input)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
-func (q *Sqlite) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.WebhooksTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -360,36 +360,36 @@ func (q *Sqlite) buildArchiveWebhookQuery(webhookID, userID uint64) (query strin
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // ArchiveWebhook archives a webhook from the database by its ID.
-func (q *Sqlite) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
-	query, args := q.buildArchiveWebhookQuery(webhookID, userID)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
+	query, args := c.buildArchiveWebhookQuery(webhookID, userID)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
-func (q *Sqlite) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
-	q.createAuditLogEntry(ctx, audit.BuildWebhookCreationEventEntry(webhook))
+func (c *Sqlite) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
+	c.createAuditLogEntry(ctx, audit.BuildWebhookCreationEventEntry(webhook))
 }
 
 // LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
-func (q *Sqlite) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
+func (c *Sqlite) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
+	c.createAuditLogEntry(ctx, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
 }
 
 // LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
-func (q *Sqlite) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
+func (c *Sqlite) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
 }
 
 // buildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *Sqlite) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 
 	webhookIDKey := fmt.Sprintf(
@@ -398,28 +398,28 @@ func (q *Sqlite) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query
 		queriers.AuditLogEntriesTableContextColumn,
 		audit.WebhookAssignmentKey,
 	)
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{webhookIDKey: webhookID}).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAuditLogEntriesForWebhook fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForWebhookQuery(webhookID)
+func (c *Sqlite) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
+	query, args := c.buildGetAuditLogEntriesForWebhookQuery(webhookID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}

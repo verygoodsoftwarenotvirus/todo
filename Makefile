@@ -45,6 +45,11 @@ ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go get -u github.com/google/wire/cmd/wire)
 endif
 
+ensure-scc:
+ifndef $(shell command -v scc 2> /dev/null)
+	$(shell GO111MODULE=off go get -u github.com/boyter/scc)
+endif
+
 ensure-pnpm:
 ifndef $(shell command -v pnpm 2> /dev/null)
 	$(shell npm install -g pnpm)
@@ -236,3 +241,7 @@ load-data-for-admin:
 .PHONY: tree
 tree:
 	tree -d -I vendor
+
+.PHONY: cloc
+cloc: ensure-scc
+	@scc --include-ext go --exclude-dir vendor

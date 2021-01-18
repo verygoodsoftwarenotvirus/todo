@@ -63,13 +63,13 @@ func (c *Client) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) 
 }
 
 // GetAllOAuth2Clients loads all OAuth2 clients into a channel.
-func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []*types.OAuth2Client, bucketSize uint16) error {
+func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []*types.OAuth2Client, batchSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllItems called")
 
-	return c.querier.GetAllOAuth2Clients(ctx, results, bucketSize)
+	return c.querier.GetAllOAuth2Clients(ctx, results, batchSize)
 }
 
 // GetOAuth2Clients gets a list of OAuth2 clients.
@@ -139,6 +139,26 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 	logger.Debug("removed oauth2 client successfully")
 
 	return nil
+}
+
+// LogOAuth2ClientCreationEvent implements our AuditLogEntryDataManager interface.
+func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
+
+	c.querier.LogOAuth2ClientCreationEvent(ctx, client)
+}
+
+// LogOAuth2ClientArchiveEvent implements our AuditLogEntryDataManager interface.
+func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogOAuth2ClientArchiveEvent called")
+
+	c.querier.LogOAuth2ClientArchiveEvent(ctx, userID, clientID)
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches a list of audit log entries from the database that relate to a given client.

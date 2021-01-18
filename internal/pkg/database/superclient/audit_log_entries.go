@@ -2,6 +2,9 @@ package superclient
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -71,7 +74,12 @@ func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.A
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
 	c.logger.WithValue(keys.AuditLogEntryIDKey, entryID).Debug("GetAuditLogEntry called")
 
-	return c.querier.GetAuditLogEntry(ctx, entryID)
+	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntryQuery(entryID)
+	row := c.db.QueryRowContext(ctx, query, args...)
+
+	entry, _, err := c.scanAuditLogEntry(row, false)
+
+	return entry, err
 }
 
 // GetAllAuditLogEntriesCount fetches the count of audit log entries from the database that meet a particular filter.
@@ -81,51 +89,80 @@ func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, 
 
 	c.logger.Debug("GetAllAuditLogEntriesCount called")
 
-	return c.querier.GetAllAuditLogEntriesCount(ctx)
+	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery()).Scan(&count)
+
+	return count, err
 }
 
 // GetAllAuditLogEntries fetches a list of all audit log entries in the database.
-func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*types.AuditLogEntry, bucketSize uint16) error {
+func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*types.AuditLogEntry, batchSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllAuditLogEntries called")
 
-	return c.querier.GetAllAuditLogEntries(ctx, results, bucketSize)
+	count, countErr := c.GetAllAuditLogEntriesCount(ctx)
+	if countErr != nil {
+		return fmt.Errorf("error fetching count of entries: %w", countErr)
+	}
+
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
+		go func(begin, end uint64) {
+			query, args := c.sqlQueryBuilder.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
+			logger := c.logger.WithValues(map[string]interface{}{
+				"query": query,
+				"begin": begin,
+				"end":   end,
+			})
+
+			rows, queryErr := c.db.Query(query, args...)
+			if errors.Is(queryErr, sql.ErrNoRows) {
+				return
+			} else if queryErr != nil {
+				logger.Error(queryErr, "querying for database rows")
+				return
+			}
+
+			auditLogEntries, _, scanErr := c.scanAuditLogEntries(rows, false)
+			if scanErr != nil {
+				logger.Error(scanErr, "scanning database rows")
+				return
+			}
+
+			results <- auditLogEntries
+		}(beginID, endID)
+	}
+
+	return nil
 }
 
 // GetAuditLogEntries fetches a list of audit log entries from the database that meet a particular filter.
-func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (*types.AuditLogEntryList, error) {
+func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (x *types.AuditLogEntryList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	x = &types.AuditLogEntryList{}
+	c.logger.Debug("GetAuditLogEntries called")
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	c.logger.Debug("GetAuditLogEntries called")
+	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesQuery(filter)
 
-	return c.querier.GetAuditLogEntries(ctx, filter)
-}
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
 
-// LogOAuth2ClientCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
+	x.Entries, x.TotalCount, err = c.scanAuditLogEntries(rows, true)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
 
-	c.logger.WithValue(keys.UserIDKey, client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
-
-	c.querier.LogOAuth2ClientCreationEvent(ctx, client)
-}
-
-// LogOAuth2ClientArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogOAuth2ClientArchiveEvent called")
-
-	c.querier.LogOAuth2ClientArchiveEvent(ctx, userID, clientID)
+	return x, nil
 }
 
 // createAuditLogEntry creates an audit log entry in the database.

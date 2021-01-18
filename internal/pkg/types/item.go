@@ -55,6 +55,8 @@ type (
 		BuildGetItemsQuery(userID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
 		BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{})
 		BuildCreateItemQuery(input *Item) (query string, args []interface{})
+		BuildUpdateItemQuery(input *Item) (query string, args []interface{})
+		BuildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{})
 	}
 

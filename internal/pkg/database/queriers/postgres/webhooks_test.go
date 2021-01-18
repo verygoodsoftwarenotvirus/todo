@@ -294,7 +294,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 	_q, _ := buildTestService(T)
 	expectedCountQuery := _q.BuildGetAllWebhooksCountQuery()
-	exampleBucketSize := uint16(1000)
+	exampleBatchSize := uint16(1000)
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -323,7 +323,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 		out := make(chan []*types.Webhook)
 		doneChan := make(chan bool, 1)
 
-		err := q.GetAllWebhooks(ctx, out, exampleBucketSize)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		stillQuerying := true
@@ -354,7 +354,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out, exampleBucketSize)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.Error(t, err)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
@@ -379,7 +379,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out, exampleBucketSize)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -406,7 +406,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out, exampleBucketSize)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -434,7 +434,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 
 		out := make(chan []*types.Webhook)
 
-		err := q.GetAllWebhooks(ctx, out, exampleBucketSize)
+		err := q.GetAllWebhooks(ctx, out, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)

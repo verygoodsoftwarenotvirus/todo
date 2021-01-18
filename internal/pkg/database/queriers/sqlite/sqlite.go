@@ -30,7 +30,7 @@ const (
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
 	currentUnixTimeQuery = `(strftime('%s','now'))`
 
-	defaultBucketSize uint16 = 1000
+	defaultBatchSize uint16 = 1000
 )
 
 var _ database.DataManager = (*Sqlite)(nil)
@@ -85,13 +85,13 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.DataM
 }
 
 // IsReady reports whether or not the db is ready.
-func (q *Sqlite) IsReady(_ context.Context) (ready bool) {
+func (c *Sqlite) IsReady(_ context.Context) (ready bool) {
 	return true
 }
 
 // BeginTx begins a transaction.
-func (q *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return q.db.BeginTx(ctx, opts)
+func (c *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return c.db.BeginTx(ctx, opts)
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.
@@ -99,16 +99,16 @@ func (q *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, err
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (q *Sqlite) logQueryBuildingError(err error) {
+func (c *Sqlite) logQueryBuildingError(err error) {
 	if err != nil {
-		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
+		c.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
 }
 
-func (q *Sqlite) getIDFromResult(res sql.Result) uint64 {
+func (c *Sqlite) getIDFromResult(res sql.Result) uint64 {
 	id, err := res.LastInsertId()
 	if err != nil {
-		q.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
+		c.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
 	}
 
 	return uint64(id)

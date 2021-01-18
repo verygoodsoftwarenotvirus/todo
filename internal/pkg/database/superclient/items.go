@@ -2,17 +2,82 @@ package superclient
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.ItemDataManager = (*Client)(nil)
+var (
+	_ types.ItemDataManager  = (*Client)(nil)
+	_ types.ItemAuditManager = (*Client)(nil)
+)
+
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
+func (c *Client) scanItem(scan database.Scanner, includeCounts bool) (x *types.Item, filteredCount, totalCount uint64, err error) {
+	x = &types.Item{}
+
+	targetVars := []interface{}{
+		&x.ID,
+		&x.Name,
+		&x.Details,
+		&x.CreatedOn,
+		&x.LastUpdatedOn,
+		&x.ArchivedOn,
+		&x.BelongsToUser,
+	}
+
+	if includeCounts {
+		targetVars = append(targetVars, &filteredCount, &totalCount)
+	}
+
+	if scanErr := scan.Scan(targetVars...); scanErr != nil {
+		return nil, 0, 0, scanErr
+	}
+
+	return x, filteredCount, totalCount, nil
+}
+
+// scanItems takes some database rows and turns them into a slice of items.
+func (c *Client) scanItems(rows database.ResultIterator, includeCounts bool) (items []*types.Item, filteredCount, totalCount uint64, err error) {
+	for rows.Next() {
+		x, fc, tc, scanErr := c.scanItem(rows, includeCounts)
+		if scanErr != nil {
+			return nil, 0, 0, scanErr
+		}
+
+		if includeCounts {
+			if filteredCount == 0 {
+				filteredCount = fc
+			}
+
+			if totalCount == 0 {
+				totalCount = tc
+			}
+		}
+
+		items = append(items, x)
+	}
+
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, 0, 0, rowsErr
+	}
+
+	if closeErr := rows.Close(); closeErr != nil {
+		c.logger.Error(closeErr, "closing database rows")
+		return nil, 0, 0, closeErr
+	}
+
+	return items, filteredCount, totalCount, nil
+}
 
 // ItemExists fetches whether or not an item exists from the database.
-func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
+func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (exists bool, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -20,11 +85,18 @@ func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (bool, e
 	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"item_id": itemID,
-		"user_id": userID,
+		keys.ItemIDKey: itemID,
+		keys.UserIDKey: userID,
 	}).Debug("ItemExists called")
 
-	return c.querier.ItemExists(ctx, itemID, userID)
+	query, args := c.sqlQueryBuilder.BuildItemExistsQuery(itemID, userID)
+
+	err = c.db.QueryRowContext(ctx, query, args...).Scan(&exists)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	return exists, err
 }
 
 // GetItem fetches an item from the database.
@@ -36,11 +108,16 @@ func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*types.Ite
 	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"item_id": itemID,
-		"user_id": userID,
+		keys.ItemIDKey: itemID,
+		keys.UserIDKey: userID,
 	}).Debug("GetItem called")
 
-	return c.querier.GetItem(ctx, itemID, userID)
+	query, args := c.sqlQueryBuilder.BuildGetItemQuery(itemID, userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
+
+	item, _, _, err := c.scanItem(row, false)
+
+	return item, err
 }
 
 // GetAllItemsCount fetches the count of items from the database that meet a particular filter.
@@ -50,51 +127,107 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 
 	c.logger.Debug("GetAllItemsCount called")
 
-	return c.querier.GetAllItemsCount(ctx)
+	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllItemsCountQuery()).Scan(&count)
+	return count, err
 }
 
 // GetAllItems fetches a list of all items in the database.
-func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item, bucketSize uint16) error {
+func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item, batchSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllItems called")
 
-	return c.querier.GetAllItems(ctx, results, bucketSize)
+	count, countErr := c.GetAllItemsCount(ctx)
+	if countErr != nil {
+		return fmt.Errorf("error fetching count of items: %w", countErr)
+	}
+
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
+		go func(begin, end uint64) {
+			query, args := c.sqlQueryBuilder.BuildGetBatchOfItemsQuery(begin, end)
+			logger := c.logger.WithValues(map[string]interface{}{
+				"query": query,
+				"begin": begin,
+				"end":   end,
+			})
+
+			rows, queryErr := c.db.Query(query, args...)
+			if errors.Is(queryErr, sql.ErrNoRows) {
+				return
+			} else if queryErr != nil {
+				logger.Error(queryErr, "querying for database rows")
+				return
+			}
+
+			items, _, _, scanErr := c.scanItems(rows, false)
+			if scanErr != nil {
+				logger.Error(scanErr, "scanning database rows")
+				return
+			}
+
+			results <- items
+		}(beginID, endID)
+	}
+
+	return nil
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter.
-func (c *Client) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.ItemList, error) {
+func (c *Client) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.ItemList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	x = &types.ItemList{}
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetItems called")
+
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	tracing.AttachUserIDToSpan(span, userID)
+	query, args := c.sqlQueryBuilder.BuildGetItemsQuery(userID, false, filter)
 
-	c.logger.WithValues(map[string]interface{}{
-		"user_id": userID,
-	}).Debug("GetItems called")
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for items: %w", err)
+	}
 
-	return c.querier.GetItems(ctx, userID, filter)
+	x.Items, x.FilteredCount, x.TotalCount, err = c.scanItems(rows, true)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return x, nil
 }
 
 // GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
-func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.ItemList, error) {
+func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter) (x *types.ItemList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
-	}
-
+	x = &types.ItemList{}
 	c.logger.Debug("GetItemsForAdmin called")
 
-	itemList, err := c.querier.GetItemsForAdmin(ctx, filter)
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+		x.Page, x.Limit = filter.Page, filter.Limit
+	}
 
-	return itemList, err
+	query, args := c.sqlQueryBuilder.BuildGetItemsQuery(0, true, filter)
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching items from database: %w", err)
+	}
+
+	if x.Items, x.FilteredCount, x.TotalCount, err = c.scanItems(rows, true); err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return x, nil
 }
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
@@ -110,9 +243,23 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 		"id_count": len(ids),
 	}).Debug("GetItemsWithIDs called")
 
-	itemList, err := c.querier.GetItemsWithIDs(ctx, userID, limit, ids)
+	if limit == 0 {
+		limit = uint8(types.DefaultLimit)
+	}
 
-	return itemList, err
+	query, args := c.sqlQueryBuilder.BuildGetItemsWithIDsQuery(userID, limit, ids, false)
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching items from database: %w", err)
+	}
+
+	items, _, _, err := c.scanItems(rows, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return items, nil
 }
 
 // GetItemsWithIDsForAdmin fetches items from the database within a given set of IDs.
@@ -126,9 +273,19 @@ func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids [
 		"ids":      ids,
 	}).Debug(fmt.Sprintf("GetItemsWithIDsForAdmin called: %v", ids))
 
-	itemList, err := c.querier.GetItemsWithIDsForAdmin(ctx, limit, ids)
+	query, args := c.sqlQueryBuilder.BuildGetItemsWithIDsQuery(0, limit, ids, true)
 
-	return itemList, err
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching items from database: %w", err)
+	}
+
+	items, _, _, err := c.scanItems(rows, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return items, nil
 }
 
 // CreateItem creates an item in the database.
@@ -138,7 +295,24 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 
 	c.logger.Debug("CreateItem called")
 
-	return c.querier.CreateItem(ctx, input)
+	x := &types.Item{
+		Name:          input.Name,
+		Details:       input.Details,
+		BelongsToUser: input.BelongsToUser,
+	}
+
+	query, args := c.sqlQueryBuilder.BuildCreateItemQuery(x)
+
+	// create the item.
+	res, err := c.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing item creation query: %w", err)
+	}
+
+	x.CreatedOn = c.timeTeller.Now()
+	x.ID = c.getIDFromResult(res)
+
+	return x, nil
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the
@@ -150,7 +324,10 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
 	tracing.AttachItemIDToSpan(span, updated.ID)
 	c.logger.WithValue(keys.ItemIDKey, updated.ID).Debug("UpdateItem called")
 
-	return c.querier.UpdateItem(ctx, updated)
+	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // ArchiveItem archives an item from the database by its ID.
@@ -166,7 +343,16 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 		"user_id": userID,
 	}).Debug("ArchiveItem called")
 
-	return c.querier.ArchiveItem(ctx, itemID, userID)
+	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, userID)
+
+	res, err := c.db.ExecContext(ctx, query, args...)
+	if res != nil {
+		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+			return sql.ErrNoRows
+		}
+	}
+
+	return err
 }
 
 // LogItemCreationEvent implements our AuditLogEntryDataManager interface.
@@ -176,7 +362,7 @@ func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
 
 	c.logger.WithValue(keys.UserIDKey, item.BelongsToUser).Debug("LogItemCreationEvent called")
 
-	c.querier.LogItemCreationEvent(ctx, item)
+	c.createAuditLogEntry(ctx, audit.BuildItemCreationEventEntry(item))
 }
 
 // LogItemUpdateEvent implements our AuditLogEntryDataManager interface.
@@ -186,7 +372,7 @@ func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, 
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemUpdateEvent called")
 
-	c.querier.LogItemUpdateEvent(ctx, userID, itemID, changes)
+	c.createAuditLogEntry(ctx, audit.BuildItemUpdateEventEntry(userID, itemID, changes))
 }
 
 // LogItemArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -196,7 +382,7 @@ func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemArchiveEvent called")
 
-	c.querier.LogItemArchiveEvent(ctx, userID, itemID)
+	c.createAuditLogEntry(ctx, audit.BuildItemArchiveEventEntry(userID, itemID))
 }
 
 // GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.
@@ -206,5 +392,17 @@ func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) (
 
 	c.logger.Debug("GetAuditLogEntriesForItem called")
 
-	return c.querier.GetAuditLogEntriesForItem(ctx, itemID)
+	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForItemQuery(itemID)
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

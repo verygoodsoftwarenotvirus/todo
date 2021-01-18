@@ -10,17 +10,17 @@ import (
 )
 
 // buildQuery builds a given query, handles whatever errors and returns just the query and args.
-func (q *Sqlite) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
+func (c *Sqlite) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
-func (q *Sqlite) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
+func (c *Sqlite) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
 	where := squirrel.Eq{}
-	totalCountQueryBuilder := q.sqlBuilder.
+	totalCountQueryBuilder := c.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
 
@@ -38,12 +38,12 @@ func (q *Sqlite) buildTotalCountQuery(tableName, ownershipColumn string, userID 
 		totalCountQueryBuilder = totalCountQueryBuilder.Where(where)
 	}
 
-	return q.buildQuery(totalCountQueryBuilder)
+	return c.buildQuery(totalCountQueryBuilder)
 }
 
-func (q *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (c *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	where := squirrel.Eq{}
-	filteredCountQueryBuilder := q.sqlBuilder.
+	filteredCountQueryBuilder := c.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
 
@@ -65,18 +65,18 @@ func (q *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, user
 		filteredCountQueryBuilder = queriers.ApplyFilterToSubCountQueryBuilder(filter, filteredCountQueryBuilder, tableName)
 	}
 
-	return q.buildQuery(filteredCountQueryBuilder)
+	return c.buildQuery(filteredCountQueryBuilder)
 }
 
 // buildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (c *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	var includeArchived bool
 	if filter != nil {
 		includeArchived = filter.IncludeArchived
 	}
 
-	filteredCountQuery, filteredCountQueryArgs := q.buildFilteredCountQuery(
+	filteredCountQuery, filteredCountQueryArgs := c.buildFilteredCountQuery(
 		tableName,
 		ownershipColumn,
 		userID,
@@ -85,7 +85,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 		filter,
 	)
 
-	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(
+	totalCountQuery, totalCountQueryArgs := c.buildTotalCountQuery(
 		tableName,
 		ownershipColumn,
 		userID,
@@ -93,7 +93,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 		includeArchived,
 	)
 
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(append(
 			columns,
 			fmt.Sprintf("(%s) as total_count", totalCountQuery),
@@ -114,7 +114,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 		builder = queriers.ApplyFilterToQueryBuilder(filter, builder, tableName)
 	}
 
-	query, selectArgs := q.buildQuery(builder)
+	query, selectArgs := c.buildQuery(builder)
 
 	return query, append(append(filteredCountQueryArgs, totalCountQueryArgs...), selectArgs...)
 }

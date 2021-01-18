@@ -19,7 +19,7 @@ var (
 )
 
 // scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
-func (q *Sqlite) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
+func (c *Sqlite) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
 	entry = &types.AuditLogEntry{}
 
 	targetVars := []interface{}{
@@ -41,9 +41,9 @@ func (q *Sqlite) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (e
 }
 
 // scanAuditLogEntries takes some database rows and turns them into a slice of .
-func (q *Sqlite) scanAuditLogEntries(rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
+func (c *Sqlite) scanAuditLogEntries(rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
 	for rows.Next() {
-		x, tc, scanErr := q.scanAuditLogEntry(rows, includeCounts)
+		x, tc, scanErr := c.scanAuditLogEntry(rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, scanErr
 		}
@@ -62,7 +62,7 @@ func (q *Sqlite) scanAuditLogEntries(rows database.ResultIterator, includeCounts
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing database rows")
+		c.logger.Error(closeErr, "closing database rows")
 		return nil, 0, closeErr
 	}
 
@@ -70,10 +70,10 @@ func (q *Sqlite) scanAuditLogEntries(rows database.ResultIterator, includeCounts
 }
 
 // buildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *Sqlite) buildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{
@@ -81,42 +81,42 @@ func (q *Sqlite) buildGetAuditLogEntryQuery(entryID uint64) (query string, args 
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAuditLogEntry fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntryQuery(entryID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
+	query, args := c.buildGetAuditLogEntryQuery(entryID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	entry, _, err := q.scanAuditLogEntry(row, false)
+	entry, _, err := c.scanAuditLogEntry(row, false)
 
 	return entry, err
 }
 
 // buildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *Sqlite) buildGetAllAuditLogEntriesCountQuery() string {
-	allAuditLogEntriesCountQuery, _, err := q.sqlBuilder.
+func (c *Sqlite) buildGetAllAuditLogEntriesCountQuery() string {
+	allAuditLogEntriesCountQuery, _, err := c.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.AuditLogEntriesTableName)).
 		From(queriers.AuditLogEntriesTableName).
 		ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return allAuditLogEntriesCountQuery
 }
 
 // GetAllAuditLogEntriesCount will fetch the count of  from the database.
-func (q *Sqlite) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllAuditLogEntriesCountQuery()).Scan(&count)
+func (c *Sqlite) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, err error) {
+	err = c.db.QueryRowContext(ctx, c.buildGetAllAuditLogEntriesCountQuery()).Scan(&count)
 	return count, err
 }
 
 // buildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
-func (q *Sqlite) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+func (c *Sqlite) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := c.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Gt{
@@ -127,15 +127,15 @@ func (q *Sqlite) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (que
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAllAuditLogEntries fetches every audit log entry from the database and writes them to a channel. This method primarily exists
 // to aid in administrative data tasks.
-func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry, batchSize uint16) error {
-	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
+func (c *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry, batchSize uint16) error {
+	count, countErr := c.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
 		return fmt.Errorf("error fetching count of entries: %w", countErr)
 	}
@@ -143,14 +143,14 @@ func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan [
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfAuditLogEntriesQuery(begin, end)
-			logger := q.logger.WithValues(map[string]interface{}{
+			query, args := c.buildGetBatchOfAuditLogEntriesQuery(begin, end)
+			logger := c.logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
 			})
 
-			rows, queryErr := q.db.Query(query, args...)
+			rows, queryErr := c.db.Query(query, args...)
 			if errors.Is(queryErr, sql.ErrNoRows) {
 				return
 			} else if queryErr != nil {
@@ -158,7 +158,7 @@ func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan [
 				return
 			}
 
-			auditLogEntries, _, scanErr := q.scanAuditLogEntries(rows, false)
+			auditLogEntries, _, scanErr := c.scanAuditLogEntries(rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -173,15 +173,15 @@ func (q *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan [
 
 // buildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Sqlite) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	countQueryBuilder := q.sqlBuilder.
+func (c *Sqlite) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+	countQueryBuilder := c.sqlBuilder.
 		Select(allCountQuery).
 		From(queriers.AuditLogEntriesTableName)
 
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(append(queriers.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(queriers.AuditLogEntriesTableName).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
@@ -191,21 +191,21 @@ func (q *Sqlite) buildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query 
 	}
 
 	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, append(countQueryArgs, selectArgs...)
 }
 
 // GetAuditLogEntries fetches a list of  from the database that meet a particular filter.
-func (q *Sqlite) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (*types.AuditLogEntryList, error) {
-	query, args := q.buildGetAuditLogEntriesQuery(filter)
+func (c *Sqlite) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (*types.AuditLogEntryList, error) {
+	query, args := c.buildGetAuditLogEntriesQuery(filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	auditLogEntries, count, err := q.scanAuditLogEntries(rows, true)
+	auditLogEntries, count, err := c.scanAuditLogEntries(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -223,10 +223,10 @@ func (q *Sqlite) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 }
 
 // buildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
-func (q *Sqlite) buildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (query string, args []interface{}) {
+func (c *Sqlite) buildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Insert(queriers.AuditLogEntriesTableName).
 		Columns(
 			queriers.AuditLogEntriesTableEventTypeColumn,
@@ -238,23 +238,23 @@ func (q *Sqlite) buildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (quer
 		).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // createAuditLogEntry creates an audit log entry in the database.
-func (q *Sqlite) createAuditLogEntry(ctx context.Context, input *types.AuditLogEntryCreationInput) {
+func (c *Sqlite) createAuditLogEntry(ctx context.Context, input *types.AuditLogEntryCreationInput) {
 	x := &types.AuditLogEntry{
 		EventType: input.EventType,
 		Context:   input.Context,
 	}
 
-	query, args := q.buildCreateAuditLogEntryQuery(x)
-	q.logger.Debug("createAuditLogEntry called")
+	query, args := c.buildCreateAuditLogEntryQuery(x)
+	c.logger.Debug("createAuditLogEntry called")
 
 	// create the audit log entry.
-	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		q.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
+	if _, err := c.db.ExecContext(ctx, query, args...); err != nil {
+		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

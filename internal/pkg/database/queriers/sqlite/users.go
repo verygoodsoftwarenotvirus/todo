@@ -21,7 +21,7 @@ var (
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (q *Sqlite) scanUser(scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanUser(scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
 	user = &types.User{}
 
 	var perms uint32
@@ -59,9 +59,9 @@ func (q *Sqlite) scanUser(scan database.Scanner, includeCounts bool) (user *type
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (q *Sqlite) scanUsers(rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanUsers(rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		user, fc, tc, scanErr := q.scanUser(rows, includeCounts)
+		user, fc, tc, scanErr := c.scanUser(rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, fmt.Errorf("scanning user result: %w", scanErr)
 		}
@@ -84,7 +84,7 @@ func (q *Sqlite) scanUsers(rows database.ResultIterator, includeCounts bool) (us
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing rows")
+		c.logger.Error(closeErr, "closing rows")
 		return nil, 0, 0, closeErr
 	}
 
@@ -92,10 +92,10 @@ func (q *Sqlite) scanUsers(rows database.ResultIterator, includeCounts bool) (us
 }
 
 // buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (q *Sqlite) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -107,17 +107,17 @@ func (q *Sqlite) buildGetUserQuery(userID uint64) (query string, args []interfac
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUser fetches a user.
-func (q *Sqlite) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
-	query, args := q.buildGetUserQuery(userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
+	query, args := c.buildGetUserQuery(userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := q.scanUser(row, false)
+	u, _, _, err := c.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -127,10 +127,10 @@ func (q *Sqlite) GetUser(ctx context.Context, userID uint64) (*types.User, error
 
 // buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
-func (q *Sqlite) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -140,17 +140,17 @@ func (q *Sqlite) buildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified two factor secret.
-func (q *Sqlite) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
-	query, args := q.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
+	query, args := c.buildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := q.scanUser(row, false)
+	u, _, _, err := c.scanUser(row, false)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
@@ -159,10 +159,10 @@ func (q *Sqlite) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 }
 
 // buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (q *Sqlite) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
+func (c *Sqlite) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -174,17 +174,17 @@ func (q *Sqlite) buildGetUserByUsernameQuery(username string) (query string, arg
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUserByUsername fetches a user by their username.
-func (q *Sqlite) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	query, args := q.buildGetUserByUsernameQuery(username)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	query, args := c.buildGetUserByUsernameQuery(username)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := q.scanUser(row, false)
+	u, _, _, err := c.scanUser(row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -197,10 +197,10 @@ func (q *Sqlite) GetUserByUsername(ctx context.Context, username string) (*types
 }
 
 // buildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (q *Sqlite) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
+func (c *Sqlite) buildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Expr(
@@ -215,21 +215,21 @@ func (q *Sqlite) buildSearchForUserByUsernameQuery(usernameQuery string) (query 
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
-func (q *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
-	query, args := q.buildSearchForUserByUsernameQuery(usernameQuery)
+func (c *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
+	query, args := c.buildSearchForUserByUsernameQuery(usernameQuery)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database for users: %w", err)
 	}
 
-	u, _, _, err := q.scanUsers(rows, false)
+	u, _, _, err := c.scanUsers(rows, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -243,10 +243,10 @@ func (q *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 
 // buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (q *Sqlite) buildGetAllUsersCountQuery() (query string) {
+func (c *Sqlite) buildGetAllUsersCountQuery() (query string) {
 	var err error
 
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.UsersTableName)).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -255,25 +255,25 @@ func (q *Sqlite) buildGetAllUsersCountQuery() (query string) {
 
 	query, _, err = builder.ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query
 }
 
 // GetAllUsersCount fetches a count of users from the database.
-func (q *Sqlite) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
-	query := q.buildGetAllUsersCountQuery()
-	err = q.db.QueryRowContext(ctx, query).Scan(&count)
+func (c *Sqlite) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
+	query := c.buildGetAllUsersCountQuery()
+	err = c.db.QueryRowContext(ctx, query).Scan(&count)
 
 	return count, err
 }
 
 // buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
-func (q *Sqlite) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (c *Sqlite) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	var err error
 
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(queriers.UsersTableColumns...).
 		From(queriers.UsersTableName).
 		Where(squirrel.Eq{
@@ -286,21 +286,21 @@ func (q *Sqlite) buildGetUsersQuery(filter *types.QueryFilter) (query string, ar
 	}
 
 	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
-func (q *Sqlite) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
-	query, args := q.buildGetUsersQuery(filter)
+func (c *Sqlite) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
+	query, args := c.buildGetUsersQuery(filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("fetching user from database: %w", err)
 	}
 
-	userList, filteredCount, totalCount, err := q.scanUsers(rows, true)
+	userList, filteredCount, totalCount, err := c.scanUsers(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
@@ -319,10 +319,10 @@ func (q *Sqlite) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 }
 
 // buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
-func (q *Sqlite) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (c *Sqlite) buildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Insert(queriers.UsersTableName).
 		Columns(
 			queriers.UsersTableUsernameColumn,
@@ -349,37 +349,37 @@ func (q *Sqlite) buildCreateUserQuery(input types.UserDataStoreCreationInput) (q
 	// There should be no way to update a user via this structure
 	// such that they would have admin privileges.
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // CreateUser creates a user.
-func (q *Sqlite) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
+func (c *Sqlite) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	x := &types.User{
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
 	}
-	query, args := q.buildCreateUserQuery(input)
+	query, args := c.buildCreateUserQuery(input)
 
 	// create the user.
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing user creation query: %w", err)
 	}
 
-	x.CreatedOn = q.timeTeller.Now()
-	x.ID = q.getIDFromResult(res)
+	x.CreatedOn = c.timeTeller.Now()
+	x.ID = c.getIDFromResult(res)
 
 	return x, nil
 }
 
 // buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
-func (q *Sqlite) buildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
+func (c *Sqlite) buildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableUsernameColumn, input.Username).
 		Set(queriers.UsersTableHashedPasswordColumn, input.HashedPassword).
@@ -392,7 +392,7 @@ func (q *Sqlite) buildUpdateUserQuery(input *types.User) (query string, args []i
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
@@ -400,18 +400,18 @@ func (q *Sqlite) buildUpdateUserQuery(input *types.User) (query string, args []i
 // UpdateUser receives a complete User struct and updates its place in the db.
 // NOTE this function uses the ID provided in the input to make its query. Pass in
 // incomplete types at your peril.
-func (q *Sqlite) UpdateUser(ctx context.Context, input *types.User) error {
-	query, args := q.buildUpdateUserQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) UpdateUser(ctx context.Context, input *types.User) error {
+	query, args := c.buildUpdateUserQuery(input)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
-func (q *Sqlite) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
+func (c *Sqlite) buildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableHashedPasswordColumn, newHash).
 		Set(queriers.UsersTableRequiresPasswordChangeColumn, false).
@@ -420,123 +420,123 @@ func (q *Sqlite) buildUpdateUserPasswordQuery(userID uint64, newHash string) (qu
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // UpdateUserPassword updates a user's password.
-func (q *Sqlite) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
-	query, args := q.buildUpdateUserPasswordQuery(userID, newHash)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	query, args := c.buildUpdateUserPasswordQuery(userID, newHash)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (q *Sqlite) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.UsersTableReputationColumn, types.GoodStandingAccountStatus).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
-func (q *Sqlite) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
-	query, args := q.buildVerifyUserTwoFactorSecretQuery(userID)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	query, args := c.buildVerifyUserTwoFactorSecretQuery(userID)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildArchiveUserQuery builds a SQL query that marks a user as archived.
-func (q *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.UsersTableName).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // ArchiveUser marks a user as archived.
-func (q *Sqlite) ArchiveUser(ctx context.Context, userID uint64) error {
-	query, args := q.buildArchiveUserQuery(userID)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) ArchiveUser(ctx context.Context, userID uint64) error {
+	query, args := c.buildArchiveUserQuery(userID)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // LogCycleCookieSecretEvent saves a CycleCookieSecretEvent in the audit log table.
-func (q *Sqlite) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
+func (c *Sqlite) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
 }
 
 // LogSuccessfulLoginEvent saves a SuccessfulLoginEvent in the audit log table.
-func (q *Sqlite) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
+func (c *Sqlite) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
 }
 
 // LogBannedUserLoginAttemptEvent saves a SuccessfulLoginEvent in the audit log table.
-func (q *Sqlite) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
+func (c *Sqlite) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent saves a UnsuccessfulLoginBadPasswordEvent in the audit log table.
-func (q *Sqlite) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
+func (c *Sqlite) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent saves a UnsuccessfulLoginBad2FATokenEvent in the audit log table.
-func (q *Sqlite) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
+func (c *Sqlite) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
 // LogLogoutEvent saves a LogoutEvent in the audit log table.
-func (q *Sqlite) LogLogoutEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
+func (c *Sqlite) LogLogoutEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.
-func (q *Sqlite) LogUserCreationEvent(ctx context.Context, user *types.User) {
-	q.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
+func (c *Sqlite) LogUserCreationEvent(ctx context.Context, user *types.User) {
+	c.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
 }
 
 // LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
-func (q *Sqlite) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+func (c *Sqlite) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
-func (q *Sqlite) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
+func (c *Sqlite) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 }
 
 // LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
-func (q *Sqlite) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
+func (c *Sqlite) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
 }
 
 // LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
-func (q *Sqlite) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
+func (c *Sqlite) LogUserArchiveEvent(ctx context.Context, userID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
 }
 
 // buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
 	userIDKey := fmt.Sprintf(
@@ -551,7 +551,7 @@ func (q *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query strin
 		queriers.AuditLogEntriesTableContextColumn,
 		audit.ActorAssignmentKey,
 	)
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Or{
@@ -561,21 +561,21 @@ func (q *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query strin
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAuditLogEntriesForUser fetches an audit log entry from the database.
-func (q *Sqlite) GetAuditLogEntriesForUser(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForUserQuery(itemID)
+func (c *Sqlite) GetAuditLogEntriesForUser(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
+	query, args := c.buildGetAuditLogEntriesForUserQuery(itemID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}

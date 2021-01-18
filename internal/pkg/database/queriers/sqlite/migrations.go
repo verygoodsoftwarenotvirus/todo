@@ -176,17 +176,17 @@ func buildMigrationFunc(db *sql.DB) func() {
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (q *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
-	q.logger.Info("migrating db")
+func (c *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
+	c.logger.Info("migrating db")
 
-	if !q.IsReady(ctx) {
+	if !c.IsReady(ctx) {
 		return database.ErrDBUnready
 	}
 
-	q.migrateOnce.Do(buildMigrationFunc(q.db))
+	c.migrateOnce.Do(buildMigrationFunc(c.db))
 
 	if testUserConfig != nil {
-		query, args, err := q.sqlBuilder.
+		query, args, err := c.sqlBuilder.
 			Insert(queriers.UsersTableName).
 			Columns(
 				queriers.UsersTableUsernameColumn,
@@ -210,29 +210,29 @@ func (q *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 				squirrel.Expr(currentUnixTimeQuery),
 			).
 			ToSql()
-		q.logQueryBuildingError(err)
+		c.logQueryBuildingError(err)
 
-		res, userCreateErr := q.db.ExecContext(ctx, query, args...)
+		res, userCreateErr := c.db.ExecContext(ctx, query, args...)
 		if userCreateErr != nil {
-			q.logger.Error(userCreateErr, "creating test user")
+			c.logger.Error(userCreateErr, "creating test user")
 			return fmt.Errorf("creating test user: %w", userCreateErr)
 		}
 
 		id, idRetErr := res.LastInsertId()
 		if idRetErr != nil {
-			q.logger.Error(idRetErr, "fetching insert ID")
+			c.logger.Error(idRetErr, "fetching insert ID")
 			return fmt.Errorf("fetching insert ID: %w", idRetErr)
 		}
 
-		if _, accountCreationErr := q.CreateAccount(ctx, &types.AccountCreationInput{
+		if _, accountCreationErr := c.CreateAccount(ctx, &types.AccountCreationInput{
 			Name:          testUserConfig.Username,
 			BelongsToUser: uint64(id),
 		}); accountCreationErr != nil {
-			q.logger.Error(accountCreationErr, "creating test user")
+			c.logger.Error(accountCreationErr, "creating test user")
 			return fmt.Errorf("creating test user: %w", accountCreationErr)
 		}
 
-		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
+		c.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
 	}
 
 	return nil

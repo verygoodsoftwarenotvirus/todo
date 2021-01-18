@@ -135,8 +135,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
-		x.Page = filter.Page
-		x.Limit = filter.Limit
+		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
 	query, args := c.sqlQueryBuilder.BuildGetWebhooksQuery(userID, filter)
@@ -168,7 +167,7 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 }
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, bucketSize uint16) error {
+func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -179,8 +178,8 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(bucketSize) {
-		endID := beginID + uint64(bucketSize)
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := c.sqlQueryBuilder.BuildGetBatchOfWebhooksQuery(begin, end)
 			logger := c.logger.WithValues(map[string]interface{}{
@@ -314,19 +313,17 @@ func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uin
 
 	c.logger.Debug("GetAuditLogEntriesForWebhook called")
 
-	//query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(webhookID)
-	//
-	//rows, err := c.db.QueryContext(ctx, query, args...)
-	//if err != nil {
-	//	return nil, fmt.Errorf("querying database for audit log entries: %w", err)
-	//}
-	//
-	//auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
-	//if err != nil {
-	//	return nil, fmt.Errorf("scanning response from database: %w", err)
-	//}
-	//
-	//return auditLogEntries, nil
+	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(webhookID)
 
-	return c.querier.GetAuditLogEntriesForWebhook(ctx, webhookID)
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

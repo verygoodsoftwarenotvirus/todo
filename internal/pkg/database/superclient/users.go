@@ -3,18 +3,93 @@ package superclient
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 var (
-	_ types.UserDataManager = (*Client)(nil)
+	_ types.UserDataManager  = (*Client)(nil)
+	_ types.UserAuditManager = (*Client)(nil)
 
 	// ErrUserExists is a sentinel error for returning when a username is taken.
 	ErrUserExists = errors.New("error: username already exists")
 )
+
+// scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
+func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
+	user = &types.User{}
+
+	var perms uint32
+
+	targetVars := []interface{}{
+		&user.ID,
+		&user.Username,
+		&user.AvatarSrc,
+		&user.HashedPassword,
+		&user.Salt,
+		&user.RequiresPasswordChange,
+		&user.PasswordLastChangedOn,
+		&user.TwoFactorSecret,
+		&user.TwoFactorSecretVerifiedOn,
+		&user.IsSiteAdmin,
+		&perms,
+		&user.AccountStatus,
+		&user.AccountStatusExplanation,
+		&user.CreatedOn,
+		&user.LastUpdatedOn,
+		&user.ArchivedOn,
+	}
+
+	if includeCounts {
+		targetVars = append(targetVars, &filteredCount, &totalCount)
+	}
+
+	if scanErr := scan.Scan(targetVars...); scanErr != nil {
+		return nil, 0, 0, scanErr
+	}
+
+	user.AdminPermissions = bitmask.NewPermissionBitmask(perms)
+
+	return user, filteredCount, totalCount, nil
+}
+
+// scanUsers takes database rows and loads them into a slice of User structs.
+func (c *Client) scanUsers(rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
+	for rows.Next() {
+		user, fc, tc, scanErr := c.scanUser(rows, includeCounts)
+		if scanErr != nil {
+			return nil, 0, 0, fmt.Errorf("scanning user result: %w", scanErr)
+		}
+
+		if includeCounts {
+			if filteredCount == 0 {
+				filteredCount = fc
+			}
+
+			if totalCount == 0 {
+				totalCount = tc
+			}
+		}
+
+		users = append(users, user)
+	}
+
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, 0, 0, rowsErr
+	}
+
+	if closeErr := rows.Close(); closeErr != nil {
+		c.logger.Error(closeErr, "closing rows")
+		return nil, 0, 0, closeErr
+	}
+
+	return users, filteredCount, totalCount, nil
+}
 
 // GetUser fetches a user.
 func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
@@ -24,15 +99,17 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
-	user, err := c.querier.GetUser(ctx, userID)
-	if err != nil {
-		logger.Error(err, "querying database for user")
-		return nil, err
-	}
-
 	logger.Debug("GetUser called")
 
-	return user, nil
+	query, args := c.sqlQueryBuilder.BuildGetUserQuery(userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
+
+	u, _, _, err := c.scanUser(row, false)
+	if err != nil {
+		return nil, fmt.Errorf("fetching user from database: %w", err)
+	}
+
+	return u, err
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified 2FA secret.

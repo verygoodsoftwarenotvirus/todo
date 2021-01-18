@@ -20,7 +20,7 @@ var (
 )
 
 // scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountSubscriptionPlan struct.
-func (q *Sqlite) scanAccountSubscriptionPlan(scan database.Scanner, includeCounts bool) (plan *types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanAccountSubscriptionPlan(scan database.Scanner, includeCounts bool) (plan *types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	plan = &types.AccountSubscriptionPlan{}
 
 	var rawPeriod string
@@ -55,9 +55,9 @@ func (q *Sqlite) scanAccountSubscriptionPlan(scan database.Scanner, includeCount
 }
 
 // scanPlans takes some database rows and turns them into a slice of plans.
-func (q *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+func (c *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
-		x, fc, tc, scanErr := q.scanAccountSubscriptionPlan(rows, includeCounts)
+		x, fc, tc, scanErr := c.scanAccountSubscriptionPlan(rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, scanErr
 		}
@@ -80,7 +80,7 @@ func (q *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, incl
 	}
 
 	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing database rows")
+		c.logger.Error(closeErr, "closing database rows")
 		return nil, 0, 0, closeErr
 	}
 
@@ -88,10 +88,10 @@ func (q *Sqlite) scanAccountSubscriptionPlans(rows database.ResultIterator, incl
 }
 
 // buildGetPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
-func (q *Sqlite) buildGetPlanQuery(planID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Select(queriers.AccountSubscriptionPlansTableColumns...).
 		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
@@ -100,46 +100,46 @@ func (q *Sqlite) buildGetPlanQuery(planID uint64) (query string, args []interfac
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAccountSubscriptionPlan fetches an plan from the database.
-func (q *Sqlite) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*types.AccountSubscriptionPlan, error) {
-	query, args := q.buildGetPlanQuery(planID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+func (c *Sqlite) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*types.AccountSubscriptionPlan, error) {
+	query, args := c.buildGetPlanQuery(planID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-	plan, _, _, err := q.scanAccountSubscriptionPlan(row, false)
+	plan, _, _, err := c.scanAccountSubscriptionPlan(row, false)
 
 	return plan, err
 }
 
 // buildGetAllPlansCountQuery returns a query that fetches the total number of plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *Sqlite) buildGetAllPlansCountQuery() string {
-	allPlansCountQuery, _, err := q.sqlBuilder.
+func (c *Sqlite) buildGetAllPlansCountQuery() string {
+	allPlansCountQuery, _, err := c.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, queriers.AccountSubscriptionPlansTableName)).
 		From(queriers.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", queriers.AccountSubscriptionPlansTableName, queriers.ArchivedOnColumn): nil,
 		}).
 		ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return allPlansCountQuery
 }
 
 // GetAllAccountSubscriptionPlansCount will fetch the count of plans from the database.
-func (q *Sqlite) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllPlansCountQuery()).Scan(&count)
+func (c *Sqlite) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count uint64, err error) {
+	err = c.db.QueryRowContext(ctx, c.buildGetAllPlansCountQuery()).Scan(&count)
 	return count, err
 }
 
 // buildGetPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	return q.buildListQuery(
+func (c *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+	return c.buildListQuery(
 		queriers.AccountSubscriptionPlansTableName,
 		"",
 		queriers.AccountSubscriptionPlansTableColumns,
@@ -150,15 +150,15 @@ func (q *Sqlite) buildGetPlansQuery(filter *types.QueryFilter) (query string, ar
 }
 
 // GetAccountSubscriptionPlans fetches a list of plans from the database that meet a particular filter.
-func (q *Sqlite) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (*types.AccountSubscriptionPlanList, error) {
-	query, args := q.buildGetPlansQuery(filter)
+func (c *Sqlite) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (*types.AccountSubscriptionPlanList, error) {
+	query, args := c.buildGetPlansQuery(filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for plans: %w", err)
 	}
 
-	plans, filteredCount, totalCount, err := q.scanAccountSubscriptionPlans(rows, true)
+	plans, filteredCount, totalCount, err := c.scanAccountSubscriptionPlans(rows, true)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
@@ -177,10 +177,10 @@ func (q *Sqlite) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 }
 
 // buildCreatePlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (q *Sqlite) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+func (c *Sqlite) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Insert(queriers.AccountSubscriptionPlansTableName).
 		Columns(
 			queriers.AccountSubscriptionPlansTableNameColumn,
@@ -196,13 +196,13 @@ func (q *Sqlite) buildCreatePlanQuery(input *types.AccountSubscriptionPlan) (que
 		).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // CreateAccountSubscriptionPlan creates an plan in the database.
-func (q *Sqlite) CreateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*types.AccountSubscriptionPlan, error) {
+func (c *Sqlite) CreateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*types.AccountSubscriptionPlan, error) {
 	x := &types.AccountSubscriptionPlan{
 		Name:        input.Name,
 		Description: input.Description,
@@ -210,25 +210,25 @@ func (q *Sqlite) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 		Period:      input.Period,
 	}
 
-	query, args := q.buildCreatePlanQuery(x)
+	query, args := c.buildCreatePlanQuery(x)
 
 	// create the plan.
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error executing item creation query: %w", err)
 	}
 
-	x.CreatedOn = q.timeTeller.Now()
-	x.ID = q.getIDFromResult(res)
+	x.CreatedOn = c.timeTeller.Now()
+	x.ID = c.getIDFromResult(res)
 
 	return x, nil
 }
 
 // buildUpdatePlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
-func (q *Sqlite) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+func (c *Sqlite) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.AccountSubscriptionPlansTableName).
 		Set(queriers.AccountSubscriptionPlansTableNameColumn, input.Name).
 		Set(queriers.AccountSubscriptionPlansTableDescriptionColumn, input.Description).
@@ -240,24 +240,24 @@ func (q *Sqlite) buildUpdatePlanQuery(input *types.AccountSubscriptionPlan) (que
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // UpdateAccountSubscriptionPlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
-func (q *Sqlite) UpdateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlan) error {
-	query, args := q.buildUpdatePlanQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
+func (c *Sqlite) UpdateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlan) error {
+	query, args := c.buildUpdatePlanQuery(input)
+	_, err := c.db.ExecContext(ctx, query, args...)
 
 	return err
 }
 
 // buildArchivePlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
-func (q *Sqlite) buildArchivePlanQuery(planID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildArchivePlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = q.sqlBuilder.
+	query, args, err = c.sqlBuilder.
 		Update(queriers.AccountSubscriptionPlansTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(queriers.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -267,16 +267,16 @@ func (q *Sqlite) buildArchivePlanQuery(planID uint64) (query string, args []inte
 		}).
 		ToSql()
 
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // ArchiveAccountSubscriptionPlan marks an plan as archived in the database.
-func (q *Sqlite) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
-	query, args := q.buildArchivePlanQuery(planID)
+func (c *Sqlite) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
+	query, args := c.buildArchivePlanQuery(planID)
 
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := c.db.ExecContext(ctx, query, args...)
 	if res != nil {
 		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
 			return sql.ErrNoRows
@@ -287,48 +287,48 @@ func (q *Sqlite) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint
 }
 
 // LogAccountSubscriptionPlanCreationEvent saves a AccountSubscriptionPlanCreationEvent in the audit log table.
-func (q *Sqlite) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
+func (c *Sqlite) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
+	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
 }
 
 // AccountSubscriptionLogPlanUpdateEvent saves a AccountSubscriptionPlanUpdateEvent in the audit log table.
-func (q *Sqlite) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID, changes))
+func (c *Sqlite) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
+	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID, changes))
 }
 
 // AccountSubscriptionLogPlanArchiveEvent saves a AccountSubscriptionPlanArchiveEvent in the audit log table.
-func (q *Sqlite) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
+func (c *Sqlite) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
+	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
 }
 
 // buildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
-func (q *Sqlite) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
+func (c *Sqlite) buildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
 	planIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)
-	builder := q.sqlBuilder.
+	builder := c.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
 		From(queriers.AuditLogEntriesTableName).
 		Where(squirrel.Eq{planIDKey: planID}).
 		OrderBy(fmt.Sprintf("%s.%s", queriers.AuditLogEntriesTableName, queriers.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
-	q.logQueryBuildingError(err)
+	c.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
-func (q *Sqlite) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForPlanQuery(planID)
+func (c *Sqlite) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
+	query, args := c.buildGetAuditLogEntriesForPlanQuery(planID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}

@@ -53,7 +53,15 @@ func interfaceToDriverValue(in []interface{}) []driver.Value {
 	return out
 }
 
-func buildTestClient(t *testing.T) (*Client, sqlmock.Sqlmock, *database.MockDatabase) {
+type expecterSqlmockWrapper struct {
+	sqlmock.Sqlmock
+}
+
+func (e *expecterSqlmockWrapper) AssertExpectations(t mock.TestingT) bool {
+	return assert.NoError(t, e.Sqlmock.ExpectationsWereMet(), "not all database expectations were met")
+}
+
+func buildTestClient(t *testing.T) (*Client, *expecterSqlmockWrapper, *database.MockDatabase) {
 	t.Helper()
 
 	db, sqlMock, err := sqlmock.New()
@@ -69,7 +77,7 @@ func buildTestClient(t *testing.T) (*Client, sqlmock.Sqlmock, *database.MockData
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
 	}
 
-	return c, sqlMock, mdb
+	return c, &expecterSqlmockWrapper{Sqlmock: sqlMock}, mdb
 }
 
 // end helper funcs

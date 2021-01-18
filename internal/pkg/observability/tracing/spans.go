@@ -15,7 +15,6 @@ func StartSpan(ctx context.Context) (context.Context, trace.Span) {
 // Tracer describes a tracer.
 type Tracer interface {
 	StartSpan(ctx context.Context) (context.Context, trace.Span)
-	StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span)
 }
 
 var _ Tracer = (*otSpanManager)(nil)
@@ -33,10 +32,6 @@ func NewTracer(name string) Tracer {
 
 // StartSpan wraps tracer.Start.
 func (t *otSpanManager) StartSpan(ctx context.Context) (context.Context, trace.Span) {
-	return t.tracer.Start(ctx, GetCallerName())
-}
-
-// StartSpan wraps tracer.Start.
-func (t *otSpanManager) StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span) {
-	return t.tracer.Start(ctx, name)
+	callerName := GetCallerName()
+	return t.tracer.Start(ctx, callerName)
 }

@@ -61,12 +61,12 @@ func TestClient_GetAllAccounts(T *testing.T) {
 		ctx := context.Background()
 
 		results := make(chan []*types.Account)
-		exampleBucketSize := uint16(1000)
+		exampleBatchSize := uint16(1000)
 
 		c, _, mockDB := buildTestClient(t)
-		mockDB.AccountDataManager.On("GetAllAccounts", mock.Anything, results, exampleBucketSize).Return(nil)
+		mockDB.AccountDataManager.On("GetAllAccounts", mock.Anything, results, exampleBatchSize).Return(nil)
 
-		err := c.GetAllAccounts(ctx, results, exampleBucketSize)
+		err := c.GetAllAccounts(ctx, results, exampleBatchSize)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockDB)

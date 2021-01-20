@@ -246,7 +246,7 @@ func TestMariaDB_GetPlans(T *testing.T) {
 				buildMockRowsFromPlans(
 					true,
 					examplePlanList.FilteredCount,
-					examplePlanList.Plans...,
+					examplePlanList.AccountSubscriptionPlans...,
 				),
 			)
 

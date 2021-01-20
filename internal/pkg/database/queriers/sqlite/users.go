@@ -567,8 +567,8 @@ func (c *Sqlite) buildGetAuditLogEntriesForUserQuery(userID uint64) (query strin
 }
 
 // GetAuditLogEntriesForUser fetches an audit log entry from the database.
-func (c *Sqlite) GetAuditLogEntriesForUser(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := c.buildGetAuditLogEntriesForUserQuery(itemID)
+func (c *Sqlite) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
+	query, args := c.buildGetAuditLogEntriesForUserQuery(userID)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {

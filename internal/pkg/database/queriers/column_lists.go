@@ -6,7 +6,7 @@ import (
 
 var (
 	//
-	// Plans Table.
+	// AccountSubscriptionPlans Table.
 	//
 
 	// AccountSubscriptionPlansTableColumns are the columns for the users table.

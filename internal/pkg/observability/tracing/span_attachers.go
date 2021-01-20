@@ -68,7 +68,7 @@ func AttachUserIDToSpan(span trace.Span, userID uint64) {
 
 // AttachPlanIDToSpan provides a consistent way to attach a plan's ID to a span.
 func AttachPlanIDToSpan(span trace.Span, planID uint64) {
-	attachUint64ToSpan(span, keys.PlanIDKey, planID)
+	attachUint64ToSpan(span, keys.AccountSubscriptionPlanIDKey, planID)
 }
 
 // AttachSessionInfoToSpan provides a consistent way to attach a SessionInfo object to a span.

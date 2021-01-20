@@ -227,10 +227,8 @@ func (c *Sqlite) buildGetAllOAuth2ClientsCountQuery() string {
 }
 
 // GetTotalOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
-func (c *Sqlite) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
-	var count uint64
-	err := c.db.QueryRowContext(ctx, c.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
-
+func (c *Sqlite) GetTotalOAuth2ClientCount(ctx context.Context) (count uint64, err error) {
+	err = c.db.QueryRowContext(ctx, c.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
 	return count, err
 }
 

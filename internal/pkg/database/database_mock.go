@@ -40,6 +40,24 @@ type MockDatabase struct {
 	*mocktypes.AccountDataManager
 }
 
+// Migrate satisfies the DataManager interface.
+func (m *MockDatabase) Migrate(ctx context.Context, ucc *types.TestUserCreationConfig) error {
+	return m.Called(ctx, ucc).Error(0)
+}
+
+// IsReady satisfies the DataManager interface.
+func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
+	return m.Called(ctx).Bool(0)
+}
+
+// BeginTx satisfies the DataManager interface.
+func (m *MockDatabase) BeginTx(ctx context.Context, options *sql.TxOptions) (*sql.Tx, error) {
+	args := m.Called(ctx, options)
+	return args.Get(0).(*sql.Tx), args.Error(1)
+}
+
+var _ SQLQueryBuilder = (*MockSQLQueryBuilder)(nil)
+
 // BuildMockSQLQueryBuilder builds a MockSQLQueryBuilder.
 func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 	return &MockSQLQueryBuilder{
@@ -64,22 +82,6 @@ type MockSQLQueryBuilder struct {
 	*mocktypes.UserSQLQueryBuilder
 	*mocktypes.OAuth2ClientSQLQueryBuilder
 	*mocktypes.WebhookSQLQueryBuilder
-}
-
-// Migrate satisfies the DataManager interface.
-func (m *MockDatabase) Migrate(ctx context.Context, ucc *types.TestUserCreationConfig) error {
-	return m.Called(ctx, ucc).Error(0)
-}
-
-// IsReady satisfies the DataManager interface.
-func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
-	return m.Called(ctx).Bool(0)
-}
-
-// BeginTx satisfies the DataManager interface.
-func (m *MockDatabase) BeginTx(ctx context.Context, options *sql.TxOptions) (*sql.Tx, error) {
-	args := m.Called(ctx, options)
-	return args.Get(0).(*sql.Tx), args.Error(1)
 }
 
 var _ ResultIterator = (*MockResultIterator)(nil)

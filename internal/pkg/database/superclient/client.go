@@ -25,8 +25,8 @@ var _ database.DataManager = (*Client)(nil)
 // logging and trace propagation should happen, the querier is where
 // the actual database querying is performed.
 type Client struct {
+	//config          *dbconfig.Config
 	db              *sql.DB
-	querier         database.DataManager
 	sqlQueryBuilder database.SQLQueryBuilder
 	timeTeller      queriers.TimeTeller
 	debug           bool
@@ -39,7 +39,9 @@ func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return c.querier.Migrate(ctx, testUserConfig)
+	return nil
+
+	// return c.querier.Migrate(ctx, testUserConfig)
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
@@ -47,15 +49,9 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return c.querier.IsReady(ctx)
-}
+	return true
 
-// BeginTx is a simple wrapper around the core querier BeginTx call.
-func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	return c.querier.BeginTx(ctx, opts)
+	// return c.querier.IsReady(ctx)
 }
 
 // ProvideDatabaseClient provides a new DataManager client.
@@ -70,7 +66,6 @@ func ProvideDatabaseClient(
 ) (database.DataManager, error) {
 	c := &Client{
 		db:              db,
-		querier:         querier,
 		timeTeller:      &queriers.StandardTimeTeller{},
 		sqlQueryBuilder: nil,
 		debug:           debug,
@@ -85,7 +80,7 @@ func ProvideDatabaseClient(
 	if shouldMigrate {
 		c.logger.Debug("migrating querier")
 
-		if err := c.querier.Migrate(ctx, testUserConfig); err != nil {
+		if err := querier.Migrate(ctx, testUserConfig); err != nil {
 			return nil, fmt.Errorf("error migrating database: %w", err)
 		}
 

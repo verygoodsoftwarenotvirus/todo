@@ -178,8 +178,10 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
 	}
 
-	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
-		endID := beginID + uint64(batchSize)
+	increment := uint64(batchSize)
+
+	for beginID := uint64(1); beginID <= count; beginID += increment {
+		endID := beginID + increment
 		go func(begin, end uint64) {
 			query, args := c.sqlQueryBuilder.BuildGetBatchOfWebhooksQuery(begin, end)
 			logger := c.logger.WithValues(map[string]interface{}{

@@ -140,7 +140,9 @@ type (
 	// UserSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	UserSQLQueryBuilder interface {
 		BuildGetUserQuery(userID uint64) (query string, args []interface{})
+		BuildGetUsersQuery(filter *QueryFilter) (query string, args []interface{})
 		BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
+		BuildGetUserByUsernameQuery(username string) (query string, args []interface{})
 		BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{})
 		BuildGetAllUsersCountQuery() (query string)
 		BuildCreateUserQuery(input UserDataStoreCreationInput) (query string, args []interface{})

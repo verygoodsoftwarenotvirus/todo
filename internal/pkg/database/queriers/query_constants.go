@@ -53,7 +53,7 @@ const (
 	AccountsMembershipTableUserOwnershipColumn = userOwnershipColumn
 
 	//
-	// Plans Table.
+	// AccountSubscriptionPlans Table.
 	//
 
 	// AccountSubscriptionPlansTableName is what the users table calls the <> column.

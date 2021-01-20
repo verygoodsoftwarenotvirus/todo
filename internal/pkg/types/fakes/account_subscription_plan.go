@@ -34,7 +34,7 @@ func BuildFakePlanList() *types.AccountSubscriptionPlanList {
 			FilteredCount: exampleQuantity / 2,
 			TotalCount:    exampleQuantity,
 		},
-		Plans: examples,
+		AccountSubscriptionPlans: examples,
 	}
 }
 

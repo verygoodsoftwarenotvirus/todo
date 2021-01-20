@@ -62,7 +62,7 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 	T.Run("surfaces row errors", func(t *testing.T) {
 		t.Parallel()
 
-		q, _, _ := buildTestClient(t)
+		q, _ := buildTestClient(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
@@ -75,7 +75,7 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 	T.Run("logs row closing errors", func(t *testing.T) {
 		t.Parallel()
 
-		q, _, _ := buildTestClient(t)
+		q, _ := buildTestClient(t)
 		mockRows := &database.MockResultIterator{}
 
 		mockRows.On("Next").Return(false)
@@ -95,7 +95,7 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 
 		ctx := context.Background()
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-		c, db, mockDB := buildTestClient(t)
+		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -110,7 +110,7 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntry, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder, mockDB)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 
@@ -123,7 +123,7 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 		ctx := context.Background()
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
-		c, db, mockDB := buildTestClient(t)
+		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -136,7 +136,7 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 
 		c.createAuditLogEntry(ctx, exampleInput)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder, mockDB)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 
@@ -152,7 +152,7 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 		exampleAuditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
 		exampleBatchSize := uint16(1000)
 		expectedStart, expectedEnd := uint64(1), uint64(1001)
-		c, db, mockDB := buildTestClient(t)
+		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -161,7 +161,7 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
 			WithArgs().
-			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(123))
+			WillReturnRows(newCountDBRowResponse(123))
 
 		fakeSelectQuery, fakeSelectArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildGetBatchOfAuditLogEntriesQuery", expectedStart, expectedEnd).Return(fakeSelectQuery, fakeSelectArgs)
@@ -188,7 +188,7 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 			}
 		}
 
-		mock.AssertExpectationsForObjects(t, db, mockDB, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 
@@ -201,7 +201,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 
 		filter := types.DefaultQueryFilter()
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
-		c, db, mockDB := buildTestClient(t)
+		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -216,7 +216,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockDB, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -227,7 +227,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		exampleAuditLogEntryList.Page = 0
 		exampleAuditLogEntryList.Limit = 0
-		c, db, mockDB := buildTestClient(t)
+		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -242,6 +242,6 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockDB, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }

@@ -2,9 +2,11 @@ package superclient
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -120,26 +122,17 @@ func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
-	user, err := c.querier.GetUserWithUnverifiedTwoFactorSecret(ctx, userID)
-	if err != nil {
-		logger.Error(err, "querying database for user")
-		return nil, err
-	}
-
 	logger.Debug("GetUserWithUnverifiedTwoFactorSecret called")
 
-	return user, nil
-}
+	query, args := c.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
 
-// VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
-func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
+	u, _, _, err := c.scanUser(row, false)
+	if err != nil {
+		return nil, fmt.Errorf("fetching user from database: %w", err)
+	}
 
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("VerifyUserTwoFactorSecret called")
-
-	return c.querier.VerifyUserTwoFactorSecret(ctx, userID)
+	return u, err
 }
 
 // GetUserByUsername fetches a user by their username.
@@ -150,15 +143,21 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 	tracing.AttachUsernameToSpan(span, username)
 	logger := c.logger.WithValue(keys.UsernameKey, username)
 
-	user, err := c.querier.GetUserByUsername(ctx, username)
-	if err != nil {
-		logger.Error(err, "querying database for user")
-		return nil, err
-	}
-
 	logger.Debug("GetUserByUsername called")
 
-	return user, nil
+	query, args := c.sqlQueryBuilder.BuildGetUserByUsernameQuery(username)
+	row := c.db.QueryRowContext(ctx, query, args...)
+
+	u, _, _, err := c.scanUser(row, false)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("fetching user from database: %w", err)
+	}
+
+	return u, nil
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
@@ -166,15 +165,25 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	user, err := c.querier.SearchForUsersByUsername(ctx, usernameQuery)
-	if err != nil {
-		c.logger.Error(err, "querying database for user")
-		return nil, err
-	}
-
 	c.logger.Debug("SearchForUsersByUsername called")
 
-	return user, nil
+	query, args := c.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(usernameQuery)
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error querying database for users: %w", err)
+	}
+
+	u, _, _, err := c.scanUsers(rows, false)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("fetching user from database: %w", err)
+	}
+
+	return u, nil
 }
 
 // GetAllUsersCount fetches a count of users from the database that meet a particular filter.
@@ -184,21 +193,40 @@ func (c *Client) GetAllUsersCount(ctx context.Context) (count uint64, err error)
 
 	c.logger.Debug("GetAllUsersCount called")
 
-	return c.querier.GetAllUsersCount(ctx)
+	query := c.sqlQueryBuilder.BuildGetAllUsersCountQuery()
+	err = c.db.QueryRowContext(ctx, query).Scan(&count)
+
+	return count, err
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
-func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
+func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *types.UserList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	x = &types.UserList{}
+	logger := c.logger.WithValue(keys.FilterIsNilKey, filter == nil)
+
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	c.logger.WithValue(keys.FilterIsNilKey, filter == nil).Debug("GetUsers called")
+	logger.Debug("GetUsers called")
 
-	return c.querier.GetUsers(ctx, filter)
+	query, args := c.sqlQueryBuilder.BuildGetUsersQuery(filter)
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching user from database: %w", err)
+	}
+
+	x.Users, x.FilteredCount, x.TotalCount, err = c.scanUsers(rows, true)
+	if err != nil {
+		return nil, fmt.Errorf("loading response from database: %w", err)
+	}
+
+	return x, nil
 }
 
 // CreateUser creates a user.
@@ -209,15 +237,25 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	tracing.AttachUsernameToSpan(span, input.Username)
 	logger := c.logger.WithValue(keys.UsernameKey, input.Username)
 
-	user, err := c.querier.CreateUser(ctx, input)
-	if err != nil {
-		logger.Error(err, "querying database for user")
-		return nil, err
-	}
-
 	logger.Debug("CreateUser called")
 
-	return user, nil
+	x := &types.User{
+		Username:        input.Username,
+		HashedPassword:  input.HashedPassword,
+		TwoFactorSecret: input.TwoFactorSecret,
+	}
+	query, args := c.sqlQueryBuilder.BuildCreateUserQuery(input)
+
+	// create the user.
+	res, err := c.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing user creation query: %w", err)
+	}
+
+	x.CreatedOn = c.timeTeller.Now()
+	x.ID = c.getIDFromResult(res)
+
+	return x, nil
 }
 
 // UpdateUser receives a complete User struct and updates its record in the database.
@@ -229,7 +267,10 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 	tracing.AttachUsernameToSpan(span, updated.Username)
 	c.logger.WithValue(keys.UsernameKey, updated.Username).Debug("UpdateUser called")
 
-	return c.querier.UpdateUser(ctx, updated)
+	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // UpdateUserPassword updates a user's password hash in the database.
@@ -240,7 +281,24 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserPassword called")
 
-	return c.querier.UpdateUserPassword(ctx, userID, newHash)
+	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
+}
+
+// VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
+func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("VerifyUserTwoFactorSecret called")
+
+	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // ArchiveUser archives a user.
@@ -251,57 +309,65 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("ArchiveUser called")
 
-	return c.querier.ArchiveUser(ctx, userID)
+	query, args := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
-// LogUserCreationEvent implements our AuditLogEntryDataManager interface.
+// LogUserCreationEvent saves a UserCreationEvent in the audit log table.
 func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, user.ID)
 	c.logger.WithValue(keys.UserIDKey, user.ID).Debug("LogUserCreationEvent called")
 
-	c.querier.LogUserCreationEvent(ctx, user)
+	c.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
 }
 
-// LogUserVerifyTwoFactorSecretEvent implements our AuditLogEntryDataManager interface.
+// LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
 func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserVerifyTwoFactorSecretEvent called")
 
-	c.querier.LogUserVerifyTwoFactorSecretEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
 }
 
-// LogUserUpdateTwoFactorSecretEvent implements our AuditLogEntryDataManager interface.
+// LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
 func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdateTwoFactorSecretEvent called")
 
-	c.querier.LogUserUpdateTwoFactorSecretEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 }
 
-// LogUserUpdatePasswordEvent implements our AuditLogEntryDataManager interface.
+// LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
 func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdatePasswordEvent called")
 
-	c.querier.LogUserUpdatePasswordEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
 }
 
-// LogUserArchiveEvent implements our AuditLogEntryDataManager interface.
+// LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
 func (c *Client) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserArchiveEvent called")
 
-	c.querier.LogUserArchiveEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
 }
 
 // GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.
@@ -311,5 +377,17 @@ func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) (
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetAuditLogEntriesForUser called")
 
-	return c.querier.GetAuditLogEntriesForUser(ctx, userID)
+	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(userID)
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
+
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

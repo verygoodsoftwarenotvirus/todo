@@ -14,13 +14,13 @@ import (
 // fetchRandomPlan retrieves a random plan from the list of available plans.
 func fetchRandomPlan(ctx context.Context, c *httpclient.Client) *types.AccountSubscriptionPlan {
 	plansRes, err := c.GetPlans(ctx, nil)
-	if err != nil || plansRes == nil || len(plansRes.Plans) == 0 {
+	if err != nil || plansRes == nil || len(plansRes.AccountSubscriptionPlans) == 0 {
 		return nil
 	}
 
-	randIndex := rand.Intn(len(plansRes.Plans))
+	randIndex := rand.Intn(len(plansRes.AccountSubscriptionPlans))
 
-	return plansRes.Plans[randIndex]
+	return plansRes.AccountSubscriptionPlans[randIndex]
 }
 
 func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {

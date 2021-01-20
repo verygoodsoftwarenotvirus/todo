@@ -3,6 +3,7 @@ package superclient
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 )
 
@@ -13,7 +14,7 @@ func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogCycleCookieSecretEvent called")
 
-	c.querier.LogCycleCookieSecretEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildCycleCookieSecretEvent(userID))
 }
 
 // LogSuccessfulLoginEvent implements our AuditLogEntryDataManager interface.
@@ -23,7 +24,7 @@ func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogSuccessfulLoginEvent called")
 
-	c.querier.LogSuccessfulLoginEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildSuccessfulLoginEventEntry(userID))
 }
 
 // LogBannedUserLoginAttemptEvent implements our AuditLogEntryDataManager interface.
@@ -33,7 +34,7 @@ func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogBannedUserLoginAttemptEvent called")
 
-	c.querier.LogBannedUserLoginAttemptEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogEntryDataManager interface.
@@ -43,7 +44,7 @@ func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userI
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUnsuccessfulLoginBadPasswordEvent called")
 
-	c.querier.LogUnsuccessfulLoginBadPasswordEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent implements our AuditLogEntryDataManager interface.
@@ -53,7 +54,7 @@ func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userI
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUnsuccessfulLoginBad2FATokenEvent called")
 
-	c.querier.LogUnsuccessfulLoginBad2FATokenEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
 // LogLogoutEvent implements our AuditLogEntryDataManager interface.
@@ -63,5 +64,5 @@ func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogLogoutEvent called")
 
-	c.querier.LogLogoutEvent(ctx, userID)
+	c.createAuditLogEntry(ctx, audit.BuildLogoutEventEntry(userID))
 }

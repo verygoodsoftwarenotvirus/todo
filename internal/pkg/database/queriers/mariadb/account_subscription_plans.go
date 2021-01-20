@@ -167,7 +167,7 @@ func (q *MariaDB) GetAccountSubscriptionPlans(ctx context.Context, filter *types
 			FilteredCount: filteredCount,
 			TotalCount:    totalCount,
 		},
-		Plans: plans,
+		AccountSubscriptionPlans: plans,
 	}
 
 	return list, nil

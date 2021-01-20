@@ -78,37 +78,6 @@ func (c *Sqlite) scanAccounts(rows database.ResultIterator, includeCounts bool) 
 	return accounts, filteredCount, totalCount, nil
 }
 
-// buildAccountExistsQuery constructs a SQL query for checking if an account with a given ID belong to a user with a given ID exists.
-func (c *Sqlite) buildAccountExistsQuery(accountID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = c.sqlBuilder.
-		Select(fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.IDColumn)).
-		Prefix(queriers.ExistencePrefix).
-		From(queriers.AccountsTableName).
-		Suffix(queriers.ExistenceSuffix).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.IDColumn):                         accountID,
-			fmt.Sprintf("%s.%s", queriers.AccountsTableName, queriers.AccountsTableUserOwnershipColumn): userID,
-		}).ToSql()
-
-	c.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// AccountExists queries the database to see if a given account belonging to a given user exists.
-func (c *Sqlite) AccountExists(ctx context.Context, accountID, userID uint64) (exists bool, err error) {
-	query, args := c.buildAccountExistsQuery(accountID, userID)
-
-	err = c.db.QueryRowContext(ctx, query, args...).Scan(&exists)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-
-	return exists, err
-}
-
 // buildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (c *Sqlite) buildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error

@@ -40,7 +40,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		plans = &types.AccountSubscriptionPlanList{Plans: []*types.AccountSubscriptionPlan{}}
+		plans = &types.AccountSubscriptionPlanList{AccountSubscriptionPlans: []*types.AccountSubscriptionPlan{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching plans")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -94,7 +94,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}).Info("created plan")
 
 	tracing.AttachPlanIDToSpan(span, x.ID)
-	logger = logger.WithValue(keys.PlanIDKey, x.ID)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, x.ID)
 	logger.Debug("plan created")
 
 	s.planCounter.Increment(ctx)
@@ -122,7 +122,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
 	tracing.AttachPlanIDToSpan(span, planID)
-	logger = logger.WithValue(keys.PlanIDKey, planID)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
 	// fetch plan from database.
 	x, err := s.planDataManager.GetAccountSubscriptionPlan(ctx, planID)
@@ -166,7 +166,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
-	logger = logger.WithValue(keys.PlanIDKey, planID)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 	tracing.AttachPlanIDToSpan(span, planID)
 
 	// fetch plan from database.
@@ -215,7 +215,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
-	logger = logger.WithValue(keys.PlanIDKey, planID)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 	tracing.AttachPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
@@ -258,7 +258,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
 	tracing.AttachPlanIDToSpan(span, planID)
-	logger = logger.WithValue(keys.PlanIDKey, planID)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
 	x, err := s.auditLog.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {

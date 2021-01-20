@@ -2,13 +2,80 @@ package superclient
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.AccountDataManager = (*Client)(nil)
+var (
+	_ types.AccountDataManager  = (*Client)(nil)
+	_ types.AccountAuditManager = (*Client)(nil)
+)
+
+// scanAccount takes a database Scanner (i.e. *sql.Row) and scans the result into an Account struct.
+func (c *Client) scanAccount(scan database.Scanner, includeCounts bool) (account *types.Account, filteredCount, totalCount uint64, err error) {
+	account = &types.Account{}
+
+	targetVars := []interface{}{
+		&account.ID,
+		&account.Name,
+		&account.PlanID,
+		&account.PersonalAccount,
+		&account.CreatedOn,
+		&account.LastUpdatedOn,
+		&account.ArchivedOn,
+		&account.BelongsToUser,
+	}
+
+	if includeCounts {
+		targetVars = append(targetVars, &filteredCount, &totalCount)
+	}
+
+	if scanErr := scan.Scan(targetVars...); scanErr != nil {
+		return nil, 0, 0, scanErr
+	}
+
+	return account, filteredCount, totalCount, nil
+}
+
+// scanAccounts takes some database rows and turns them into a slice of accounts.
+func (c *Client) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []*types.Account, filteredCount, totalCount uint64, err error) {
+	for rows.Next() {
+		x, fc, tc, scanErr := c.scanAccount(rows, includeCounts)
+		if scanErr != nil {
+			return nil, 0, 0, scanErr
+		}
+
+		if includeCounts {
+			if filteredCount == 0 {
+				filteredCount = fc
+			}
+
+			if totalCount == 0 {
+				totalCount = tc
+			}
+		}
+
+		accounts = append(accounts, x)
+	}
+
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, 0, 0, rowsErr
+	}
+
+	if closeErr := rows.Close(); closeErr != nil {
+		c.logger.Error(closeErr, "closing database rows")
+		return nil, 0, 0, closeErr
+	}
+
+	return accounts, filteredCount, totalCount, nil
+}
 
 // GetAccount fetches an account from the database.
 func (c *Client) GetAccount(ctx context.Context, accountID, userID uint64) (*types.Account, error) {
@@ -23,7 +90,12 @@ func (c *Client) GetAccount(ctx context.Context, accountID, userID uint64) (*typ
 		"user_id":    userID,
 	}).Debug("GetAccount called")
 
-	return c.querier.GetAccount(ctx, accountID, userID)
+	query, args := c.sqlQueryBuilder.BuildGetAccountQuery(accountID, userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
+
+	account, _, _, err := c.scanAccount(row, false)
+
+	return account, err
 }
 
 // GetAllAccountsCount fetches the count of accounts from the database that meet a particular filter.
@@ -33,7 +105,8 @@ func (c *Client) GetAllAccountsCount(ctx context.Context) (count uint64, err err
 
 	c.logger.Debug("GetAllAccountsCount called")
 
-	return c.querier.GetAllAccountsCount(ctx)
+	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountsCountQuery()).Scan(&count)
+	return count, err
 }
 
 // GetAllAccounts fetches a list of all accounts in the database.
@@ -43,16 +116,52 @@ func (c *Client) GetAllAccounts(ctx context.Context, results chan []*types.Accou
 
 	c.logger.Debug("GetAllAccounts called")
 
-	return c.querier.GetAllAccounts(ctx, results, batchSize)
+	count, countErr := c.GetAllAccountsCount(ctx)
+	if countErr != nil {
+		return fmt.Errorf("error fetching count of accounts: %w", countErr)
+	}
+
+	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
+		endID := beginID + uint64(batchSize)
+		go func(begin, end uint64) {
+			query, args := c.sqlQueryBuilder.BuildGetBatchOfAccountsQuery(begin, end)
+			logger := c.logger.WithValues(map[string]interface{}{
+				"query": query,
+				"begin": begin,
+				"end":   end,
+			})
+
+			rows, queryErr := c.db.Query(query, args...)
+			if errors.Is(queryErr, sql.ErrNoRows) {
+				return
+			} else if queryErr != nil {
+				logger.Error(queryErr, "querying for database rows")
+				return
+			}
+
+			accounts, _, _, scanErr := c.scanAccounts(rows, false)
+			if scanErr != nil {
+				logger.Error(scanErr, "scanning database rows")
+				return
+			}
+
+			results <- accounts
+		}(beginID, endID)
+	}
+
+	return nil
 }
 
 // GetAccounts fetches a list of accounts from the database that meet a particular filter.
-func (c *Client) GetAccounts(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.AccountList, error) {
+func (c *Client) GetAccounts(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.AccountList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	x = &types.AccountList{}
+
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -61,23 +170,48 @@ func (c *Client) GetAccounts(ctx context.Context, userID uint64, filter *types.Q
 		"user_id": userID,
 	}).Debug("GetAccounts called")
 
-	return c.querier.GetAccounts(ctx, userID, filter)
+	query, args := c.sqlQueryBuilder.BuildGetAccountsQuery(userID, false, filter)
+
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for accounts: %w", err)
+	}
+
+	x.Accounts, x.FilteredCount, x.TotalCount, err = c.scanAccounts(rows, true)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return x, nil
 }
 
 // GetAccountsForAdmin fetches a list of accounts from the database that meet a particular filter for all users.
-func (c *Client) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.AccountList, error) {
+func (c *Client) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFilter) (x *types.AccountList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	x = &types.AccountList{}
+
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
+		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	c.logger.Debug("GetAccountsForAdmin called")
+	c.logger.Debug("GetAccounts called")
 
-	accountList, err := c.querier.GetAccountsForAdmin(ctx, filter)
+	query, args := c.sqlQueryBuilder.BuildGetAccountsQuery(0, true, filter)
 
-	return accountList, err
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for accounts: %w", err)
+	}
+
+	x.Accounts, x.FilteredCount, x.TotalCount, err = c.scanAccounts(rows, true)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return x, nil
 }
 
 // CreateAccount creates an account in the database.
@@ -87,7 +221,23 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	c.logger.Debug("CreateAccount called")
 
-	return c.querier.CreateAccount(ctx, input)
+	x := &types.Account{
+		Name:          input.Name,
+		BelongsToUser: input.BelongsToUser,
+	}
+
+	query, args := c.sqlQueryBuilder.BuildCreateAccountQuery(x)
+
+	// create the account.
+	res, err := c.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error executing account creation query: %w", err)
+	}
+
+	x.CreatedOn = c.timeTeller.Now()
+	x.ID = c.getIDFromResult(res)
+
+	return x, nil
 }
 
 // UpdateAccount updates a particular account. Note that UpdateAccount expects the
@@ -99,7 +249,10 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account) erro
 	tracing.AttachAccountIDToSpan(span, updated.ID)
 	c.logger.WithValue(keys.AccountIDKey, updated.ID).Debug("UpdateAccount called")
 
-	return c.querier.UpdateAccount(ctx, updated)
+	query, args := c.sqlQueryBuilder.BuildUpdateAccountQuery(updated)
+	_, err := c.db.ExecContext(ctx, query, args...)
+
+	return err
 }
 
 // ArchiveAccount archives an account from the database by its ID.
@@ -115,7 +268,16 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 		"user_id":    userID,
 	}).Debug("ArchiveAccount called")
 
-	return c.querier.ArchiveAccount(ctx, accountID, userID)
+	query, args := c.sqlQueryBuilder.BuildArchiveAccountQuery(accountID, userID)
+
+	res, err := c.db.ExecContext(ctx, query, args...)
+	if res != nil {
+		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+			return sql.ErrNoRows
+		}
+	}
+
+	return err
 }
 
 // LogAccountCreationEvent implements our AuditLogEntryDataManager interface.
@@ -125,7 +287,7 @@ func (c *Client) LogAccountCreationEvent(ctx context.Context, account *types.Acc
 
 	c.logger.WithValue(keys.UserIDKey, account.BelongsToUser).Debug("LogAccountCreationEvent called")
 
-	c.querier.LogAccountCreationEvent(ctx, account)
+	c.createAuditLogEntry(ctx, audit.BuildAccountCreationEventEntry(account))
 }
 
 // LogAccountUpdateEvent implements our AuditLogEntryDataManager interface.
@@ -135,7 +297,7 @@ func (c *Client) LogAccountUpdateEvent(ctx context.Context, userID, accountID ui
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogAccountUpdateEvent called")
 
-	c.querier.LogAccountUpdateEvent(ctx, userID, accountID, changes)
+	c.createAuditLogEntry(ctx, audit.BuildAccountUpdateEventEntry(userID, accountID, changes))
 }
 
 // LogAccountArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -145,15 +307,22 @@ func (c *Client) LogAccountArchiveEvent(ctx context.Context, userID, accountID u
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogAccountArchiveEvent called")
 
-	c.querier.LogAccountArchiveEvent(ctx, userID, accountID)
+	c.createAuditLogEntry(ctx, audit.BuildAccountArchiveEventEntry(userID, accountID))
 }
 
 // GetAuditLogEntriesForAccount fetches a list of audit log entries from the database that relate to a given account.
 func (c *Client) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
+	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountQuery(accountID)
 
-	c.logger.Debug("GetAuditLogEntriesForAccount called")
+	rows, err := c.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+	}
 
-	return c.querier.GetAuditLogEntriesForAccount(ctx, accountID)
+	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning response from database: %w", err)
+	}
+
+	return auditLogEntries, nil
 }

@@ -160,7 +160,7 @@ func (q *Postgres) GetAccountSubscriptionPlans(ctx context.Context, filter *type
 			FilteredCount: filteredCount,
 			TotalCount:    totalCount,
 		},
-		Plans: plans,
+		AccountSubscriptionPlans: plans,
 	}
 
 	return list, nil
@@ -273,7 +273,7 @@ func (q *Postgres) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, u
 
 // BuildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
-func (q *Postgres) BuildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	planIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)
 
 	return q.buildQuery(q.sqlBuilder.
@@ -286,7 +286,7 @@ func (q *Postgres) BuildGetAuditLogEntriesForPlanQuery(planID uint64) (query str
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a audit log entries for a given plan from the database.
 func (q *Postgres) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.BuildGetAuditLogEntriesForPlanQuery(planID)
+	query, args := q.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

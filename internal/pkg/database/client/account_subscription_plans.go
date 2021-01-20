@@ -65,7 +65,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 	defer span.End()
 
 	tracing.AttachPlanIDToSpan(span, updated.ID)
-	c.logger.WithValue(keys.PlanIDKey, updated.ID).Debug("UpdateAccountSubscriptionPlan called")
+	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, updated.ID).Debug("UpdateAccountSubscriptionPlan called")
 
 	return c.querier.UpdateAccountSubscriptionPlan(ctx, updated)
 }
@@ -119,7 +119,7 @@ func (c *Client) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Contex
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.PlanIDKey, planID).Debug("GetAuditLogEntriesForAccountSubscriptionPlan called")
+	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID).Debug("GetAuditLogEntriesForAccountSubscriptionPlan called")
 
 	return c.querier.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)
 }

@@ -138,7 +138,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			})
 		})
 
-		// Plans
+		// AccountSubscriptionPlans
 		adminRouter.Route("/plans", func(plansRouter chi.Router) {
 			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.PlanIDURIParamKey)
 

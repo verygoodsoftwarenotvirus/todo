@@ -104,10 +104,10 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			checkValueAndError(t, actual, err)
 			assert.True(
 				t,
-				len(created) <= len(actual.Plans),
+				len(created) <= len(actual.AccountSubscriptionPlans),
 				"created %d to be <= %d",
 				len(created),
-				len(actual.Plans),
+				len(actual.AccountSubscriptionPlans),
 			)
 
 			// Clean up.

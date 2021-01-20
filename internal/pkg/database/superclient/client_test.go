@@ -61,80 +61,24 @@ func (e *expecterSqlmockWrapper) AssertExpectations(t mock.TestingT) bool {
 	return assert.NoError(t, e.Sqlmock.ExpectationsWereMet(), "not all database expectations were met")
 }
 
-func buildTestClient(t *testing.T) (*Client, *expecterSqlmockWrapper, *database.MockDatabase) {
+func buildTestClient(t *testing.T) (*Client, *expecterSqlmockWrapper) {
 	t.Helper()
 
 	db, sqlMock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	mdb := database.BuildMockDatabase()
 	c := &Client{
 		db:              db,
-		querier:         mdb,
 		logger:          noop.NewLogger(),
 		timeTeller:      &queriers.StandardTimeTeller{},
 		tracer:          tracing.NewTracer("test"),
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
 	}
 
-	return c, &expecterSqlmockWrapper{Sqlmock: sqlMock}, mdb
+	return c, &expecterSqlmockWrapper{Sqlmock: sqlMock}
 }
 
 // end helper funcs
-
-func TestMigrate(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(nil)
-
-		c, _, _ := buildTestClient(t)
-		c.querier = mockDB
-
-		assert.NoError(t, c.Migrate(ctx, nil))
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("bubbles up errors", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		c, _, _ := buildTestClient(t)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(errors.New("blah"))
-
-		c.querier = mockDB
-
-		assert.Error(t, c.Migrate(ctx, nil))
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-}
-
-func TestIsReady(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		c, _, _ := buildTestClient(t)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.On("IsReady", mock.Anything).Return(true)
-
-		c.querier = mockDB
-		c.IsReady(ctx)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-}
 
 func TestProvideDatabaseClient(T *testing.T) {
 	T.Parallel()

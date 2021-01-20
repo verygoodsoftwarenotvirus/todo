@@ -7,8 +7,8 @@ const (
 	AuditLogEntryEventTypeKey = "event_type"
 	// ItemIDKey is the standard key for referring to an item ID.
 	ItemIDKey = "item_id"
-	// PlanIDKey is the standard key for referring to a plan ID.
-	PlanIDKey = "plan_id"
+	// AccountSubscriptionPlanIDKey is the standard key for referring to a plan ID.
+	AccountSubscriptionPlanIDKey = "plan_id"
 	// AccountIDKey is the standard key for referring to a user ID.
 	AccountIDKey = "account_id"
 	// UserIDKey is the standard key for referring to a user ID.

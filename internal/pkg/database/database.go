@@ -50,7 +50,6 @@ type (
 	DataManager interface {
 		Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error
 		IsReady(ctx context.Context) (ready bool)
-		BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 
 		types.AdminUserDataManager
 		types.AccountDataManager

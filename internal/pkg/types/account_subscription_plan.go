@@ -24,7 +24,7 @@ type (
 	// AccountSubscriptionPlanList represents a list of plans.
 	AccountSubscriptionPlanList struct {
 		Pagination
-		Plans []*AccountSubscriptionPlan `json:"accountSubscriptionPlans"`
+		AccountSubscriptionPlans []*AccountSubscriptionPlan `json:"accountSubscriptionPlans"`
 	}
 
 	// AccountSubscriptionPlanCreationInput represents what a User could set as input for creating plans.
@@ -51,7 +51,7 @@ type (
 		BuildCreateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlan) (query string, args []interface{})
 		BuildUpdateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlan) (query string, args []interface{})
 		BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForPlanQuery(planID uint64) (query string, args []interface{})
+		BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
 	}
 
 	// AccountSubscriptionPlanDataManager describes a structure capable of storing plans permanently.

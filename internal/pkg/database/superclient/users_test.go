@@ -84,9 +84,10 @@ func TestSqlite_ScanUsers(T *testing.T) {
 
 	T.Run("surfaces row errors", func(t *testing.T) {
 		t.Parallel()
-		q, _ := buildTestClient(t)
-		mockRows := &database.MockResultIterator{}
 
+		q, _ := buildTestClient(t)
+
+		mockRows := &database.MockResultIterator{}
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
@@ -96,9 +97,10 @@ func TestSqlite_ScanUsers(T *testing.T) {
 
 	T.Run("logs row closing errors", func(t *testing.T) {
 		t.Parallel()
-		q, _ := buildTestClient(t)
-		mockRows := &database.MockResultIterator{}
 
+		q, _ := buildTestClient(t)
+
+		mockRows := &database.MockResultIterator{}
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
@@ -113,10 +115,10 @@ func TestClient_GetUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -141,10 +143,10 @@ func TestClient_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -169,10 +171,10 @@ func TestClient_VerifyUserTwoFactorSecret(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -196,9 +198,10 @@ func TestClient_GetUserByUsername(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -224,10 +227,10 @@ func TestClient_SearchForUsersByUsername(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		exampleUsername := fakes.BuildFakeUser().Username
 		exampleUserList := fakes.BuildFakeUserList()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -253,8 +256,9 @@ func TestClient_GetAllUsersCount(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		exampleCount := uint64(123)
+
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -279,11 +283,11 @@ func TestClient_GetUsers(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUserList := fakes.BuildFakeUserList()
 		filter := types.DefaultQueryFilter()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -304,12 +308,12 @@ func TestClient_GetUsers(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUserList := fakes.BuildFakeUserList()
 		exampleUserList.Limit, exampleUserList.Page = 0, 0
 		filter := (*types.QueryFilter)(nil)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -334,12 +338,12 @@ func TestClient_CreateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -368,9 +372,10 @@ func TestClient_UpdateUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -394,9 +399,10 @@ func TestClient_UpdateUserPassword(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -420,10 +426,10 @@ func TestClient_ArchiveUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()

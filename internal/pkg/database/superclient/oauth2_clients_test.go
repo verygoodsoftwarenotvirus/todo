@@ -73,9 +73,10 @@ func TestSqlite_ScanOAuth2Clients(T *testing.T) {
 
 	T.Run("surfaces row errors", func(t *testing.T) {
 		t.Parallel()
-		q, _ := buildTestClient(t)
-		mockRows := &database.MockResultIterator{}
 
+		q, _ := buildTestClient(t)
+
+		mockRows := &database.MockResultIterator{}
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
@@ -85,9 +86,10 @@ func TestSqlite_ScanOAuth2Clients(T *testing.T) {
 
 	T.Run("logs row closing errors", func(t *testing.T) {
 		t.Parallel()
-		q, _ := buildTestClient(t)
-		mockRows := &database.MockResultIterator{}
 
+		q, _ := buildTestClient(t)
+
+		mockRows := &database.MockResultIterator{}
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
@@ -102,10 +104,10 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -130,10 +132,10 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -158,10 +160,10 @@ func TestClient_GetAllOAuth2ClientCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleCount := uint64(123)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -188,11 +190,12 @@ func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		c, db := buildTestClient(t)
 		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 		filter := types.DefaultQueryFilter()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
@@ -212,12 +215,13 @@ func TestClient_GetOAuth2ClientsForUser(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
-		c, db := buildTestClient(t)
 		exampleOAuth2ClientList := fakes.BuildFakeOAuth2ClientList()
 		exampleOAuth2ClientList.Limit, exampleOAuth2ClientList.Page = 0, 0
 		filter := (*types.QueryFilter)(nil)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
@@ -241,12 +245,12 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
-
-		c, db := buildTestClient(t)
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
@@ -274,11 +278,11 @@ func TestClient_UpdateOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		var expected error
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -303,11 +307,11 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		var expected error
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()

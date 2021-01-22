@@ -454,10 +454,11 @@ func TestClient_GetAuditLogEntriesForItem(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
-		auditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
+		exampleAuditLogEntriesList := fakes.BuildFakeAuditLogEntryList()
+
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -471,12 +472,12 @@ func TestClient_GetAuditLogEntriesForItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromAuditLogEntries(
 				false,
-				auditLogEntries...,
+				exampleAuditLogEntriesList.Entries...,
 			))
 
 		actual, err := c.GetAuditLogEntriesForItem(ctx, exampleItem.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, auditLogEntries, actual)
+		assert.Equal(t, exampleAuditLogEntriesList.Entries, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

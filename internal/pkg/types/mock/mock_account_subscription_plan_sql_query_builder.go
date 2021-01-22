@@ -55,7 +55,7 @@ func (m *AccountSubscriptionPlanSQLQueryBuilder) BuildArchiveAccountSubscription
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAuditLogEntriesForPlanQuery implements our interface.
+// BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery implements our interface.
 func (m *AccountSubscriptionPlanSQLQueryBuilder) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(planID)
 

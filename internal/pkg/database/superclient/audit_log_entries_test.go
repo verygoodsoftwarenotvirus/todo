@@ -63,8 +63,8 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 		t.Parallel()
 
 		q, _ := buildTestClient(t)
-		mockRows := &database.MockResultIterator{}
 
+		mockRows := &database.MockResultIterator{}
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
@@ -76,8 +76,8 @@ func TestSqlite_ScanAuditLogEntries(T *testing.T) {
 		t.Parallel()
 
 		q, _ := buildTestClient(t)
-		mockRows := &database.MockResultIterator{}
 
+		mockRows := &database.MockResultIterator{}
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
@@ -114,15 +114,27 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 	})
 }
 
+func prepareForAuditLogEntryCreation(t *testing.T, exampleAuditLogEntry *types.AuditLogEntry, mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
+	t.Helper()
+
+	fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(matchAuditLogEntry(t, exampleAuditLogEntry))).Return(fakeQuery, fakeArgs)
+
+	db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+		WithArgs(interfaceToDriverValue(fakeArgs)...).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+}
+
 func TestClient_createAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
@@ -133,6 +145,24 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		c.createAuditLogEntry(ctx, exampleInput)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("obligatory but with helper method", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
+		c.sqlQueryBuilder = mockQueryBuilder
 
 		c.createAuditLogEntry(ctx, exampleInput)
 

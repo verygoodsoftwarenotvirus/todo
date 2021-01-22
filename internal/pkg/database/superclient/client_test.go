@@ -53,15 +53,15 @@ func interfaceToDriverValue(in []interface{}) []driver.Value {
 	return out
 }
 
-type expecterSqlmockWrapper struct {
+type sqlmockExpecterWrapper struct {
 	sqlmock.Sqlmock
 }
 
-func (e *expecterSqlmockWrapper) AssertExpectations(t mock.TestingT) bool {
+func (e *sqlmockExpecterWrapper) AssertExpectations(t mock.TestingT) bool {
 	return assert.NoError(t, e.Sqlmock.ExpectationsWereMet(), "not all database expectations were met")
 }
 
-func buildTestClient(t *testing.T) (*Client, *expecterSqlmockWrapper) {
+func buildTestClient(t *testing.T) (*Client, *sqlmockExpecterWrapper) {
 	t.Helper()
 
 	db, sqlMock, err := sqlmock.New()
@@ -75,7 +75,7 @@ func buildTestClient(t *testing.T) (*Client, *expecterSqlmockWrapper) {
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
 	}
 
-	return c, &expecterSqlmockWrapper{Sqlmock: sqlMock}
+	return c, &sqlmockExpecterWrapper{Sqlmock: sqlMock}
 }
 
 // end helper funcs
@@ -85,6 +85,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		mockDB := database.BuildMockDatabase()
@@ -99,6 +100,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 	T.Run("with error migrating querier", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expected := errors.New("blah")

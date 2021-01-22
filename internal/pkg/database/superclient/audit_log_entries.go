@@ -143,6 +143,7 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 	defer span.End()
 
 	x = &types.AuditLogEntryList{}
+
 	c.logger.Debug("GetAuditLogEntries called")
 
 	if filter != nil {

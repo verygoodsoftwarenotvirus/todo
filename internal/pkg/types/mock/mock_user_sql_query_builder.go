@@ -90,12 +90,14 @@ func (m *UserSQLQueryBuilder) BuildSetUserStatusQuery(userID uint64, input types
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildGetUsersQuery implements our interface.
 func (m *UserSQLQueryBuilder) BuildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	returnArgs := m.Called(filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildGetUserByUsernameQuery implements our interface.
 func (m *UserSQLQueryBuilder) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	returnArgs := m.Called(username)
 

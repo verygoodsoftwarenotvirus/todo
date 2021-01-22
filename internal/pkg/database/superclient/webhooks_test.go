@@ -79,10 +79,10 @@ func TestClient_GetWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -110,9 +110,9 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		expected := uint64(123)
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -141,14 +141,15 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		results := make(chan []*types.Webhook)
 		doneChan := make(chan bool, 1)
 		expectedCount := uint64(20)
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 		exampleBatchSize := uint16(1000)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
+
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
@@ -165,11 +166,11 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 			On("BuildGetBatchOfWebhooksQuery", uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 
+		c.sqlQueryBuilder = mockQueryBuilder
+
 		db.ExpectQuery(formatQueryForSQLMock(secondFakeQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhookList.Webhooks...))
-
-		c.sqlQueryBuilder = mockQueryBuilder
 
 		err := c.GetAllWebhooks(ctx, results, exampleBatchSize)
 		assert.NoError(t, err)
@@ -193,10 +194,10 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		results := make(chan []*types.Webhook)
 		exampleBatchSize := uint16(1000)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -220,11 +221,11 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		results := make(chan []*types.Webhook)
 		expectedCount := uint64(20)
 		exampleBatchSize := uint16(1000)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -259,11 +260,11 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		results := make(chan []*types.Webhook)
 		expectedCount := uint64(20)
 		exampleBatchSize := uint16(1000)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -298,12 +299,12 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
 		results := make(chan []*types.Webhook)
 		expectedCount := uint64(20)
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleBatchSize := uint16(1000)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -343,11 +344,11 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 		filter := types.DefaultQueryFilter()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -372,13 +373,13 @@ func TestClient_GetWebhooks(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 		exampleWebhookList.Page = 0
 		exampleWebhookList.Limit = 0
 		filter := (*types.QueryFilter)(nil)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -407,12 +408,12 @@ func TestClient_CreateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleRows := newSuccessfulDatabaseResult(exampleWebhook.ID)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -441,11 +442,11 @@ func TestClient_UpdateWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		var expected error
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -471,11 +472,11 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		var expected error
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
@@ -501,10 +502,10 @@ func TestClient_GetAuditLogEntriesForWebhook(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		auditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()

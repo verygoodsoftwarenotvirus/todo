@@ -128,6 +128,7 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 	c.logger.Debug("GetAllItemsCount called")
 
 	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllItemsCountQuery()).Scan(&count)
+
 	return count, err
 }
 
@@ -180,6 +181,7 @@ func (c *Client) GetItems(ctx context.Context, userID uint64, filter *types.Quer
 	defer span.End()
 
 	x = &types.ItemList{}
+
 	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetItems called")
 
@@ -209,6 +211,7 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 	defer span.End()
 
 	x = &types.ItemList{}
+
 	c.logger.Debug("GetItemsForAdmin called")
 
 	if filter != nil {

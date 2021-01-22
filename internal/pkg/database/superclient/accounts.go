@@ -106,6 +106,7 @@ func (c *Client) GetAllAccountsCount(ctx context.Context) (count uint64, err err
 	c.logger.Debug("GetAllAccountsCount called")
 
 	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountsCountQuery()).Scan(&count)
+
 	return count, err
 }
 

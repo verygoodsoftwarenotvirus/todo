@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
@@ -14,6 +15,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
+const (
+	maximumConnectionAttempts = 50
+)
+
 var _ database.DataManager = (*Client)(nil)
 
 /*
@@ -21,11 +26,10 @@ var _ database.DataManager = (*Client)(nil)
 	wrapping of actual query execution.
 */
 
-// Client is a wrapper around a database querier. Client is where all
-// logging and trace propagation should happen, the querier is where
-// the actual database querying is performed.
+// Client is a wrapper around a database querier. Client is where all logging and trace propagation should happen,
+// the querier is where the actual database querying is performed.
 type Client struct {
-	//config          *dbconfig.Config
+	// config          *dbconfig.Config
 	db              *sql.DB
 	sqlQueryBuilder database.SQLQueryBuilder
 	timeTeller      queriers.TimeTeller
@@ -36,12 +40,12 @@ type Client struct {
 
 // Migrate is a simple wrapper around the core querier Migrate call.
 func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return nil
+	c.logger.Debug("Migrate called")
 
-	// return c.querier.Migrate(ctx, testUserConfig)
+	return nil
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
@@ -49,9 +53,31 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return true
+	attemptCount := 0
 
-	// return c.querier.IsReady(ctx)
+	logger := c.logger.WithValues(map[string]interface{}{
+		"interval":     time.Second,
+		"max_attempts": maximumConnectionAttempts,
+	})
+	logger.Debug("IsReady called")
+
+	for !ready {
+		err := c.db.PingContext(ctx)
+		if err != nil {
+			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for db")
+			time.Sleep(time.Second)
+
+			attemptCount++
+			if attemptCount >= maximumConnectionAttempts {
+				return false
+			}
+		} else {
+			ready = true
+			return ready
+		}
+	}
+
+	return false
 }
 
 // ProvideDatabaseClient provides a new DataManager client.

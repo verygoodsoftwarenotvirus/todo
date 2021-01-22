@@ -55,6 +55,7 @@ func (m *OAuth2ClientSQLQueryBuilder) BuildCreateOAuth2ClientQuery(input *types.
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildUpdateOAuth2ClientQuery implements our interface.
 func (m *OAuth2ClientSQLQueryBuilder) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 

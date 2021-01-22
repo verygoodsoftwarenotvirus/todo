@@ -142,6 +142,7 @@ func (c *Client) GetTotalOAuth2ClientCount(ctx context.Context) (count uint64, e
 	c.logger.Debug("GetTotalOAuth2ClientCount called")
 
 	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllOAuth2ClientsCountQuery()).Scan(&count)
+
 	return count, err
 }
 
@@ -194,6 +195,7 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *ty
 	defer span.End()
 
 	x = &types.OAuth2ClientList{}
+
 	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetOAuth2Clients called")
 

@@ -111,6 +111,7 @@ func (c *Client) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count
 	c.logger.Debug("GetAllAccountSubscriptionPlansCount called")
 
 	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count)
+
 	return count, err
 }
 

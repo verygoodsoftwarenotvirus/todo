@@ -69,13 +69,15 @@ func (m *ItemSQLQueryBuilder) BuildGetAuditLogEntriesForItemQuery(itemID uint64)
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildUpdateItemQuery implements our interface.
 func (m *ItemSQLQueryBuilder) BuildUpdateItemQuery(input *types.Item) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-func (m *ItemSQLQueryBuilder) BuildArchiveItemQuery(itemID uint64, userID uint64) (query string, args []interface{}) {
+// BuildArchiveItemQuery implements our interface.
+func (m *ItemSQLQueryBuilder) BuildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(itemID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

@@ -97,10 +97,10 @@ func TestClient_GetPlan(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		examplePlan := fakes.BuildFakePlan()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -127,10 +127,10 @@ func TestClient_GetAllPlansCount(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		exampleCount := uint64(123)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -157,11 +157,11 @@ func TestClient_GetPlans(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		filter := types.DefaultQueryFilter()
 		examplePlanList := fakes.BuildFakePlanList()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -184,12 +184,12 @@ func TestClient_GetPlans(T *testing.T) {
 
 	T.Run("with nil filter", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		filter := (*types.QueryFilter)(nil)
 		examplePlanList := fakes.BuildFakePlanList()
 		examplePlanList.Page, examplePlanList.Limit = 0, 0
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -216,11 +216,11 @@ func TestClient_CreatePlan(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		examplePlan := fakes.BuildFakePlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -251,10 +251,10 @@ func TestClient_UpdatePlan(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		examplePlan := fakes.BuildFakePlan()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -280,10 +280,10 @@ func TestClient_ArchivePlan(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ctx := context.Background()
 
 		examplePlan := fakes.BuildFakePlan()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()

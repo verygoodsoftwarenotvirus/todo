@@ -271,7 +271,7 @@ func (q *Postgres) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, u
 	q.CreateAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
 }
 
-// BuildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
+// BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
 func (q *Postgres) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	planIDKey := fmt.Sprintf(jsonPluckQuery, queriers.AuditLogEntriesTableName, queriers.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)

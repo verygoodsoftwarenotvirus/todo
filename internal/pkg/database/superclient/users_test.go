@@ -79,7 +79,7 @@ func buildErroneousMockRowFromUser(user *types.User) *sqlmock.Rows {
 	return exampleRows
 }
 
-func TestSqlite_ScanUsers(T *testing.T) {
+func TestClient_ScanUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {

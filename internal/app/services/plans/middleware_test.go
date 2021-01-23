@@ -116,7 +116,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		s := buildTestService()
 		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
-		exampleCreationInput := fakes.BuildFakePlanUpdateInputFromPlan(fakes.BuildFakePlan())
+		exampleCreationInput := fakes.BuildFakePlanUpdateInputFromPlan(fakes.BuildFakeAccountSubscriptionPlan())
 		jsonBytes, err := json.Marshal(&exampleCreationInput)
 		require.NoError(t, err)
 

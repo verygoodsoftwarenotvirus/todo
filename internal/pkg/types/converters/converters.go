@@ -20,8 +20,8 @@ func ConvertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
 	}
 }
 
-// ConvertPlanToPlanUpdateInput creates an AccountSubscriptionPlanUpdateInput struct from a plan.
-func ConvertPlanToPlanUpdateInput(x *types.AccountSubscriptionPlan) *types.AccountSubscriptionPlanUpdateInput {
+// ConvertAccountSubscriptionPlanToPlanUpdateInput creates an AccountSubscriptionPlanUpdateInput struct from a plan.
+func ConvertAccountSubscriptionPlanToPlanUpdateInput(x *types.AccountSubscriptionPlan) *types.AccountSubscriptionPlanUpdateInput {
 	return &types.AccountSubscriptionPlanUpdateInput{
 		Name:        x.Name,
 		Description: x.Description,

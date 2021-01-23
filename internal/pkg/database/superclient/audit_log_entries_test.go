@@ -56,7 +56,7 @@ func buildErroneousMockRowFromAuditLogEntry(x *types.AuditLogEntry) *sqlmock.Row
 	return exampleRows
 }
 
-func TestSqlite_ScanAuditLogEntries(T *testing.T) {
+func TestClient_ScanAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {

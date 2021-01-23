@@ -25,7 +25,7 @@ func TestV1Client_BuildGetPlanRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, examplePlan.ID)
 
 		c := buildTestClient(t, ts)
@@ -45,7 +45,7 @@ func TestV1Client_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, examplePlan.ID)
 
 		ts := httptest.NewTLSServer(
@@ -70,7 +70,7 @@ func TestV1Client_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetPlan(ctx, examplePlan.ID)
@@ -83,7 +83,7 @@ func TestV1Client_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, examplePlan.ID)
 
 		ts := httptest.NewTLSServer(
@@ -203,7 +203,7 @@ func TestV1Client_BuildCreatePlanRequest(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		ts := httptest.NewTLSServer(nil)
@@ -229,7 +229,7 @@ func TestV1Client_CreatePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		ts := httptest.NewTLSServer(
@@ -259,7 +259,7 @@ func TestV1Client_CreatePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		c := buildTestClientWithInvalidURL(t)
@@ -279,7 +279,7 @@ func TestV1Client_BuildUpdatePlanRequest(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		ts := httptest.NewTLSServer(nil)
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, examplePlan.ID)
 
@@ -300,7 +300,7 @@ func TestV1Client_UpdatePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, examplePlan.ID)
 
 		ts := httptest.NewTLSServer(
@@ -321,7 +321,7 @@ func TestV1Client_UpdatePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		err := buildTestClientWithInvalidURL(t).UpdatePlan(ctx, examplePlan)
 		assert.Error(t, err, "error should be returned")
@@ -338,7 +338,7 @@ func TestV1Client_BuildArchivePlanRequest(T *testing.T) {
 		ctx := context.Background()
 
 		ts := httptest.NewTLSServer(nil)
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, examplePlan.ID)
 
 		c := buildTestClient(t, ts)
@@ -358,7 +358,7 @@ func TestV1Client_ArchivePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, examplePlan.ID)
 
 		ts := httptest.NewTLSServer(
@@ -379,7 +379,7 @@ func TestV1Client_ArchivePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		err := buildTestClientWithInvalidURL(t).ArchivePlan(ctx, examplePlan.ID)
 		assert.Error(t, err, "error should be returned")
@@ -395,7 +395,7 @@ func TestV1Client_BuildGetAuditLogForPlanRequest(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
@@ -420,7 +420,7 @@ func TestV1Client_GetAuditLogForPlan(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, examplePlan.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
@@ -446,7 +446,7 @@ func TestV1Client_GetAuditLogForPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetAuditLogForPlan(ctx, examplePlan.ID)
@@ -459,7 +459,7 @@ func TestV1Client_GetAuditLogForPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, examplePlan.ID)
 
 		ts := httptest.NewTLSServer(

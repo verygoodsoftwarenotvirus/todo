@@ -87,18 +87,22 @@ func (c *Client) scanAccountSubscriptionPlans(rows database.ResultIterator, incl
 }
 
 // GetAccountSubscriptionPlan fetches an plan from the database.
-func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*types.AccountSubscriptionPlan, error) {
+func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, accountSubscriptionPlanID uint64) (*types.AccountSubscriptionPlan, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachPlanIDToSpan(span, planID)
+	logger := c.logger.WithValue("plan_id", accountSubscriptionPlanID)
 
-	c.logger.WithValue("plan_id", planID).Debug("GetAccountSubscriptionPlan called")
+	tracing.AttachPlanIDToSpan(span, accountSubscriptionPlanID)
+	logger.Debug("GetAccountSubscriptionPlan called")
 
-	query, args := c.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(planID)
+	query, args := c.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	plan, _, _, err := c.scanAccountSubscriptionPlan(row, false)
+	if err != nil {
+		return nil, fmt.Errorf("error scanning account subscription plan: %w", err)
+	}
 
 	return plan, err
 }
@@ -110,7 +114,9 @@ func (c *Client) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count
 
 	c.logger.Debug("GetAllAccountSubscriptionPlansCount called")
 
-	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count)
+	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count); err != nil {
+		return 0, fmt.Errorf("error querying for account subscription plans count: %w", err)
+	}
 
 	return count, err
 }
@@ -138,7 +144,7 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 
 	x.AccountSubscriptionPlans, x.FilteredCount, x.TotalCount, err = c.scanAccountSubscriptionPlans(rows, true)
 	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+		return nil, fmt.Errorf("error scanning account subscription plan: %w", err)
 	}
 
 	return x, nil
@@ -181,32 +187,38 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, updated.ID).Debug("UpdateAccountSubscriptionPlan called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	_, err := c.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("error updating account subscription plan: %w", err)
+	}
+
+	return nil
 }
 
 // ArchiveAccountSubscriptionPlan archives an plan from the database by its ID.
-func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
+func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubscriptionPlanID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachPlanIDToSpan(span, planID)
+	tracing.AttachPlanIDToSpan(span, accountSubscriptionPlanID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"plan_id": planID,
+		"plan_id": accountSubscriptionPlanID,
 	}).Debug("ArchiveAccountSubscriptionPlan called")
 
-	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(planID)
+	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
 	res, err := c.db.ExecContext(ctx, query, args...)
 	if res != nil {
 		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
 			return sql.ErrNoRows
 		}
+	} else if err != nil {
+		return err
 	}
 
-	return err
+	return nil
 }
 
 // LogAccountSubscriptionPlanCreationEvent implements our AuditLogEntryDataManager interface.
@@ -220,33 +232,33 @@ func (c *Client) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, pl
 }
 
 // AccountSubscriptionLogPlanUpdateEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
+func (c *Client) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, accountSubscriptionPlanID uint64, changes []types.FieldChangeSummary) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("AccountSubscriptionLogPlanUpdateEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID, changes))
+	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, accountSubscriptionPlanID, changes))
 }
 
 // AccountSubscriptionLogPlanArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
+func (c *Client) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, accountSubscriptionPlanID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("AccountSubscriptionLogPlanArchiveEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, planID))
+	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, accountSubscriptionPlanID))
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a list of audit log entries from the database that relate to a given plan.
-func (c *Client) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
+func (c *Client) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, accountSubscriptionPlanID uint64) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID).Debug("GetAuditLogEntriesForAccountSubscriptionPlan called")
+	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID).Debug("GetAuditLogEntriesForAccountSubscriptionPlan called")
 
-	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID)
+	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {

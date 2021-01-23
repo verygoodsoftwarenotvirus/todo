@@ -68,7 +68,7 @@ func buildErroneousMockRowFromOAuth2Client(c *types.OAuth2Client) *sqlmock.Rows 
 	return exampleRows
 }
 
-func TestSqlite_ScanOAuth2Clients(T *testing.T) {
+func TestClient_ScanOAuth2Clients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {

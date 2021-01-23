@@ -8,8 +8,8 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakePlan builds a faked plan.
-func BuildFakePlan() *types.AccountSubscriptionPlan {
+// BuildFakeAccountSubscriptionPlan builds a faked plan.
+func BuildFakeAccountSubscriptionPlan() *types.AccountSubscriptionPlan {
 	return &types.AccountSubscriptionPlan{
 		ID:          uint64(fake.Uint32()),
 		Name:        fake.Password(true, true, false, false, false, 32),
@@ -24,7 +24,7 @@ func BuildFakePlan() *types.AccountSubscriptionPlan {
 func BuildFakePlanList() *types.AccountSubscriptionPlanList {
 	var examples []*types.AccountSubscriptionPlan
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, BuildFakePlan())
+		examples = append(examples, BuildFakeAccountSubscriptionPlan())
 	}
 
 	return &types.AccountSubscriptionPlanList{
@@ -50,7 +50,7 @@ func BuildFakePlanUpdateInputFromPlan(plan *types.AccountSubscriptionPlan) *type
 
 // BuildFakePlanCreationInput builds a faked AccountSubscriptionPlanCreationInput.
 func BuildFakePlanCreationInput() *types.AccountSubscriptionPlanCreationInput {
-	plan := BuildFakePlan()
+	plan := BuildFakeAccountSubscriptionPlan()
 	return BuildFakePlanCreationInputFromPlan(plan)
 }
 

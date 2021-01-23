@@ -142,7 +142,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
@@ -215,7 +215,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
@@ -261,7 +261,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
 			return examplePlan.ID
 		}
@@ -298,7 +298,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
 			return examplePlan.ID
 		}
@@ -335,7 +335,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
 			return examplePlan.ID
 		}
@@ -381,7 +381,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
 
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -455,7 +455,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
 
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -496,7 +496,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
 
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -537,7 +537,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
 
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -588,7 +588,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
 			return examplePlan.ID
 		}
@@ -629,7 +629,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
 			return examplePlan.ID
 		}
@@ -666,7 +666,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
 			return examplePlan.ID
 		}
@@ -703,7 +703,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
 			return examplePlan.ID
 		}

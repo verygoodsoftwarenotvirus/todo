@@ -101,7 +101,7 @@ func TestPostgres_buildGetPlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.id = $1"
 		expectedArgs := []interface{}{
@@ -122,7 +122,7 @@ func TestPostgres_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		q, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := q.BuildGetAccountSubscriptionPlanQuery(examplePlan.ID)
@@ -142,7 +142,7 @@ func TestPostgres_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		q, mockDB := buildTestService(t)
 
@@ -304,7 +304,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.BuildGetAccountSubscriptionPlansQuery(filter)
 
@@ -327,7 +327,7 @@ func TestPostgres_buildCreatePlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "INSERT INTO account_subscription_plans (name,description,price,period) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 		expectedArgs := []interface{}{
@@ -352,7 +352,7 @@ func TestPostgres_CreatePlan(T *testing.T) {
 		ctx := context.Background()
 
 		q, mockDB := buildTestService(t)
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.BuildCreateAccountSubscriptionPlanQuery(examplePlan)
@@ -372,7 +372,7 @@ func TestPostgres_CreatePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
@@ -396,7 +396,7 @@ func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "UPDATE account_subscription_plans SET name = $1, description = $2, price = $3, period = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5 RETURNING last_updated_on"
 		expectedArgs := []interface{}{
@@ -423,7 +423,7 @@ func TestPostgres_UpdatePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.BuildUpdateAccountSubscriptionPlanQuery(examplePlan)
 
@@ -444,7 +444,7 @@ func TestPostgres_UpdatePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.BuildUpdateAccountSubscriptionPlanQuery(examplePlan)
 
@@ -466,7 +466,7 @@ func TestPostgres_buildArchivePlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "UPDATE account_subscription_plans SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $1 RETURNING archived_on"
 		expectedArgs := []interface{}{
@@ -489,7 +489,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.BuildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -508,7 +508,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.BuildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -528,7 +528,7 @@ func TestPostgres_ArchivePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.BuildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -550,7 +550,7 @@ func TestPostgres_LogPlanCreationEvent(T *testing.T) {
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
 
-		exampleInput := fakes.BuildFakePlan()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -576,7 +576,7 @@ func TestPostgres_LogPlanUpdateEvent(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
 		exampleChanges := []types.FieldChangeSummary{}
-		exampleInput := fakes.BuildFakePlan()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -601,7 +601,7 @@ func TestPostgres_LogPlanArchiveEvent(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakePlan()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

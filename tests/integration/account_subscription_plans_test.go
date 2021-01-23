@@ -38,7 +38,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakePlan()
+			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 			adminClientLock.Lock()
@@ -91,7 +91,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			var created []*types.AccountSubscriptionPlan
 			for i := 0; i < 5; i++ {
 				// Create plan.
-				examplePlan := fakes.BuildFakePlan()
+				examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 				examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 				createdPlan, planCreationErr := adminClient.CreatePlan(ctx, examplePlanInput)
 				checkValueAndError(t, createdPlan, planCreationErr)
@@ -141,7 +141,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakePlan()
+			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 			adminClientLock.Lock()
@@ -171,7 +171,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			examplePlan := fakes.BuildFakePlan()
+			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 			examplePlan.ID = nonexistentID
 
 			adminClientLock.Lock()
@@ -187,7 +187,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakePlan()
+			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 			adminClientLock.Lock()
@@ -197,7 +197,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			checkValueAndError(t, createdPlan, err)
 
 			// Change plan.
-			createdPlan.Update(converters.ConvertPlanToPlanUpdateInput(examplePlan))
+			createdPlan.Update(converters.ConvertAccountSubscriptionPlanToPlanUpdateInput(examplePlan))
 			assert.NoError(t, adminClient.UpdatePlan(ctx, createdPlan))
 
 			// Fetch plan.
@@ -235,7 +235,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakePlan()
+			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 			adminClientLock.Lock()
@@ -258,7 +258,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			examplePlan := fakes.BuildFakePlan()
+			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 			examplePlan.ID = nonexistentID
 
 			adminClientLock.Lock()
@@ -280,7 +280,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer adminClientLock.Unlock()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakePlan()
+			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 			createdPlan, err := adminClient.CreatePlan(ctx, examplePlanInput)
 			checkValueAndError(t, createdPlan, err)

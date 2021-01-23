@@ -101,7 +101,7 @@ func TestSqlite_buildGetPlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.id = ?"
 		expectedArgs := []interface{}{
@@ -122,7 +122,7 @@ func TestSqlite_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		q, mockDB := buildTestService(t)
 		expectedQuery, expectedArgs := q.buildGetPlanQuery(examplePlan.ID)
@@ -142,7 +142,7 @@ func TestSqlite_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		q, mockDB := buildTestService(t)
 
@@ -304,7 +304,7 @@ func TestSqlite_GetPlans(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		filter := types.DefaultQueryFilter()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.buildGetPlansQuery(filter)
 
@@ -327,7 +327,7 @@ func TestSqlite_buildCreatePlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "INSERT INTO account_subscription_plans (name,description,price,period) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
@@ -352,7 +352,7 @@ func TestSqlite_CreatePlan(T *testing.T) {
 		ctx := context.Background()
 
 		q, mockDB := buildTestService(t)
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery, expectedArgs := q.buildCreatePlanQuery(examplePlan)
@@ -376,7 +376,7 @@ func TestSqlite_CreatePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
@@ -400,7 +400,7 @@ func TestSqlite_buildUpdatePlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "UPDATE account_subscription_plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
 		expectedArgs := []interface{}{
@@ -427,7 +427,7 @@ func TestSqlite_UpdatePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
@@ -447,7 +447,7 @@ func TestSqlite_UpdatePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.buildUpdatePlanQuery(examplePlan)
 
@@ -469,7 +469,7 @@ func TestSqlite_buildArchivePlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "UPDATE account_subscription_plans SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
@@ -492,7 +492,7 @@ func TestSqlite_ArchivePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.buildArchivePlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -511,7 +511,7 @@ func TestSqlite_ArchivePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.buildArchivePlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -531,7 +531,7 @@ func TestSqlite_ArchivePlan(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery, expectedArgs := q.buildArchivePlanQuery(examplePlan.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
@@ -553,7 +553,7 @@ func TestSqlite_LogPlanCreationEvent(T *testing.T) {
 		ctx := context.Background()
 		q, mockDB := buildTestService(t)
 
-		exampleInput := fakes.BuildFakePlan()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleInput)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -577,7 +577,7 @@ func TestSqlite_LogPlanUpdateEvent(T *testing.T) {
 		q, mockDB := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
 		exampleChanges := []types.FieldChangeSummary{}
-		exampleInput := fakes.BuildFakePlan()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleInput.ID, exampleChanges)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
@@ -600,7 +600,7 @@ func TestSqlite_LogPlanArchiveEvent(T *testing.T) {
 
 		q, mockDB := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakePlan()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleInput.ID)
 		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 

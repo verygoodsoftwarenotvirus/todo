@@ -18,7 +18,7 @@ func TestClient_GetPlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		c, mockDB := buildTestClient()
 		mockDB.AccountSubscriptionPlanDataManager.On("GetAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(examplePlan, nil)
@@ -96,7 +96,7 @@ func TestClient_CreatePlan(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		c, mockDB := buildTestClient()
@@ -118,7 +118,7 @@ func TestClient_UpdatePlan(T *testing.T) {
 		ctx := context.Background()
 		var expected error
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		c, mockDB := buildTestClient()
 
@@ -140,7 +140,7 @@ func TestClient_ArchivePlan(T *testing.T) {
 
 		var expected error
 
-		examplePlan := fakes.BuildFakePlan()
+		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		c, mockDB := buildTestClient()
 		mockDB.AccountSubscriptionPlanDataManager.On("ArchiveAccountSubscriptionPlan", mock.Anything, examplePlan.ID).Return(expected)

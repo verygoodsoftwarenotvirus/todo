@@ -61,7 +61,7 @@ type (
 		BuildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{})
 		BuildGetAllOAuth2ClientsCountQuery() string
 		BuildGetOAuth2ClientsQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
-		BuildCreateOAuth2ClientQuery(input *OAuth2Client) (query string, args []interface{})
+		BuildCreateOAuth2ClientQuery(input *OAuth2ClientCreationInput) (query string, args []interface{})
 		BuildUpdateOAuth2ClientQuery(input *OAuth2Client) (query string, args []interface{})
 		BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{})

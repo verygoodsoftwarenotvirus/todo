@@ -42,7 +42,7 @@ func (m *AccountSQLQueryBuilder) BuildGetAccountsQuery(userID uint64, forAdmin b
 }
 
 // BuildCreateAccountQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildCreateAccountQuery(input *types.Account) (query string, args []interface{}) {
+func (m *AccountSQLQueryBuilder) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

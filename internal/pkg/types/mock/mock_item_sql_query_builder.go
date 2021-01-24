@@ -56,7 +56,7 @@ func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(userID uint64, limit uin
 }
 
 // BuildCreateItemQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildCreateItemQuery(input *types.Item) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildCreateItemQuery(input *types.ItemCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

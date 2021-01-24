@@ -49,7 +49,7 @@ func (m *OAuth2ClientSQLQueryBuilder) BuildGetOAuth2ClientsQuery(userID uint64, 
 }
 
 // BuildCreateOAuth2ClientQuery implements our interface.
-func (m *OAuth2ClientSQLQueryBuilder) BuildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+func (m *OAuth2ClientSQLQueryBuilder) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

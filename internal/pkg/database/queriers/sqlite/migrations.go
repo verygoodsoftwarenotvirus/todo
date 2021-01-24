@@ -169,7 +169,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		d := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
 		if err := darwin.Migrate(d, migrations, nil); err != nil {
-			panic(fmt.Errorf("error migrating database: %w", err))
+			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}
 }

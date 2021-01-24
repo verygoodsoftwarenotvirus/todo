@@ -9,11 +9,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.AuditLogEntryDataManager = (*Client)(nil)
+var (
+	_ types.AuditLogEntryDataManager = (*Client)(nil)
+)
 
 // scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
 func (c *Client) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
@@ -37,7 +38,7 @@ func (c *Client) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (e
 	return entry, totalCount, nil
 }
 
-// scanAuditLogEntries takes some database rows and turns them into a slice of .
+// scanAuditLogEntries takes some database rows and turns them into a slice of AuditLogEntry pointers.
 func (c *Client) scanAuditLogEntries(rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
 	for rows.Next() {
 		x, tc, scanErr := c.scanAuditLogEntry(rows, includeCounts)
@@ -78,8 +79,11 @@ func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.A
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	entry, _, err := c.scanAuditLogEntry(row, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning audit log entry: %w", err)
+	}
 
-	return entry, err
+	return entry, nil
 }
 
 // GetAllAuditLogEntriesCount fetches the count of audit log entries from the database that meet a particular filter.
@@ -89,9 +93,11 @@ func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, 
 
 	c.logger.Debug("GetAllAuditLogEntriesCount called")
 
-	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery()).Scan(&count)
+	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery()).Scan(&count); err != nil {
+		return 0, fmt.Errorf("executing audit log entries count query: %w", err)
+	}
 
-	return count, err
+	return count, nil
 }
 
 // GetAllAuditLogEntries fetches a list of all audit log entries in the database.
@@ -103,7 +109,7 @@ func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*type
 
 	count, countErr := c.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of entries: %w", countErr)
+		return fmt.Errorf("fetching count of entries: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -158,9 +164,8 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	x.Entries, x.TotalCount, err = c.scanAuditLogEntries(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+	if x.Entries, x.TotalCount, err = c.scanAuditLogEntries(rows, true); err != nil {
+		return nil, fmt.Errorf("scanning audit log entry: %w", err)
 	}
 
 	return x, nil
@@ -168,16 +173,14 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 
 // createAuditLogEntry creates an audit log entry in the database.
 func (c *Client) createAuditLogEntry(ctx context.Context, input *types.AuditLogEntryCreationInput) {
-	x := &types.AuditLogEntry{
-		EventType: input.EventType,
-		Context:   input.Context,
-	}
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
 
 	c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Debug("createAuditLogEntry called")
-	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(x)
+	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	// create the audit log entry.
-	if _, err := c.db.ExecContext(ctx, query, args...); err != nil {
+	if err := c.execContext(ctx, "audit log entry creation", query, args...); err != nil {
 		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

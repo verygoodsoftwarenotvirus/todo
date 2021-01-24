@@ -68,7 +68,7 @@ func (i *Image) Write(w http.ResponseWriter) error {
 	w.Header().Set("Content-Length", strconv.Itoa(i.Size))
 
 	if _, err := w.Write(i.Data); err != nil {
-		return fmt.Errorf("error writing image to HTTP response: %w", err)
+		return fmt.Errorf("writing image to HTTP response: %w", err)
 	}
 
 	return nil
@@ -122,7 +122,7 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 
 	file, info, err := req.FormFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("error reading image from request: %w", err)
+		return nil, fmt.Errorf("reading image from request: %w", err)
 	}
 
 	if contentTypeErr := validateContentType(info.Filename); contentTypeErr != nil {
@@ -131,11 +131,11 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 
 	bs, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("error reading attached image: %w", err)
+		return nil, fmt.Errorf("reading attached image: %w", err)
 	}
 
 	if _, _, err = image.Decode(bytes.NewReader(bs)); err != nil {
-		return nil, fmt.Errorf("error decoding attached image: %w", err)
+		return nil, fmt.Errorf("decoding attached image: %w", err)
 	}
 
 	i := &Image{

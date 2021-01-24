@@ -160,11 +160,11 @@ func localDevelopmentConfig(filePath string) error {
 
 	vConfig, err := viper.FromConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("error converting config object: %w", err)
+		return fmt.Errorf("converting config object: %w", err)
 	}
 
 	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
+		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 	}
 
 	return nil
@@ -249,11 +249,11 @@ func frontendTestsConfig(filePath string) error {
 
 	vConfig, err := viper.FromConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("error converting config object: %w", err)
+		return fmt.Errorf("converting config object: %w", err)
 	}
 
 	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
+		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 	}
 
 	return nil
@@ -344,11 +344,11 @@ func coverageConfig(filePath string) error {
 
 	vConfig, err := viper.FromConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("error converting config object: %w", err)
+		return fmt.Errorf("converting config object: %w", err)
 	}
 
 	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
+		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 	}
 
 	return nil
@@ -445,11 +445,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 
 		vConfig, err := viper.FromConfig(cfg)
 		if err != nil {
-			return fmt.Errorf("error converting config object: %w", err)
+			return fmt.Errorf("converting config object: %w", err)
 		}
 
 		if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-			return fmt.Errorf("error writing developmentEnv config: %w", writeErr)
+			return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 		}
 
 		return nil

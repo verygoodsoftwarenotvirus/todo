@@ -34,7 +34,7 @@ func (c *Client) UpdateAccountStatus(ctx context.Context, input *types.AccountSt
 
 	req, err := c.BuildAccountStatusUpdateInputRequest(ctx, input)
 	if err != nil {
-		return fmt.Errorf("error building user account status update request: %w", err)
+		return fmt.Errorf("building user account status update request: %w", err)
 	}
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)

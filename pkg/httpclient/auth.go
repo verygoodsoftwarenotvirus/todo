@@ -44,7 +44,7 @@ func (c *Client) Status(ctx context.Context, cookie *http.Cookie) (*types.UserSt
 
 	req, err := c.BuildStatusRequest(ctx, cookie)
 	if err != nil {
-		return nil, fmt.Errorf("error building login request: %w", err)
+		return nil, fmt.Errorf("building login request: %w", err)
 	}
 
 	var output *types.UserStatusResponse
@@ -81,7 +81,7 @@ func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.
 
 	req, err := c.BuildLoginRequest(ctx, input)
 	if err != nil {
-		return nil, fmt.Errorf("error building login request: %w", err)
+		return nil, fmt.Errorf("building login request: %w", err)
 	}
 
 	res, err := c.plainClient.Do(req)
@@ -116,7 +116,7 @@ func (c *Client) Logout(ctx context.Context) error {
 
 	req, err := c.BuildLogoutRequest(ctx)
 	if err != nil {
-		return fmt.Errorf("error building login request: %w", err)
+		return fmt.Errorf("building login request: %w", err)
 	}
 
 	res, err := c.authedClient.Do(req)
@@ -157,7 +157,7 @@ func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input 
 
 	req, err := c.BuildChangePasswordRequest(ctx, cookie, input)
 	if err != nil {
-		return fmt.Errorf("error building password change request: %w", err)
+		return fmt.Errorf("building password change request: %w", err)
 	}
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
@@ -202,7 +202,7 @@ func (c *Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, 
 
 	req, err := c.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
 	if err != nil {
-		return nil, fmt.Errorf("error building password change request: %w", err)
+		return nil, fmt.Errorf("building password change request: %w", err)
 	}
 
 	var output *types.TOTPSecretRefreshResponse
@@ -231,7 +231,7 @@ func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token stri
 
 	req, err := c.BuildVerifyTOTPSecretRequest(ctx, userID, token)
 	if err != nil {
-		return fmt.Errorf("error building TOTP validation request: %w", err)
+		return fmt.Errorf("building TOTP validation request: %w", err)
 	}
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)

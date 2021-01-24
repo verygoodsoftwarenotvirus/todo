@@ -61,7 +61,7 @@ type (
 		BuildGetAllWebhooksCountQuery() string
 		BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{})
 		BuildGetWebhooksQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
-		BuildCreateWebhookQuery(x *Webhook) (query string, args []interface{})
+		BuildCreateWebhookQuery(x *WebhookCreationInput) (query string, args []interface{})
 		BuildUpdateWebhookQuery(input *Webhook) (query string, args []interface{})
 		BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{})

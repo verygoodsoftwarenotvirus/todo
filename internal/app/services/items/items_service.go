@@ -52,7 +52,7 @@ func ProvideService(
 ) (types.ItemDataService, error) {
 	itemCounter, err := itemCounterProvider(counterName, counterDescription)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing counter: %w", err)
+		return nil, fmt.Errorf("initializing counter: %w", err)
 	}
 
 	logger.WithValue("index_path", searchSettings.ItemsIndexPath).Debug("setting up items search index")

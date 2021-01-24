@@ -101,7 +101,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) 
 }
 
 // BuildCreateUserRequest builds an HTTP request for creating a user.
-func (c *Client) BuildCreateUserRequest(ctx context.Context, body *types.UserCreationInput) (*http.Request, error) {
+func (c *Client) BuildCreateUserRequest(ctx context.Context, body *types.NewUserCreationInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -111,7 +111,7 @@ func (c *Client) BuildCreateUserRequest(ctx context.Context, body *types.UserCre
 }
 
 // CreateUser creates a new user.
-func (c *Client) CreateUser(ctx context.Context, input *types.UserCreationInput) (*types.UserCreationResponse, error) {
+func (c *Client) CreateUser(ctx context.Context, input *types.NewUserCreationInput) (*types.UserCreationResponse, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -190,7 +190,7 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, filename string) 
 
 	avatarBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("error reading avatar file: %w", err)
+		return nil, fmt.Errorf("reading avatar file: %w", err)
 	}
 
 	body := &bytes.Buffer{}
@@ -198,15 +198,15 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, filename string) 
 
 	part, err := writer.CreateFormFile("avatar", fmt.Sprintf("avatar.%s", filepath.Ext(filename)))
 	if err != nil {
-		return nil, fmt.Errorf("error writing to form file: %w", err)
+		return nil, fmt.Errorf("writing to form file: %w", err)
 	}
 
 	if _, copyErr := io.Copy(part, bytes.NewReader(avatarBytes)); copyErr != nil {
-		return nil, fmt.Errorf("error copying file contents to request: %w", copyErr)
+		return nil, fmt.Errorf("copying file contents to request: %w", copyErr)
 	}
 
 	if closeErr := writer.Close(); closeErr != nil {
-		return nil, fmt.Errorf("error closing avatar file: %w", closeErr)
+		return nil, fmt.Errorf("closing avatar file: %w", closeErr)
 	}
 
 	uri := c.BuildURL(
@@ -218,7 +218,7 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, filename string) 
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, body)
 	if err != nil {
-		return nil, fmt.Errorf("error building HTTP request: %w", err)
+		return nil, fmt.Errorf("building HTTP request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())

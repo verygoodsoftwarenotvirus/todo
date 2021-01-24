@@ -200,7 +200,7 @@ func (q *Postgres) CreateAccountSubscriptionPlan(ctx context.Context, input *typ
 	// create the plan.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, fmt.Errorf("error executing plan creation query: %w", err)
+		return nil, fmt.Errorf("executing plan creation query: %w", err)
 	}
 
 	return x, nil

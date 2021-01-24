@@ -578,6 +578,7 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 
 		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		expectedQuery := "INSERT INTO webhooks (name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, created_on"
 		expectedArgs := []interface{}{
@@ -590,7 +591,7 @@ func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, queriers.WebhooksTableTopicsSeparator),
 			exampleWebhook.BelongsToUser,
 		}
-		actualQuery, actualArgs := q.BuildCreateWebhookQuery(exampleWebhook)
+		actualQuery, actualArgs := q.BuildCreateWebhookQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -610,7 +611,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleWebhook.ID, exampleWebhook.CreatedOn)
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.BuildCreateWebhookQuery(exampleWebhook)
+		expectedQuery, expectedArgs := q.BuildCreateWebhookQuery(exampleInput)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -631,7 +632,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.BuildCreateWebhookQuery(exampleWebhook)
+		expectedQuery, expectedArgs := q.BuildCreateWebhookQuery(exampleInput)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

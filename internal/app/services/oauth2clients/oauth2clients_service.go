@@ -105,7 +105,7 @@ func ProvideOAuth2ClientsService(
 
 	var err error
 	if svc.oauth2ClientCounter, err = counterProvider(counterName, counterDescription); err != nil {
-		return nil, fmt.Errorf("error initializing counter: %w", err)
+		return nil, fmt.Errorf("initializing counter: %w", err)
 	}
 
 	return svc, nil

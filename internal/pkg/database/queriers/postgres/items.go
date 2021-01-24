@@ -163,7 +163,7 @@ func (q *Postgres) BuildGetBatchOfItemsQuery(beginID, endID uint64) (query strin
 func (q *Postgres) GetAllItems(ctx context.Context, resultChannel chan []*types.Item, batchSize uint16) error {
 	count, countErr := q.GetAllItemsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -364,7 +364,7 @@ func (q *Postgres) CreateItem(ctx context.Context, input *types.ItemCreationInpu
 	// create the item.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, fmt.Errorf("error executing item creation query: %w", err)
+		return nil, fmt.Errorf("executing item creation query: %w", err)
 	}
 
 	return x, nil

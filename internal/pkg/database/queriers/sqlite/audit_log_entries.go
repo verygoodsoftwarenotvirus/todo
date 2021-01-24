@@ -137,7 +137,7 @@ func (c *Sqlite) buildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (que
 func (c *Sqlite) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry, batchSize uint16) error {
 	count, countErr := c.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of entries: %w", countErr)
+		return fmt.Errorf("fetching count of entries: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {

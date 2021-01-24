@@ -81,7 +81,7 @@ func main() {
 
 	parsedURI, uriParseErr := url.Parse(uri)
 	if uriParseErr != nil {
-		quitter.ComplainAndQuit(fmt.Errorf("error parsing provided url: %w", uriParseErr))
+		quitter.ComplainAndQuit(fmt.Errorf("parsing provided url: %w", uriParseErr))
 	}
 	if parsedURI.Scheme == "" {
 		quitter.ComplainAndQuit("provided URI missing scheme")
@@ -95,7 +95,7 @@ func main() {
 			// create user.
 			createdUser, userCreationErr := testutil.CreateServiceUser(ctx, uri, "", debug)
 			if userCreationErr != nil {
-				quitter.ComplainAndQuit(fmt.Errorf("error creating user #%d: %w", x, userCreationErr))
+				quitter.ComplainAndQuit(fmt.Errorf("creating user #%d: %w", x, userCreationErr))
 			}
 
 			if x == 0 && singleUserMode {
@@ -118,7 +118,7 @@ func main() {
 
 			createdOAuth2Client, oauth2ClientCreationErr = testutil.CreateObligatoryOAuth2Client(ctx, uri, createdUser)
 			if oauth2ClientCreationErr != nil {
-				quitter.ComplainAndQuit(fmt.Errorf("error creating oauth2 client for user #%d: %w", x, oauth2ClientCreationErr))
+				quitter.ComplainAndQuit(fmt.Errorf("creating oauth2 client for user #%d: %w", x, oauth2ClientCreationErr))
 			}
 			userLogger.WithValue(keys.OAuth2ClientIDKey, createdOAuth2Client.ClientID).Debug("created oauth2 client")
 
@@ -143,7 +143,7 @@ func main() {
 
 					createdOAuth2Client, oauth2ClientCreationErr = testutil.CreateObligatoryOAuth2Client(ctx, uri, createdUser)
 					if oauth2ClientCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("error creating oauth2 client #%d for user #%d: %w", j, x, oauth2ClientCreationErr))
+						quitter.ComplainAndQuit(fmt.Errorf("creating oauth2 client #%d for user #%d: %w", j, x, oauth2ClientCreationErr))
 					}
 
 					iterationLogger.WithValue(keys.OAuth2ClientIDKey, createdOAuth2Client.ClientID).Debug("created oauth2 client")
@@ -158,7 +158,7 @@ func main() {
 
 					createdWebhook, webhookCreationErr := userClient.CreateWebhook(ctx, fakes.BuildFakeWebhookCreationInput())
 					if webhookCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("error creating webhook #%d: %w", j, webhookCreationErr))
+						quitter.ComplainAndQuit(fmt.Errorf("creating webhook #%d: %w", j, webhookCreationErr))
 					}
 					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhook.ID).Debug("created webhook")
 				}
@@ -173,7 +173,7 @@ func main() {
 					// create item
 					createdItem, itemCreationErr := userClient.CreateItem(ctx, fakes.BuildFakeItemCreationInput())
 					if itemCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("error creating item #%d: %w", j, itemCreationErr))
+						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
 					}
 					iterationLogger.WithValue(keys.WebhookIDKey, createdItem.ID).Debug("created item")
 				}

@@ -17,9 +17,6 @@ import (
 var (
 	_ types.UserDataManager  = (*Client)(nil)
 	_ types.UserAuditManager = (*Client)(nil)
-
-	// ErrUserExists is a sentinel error for returning when a username is taken.
-	ErrUserExists = errors.New("error: username already exists")
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
@@ -93,25 +90,41 @@ func (c *Client) scanUsers(rows database.ResultIterator, includeCounts bool) (us
 	return users, filteredCount, totalCount, nil
 }
 
+// getUser fetches a user.
+func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSecret bool) (*types.User, error) {
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
+
+	logger.Debug("GetUser called")
+
+	var (
+		query string
+		args  []interface{}
+	)
+
+	if withVerifiedTOTPSecret {
+		query, args = c.sqlQueryBuilder.BuildGetUserQuery(userID)
+	} else {
+		query, args = c.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+	}
+
+	row := c.db.QueryRowContext(ctx, query, args...)
+
+	u, _, _, err := c.scanUser(row, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning user: %w", err)
+	}
+
+	return u, nil
+}
+
 // GetUser fetches a user.
 func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
-	logger.Debug("GetUser called")
-
-	query, args := c.sqlQueryBuilder.BuildGetUserQuery(userID)
-	row := c.db.QueryRowContext(ctx, query, args...)
-
-	u, _, _, err := c.scanUser(row, false)
-	if err != nil {
-		return nil, fmt.Errorf("fetching user from database: %w", err)
-	}
-
-	return u, err
+	return c.getUser(ctx, userID, true)
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified 2FA secret.
@@ -120,19 +133,8 @@ func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userI
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
-	logger.Debug("GetUserWithUnverifiedTwoFactorSecret called")
-
-	query, args := c.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
-	row := c.db.QueryRowContext(ctx, query, args...)
-
-	u, _, _, err := c.scanUser(row, false)
-	if err != nil {
-		return nil, fmt.Errorf("fetching user from database: %w", err)
-	}
-
-	return u, err
+	return c.getUser(ctx, userID, false)
 }
 
 // GetUserByUsername fetches a user by their username.
@@ -154,7 +156,7 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("fetching user from database: %w", err)
+		return nil, fmt.Errorf("scanning user: %w", err)
 	}
 
 	return u, nil
@@ -171,7 +173,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error querying database for users: %w", err)
+		return nil, fmt.Errorf("querying database for users: %w", err)
 	}
 
 	u, _, _, err := c.scanUsers(rows, false)
@@ -180,7 +182,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("fetching user from database: %w", err)
+		return nil, fmt.Errorf("scanning user: %w", err)
 	}
 
 	return u, nil
@@ -193,10 +195,11 @@ func (c *Client) GetAllUsersCount(ctx context.Context) (count uint64, err error)
 
 	c.logger.Debug("GetAllUsersCount called")
 
-	query := c.sqlQueryBuilder.BuildGetAllUsersCountQuery()
-	err = c.db.QueryRowContext(ctx, query).Scan(&count)
+	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllUsersCountQuery()).Scan(&count); err != nil {
+		return 0, fmt.Errorf("executing users count query: %w", err)
+	}
 
-	return count, err
+	return count, nil
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
@@ -205,24 +208,22 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *ty
 	defer span.End()
 
 	x = &types.UserList{}
-	logger := c.logger.WithValue(keys.FilterIsNilKey, filter == nil)
+
+	c.logger.WithValue(keys.FilterIsNilKey, filter == nil).Debug("GetUsers called")
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	logger.Debug("GetUsers called")
-
 	query, args := c.sqlQueryBuilder.BuildGetUsersQuery(filter)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("fetching user from database: %w", err)
+		return nil, fmt.Errorf("scanning user: %w", err)
 	}
 
-	x.Users, x.FilteredCount, x.TotalCount, err = c.scanUsers(rows, true)
-	if err != nil {
+	if x.Users, x.FilteredCount, x.TotalCount, err = c.scanUsers(rows, true); err != nil {
 		return nil, fmt.Errorf("loading response from database: %w", err)
 	}
 
@@ -235,25 +236,23 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, input.Username)
-	logger := c.logger.WithValue(keys.UsernameKey, input.Username)
+	c.logger.WithValue(keys.UsernameKey, input.Username).Debug("CreateUser called")
 
-	logger.Debug("CreateUser called")
-
-	x := &types.User{
-		Username:        input.Username,
-		HashedPassword:  input.HashedPassword,
-		TwoFactorSecret: input.TwoFactorSecret,
-	}
 	query, args := c.sqlQueryBuilder.BuildCreateUserQuery(input)
 
 	// create the user.
-	res, err := c.db.ExecContext(ctx, query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "user creation", query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing user creation query: %w", err)
+		return nil, err
 	}
 
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
+	x := &types.User{
+		ID:              c.getIDFromResult(res),
+		Username:        input.Username,
+		HashedPassword:  input.HashedPassword,
+		TwoFactorSecret: input.TwoFactorSecret,
+		CreatedOn:       c.currentTime(),
+	}
 
 	return x, nil
 }
@@ -268,9 +267,8 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 	c.logger.WithValue(keys.UsernameKey, updated.Username).Debug("UpdateUser called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "user update", query, args...)
 }
 
 // UpdateUserPassword updates a user's password hash in the database.
@@ -282,9 +280,8 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserPassword called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "user password update", query, args...)
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
@@ -296,9 +293,8 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("VerifyUserTwoFactorSecret called")
 
 	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "user two factor secret verification", query, args...)
 }
 
 // ArchiveUser archives a user.
@@ -310,9 +306,8 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("ArchiveUser called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "user archive", query, args...)
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.

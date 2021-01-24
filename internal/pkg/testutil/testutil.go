@@ -126,7 +126,7 @@ func CreateServiceUser(ctx context.Context, address, username string, debug bool
 		httpclient.WithURL(tu),
 	)
 
-	in := &types.UserCreationInput{
+	in := &types.NewUserCreationInput{
 		Username: username,
 		Password: fake.Password(true, true, true, true, true, 64),
 	}
@@ -308,14 +308,14 @@ func ParseTwoFactorSecretFromBase64EncodedQRCode(qrCode string) (string, error) 
 
 	res, err := qrcode.NewQRCodeReader().DecodeWithoutHints(bb)
 	if err != nil {
-		return "", fmt.Errorf("error decoding: %w", err)
+		return "", fmt.Errorf("decoding: %w", err)
 	}
 
 	totpDetails := res.String()
 
 	u, err := url.Parse(totpDetails)
 	if err != nil {
-		return "", fmt.Errorf("error parsing URI: %w", err)
+		return "", fmt.Errorf("parsing URI: %w", err)
 	}
 
 	return u.Query().Get("secret"), nil

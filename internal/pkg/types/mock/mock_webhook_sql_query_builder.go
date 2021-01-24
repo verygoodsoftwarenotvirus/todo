@@ -40,7 +40,7 @@ func (m *WebhookSQLQueryBuilder) BuildGetWebhooksQuery(userID uint64, filter *ty
 }
 
 // BuildCreateWebhookQuery implements our interface.
-func (m *WebhookSQLQueryBuilder) BuildCreateWebhookQuery(x *types.Webhook) (query string, args []interface{}) {
+func (m *WebhookSQLQueryBuilder) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(x)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

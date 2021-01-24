@@ -114,11 +114,11 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 	})
 }
 
-func prepareForAuditLogEntryCreation(t *testing.T, exampleAuditLogEntry *types.AuditLogEntry, mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
+func prepareForAuditLogEntryCreation(t *testing.T, exampleAuditLogEntry *types.AuditLogEntryCreationInput, mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
 	t.Helper()
 
 	fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(matchAuditLogEntry(t, exampleAuditLogEntry))).Return(fakeQuery, fakeArgs)
+	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", exampleAuditLogEntry).Return(fakeQuery, fakeArgs)
 
 	db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 		WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -139,7 +139,7 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(matchAuditLogEntry(t, exampleAuditLogEntry))).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", exampleInput).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -161,7 +161,7 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
+		prepareForAuditLogEntryCreation(t, exampleInput, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		c.createAuditLogEntry(ctx, exampleInput)

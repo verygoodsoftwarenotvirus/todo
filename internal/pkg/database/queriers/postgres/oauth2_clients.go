@@ -137,7 +137,7 @@ func (q *Postgres) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (que
 func (q *Postgres) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -320,7 +320,7 @@ func (q *Postgres) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Cl
 
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, fmt.Errorf("error executing client creation query: %w", err)
+		return nil, fmt.Errorf("executing client creation query: %w", err)
 	}
 
 	return x, nil

@@ -37,7 +37,7 @@ func newThumbnailer(contentType string, quality int) (thumbnailer, error) {
 func preprocess(i *Image, width, height uint) (*bytes.Buffer, image.Image, error) {
 	img, _, err := image.Decode(bytes.NewReader(i.Data))
 	if err != nil {
-		return nil, nil, fmt.Errorf("error decoding image: %w", err)
+		return nil, nil, fmt.Errorf("decoding image: %w", err)
 	}
 
 	thumbnail := resize.Thumbnail(width, height, img, resize.Lanczos3)
@@ -58,7 +58,7 @@ func (t *jpegThumbnailer) Thumbnail(i *Image, width, height uint, filename strin
 	}
 
 	if err = jpeg.Encode(data, thumbnail, &jpeg.Options{Quality: t.quality}); err != nil {
-		return nil, fmt.Errorf("error encoding JPEG: %w", err)
+		return nil, fmt.Errorf("encoding JPEG: %w", err)
 	}
 
 	bs := data.Bytes()
@@ -81,7 +81,7 @@ func (t *pngThumbnailer) Thumbnail(i *Image, width, height uint, filename string
 	}
 
 	if err = gif.Encode(data, thumbnail, &gif.Options{NumColors: allSupportedColors}); err != nil {
-		return nil, fmt.Errorf("error encoding JPEG: %w", err)
+		return nil, fmt.Errorf("encoding JPEG: %w", err)
 	}
 
 	bs := data.Bytes()
@@ -104,7 +104,7 @@ func (t *gifThumbnailer) Thumbnail(i *Image, width, height uint, filename string
 	}
 
 	if err = png.Encode(data, thumbnail); err != nil {
-		return nil, fmt.Errorf("error encoding PNG: %w", err)
+		return nil, fmt.Errorf("encoding PNG: %w", err)
 	}
 
 	bs := data.Bytes()

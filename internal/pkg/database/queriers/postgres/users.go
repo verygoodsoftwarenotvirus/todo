@@ -225,7 +225,7 @@ func (q *Postgres) SearchForUsersByUsername(ctx context.Context, usernameQuery s
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error querying database for users: %w", err)
+		return nil, fmt.Errorf("querying database for users: %w", err)
 	}
 
 	u, _, _, err := q.scanUsers(rows, false)
@@ -382,7 +382,7 @@ func (q *Postgres) CreateUser(ctx context.Context, input types.UserDataStoreCrea
 			return nil, dbclient.ErrUserExists
 		}
 
-		return nil, fmt.Errorf("error executing user creation query: %w", err)
+		return nil, fmt.Errorf("executing user creation query: %w", err)
 	}
 
 	return x, nil

@@ -153,7 +153,7 @@ func (c *Sqlite) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query stri
 func (c *Sqlite) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, batchSize uint16) error {
 	count, countErr := c.GetAllAccountsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of accounts: %w", countErr)
+		return fmt.Errorf("fetching count of accounts: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -287,11 +287,10 @@ func (c *Sqlite) CreateAccount(ctx context.Context, input *types.AccountCreation
 	// create the account.
 	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing account creation query: %w", err)
+		return nil, fmt.Errorf("executing account creation query: %w", err)
 	}
 
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
+	x.ID, x.CreatedOn = c.getIDFromResult(res), c.timeTeller.Now()
 
 	return x, nil
 }

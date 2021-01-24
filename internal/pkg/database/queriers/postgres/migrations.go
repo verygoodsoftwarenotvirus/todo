@@ -173,7 +173,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
 		if err := darwin.Migrate(driver, migrations, nil); err != nil {
-			panic(fmt.Errorf("error migrating database: %w", err))
+			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}
 }

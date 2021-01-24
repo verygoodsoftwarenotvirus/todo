@@ -13,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -361,7 +360,7 @@ func TestClient_GetPlans(T *testing.T) {
 	})
 }
 
-func TestClient_CreatePlan(T *testing.T) {
+func TestClient_CreateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -376,7 +375,7 @@ func TestClient_CreatePlan(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildCreateAccountSubscriptionPlanQuery", mock.MatchedBy(matchAccountSubscriptionPlan(t, exampleAccountSubscriptionPlan))).
+			On("BuildCreateAccountSubscriptionPlanQuery", exampleInput).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -384,9 +383,9 @@ func TestClient_CreatePlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
 
-		stt := &queriers.MockTimeTeller{}
-		stt.On("Now").Return(exampleAccountSubscriptionPlan.CreatedOn)
-		c.timeTeller = stt
+		c.timeFunc = func() uint64 {
+			return exampleAccountSubscriptionPlan.CreatedOn
+		}
 
 		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.NoError(t, err)
@@ -408,17 +407,13 @@ func TestClient_CreatePlan(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildCreateAccountSubscriptionPlanQuery", mock.MatchedBy(matchAccountSubscriptionPlan(t, exampleAccountSubscriptionPlan))).
+			On("BuildCreateAccountSubscriptionPlanQuery", exampleInput).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(expectedError)
-
-		stt := &queriers.MockTimeTeller{}
-		stt.On("Now").Return(exampleAccountSubscriptionPlan.CreatedOn)
-		c.timeTeller = stt
 
 		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.Error(t, err)
@@ -574,7 +569,7 @@ func TestClient_LogAccountSubscriptionPlanCreationEvent(T *testing.T) {
 		t.Parallel()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleAccountSubscriptionPlan))
+		exampleAuditLogEntry := audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleAccountSubscriptionPlan)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -598,7 +593,7 @@ func TestClient_AccountSubscriptionLogPlanUpdateEvent(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleFieldChangeSummaryList := []types.FieldChangeSummary{}
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleAccountSubscriptionPlan.ID, exampleFieldChangeSummaryList))
+		exampleAuditLogEntry := audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleAccountSubscriptionPlan.ID, exampleFieldChangeSummaryList)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -621,7 +616,7 @@ func TestClient_AccountSubscriptionLogPlanArchiveEvent(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleAccountSubscriptionPlan.ID))
+		exampleAuditLogEntry := audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleAccountSubscriptionPlan.ID)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)

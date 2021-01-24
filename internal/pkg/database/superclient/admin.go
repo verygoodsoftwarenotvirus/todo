@@ -2,7 +2,6 @@ package superclient
 
 import (
 	"context"
-	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -11,20 +10,6 @@ import (
 )
 
 var _ types.AdminUserDataManager = (*Client)(nil)
-
-// updateUserAccountStatus updates a user's account status.
-func (c *Client) updateUserAccountStatus(ctx context.Context, query string, args []interface{}) error {
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return err
-	}
-
-	if count, rowsAffectedErr := res.RowsAffected(); count == 0 || rowsAffectedErr != nil {
-		return sql.ErrNoRows
-	}
-
-	return nil
-}
 
 // UpdateUserAccountStatus updates a user's account status.
 func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
@@ -36,7 +21,7 @@ func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, inp
 
 	query, args := c.sqlQueryBuilder.BuildSetUserStatusQuery(userID, input)
 
-	return c.updateUserAccountStatus(ctx, query, args)
+	return c.execContext(ctx, "user status update query", query, args)
 }
 
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.

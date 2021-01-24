@@ -174,7 +174,7 @@ func (q *MariaDB) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query str
 func (q *MariaDB) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	count, countErr := q.GetAllWebhooksCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -300,7 +300,7 @@ func (q *MariaDB) CreateWebhook(ctx context.Context, input *types.WebhookCreatio
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
+		return nil, fmt.Errorf("executing webhook creation query: %w", err)
 	}
 
 	x.CreatedOn = q.timeTeller.Now()

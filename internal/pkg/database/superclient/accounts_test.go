@@ -257,23 +257,27 @@ func TestClient_CreateAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.
-			On("BuildCreateAccountQuery", mock.MatchedBy(matchAccount(t, exampleAccount))).
+			On("BuildCreateAccountQuery", exampleInput).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		stt := &queriers.MockTimeTeller{}
-		stt.On("Now").Return(exampleAccount.CreatedOn)
-		c.timeTeller = stt
+		c.timeFunc = func() uint64 {
+			return exampleAccount.CreatedOn
+		}
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
 
+		c.timeFunc = func() uint64 {
+			return exampleAccount.CreatedOn
+		}
+
 		actual, err := c.CreateAccount(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAccount, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder, stt)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 

@@ -182,7 +182,7 @@ func (q *MariaDB) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query str
 func (q *MariaDB) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, batchSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of accounts: %w", countErr)
+		return fmt.Errorf("fetching count of accounts: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -316,7 +316,7 @@ func (q *MariaDB) CreateAccount(ctx context.Context, input *types.AccountCreatio
 	// create the account.
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing account creation query: %w", err)
+		return nil, fmt.Errorf("executing account creation query: %w", err)
 	}
 
 	x.CreatedOn = q.timeTeller.Now()

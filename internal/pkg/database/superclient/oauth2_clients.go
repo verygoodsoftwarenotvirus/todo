@@ -96,8 +96,8 @@ func (c *Client) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, clientID)
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		"client_id": clientID,
-		"user_id":   userID,
+		"client_id":    clientID,
+		keys.UserIDKey: userID,
 	})
 	logger.Debug("GetOAuth2Client called")
 
@@ -130,8 +130,11 @@ func (c *Client) GetOAuth2ClientByClientID(ctx context.Context, clientID string)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	client, _, _, err := c.scanOAuth2Client(row, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning oauth2 client: %w", err)
+	}
 
-	return client, err
+	return client, nil
 }
 
 // GetTotalOAuth2ClientCount gets the count of OAuth2 clients that match the current filter.
@@ -141,9 +144,11 @@ func (c *Client) GetTotalOAuth2ClientCount(ctx context.Context) (count uint64, e
 
 	c.logger.Debug("GetTotalOAuth2ClientCount called")
 
-	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllOAuth2ClientsCountQuery()).Scan(&count)
+	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllOAuth2ClientsCountQuery()).Scan(&count); err != nil {
+		return 0, fmt.Errorf("executing account subscription plans count query: %w", err)
+	}
 
-	return count, err
+	return count, nil
 }
 
 // GetAllOAuth2Clients loads all OAuth2 clients into a channel.
@@ -155,7 +160,7 @@ func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []*types.
 
 	count, countErr := c.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of oauth2 clients: %w", countErr)
+		return fmt.Errorf("fetching count of oauth2 clients: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -215,8 +220,7 @@ func (c *Client) GetOAuth2Clients(ctx context.Context, userID uint64, filter *ty
 		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
 	}
 
-	x.Clients, x.FilteredCount, x.TotalCount, err = c.scanOAuth2Clients(rows, true)
-	if err != nil {
+	if x.Clients, x.FilteredCount, x.TotalCount, err = c.scanOAuth2Clients(rows, true); err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
@@ -229,27 +233,27 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 	defer span.End()
 
 	c.logger.WithValues(map[string]interface{}{
-		"oauth2client_client_id": input.ClientID,
-		"belongs_to_user":        input.BelongsToUser,
+		keys.OAuth2ClientDatabaseIDKey: input.ClientID,
+		keys.UserIDKey:                 input.BelongsToUser,
 	}).Debug("CreateOAuth2Client called")
 
+	query, args := c.sqlQueryBuilder.BuildCreateOAuth2ClientQuery(input)
+
+	res, err := c.execContextAndReturnResult(ctx, "oauth2 client creation", query, args...)
+	if err != nil {
+		return nil, err
+	}
+
 	x := &types.OAuth2Client{
+		ID:            c.getIDFromResult(res),
 		Name:          input.Name,
 		ClientID:      input.ClientID,
 		ClientSecret:  input.ClientSecret,
 		RedirectURI:   input.RedirectURI,
 		Scopes:        input.Scopes,
 		BelongsToUser: input.BelongsToUser,
+		CreatedOn:     c.currentTime(),
 	}
-	query, args := c.sqlQueryBuilder.BuildCreateOAuth2ClientQuery(x)
-
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("error executing client creation query: %w", err)
-	}
-
-	x.ID = c.getIDFromResult(res)
-	x.CreatedOn = c.timeTeller.Now()
 
 	return x, nil
 }
@@ -261,9 +265,8 @@ func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *types.OAuth2Cl
 	defer span.End()
 
 	query, args := c.sqlQueryBuilder.BuildUpdateOAuth2ClientQuery(updated)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "oauth2 client update", query, args...)
 }
 
 // ArchiveOAuth2Client archives an OAuth2 client.
@@ -275,14 +278,13 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, clientID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"client_id":       clientID,
-		"belongs_to_user": userID,
+		keys.OAuth2ClientDatabaseIDKey: clientID,
+		keys.UserIDKey:                 userID,
 	}).Debug("ArchiveOAuth2Client called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveOAuth2ClientQuery(clientID, userID)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "oauth2 client archive", query, args...)
 }
 
 // LogOAuth2ClientCreationEvent implements our AuditLogEntryDataManager interface.

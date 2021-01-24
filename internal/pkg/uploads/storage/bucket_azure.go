@@ -96,7 +96,7 @@ func provideAzureBucket(ctx context.Context, cfg *AzureConfig, logger logging.Lo
 			cfg.AccountName,
 			cfg.SharedKeyAccountKey,
 		); err != nil {
-			return nil, fmt.Errorf("error reading shared key credential: %w", err)
+			return nil, fmt.Errorf("reading shared key credential: %w", err)
 		}
 	case azureTokenAuthMethod:
 		if cfg.TokenCredentialsInitialToken == "" {
@@ -115,7 +115,7 @@ func provideAzureBucket(ctx context.Context, cfg *AzureConfig, logger logging.Lo
 		cfg.Bucketname,
 		nil,
 	); err != nil {
-		return nil, fmt.Errorf("error initializing azure bucket: %w", err)
+		return nil, fmt.Errorf("initializing azure bucket: %w", err)
 	}
 
 	return bucket, nil

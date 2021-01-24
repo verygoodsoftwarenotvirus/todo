@@ -139,7 +139,7 @@ func (c *Sqlite) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query
 func (c *Sqlite) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
 	count, countErr := c.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of oauth2 clients: %w", countErr)
+		return fmt.Errorf("fetching count of oauth2 clients: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -319,7 +319,7 @@ func (c *Sqlite) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 
 	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing client creation query: %w", err)
+		return nil, fmt.Errorf("executing client creation query: %w", err)
 	}
 
 	x.ID = c.getIDFromResult(res)

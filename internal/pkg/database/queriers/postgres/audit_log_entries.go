@@ -135,7 +135,7 @@ func (q *Postgres) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (q
 func (q *Postgres) GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*types.AuditLogEntry, batchSize uint16) error {
 	count, countErr := q.GetAllAuditLogEntriesCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {

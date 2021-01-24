@@ -49,7 +49,7 @@ func ProvideService(
 ) (types.AccountDataService, error) {
 	accountCounter, err := accountCounterProvider(counterName, counterDescription)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing counter: %w", err)
+		return nil, fmt.Errorf("initializing counter: %w", err)
 	}
 
 	svc := &service{

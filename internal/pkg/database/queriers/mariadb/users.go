@@ -223,7 +223,7 @@ func (q *MariaDB) SearchForUsersByUsername(ctx context.Context, usernameQuery st
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error querying database for users: %w", err)
+		return nil, fmt.Errorf("querying database for users: %w", err)
 	}
 
 	u, _, _, err := q.scanUsers(rows, false)
@@ -375,7 +375,7 @@ func (q *MariaDB) CreateUser(ctx context.Context, input types.UserDataStoreCreat
 	// create the user.
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing user creation query: %w", err)
+		return nil, fmt.Errorf("executing user creation query: %w", err)
 	}
 
 	x.CreatedOn = q.timeTeller.Now()

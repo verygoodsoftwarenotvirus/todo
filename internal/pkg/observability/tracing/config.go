@@ -40,7 +40,7 @@ func (cfg *Config) Initialize(l logging.Logger) error {
 		if agentHost != "" && agentPort != "" && serviceName != "" {
 			_, err := SetupJaeger(fmt.Sprintf("http://%s:%s", agentHost, agentPort), serviceName)
 			if err != nil {
-				return fmt.Errorf("error initializing jaeger tracer: %w", err)
+				return fmt.Errorf("initializing jaeger tracer: %w", err)
 			}
 		}
 	}

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -32,7 +31,7 @@ type Client struct {
 	// config          *dbconfig.Config
 	db              *sql.DB
 	sqlQueryBuilder database.SQLQueryBuilder
-	timeTeller      queriers.TimeTeller
+	timeFunc        func() uint64
 	debug           bool
 	logger          logging.Logger
 	tracer          tracing.Tracer
@@ -92,8 +91,8 @@ func ProvideDatabaseClient(
 ) (database.DataManager, error) {
 	c := &Client{
 		db:              db,
-		timeTeller:      &queriers.StandardTimeTeller{},
 		sqlQueryBuilder: nil,
+		timeFunc:        defaultTimeFunc,
 		debug:           debug,
 		logger:          logger.WithName("db_client"),
 		tracer:          tracing.NewTracer("db_client"),
@@ -107,13 +106,25 @@ func ProvideDatabaseClient(
 		c.logger.Debug("migrating querier")
 
 		if err := querier.Migrate(ctx, testUserConfig); err != nil {
-			return nil, fmt.Errorf("error migrating database: %w", err)
+			return nil, fmt.Errorf("migrating database: %w", err)
 		}
 
 		c.logger.Debug("querier migrated!")
 	}
 
 	return c, nil
+}
+
+func defaultTimeFunc() uint64 {
+	return uint64(time.Now().Unix())
+}
+
+func (c *Client) currentTime() uint64 {
+	if c == nil || c.timeFunc == nil {
+		return defaultTimeFunc()
+	}
+
+	return c.timeFunc()
 }
 
 func (c *Client) getIDFromResult(res sql.Result) uint64 {
@@ -123,4 +134,28 @@ func (c *Client) getIDFromResult(res sql.Result) uint64 {
 	}
 
 	return uint64(id)
+}
+
+func (c *Client) execContext(ctx context.Context, queryDescription, query string, args ...interface{}) error {
+	_, err := c.execContextAndReturnResult(ctx, queryDescription, query, args...)
+
+	return err
+}
+
+func (c *Client) execContextAndReturnResult(ctx context.Context, queryDescription, query string, args ...interface{}) (sql.Result, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	res, err := c.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("executing %s query: %w", queryDescription, err)
+	}
+
+	if res != nil {
+		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+			return nil, sql.ErrNoRows
+		}
+	}
+
+	return res, nil
 }

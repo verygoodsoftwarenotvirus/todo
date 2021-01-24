@@ -83,7 +83,7 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config) (
 	}
 
 	if err := u.selectBucket(ctx, cfg); err != nil {
-		return nil, fmt.Errorf("error initializing bucket: %w", err)
+		return nil, fmt.Errorf("initializing bucket: %w", err)
 	}
 
 	return u, nil
@@ -97,7 +97,7 @@ func (u *Uploader) selectBucket(ctx context.Context, cfg *Config) (err error) {
 		}
 
 		if u.bucket, err = provideAzureBucket(ctx, cfg.AzureConfig, u.logger); err != nil {
-			return fmt.Errorf("error initializing azure bucket: %w", err)
+			return fmt.Errorf("initializing azure bucket: %w", err)
 		}
 	case GCSProvider:
 		if cfg.GCSConfig == nil {
@@ -105,7 +105,7 @@ func (u *Uploader) selectBucket(ctx context.Context, cfg *Config) (err error) {
 		}
 
 		if u.bucket, err = buildGCSBucket(ctx, cfg.GCSConfig); err != nil {
-			return fmt.Errorf("error initializing gcs bucket: %w", err)
+			return fmt.Errorf("initializing gcs bucket: %w", err)
 		}
 	case S3Provider:
 		if cfg.S3Config == nil {
@@ -115,7 +115,7 @@ func (u *Uploader) selectBucket(ctx context.Context, cfg *Config) (err error) {
 		if u.bucket, err = s3blob.OpenBucket(ctx, session.Must(session.NewSession()), cfg.S3Config.BucketName, &s3blob.Options{
 			UseLegacyList: false,
 		}); err != nil {
-			return fmt.Errorf("error initializing s3 bucket: %w", err)
+			return fmt.Errorf("initializing s3 bucket: %w", err)
 		}
 	case MemoryProvider:
 		u.bucket = memblob.OpenBucket(&memblob.Options{})
@@ -128,7 +128,7 @@ func (u *Uploader) selectBucket(ctx context.Context, cfg *Config) (err error) {
 			URLSigner: nil,
 			CreateDir: true,
 		}); err != nil {
-			return fmt.Errorf("error initializing filesystem bucket: %w", err)
+			return fmt.Errorf("initializing filesystem bucket: %w", err)
 		}
 	}
 

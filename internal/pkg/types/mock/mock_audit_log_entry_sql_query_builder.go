@@ -42,7 +42,7 @@ func (m *AuditLogEntrySQLQueryBuilder) BuildGetAuditLogEntriesQuery(filter *type
 }
 
 // BuildCreateAuditLogEntryQuery implements our interface.
-func (m *AuditLogEntrySQLQueryBuilder) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (query string, args []interface{}) {
+func (m *AuditLogEntrySQLQueryBuilder) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

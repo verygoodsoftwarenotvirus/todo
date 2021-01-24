@@ -355,15 +355,15 @@ func TestClient_CreateUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
 
-		stt := &queriers.MockTimeTeller{}
-		stt.On("Now").Return(exampleUser.CreatedOn)
-		c.timeTeller = stt
+		c.timeFunc = func() uint64 {
+			return exampleUser.CreatedOn
+		}
 
 		actual, err := c.CreateUser(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder, stt)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 

@@ -23,7 +23,7 @@ func SetupJaeger(endpoint, serviceName string) (func(), error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("error initializing Jaeger: %w", err)
+		return nil, fmt.Errorf("initializing Jaeger: %w", err)
 	}
 
 	return flush, nil

@@ -45,7 +45,7 @@ func ProvideService(
 ) (types.AccountSubscriptionPlanDataService, error) {
 	planCounter, err := planCounterProvider(counterName, counterDescription)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing counter: %w", err)
+		return nil, fmt.Errorf("initializing counter: %w", err)
 	}
 
 	svc := &service{

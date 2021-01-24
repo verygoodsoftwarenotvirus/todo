@@ -301,7 +301,7 @@ func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string
 	}
 
 	if err := serverConfig.Validate(ctx); err != nil {
-		return nil, fmt.Errorf("error validating config: %w", err)
+		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
 	if serverConfig.Database.CreateTestUser != nil && serverConfig.Meta.RunMode == config.ProductionRunMode {

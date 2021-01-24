@@ -254,22 +254,22 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildCreateOAuth2ClientQuery", mock.MatchedBy(matchOAuth2Client(t, exampleOAuth2Client))).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildCreateOAuth2ClientQuery", exampleInput).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleOAuth2Client.ID))
 
-		mtt := &queriers.MockTimeTeller{}
-		mtt.On("Now").Return(exampleOAuth2Client.CreatedOn)
-		c.timeTeller = mtt
+		c.timeFunc = func() uint64 {
+			return exampleOAuth2Client.CreatedOn
+		}
 
 		actual, err := c.CreateOAuth2Client(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleOAuth2Client, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder, mtt)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 

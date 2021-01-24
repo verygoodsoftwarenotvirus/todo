@@ -17,7 +17,7 @@ func (u *Uploader) SaveFile(ctx context.Context, path string, content []byte) er
 	defer span.End()
 
 	if err := u.bucket.WriteAll(ctx, path, content, nil); err != nil {
-		return fmt.Errorf("error writing file content: %w", err)
+		return fmt.Errorf("writing file content: %w", err)
 	}
 
 	return nil
@@ -30,7 +30,7 @@ func (u *Uploader) ReadFile(ctx context.Context, path string) ([]byte, error) {
 
 	r, err := u.bucket.NewReader(ctx, path, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching file: %w", err)
+		return nil, fmt.Errorf("fetching file: %w", err)
 	}
 
 	defer func() {
@@ -41,7 +41,7 @@ func (u *Uploader) ReadFile(ctx context.Context, path string) ([]byte, error) {
 
 	fileBytes, err := ioutil.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("error reading file: %w", err)
+		return nil, fmt.Errorf("reading file: %w", err)
 	}
 
 	return fileBytes, nil

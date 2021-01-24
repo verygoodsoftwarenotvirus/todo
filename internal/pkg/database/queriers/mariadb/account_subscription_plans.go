@@ -212,7 +212,7 @@ func (q *MariaDB) CreateAccountSubscriptionPlan(ctx context.Context, input *type
 	// create the plan.
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing plan creation query: %w", err)
+		return nil, fmt.Errorf("executing plan creation query: %w", err)
 	}
 
 	x.CreatedOn = q.timeTeller.Now()

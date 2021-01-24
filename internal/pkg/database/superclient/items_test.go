@@ -365,7 +365,7 @@ func TestClient_CreateItem(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildCreateItemQuery", mock.MatchedBy(matchItem(t, exampleItem))).
+			On("BuildCreateItemQuery", exampleInput).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -373,15 +373,15 @@ func TestClient_CreateItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(exampleRows)
 
-		stt := &queriers.MockTimeTeller{}
-		stt.On("Now").Return(exampleItem.CreatedOn)
-		c.timeTeller = stt
+		c.timeFunc = func() uint64 {
+			return exampleItem.CreatedOn
+		}
 
 		actual, err := c.CreateItem(ctx, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder, stt)
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 
@@ -401,7 +401,7 @@ func TestClient_UpdateItem(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildUpdateItemQuery", mock.MatchedBy(matchItem(t, exampleItem))).
+			On("BuildUpdateItemQuery", exampleItem).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 

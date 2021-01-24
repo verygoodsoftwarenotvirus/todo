@@ -145,9 +145,8 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 		return nil, err
 	}
 
-	x.Webhooks, x.FilteredCount, x.TotalCount, err = c.scanWebhooks(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("error scanning database response: %w", err)
+	if x.Webhooks, x.FilteredCount, x.TotalCount, err = c.scanWebhooks(rows, true); err != nil {
+		return nil, fmt.Errorf("scanning database response: %w", err)
 	}
 
 	return x, nil
@@ -175,7 +174,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 
 	count, countErr := c.GetAllWebhooksCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	increment := uint64(batchSize)
@@ -219,7 +218,15 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
 	c.logger.WithValue(keys.UserIDKey, input.BelongsToUser).Debug("CreateWebhook called")
 
+	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
+
+	res, err := c.execContextAndReturnResult(ctx, "webhook creation", query, args...)
+	if err != nil {
+		return nil, err
+	}
+
 	x := &types.Webhook{
+		ID:            c.getIDFromResult(res),
 		Name:          input.Name,
 		ContentType:   input.ContentType,
 		URL:           input.URL,
@@ -228,16 +235,8 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 		DataTypes:     input.DataTypes,
 		Topics:        input.Topics,
 		BelongsToUser: input.BelongsToUser,
+		CreatedOn:     c.currentTime(),
 	}
-	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(x)
-
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
-	}
-
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
 
 	return x, nil
 }
@@ -254,9 +253,8 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error 
 	c.logger.WithValue(keys.WebhookIDKey, input.ID).Debug("UpdateWebhook called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(input)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "webhook update", query, args...)
 }
 
 // ArchiveWebhook archives a webhook from the database.
@@ -268,14 +266,13 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"webhook_id": webhookID,
-		"user_id":    userID,
+		keys.WebhookIDKey: webhookID,
+		keys.UserIDKey:    userID,
 	}).Debug("ArchiveWebhook called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "webhook archive", query, args...)
 }
 
 // LogWebhookCreationEvent implements our AuditLogEntryDataManager interface.

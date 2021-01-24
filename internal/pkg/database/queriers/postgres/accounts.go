@@ -148,7 +148,7 @@ func (q *Postgres) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query st
 func (q *Postgres) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, batchSize uint16) error {
 	count, countErr := q.GetAllAccountsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -283,7 +283,7 @@ func (q *Postgres) CreateAccount(ctx context.Context, input *types.AccountCreati
 	// create the account.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
-		return nil, fmt.Errorf("error executing account creation query: %w", err)
+		return nil, fmt.Errorf("executing account creation query: %w", err)
 	}
 
 	return x, nil

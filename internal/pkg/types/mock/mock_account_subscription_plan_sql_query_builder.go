@@ -35,7 +35,7 @@ func (m *AccountSubscriptionPlanSQLQueryBuilder) BuildGetAccountSubscriptionPlan
 }
 
 // BuildCreateAccountSubscriptionPlanQuery implements our interface.
-func (m *AccountSubscriptionPlanSQLQueryBuilder) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+func (m *AccountSubscriptionPlanSQLQueryBuilder) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

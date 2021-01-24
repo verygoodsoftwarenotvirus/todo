@@ -48,7 +48,7 @@ type (
 		BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
 		BuildGetAllAccountSubscriptionPlansCountQuery() string
 		BuildGetAccountSubscriptionPlansQuery(filter *QueryFilter) (query string, args []interface{})
-		BuildCreateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlan) (query string, args []interface{})
+		BuildCreateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlanCreationInput) (query string, args []interface{})
 		BuildUpdateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlan) (query string, args []interface{})
 		BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})

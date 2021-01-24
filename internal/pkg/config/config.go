@@ -75,27 +75,27 @@ func (cfg *ServerConfig) EncodeToFile(path string, marshaller func(v interface{}
 // Validate validates a ServerConfig struct.
 func (cfg *ServerConfig) Validate(ctx context.Context) error {
 	if err := cfg.Auth.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating the Auth portion of config: %w", err)
+		return fmt.Errorf("validating the Auth portion of config: %w", err)
 	}
 
 	if err := cfg.Database.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating the Database portion of config: %w", err)
+		return fmt.Errorf("validating the Database portion of config: %w", err)
 	}
 
 	if err := cfg.Frontend.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating the Frontend portion of config: %w", err)
+		return fmt.Errorf("validating the Frontend portion of config: %w", err)
 	}
 
 	if err := cfg.Observability.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating the Observability portion of config: %w", err)
+		return fmt.Errorf("validating the Observability portion of config: %w", err)
 	}
 
 	if err := cfg.Meta.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating the Meta portion of config: %w", err)
+		return fmt.Errorf("validating the Meta portion of config: %w", err)
 	}
 
 	if err := cfg.Search.Validate(ctx); err != nil {
-		return fmt.Errorf("error validating the Search portion of config: %w", err)
+		return fmt.Errorf("validating the Search portion of config: %w", err)
 	}
 
 	return nil

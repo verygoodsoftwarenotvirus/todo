@@ -184,7 +184,7 @@ func (c *Sqlite) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string,
 func (c *Sqlite) GetAllItems(ctx context.Context, resultChannel chan []*types.Item, batchSize uint16) error {
 	count, countErr := c.GetAllItemsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of items: %w", countErr)
+		return fmt.Errorf("fetching count of items: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -441,11 +441,10 @@ func (c *Sqlite) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	// create the item.
 	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing item creation query: %w", err)
+		return nil, fmt.Errorf("executing item creation query: %w", err)
 	}
 
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
+	x.ID, x.CreatedOn = c.getIDFromResult(res), c.timeTeller.Now()
 
 	return x, nil
 }

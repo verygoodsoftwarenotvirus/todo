@@ -86,16 +86,19 @@ func (c *Client) GetAccount(ctx context.Context, accountID, userID uint64) (*typ
 	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"account_id": accountID,
-		"user_id":    userID,
+		keys.AccountIDKey: accountID,
+		keys.UserIDKey:    userID,
 	}).Debug("GetAccount called")
 
 	query, args := c.sqlQueryBuilder.BuildGetAccountQuery(accountID, userID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	account, _, _, err := c.scanAccount(row, false)
+	if err != nil {
+		return nil, fmt.Errorf("scanning account: %w", err)
+	}
 
-	return account, err
+	return account, nil
 }
 
 // GetAllAccountsCount fetches the count of accounts from the database that meet a particular filter.
@@ -105,9 +108,11 @@ func (c *Client) GetAllAccountsCount(ctx context.Context) (count uint64, err err
 
 	c.logger.Debug("GetAllAccountsCount called")
 
-	err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountsCountQuery()).Scan(&count)
+	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountsCountQuery()).Scan(&count); err != nil {
+		return 0, fmt.Errorf("executing accounts count query: %w", err)
+	}
 
-	return count, err
+	return count, nil
 }
 
 // GetAllAccounts fetches a list of all accounts in the database.
@@ -119,7 +124,7 @@ func (c *Client) GetAllAccounts(ctx context.Context, results chan []*types.Accou
 
 	count, countErr := c.GetAllAccountsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of accounts: %w", countErr)
+		return fmt.Errorf("fetching count of accounts: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -168,18 +173,17 @@ func (c *Client) GetAccounts(ctx context.Context, userID uint64, filter *types.Q
 	tracing.AttachUserIDToSpan(span, userID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"user_id": userID,
+		keys.UserIDKey: userID,
 	}).Debug("GetAccounts called")
 
 	query, args := c.sqlQueryBuilder.BuildGetAccountsQuery(userID, false, filter)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for accounts: %w", err)
+		return nil, fmt.Errorf("executing accounts list retrieval query: %w", err)
 	}
 
-	x.Accounts, x.FilteredCount, x.TotalCount, err = c.scanAccounts(rows, true)
-	if err != nil {
+	if x.Accounts, x.FilteredCount, x.TotalCount, err = c.scanAccounts(rows, true); err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
@@ -204,12 +208,11 @@ func (c *Client) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFil
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for accounts: %w", err)
+		return nil, fmt.Errorf("executing accounts list retrieval query for admin: %w", err)
 	}
 
-	x.Accounts, x.FilteredCount, x.TotalCount, err = c.scanAccounts(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+	if x.Accounts, x.FilteredCount, x.TotalCount, err = c.scanAccounts(rows, true); err != nil {
+		return nil, fmt.Errorf("scanning accounts: %w", err)
 	}
 
 	return x, nil
@@ -222,21 +225,20 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	c.logger.Debug("CreateAccount called")
 
-	x := &types.Account{
-		Name:          input.Name,
-		BelongsToUser: input.BelongsToUser,
-	}
-
-	query, args := c.sqlQueryBuilder.BuildCreateAccountQuery(x)
+	query, args := c.sqlQueryBuilder.BuildCreateAccountQuery(input)
 
 	// create the account.
-	res, err := c.db.ExecContext(ctx, query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "account creation", query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing account creation query: %w", err)
+		return nil, err
 	}
 
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
+	x := &types.Account{
+		ID:            c.getIDFromResult(res),
+		Name:          input.Name,
+		BelongsToUser: input.BelongsToUser,
+		CreatedOn:     c.currentTime(),
+	}
 
 	return x, nil
 }
@@ -251,9 +253,8 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account) erro
 	c.logger.WithValue(keys.AccountIDKey, updated.ID).Debug("UpdateAccount called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountQuery(updated)
-	_, err := c.db.ExecContext(ctx, query, args...)
 
-	return err
+	return c.execContext(ctx, "account update", query, args...)
 }
 
 // ArchiveAccount archives an account from the database by its ID.
@@ -265,20 +266,13 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"account_id": accountID,
-		"user_id":    userID,
+		keys.AccountIDKey: accountID,
+		keys.UserIDKey:    userID,
 	}).Debug("ArchiveAccount called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountQuery(accountID, userID)
 
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if res != nil {
-		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
-			return sql.ErrNoRows
-		}
-	}
-
-	return err
+	return c.execContext(ctx, "account archive", query, args...)
 }
 
 // LogAccountCreationEvent implements our AuditLogEntryDataManager interface.
@@ -322,7 +316,7 @@ func (c *Client) GetAuditLogEntriesForAccount(ctx context.Context, accountID uin
 
 	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+		return nil, fmt.Errorf("scanning audit log entries: %w", err)
 	}
 
 	return auditLogEntries, nil

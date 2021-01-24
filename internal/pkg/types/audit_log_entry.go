@@ -45,7 +45,7 @@ type (
 		BuildGetAllAuditLogEntriesCountQuery() string
 		BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesQuery(filter *QueryFilter) (query string, args []interface{})
-		BuildCreateAuditLogEntryQuery(input *AuditLogEntry) (query string, args []interface{})
+		BuildCreateAuditLogEntryQuery(input *AuditLogEntryCreationInput) (query string, args []interface{})
 	}
 
 	// AuditLogEntryDataManager describes a structure capable of managing audit log entries.

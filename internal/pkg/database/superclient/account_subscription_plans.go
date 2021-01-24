@@ -2,7 +2,6 @@ package superclient
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -86,25 +85,23 @@ func (c *Client) scanAccountSubscriptionPlans(rows database.ResultIterator, incl
 	return plans, filteredCount, totalCount, nil
 }
 
-// GetAccountSubscriptionPlan fetches an plan from the database.
+// GetAccountSubscriptionPlan fetches a plan from the database.
 func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, accountSubscriptionPlanID uint64) (*types.AccountSubscriptionPlan, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("plan_id", accountSubscriptionPlanID)
-
+	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID).Debug("GetAccountSubscriptionPlan called")
 	tracing.AttachPlanIDToSpan(span, accountSubscriptionPlanID)
-	logger.Debug("GetAccountSubscriptionPlan called")
 
 	query, args := c.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	plan, _, _, err := c.scanAccountSubscriptionPlan(row, false)
 	if err != nil {
-		return nil, fmt.Errorf("error scanning account subscription plan: %w", err)
+		return nil, fmt.Errorf("scanning account subscription plan: %w", err)
 	}
 
-	return plan, err
+	return plan, nil
 }
 
 // GetAllAccountSubscriptionPlansCount fetches the count of plans from the database that meet a particular filter.
@@ -115,10 +112,10 @@ func (c *Client) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count
 	c.logger.Debug("GetAllAccountSubscriptionPlansCount called")
 
 	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("error querying for account subscription plans count: %w", err)
+		return 0, fmt.Errorf("executing account subscription plans count query: %w", err)
 	}
 
-	return count, err
+	return count, nil
 }
 
 // GetAccountSubscriptionPlans fetches a list of plans from the database that meet a particular filter.
@@ -139,41 +136,39 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for plans: %w", err)
+		return nil, fmt.Errorf("executing account subscription plan list retrieval query: %w", err)
 	}
 
-	x.AccountSubscriptionPlans, x.FilteredCount, x.TotalCount, err = c.scanAccountSubscriptionPlans(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("error scanning account subscription plan: %w", err)
+	if x.AccountSubscriptionPlans, x.FilteredCount, x.TotalCount, err = c.scanAccountSubscriptionPlans(rows, true); err != nil {
+		return nil, fmt.Errorf("scanning account subscription plans: %w", err)
 	}
 
 	return x, nil
 }
 
-// CreateAccountSubscriptionPlan creates an plan in the database.
+// CreateAccountSubscriptionPlan creates a plan in the database.
 func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*types.AccountSubscriptionPlan, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("CreateAccountSubscriptionPlan called")
 
+	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
+
+	// create the account subscription plan.
+	res, err := c.execContextAndReturnResult(ctx, "account subscription plan creation", query, args...)
+	if err != nil {
+		return nil, err
+	}
+
 	x := &types.AccountSubscriptionPlan{
+		ID:          c.getIDFromResult(res),
 		Name:        input.Name,
 		Description: input.Description,
 		Price:       input.Price,
 		Period:      input.Period,
+		CreatedOn:   c.currentTime(),
 	}
-
-	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(x)
-
-	// create the plan.
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("error executing item creation query: %w", err)
-	}
-
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
 
 	return x, nil
 }
@@ -188,15 +183,10 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
 
-	_, err := c.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return fmt.Errorf("error updating account subscription plan: %w", err)
-	}
-
-	return nil
+	return c.execContext(ctx, "account subscription plan update", query, args...)
 }
 
-// ArchiveAccountSubscriptionPlan archives an plan from the database by its ID.
+// ArchiveAccountSubscriptionPlan archives a plan from the database by its ID.
 func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubscriptionPlanID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -204,21 +194,12 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 	tracing.AttachPlanIDToSpan(span, accountSubscriptionPlanID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"plan_id": accountSubscriptionPlanID,
+		keys.AccountSubscriptionPlanIDKey: accountSubscriptionPlanID,
 	}).Debug("ArchiveAccountSubscriptionPlan called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if res != nil {
-		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
-			return sql.ErrNoRows
-		}
-	} else if err != nil {
-		return err
-	}
-
-	return nil
+	return c.execContext(ctx, "account subscription plan archive", query, args...)
 }
 
 // LogAccountSubscriptionPlanCreationEvent implements our AuditLogEntryDataManager interface.
@@ -267,7 +248,7 @@ func (c *Client) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Contex
 
 	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+		return nil, fmt.Errorf("scanning audit log entries: %w", err)
 	}
 
 	return auditLogEntries, nil

@@ -136,7 +136,7 @@ func (q *MariaDB) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (quer
 func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
 	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of items: %w", countErr)
+		return fmt.Errorf("fetching count of items: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -318,7 +318,7 @@ func (q *MariaDB) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Cli
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing client creation query: %w", err)
+		return nil, fmt.Errorf("executing client creation query: %w", err)
 	}
 
 	x.CreatedOn = q.timeTeller.Now()

@@ -40,7 +40,7 @@ func main() {
 	// parse our config file.
 	cfg, err := viper.ParseConfigFile(ctx, logger, configFilepath)
 	if err != nil || cfg == nil {
-		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("error parsing configuration file: %w", err))
+		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("parsing configuration file: %w", err))
 	}
 
 	if initializeTracerErr := cfg.Observability.Tracing.Initialize(logger); initializeTracerErr != nil {
@@ -58,7 +58,7 @@ func main() {
 
 	rawDB, err := cfg.Database.ProvideDatabaseConnection(logger)
 	if err != nil {
-		logger.Fatal(fmt.Errorf("error connecting to database: %w", err))
+		logger.Fatal(fmt.Errorf("connecting to database: %w", err))
 	}
 
 	databaseConnectionSpan.End()
@@ -70,7 +70,7 @@ func main() {
 
 	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB)
 	if err != nil {
-		logger.Fatal(fmt.Errorf("error initializing database client: %w", err))
+		logger.Fatal(fmt.Errorf("initializing database client: %w", err))
 	}
 
 	databaseClientSetupSpan.End()
@@ -78,7 +78,7 @@ func main() {
 	// build our server struct.
 	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB, authenticator)
 	if err != nil {
-		logger.Fatal(fmt.Errorf("error initializing HTTP server: %w", err))
+		logger.Fatal(fmt.Errorf("initializing HTTP server: %w", err))
 	}
 
 	initSpan.End()

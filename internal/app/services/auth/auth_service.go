@@ -76,7 +76,7 @@ func ProvideService(
 
 	if _, err := svc.cookieManager.Encode(cfg.CookieName, "blah"); err != nil {
 		logger.WithValue("cookie_signing_key_length", len(cfg.CookieSigningKey)).Error(err, "building test cookie")
-		return nil, fmt.Errorf("error building test cookie: %w", err)
+		return nil, fmt.Errorf("building test cookie: %w", err)
 	}
 
 	return svc, nil

@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func checkUserCreationEquality(t *testing.T, expected *types.UserCreationInput, actual *types.UserCreationResponse) {
+func checkUserCreationEquality(t *testing.T, expected *types.NewUserCreationInput, actual *types.UserCreationResponse) {
 	t.Helper()
 
 	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(actual.TwoFactorQRCode)

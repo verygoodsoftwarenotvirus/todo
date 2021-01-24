@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -25,6 +24,14 @@ const (
 )
 
 // begin helper funcs
+
+func newCountDBRowResponse(count uint64) *sqlmock.Rows {
+	return sqlmock.NewRows([]string{"count"}).AddRow(count)
+}
+
+func newSuccessfulDatabaseResult(returnID uint64) driver.Result {
+	return sqlmock.NewResult(int64(returnID), 1)
+}
 
 func formatQueryForSQLMock(query string) string {
 	return strings.NewReplacer(
@@ -70,7 +77,7 @@ func buildTestClient(t *testing.T) (*Client, *sqlmockExpecterWrapper) {
 	c := &Client{
 		db:              db,
 		logger:          noop.NewLogger(),
-		timeTeller:      &queriers.StandardTimeTeller{},
+		timeFunc:        defaultTimeFunc,
 		tracer:          tracing.NewTracer("test"),
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
 	}

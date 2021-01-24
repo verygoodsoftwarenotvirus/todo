@@ -177,7 +177,7 @@ func (c *Sqlite) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query stri
 func (c *Sqlite) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	count, countErr := c.GetAllWebhooksCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -303,11 +303,10 @@ func (c *Sqlite) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
+		return nil, fmt.Errorf("executing webhook creation query: %w", err)
 	}
 
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
+	x.ID, x.CreatedOn = c.getIDFromResult(res), c.timeTeller.Now()
 
 	return x, nil
 }

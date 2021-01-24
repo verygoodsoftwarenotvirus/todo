@@ -174,7 +174,7 @@ func (q *Postgres) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query st
 func (q *Postgres) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
 	count, countErr := q.GetAllWebhooksCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of webhooks: %w", countErr)
+		return fmt.Errorf("fetching count of webhooks: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -252,7 +252,7 @@ func (q *Postgres) GetWebhooks(ctx context.Context, userID uint64, filter *types
 }
 
 // BuildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
-func (q *Postgres) BuildCreateWebhookQuery(x *types.Webhook) (query string, args []interface{}) {
+func (q *Postgres) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -298,9 +298,9 @@ func (q *Postgres) CreateWebhook(ctx context.Context, input *types.WebhookCreati
 		BelongsToUser: input.BelongsToUser,
 	}
 
-	query, args := q.BuildCreateWebhookQuery(x)
+	query, args := q.BuildCreateWebhookQuery(input)
 	if err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn); err != nil {
-		return nil, fmt.Errorf("error executing webhook creation query: %w", err)
+		return nil, fmt.Errorf("executing webhook creation query: %w", err)
 	}
 
 	return x, nil

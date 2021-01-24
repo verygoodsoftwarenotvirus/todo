@@ -81,8 +81,8 @@ type (
 		Users []*User `json:"users"`
 	}
 
-	// UserCreationInput represents the input required from users to register an account.
-	UserCreationInput struct {
+	// NewUserCreationInput represents the input required from users to register an account.
+	NewUserCreationInput struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
@@ -263,8 +263,8 @@ func (u *User) IsBanned() bool {
 	return u.AccountStatus == BannedAccountStatus
 }
 
-// Validate ensures our provided UserCreationInput meets expectations.
-func (i *UserCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+// Validate ensures our provided NewUserCreationInput meets expectations.
+func (i *NewUserCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),

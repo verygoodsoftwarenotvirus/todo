@@ -181,7 +181,7 @@ func (q *MariaDB) buildGetBatchOfItemsQuery(beginID, endID uint64) (query string
 func (q *MariaDB) GetAllItems(ctx context.Context, resultChannel chan []*types.Item, batchSize uint16) error {
 	count, countErr := q.GetAllItemsCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("error fetching count of items: %w", countErr)
+		return fmt.Errorf("fetching count of items: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -438,7 +438,7 @@ func (q *MariaDB) CreateItem(ctx context.Context, input *types.ItemCreationInput
 	// create the item.
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing item creation query: %w", err)
+		return nil, fmt.Errorf("executing item creation query: %w", err)
 	}
 
 	x.CreatedOn = q.timeTeller.Now()

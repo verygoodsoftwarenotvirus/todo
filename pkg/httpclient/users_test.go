@@ -290,7 +290,7 @@ func TestV1Client_CreateUser(T *testing.T) {
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					var x *types.UserCreationInput
+					var x *types.NewUserCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 					assert.Equal(t, exampleInput, x)
 

@@ -31,7 +31,7 @@ func (q *Postgres) MarkAccountAsUserPrimary(ctx context.Context, userID, account
 
 	// create the user/account association.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("error executing account association creation query: %w", err)
+		return fmt.Errorf("executing account association creation query: %w", err)
 	}
 
 	return nil
@@ -71,7 +71,7 @@ func (q *Postgres) AddUserToAccount(ctx context.Context, userID, accountID uint6
 
 	// create the user/account association.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("error executing account association creation query: %w", err)
+		return fmt.Errorf("executing account association creation query: %w", err)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func (q *Postgres) RemoveUserFromAccount(ctx context.Context, userID, accountID 
 
 	// remove the user/account association.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("error executing account association creation query: %w", err)
+		return fmt.Errorf("executing account association creation query: %w", err)
 	}
 
 	return nil

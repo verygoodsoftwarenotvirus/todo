@@ -253,7 +253,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.MySQLDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
-			panic(fmt.Errorf("error migrating database: %w", err))
+			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}
 }

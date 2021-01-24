@@ -226,7 +226,7 @@ func (c *Sqlite) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error querying database for users: %w", err)
+		return nil, fmt.Errorf("querying database for users: %w", err)
 	}
 
 	u, _, _, err := c.scanUsers(rows, false)
@@ -366,11 +366,10 @@ func (c *Sqlite) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	// create the user.
 	res, err := c.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("error executing user creation query: %w", err)
+		return nil, fmt.Errorf("executing user creation query: %w", err)
 	}
 
-	x.CreatedOn = c.timeTeller.Now()
-	x.ID = c.getIDFromResult(res)
+	x.ID, x.CreatedOn = c.getIDFromResult(res), c.timeTeller.Now()
 
 	return x, nil
 }

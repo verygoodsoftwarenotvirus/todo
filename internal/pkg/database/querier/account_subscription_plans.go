@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -73,13 +73,8 @@ func (c *Client) scanAccountSubscriptionPlans(rows database.ResultIterator, incl
 		plans = append(plans, x)
 	}
 
-	if rowErr := rows.Err(); rowErr != nil {
-		return nil, 0, 0, rowErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing database rows")
-		return nil, 0, 0, closeErr
+	if handleErr := c.handleRows(rows); handleErr != nil {
+		return nil, 0, 0, handleErr
 	}
 
 	return plans, filteredCount, totalCount, nil
@@ -156,7 +151,7 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
 
 	// create the account subscription plan.
-	res, err := c.execContextAndReturnResult(ctx, "account subscription plan creation", query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "account subscription plan creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +178,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
 
-	return c.execContext(ctx, "account subscription plan update", query, args...)
+	return c.execContext(ctx, "account subscription plan update", query, args)
 }
 
 // ArchiveAccountSubscriptionPlan archives a plan from the database by its ID.
@@ -199,7 +194,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
-	return c.execContext(ctx, "account subscription plan archive", query, args...)
+	return c.execContext(ctx, "account subscription plan archive", query, args)
 }
 
 // LogAccountSubscriptionPlanCreationEvent implements our AuditLogEntryDataManager interface.

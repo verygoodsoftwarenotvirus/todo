@@ -78,7 +78,7 @@ func TestIsReady(T *testing.T) {
 		mockDB.On("IsReady", mock.Anything).Return(true)
 
 		c.querier = mockDB
-		c.IsReady(ctx)
+		c.IsReady(ctx, 1)
 
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})

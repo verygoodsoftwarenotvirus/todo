@@ -29,8 +29,6 @@ const (
 	jsonPluckQuery = `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
 	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
 	currentUnixTimeQuery = `UNIX_TIMESTAMP()`
-
-	maximumConnectionAttempts = 50
 )
 
 var _ database.DataManager = (*MariaDB)(nil)
@@ -85,12 +83,12 @@ func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.Data
 }
 
 // IsReady reports whether or not the db is ready.
-func (q *MariaDB) IsReady(ctx context.Context) (ready bool) {
+func (q *MariaDB) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
 	attemptCount := 0
 
 	logger := q.logger.WithValues(map[string]interface{}{
 		"interval":     time.Second,
-		"max_attempts": maximumConnectionAttempts,
+		"max_attempts": maxAttempts,
 	})
 	logger.Debug("IsReady called")
 
@@ -101,7 +99,7 @@ func (q *MariaDB) IsReady(ctx context.Context) (ready bool) {
 			time.Sleep(time.Second)
 
 			attemptCount++
-			if attemptCount >= maximumConnectionAttempts {
+			if attemptCount >= int(maxAttempts) {
 				return false
 			}
 		} else {

@@ -39,11 +39,11 @@ func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
-func (c *Client) IsReady(ctx context.Context) (ready bool) {
+func (c *Client) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return c.querier.IsReady(ctx)
+	return c.querier.IsReady(ctx, maxAttempts)
 }
 
 // ProvideDatabaseClient provides a new DataManager client.

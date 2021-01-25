@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -15,7 +16,9 @@ import (
 )
 
 const (
-	maximumConnectionAttempts = 50
+	name        = "db_client"
+	loggerName  = name
+	tracingName = name
 )
 
 var _ database.DataManager = (*Client)(nil)
@@ -28,11 +31,10 @@ var _ database.DataManager = (*Client)(nil)
 // Client is a wrapper around a database querier. Client is where all logging and trace propagation should happen,
 // the querier is where the actual database querying is performed.
 type Client struct {
-	// config          *dbconfig.Config
+	config          *dbconfig.Config
 	db              *sql.DB
 	sqlQueryBuilder database.SQLQueryBuilder
 	timeFunc        func() uint64
-	debug           bool
 	logger          logging.Logger
 	tracer          tracing.Tracer
 }
@@ -48,7 +50,7 @@ func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
-func (c *Client) IsReady(ctx context.Context) (ready bool) {
+func (c *Client) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -56,7 +58,7 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 
 	logger := c.logger.WithValues(map[string]interface{}{
 		"interval":     time.Second,
-		"max_attempts": maximumConnectionAttempts,
+		"max_attempts": maxAttempts,
 	})
 	logger.Debug("IsReady called")
 
@@ -67,7 +69,7 @@ func (c *Client) IsReady(ctx context.Context) (ready bool) {
 			time.Sleep(time.Second)
 
 			attemptCount++
-			if attemptCount >= maximumConnectionAttempts {
+			if attemptCount >= int(maxAttempts) {
 				return false
 			}
 		} else {
@@ -85,27 +87,30 @@ func ProvideDatabaseClient(
 	logger logging.Logger,
 	querier database.DataManager,
 	db *sql.DB,
-	testUserConfig *types.TestUserCreationConfig,
-	shouldMigrate,
-	debug bool,
+	cfg *dbconfig.Config,
 ) (database.DataManager, error) {
+	tracer := tracing.NewTracer(tracingName)
+
+	ctx, span := tracer.StartSpan(ctx)
+	defer span.End()
+
 	c := &Client{
 		db:              db,
 		sqlQueryBuilder: nil,
+		config:          cfg,
+		tracer:          tracer,
 		timeFunc:        defaultTimeFunc,
-		debug:           debug,
-		logger:          logger.WithName("db_client"),
-		tracer:          tracing.NewTracer("db_client"),
+		logger:          logger.WithName(loggerName),
 	}
 
-	if debug {
+	if cfg.Debug {
 		c.logger.SetLevel(logging.DebugLevel)
 	}
 
-	if shouldMigrate {
+	if cfg.RunMigrations {
 		c.logger.Debug("migrating querier")
 
-		if err := querier.Migrate(ctx, testUserConfig); err != nil {
+		if err := querier.Migrate(ctx, cfg.CreateTestUser); err != nil {
 			return nil, fmt.Errorf("migrating database: %w", err)
 		}
 
@@ -136,13 +141,27 @@ func (c *Client) getIDFromResult(res sql.Result) uint64 {
 	return uint64(id)
 }
 
-func (c *Client) execContext(ctx context.Context, queryDescription, query string, args ...interface{}) error {
-	_, err := c.execContextAndReturnResult(ctx, queryDescription, query, args...)
+func (c *Client) handleRows(rows database.ResultIterator) error {
+	if rowErr := rows.Err(); rowErr != nil {
+		c.logger.Error(rowErr, "row error")
+		return rowErr
+	}
+
+	if closeErr := rows.Close(); closeErr != nil {
+		c.logger.Error(closeErr, "closing database rows")
+		return closeErr
+	}
+
+	return nil
+}
+
+func (c *Client) execContext(ctx context.Context, queryDescription, query string, args []interface{}) error {
+	_, err := c.execContextAndReturnResult(ctx, queryDescription, query, args)
 
 	return err
 }
 
-func (c *Client) execContextAndReturnResult(ctx context.Context, queryDescription, query string, args ...interface{}) (sql.Result, error) {
+func (c *Client) execContextAndReturnResult(ctx context.Context, queryDescription, query string, args []interface{}) (sql.Result, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

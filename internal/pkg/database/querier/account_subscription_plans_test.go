@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -46,21 +46,6 @@ func buildMockRowsFromAccountSubscriptionPlans(includeCounts bool, filteredCount
 
 		exampleRows.AddRow(rowValues...)
 	}
-
-	return exampleRows
-}
-
-func buildErroneousMockRowFromAccountSubscriptionPlan(x *types.AccountSubscriptionPlan) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(queriers.AccountSubscriptionPlansTableColumns).AddRow(
-		x.Name,
-		x.ID,
-		x.Description,
-		x.Price,
-		x.Period.String(),
-		x.CreatedOn,
-		x.LastUpdatedOn,
-		x.ArchivedOn,
-	)
 
 	return exampleRows
 }
@@ -189,7 +174,7 @@ func TestClient_GetPlan(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllPlansCount(T *testing.T) {
+func TestClient_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -246,7 +231,7 @@ func TestClient_GetAllPlansCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetPlans(T *testing.T) {
+func TestClient_GetAccountSubscriptionPlans(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -336,7 +321,6 @@ func TestClient_GetPlans(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -350,7 +334,7 @@ func TestClient_GetPlans(T *testing.T) {
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnRows(buildErroneousMockRowFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan))
+			WillReturnRows(buildErroneousMockRow())
 
 		actual, err := c.GetAccountSubscriptionPlans(ctx, filter)
 		assert.Error(t, err)
@@ -424,7 +408,7 @@ func TestClient_CreateAccountSubscriptionPlan(T *testing.T) {
 	})
 }
 
-func TestClient_UpdatePlan(T *testing.T) {
+func TestClient_UpdateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -480,7 +464,7 @@ func TestClient_UpdatePlan(T *testing.T) {
 	})
 }
 
-func TestClient_ArchivePlan(T *testing.T) {
+func TestClient_ArchiveAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -686,7 +670,6 @@ func TestClient_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
@@ -696,7 +679,7 @@ func TestClient_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnRows(buildErroneousMockRowFromAuditLogEntry(exampleAuditLogEntry))
+			WillReturnRows(buildErroneousMockRow())
 
 		actual, err := c.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID)
 		assert.Error(t, err)

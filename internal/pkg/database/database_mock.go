@@ -46,8 +46,8 @@ func (m *MockDatabase) Migrate(ctx context.Context, ucc *types.TestUserCreationC
 }
 
 // IsReady satisfies the DataManager interface.
-func (m *MockDatabase) IsReady(ctx context.Context) (ready bool) {
-	return m.Called(ctx).Bool(0)
+func (m *MockDatabase) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
+	return m.Called(ctx, maxAttempts).Bool(0)
 }
 
 // BeginTx satisfies the DataManager interface.
@@ -109,4 +109,23 @@ func (m *MockResultIterator) Err() error {
 // Close satisfies the ResultIterator interface.
 func (m *MockResultIterator) Close() error {
 	return m.Called().Error(0)
+}
+
+// MockSQLResult mocks a sql.Result.
+type MockSQLResult struct {
+	mock.Mock
+}
+
+// LastInsertId implements our interface.
+func (m *MockSQLResult) LastInsertId() (int64, error) {
+	args := m.Called()
+
+	return args.Get(0).(int64), args.Error(1)
+}
+
+// RowsAffected implements our interface.
+func (m *MockSQLResult) RowsAffected() (int64, error) {
+	args := m.Called()
+
+	return args.Get(0).(int64), args.Error(1)
 }

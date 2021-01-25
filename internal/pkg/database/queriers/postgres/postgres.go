@@ -29,8 +29,6 @@ const (
 	jsonPluckQuery = `%s.%s->'%s'`
 	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
 	currentUnixTimeQuery = `extract(epoch FROM NOW())`
-
-	maximumConnectionAttempts = 50
 )
 
 var _ database.DataManager = (*Postgres)(nil)
@@ -83,12 +81,12 @@ func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.Dat
 }
 
 // IsReady reports whether or not the db is ready.
-func (q *Postgres) IsReady(ctx context.Context) (ready bool) {
+func (q *Postgres) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
 	attemptCount := 0
 
 	logger := q.logger.WithValues(map[string]interface{}{
 		"interval":     time.Second,
-		"max_attempts": maximumConnectionAttempts,
+		"max_attempts": maxAttempts,
 	})
 	logger.Debug("IsReady called")
 
@@ -99,7 +97,7 @@ func (q *Postgres) IsReady(ctx context.Context) (ready bool) {
 			time.Sleep(time.Second)
 
 			attemptCount++
-			if attemptCount >= maximumConnectionAttempts {
+			if attemptCount >= int(maxAttempts) {
 				return false
 			}
 		} else {

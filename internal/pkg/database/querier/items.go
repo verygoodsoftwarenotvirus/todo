@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -64,13 +64,8 @@ func (c *Client) scanItems(rows database.ResultIterator, includeCounts bool) (it
 		items = append(items, x)
 	}
 
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, 0, 0, rowsErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing database rows")
-		return nil, 0, 0, closeErr
+	if handleErr := c.handleRows(rows); handleErr != nil {
+		return nil, 0, 0, handleErr
 	}
 
 	return items, filteredCount, totalCount, nil
@@ -245,15 +240,15 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 
 	tracing.AttachUserIDToSpan(span, userID)
 
+	if limit == 0 {
+		limit = uint8(types.DefaultLimit)
+	}
+
 	c.logger.WithValues(map[string]interface{}{
 		keys.UserIDKey: userID,
 		"limit":        limit,
 		"id_count":     len(ids),
 	}).Debug("GetItemsWithIDs called")
-
-	if limit == 0 {
-		limit = uint8(types.DefaultLimit)
-	}
 
 	query, args := c.sqlQueryBuilder.BuildGetItemsWithIDsQuery(userID, limit, ids, false)
 
@@ -274,6 +269,10 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8
 func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if limit == 0 {
+		limit = uint8(types.DefaultLimit)
+	}
 
 	c.logger.WithValues(map[string]interface{}{
 		"limit":    limit,
@@ -306,7 +305,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	query, args := c.sqlQueryBuilder.BuildCreateItemQuery(input)
 
 	// create the item.
-	res, err := c.execContextAndReturnResult(ctx, "item creation", query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "item creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +332,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
 
-	return c.execContext(ctx, "item update", query, args...)
+	return c.execContext(ctx, "item update", query, args)
 }
 
 // ArchiveItem archives an item from the database by its ID.
@@ -351,7 +350,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, userID)
 
-	return c.execContext(ctx, "item archive", query, args...)
+	return c.execContext(ctx, "item archive", query, args)
 }
 
 // LogItemCreationEvent implements our AuditLogEntryDataManager interface.

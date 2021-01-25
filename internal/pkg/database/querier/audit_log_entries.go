@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -180,7 +180,7 @@ func (c *Client) createAuditLogEntry(ctx context.Context, input *types.AuditLogE
 	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	// create the audit log entry.
-	if err := c.execContext(ctx, "audit log entry creation", query, args...); err != nil {
+	if err := c.execContext(ctx, "audit log entry creation", query, args); err != nil {
 		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

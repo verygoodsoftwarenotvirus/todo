@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -239,7 +239,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 
 	query, args := c.sqlQueryBuilder.BuildCreateOAuth2ClientQuery(input)
 
-	res, err := c.execContextAndReturnResult(ctx, "oauth2 client creation", query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "oauth2 client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *types.OAuth2Cl
 
 	query, args := c.sqlQueryBuilder.BuildUpdateOAuth2ClientQuery(updated)
 
-	return c.execContext(ctx, "oauth2 client update", query, args...)
+	return c.execContext(ctx, "oauth2 client update", query, args)
 }
 
 // ArchiveOAuth2Client archives an OAuth2 client.
@@ -284,7 +284,7 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 
 	query, args := c.sqlQueryBuilder.BuildArchiveOAuth2ClientQuery(clientID, userID)
 
-	return c.execContext(ctx, "oauth2 client archive", query, args...)
+	return c.execContext(ctx, "oauth2 client archive", query, args)
 }
 
 // LogOAuth2ClientCreationEvent implements our AuditLogEntryDataManager interface.

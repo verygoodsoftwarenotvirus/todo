@@ -85,7 +85,7 @@ func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.DataM
 }
 
 // IsReady reports whether or not the db is ready.
-func (c *Sqlite) IsReady(_ context.Context) (ready bool) {
+func (c *Sqlite) IsReady(_ context.Context, maxAttempts uint8) (ready bool) {
 	return true
 }
 

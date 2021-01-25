@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -65,13 +65,8 @@ func (c *Client) scanAccounts(rows database.ResultIterator, includeCounts bool) 
 		accounts = append(accounts, x)
 	}
 
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, 0, 0, rowsErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing database rows")
-		return nil, 0, 0, closeErr
+	if handleErr := c.handleRows(rows); handleErr != nil {
+		return nil, 0, 0, handleErr
 	}
 
 	return accounts, filteredCount, totalCount, nil
@@ -228,7 +223,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	query, args := c.sqlQueryBuilder.BuildCreateAccountQuery(input)
 
 	// create the account.
-	res, err := c.execContextAndReturnResult(ctx, "account creation", query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "account creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +249,7 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account) erro
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountQuery(updated)
 
-	return c.execContext(ctx, "account update", query, args...)
+	return c.execContext(ctx, "account update", query, args)
 }
 
 // ArchiveAccount archives an account from the database by its ID.
@@ -272,7 +267,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountQuery(accountID, userID)
 
-	return c.execContext(ctx, "account archive", query, args...)
+	return c.execContext(ctx, "account archive", query, args)
 }
 
 // LogAccountCreationEvent implements our AuditLogEntryDataManager interface.

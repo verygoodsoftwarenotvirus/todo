@@ -90,7 +90,7 @@ func TestPostgres_IsReady(T *testing.T) {
 		ctx := context.Background()
 
 		q, _ := buildTestService(t)
-		assert.True(t, q.IsReady(ctx))
+		assert.True(t, q.IsReady(ctx, 1))
 	})
 }
 

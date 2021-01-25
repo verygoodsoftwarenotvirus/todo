@@ -266,7 +266,7 @@ func TestSqlite_GetAllWebhooksCount(T *testing.T) {
 	})
 }
 
-func TestMariaDB_buildGetBatchOfWebhooksQuery(T *testing.T) {
+func TestSqlite_buildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -288,7 +288,7 @@ func TestMariaDB_buildGetBatchOfWebhooksQuery(T *testing.T) {
 	})
 }
 
-func TestMariaDB_GetAllWebhooks(T *testing.T) {
+func TestSqlite_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
 	_q, _ := buildTestService(T)

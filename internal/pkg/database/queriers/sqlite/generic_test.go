@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMariaDB_buildListQuery(T *testing.T) {
+func TestSqlite_buildListQuery(T *testing.T) {
 	T.Parallel()
 
 	const (

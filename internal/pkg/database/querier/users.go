@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -173,15 +173,15 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf("querying database for users: %w", err)
 	}
 
 	u, _, _, err := c.scanUsers(rows, false)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-
 		return nil, fmt.Errorf("scanning user: %w", err)
 	}
 
@@ -241,7 +241,7 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	query, args := c.sqlQueryBuilder.BuildCreateUserQuery(input)
 
 	// create the user.
-	res, err := c.execContextAndReturnResult(ctx, "user creation", query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "user creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
 
-	return c.execContext(ctx, "user update", query, args...)
+	return c.execContext(ctx, "user update", query, args)
 }
 
 // UpdateUserPassword updates a user's password hash in the database.
@@ -281,7 +281,7 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
 
-	return c.execContext(ctx, "user password update", query, args...)
+	return c.execContext(ctx, "user password update", query, args)
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
@@ -294,7 +294,7 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
 
-	return c.execContext(ctx, "user two factor secret verification", query, args...)
+	return c.execContext(ctx, "user two factor secret verification", query, args)
 }
 
 // ArchiveUser archives a user.
@@ -307,7 +307,7 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	query, args := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
 
-	return c.execContext(ctx, "user archive", query, args...)
+	return c.execContext(ctx, "user archive", query, args)
 }
 
 // LogUserCreationEvent saves a UserCreationEvent in the audit log table.

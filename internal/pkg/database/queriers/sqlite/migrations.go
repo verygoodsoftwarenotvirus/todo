@@ -179,7 +179,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 func (c *Sqlite) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
 	c.logger.Info("migrating db")
 
-	if !c.IsReady(ctx) {
+	if !c.IsReady(ctx, 50) {
 		return database.ErrDBUnready
 	}
 

@@ -1,4 +1,4 @@
-package superclient
+package querier
 
 import (
 	"context"
@@ -122,6 +122,19 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*typ
 	return webhook, err
 }
 
+// GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
+func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	c.logger.Debug("GetAllWebhooksCount called")
+	query := c.sqlQueryBuilder.BuildGetAllWebhooksCountQuery()
+
+	err = c.db.QueryRowContext(ctx, query).Scan(&count)
+
+	return count, err
+}
+
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
 func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.WebhookList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
@@ -150,19 +163,6 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 	}
 
 	return x, nil
-}
-
-// GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
-func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.Debug("GetAllWebhooksCount called")
-	query := c.sqlQueryBuilder.BuildGetAllWebhooksCountQuery()
-
-	err = c.db.QueryRowContext(ctx, query).Scan(&count)
-
-	return count, err
 }
 
 // GetAllWebhooks fetches a list of webhooks from the database that meet a particular filter.
@@ -220,7 +220,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
 
-	res, err := c.execContextAndReturnResult(ctx, "webhook creation", query, args...)
+	res, err := c.execContextAndReturnResult(ctx, "webhook creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(input)
 
-	return c.execContext(ctx, "webhook update", query, args...)
+	return c.execContext(ctx, "webhook update", query, args)
 }
 
 // ArchiveWebhook archives a webhook from the database.
@@ -272,7 +272,7 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
 
-	return c.execContext(ctx, "webhook archive", query, args...)
+	return c.execContext(ctx, "webhook archive", query, args)
 }
 
 // LogWebhookCreationEvent implements our AuditLogEntryDataManager interface.

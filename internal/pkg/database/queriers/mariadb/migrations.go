@@ -263,7 +263,7 @@ func buildMigrationFunc(db *sql.DB) func() {
 func (q *MariaDB) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
 	q.logger.Info("migrating db")
 
-	if !q.IsReady(ctx) {
+	if !q.IsReady(ctx, 50) {
 		return database.ErrDBUnready
 	}
 

@@ -34,7 +34,7 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
-				planInput := fakes.BuildFakePlanCreationInput()
+				planInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
 
 				return c.BuildCreatePlanRequest(ctx, planInput)
 			},
@@ -69,7 +69,7 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 				ctx := context.Background()
 
 				if randomPlan := fetchRandomPlan(ctx, c); randomPlan != nil {
-					newPlan := fakes.BuildFakePlanCreationInput()
+					newPlan := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
 					randomPlan.Name = newPlan.Name
 					randomPlan.Description = newPlan.Description
 					randomPlan.Price = newPlan.Price

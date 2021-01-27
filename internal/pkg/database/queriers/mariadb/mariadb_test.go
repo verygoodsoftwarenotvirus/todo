@@ -22,7 +22,7 @@ func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	return ProvideMariaDB(true, db, noop.NewLogger()).(*MariaDB), mock
+	return ProvideMariaDB(true, db, noop.NewLogger()), mock
 }
 
 var (

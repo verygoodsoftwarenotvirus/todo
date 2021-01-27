@@ -175,10 +175,10 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		ctx := context.Background()
 
-		mockDB := database.BuildMockDatabase()
+		mockDB := database.BuildMockSQLQueryBuilder()
 		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(nil)
 
-		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, exampleConfig)
+		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), nil, exampleConfig, mockDB)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
@@ -191,10 +191,10 @@ func TestProvideDatabaseClient(T *testing.T) {
 		ctx := context.Background()
 
 		expected := errors.New("blah")
-		mockDB := database.BuildMockDatabase()
+		mockDB := database.BuildMockSQLQueryBuilder()
 		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(expected)
 
-		x, actual := ProvideDatabaseClient(ctx, noop.NewLogger(), mockDB, nil, exampleConfig)
+		x, actual := ProvideDatabaseClient(ctx, noop.NewLogger(), nil, exampleConfig, mockDB)
 		assert.Nil(t, x)
 		assert.Error(t, actual)
 		assert.Equal(t, expected, errors.Unwrap(actual))

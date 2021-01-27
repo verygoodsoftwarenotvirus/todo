@@ -84,6 +84,18 @@ type MockSQLQueryBuilder struct {
 	*mocktypes.WebhookSQLQueryBuilder
 }
 
+func (m *MockSQLQueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
+	args := m.Called(db)
+
+	return args.Get(0).(func())
+}
+
+func (m *MockSQLQueryBuilder) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
+	returnValues := m.Called(testUserConfig)
+
+	return returnValues.Get(0).(string), returnValues.Get(0).([]interface{})
+}
+
 var _ ResultIterator = (*MockResultIterator)(nil)
 
 // MockResultIterator is our mock sql.Rows structure.

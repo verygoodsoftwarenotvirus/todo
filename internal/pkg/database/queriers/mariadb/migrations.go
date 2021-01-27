@@ -1,19 +1,13 @@
 package mariadb
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"math"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
 	"github.com/GuiaBolso/darwin"
-	"github.com/Masterminds/squirrel"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 )
 
 func buildCreationTriggerScript(tableName string) string {
@@ -247,77 +241,13 @@ var (
 	}
 )
 
-// buildMigrationFunc returns a sync.Once compatible function closure that will
+// BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a maria DB database.
-func buildMigrationFunc(db *sql.DB) func() {
+func (q *MariaDB) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.MySQLDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}
-}
-
-// Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
-// safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (q *MariaDB) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
-	q.logger.Info("migrating db")
-
-	if !q.IsReady(ctx, 50) {
-		return database.ErrDBUnready
-	}
-
-	q.migrateOnce.Do(buildMigrationFunc(q.db))
-
-	if testUserConfig != nil {
-		query, args, err := q.sqlBuilder.
-			Insert(queriers.UsersTableName).
-			Columns(
-				queriers.UsersTableUsernameColumn,
-				queriers.UsersTableHashedPasswordColumn,
-				queriers.UsersTableSaltColumn,
-				queriers.UsersTableTwoFactorColumn,
-				queriers.UsersTableIsAdminColumn,
-				queriers.UsersTableReputationColumn,
-				queriers.UsersTableAdminPermissionsColumn,
-				queriers.UsersTableTwoFactorVerifiedOnColumn,
-			).
-			Values(
-				testUserConfig.Username,
-				testUserConfig.HashedPassword,
-				[]byte("aaaaaaaaaaaaaaaa"),
-				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
-				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-				testUserConfig.IsSiteAdmin,
-				types.GoodStandingAccountStatus,
-				math.MaxUint32,
-				squirrel.Expr(currentUnixTimeQuery),
-			).
-			ToSql()
-		q.logQueryBuildingError(err)
-
-		res, userCreateErr := q.db.ExecContext(ctx, query, args...)
-		if userCreateErr != nil {
-			q.logger.Error(userCreateErr, "creating test user")
-			return fmt.Errorf("creating test user: %w", userCreateErr)
-		}
-
-		id, idRetErr := res.LastInsertId()
-		if idRetErr != nil {
-			q.logger.Error(idRetErr, "fetching insert ID")
-			return fmt.Errorf("fetching insert ID: %w", idRetErr)
-		}
-
-		if _, accountCreationErr := q.CreateAccount(ctx, &types.AccountCreationInput{
-			Name:          testUserConfig.Username,
-			BelongsToUser: uint64(id),
-		}); accountCreationErr != nil {
-			q.logger.Error(accountCreationErr, "creating test user")
-			return fmt.Errorf("creating test user: %w", accountCreationErr)
-		}
-
-		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
-	}
-
-	return nil
 }

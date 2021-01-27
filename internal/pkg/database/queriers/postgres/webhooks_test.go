@@ -13,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -103,7 +102,7 @@ func TestPostgres_ScanWebhooks(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetWebhookQuery(T *testing.T) {
+func TestPostgres_BuildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -210,7 +209,7 @@ func TestPostgres_GetWebhook(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAllWebhooksCountQuery(T *testing.T) {
+func TestPostgres_BuildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -267,7 +266,7 @@ func TestPostgres_GetAllWebhooksCount(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetBatchOfWebhooksQuery(T *testing.T) {
+func TestPostgres_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -443,7 +442,7 @@ func TestPostgres_GetAllWebhooks(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetWebhooksQuery(T *testing.T) {
+func TestPostgres_BuildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -570,7 +569,7 @@ func TestPostgres_GetWebhooks(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildWebhookCreationQuery(T *testing.T) {
+func TestPostgres_BuildWebhookCreationQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -646,7 +645,7 @@ func TestPostgres_CreateWebhook(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildUpdateWebhookQuery(T *testing.T) {
+func TestPostgres_BuildUpdateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -718,7 +717,7 @@ func TestPostgres_UpdateWebhook(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildArchiveWebhookQuery(T *testing.T) {
+func TestPostgres_BuildArchiveWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -774,9 +773,8 @@ func TestPostgres_LogWebhookCreationEvent(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookCreationEventEntry(exampleWebhook)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleWebhook.ID, exampleWebhook.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -799,9 +797,8 @@ func TestPostgres_LogWebhookUpdateEvent(T *testing.T) {
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleInput := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -824,9 +821,8 @@ func TestPostgres_LogWebhookArchiveEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeWebhook()
 		exampleAuditLogEntryInput := audit.BuildWebhookArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

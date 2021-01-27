@@ -48,8 +48,8 @@ func BuildFakePlanUpdateInputFromPlan(plan *types.AccountSubscriptionPlan) *type
 	}
 }
 
-// BuildFakePlanCreationInput builds a faked AccountSubscriptionPlanCreationInput.
-func BuildFakePlanCreationInput() *types.AccountSubscriptionPlanCreationInput {
+// BuildFakeAccountSubscriptionPlanCreationInput builds a faked AccountSubscriptionPlanCreationInput.
+func BuildFakeAccountSubscriptionPlanCreationInput() *types.AccountSubscriptionPlanCreationInput {
 	plan := BuildFakeAccountSubscriptionPlan()
 	return BuildFakePlanCreationInputFromPlan(plan)
 }

@@ -1,105 +1,20 @@
 package mariadb
 
 import (
-	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.WebhookDataManager = (*MariaDB)(nil)
-
-// scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
-func (q *MariaDB) scanWebhook(scan database.Scanner, includeCounts bool) (webhook *types.Webhook, filteredCount, totalCount uint64, err error) {
-	webhook = &types.Webhook{}
-
-	var (
-		eventsStr,
-		dataTypesStr,
-		topicsStr string
-	)
-
-	targetVars := []interface{}{
-		&webhook.ID,
-		&webhook.Name,
-		&webhook.ContentType,
-		&webhook.URL,
-		&webhook.Method,
-		&eventsStr,
-		&dataTypesStr,
-		&topicsStr,
-		&webhook.CreatedOn,
-		&webhook.LastUpdatedOn,
-		&webhook.ArchivedOn,
-		&webhook.BelongsToUser,
-	}
-
-	if includeCounts {
-		targetVars = append(targetVars, &filteredCount, &totalCount)
-	}
-
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
-	}
-
-	if events := strings.Split(eventsStr, queriers.WebhooksTableEventsSeparator); len(events) >= 1 && events[0] != "" {
-		webhook.Events = events
-	}
-
-	if dataTypes := strings.Split(dataTypesStr, queriers.WebhooksTableDataTypesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
-		webhook.DataTypes = dataTypes
-	}
-
-	if topics := strings.Split(topicsStr, queriers.WebhooksTableTopicsSeparator); len(topics) >= 1 && topics[0] != "" {
-		webhook.Topics = topics
-	}
-
-	return webhook, filteredCount, totalCount, nil
-}
-
-// scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
-func (q *MariaDB) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
-	for rows.Next() {
-		webhook, fc, tc, scanErr := q.scanWebhook(rows, includeCounts)
-		if scanErr != nil {
-			return nil, 0, 0, scanErr
-		}
-
-		if includeCounts {
-			if filteredCount == 0 {
-				filteredCount = fc
-			}
-
-			if totalCount == 0 {
-				totalCount = tc
-			}
-		}
-
-		webhooks = append(webhooks, webhook)
-	}
-
-	if rowErr := rows.Err(); rowErr != nil {
-		return nil, 0, 0, rowErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing rows")
-		return nil, 0, 0, closeErr
-	}
-
-	return webhooks, filteredCount, totalCount, nil
-}
+var _ types.WebhookSQLQueryBuilder = (*MariaDB)(nil)
 
 // buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
-func (q *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -115,21 +30,8 @@ func (q *MariaDB) buildGetWebhookQuery(webhookID, userID uint64) (query string, 
 	return query, args
 }
 
-// GetWebhook fetches a webhook from the database.
-func (q *MariaDB) GetWebhook(ctx context.Context, webhookID, userID uint64) (*types.Webhook, error) {
-	query, args := q.buildGetWebhookQuery(webhookID, userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
-
-	webhook, _, _, err := q.scanWebhook(row, false)
-	if err != nil {
-		return nil, fmt.Errorf("fetching webhook from database: %w", err)
-	}
-
-	return webhook, nil
-}
-
 // buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
-func (q *MariaDB) buildGetAllWebhooksCountQuery() string {
+func (q *MariaDB) BuildGetAllWebhooksCountQuery() string {
 	var err error
 
 	getAllWebhooksCountQuery, _, err := q.sqlBuilder.
@@ -145,14 +47,8 @@ func (q *MariaDB) buildGetAllWebhooksCountQuery() string {
 	return getAllWebhooksCountQuery
 }
 
-// GetAllWebhooksCount will fetch the count of every active webhook in the database.
-func (q *MariaDB) GetAllWebhooksCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllWebhooksCountQuery()).Scan(&count)
-	return count, err
-}
-
 // buildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *MariaDB) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.WebhooksTableColumns...).
 		From(queriers.WebhooksTableName).
@@ -169,47 +65,8 @@ func (q *MariaDB) buildGetBatchOfWebhooksQuery(beginID, endID uint64) (query str
 	return query, args
 }
 
-// GetAllWebhooks fetches every item from the database and writes them to a channel. This method primarily exists
-// to aid in administrative data tasks.
-func (q *MariaDB) GetAllWebhooks(ctx context.Context, resultChannel chan []*types.Webhook, batchSize uint16) error {
-	count, countErr := q.GetAllWebhooksCount(ctx)
-	if countErr != nil {
-		return fmt.Errorf("fetching count of webhooks: %w", countErr)
-	}
-
-	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
-		endID := beginID + uint64(batchSize)
-		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfWebhooksQuery(begin, end)
-			logger := q.logger.WithValues(map[string]interface{}{
-				"query": query,
-				"begin": begin,
-				"end":   end,
-			})
-
-			rows, queryErr := q.db.Query(query, args...)
-			if errors.Is(queryErr, sql.ErrNoRows) {
-				return
-			} else if queryErr != nil {
-				logger.Error(queryErr, "querying for database rows")
-				return
-			}
-
-			webhooks, _, _, err := q.scanWebhooks(rows, false)
-			if err != nil {
-				logger.Error(err, "scanning database rows")
-				return
-			}
-
-			resultChannel <- webhooks
-		}(beginID, endID)
-	}
-
-	return nil
-}
-
 // buildGetWebhooksQuery returns a SQL query (and arguments) that would return a query and arguments to retrieve a list of webhooks.
-func (q *MariaDB) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		queriers.WebhooksTableName,
 		queriers.WebhooksTableOwnershipColumn,
@@ -220,39 +77,8 @@ func (q *MariaDB) buildGetWebhooksQuery(userID uint64, filter *types.QueryFilter
 	)
 }
 
-// GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (q *MariaDB) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
-	query, args := q.buildGetWebhooksQuery(userID, filter)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("querying database: %w", err)
-	}
-
-	list, filteredCount, totalCount, err := q.scanWebhooks(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	x := &types.WebhookList{
-		Pagination: types.Pagination{
-			Page:          filter.Page,
-			Limit:         filter.Limit,
-			FilteredCount: filteredCount,
-			TotalCount:    totalCount,
-		},
-		Webhooks: list,
-	}
-
-	return x, err
-}
-
 // buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
-func (q *MariaDB) buildCreateWebhookQuery(x *types.Webhook) (query string, args []interface{}) {
+func (q *MariaDB) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -284,33 +110,8 @@ func (q *MariaDB) buildCreateWebhookQuery(x *types.Webhook) (query string, args 
 	return query, args
 }
 
-// CreateWebhook creates a webhook in the database.
-func (q *MariaDB) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
-	x := &types.Webhook{
-		Name:          input.Name,
-		ContentType:   input.ContentType,
-		URL:           input.URL,
-		Method:        input.Method,
-		Events:        input.Events,
-		DataTypes:     input.DataTypes,
-		Topics:        input.Topics,
-		BelongsToUser: input.BelongsToUser,
-	}
-	query, args := q.buildCreateWebhookQuery(x)
-
-	res, err := q.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("executing webhook creation query: %w", err)
-	}
-
-	x.CreatedOn = q.timeTeller.Now()
-	x.ID = q.getIDFromResult(res)
-
-	return x, nil
-}
-
 // buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
-func (q *MariaDB) buildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
+func (q *MariaDB) BuildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -334,16 +135,8 @@ func (q *MariaDB) buildUpdateWebhookQuery(input *types.Webhook) (query string, a
 	return query, args
 }
 
-// UpdateWebhook updates a particular webhook. Note that UpdateWebhook expects the provided input to have a valid ID.
-func (q *MariaDB) UpdateWebhook(ctx context.Context, input *types.Webhook) error {
-	query, args := q.buildUpdateWebhookQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
 // buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
-func (q *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -362,31 +155,8 @@ func (q *MariaDB) buildArchiveWebhookQuery(webhookID, userID uint64) (query stri
 	return query, args
 }
 
-// ArchiveWebhook archives a webhook from the database by its ID.
-func (q *MariaDB) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
-	query, args := q.buildArchiveWebhookQuery(webhookID, userID)
-	_, err := q.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
-// LogWebhookCreationEvent saves a WebhookCreationEvent in the audit log table.
-func (q *MariaDB) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
-	q.createAuditLogEntry(ctx, audit.BuildWebhookCreationEventEntry(webhook))
-}
-
-// LogWebhookUpdateEvent saves a WebhookUpdateEvent in the audit log table.
-func (q *MariaDB) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
-}
-
-// LogWebhookArchiveEvent saves a WebhookArchiveEvent in the audit log table.
-func (q *MariaDB) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
-}
-
 // buildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *MariaDB) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 
 	builder := q.sqlBuilder.
@@ -409,21 +179,4 @@ func (q *MariaDB) buildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (quer
 	q.logQueryBuildingError(err)
 
 	return query, args
-}
-
-// GetAuditLogEntriesForWebhook fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForWebhookQuery(webhookID)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
-	}
-
-	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	return auditLogEntries, nil
 }

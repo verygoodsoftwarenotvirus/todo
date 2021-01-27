@@ -32,7 +32,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		s := buildTestService()
 		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
 
-		exampleCreationInput := fakes.BuildFakePlanCreationInput()
+		exampleCreationInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
 		jsonBytes, err := json.Marshal(&exampleCreationInput)
 		require.NoError(t, err)
 

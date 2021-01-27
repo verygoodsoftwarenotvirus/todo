@@ -1,91 +1,20 @@
 package mariadb
 
 import (
-	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.OAuth2ClientDataManager = (*MariaDB)(nil)
-
-// scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
-func (q *MariaDB) scanOAuth2Client(scan database.Scanner, includeCounts bool) (client *types.OAuth2Client, filteredCount, totalCount uint64, err error) {
-	client = &types.OAuth2Client{}
-
-	var rawScopes string
-
-	targetVars := []interface{}{
-		&client.ID,
-		&client.Name,
-		&client.ClientID,
-		&rawScopes,
-		&client.RedirectURI,
-		&client.ClientSecret,
-		&client.CreatedOn,
-		&client.LastUpdatedOn,
-		&client.ArchivedOn,
-		&client.BelongsToUser,
-	}
-
-	if includeCounts {
-		targetVars = append(targetVars, &filteredCount, &totalCount)
-	}
-
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
-	}
-
-	if scopes := strings.Split(rawScopes, queriers.OAuth2ClientsTableScopeSeparator); len(scopes) >= 1 && scopes[0] != "" {
-		client.Scopes = scopes
-	}
-
-	return client, filteredCount, totalCount, nil
-}
-
-// scanOAuth2Clients takes sql rows and turns them into a slice of OAuth2Clients.
-func (q *MariaDB) scanOAuth2Clients(rows database.ResultIterator, includeCounts bool) (clients []*types.OAuth2Client, filteredCount, totalCount uint64, err error) {
-	for rows.Next() {
-		client, fc, tc, scanErr := q.scanOAuth2Client(rows, includeCounts)
-		if scanErr != nil {
-			return nil, 0, 0, scanErr
-		}
-
-		if includeCounts {
-			if filteredCount == 0 {
-				filteredCount = fc
-			}
-
-			if totalCount == 0 {
-				totalCount = tc
-			}
-		}
-
-		clients = append(clients, client)
-	}
-
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, 0, 0, rowsErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing rows")
-		return nil, 0, 0, closeErr
-	}
-
-	return clients, filteredCount, totalCount, nil
-}
+var _ types.OAuth2ClientSQLQueryBuilder = (*MariaDB)(nil)
 
 // buildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID.
-func (q *MariaDB) buildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
 
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
@@ -103,18 +32,8 @@ func (q *MariaDB) buildGetOAuth2ClientByClientIDQuery(clientID string) (query st
 	return query, args
 }
 
-// GetOAuth2ClientByClientID gets an OAuth2 client.
-func (q *MariaDB) GetOAuth2ClientByClientID(ctx context.Context, clientID string) (*types.OAuth2Client, error) {
-	query, args := q.buildGetOAuth2ClientByClientIDQuery(clientID)
-	row := q.db.QueryRowContext(ctx, query, args...)
-
-	client, _, _, err := q.scanOAuth2Client(row, false)
-
-	return client, err
-}
-
 // buildGetBatchOfOAuth2ClientsQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *MariaDB) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.OAuth2ClientsTableColumns...).
 		From(queriers.OAuth2ClientsTableName).
@@ -131,47 +50,8 @@ func (q *MariaDB) buildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (quer
 	return query, args
 }
 
-// GetAllOAuth2Clients fetches every item from the database and writes them to a channel. This method primarily exists
-// to aid in administrative data tasks.
-func (q *MariaDB) GetAllOAuth2Clients(ctx context.Context, resultChannel chan []*types.OAuth2Client, batchSize uint16) error {
-	count, countErr := q.GetTotalOAuth2ClientCount(ctx)
-	if countErr != nil {
-		return fmt.Errorf("fetching count of items: %w", countErr)
-	}
-
-	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
-		endID := beginID + uint64(batchSize)
-		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfOAuth2ClientsQuery(begin, end)
-			logger := q.logger.WithValues(map[string]interface{}{
-				"query": query,
-				"begin": begin,
-				"end":   end,
-			})
-
-			rows, queryErr := q.db.Query(query, args...)
-			if errors.Is(queryErr, sql.ErrNoRows) {
-				return
-			} else if queryErr != nil {
-				logger.Error(queryErr, "querying for database rows")
-				return
-			}
-
-			clients, _, _, scanErr := q.scanOAuth2Clients(rows, false)
-			if scanErr != nil {
-				logger.Error(scanErr, "scanning database rows")
-				return
-			}
-
-			resultChannel <- clients
-		}(beginID, endID)
-	}
-
-	return nil
-}
-
 // buildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
-func (q *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -188,26 +68,9 @@ func (q *MariaDB) buildGetOAuth2ClientQuery(clientID, userID uint64) (query stri
 	return query, args
 }
 
-// GetOAuth2Client retrieves an OAuth2 client from the database.
-func (q *MariaDB) GetOAuth2Client(ctx context.Context, clientID, userID uint64) (*types.OAuth2Client, error) {
-	query, args := q.buildGetOAuth2ClientQuery(clientID, userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
-
-	client, _, _, err := q.scanOAuth2Client(row, false)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
-	}
-
-	return client, nil
-}
-
 // buildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
-func (q *MariaDB) buildGetAllOAuth2ClientsCountQuery() string {
+func (q *MariaDB) BuildGetAllOAuth2ClientsCountQuery() string {
 	var err error
 
 	getAllOAuth2ClientCountQuery, _, err := q.sqlBuilder.
@@ -223,17 +86,9 @@ func (q *MariaDB) buildGetAllOAuth2ClientsCountQuery() string {
 	return getAllOAuth2ClientCountQuery
 }
 
-// GetTotalOAuth2ClientCount will get the count of OAuth2 clients that match the current filter.
-func (q *MariaDB) GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error) {
-	var count uint64
-	err := q.db.QueryRowContext(ctx, q.buildGetAllOAuth2ClientsCountQuery()).Scan(&count)
-
-	return count, err
-}
-
 // buildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (q *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		queriers.OAuth2ClientsTableName,
 		queriers.OAuth2ClientsTableOwnershipColumn,
@@ -244,39 +99,8 @@ func (q *MariaDB) buildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryF
 	)
 }
 
-// GetOAuth2Clients gets a list of OAuth2 clients.
-func (q *MariaDB) GetOAuth2Clients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.OAuth2ClientList, error) {
-	query, args := q.buildGetOAuth2ClientsQuery(userID, filter)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
-	}
-
-	list, filteredCount, totalCount, err := q.scanOAuth2Clients(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	ocl := &types.OAuth2ClientList{
-		Pagination: types.Pagination{
-			Page:          filter.Page,
-			Limit:         filter.Limit,
-			FilteredCount: filteredCount,
-			TotalCount:    totalCount,
-		},
-		Clients: list,
-	}
-
-	return ocl, nil
-}
-
 // buildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
-func (q *MariaDB) buildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+func (q *MariaDB) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -304,31 +128,8 @@ func (q *MariaDB) buildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query
 	return query, args
 }
 
-// CreateOAuth2Client creates an OAuth2 client.
-func (q *MariaDB) CreateOAuth2Client(ctx context.Context, input *types.OAuth2ClientCreationInput) (*types.OAuth2Client, error) {
-	x := &types.OAuth2Client{
-		Name:          input.Name,
-		ClientID:      input.ClientID,
-		ClientSecret:  input.ClientSecret,
-		RedirectURI:   input.RedirectURI,
-		Scopes:        input.Scopes,
-		BelongsToUser: input.BelongsToUser,
-	}
-	query, args := q.buildCreateOAuth2ClientQuery(x)
-
-	res, err := q.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("executing client creation query: %w", err)
-	}
-
-	x.CreatedOn = q.timeTeller.Now()
-	x.ID = q.getIDFromResult(res)
-
-	return x, nil
-}
-
 // buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
-func (q *MariaDB) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+func (q *MariaDB) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -349,17 +150,8 @@ func (q *MariaDB) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query
 	return query, args
 }
 
-// UpdateOAuth2Client updates a OAuth2 client.
-// NOTE: this function expects the input's ID field to be valid and non-zero.
-func (q *MariaDB) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Client) error {
-	query, args := q.buildUpdateOAuth2ClientQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
 // buildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
-func (q *MariaDB) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -377,26 +169,8 @@ func (q *MariaDB) buildArchiveOAuth2ClientQuery(clientID, userID uint64) (query 
 	return query, args
 }
 
-// ArchiveOAuth2Client archives an OAuth2 client.
-func (q *MariaDB) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
-	query, args := q.buildArchiveOAuth2ClientQuery(clientID, userID)
-	_, err := q.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
-// LogOAuth2ClientCreationEvent saves a OAuth2ClientCreationEvent in the audit log table.
-func (q *MariaDB) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
-	q.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
-}
-
-// LogOAuth2ClientArchiveEvent saves a OAuth2ClientArchiveEvent in the audit log table.
-func (q *MariaDB) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
-}
-
 // buildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *MariaDB) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
 	var err error
 
 	builder := q.sqlBuilder.
@@ -419,21 +193,4 @@ func (q *MariaDB) buildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (
 	q.logQueryBuildingError(err)
 
 	return query, args
-}
-
-// GetAuditLogEntriesForOAuth2Client fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForOAuth2ClientQuery(clientID)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
-	}
-
-	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	return auditLogEntries, nil
 }

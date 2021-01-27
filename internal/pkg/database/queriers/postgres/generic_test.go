@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostgres_buildListQuery(T *testing.T) {
+func TestPostgres_BuildListQuery(T *testing.T) {
 	T.Parallel()
 
 	const (

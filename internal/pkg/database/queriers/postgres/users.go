@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -157,8 +158,8 @@ func (q *Postgres) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, use
 	return u, err
 }
 
-// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (q *Postgres) buildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
+// BuildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
+func (q *Postgres) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -180,7 +181,7 @@ func (q *Postgres) buildGetUserByUsernameQuery(username string) (query string, a
 
 // GetUserByUsername fetches a user by their username.
 func (q *Postgres) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	query, args := q.buildGetUserByUsernameQuery(username)
+	query, args := q.BuildGetUserByUsernameQuery(username)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	u, _, _, err := q.scanUser(row, false)
@@ -267,9 +268,9 @@ func (q *Postgres) GetAllUsersCount(ctx context.Context) (count uint64, err erro
 	return count, err
 }
 
-// buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// BuildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria. It is assumed that this is only accessible to site administrators.
-func (q *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Postgres) BuildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.PlaceholderFormat(squirrel.Question).
 		Select(allCountQuery).
 		From(queriers.UsersTableName).
@@ -304,7 +305,7 @@ func (q *Postgres) buildGetUsersQuery(filter *types.QueryFilter) (query string, 
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
 func (q *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*types.UserList, error) {
-	query, args := q.buildGetUsersQuery(filter)
+	query, args := q.BuildGetUsersQuery(filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -327,6 +328,36 @@ func (q *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 	}
 
 	return x, nil
+}
+
+func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
+	query, args, err := q.sqlBuilder.
+		Insert(queriers.UsersTableName).
+		Columns(
+			queriers.UsersTableUsernameColumn,
+			queriers.UsersTableHashedPasswordColumn,
+			queriers.UsersTableSaltColumn,
+			queriers.UsersTableTwoFactorColumn,
+			queriers.UsersTableIsAdminColumn,
+			queriers.UsersTableReputationColumn,
+			queriers.UsersTableAdminPermissionsColumn,
+			queriers.UsersTableTwoFactorVerifiedOnColumn,
+		).
+		Values(
+			testUserConfig.Username,
+			testUserConfig.HashedPassword,
+			[]byte("aaaaaaaaaaaaaaaa"),
+			// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
+			"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+			testUserConfig.IsSiteAdmin,
+			types.GoodStandingAccountStatus,
+			math.MaxUint32,
+			squirrel.Expr(currentUnixTimeQuery),
+		).
+		ToSql()
+	q.logQueryBuildingError(err)
+
+	return query, args
 }
 
 // BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.

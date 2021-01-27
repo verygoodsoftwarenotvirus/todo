@@ -72,6 +72,9 @@ type (
 
 	// SQLQueryBuilder describes anything that builds SQL queries to manage our data.
 	SQLQueryBuilder interface {
+		BuildMigrationFunc(db *sql.DB) func()
+		BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{})
+
 		types.AccountSQLQueryBuilder
 		types.AccountSubscriptionPlanSQLQueryBuilder
 		types.UserSQLQueryBuilder

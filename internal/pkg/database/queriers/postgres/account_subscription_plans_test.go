@@ -12,7 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -94,7 +93,7 @@ func TestPostgres_ScanPlans(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetPlanQuery(T *testing.T) {
+func TestPostgres_BuildGetPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -160,7 +159,7 @@ func TestPostgres_GetPlan(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAllPlansCountQuery(T *testing.T) {
+func TestPostgres_BuildGetAllPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -197,7 +196,7 @@ func TestPostgres_GetAllPlansCount(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetPlansQuery(T *testing.T) {
+func TestPostgres_BuildGetPlansQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -320,7 +319,7 @@ func TestPostgres_GetPlans(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildCreatePlanQuery(T *testing.T) {
+func TestPostgres_BuildCreatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -328,6 +327,7 @@ func TestPostgres_buildCreatePlanQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
 		expectedQuery := "INSERT INTO account_subscription_plans (name,description,price,period) VALUES ($1,$2,$3,$4) RETURNING id, created_on"
 		expectedArgs := []interface{}{
@@ -336,7 +336,7 @@ func TestPostgres_buildCreatePlanQuery(T *testing.T) {
 			examplePlan.Price,
 			examplePlan.Period.String(),
 		}
-		actualQuery, actualArgs := q.BuildCreateAccountSubscriptionPlanQuery(examplePlan)
+		actualQuery, actualArgs := q.BuildCreateAccountSubscriptionPlanQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -355,7 +355,7 @@ func TestPostgres_CreatePlan(T *testing.T) {
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
-		expectedQuery, expectedArgs := q.BuildCreateAccountSubscriptionPlanQuery(examplePlan)
+		expectedQuery, expectedArgs := q.BuildCreateAccountSubscriptionPlanQuery(exampleInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(examplePlan.ID, examplePlan.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -376,7 +376,7 @@ func TestPostgres_CreatePlan(T *testing.T) {
 
 		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
 
-		expectedQuery, expectedArgs := q.BuildCreateAccountSubscriptionPlanQuery(examplePlan)
+		expectedQuery, expectedArgs := q.BuildCreateAccountSubscriptionPlanQuery(exampleInput)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -389,7 +389,7 @@ func TestPostgres_CreatePlan(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildUpdatePlanQuery(T *testing.T) {
+func TestPostgres_BuildUpdatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -459,7 +459,7 @@ func TestPostgres_UpdatePlan(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildArchivePlanQuery(T *testing.T) {
+func TestPostgres_BuildArchivePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -552,9 +552,8 @@ func TestPostgres_LogPlanCreationEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleInput)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -578,9 +577,8 @@ func TestPostgres_LogPlanUpdateEvent(T *testing.T) {
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleInput.ID, exampleChanges)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -603,9 +601,8 @@ func TestPostgres_LogPlanArchiveEvent(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleAuditLogEntryInput := audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

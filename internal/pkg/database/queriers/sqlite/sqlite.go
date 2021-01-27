@@ -33,7 +33,10 @@ const (
 	defaultBatchSize uint16 = 1000
 )
 
-var _ database.DataManager = (*Sqlite)(nil)
+var (
+	//_ database.DataManager = (*Sqlite)(nil)
+	_ database.SQLQueryBuilder = (*Sqlite)(nil)
+)
 
 type (
 	// Sqlite is our main Sqlite interaction db.
@@ -74,7 +77,7 @@ func ProvideSqliteDB(logger logging.Logger, connectionDetails database.Connectio
 }
 
 // ProvideSqlite provides a sqlite db controller.
-func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) database.DataManager {
+func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) *Sqlite {
 	return &Sqlite{
 		db:         db,
 		debug:      debug,

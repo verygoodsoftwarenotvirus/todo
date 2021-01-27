@@ -167,7 +167,7 @@ func (q *Postgres) GetAccountSubscriptionPlans(ctx context.Context, filter *type
 }
 
 // BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (q *Postgres) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+func (q *Postgres) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(queriers.AccountSubscriptionPlansTableName).
 		Columns(
@@ -195,7 +195,7 @@ func (q *Postgres) CreateAccountSubscriptionPlan(ctx context.Context, input *typ
 		Period:      input.Period,
 	}
 
-	query, args := q.BuildCreateAccountSubscriptionPlanQuery(x)
+	query, args := q.BuildCreateAccountSubscriptionPlanQuery(input)
 
 	// create the plan.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)

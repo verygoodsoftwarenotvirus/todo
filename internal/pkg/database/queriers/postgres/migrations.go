@@ -4,15 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
-	"github.com/Masterminds/squirrel"
 )
 
 var (
@@ -167,9 +164,9 @@ var (
 	}
 )
 
-// buildMigrationFunc returns a sync.Once compatible function closure that will
+// BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a postgres database.
-func buildMigrationFunc(db *sql.DB) func() {
+func (q *Postgres) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
 		if err := darwin.Migrate(driver, migrations, nil); err != nil {
@@ -187,37 +184,12 @@ func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCr
 		return database.ErrDBUnready
 	}
 
-	q.migrateOnce.Do(buildMigrationFunc(q.db))
+	q.migrateOnce.Do(q.BuildMigrationFunc(q.db))
 
 	if testUserConfig != nil {
 		q.logger.Debug("creating test user")
 
-		query, args, err := q.sqlBuilder.
-			Insert(queriers.UsersTableName).
-			Columns(
-				queriers.UsersTableUsernameColumn,
-				queriers.UsersTableHashedPasswordColumn,
-				queriers.UsersTableSaltColumn,
-				queriers.UsersTableTwoFactorColumn,
-				queriers.UsersTableIsAdminColumn,
-				queriers.UsersTableReputationColumn,
-				queriers.UsersTableAdminPermissionsColumn,
-				queriers.UsersTableTwoFactorVerifiedOnColumn,
-			).
-			Values(
-				testUserConfig.Username,
-				testUserConfig.HashedPassword,
-				[]byte("aaaaaaaaaaaaaaaa"),
-				// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
-				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-				testUserConfig.IsSiteAdmin,
-				types.GoodStandingAccountStatus,
-				math.MaxUint32,
-				squirrel.Expr(currentUnixTimeQuery),
-			).
-			Suffix("RETURNING id").
-			ToSql()
-		q.logQueryBuildingError(err)
+		query, args := q.BuildTestUserCreationQuery(testUserConfig)
 
 		var id uint64
 		if userCreateErr := q.db.QueryRowContext(ctx, query, args...).Scan(&id); userCreateErr != nil {

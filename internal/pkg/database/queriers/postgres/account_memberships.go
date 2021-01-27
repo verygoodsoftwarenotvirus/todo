@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 )
 
-func (q *Postgres) buildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.AccountsMembershipTableName).
 		Set(queriers.AccountsMembershipTablePrimaryUserAccountColumn, squirrel.And{
@@ -27,7 +27,7 @@ func (q *Postgres) buildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) 
 
 // MarkAccountAsUserPrimary marks an account as the primary account.
 func (q *Postgres) MarkAccountAsUserPrimary(ctx context.Context, userID, accountID uint64) error {
-	query, args := q.buildMarkAccountAsUserPrimaryQuery(userID, accountID)
+	query, args := q.BuildMarkAccountAsUserPrimaryQuery(userID, accountID)
 
 	// create the user/account association.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
@@ -37,7 +37,7 @@ func (q *Postgres) MarkAccountAsUserPrimary(ctx context.Context, userID, account
 	return nil
 }
 
-func (q *Postgres) buildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", queriers.AccountsMembershipTableName, queriers.IDColumn)).
 		Prefix(queriers.ExistencePrefix).
@@ -51,7 +51,7 @@ func (q *Postgres) buildUserIsMemberOfAccountQuery(userID, accountID uint64) (qu
 	)
 }
 
-func (q *Postgres) buildAddUserToAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildAddUserToAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(queriers.AccountsMembershipTableName).
 		Columns(
@@ -67,7 +67,7 @@ func (q *Postgres) buildAddUserToAccountQuery(userID, accountID uint64) (query s
 
 // AddUserToAccount adds a user to a given account.
 func (q *Postgres) AddUserToAccount(ctx context.Context, userID, accountID uint64) error {
-	query, args := q.buildAddUserToAccountQuery(userID, accountID)
+	query, args := q.BuildAddUserToAccountQuery(userID, accountID)
 
 	// create the user/account association.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
@@ -77,7 +77,7 @@ func (q *Postgres) AddUserToAccount(ctx context.Context, userID, accountID uint6
 	return nil
 }
 
-func (q *Postgres) buildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Delete(queriers.AccountsMembershipTableName).
 		Where(squirrel.Eq{
@@ -90,7 +90,7 @@ func (q *Postgres) buildRemoveUserFromAccountQuery(userID, accountID uint64) (qu
 
 // RemoveUserFromAccount removes a user from a given account.
 func (q *Postgres) RemoveUserFromAccount(ctx context.Context, userID, accountID uint64) error {
-	query, args := q.buildRemoveUserFromAccountQuery(userID, accountID)
+	query, args := q.BuildRemoveUserFromAccountQuery(userID, accountID)
 
 	// remove the user/account association.
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {

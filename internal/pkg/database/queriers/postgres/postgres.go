@@ -71,7 +71,7 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 }
 
 // ProvidePostgres provides a postgres db controller.
-func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) database.DataManager {
+func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) *Postgres {
 	return &Postgres{
 		db:         db,
 		debug:      debug,

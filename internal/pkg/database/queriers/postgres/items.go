@@ -334,7 +334,7 @@ func (q *Postgres) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
-func (q *Postgres) BuildCreateItemQuery(input *types.Item) (query string, args []interface{}) {
+func (q *Postgres) BuildCreateItemQuery(input *types.ItemCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(queriers.ItemsTableName).
 		Columns(
@@ -359,7 +359,7 @@ func (q *Postgres) CreateItem(ctx context.Context, input *types.ItemCreationInpu
 		BelongsToUser: input.BelongsToUser,
 	}
 
-	query, args := q.BuildCreateItemQuery(x)
+	query, args := q.BuildCreateItemQuery(input)
 
 	// create the item.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
@@ -370,8 +370,8 @@ func (q *Postgres) CreateItem(ctx context.Context, input *types.ItemCreationInpu
 	return x, nil
 }
 
-// buildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters.
-func (q *Postgres) buildUpdateItemQuery(input *types.Item) (query string, args []interface{}) {
+// BuildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters.
+func (q *Postgres) BuildUpdateItemQuery(input *types.Item) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.ItemsTableName).
 		Set(queriers.ItemsTableNameColumn, input.Name).
@@ -387,12 +387,12 @@ func (q *Postgres) buildUpdateItemQuery(input *types.Item) (query string, args [
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (q *Postgres) UpdateItem(ctx context.Context, input *types.Item) error {
-	query, args := q.buildUpdateItemQuery(input)
+	query, args := q.BuildUpdateItemQuery(input)
 	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 
-// buildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
-func (q *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
+// BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
+func (q *Postgres) BuildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(queriers.ItemsTableName).
 		Set(queriers.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -408,7 +408,7 @@ func (q *Postgres) buildArchiveItemQuery(itemID, userID uint64) (query string, a
 
 // ArchiveItem marks an item as archived in the database.
 func (q *Postgres) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
-	query, args := q.buildArchiveItemQuery(itemID, userID)
+	query, args := q.BuildArchiveItemQuery(itemID, userID)
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if res != nil {

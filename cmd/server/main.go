@@ -6,8 +6,13 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querier"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/mariadb"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 
@@ -68,9 +73,41 @@ func main() {
 	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
 	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
 
-	dbClient, err := cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB)
-	if err != nil {
-		logger.Fatal(fmt.Errorf("initializing database client: %w", err))
+	var dbClient database.DataManager
+
+	dbProvider := strings.ToLower(strings.TrimSpace(cfg.Database.Provider))
+	if dbProvider == "sqlite" {
+		queryBuilder := sqlite.ProvideSqlite(cfg.Database.Debug, rawDB, logger)
+		dbClient, err = querier.ProvideDatabaseClient(
+			ctx,
+			logger,
+			rawDB,
+			&cfg.Database,
+			queryBuilder,
+		)
+		if err != nil {
+			logger.Fatal(fmt.Errorf("initializing database client: %w", err))
+		}
+
+		logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   USING THE NEW HOTNESS    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	} else if dbProvider == "mariadb" {
+		queryBuilder := mariadb.ProvideMariaDB(cfg.Database.Debug, rawDB, logger)
+		dbClient, err = querier.ProvideDatabaseClient(
+			ctx,
+			logger,
+			rawDB,
+			&cfg.Database,
+			queryBuilder,
+		)
+		if err != nil {
+			logger.Fatal(fmt.Errorf("initializing database client: %w", err))
+		}
+
+		logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   USING THE NEW HOTNESS    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	} else {
+		if dbClient, err = cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB); err != nil {
+			logger.Fatal(fmt.Errorf("initializing database client: %w", err))
+		}
 	}
 
 	databaseClientSetupSpan.End()

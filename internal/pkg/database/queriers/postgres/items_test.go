@@ -13,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -93,7 +92,7 @@ func TestPostgres_ScanItems(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildItemExistsQuery(T *testing.T) {
+func TestPostgres_BuildItemExistsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -165,7 +164,7 @@ func TestPostgres_ItemExists(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetItemQuery(T *testing.T) {
+func TestPostgres_BuildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -238,7 +237,7 @@ func TestPostgres_GetItem(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAllItemsCountQuery(T *testing.T) {
+func TestPostgres_BuildGetAllItemsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -275,7 +274,7 @@ func TestPostgres_GetAllItemsCount(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetBatchOfItemsQuery(T *testing.T) {
+func TestPostgres_BuildGetBatchOfItemsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -451,7 +450,7 @@ func TestPostgres_GetAllItems(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetItemsQuery(T *testing.T) {
+func TestPostgres_BuildGetItemsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -681,7 +680,7 @@ func TestPostgres_GetItemsForAdmin(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetItemsWithIDsQuery(T *testing.T) {
+func TestPostgres_BuildGetItemsWithIDsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -920,7 +919,7 @@ func TestPostgres_GetItemsWithIDsForAdmin(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildCreateItemQuery(T *testing.T) {
+func TestPostgres_BuildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -930,6 +929,7 @@ func TestPostgres_buildCreateItemQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		expectedQuery := "INSERT INTO items (name,details,belongs_to_user) VALUES ($1,$2,$3) RETURNING id, created_on"
 		expectedArgs := []interface{}{
@@ -937,7 +937,7 @@ func TestPostgres_buildCreateItemQuery(T *testing.T) {
 			exampleItem.Details,
 			exampleItem.BelongsToUser,
 		}
-		actualQuery, actualArgs := q.BuildCreateItemQuery(exampleItem)
+		actualQuery, actualArgs := q.BuildCreateItemQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -959,7 +959,7 @@ func TestPostgres_CreateItem(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		expectedQuery, expectedArgs := q.BuildCreateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.BuildCreateItemQuery(exampleInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleItem.ID, exampleItem.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -983,7 +983,7 @@ func TestPostgres_CreateItem(T *testing.T) {
 		exampleItem.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		expectedQuery, expectedArgs := q.BuildCreateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.BuildCreateItemQuery(exampleInput)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -996,7 +996,7 @@ func TestPostgres_CreateItem(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildUpdateItemQuery(T *testing.T) {
+func TestPostgres_BuildUpdateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -1014,7 +1014,7 @@ func TestPostgres_buildUpdateItemQuery(T *testing.T) {
 			exampleItem.BelongsToUser,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.buildUpdateItemQuery(exampleItem)
+		actualQuery, actualArgs := q.BuildUpdateItemQuery(exampleItem)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -1035,7 +1035,7 @@ func TestPostgres_UpdateItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildUpdateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.BuildUpdateItemQuery(exampleItem)
 
 		exampleRows := sqlmock.NewRows([]string{"last_updated_on"}).AddRow(uint64(time.Now().Unix()))
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
@@ -1058,7 +1058,7 @@ func TestPostgres_UpdateItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildUpdateItemQuery(exampleItem)
+		expectedQuery, expectedArgs := q.BuildUpdateItemQuery(exampleItem)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1071,7 +1071,7 @@ func TestPostgres_UpdateItem(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildArchiveItemQuery(T *testing.T) {
+func TestPostgres_BuildArchiveItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -1087,7 +1087,7 @@ func TestPostgres_buildArchiveItemQuery(T *testing.T) {
 			exampleUser.ID,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -1108,7 +1108,7 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
@@ -1129,7 +1129,7 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
@@ -1151,7 +1151,7 @@ func TestPostgres_ArchiveItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery, expectedArgs := q.buildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
+		expectedQuery, expectedArgs := q.BuildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -1173,9 +1173,8 @@ func TestPostgres_LogItemCreationEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemCreationEventEntry(exampleInput)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1198,9 +1197,8 @@ func TestPostgres_LogItemUpdateEvent(T *testing.T) {
 		exampleChanges := []types.FieldChangeSummary{}
 		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemUpdateEventEntry(exampleInput.BelongsToUser, exampleInput.ID, exampleChanges)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1223,9 +1221,8 @@ func TestPostgres_LogItemArchiveEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeItem()
 		exampleAuditLogEntryInput := audit.BuildItemArchiveEventEntry(exampleInput.BelongsToUser, exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

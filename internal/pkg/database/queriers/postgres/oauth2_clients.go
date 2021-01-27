@@ -277,7 +277,7 @@ func (q *Postgres) GetOAuth2Clients(ctx context.Context, userID uint64, filter *
 }
 
 // BuildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
-func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -316,7 +316,7 @@ func (q *Postgres) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Cl
 		Scopes:        input.Scopes,
 		BelongsToUser: input.BelongsToUser,
 	}
-	query, args := q.BuildCreateOAuth2ClientQuery(x)
+	query, args := q.BuildCreateOAuth2ClientQuery(input)
 
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)
 	if err != nil {
@@ -326,8 +326,8 @@ func (q *Postgres) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Cl
 	return x, nil
 }
 
-// buildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
-func (q *Postgres) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+// BuildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
+func (q *Postgres) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -352,7 +352,7 @@ func (q *Postgres) buildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (quer
 // UpdateOAuth2Client updates a OAuth2 client.
 // NOTE: this function expects the input's ID field to be valid and non-zero.
 func (q *Postgres) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Client) error {
-	query, args := q.buildUpdateOAuth2ClientQuery(input)
+	query, args := q.BuildUpdateOAuth2ClientQuery(input)
 	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
 }
 

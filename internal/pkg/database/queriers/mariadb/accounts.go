@@ -1,82 +1,19 @@
 package mariadb
 
 import (
-	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
 )
 
-var _ types.AccountDataManager = (*MariaDB)(nil)
-
-// scanAccount takes a database Scanner (i.e. *sql.Row) and scans the result into an Account struct.
-func (q *MariaDB) scanAccount(scan database.Scanner, includeCounts bool) (account *types.Account, filteredCount, totalCount uint64, err error) {
-	account = &types.Account{}
-
-	targetVars := []interface{}{
-		&account.ID,
-		&account.Name,
-		&account.PlanID,
-		&account.PersonalAccount,
-		&account.CreatedOn,
-		&account.LastUpdatedOn,
-		&account.ArchivedOn,
-		&account.BelongsToUser,
-	}
-
-	if includeCounts {
-		targetVars = append(targetVars, &filteredCount, &totalCount)
-	}
-
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
-	}
-
-	return account, filteredCount, totalCount, nil
-}
-
-// scanAccounts takes some database rows and turns them into a slice of accounts.
-func (q *MariaDB) scanAccounts(rows database.ResultIterator, includeCounts bool) (accounts []*types.Account, filteredCount, totalCount uint64, err error) {
-	for rows.Next() {
-		x, fc, tc, scanErr := q.scanAccount(rows, includeCounts)
-		if scanErr != nil {
-			return nil, 0, 0, scanErr
-		}
-
-		if includeCounts {
-			if filteredCount == 0 {
-				filteredCount = fc
-			}
-
-			if totalCount == 0 {
-				totalCount = tc
-			}
-		}
-
-		accounts = append(accounts, x)
-	}
-
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, 0, 0, rowsErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		q.logger.Error(closeErr, "closing database rows")
-		return nil, 0, 0, closeErr
-	}
-
-	return accounts, filteredCount, totalCount, nil
-}
+var _ types.AccountSQLQueryBuilder = (*MariaDB)(nil)
 
 // buildAccountExistsQuery constructs a SQL query for checking if an account with a given ID belong to a user with a given ID exists.
-func (q *MariaDB) buildAccountExistsQuery(accountID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildAccountExistsQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -95,20 +32,8 @@ func (q *MariaDB) buildAccountExistsQuery(accountID, userID uint64) (query strin
 	return query, args
 }
 
-// AccountExists queries the database to see if a given account belonging to a given user exists.
-func (q *MariaDB) AccountExists(ctx context.Context, accountID, userID uint64) (exists bool, err error) {
-	query, args := q.buildAccountExistsQuery(accountID, userID)
-
-	err = q.db.QueryRowContext(ctx, query, args...).Scan(&exists)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-
-	return exists, err
-}
-
 // buildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
-func (q *MariaDB) buildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -126,19 +51,9 @@ func (q *MariaDB) buildGetAccountQuery(accountID, userID uint64) (query string, 
 	return query, args
 }
 
-// GetAccount fetches an account from the database.
-func (q *MariaDB) GetAccount(ctx context.Context, accountID, userID uint64) (*types.Account, error) {
-	query, args := q.buildGetAccountQuery(accountID, userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
-
-	account, _, _, err := q.scanAccount(row, false)
-
-	return account, err
-}
-
 // buildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *MariaDB) buildGetAllAccountsCountQuery() string {
+func (q *MariaDB) BuildGetAllAccountsCountQuery() string {
 	var err error
 
 	allAccountsCountQuery, _, err := q.sqlBuilder.
@@ -153,14 +68,8 @@ func (q *MariaDB) buildGetAllAccountsCountQuery() string {
 	return allAccountsCountQuery
 }
 
-// GetAllAccountsCount will fetch the count of accounts from the database.
-func (q *MariaDB) GetAllAccountsCount(ctx context.Context) (count uint64, err error) {
-	err = q.db.QueryRowContext(ctx, q.buildGetAllAccountsCountQuery()).Scan(&count)
-	return count, err
-}
-
 // buildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
-func (q *MariaDB) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.AccountsTableColumns...).
 		From(queriers.AccountsTableName).
@@ -177,48 +86,9 @@ func (q *MariaDB) buildGetBatchOfAccountsQuery(beginID, endID uint64) (query str
 	return query, args
 }
 
-// GetAllAccounts fetches every account from the database and writes them to a channel. This method primarily exists
-// to aid in administrative data tasks.
-func (q *MariaDB) GetAllAccounts(ctx context.Context, resultChannel chan []*types.Account, batchSize uint16) error {
-	count, countErr := q.GetAllAccountsCount(ctx)
-	if countErr != nil {
-		return fmt.Errorf("fetching count of accounts: %w", countErr)
-	}
-
-	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
-		endID := beginID + uint64(batchSize)
-		go func(begin, end uint64) {
-			query, args := q.buildGetBatchOfAccountsQuery(begin, end)
-			logger := q.logger.WithValues(map[string]interface{}{
-				"query": query,
-				"begin": begin,
-				"end":   end,
-			})
-
-			rows, queryErr := q.db.Query(query, args...)
-			if errors.Is(queryErr, sql.ErrNoRows) {
-				return
-			} else if queryErr != nil {
-				logger.Error(queryErr, "querying for database rows")
-				return
-			}
-
-			accounts, _, _, scanErr := q.scanAccounts(rows, false)
-			if scanErr != nil {
-				logger.Error(scanErr, "scanning database rows")
-				return
-			}
-
-			resultChannel <- accounts
-		}(beginID, endID)
-	}
-
-	return nil
-}
-
 // buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *MariaDB) buildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		queriers.AccountsTableName,
 		queriers.AccountsTableUserOwnershipColumn,
@@ -229,62 +99,8 @@ func (q *MariaDB) buildGetAccountsQuery(userID uint64, forAdmin bool, filter *ty
 	)
 }
 
-// GetAccounts fetches a list of accounts from the database that meet a particular filter.
-func (q *MariaDB) GetAccounts(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.AccountList, error) {
-	query, args := q.buildGetAccountsQuery(userID, false, filter)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("querying database for accounts: %w", err)
-	}
-
-	accounts, filteredCount, totalCount, err := q.scanAccounts(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	list := &types.AccountList{
-		Pagination: types.Pagination{
-			Page:          filter.Page,
-			Limit:         filter.Limit,
-			FilteredCount: filteredCount,
-			TotalCount:    totalCount,
-		},
-		Accounts: accounts,
-	}
-
-	return list, nil
-}
-
-// GetAccountsForAdmin fetches a list of accounts from the database that meet a particular filter for all users.
-func (q *MariaDB) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFilter) (*types.AccountList, error) {
-	query, args := q.buildGetAccountsQuery(0, true, filter)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("fetching accounts from database: %w", err)
-	}
-
-	accounts, filteredCount, totalCount, err := q.scanAccounts(rows, true)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	list := &types.AccountList{
-		Pagination: types.Pagination{
-			Page:          filter.Page,
-			Limit:         filter.Limit,
-			FilteredCount: filteredCount,
-			TotalCount:    totalCount,
-		},
-		Accounts: accounts,
-	}
-
-	return list, nil
-}
-
 // buildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
-func (q *MariaDB) buildCreateAccountQuery(input *types.Account) (query string, args []interface{}) {
+func (q *MariaDB) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -304,29 +120,8 @@ func (q *MariaDB) buildCreateAccountQuery(input *types.Account) (query string, a
 	return query, args
 }
 
-// CreateAccount creates an account in the database.
-func (q *MariaDB) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (*types.Account, error) {
-	x := &types.Account{
-		Name:          input.Name,
-		BelongsToUser: input.BelongsToUser,
-	}
-
-	query, args := q.buildCreateAccountQuery(x)
-
-	// create the account.
-	res, err := q.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("executing account creation query: %w", err)
-	}
-
-	x.CreatedOn = q.timeTeller.Now()
-	x.ID = q.getIDFromResult(res)
-
-	return x, nil
-}
-
 // buildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
-func (q *MariaDB) buildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
+func (q *MariaDB) BuildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -344,16 +139,8 @@ func (q *MariaDB) buildUpdateAccountQuery(input *types.Account) (query string, a
 	return query, args
 }
 
-// UpdateAccount updates a particular account. Note that UpdateAccount expects the provided input to have a valid ID.
-func (q *MariaDB) UpdateAccount(ctx context.Context, input *types.Account) error {
-	query, args := q.buildUpdateAccountQuery(input)
-	_, err := q.db.ExecContext(ctx, query, args...)
-
-	return err
-}
-
 // buildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
-func (q *MariaDB) buildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -372,37 +159,8 @@ func (q *MariaDB) buildArchiveAccountQuery(accountID, userID uint64) (query stri
 	return query, args
 }
 
-// ArchiveAccount marks an account as archived in the database.
-func (q *MariaDB) ArchiveAccount(ctx context.Context, accountID, userID uint64) error {
-	query, args := q.buildArchiveAccountQuery(accountID, userID)
-
-	res, err := q.db.ExecContext(ctx, query, args...)
-	if res != nil {
-		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
-			return sql.ErrNoRows
-		}
-	}
-
-	return err
-}
-
-// LogAccountCreationEvent saves a AccountCreationEvent in the audit log table.
-func (q *MariaDB) LogAccountCreationEvent(ctx context.Context, account *types.Account) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountCreationEventEntry(account))
-}
-
-// LogAccountUpdateEvent saves a AccountUpdateEvent in the audit log table.
-func (q *MariaDB) LogAccountUpdateEvent(ctx context.Context, userID, accountID uint64, changes []types.FieldChangeSummary) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountUpdateEventEntry(userID, accountID, changes))
-}
-
-// LogAccountArchiveEvent saves a AccountArchiveEvent in the audit log table.
-func (q *MariaDB) LogAccountArchiveEvent(ctx context.Context, userID, accountID uint64) {
-	q.createAuditLogEntry(ctx, audit.BuildAccountArchiveEventEntry(userID, accountID))
-}
-
 // buildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *MariaDB) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
 	var err error
 
 	builder := q.sqlBuilder.
@@ -423,21 +181,4 @@ func (q *MariaDB) buildGetAuditLogEntriesForAccountQuery(accountID uint64) (quer
 	q.logQueryBuildingError(err)
 
 	return query, args
-}
-
-// GetAuditLogEntriesForAccount fetches an audit log entry from the database.
-func (q *MariaDB) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
-	query, args := q.buildGetAuditLogEntriesForAccountQuery(accountID)
-
-	rows, err := q.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
-	}
-
-	auditLogEntries, _, err := q.scanAuditLogEntries(rows, false)
-	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
-	}
-
-	return auditLogEntries, nil
 }

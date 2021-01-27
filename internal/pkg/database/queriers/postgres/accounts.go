@@ -250,7 +250,7 @@ func (q *Postgres) GetAccountsForAdmin(ctx context.Context, filter *types.QueryF
 }
 
 // BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
-func (q *Postgres) BuildCreateAccountQuery(input *types.Account) (query string, args []interface{}) {
+func (q *Postgres) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -278,7 +278,7 @@ func (q *Postgres) CreateAccount(ctx context.Context, input *types.AccountCreati
 		BelongsToUser: input.BelongsToUser,
 	}
 
-	query, args := q.BuildCreateAccountQuery(x)
+	query, args := q.BuildCreateAccountQuery(input)
 
 	// create the account.
 	err := q.db.QueryRowContext(ctx, query, args...).Scan(&x.ID, &x.CreatedOn)

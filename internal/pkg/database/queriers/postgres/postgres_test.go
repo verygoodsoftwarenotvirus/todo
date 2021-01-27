@@ -26,7 +26,7 @@ func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 
 	q := ProvidePostgres(true, db, noop.NewLogger())
 
-	return q.(*Postgres), mock
+	return q, mock
 }
 
 var (

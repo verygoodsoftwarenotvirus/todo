@@ -25,7 +25,7 @@ func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 
 	q := ProvideSqlite(true, db, noop.NewLogger())
 
-	return q.(*Sqlite), mock
+	return q, mock
 }
 
 var (

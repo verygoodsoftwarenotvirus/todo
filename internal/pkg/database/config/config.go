@@ -98,10 +98,10 @@ func (cfg *Config) ProvideDatabaseClient(
 	switch cfg.Provider {
 	case PostgresProviderKey:
 		dbManager = postgres.ProvidePostgres(cfg.Debug, rawDB, logger)
-	case MariaDBProviderKey:
-		dbManager = mariadb.ProvideMariaDB(cfg.Debug, rawDB, logger)
-	case SqliteProviderKey:
-		dbManager = zqlite.ProvideSqlite(cfg.Debug, rawDB, logger)
+	//case MariaDBProviderKey:
+	//	dbManager = mariadb.ProvideMariaDB(cfg.Debug, rawDB, logger)
+	//case SqliteProviderKey:
+	//	dbManager = zqlite.ProvideSqlite(cfg.Debug, rawDB, logger)
 	default:
 		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
 	}

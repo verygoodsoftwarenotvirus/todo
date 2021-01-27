@@ -221,7 +221,7 @@ func (q *Postgres) GetAuditLogEntries(ctx context.Context, filter *types.QueryFi
 }
 
 // BuildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
-func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntry) (query string, args []interface{}) {
+func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
@@ -249,7 +249,7 @@ func (q *Postgres) CreateAuditLogEntry(ctx context.Context, input *types.AuditLo
 		Context:   input.Context,
 	}
 
-	query, args := q.BuildCreateAuditLogEntryQuery(x)
+	query, args := q.BuildCreateAuditLogEntryQuery(input)
 	q.logger.WithValue("event_type", input.EventType).Debug("CreateAuditLogEntry called")
 
 	// create the audit log entry.

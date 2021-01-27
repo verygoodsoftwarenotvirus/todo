@@ -31,7 +31,7 @@ const (
 	currentUnixTimeQuery = `UNIX_TIMESTAMP()`
 )
 
-var _ database.DataManager = (*MariaDB)(nil)
+var _ database.SQLQueryBuilder = (*MariaDB)(nil)
 
 type (
 	// MariaDB is our main MariaDB interaction db.
@@ -72,7 +72,7 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 }
 
 // ProvideMariaDB provides a maria DB controller.
-func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) database.DataManager {
+func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) *MariaDB {
 	return &MariaDB{
 		db:         db,
 		debug:      debug,

@@ -14,7 +14,6 @@ import (
 	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -113,7 +112,7 @@ func TestPostgres_ScanUsers(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetUserQuery(T *testing.T) {
+func TestPostgres_BuildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -179,7 +178,7 @@ func TestPostgres_GetUser(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
+func TestPostgres_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -245,7 +244,7 @@ func TestPostgres_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetUsersQuery(T *testing.T) {
+func TestPostgres_BuildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -265,7 +264,7 @@ func TestPostgres_buildGetUsersQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildGetUsersQuery(filter)
+		actualQuery, actualArgs := q.BuildGetUsersQuery(filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -288,7 +287,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		}
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetUsersQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -314,7 +313,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetUsersQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -335,7 +334,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetUsersQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -355,7 +354,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetUsersQuery(filter)
+		expectedQuery, expectedArgs := q.BuildGetUsersQuery(filter)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -369,7 +368,7 @@ func TestPostgres_GetUsers(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
+func TestPostgres_BuildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -382,7 +381,7 @@ func TestPostgres_buildGetUserByUsernameQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 		}
-		actualQuery, actualArgs := q.buildGetUserByUsernameQuery(exampleUser.Username)
+		actualQuery, actualArgs := q.BuildGetUserByUsernameQuery(exampleUser.Username)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -401,7 +400,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		exampleUser.Salt = nil
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetUserByUsernameQuery(exampleUser.Username)
+		expectedQuery, expectedArgs := q.BuildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -421,7 +420,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetUserByUsernameQuery(exampleUser.Username)
+		expectedQuery, expectedArgs := q.BuildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -442,7 +441,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		q, mockDB := buildTestService(t)
-		expectedQuery, expectedArgs := q.buildGetUserByUsernameQuery(exampleUser.Username)
+		expectedQuery, expectedArgs := q.BuildGetUserByUsernameQuery(exampleUser.Username)
 
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -456,7 +455,7 @@ func TestPostgres_GetUserByUsername(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildSearchForUserByUsernameQuery(T *testing.T) {
+func TestPostgres_BuildSearchForUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -552,7 +551,7 @@ func TestPostgres_SearchForUsersByUsername(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAllUsersCountQuery(T *testing.T) {
+func TestPostgres_BuildGetAllUsersCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -609,7 +608,7 @@ func TestPostgres_GetAllUsersCount(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildCreateUserQuery(T *testing.T) {
+func TestPostgres_BuildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -713,7 +712,7 @@ func TestPostgres_CreateUser(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildUpdateUserQuery(T *testing.T) {
+func TestPostgres_BuildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -763,7 +762,7 @@ func TestPostgres_UpdateUser(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildUpdateUserPasswordQuery(T *testing.T) {
+func TestPostgres_BuildUpdateUserPasswordQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -809,7 +808,7 @@ func TestPostgres_UpdateUserPassword(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildVerifyUserTwoFactorSecretQuery(T *testing.T) {
+func TestPostgres_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -854,7 +853,7 @@ func TestPostgres_VerifyUserTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildArchiveUserQuery(T *testing.T) {
+func TestPostgres_BuildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -898,7 +897,7 @@ func TestPostgres_ArchiveUser(T *testing.T) {
 	})
 }
 
-func TestPostgres_buildGetAuditLogEntriesForUserQuery(T *testing.T) {
+func TestPostgres_BuildGetAuditLogEntriesForUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -931,9 +930,8 @@ func TestPostgres_LogUserCreationEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserCreationEventEntry(exampleInput)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -956,9 +954,8 @@ func TestPostgres_LogUserVerifyTwoFactorSecretEvent(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleUser.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleUser.ID, exampleUser.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -981,9 +978,8 @@ func TestPostgres_LogUserUpdateTwoFactorSecretEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1006,9 +1002,8 @@ func TestPostgres_LogUserUpdatePasswordEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserUpdatePasswordEventEntry(exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1031,9 +1026,8 @@ func TestPostgres_LogUserArchiveEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUserArchiveEventEntry(exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1056,9 +1050,8 @@ func TestPostgres_LogSuccessfulLoginEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildSuccessfulLoginEventEntry(exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1081,9 +1074,8 @@ func TestPostgres_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1106,9 +1098,8 @@ func TestPostgres_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -1131,9 +1122,8 @@ func TestPostgres_LogLogoutEvent(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUser()
 		exampleAuditLogEntryInput := audit.BuildLogoutEventEntry(exampleInput.ID)
-		exampleAuditLogEntry := converters.ConvertAuditLogEntryCreationInputToEntry(exampleAuditLogEntryInput)
 
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntry)
+		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleAuditLogEntryInput)
 		exampleRows := sqlmock.NewRows([]string{"id", "created_on"}).AddRow(exampleInput.ID, exampleInput.CreatedOn)
 		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).

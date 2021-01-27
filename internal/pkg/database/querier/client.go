@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -37,6 +38,46 @@ type Client struct {
 	timeFunc        func() uint64
 	logger          logging.Logger
 	tracer          tracing.Tracer
+	migrateOnce     sync.Once
+}
+
+// ProvideDatabaseClient provides a new DataManager client.
+func ProvideDatabaseClient(
+	ctx context.Context,
+	logger logging.Logger,
+	db *sql.DB,
+	cfg *dbconfig.Config,
+	sqlQueryBuilder database.SQLQueryBuilder,
+) (database.DataManager, error) {
+	tracer := tracing.NewTracer(tracingName)
+
+	ctx, span := tracer.StartSpan(ctx)
+	defer span.End()
+
+	c := &Client{
+		db:              db,
+		config:          cfg,
+		tracer:          tracer,
+		timeFunc:        defaultTimeFunc,
+		logger:          logger.WithName(loggerName),
+		sqlQueryBuilder: sqlQueryBuilder,
+	}
+
+	if cfg.Debug {
+		c.logger.SetLevel(logging.DebugLevel)
+	}
+
+	if cfg.RunMigrations {
+		c.logger.Debug("migrating querier")
+
+		if err := c.Migrate(ctx, cfg.CreateTestUser); err != nil {
+			return nil, fmt.Errorf("migrating database: %w", err)
+		}
+
+		c.logger.Debug("querier migrated!")
+	}
+
+	return c, nil
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call.
@@ -44,7 +85,35 @@ func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("Migrate called")
+	c.logger.Info("migrating db")
+
+	if !c.IsReady(ctx, 50) {
+		return database.ErrDBUnready
+	}
+
+	c.migrateOnce.Do(c.sqlQueryBuilder.BuildMigrationFunc(c.db))
+
+	if testUserConfig != nil {
+		c.logger.Debug("creating test user")
+
+		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
+
+		var id uint64
+		userCreationRow := c.db.QueryRowContext(ctx, query, args...)
+		userCreationRow.Scan(&id)
+
+		if _, accountCreationErr := c.CreateAccount(ctx,
+			&types.AccountCreationInput{
+				Name:          fmt.Sprintf("%s_default", testUserConfig.Username),
+				BelongsToUser: id,
+			},
+		); accountCreationErr != nil {
+			c.logger.Error(accountCreationErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", accountCreationErr)
+		}
+
+		c.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
+	}
 
 	return nil
 }
@@ -79,45 +148,6 @@ func (c *Client) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
 	}
 
 	return false
-}
-
-// ProvideDatabaseClient provides a new DataManager client.
-func ProvideDatabaseClient(
-	ctx context.Context,
-	logger logging.Logger,
-	querier database.DataManager,
-	db *sql.DB,
-	cfg *dbconfig.Config,
-) (database.DataManager, error) {
-	tracer := tracing.NewTracer(tracingName)
-
-	ctx, span := tracer.StartSpan(ctx)
-	defer span.End()
-
-	c := &Client{
-		db:              db,
-		sqlQueryBuilder: nil,
-		config:          cfg,
-		tracer:          tracer,
-		timeFunc:        defaultTimeFunc,
-		logger:          logger.WithName(loggerName),
-	}
-
-	if cfg.Debug {
-		c.logger.SetLevel(logging.DebugLevel)
-	}
-
-	if cfg.RunMigrations {
-		c.logger.Debug("migrating querier")
-
-		if err := querier.Migrate(ctx, cfg.CreateTestUser); err != nil {
-			return nil, fmt.Errorf("migrating database: %w", err)
-		}
-
-		c.logger.Debug("querier migrated!")
-	}
-
-	return c, nil
 }
 
 func defaultTimeFunc() uint64 {

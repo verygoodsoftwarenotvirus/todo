@@ -48,7 +48,7 @@ type (
 
 	// DataManager describes anything that stores data for our services.
 	DataManager interface {
-		Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error
+		Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error
 		IsReady(ctx context.Context, maxAttempts uint8) (ready bool)
 
 		types.AdminUserDataManager

@@ -12,7 +12,7 @@ import (
 
 var _ types.AccountSubscriptionPlanSQLQueryBuilder = (*MariaDB)(nil)
 
-// buildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
+// BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
 func (q *MariaDB) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -30,7 +30,7 @@ func (q *MariaDB) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query str
 	return query, args
 }
 
-// buildGetAllPlansCountQuery returns a query that fetches the total number of plans in the database.
+// BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *MariaDB) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	allPlansCountQuery, _, err := q.sqlBuilder.
@@ -45,7 +45,7 @@ func (q *MariaDB) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	return allPlansCountQuery
 }
 
-// buildGetPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *MariaDB) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
@@ -58,7 +58,7 @@ func (q *MariaDB) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilte
 	)
 }
 
-// buildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
+// BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
 func (q *MariaDB) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -83,7 +83,7 @@ func (q *MariaDB) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSu
 	return query, args
 }
 
-// buildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
+// BuildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
 func (q *MariaDB) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
@@ -104,7 +104,7 @@ func (q *MariaDB) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSu
 	return query, args
 }
 
-// buildArchiveAccountSubscriptionPlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
+// BuildArchiveAccountSubscriptionPlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
 func (q *MariaDB) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -123,6 +123,7 @@ func (q *MariaDB) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query
 	return query, args
 }
 
+// BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery returns a SQL query which retrieves audit log entries for a given account subscription plan.
 func (q *MariaDB) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 

@@ -29,24 +29,20 @@ const (
 	jsonPluckQuery = `json_extract(%s.%s, '$.%s')`
 	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
 	currentUnixTimeQuery = `(strftime('%s','now'))`
-
-	defaultBatchSize uint16 = 1000
 )
 
 var (
-	//_ database.DataManager = (*Sqlite)(nil)
 	_ database.SQLQueryBuilder = (*Sqlite)(nil)
 )
 
 type (
 	// Sqlite is our main Sqlite interaction db.
 	Sqlite struct {
-		logger      logging.Logger
-		db          *sql.DB
-		timeTeller  queriers.TimeTeller
-		sqlBuilder  squirrel.StatementBuilderType
-		migrateOnce sync.Once
-		debug       bool
+		logger     logging.Logger
+		db         *sql.DB
+		timeTeller queriers.TimeTeller
+		sqlBuilder squirrel.StatementBuilderType
+		debug      bool
 	}
 )
 
@@ -106,13 +102,4 @@ func (c *Sqlite) logQueryBuildingError(err error) {
 	if err != nil {
 		c.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
-}
-
-func (c *Sqlite) getIDFromResult(res sql.Result) uint64 {
-	id, err := res.LastInsertId()
-	if err != nil {
-		c.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
-	}
-
-	return uint64(id)
 }

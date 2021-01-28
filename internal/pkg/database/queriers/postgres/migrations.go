@@ -177,10 +177,10 @@ func (q *Postgres) BuildMigrationFunc(db *sql.DB) func() {
 
 // Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
 // safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (q *Postgres) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
+func (q *Postgres) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
 	q.logger.Info("migrating db")
 
-	if !q.IsReady(ctx, 50) {
+	if !q.IsReady(ctx, maxAttempts) {
 		return database.ErrDBUnready
 	}
 

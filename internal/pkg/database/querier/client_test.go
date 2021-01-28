@@ -12,7 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -110,7 +109,7 @@ func TestClient_Migrate(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		c.Migrate(ctx, nil)
+		c.Migrate(ctx, 1, nil)
 	})
 }
 
@@ -166,40 +165,53 @@ func TestProvideDatabaseClient(T *testing.T) {
 	T.Parallel()
 
 	exampleConfig := &dbconfig.Config{
-		Debug:         true,
-		RunMigrations: true,
+		Debug:           true,
+		RunMigrations:   true,
+		MaxPingAttempts: 1,
 	}
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
+		var migrationFunctionCalled bool
+		fakeMigrationFunc := func() {
+			migrationFunctionCalled = true
+		}
 
-		mockDB := database.BuildMockSQLQueryBuilder()
-		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(nil)
+		db, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+		require.NoError(t, err)
 
-		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), nil, exampleConfig, mockDB)
+		queryBuilder := database.BuildMockSQLQueryBuilder()
+		queryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).Return(fakeMigrationFunc)
+
+		mockDB.ExpectPing().WillDelayFor(0)
+
+		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), db, exampleConfig, queryBuilder)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		assert.True(t, migrationFunctionCalled)
+		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
 	})
 
-	T.Run("with error migrating querier", func(t *testing.T) {
+	T.Run("with error initializing querier", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 
-		expected := errors.New("blah")
-		mockDB := database.BuildMockSQLQueryBuilder()
-		mockDB.On("Migrate", mock.Anything, (*types.TestUserCreationConfig)(nil)).Return(expected)
+		db, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+		require.NoError(t, err)
 
-		x, actual := ProvideDatabaseClient(ctx, noop.NewLogger(), nil, exampleConfig, mockDB)
-		assert.Nil(t, x)
-		assert.Error(t, actual)
-		assert.Equal(t, expected, errors.Unwrap(actual))
+		queryBuilder := database.BuildMockSQLQueryBuilder()
 
-		mock.AssertExpectationsForObjects(t, mockDB)
+		mockDB.ExpectPing().WillReturnError(errors.New("blah"))
+
+		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), db, exampleConfig, queryBuilder)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
 	})
 }
 

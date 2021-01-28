@@ -155,7 +155,7 @@ var (
 	}
 )
 
-// buildMigrationFunc returns a sync.Once compatible function closure that will
+// BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a sqlite database.
 func (c *Sqlite) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {

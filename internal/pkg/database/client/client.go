@@ -31,11 +31,11 @@ type Client struct {
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call.
-func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
+func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return c.querier.Migrate(ctx, testUserConfig)
+	return c.querier.Migrate(ctx, maxAttempts, testUserConfig)
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
@@ -71,7 +71,7 @@ func ProvideDatabaseClient(
 	if shouldMigrate {
 		c.logger.Debug("migrating querier")
 
-		if err := c.querier.Migrate(ctx, testUserConfig); err != nil {
+		if err := c.querier.Migrate(ctx, 50, testUserConfig); err != nil {
 			return nil, fmt.Errorf("migrating database: %w", err)
 		}
 

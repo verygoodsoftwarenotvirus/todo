@@ -15,7 +15,7 @@ var (
 	_ types.AuditLogEntrySQLQueryBuilder = (*Sqlite)(nil)
 )
 
-// buildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (c *Sqlite) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -32,7 +32,7 @@ func (c *Sqlite) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args 
 	return query, args
 }
 
-// buildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
+// BuildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (c *Sqlite) BuildGetAllAuditLogEntriesCountQuery() string {
 	allAuditLogEntriesCountQuery, _, err := c.sqlBuilder.
@@ -44,7 +44,7 @@ func (c *Sqlite) BuildGetAllAuditLogEntriesCountQuery() string {
 	return allAuditLogEntriesCountQuery
 }
 
-// buildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
+// BuildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
 func (c *Sqlite) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := c.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
@@ -62,7 +62,7 @@ func (c *Sqlite) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (que
 	return query, args
 }
 
-// buildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (c *Sqlite) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := c.sqlBuilder.
@@ -87,7 +87,7 @@ func (c *Sqlite) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query 
 	return query, append(countQueryArgs, selectArgs...)
 }
 
-// buildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
+// BuildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
 func (c *Sqlite) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
 	var err error
 

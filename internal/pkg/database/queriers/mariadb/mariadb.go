@@ -36,12 +36,11 @@ var _ database.SQLQueryBuilder = (*MariaDB)(nil)
 type (
 	// MariaDB is our main MariaDB interaction db.
 	MariaDB struct {
-		logger      logging.Logger
-		db          *sql.DB
-		timeTeller  queriers.TimeTeller
-		sqlBuilder  squirrel.StatementBuilderType
-		migrateOnce sync.Once
-		debug       bool
+		logger     logging.Logger
+		db         *sql.DB
+		timeTeller queriers.TimeTeller
+		sqlBuilder squirrel.StatementBuilderType
+		debug      bool
 	}
 )
 
@@ -125,14 +124,4 @@ func (q *MariaDB) logQueryBuildingError(err error) {
 	if err != nil {
 		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
-}
-
-// getIDFromResult fetches the last inserted ID from the result, casts it to uint64, and logs errors if relevant.
-func (q *MariaDB) getIDFromResult(res sql.Result) uint64 {
-	id, err := res.LastInsertId()
-	if err != nil {
-		q.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
-	}
-
-	return uint64(id)
 }

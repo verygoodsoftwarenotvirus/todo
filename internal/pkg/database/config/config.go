@@ -43,18 +43,13 @@ const (
 
 // Config represents our database configuration.
 type Config struct {
-	// Debug determines if debug logging or other development conditions are active.
-	Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
-	// RunMigrations determines if we should migrate the database.
-	RunMigrations bool `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
-	// CreateTestUser determines if we should create a test user. Doesn't occur if RunMigrations is false.
-	CreateTestUser *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
-	// Provider indicates what database we'll connect to (postgres, mysql, etc.)
-	Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-	// ConnectionDetails indicates how our database driver should connect to the instance.
-	ConnectionDetails database.ConnectionDetails `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
-	// MetricsCollectionInterval defines the interval at which we poll for metrics.
-	MetricsCollectionInterval time.Duration `json:"metrics_collection_interval" mapstructure:"metrics_collection_interval" toml:"metrics_collection_interval,omitempty"`
+	Provider                  string                        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
+	ConnectionDetails         database.ConnectionDetails    `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
+	CreateTestUser            *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
+	MetricsCollectionInterval time.Duration                 `json:"metrics_collection_interval" mapstructure:"metrics_collection_interval" toml:"metrics_collection_interval,omitempty"`
+	Debug                     bool                          `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
+	RunMigrations             bool                          `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
+	MaxPingAttempts           uint8                         `json:"max_ping_attempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
 }
 
 // Validate validates an DatabaseSettings struct.
@@ -98,10 +93,6 @@ func (cfg *Config) ProvideDatabaseClient(
 	switch cfg.Provider {
 	case PostgresProviderKey:
 		dbManager = postgres.ProvidePostgres(cfg.Debug, rawDB, logger)
-	//case MariaDBProviderKey:
-	//	dbManager = mariadb.ProvideMariaDB(cfg.Debug, rawDB, logger)
-	//case SqliteProviderKey:
-	//	dbManager = zqlite.ProvideSqlite(cfg.Debug, rawDB, logger)
 	default:
 		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
 	}

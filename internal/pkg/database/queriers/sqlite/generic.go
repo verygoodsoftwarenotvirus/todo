@@ -9,7 +9,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-// buildQuery builds a given query, handles whatever errors and returns just the query and args.
+// BuildQuery builds a given query, handles whatever errors and returns just the query and args.
 func (c *Sqlite) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
 	var err error
 
@@ -68,7 +68,7 @@ func (c *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, user
 	return c.buildQuery(filteredCountQueryBuilder)
 }
 
-// buildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given user,
+// BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (c *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	var includeArchived bool

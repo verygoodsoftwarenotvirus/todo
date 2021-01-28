@@ -24,11 +24,6 @@ const (
 
 var _ database.DataManager = (*Client)(nil)
 
-/*
-	NOTE: the primary purpose of this client is to allow convenient
-	wrapping of actual query execution.
-*/
-
 // Client is a wrapper around a database querier. Client is where all logging and trace propagation should happen,
 // the querier is where the actual database querying is performed.
 type Client struct {
@@ -70,7 +65,7 @@ func ProvideDatabaseClient(
 	if cfg.RunMigrations {
 		c.logger.Debug("migrating querier")
 
-		if err := c.Migrate(ctx, cfg.CreateTestUser); err != nil {
+		if err := c.Migrate(ctx, cfg.MaxPingAttempts, cfg.CreateTestUser); err != nil {
 			return nil, fmt.Errorf("migrating database: %w", err)
 		}
 
@@ -81,13 +76,13 @@ func ProvideDatabaseClient(
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call.
-func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCreationConfig) error {
+func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
 	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Info("migrating db")
 
-	if !c.IsReady(ctx, 50) {
+	if !c.IsReady(ctx, maxAttempts) {
 		return database.ErrDBUnready
 	}
 
@@ -98,17 +93,19 @@ func (c *Client) Migrate(ctx context.Context, testUserConfig *types.TestUserCrea
 
 		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
 
-		var id uint64
-		userCreationRow := c.db.QueryRowContext(ctx, query, args...)
-		userCreationRow.Scan(&id)
+		res, userCreationErr := c.db.ExecContext(ctx, query, args...)
+		if userCreationErr != nil {
+			c.logger.Error(userCreationErr, "creating test user")
+			return fmt.Errorf("creating test user: %w", userCreationErr)
+		}
 
 		if _, accountCreationErr := c.CreateAccount(ctx,
 			&types.AccountCreationInput{
 				Name:          fmt.Sprintf("%s_default", testUserConfig.Username),
-				BelongsToUser: id,
+				BelongsToUser: c.getIDFromResult(res),
 			},
 		); accountCreationErr != nil {
-			c.logger.Error(accountCreationErr, "creating test user")
+			c.logger.Error(accountCreationErr, "creating test account")
 			return fmt.Errorf("creating test user: %w", accountCreationErr)
 		}
 

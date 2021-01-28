@@ -76,35 +76,37 @@ func main() {
 	var dbClient database.DataManager
 
 	dbProvider := strings.ToLower(strings.TrimSpace(cfg.Database.Provider))
-	if dbProvider == "sqlite" {
+
+	switch dbProvider {
+	case "sqlite":
 		queryBuilder := sqlite.ProvideSqlite(cfg.Database.Debug, rawDB, logger)
-		dbClient, err = querier.ProvideDatabaseClient(
+
+		if dbClient, err = querier.ProvideDatabaseClient(
 			ctx,
 			logger,
 			rawDB,
 			&cfg.Database,
 			queryBuilder,
-		)
-		if err != nil {
+		); err != nil {
 			logger.Fatal(fmt.Errorf("initializing database client: %w", err))
 		}
 
 		logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   USING THE NEW HOTNESS    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-	} else if dbProvider == "mariadb" {
+	case "mariadb":
 		queryBuilder := mariadb.ProvideMariaDB(cfg.Database.Debug, rawDB, logger)
-		dbClient, err = querier.ProvideDatabaseClient(
+
+		if dbClient, err = querier.ProvideDatabaseClient(
 			ctx,
 			logger,
 			rawDB,
 			&cfg.Database,
 			queryBuilder,
-		)
-		if err != nil {
+		); err != nil {
 			logger.Fatal(fmt.Errorf("initializing database client: %w", err))
 		}
 
 		logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   USING THE NEW HOTNESS    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-	} else {
+	default:
 		if dbClient, err = cfg.Database.ProvideDatabaseClient(ctx, logger, rawDB); err != nil {
 			logger.Fatal(fmt.Errorf("initializing database client: %w", err))
 		}

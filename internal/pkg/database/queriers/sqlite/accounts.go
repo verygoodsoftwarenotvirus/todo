@@ -14,7 +14,7 @@ var (
 	_ types.AccountSQLQueryBuilder = (*Sqlite)(nil)
 )
 
-// buildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
+// BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (c *Sqlite) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -33,7 +33,7 @@ func (c *Sqlite) BuildGetAccountQuery(accountID, userID uint64) (query string, a
 	return query, args
 }
 
-// buildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
+// BuildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (c *Sqlite) BuildGetAllAccountsCountQuery() string {
 	var err error
@@ -50,7 +50,7 @@ func (c *Sqlite) BuildGetAllAccountsCountQuery() string {
 	return allAccountsCountQuery
 }
 
-// buildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
+// BuildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
 func (c *Sqlite) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := c.sqlBuilder.
 		Select(queriers.AccountsTableColumns...).
@@ -68,7 +68,7 @@ func (c *Sqlite) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query stri
 	return query, args
 }
 
-// buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (c *Sqlite) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	return c.buildListQuery(
@@ -81,7 +81,7 @@ func (c *Sqlite) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *typ
 	)
 }
 
-// buildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
+// BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
 func (c *Sqlite) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -102,7 +102,7 @@ func (c *Sqlite) BuildCreateAccountQuery(input *types.AccountCreationInput) (que
 	return query, args
 }
 
-// buildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
+// BuildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
 func (c *Sqlite) BuildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
 	var err error
 
@@ -121,7 +121,7 @@ func (c *Sqlite) BuildUpdateAccountQuery(input *types.Account) (query string, ar
 	return query, args
 }
 
-// buildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
+// BuildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
 func (c *Sqlite) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -141,7 +141,7 @@ func (c *Sqlite) BuildArchiveAccountQuery(accountID, userID uint64) (query strin
 	return query, args
 }
 
-// buildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (c *Sqlite) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
 	var err error
 

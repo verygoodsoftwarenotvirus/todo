@@ -11,7 +11,7 @@ import (
 
 var _ types.AuditLogEntrySQLQueryBuilder = (*MariaDB)(nil)
 
-// buildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (q *MariaDB) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -28,7 +28,7 @@ func (q *MariaDB) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args
 	return query, args
 }
 
-// buildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
+// BuildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *MariaDB) BuildGetAllAuditLogEntriesCountQuery() string {
 	allAuditLogEntriesCountQuery, _, err := q.sqlBuilder.
@@ -40,7 +40,7 @@ func (q *MariaDB) BuildGetAllAuditLogEntriesCountQuery() string {
 	return allAuditLogEntriesCountQuery
 }
 
-// buildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
+// BuildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
 func (q *MariaDB) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.AuditLogEntriesTableColumns...).
@@ -58,7 +58,7 @@ func (q *MariaDB) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (qu
 	return query, args
 }
 
-// buildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *MariaDB) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.
@@ -83,7 +83,7 @@ func (q *MariaDB) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query
 	return query, append(countQueryArgs, selectArgs...)
 }
 
-// buildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
+// BuildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
 func (q *MariaDB) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
 	var err error
 

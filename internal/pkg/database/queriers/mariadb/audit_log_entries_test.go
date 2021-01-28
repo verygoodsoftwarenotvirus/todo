@@ -1,54 +1,12 @@
 package mariadb
 
 import (
-	sqldriver "database/sql/driver"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
-
-func buildMockRowsFromAuditLogEntries(includeCounts bool, auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
-	columns := queriers.AuditLogEntriesTableColumns
-
-	if includeCounts {
-		columns = append(columns, "count")
-	}
-
-	exampleRows := sqlmock.NewRows(columns)
-
-	for _, x := range auditLogEntries {
-		rowValues := []sqldriver.Value{
-			x.ID,
-			x.EventType,
-			x.Context,
-			x.CreatedOn,
-		}
-
-		if includeCounts {
-			rowValues = append(rowValues, len(auditLogEntries))
-		}
-
-		exampleRows.AddRow(rowValues...)
-	}
-
-	return exampleRows
-}
-
-func buildErroneousMockRowFromAuditLogEntry(x *types.AuditLogEntry) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(queriers.AuditLogEntriesTableColumns).AddRow(
-		x.CreatedOn,
-		x.ID,
-		x.EventType,
-		x.Context,
-	)
-
-	return exampleRows
-}
 
 func TestMariaDB_BuildGetAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()

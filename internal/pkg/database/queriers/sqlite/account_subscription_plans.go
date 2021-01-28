@@ -14,7 +14,7 @@ var (
 	_ types.AccountSubscriptionPlanSQLQueryBuilder = (*Sqlite)(nil)
 )
 
-// buildGetPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
+// BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
 func (c *Sqlite) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -32,7 +32,7 @@ func (c *Sqlite) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query stri
 	return query, args
 }
 
-// buildGetAllPlansCountQuery returns a query that fetches the total number of plans in the database.
+// BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (c *Sqlite) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	allPlansCountQuery, _, err := c.sqlBuilder.
@@ -47,7 +47,7 @@ func (c *Sqlite) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	return allPlansCountQuery
 }
 
-// buildGetPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (c *Sqlite) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	return c.buildListQuery(
@@ -60,7 +60,7 @@ func (c *Sqlite) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter
 	)
 }
 
-// buildCreatePlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
+// BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
 func (c *Sqlite) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -85,7 +85,7 @@ func (c *Sqlite) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSub
 	return query, args
 }
 
-// buildUpdatePlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
+// BuildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
 func (c *Sqlite) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
@@ -106,7 +106,7 @@ func (c *Sqlite) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSub
 	return query, args
 }
 
-// buildArchivePlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
+// BuildArchiveAccountSubscriptionPlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
 func (c *Sqlite) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -125,7 +125,7 @@ func (c *Sqlite) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query 
 	return query, args
 }
 
-// buildGetAuditLogEntriesForPlanQuery constructs a SQL query for fetching audit log entries
+// BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
 func (c *Sqlite) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error

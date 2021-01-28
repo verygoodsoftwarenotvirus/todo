@@ -1,60 +1,12 @@
 package sqlite
 
 import (
-	"database/sql/driver"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
-
-func buildMockRowsFromItems(includeCounts bool, filteredCount uint64, items ...*types.Item) *sqlmock.Rows {
-	columns := queriers.ItemsTableColumns
-
-	if includeCounts {
-		columns = append(columns, "filtered_count", "total_count")
-	}
-
-	exampleRows := sqlmock.NewRows(columns)
-
-	for _, x := range items {
-		rowValues := []driver.Value{
-			x.ID,
-			x.Name,
-			x.Details,
-			x.CreatedOn,
-			x.LastUpdatedOn,
-			x.ArchivedOn,
-			x.BelongsToUser,
-		}
-
-		if includeCounts {
-			rowValues = append(rowValues, filteredCount, len(items))
-		}
-
-		exampleRows.AddRow(rowValues...)
-	}
-
-	return exampleRows
-}
-
-func buildErroneousMockRowFromItem(x *types.Item) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(queriers.ItemsTableColumns).AddRow(
-		x.ArchivedOn,
-		x.Name,
-		x.Details,
-		x.CreatedOn,
-		x.LastUpdatedOn,
-		x.BelongsToUser,
-		x.ID,
-	)
-
-	return exampleRows
-}
 
 func TestSqlite_BuildItemExistsQuery(T *testing.T) {
 	T.Parallel()

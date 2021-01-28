@@ -330,6 +330,7 @@ func (q *Postgres) GetUsers(ctx context.Context, filter *types.QueryFilter) (*ty
 	return x, nil
 }
 
+// BuildTestUserCreationQuery returns a SQL query (and arguments) that would create a test user.
 func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Insert(queriers.UsersTableName).

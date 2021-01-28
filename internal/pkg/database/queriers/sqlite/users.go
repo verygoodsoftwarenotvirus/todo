@@ -15,7 +15,7 @@ var (
 	_ types.UserSQLQueryBuilder = (*Sqlite)(nil)
 )
 
-// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
+// BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (c *Sqlite) BuildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -36,7 +36,7 @@ func (c *Sqlite) BuildGetUserQuery(userID uint64) (query string, args []interfac
 	return query, args
 }
 
-// buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
+// BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
 func (c *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
@@ -56,7 +56,7 @@ func (c *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (
 	return query, args
 }
 
-// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
+// BuildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (c *Sqlite) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
@@ -77,7 +77,7 @@ func (c *Sqlite) BuildGetUserByUsernameQuery(username string) (query string, arg
 	return query, args
 }
 
-// buildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
+// BuildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (c *Sqlite) BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
 	var err error
 
@@ -101,7 +101,7 @@ func (c *Sqlite) BuildSearchForUserByUsernameQuery(usernameQuery string) (query 
 	return query, args
 }
 
-// buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// BuildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
 func (c *Sqlite) BuildGetAllUsersCountQuery() (query string) {
 	var err error
@@ -120,7 +120,7 @@ func (c *Sqlite) BuildGetAllUsersCountQuery() (query string) {
 	return query
 }
 
-// buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// BuildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
 func (c *Sqlite) BuildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	var err error
@@ -143,6 +143,7 @@ func (c *Sqlite) BuildGetUsersQuery(filter *types.QueryFilter) (query string, ar
 	return query, args
 }
 
+// BuildTestUserCreationQuery builds a query and arguments that creates a test user.
 func (c *Sqlite) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	query, args, err := c.sqlBuilder.
 		Insert(queriers.UsersTableName).
@@ -173,7 +174,7 @@ func (c *Sqlite) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreati
 	return query, args
 }
 
-// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
+// BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
 func (c *Sqlite) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -209,7 +210,7 @@ func (c *Sqlite) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (q
 	return query, args
 }
 
-// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
+// BuildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (c *Sqlite) BuildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
 	var err error
 
@@ -231,7 +232,7 @@ func (c *Sqlite) BuildUpdateUserQuery(input *types.User) (query string, args []i
 	return query, args
 }
 
-// buildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
+// BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
 func (c *Sqlite) BuildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {
 	var err error
 
@@ -247,7 +248,7 @@ func (c *Sqlite) BuildSetUserStatusQuery(userID uint64, input types.AccountStatu
 	return query, args
 }
 
-// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
+// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
 func (c *Sqlite) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 
@@ -265,7 +266,7 @@ func (c *Sqlite) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (qu
 	return query, args
 }
 
-// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
+// BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (c *Sqlite) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -281,7 +282,7 @@ func (c *Sqlite) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query strin
 	return query, args
 }
 
-// buildArchiveUserQuery builds a SQL query that marks a user as archived.
+// BuildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (c *Sqlite) BuildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -296,7 +297,7 @@ func (c *Sqlite) BuildArchiveUserQuery(userID uint64) (query string, args []inte
 	return query, args
 }
 
-// buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (c *Sqlite) BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 

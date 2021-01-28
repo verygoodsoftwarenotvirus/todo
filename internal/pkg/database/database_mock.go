@@ -41,8 +41,8 @@ type MockDatabase struct {
 }
 
 // Migrate satisfies the DataManager interface.
-func (m *MockDatabase) Migrate(ctx context.Context, ucc *types.TestUserCreationConfig) error {
-	return m.Called(ctx, ucc).Error(0)
+func (m *MockDatabase) Migrate(ctx context.Context, maxAttempts uint8, ucc *types.TestUserCreationConfig) error {
+	return m.Called(ctx, maxAttempts, ucc).Error(0)
 }
 
 // IsReady satisfies the DataManager interface.
@@ -84,12 +84,14 @@ type MockSQLQueryBuilder struct {
 	*mocktypes.WebhookSQLQueryBuilder
 }
 
+// BuildMigrationFunc implements our interface.
 func (m *MockSQLQueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
 	args := m.Called(db)
 
 	return args.Get(0).(func())
 }
 
+// BuildTestUserCreationQuery implements our interface.
 func (m *MockSQLQueryBuilder) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	returnValues := m.Called(testUserConfig)
 

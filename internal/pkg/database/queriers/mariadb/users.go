@@ -13,7 +13,7 @@ import (
 
 var _ types.UserSQLQueryBuilder = (*MariaDB)(nil)
 
-// buildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
+// BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (q *MariaDB) BuildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -34,7 +34,7 @@ func (q *MariaDB) BuildGetUserQuery(userID uint64) (query string, args []interfa
 	return query, args
 }
 
-// buildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
+// BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
 func (q *MariaDB) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
@@ -54,7 +54,7 @@ func (q *MariaDB) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) 
 	return query, args
 }
 
-// buildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
+// BuildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (q *MariaDB) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	var err error
 
@@ -75,7 +75,7 @@ func (q *MariaDB) BuildGetUserByUsernameQuery(username string) (query string, ar
 	return query, args
 }
 
-// buildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
+// BuildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (q *MariaDB) BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
 	var err error
 
@@ -99,7 +99,7 @@ func (q *MariaDB) BuildSearchForUserByUsernameQuery(usernameQuery string) (query
 	return query, args
 }
 
-// buildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
+// BuildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
 func (q *MariaDB) BuildGetAllUsersCountQuery() (query string) {
 	var err error
@@ -118,7 +118,7 @@ func (q *MariaDB) BuildGetAllUsersCountQuery() (query string) {
 	return query
 }
 
-// buildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
+// BuildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
 func (q *MariaDB) BuildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.
@@ -184,7 +184,7 @@ func (q *MariaDB) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreat
 	return query, args
 }
 
-// buildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
+// BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
 func (q *MariaDB) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -220,7 +220,7 @@ func (q *MariaDB) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (
 	return query, args
 }
 
-// buildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
+// BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
 func (q *MariaDB) BuildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {
 	var err error
 
@@ -236,7 +236,7 @@ func (q *MariaDB) BuildSetUserStatusQuery(userID uint64, input types.AccountStat
 	return query, args
 }
 
-// buildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
+// BuildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (q *MariaDB) BuildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
 	var err error
 
@@ -258,7 +258,7 @@ func (q *MariaDB) BuildUpdateUserQuery(input *types.User) (query string, args []
 	return query, args
 }
 
-// buildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
+// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
 func (q *MariaDB) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 
@@ -276,7 +276,7 @@ func (q *MariaDB) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (q
 	return query, args
 }
 
-// buildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
+// BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (q *MariaDB) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -292,7 +292,7 @@ func (q *MariaDB) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query stri
 	return query, args
 }
 
-// buildArchiveUserQuery builds a SQL query that marks a user as archived.
+// BuildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (q *MariaDB) BuildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -307,7 +307,7 @@ func (q *MariaDB) BuildArchiveUserQuery(userID uint64) (query string, args []int
 	return query, args
 }
 
-// buildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (q *MariaDB) BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	var err error
 

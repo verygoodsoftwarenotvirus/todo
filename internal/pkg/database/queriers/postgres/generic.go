@@ -21,7 +21,7 @@ func joinUint64s(in []uint64) string {
 	return strings.Join(out, ",")
 }
 
-// buildQuery builds a given query, handles whatever errors and returns just the query and args.
+// BuildQuery builds a given query, handles whatever errors and returns just the query and args.
 func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
 	var err error
 
@@ -82,7 +82,7 @@ func (q *Postgres) buildFilteredCountQuery(tableName, ownershipColumn string, us
 	return q.buildQuery(filteredCountQueryBuilder)
 }
 
-// buildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given user,
+// BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Postgres) buildListQuery(tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	var includeArchived bool

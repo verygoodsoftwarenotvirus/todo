@@ -13,7 +13,7 @@ import (
 
 var _ types.WebhookSQLQueryBuilder = (*MariaDB)(nil)
 
-// buildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
+// BuildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
 func (q *MariaDB) BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -30,7 +30,7 @@ func (q *MariaDB) BuildGetWebhookQuery(webhookID, userID uint64) (query string, 
 	return query, args
 }
 
-// buildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
+// BuildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
 func (q *MariaDB) BuildGetAllWebhooksCountQuery() string {
 	var err error
 
@@ -47,7 +47,7 @@ func (q *MariaDB) BuildGetAllWebhooksCountQuery() string {
 	return getAllWebhooksCountQuery
 }
 
-// buildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
+// BuildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
 func (q *MariaDB) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Select(queriers.WebhooksTableColumns...).
@@ -65,7 +65,7 @@ func (q *MariaDB) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query str
 	return query, args
 }
 
-// buildGetWebhooksQuery returns a SQL query (and arguments) that would return a query and arguments to retrieve a list of webhooks.
+// BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a query and arguments to retrieve a list of webhooks.
 func (q *MariaDB) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		queriers.WebhooksTableName,
@@ -77,7 +77,7 @@ func (q *MariaDB) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter
 	)
 }
 
-// buildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
+// BuildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
 func (q *MariaDB) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
 	var err error
 
@@ -110,7 +110,7 @@ func (q *MariaDB) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query 
 	return query, args
 }
 
-// buildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
+// BuildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
 func (q *MariaDB) BuildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
 	var err error
 
@@ -135,7 +135,7 @@ func (q *MariaDB) BuildUpdateWebhookQuery(input *types.Webhook) (query string, a
 	return query, args
 }
 
-// buildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
+// BuildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
 func (q *MariaDB) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
@@ -155,7 +155,7 @@ func (q *MariaDB) BuildArchiveWebhookQuery(webhookID, userID uint64) (query stri
 	return query, args
 }
 
-// buildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (q *MariaDB) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 

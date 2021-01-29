@@ -221,12 +221,12 @@ func (q *MariaDB) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (
 }
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (q *MariaDB) BuildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {
+func (q *MariaDB) BuildSetUserStatusQuery(userID uint64, input types.UserReputationUpdateInput) (query string, args []interface{}) {
 	var err error
 
 	query, args, err = q.sqlBuilder.
 		Update(queriers.UsersTableName).
-		Set(queriers.UsersTableReputationColumn, input.NewStatus).
+		Set(queriers.UsersTableReputationColumn, input.NewReputation).
 		Set(queriers.UsersTableStatusExplanationColumn, input.Reason).
 		Where(squirrel.Eq{queriers.IDColumn: userID}).
 		ToSql()

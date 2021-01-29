@@ -21,10 +21,10 @@ type (
 		LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string)
 	}
 
-	// AccountStatusUpdateInput represents what an admin User could provide as input for changing statuses.
-	AccountStatusUpdateInput struct {
+	// UserReputationUpdateInput represents what an admin User could provide as input for changing statuses.
+	UserReputationUpdateInput struct {
 		TargetAccountID uint64         `json:"accountID"`
-		NewStatus       userReputation `json:"newStatus"`
+		NewReputation   userReputation `json:"newReputation"`
 		Reason          string         `json:"reason"`
 	}
 
@@ -35,9 +35,9 @@ type (
 )
 
 // Validate ensures our struct is validatable.
-func (i *AccountStatusUpdateInput) Validate(ctx context.Context) error {
+func (i *UserReputationUpdateInput) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
-		validation.Field(&i.NewStatus, validation.Required),
+		validation.Field(&i.NewReputation, validation.Required),
 		validation.Field(&i.Reason, validation.Required),
 		validation.Field(&i.TargetAccountID, validation.Required, validation.Min(uint64(1))),
 	)

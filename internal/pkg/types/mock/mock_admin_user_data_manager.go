@@ -16,6 +16,6 @@ type AdminUserDataManager struct {
 }
 
 // UpdateUserAccountStatus is a mock function.
-func (m *AdminUserDataManager) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
+func (m *AdminUserDataManager) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
 	return m.Called(ctx, userID, input).Error(0)
 }

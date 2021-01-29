@@ -3,17 +3,27 @@ package config
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querier"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/mariadb"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/postgres"
+	zqlite "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
@@ -34,6 +44,8 @@ const (
 	randStringSize = 32
 	randReadSize   = 24
 )
+
+var errNilDatabaseConnection = errors.New("nil DB connection provided")
 
 func init() {
 	b := make([]byte, 64)
@@ -110,4 +122,26 @@ func RandString() string {
 	}
 
 	return base64.URLEncoding.EncodeToString(b)
+}
+
+// ProvideDatabaseClient provides a database implementation dependent on the configuration.
+func (cfg *ServerConfig) ProvideDatabaseClient(
+	ctx context.Context,
+	logger logging.Logger,
+	rawDB *sql.DB,
+) (database.DataManager, error) {
+	if rawDB == nil {
+		return nil, errNilDatabaseConnection
+	}
+
+	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
+	case "sqlite":
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, zqlite.ProvideSqlite(cfg.Database.Debug, rawDB, logger))
+	case "mariadb":
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, mariadb.ProvideMariaDB(cfg.Database.Debug, rawDB, logger))
+	case "postgres":
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, postgres.ProvidePostgres(cfg.Database.Debug, rawDB, logger))
+	default:
+		return nil, fmt.Errorf("invalid provider: %q", cfg.Database.Provider)
+	}
 }

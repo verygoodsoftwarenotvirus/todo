@@ -3,7 +3,6 @@ package querier
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -28,10 +27,6 @@ const (
 	DefaultIDRetrievalStrategy idRetrievalStrategy = iota
 	// ReturningStatementIDRetrievalStrategy scans IDs to results for database drivers that support queries with RETURNING statements.
 	ReturningStatementIDRetrievalStrategy
-)
-
-var (
-	errInvalidIDRetrievalStrategy = errors.New("invalid ID retrieval strategy")
 )
 
 var _ database.DataManager = (*Client)(nil)
@@ -111,18 +106,16 @@ func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig 
 
 		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
 
-		res, userCreationErr := c.db.ExecContext(ctx, query, args...)
+		createdUserID, userCreationErr := c.performCreateQuery(ctx, false, "test user creation query", query, args)
 		if userCreationErr != nil {
 			c.logger.Error(userCreationErr, "creating test user")
 			return fmt.Errorf("creating test user: %w", userCreationErr)
 		}
 
-		if _, accountCreationErr := c.CreateAccount(ctx,
-			&types.AccountCreationInput{
-				Name:          fmt.Sprintf("%s_default", testUserConfig.Username),
-				BelongsToUser: c.getIDFromResult(res),
-			},
-		); accountCreationErr != nil {
+		if _, accountCreationErr := c.CreateAccount(ctx, &types.AccountCreationInput{
+			Name:          fmt.Sprintf("%s_default", testUserConfig.Username),
+			BelongsToUser: createdUserID,
+		}); accountCreationErr != nil {
 			c.logger.Error(accountCreationErr, "creating test account")
 			return fmt.Errorf("creating test user: %w", accountCreationErr)
 		}
@@ -177,15 +170,6 @@ func (c *Client) currentTime() uint64 {
 	return c.timeFunc()
 }
 
-func (c *Client) getIDFromResult(res sql.Result) uint64 {
-	id, err := res.LastInsertId()
-	if err != nil {
-		c.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
-	}
-
-	return uint64(id)
-}
-
 func (c *Client) handleRows(rows database.ResultIterator) error {
 	if rowErr := rows.Err(); rowErr != nil {
 		c.logger.Error(rowErr, "row error")
@@ -200,38 +184,44 @@ func (c *Client) handleRows(rows database.ResultIterator) error {
 	return nil
 }
 
-func (c *Client) execContext(ctx context.Context, queryDescription, query string, args []interface{}) error {
-	_, err := c.performWriteQuery(ctx, queryDescription, query, args)
+func (c *Client) getIDFromResult(res sql.Result) uint64 {
+	id, err := res.LastInsertId()
+	if err != nil {
+		c.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
+	}
+
+	return uint64(id)
+}
+
+func (c *Client) performCreateQueryIgnoringReturn(ctx context.Context, queryDescription, query string, args []interface{}) error {
+	_, err := c.performCreateQuery(ctx, true, queryDescription, query, args)
 
 	return err
 }
 
-func (c *Client) performWriteQuery(ctx context.Context, queryDescription, query string, args []interface{}) (uint64, error) {
+func (c *Client) performCreateQuery(ctx context.Context, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	switch c.idStrategy {
-	case ReturningStatementIDRetrievalStrategy:
+	if !ignoreReturn && c.idStrategy == ReturningStatementIDRetrievalStrategy {
 		var id uint64
 		if err := c.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
 		return id, nil
-	case DefaultIDRetrievalStrategy:
-		res, err := c.db.ExecContext(ctx, query, args...)
-		if err != nil {
-			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
-		}
-
-		if res != nil {
-			if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
-				return 0, sql.ErrNoRows
-			}
-		}
-
-		return c.getIDFromResult(res), nil
-	default:
-		return 0, errInvalidIDRetrievalStrategy
 	}
+
+	res, err := c.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
+	}
+
+	if res != nil {
+		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+			return 0, sql.ErrNoRows
+		}
+	}
+
+	return c.getIDFromResult(res), nil
 }

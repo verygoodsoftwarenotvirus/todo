@@ -305,7 +305,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	query, args := c.sqlQueryBuilder.BuildCreateItemQuery(input)
 
 	// create the item.
-	id, err := c.performWriteQuery(ctx, "item creation", query, args)
+	id, err := c.performCreateQuery(ctx, false, "item creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +332,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
 
-	return c.execContext(ctx, "item update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "item update", query, args)
 }
 
 // ArchiveItem archives an item from the database by its ID.
@@ -350,7 +350,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, userID)
 
-	return c.execContext(ctx, "item archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "item archive", query, args)
 }
 
 // LogItemCreationEvent implements our AuditLogEntryDataManager interface.

@@ -1,13 +1,8 @@
 package postgres
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
 )
@@ -173,40 +168,4 @@ func (q *Postgres) BuildMigrationFunc(db *sql.DB) func() {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}
-}
-
-// Migrate migrates the database. It does so by invoking the migrateOnce function via sync.Once, so it should be
-// safe (as in idempotent, though not necessarily recommended) to call this function multiple times.
-func (q *Postgres) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
-	q.logger.Info("migrating db")
-
-	if !q.IsReady(ctx, maxAttempts) {
-		return database.ErrDBUnready
-	}
-
-	q.migrateOnce.Do(q.BuildMigrationFunc(q.db))
-
-	if testUserConfig != nil {
-		q.logger.Debug("creating test user")
-
-		query, args := q.BuildTestUserCreationQuery(testUserConfig)
-
-		var id uint64
-		if userCreateErr := q.db.QueryRowContext(ctx, query, args...).Scan(&id); userCreateErr != nil {
-			q.logger.Error(userCreateErr, "creating test user")
-			return fmt.Errorf("creating test user: %w", userCreateErr)
-		}
-
-		if _, accountCreationErr := q.CreateAccount(ctx, &types.AccountCreationInput{
-			Name:          testUserConfig.Username,
-			BelongsToUser: id,
-		}); accountCreationErr != nil {
-			q.logger.Error(accountCreationErr, "creating test user")
-			return fmt.Errorf("creating test user: %w", accountCreationErr)
-		}
-
-		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
-	}
-
-	return nil
 }

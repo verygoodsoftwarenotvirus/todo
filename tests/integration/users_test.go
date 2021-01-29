@@ -216,7 +216,7 @@ func TestUsers(test *testing.T) {
 			defer span.End()
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
-			input.NewStatus = types.BannedAccountStatus
+			input.NewReputation = types.BannedAccountStatus
 			input.TargetAccountID = nonexistentID
 
 			// Ban user.

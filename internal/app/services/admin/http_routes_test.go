@@ -44,7 +44,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.BannedAccountStatus
+		exampleInput.NewReputation = types.BannedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
@@ -89,7 +89,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.TerminatedAccountStatus
+		exampleInput.NewReputation = types.TerminatedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
@@ -155,7 +155,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.BannedAccountStatus
+		exampleInput.NewReputation = types.BannedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
@@ -185,7 +185,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.BannedAccountStatus
+		exampleInput.NewReputation = types.BannedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
@@ -215,7 +215,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.BannedAccountStatus
+		exampleInput.NewReputation = types.BannedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
@@ -245,7 +245,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.BannedAccountStatus
+		exampleInput.NewReputation = types.BannedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
@@ -286,7 +286,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.BannedAccountStatus
+		exampleInput.NewReputation = types.BannedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
@@ -331,7 +331,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewStatus = types.BannedAccountStatus
+		exampleInput.NewReputation = types.BannedAccountStatus
 
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 

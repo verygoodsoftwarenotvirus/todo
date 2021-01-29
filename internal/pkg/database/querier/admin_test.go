@@ -20,9 +20,9 @@ func TestClient_UpdateUserAccountStatus(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := types.AccountStatusUpdateInput{
+		exampleInput := types.UserReputationUpdateInput{
 			TargetAccountID: exampleUser.ID,
-			NewStatus:       "new",
+			NewReputation:   "new",
 			Reason:          "because",
 		}
 

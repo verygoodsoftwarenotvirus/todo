@@ -21,14 +21,14 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	logger := s.logger.WithRequest(req)
 
 	// check request context for parsed input struct.
-	input, ok := ctx.Value(accountStatusUpdateMiddlewareCtxKey).(*types.AccountStatusUpdateInput)
+	input, ok := ctx.Value(accountStatusUpdateMiddlewareCtxKey).(*types.UserReputationUpdateInput)
 	if !ok || input == nil {
 		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
-	logger = logger.WithValue("new_status", input.NewStatus)
+	logger = logger.WithValue("new_status", input.NewReputation)
 
 	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
 	if sessionInfoRetrievalErr != nil {
@@ -46,7 +46,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	var allowed bool
 
-	switch input.NewStatus {
+	switch input.NewReputation {
 	case types.BannedAccountStatus:
 		allowed = si.AdminPermissions.CanBanUsers()
 	case types.TerminatedAccountStatus:
@@ -74,7 +74,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	switch input.NewStatus {
+	switch input.NewReputation {
 	case types.BannedAccountStatus:
 		s.auditLog.LogUserBanEvent(ctx, si.UserID, input.TargetAccountID, input.Reason)
 	case types.TerminatedAccountStatus:

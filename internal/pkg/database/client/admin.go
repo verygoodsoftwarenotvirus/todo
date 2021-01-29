@@ -21,7 +21,7 @@ func (c *Client) LogAccountTerminationEvent(ctx context.Context, terminator, ter
 }
 
 // UpdateUserAccountStatus marks a user's account as banned.
-func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
+func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

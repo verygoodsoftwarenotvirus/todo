@@ -43,9 +43,9 @@ func TestAdmin(test *testing.T) {
 			_, initialCheckErr := testClient.GetItems(ctx, nil)
 			require.NoError(t, initialCheckErr)
 
-			input := &types.AccountStatusUpdateInput{
+			input := &types.UserReputationUpdateInput{
 				TargetAccountID: user.ID,
-				NewStatus:       types.BannedAccountStatus,
+				NewReputation:   types.BannedAccountStatus,
 				Reason:          "testing",
 			}
 

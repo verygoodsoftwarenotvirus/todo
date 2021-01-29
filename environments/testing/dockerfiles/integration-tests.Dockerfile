@@ -9,4 +9,4 @@ COPY . .
 ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
 
 # for a more specific test:
-# ENTRYPOINT [ "go", "test", "-parallel", "1", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestAuditLogEntries" ]
+# ENTRYPOINT [ "go", "test", "-parallel", "1", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestAdmin/User_Management/users_should_be_bannable" ]

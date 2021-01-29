@@ -12,7 +12,7 @@ import (
 var _ types.AdminUserDataManager = (*Client)(nil)
 
 // UpdateUserAccountStatus updates a user's account status.
-func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.AccountStatusUpdateInput) error {
+func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -21,7 +21,7 @@ func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, inp
 
 	query, args := c.sqlQueryBuilder.BuildSetUserStatusQuery(userID, input)
 
-	return c.execContext(ctx, "user status update query", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "user status update query", query, args)
 }
 
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.

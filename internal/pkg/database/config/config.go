@@ -14,7 +14,6 @@ import (
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/postgres"
 	zqlite "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers/sqlite"
@@ -62,8 +61,6 @@ func (cfg Config) Validate(ctx context.Context) error {
 	)
 }
 
-var errNilDatabaseConnection = errors.New("nil DB connection provided")
-
 // ProvideDatabaseConnection provides a database implementation dependent on the configuration.
 func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, error) {
 	switch cfg.Provider {
@@ -76,36 +73,6 @@ func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, er
 	default:
 		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
 	}
-}
-
-// ProvideDatabaseClient provides a database implementation dependent on the configuration.
-func (cfg *Config) ProvideDatabaseClient(
-	ctx context.Context,
-	logger logging.Logger,
-	rawDB *sql.DB,
-) (database.DataManager, error) {
-	if rawDB == nil {
-		return nil, errNilDatabaseConnection
-	}
-
-	var dbManager database.DataManager
-
-	switch cfg.Provider {
-	case PostgresProviderKey:
-		dbManager = postgres.ProvidePostgres(cfg.Debug, rawDB, logger)
-	default:
-		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
-	}
-
-	return dbclient.ProvideDatabaseClient(
-		ctx,
-		logger,
-		dbManager,
-		rawDB,
-		cfg.CreateTestUser,
-		cfg.RunMigrations,
-		cfg.Debug,
-	)
 }
 
 // ProvideDatabaseDriver provides .

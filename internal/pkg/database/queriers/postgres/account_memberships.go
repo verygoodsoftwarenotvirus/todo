@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
@@ -24,18 +23,6 @@ func (q *Postgres) BuildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) 
 			queriers.ArchivedOnColumn: nil,
 		}),
 	)
-}
-
-// MarkAccountAsUserPrimary marks an account as the primary account.
-func (q *Postgres) MarkAccountAsUserPrimary(ctx context.Context, userID, accountID uint64) error {
-	query, args := q.BuildMarkAccountAsUserPrimaryQuery(userID, accountID)
-
-	// create the user/account association.
-	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("executing account association creation query: %w", err)
-	}
-
-	return nil
 }
 
 // BuildUserIsMemberOfAccountQuery builds a query that checks to see if the user is the member of a given account.
@@ -68,18 +55,6 @@ func (q *Postgres) BuildAddUserToAccountQuery(userID, accountID uint64) (query s
 	)
 }
 
-// AddUserToAccount adds a user to a given account.
-func (q *Postgres) AddUserToAccount(ctx context.Context, userID, accountID uint64) error {
-	query, args := q.BuildAddUserToAccountQuery(userID, accountID)
-
-	// create the user/account association.
-	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("executing account association creation query: %w", err)
-	}
-
-	return nil
-}
-
 // BuildRemoveUserFromAccountQuery builds a query that removes a user from an account.
 func (q *Postgres) BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
@@ -90,16 +65,4 @@ func (q *Postgres) BuildRemoveUserFromAccountQuery(userID, accountID uint64) (qu
 			fmt.Sprintf("%s.%s", queriers.AccountsMembershipTableName, queriers.ArchivedOnColumn):                              nil,
 		}),
 	)
-}
-
-// RemoveUserFromAccount removes a user from a given account.
-func (q *Postgres) RemoveUserFromAccount(ctx context.Context, userID, accountID uint64) error {
-	query, args := q.BuildRemoveUserFromAccountQuery(userID, accountID)
-
-	// remove the user/account association.
-	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("executing account association creation query: %w", err)
-	}
-
-	return nil
 }

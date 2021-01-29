@@ -220,7 +220,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
 
-	id, err := c.performWriteQuery(ctx, "webhook creation", query, args)
+	id, err := c.performCreateQuery(ctx, false, "webhook creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(input)
 
-	return c.execContext(ctx, "webhook update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "webhook update", query, args)
 }
 
 // ArchiveWebhook archives a webhook from the database.
@@ -272,7 +272,7 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
 
-	return c.execContext(ctx, "webhook archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "webhook archive", query, args)
 }
 
 // LogWebhookCreationEvent implements our AuditLogEntryDataManager interface.

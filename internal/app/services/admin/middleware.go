@@ -12,10 +12,10 @@ const (
 	accountStatusUpdateMiddlewareCtxKey types.ContextKey = "account_status_update_input"
 )
 
-// AccountStatusUpdateInputMiddleware is a middleware for fetching, parsing, and attaching a AccountStatusUpdateInput struct from a request.
+// AccountStatusUpdateInputMiddleware is a middleware for fetching, parsing, and attaching a UserReputationUpdateInput struct from a request.
 func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		x := new(types.AccountStatusUpdateInput)
+		x := new(types.UserReputationUpdateInput)
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 

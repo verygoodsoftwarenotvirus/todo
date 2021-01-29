@@ -223,7 +223,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	query, args := c.sqlQueryBuilder.BuildCreateAccountQuery(input)
 
 	// create the account.
-	id, err := c.performWriteQuery(ctx, "account creation", query, args)
+	id, err := c.performCreateQuery(ctx, false, "account creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account) erro
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountQuery(updated)
 
-	return c.execContext(ctx, "account update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "account update", query, args)
 }
 
 // ArchiveAccount archives an account from the database by its ID.
@@ -267,7 +267,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountQuery(accountID, userID)
 
-	return c.execContext(ctx, "account archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "account archive", query, args)
 }
 
 // LogAccountCreationEvent implements our AuditLogEntryDataManager interface.

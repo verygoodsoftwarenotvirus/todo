@@ -66,6 +66,18 @@ func BuildFakeUserCreationInput() *types.NewUserCreationInput {
 	}
 }
 
+// BuildTestUserCreationConfig builds a faked TestUserCreationConfig.
+func BuildTestUserCreationConfig() *types.TestUserCreationConfig {
+	exampleUser := BuildFakeUserCreationInput()
+
+	return &types.TestUserCreationConfig{
+		Username:       exampleUser.Username,
+		Password:       exampleUser.Password,
+		HashedPassword: "hashed password",
+		IsSiteAdmin:    false,
+	}
+}
+
 // BuildFakeUserCreationInputFromUser builds a faked NewUserCreationInput.
 func BuildFakeUserCreationInputFromUser(user *types.User) *types.NewUserCreationInput {
 	return &types.NewUserCreationInput{

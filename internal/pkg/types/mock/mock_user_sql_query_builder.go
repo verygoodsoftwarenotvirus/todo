@@ -84,7 +84,7 @@ func (m *UserSQLQueryBuilder) BuildGetAuditLogEntriesForUserQuery(userID uint64)
 }
 
 // BuildSetUserStatusQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildSetUserStatusQuery(userID uint64, input types.AccountStatusUpdateInput) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildSetUserStatusQuery(userID uint64, input types.UserReputationUpdateInput) (query string, args []interface{}) {
 	returnArgs := m.Called(userID, input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

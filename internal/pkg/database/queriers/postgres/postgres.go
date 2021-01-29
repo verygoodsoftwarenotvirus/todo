@@ -17,9 +17,8 @@ import (
 )
 
 const (
-	loggerName                 = "postgres"
-	driverName                 = "wrapped-postgres-driver"
-	postgresRowExistsErrorCode = "23505"
+	loggerName = "postgres"
+	driverName = "wrapped-postgres-driver"
 
 	// columnCountQueryTemplate is a generic counter query used in a few query builders.
 	columnCountQueryTemplate = `COUNT(%s.id)`
@@ -31,16 +30,15 @@ const (
 	currentUnixTimeQuery = `extract(epoch FROM NOW())`
 )
 
-var _ database.DataManager = (*Postgres)(nil)
+var _ database.SQLQueryBuilder = (*Postgres)(nil)
 
 type (
 	// Postgres is our main Postgres interaction db.
 	Postgres struct {
-		logger      logging.Logger
-		db          *sql.DB
-		sqlBuilder  squirrel.StatementBuilderType
-		migrateOnce sync.Once
-		debug       bool
+		logger     logging.Logger
+		db         *sql.DB
+		sqlBuilder squirrel.StatementBuilderType
+		debug      bool
 	}
 )
 
@@ -107,11 +105,6 @@ func (q *Postgres) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) 
 	}
 
 	return false
-}
-
-// BeginTx begins a transaction.
-func (q *Postgres) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return q.db.BeginTx(ctx, opts)
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.

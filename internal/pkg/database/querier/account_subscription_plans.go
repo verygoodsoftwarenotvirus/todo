@@ -151,7 +151,7 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
 
 	// create the account subscription plan.
-	id, err := c.performWriteQuery(ctx, "account subscription plan creation", query, args)
+	id, err := c.performCreateQuery(ctx, false, "account subscription plan creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
 
-	return c.execContext(ctx, "account subscription plan update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "account subscription plan update", query, args)
 }
 
 // ArchiveAccountSubscriptionPlan archives a plan from the database by its ID.
@@ -194,7 +194,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
-	return c.execContext(ctx, "account subscription plan archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "account subscription plan archive", query, args)
 }
 
 // LogAccountSubscriptionPlanCreationEvent implements our AuditLogEntryDataManager interface.

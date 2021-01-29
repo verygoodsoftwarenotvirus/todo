@@ -223,13 +223,13 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	query, args := c.sqlQueryBuilder.BuildCreateAccountQuery(input)
 
 	// create the account.
-	res, err := c.execContextAndReturnResult(ctx, "account creation", query, args)
+	id, err := c.performWriteQuery(ctx, "account creation", query, args)
 	if err != nil {
 		return nil, err
 	}
 
 	x := &types.Account{
-		ID:            c.getIDFromResult(res),
+		ID:            id,
 		Name:          input.Name,
 		BelongsToUser: input.BelongsToUser,
 		CreatedOn:     c.currentTime(),

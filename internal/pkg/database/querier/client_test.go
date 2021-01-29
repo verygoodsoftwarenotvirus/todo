@@ -82,6 +82,7 @@ func buildTestClient(t *testing.T) (*Client, *sqlmockExpecterWrapper) {
 		timeFunc:        defaultTimeFunc,
 		tracer:          tracing.NewTracer("test"),
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
+		idStrategy:      DefaultIDRetrievalStrategy,
 	}
 
 	return c, &sqlmockExpecterWrapper{Sqlmock: sqlMock}
@@ -359,7 +360,7 @@ func TestClient_execContextAndReturnResult(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
 
-		_, err := c.execContextAndReturnResult(ctx, "example", fakeQuery, fakeArgs)
+		_, err := c.performWriteQuery(ctx, "example", fakeQuery, fakeArgs)
 
 		assert.NoError(t, err)
 	})
@@ -376,7 +377,7 @@ func TestClient_execContextAndReturnResult(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		_, err := c.execContextAndReturnResult(ctx, "example", fakeQuery, fakeArgs)
+		_, err := c.performWriteQuery(ctx, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 	})
@@ -393,7 +394,7 @@ func TestClient_execContextAndReturnResult(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(1), 0))
 
-		_, err := c.execContextAndReturnResult(ctx, "example", fakeQuery, fakeArgs)
+		_, err := c.performWriteQuery(ctx, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))

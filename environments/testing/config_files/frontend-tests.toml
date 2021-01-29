@@ -16,6 +16,7 @@
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
   debug = true
+  max_ping_attempts = 0
   metrics_collection_interval = "1s"
   provider = "postgres"
   run_migrations = true

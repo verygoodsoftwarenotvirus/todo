@@ -151,13 +151,13 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
 
 	// create the account subscription plan.
-	res, err := c.execContextAndReturnResult(ctx, "account subscription plan creation", query, args)
+	id, err := c.performWriteQuery(ctx, "account subscription plan creation", query, args)
 	if err != nil {
 		return nil, err
 	}
 
 	x := &types.AccountSubscriptionPlan{
-		ID:          c.getIDFromResult(res),
+		ID:          id,
 		Name:        input.Name,
 		Description: input.Description,
 		Price:       input.Price,

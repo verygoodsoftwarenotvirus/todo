@@ -16,12 +16,13 @@
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
   debug = false
+  max_ping_attempts = 50
   metrics_collection_interval = "2s"
   provider = "postgres"
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$j.0JjyNk0ZJmacVI6hvCpuk8ayo/ycakdnkNTQ5EdYDFReq4IwStq"
+    hashed_password = "$2a$11$o1ta/nhedOqic4zeWOqn3u5SnGqHrX94s0JqcWGfCNrbsixujuWda"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

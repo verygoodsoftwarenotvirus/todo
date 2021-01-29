@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -16,10 +17,21 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
+type idRetrievalStrategy int
+
 const (
 	name        = "db_client"
 	loggerName  = name
 	tracingName = name
+
+	// DefaultIDRetrievalStrategy uses the standard library .LastInsertId method to retrieve the ID.
+	DefaultIDRetrievalStrategy idRetrievalStrategy = iota
+	// ReturningStatementIDRetrievalStrategy scans IDs to results for database drivers that support queries with RETURNING statements.
+	ReturningStatementIDRetrievalStrategy
+)
+
+var (
+	errInvalidIDRetrievalStrategy = errors.New("invalid ID retrieval strategy")
 )
 
 var _ database.DataManager = (*Client)(nil)
@@ -34,6 +46,7 @@ type Client struct {
 	logger          logging.Logger
 	tracer          tracing.Tracer
 	migrateOnce     sync.Once
+	idStrategy      idRetrievalStrategy
 }
 
 // ProvideDatabaseClient provides a new DataManager client.
@@ -56,6 +69,11 @@ func ProvideDatabaseClient(
 		timeFunc:        defaultTimeFunc,
 		logger:          logger.WithName(loggerName),
 		sqlQueryBuilder: sqlQueryBuilder,
+		idStrategy:      DefaultIDRetrievalStrategy,
+	}
+
+	if cfg.Provider == dbconfig.PostgresProviderKey {
+		c.idStrategy = ReturningStatementIDRetrievalStrategy
 	}
 
 	if cfg.Debug {
@@ -183,25 +201,37 @@ func (c *Client) handleRows(rows database.ResultIterator) error {
 }
 
 func (c *Client) execContext(ctx context.Context, queryDescription, query string, args []interface{}) error {
-	_, err := c.execContextAndReturnResult(ctx, queryDescription, query, args)
+	_, err := c.performWriteQuery(ctx, queryDescription, query, args)
 
 	return err
 }
 
-func (c *Client) execContextAndReturnResult(ctx context.Context, queryDescription, query string, args []interface{}) (sql.Result, error) {
+func (c *Client) performWriteQuery(ctx context.Context, queryDescription, query string, args []interface{}) (uint64, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("executing %s query: %w", queryDescription, err)
-	}
-
-	if res != nil {
-		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
-			return nil, sql.ErrNoRows
+	switch c.idStrategy {
+	case ReturningStatementIDRetrievalStrategy:
+		var id uint64
+		if err := c.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
-	}
 
-	return res, nil
+		return id, nil
+	case DefaultIDRetrievalStrategy:
+		res, err := c.db.ExecContext(ctx, query, args...)
+		if err != nil {
+			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
+		}
+
+		if res != nil {
+			if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+				return 0, sql.ErrNoRows
+			}
+		}
+
+		return c.getIDFromResult(res), nil
+	default:
+		return 0, errInvalidIDRetrievalStrategy
+	}
 }

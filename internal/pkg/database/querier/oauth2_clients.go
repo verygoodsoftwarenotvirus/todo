@@ -239,13 +239,13 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 
 	query, args := c.sqlQueryBuilder.BuildCreateOAuth2ClientQuery(input)
 
-	res, err := c.execContextAndReturnResult(ctx, "oauth2 client creation", query, args)
+	id, err := c.performWriteQuery(ctx, "oauth2 client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
 
 	x := &types.OAuth2Client{
-		ID:            c.getIDFromResult(res),
+		ID:            id,
 		Name:          input.Name,
 		ClientID:      input.ClientID,
 		ClientSecret:  input.ClientSecret,

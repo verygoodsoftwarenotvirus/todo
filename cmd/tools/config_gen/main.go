@@ -51,6 +51,8 @@ const (
 
 	// search index paths.
 	defaultItemsSearchIndexPath = "items.bleve"
+
+	maxAttempts = 50
 )
 
 type configFunc func(filePath string) error
@@ -392,6 +394,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Debug:                     false,
 				RunMigrations:             true,
 				Provider:                  dbVendor,
+				MaxPingAttempts:           maxAttempts,
 				ConnectionDetails:         database.ConnectionDetails(dbDetails),
 				MetricsCollectionInterval: 2 * time.Second,
 				CreateTestUser: &types.TestUserCreationConfig{

@@ -220,13 +220,13 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
 
-	res, err := c.execContextAndReturnResult(ctx, "webhook creation", query, args)
+	id, err := c.performWriteQuery(ctx, "webhook creation", query, args)
 	if err != nil {
 		return nil, err
 	}
 
 	x := &types.Webhook{
-		ID:            c.getIDFromResult(res),
+		ID:            id,
 		Name:          input.Name,
 		ContentType:   input.ContentType,
 		URL:           input.URL,

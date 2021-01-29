@@ -305,13 +305,13 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	query, args := c.sqlQueryBuilder.BuildCreateItemQuery(input)
 
 	// create the item.
-	res, err := c.execContextAndReturnResult(ctx, "item creation", query, args)
+	id, err := c.performWriteQuery(ctx, "item creation", query, args)
 	if err != nil {
 		return nil, err
 	}
 
 	x := &types.Item{
-		ID:            c.getIDFromResult(res),
+		ID:            id,
 		Name:          input.Name,
 		Details:       input.Details,
 		BelongsToUser: input.BelongsToUser,

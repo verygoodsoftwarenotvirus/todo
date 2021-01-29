@@ -16,12 +16,13 @@
 [database]
   connection_details = "/tmp/db"
   debug = false
+  max_ping_attempts = 50
   metrics_collection_interval = "2s"
   provider = "sqlite"
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$JGxH822e1ATr1nQ8YUa48e8hl.ynyumiPAHRdnU.qsLEZ7bVjenyG"
+    hashed_password = "$2a$11$k52XvrxXWU8NXz1UTiJ5dO2Xm1D9P1iKphTdHnor4bJCy5hgSnf2e"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

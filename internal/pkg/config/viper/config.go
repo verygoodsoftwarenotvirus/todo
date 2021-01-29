@@ -76,6 +76,8 @@ const (
 	ConfigKeyDatabaseDebug = "database.debug"
 	// ConfigKeyDatabaseProvider is the key viper will use to refer to the DatabaseSettings.Provider setting.
 	ConfigKeyDatabaseProvider = "database.provider"
+	// ConfigKeyDatabaseMaxPingAttempts is the key viper will use to refer to the DatabaseSettings.MaxPingAttempts setting.
+	ConfigKeyDatabaseMaxPingAttempts = "database.max_ping_attempts"
 	// ConfigKeyDatabaseConnectionDetails is the key viper will use to refer to the DatabaseSettings.ConnectionDetails setting.
 	ConfigKeyDatabaseConnectionDetails = "database.connection_details"
 	// ConfigKeyDatabaseCreateTestUserUsername is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.Username setting.
@@ -227,6 +229,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyMetricsRuntimeCollectionInterval, input.Observability.RuntimeMetricsCollectionInterval)
 	cfg.Set(ConfigKeyDatabaseDebug, input.Database.Debug)
 	cfg.Set(ConfigKeyDatabaseProvider, input.Database.Provider)
+	cfg.Set(ConfigKeyDatabaseMaxPingAttempts, input.Database.MaxPingAttempts)
 	cfg.Set(ConfigKeyDatabaseConnectionDetails, string(input.Database.ConnectionDetails))
 
 	if input.Database.CreateTestUser != nil {

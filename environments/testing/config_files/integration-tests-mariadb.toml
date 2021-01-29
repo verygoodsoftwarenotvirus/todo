@@ -16,12 +16,13 @@
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
   debug = false
+  max_ping_attempts = 50
   metrics_collection_interval = "2s"
   provider = "mariadb"
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$IYR7szXKTzG/Dq1U9WtKCePiKkRhElCJ0Agvvt1cDamUxMRBaOCUa"
+    hashed_password = "$2a$11$/Ke38VVQu2nZCQ.C0N8whOgso2LwDlYloBbkvY2jbt1UQLI0yj3qS"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

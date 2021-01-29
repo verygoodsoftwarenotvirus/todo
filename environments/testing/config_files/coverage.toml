@@ -16,12 +16,13 @@
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
   debug = false
+  max_ping_attempts = 0
   metrics_collection_interval = "2s"
   provider = "postgres"
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$OdLoEwaIwdUgS762eb2liuT8IoLqDFNl0HYVjEstXjzT9k4MNRkrq"
+    hashed_password = "$2a$11$0fBykPWyb72aEMe1OvKHDOBmdASK.lSzH./LaH.4yQxrATbVUPNt2"
     is_site_admin = false
     password = "password"
     username = "coverageUser"

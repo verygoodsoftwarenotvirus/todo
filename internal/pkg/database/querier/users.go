@@ -241,13 +241,13 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	query, args := c.sqlQueryBuilder.BuildCreateUserQuery(input)
 
 	// create the user.
-	res, err := c.execContextAndReturnResult(ctx, "user creation", query, args)
+	id, err := c.performWriteQuery(ctx, "user creation", query, args)
 	if err != nil {
 		return nil, err
 	}
 
 	x := &types.User{
-		ID:              c.getIDFromResult(res),
+		ID:              id,
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,

@@ -11,8 +11,6 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
@@ -569,41 +567,6 @@ func TestService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, auth, db, ed)
-	})
-
-	T.Run("with pre-existing entry in database", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-
-		auth := &mockauth.Authenticator{}
-		auth.On("HashPassword", mock.MatchedBy(testutil.ContextMatcher()), exampleInput.Password).Return(exampleUser.HashedPassword, nil)
-		s.authenticator = auth
-
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(s.logger)
-
-		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(types.UserDataStoreCreationInput{})).Return(exampleUser, dbclient.ErrUserExists)
-		s.userDataManager = db
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				userCreationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		s.authSettings.EnableUserSignup = true
-		s.CreateHandler(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-
-		mock.AssertExpectationsForObjects(t, auth, db)
 	})
 
 	T.Run("with error creating account", func(t *testing.T) {

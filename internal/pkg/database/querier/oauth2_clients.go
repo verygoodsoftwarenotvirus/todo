@@ -9,7 +9,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -47,7 +47,7 @@ func (c *Client) scanOAuth2Client(scan database.Scanner, includeCounts bool) (cl
 		return nil, 0, 0, scanErr
 	}
 
-	if scopes := strings.Split(rawScopes, queriers.OAuth2ClientsTableScopeSeparator); len(scopes) >= 1 && scopes[0] != "" {
+	if scopes := strings.Split(rawScopes, querybuilding.OAuth2ClientsTableScopeSeparator); len(scopes) >= 1 && scopes[0] != "" {
 		client.Scopes = scopes
 	}
 

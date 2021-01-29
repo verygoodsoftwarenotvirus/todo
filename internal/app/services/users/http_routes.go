@@ -10,7 +10,6 @@ import (
 	"image/png"
 	"net/http"
 
-	dbclient "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/client"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -181,12 +180,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// create the user.
 	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
 	if userCreationErr != nil {
-		if errors.Is(userCreationErr, dbclient.ErrUserExists) {
-			logger.Info("duplicate username attempted")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "username already taken", http.StatusBadRequest)
-			return
-		}
-
 		logger.Error(userCreationErr, "error creating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

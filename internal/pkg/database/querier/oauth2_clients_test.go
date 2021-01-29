@@ -11,7 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -21,7 +21,7 @@ import (
 )
 
 func buildMockRowsFromOAuth2Clients(includeCounts bool, filteredCount uint64, clients ...*types.OAuth2Client) *sqlmock.Rows {
-	columns := queriers.OAuth2ClientsTableColumns
+	columns := querybuilding.OAuth2ClientsTableColumns
 
 	if includeCounts {
 		columns = append(columns, "filtered_count", "total_count")
@@ -34,7 +34,7 @@ func buildMockRowsFromOAuth2Clients(includeCounts bool, filteredCount uint64, cl
 			c.ID,
 			c.Name,
 			c.ClientID,
-			strings.Join(c.Scopes, queriers.OAuth2ClientsTableScopeSeparator),
+			strings.Join(c.Scopes, querybuilding.OAuth2ClientsTableScopeSeparator),
 			c.RedirectURI,
 			c.ClientSecret,
 			c.CreatedOn,

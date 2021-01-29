@@ -313,15 +313,15 @@ issues:
         - wsl
       text: "return statements should not be cuddled if block has more than two lines"
 
-    - path: internal/pkg/database/queriers/mariadb/migrations.go
+    - path: internal/pkg/database/querybuilding/mariadb/migrations.go
       linters:
         - gomnd
 
-    - path: internal/pkg/database/queriers/postgres/migrations.go
+    - path: internal/pkg/database/querybuilding/postgres/migrations.go
       linters:
         - gomnd
 
-    - path: internal/pkg/database/queriers/sqlite/migrations.go
+    - path: internal/pkg/database/querybuilding/sqlite/migrations.go
       linters:
         - gomnd
 
@@ -336,7 +336,7 @@ issues:
       linters:
         - gocyclo
 
-    - path: internal/database/queriers/postgres/migrations.go
+    - path: internal/database/querybuilding/postgres/migrations.go
       linters:
         - gocyclo
 
@@ -365,7 +365,7 @@ issues:
       linters:
         - goerr113
 
-    - path: internal/pkg/database/queriers/postgres/migrations.go # TODO: FIXME
+    - path: internal/pkg/database/querybuilding/postgres/migrations.go # TODO: FIXME
       linters:
         - gocognit
         - gocyclo

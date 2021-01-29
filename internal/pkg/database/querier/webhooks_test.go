@@ -13,7 +13,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -22,7 +22,7 @@ import (
 )
 
 func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhooks ...*types.Webhook) *sqlmock.Rows {
-	columns := queriers.WebhooksTableColumns
+	columns := querybuilding.WebhooksTableColumns
 
 	if includeCounts {
 		columns = append(columns, "filtered_count", "total_count")
@@ -37,9 +37,9 @@ func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhook
 			w.ContentType,
 			w.URL,
 			w.Method,
-			strings.Join(w.Events, queriers.WebhooksTableEventsSeparator),
-			strings.Join(w.DataTypes, queriers.WebhooksTableDataTypesSeparator),
-			strings.Join(w.Topics, queriers.WebhooksTableTopicsSeparator),
+			strings.Join(w.Events, querybuilding.WebhooksTableEventsSeparator),
+			strings.Join(w.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
+			strings.Join(w.Topics, querybuilding.WebhooksTableTopicsSeparator),
 			w.CreatedOn,
 			w.LastUpdatedOn,
 			w.ArchivedOn,

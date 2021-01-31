@@ -21,7 +21,7 @@ run:
   skip-dirs:
     # javascript
     - client/v1/frontend
-    # borrowed code/utilities
+    # others
     - cmd/tools
     - cmd/playground
 
@@ -333,10 +333,6 @@ issues:
         - varcheck
 
     - path: tests/load/actions.go
-      linters:
-        - gocyclo
-
-    - path: internal/database/querybuilding/postgres/migrations.go
       linters:
         - gocyclo
 

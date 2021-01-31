@@ -13,6 +13,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func checkValueAndError(t *testing.T, i interface{}, err error) {
+	t.Helper()
+
+	require.NoError(t, err)
+	require.NotNil(t, i)
+}
+
 func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User, *httpclient.Client) {
 	t.Helper()
 
@@ -34,3 +41,21 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 
 	return code
 }
+
+/*
+func runTestForClientAndCookie(ctx context.Context, t *testing.T, testFunc func(*testing.T, *httpclient.Client)) {
+	t.Helper()
+
+	user, testClient := createUserAndClientForTest(ctx, t)
+	cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+		Username:  user.Username,
+		Password:  user.HashedPassword,
+		TOTPToken: generateTOTPTokenForUser(t, user),
+	})
+	require.NoError(t, err)
+
+	testFunc(t, testClient)
+	testClient.SetOption(httpclient.WithCookieCredentials(cookie))
+	testFunc(t, testClient)
+}
+*/

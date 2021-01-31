@@ -18,6 +18,7 @@ func (q *MariaDB) buildQuery(builder squirrel.Sqlizer) (query string, args []int
 
 	return query, args
 }
+
 func (q *MariaDB) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
 	where := squirrel.Eq{}
 	totalCountQueryBuilder := q.sqlBuilder.

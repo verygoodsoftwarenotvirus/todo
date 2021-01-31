@@ -33,6 +33,7 @@ func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhook
 	for _, w := range webhooks {
 		rowValues := []driver.Value{
 			w.ID,
+			w.ExternalID,
 			w.Name,
 			w.ContentType,
 			w.URL,
@@ -468,6 +469,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 		t.Parallel()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleWebhook.ExternalID = ""
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleRows := newSuccessfulDatabaseResult(exampleWebhook.ID)
 

@@ -19,6 +19,7 @@ type (
 	// OAuth2Client represents a User-authorized API client.
 	OAuth2Client struct {
 		ID              uint64   `json:"id"`
+		ExternalID      string   `json:"externalID"`
 		Name            string   `json:"name"`
 		ClientID        string   `json:"clientID"`
 		ClientSecret    string   `json:"clientSecret"`

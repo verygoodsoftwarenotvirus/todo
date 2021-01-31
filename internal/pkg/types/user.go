@@ -52,6 +52,7 @@ type (
 		AccountStatus             userReputation               `json:"accountStatus"`
 		AccountStatusExplanation  string                       `json:"accountStatusExplanation"`
 		ID                        uint64                       `json:"id"`
+		ExternalID                string                       `json:"externalID"`
 		PasswordLastChangedOn     *uint64                      `json:"passwordLastChangedOn"`
 		TwoFactorSecretVerifiedOn *uint64                      `json:"-"`
 		CreatedOn                 uint64                       `json:"createdOn"`
@@ -103,6 +104,13 @@ type (
 		CreatedOn       uint64         `json:"createdOn"`
 		AccountStatus   userReputation `json:"accountStatus"`
 		TwoFactorQRCode string         `json:"qrCode"`
+	}
+
+	// PASETOCreationInput represents the payload used to create a PASETO token.
+	PASETOCreationInput struct {
+		ClientID     string `json:"clientID"`
+		ClientSecret string `json:"clientSecret"`
+		TOTPToken    string `json:"totpToken"`
 	}
 
 	// UserLoginInput represents the payload used to log in a User.
@@ -276,6 +284,15 @@ func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPas
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
+		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
+	)
+}
+
+// Validate ensures our  provided UserLoginInput meets expectations.
+func (i *PASETOCreationInput) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, i,
+		validation.Field(&i.ClientID, validation.Required),
+		validation.Field(&i.ClientSecret, validation.Required),
 		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
 	)
 }

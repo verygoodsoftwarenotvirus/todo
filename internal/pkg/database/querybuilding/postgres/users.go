@@ -158,6 +158,7 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 	query, args, err := q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
@@ -168,6 +169,7 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 			querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			testUserConfig.Username,
 			testUserConfig.HashedPassword,
 			[]byte("aaaaaaaaaaaaaaaa"),
@@ -194,6 +196,7 @@ func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) 
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
@@ -203,6 +206,7 @@ func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) 
 			querybuilding.UsersTableAdminPermissionsColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Username,
 			input.HashedPassword,
 			input.Salt,

@@ -3,6 +3,9 @@ package postgres
 import (
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +20,7 @@ func TestPostgres_BuildGetAuditLogEntryQuery(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = $1"
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = $1"
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
@@ -53,7 +56,7 @@ func TestPostgres_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id > $1 AND audit_log.id < $2"
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id > $1 AND audit_log.id < $2"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -75,7 +78,7 @@ func TestPostgres_BuildGetAuditLogEntriesQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log) FROM audit_log WHERE audit_log.created_on > $1 AND audit_log.created_on < $2 AND audit_log.last_updated_on > $3 AND audit_log.last_updated_on < $4 ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -99,7 +102,7 @@ func TestPostgres_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.created_on"
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.created_on"
 		expectedArgs := []interface{}{
 			exampleItem.ID,
 		}
@@ -121,8 +124,13 @@ func TestPostgres_BuildCreateAuditLogEntryQuery(T *testing.T) {
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery := "INSERT INTO audit_log (event_type,context) VALUES ($1,$2) RETURNING id"
+		exIDGen := &querybuilding.MockExternalIDGenerator{}
+		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
+		q.externalIDGenerator = exIDGen
+
+		expectedQuery := "INSERT INTO audit_log (external_id,event_type,context) VALUES ($1,$2,$3) RETURNING id"
 		expectedArgs := []interface{}{
+			exampleAuditLogEntry.ExternalID,
 			exampleAuditLogEntry.EventType,
 			exampleAuditLogEntry.Context,
 		}
@@ -131,5 +139,7 @@ func TestPostgres_BuildCreateAuditLogEntryQuery(T *testing.T) {
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
+
+		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }

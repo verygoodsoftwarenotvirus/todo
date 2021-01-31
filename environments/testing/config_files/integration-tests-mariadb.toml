@@ -3,15 +3,22 @@
   enabled = true
 
 [auth]
-  cookie_domain = "localhost"
-  cookie_lifetime = "24h0m0s"
-  cookie_name = "todocookie"
-  cookie_signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
   debug = false
   enable_user_signup = true
   minimum_password_length = 8
   minimum_username_length = 4
-  secure_cookies_only = false
+
+  [auth.cookies]
+    domain = "localhost"
+    lifetime = "24h0m0s"
+    name = "todocookie"
+    secure_only = false
+    signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
+
+  [auth.paseto]
+    audience = ""
+    listener = ""
+    local_mode_key = []
 
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
@@ -22,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$/Ke38VVQu2nZCQ.C0N8whOgso2LwDlYloBbkvY2jbt1UQLI0yj3qS"
+    hashed_password = "$2a$11$Lr9yIJMNeMK1B8fDZOYleuayzE/uCn81qYJRKX68XuPzYmKsaMlzq"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

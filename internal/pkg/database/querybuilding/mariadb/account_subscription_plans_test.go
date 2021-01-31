@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -16,13 +19,13 @@ func TestMariaDB_BuildGetAccountSubscriptionPlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.id = ?"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.external_id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.id = ?"
 		expectedArgs := []interface{}{
-			examplePlan.ID,
+			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlanQuery(examplePlan.ID)
+		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -54,7 +57,7 @@ func TestMariaDB_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL) as total_count, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ?) as filtered_count FROM account_subscription_plans WHERE account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ? GROUP BY account_subscription_plans.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT account_subscription_plans.id, account_subscription_plans.external_id, account_subscription_plans.name, account_subscription_plans.description, account_subscription_plans.price, account_subscription_plans.period, account_subscription_plans.created_on, account_subscription_plans.last_updated_on, account_subscription_plans.archived_on, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL) as total_count, (SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL AND account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ?) as filtered_count FROM account_subscription_plans WHERE account_subscription_plans.created_on > ? AND account_subscription_plans.created_on < ? AND account_subscription_plans.last_updated_on > ? AND account_subscription_plans.last_updated_on < ? GROUP BY account_subscription_plans.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -80,20 +83,28 @@ func TestMariaDB_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
-		expectedQuery := "INSERT INTO account_subscription_plans (name,description,price,period) VALUES (?,?,?,?)"
+		exIDGen := &querybuilding.MockExternalIDGenerator{}
+		exIDGen.On("NewExternalID").Return(exampleAccountSubscriptionPlan.ExternalID)
+		q.externalIDGenerator = exIDGen
+
+		expectedQuery := "INSERT INTO account_subscription_plans (external_id,name,description,price,period) VALUES (?,?,?,?,?)"
 		expectedArgs := []interface{}{
-			exampleInput.Name,
-			exampleInput.Description,
-			exampleInput.Price,
-			exampleInput.Period.String(),
+			exampleAccountSubscriptionPlan.ExternalID,
+			exampleAccountSubscriptionPlan.Name,
+			exampleAccountSubscriptionPlan.Description,
+			exampleAccountSubscriptionPlan.Price,
+			exampleAccountSubscriptionPlan.Period.String(),
 		}
 		actualQuery, actualArgs := q.BuildCreateAccountSubscriptionPlanQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
+
+		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }
 
@@ -104,17 +115,17 @@ func TestMariaDB_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "UPDATE account_subscription_plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
 		expectedArgs := []interface{}{
-			examplePlan.Name,
-			examplePlan.Description,
-			examplePlan.Price,
-			examplePlan.Period.String(),
-			examplePlan.ID,
+			exampleAccountSubscriptionPlan.Name,
+			exampleAccountSubscriptionPlan.Description,
+			exampleAccountSubscriptionPlan.Price,
+			exampleAccountSubscriptionPlan.Period.String(),
+			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateAccountSubscriptionPlanQuery(examplePlan)
+		actualQuery, actualArgs := q.BuildUpdateAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -129,13 +140,13 @@ func TestMariaDB_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := "UPDATE account_subscription_plans SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
-			examplePlan.ID,
+			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAccountSubscriptionPlanQuery(examplePlan.ID)
+		actualQuery, actualArgs := q.BuildArchiveAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -150,11 +161,11 @@ func TestMariaDB_BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(T *testi
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.plan_id') ORDER BY audit_log.created_on", examplePlan.ID)
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.plan_id') ORDER BY audit_log.created_on", exampleAccountSubscriptionPlan.ID)
 		expectedArgs := []interface{}(nil)
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(examplePlan.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

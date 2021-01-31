@@ -31,7 +31,7 @@ type (
 
 	// service handles authentication service-wide.
 	service struct {
-		config               Config
+		config               *Config
 		logger               logging.Logger
 		authenticator        password.Authenticator
 		userDB               types.UserDataManager
@@ -48,7 +48,7 @@ type (
 // ProvideService builds a new AuthService.
 func ProvideService(
 	logger logging.Logger,
-	cfg Config,
+	cfg *Config,
 	authenticator password.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
@@ -68,14 +68,14 @@ func ProvideService(
 		sessionInfoFetcher:   routeparams.SessionInfoFetcherFromRequestContext,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
-			[]byte(cfg.CookieSigningKey),
+			[]byte(cfg.Cookies.SigningKey),
 		),
 		tracer: tracing.NewTracer(serviceName),
 	}
-	svc.sessionManager.Lifetime = cfg.CookieLifetime
+	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime
 
-	if _, err := svc.cookieManager.Encode(cfg.CookieName, "blah"); err != nil {
-		logger.WithValue("cookie_signing_key_length", len(cfg.CookieSigningKey)).Error(err, "building test cookie")
+	if _, err := svc.cookieManager.Encode(cfg.Cookies.Name, "blah"); err != nil {
+		logger.WithValue("cookie_signing_key_length", len(cfg.Cookies.SigningKey)).Error(err, "building test cookie")
 		return nil, fmt.Errorf("building test cookie: %w", err)
 	}
 

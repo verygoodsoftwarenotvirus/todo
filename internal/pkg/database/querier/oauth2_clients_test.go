@@ -32,6 +32,7 @@ func buildMockRowsFromOAuth2Clients(includeCounts bool, filteredCount uint64, cl
 	for _, c := range clients {
 		rowValues := []driver.Value{
 			c.ID,
+			c.ExternalID,
 			c.Name,
 			c.ClientID,
 			strings.Join(c.Scopes, querybuilding.OAuth2ClientsTableScopeSeparator),
@@ -596,6 +597,7 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 		t.Parallel()
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
+		exampleOAuth2Client.ExternalID = ""
 		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		ctx := context.Background()

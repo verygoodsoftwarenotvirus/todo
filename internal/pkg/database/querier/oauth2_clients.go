@@ -28,6 +28,7 @@ func (c *Client) scanOAuth2Client(scan database.Scanner, includeCounts bool) (cl
 
 	targetVars := []interface{}{
 		&client.ID,
+		&client.ExternalID,
 		&client.Name,
 		&client.ClientID,
 		&rawScopes,

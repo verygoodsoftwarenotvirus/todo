@@ -56,12 +56,14 @@ func (q *Postgres) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountS
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountSubscriptionPlansTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.AccountSubscriptionPlansTableNameColumn,
 			querybuilding.AccountSubscriptionPlansTableDescriptionColumn,
 			querybuilding.AccountSubscriptionPlansTablePriceColumn,
 			querybuilding.AccountSubscriptionPlansTablePeriodColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.Description,
 			input.Price,

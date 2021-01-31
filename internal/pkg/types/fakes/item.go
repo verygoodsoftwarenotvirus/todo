@@ -1,6 +1,8 @@
 package fakes
 
 import (
+	"github.com/google/uuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -10,6 +12,7 @@ import (
 func BuildFakeItem() *types.Item {
 	return &types.Item{
 		ID:            uint64(fake.Uint32()),
+		ExternalID:    uuid.New().String(),
 		Name:          fake.Word(),
 		Details:       fake.Word(),
 		CreatedOn:     uint64(uint32(fake.Date().Unix())),

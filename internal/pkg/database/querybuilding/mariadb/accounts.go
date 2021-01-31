@@ -106,10 +106,12 @@ func (q *MariaDB) BuildCreateAccountQuery(input *types.AccountCreationInput) (qu
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.AccountsTableNameColumn,
 			querybuilding.AccountsTableUserOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.BelongsToUser,
 		).

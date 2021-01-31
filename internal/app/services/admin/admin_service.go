@@ -21,7 +21,7 @@ const (
 type (
 	// service handles authentication service-wide.
 	service struct {
-		config             authservice.Config
+		config             *authservice.Config
 		logger             logging.Logger
 		authenticator      password.Authenticator
 		userDB             types.AdminUserDataManager
@@ -37,7 +37,7 @@ type (
 // ProvideService builds a new AuthService.
 func ProvideService(
 	logger logging.Logger,
-	cfg authservice.Config,
+	cfg *authservice.Config,
 	authenticator password.Authenticator,
 	userDataManager types.AdminUserDataManager,
 	auditLog types.AdminAuditManager,
@@ -56,7 +56,7 @@ func ProvideService(
 		userIDFetcher:      routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
 		tracer:             tracing.NewTracer(serviceName),
 	}
-	svc.sessionManager.Lifetime = cfg.CookieLifetime
+	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime
 
 	return svc, nil
 }

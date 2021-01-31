@@ -143,7 +143,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		planDataManager.On("CreateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountSubscriptionPlanCreationInput{})).Return(examplePlan, nil)
@@ -216,7 +216,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		planDataManager.On("CreateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountSubscriptionPlanCreationInput{})).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
@@ -37,10 +38,10 @@ var (
 type (
 	// Sqlite is our main Sqlite interaction db.
 	Sqlite struct {
-		logger     logging.Logger
-		db         *sql.DB
-		sqlBuilder squirrel.StatementBuilderType
-		debug      bool
+		logger              logging.Logger
+		db                  *sql.DB
+		sqlBuilder          squirrel.StatementBuilderType
+		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
 )
 
@@ -71,23 +72,23 @@ func ProvideSqliteDB(logger logging.Logger, connectionDetails database.Connectio
 }
 
 // ProvideSqlite provides a sqlite db controller.
-func ProvideSqlite(debug bool, db *sql.DB, logger logging.Logger) *Sqlite {
+func ProvideSqlite(db *sql.DB, logger logging.Logger) *Sqlite {
 	return &Sqlite{
-		db:         db,
-		debug:      debug,
-		logger:     logger.WithName(loggerName),
-		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
+		db:                  db,
+		logger:              logger.WithName(loggerName),
+		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
+		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
 }
 
 // IsReady reports whether or not the db is ready.
-func (c *Sqlite) IsReady(_ context.Context, maxAttempts uint8) (ready bool) {
+func (q *Sqlite) IsReady(_ context.Context, maxAttempts uint8) (ready bool) {
 	return true
 }
 
 // BeginTx begins a transaction.
-func (c *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return c.db.BeginTx(ctx, opts)
+func (q *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return q.db.BeginTx(ctx, opts)
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.
@@ -95,8 +96,8 @@ func (c *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, err
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (c *Sqlite) logQueryBuildingError(err error) {
+func (q *Sqlite) logQueryBuildingError(err error) {
 	if err != nil {
-		c.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
+		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}
 }

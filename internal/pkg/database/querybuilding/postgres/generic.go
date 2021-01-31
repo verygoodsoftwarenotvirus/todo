@@ -30,6 +30,7 @@ func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (query string, args []in
 
 	return query, args
 }
+
 func (q *Postgres) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
 	where := squirrel.Eq{}
 	totalCountQueryBuilder := q.sqlBuilder.

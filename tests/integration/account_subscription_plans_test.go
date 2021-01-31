@@ -38,17 +38,17 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			createdPlan, err := adminClient.CreatePlan(ctx, examplePlanInput)
+			createdPlan, err := adminClient.CreatePlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdPlan, err)
 
 			// Assert plan equality.
-			checkPlanEquality(t, examplePlan, createdPlan)
+			checkPlanEquality(t, exampleAccountSubscriptionPlan, createdPlan)
 
 			// Clean up.
 			err = adminClient.ArchivePlan(ctx, createdPlan.ID)
@@ -91,9 +91,9 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			var created []*types.AccountSubscriptionPlan
 			for i := 0; i < 5; i++ {
 				// Create plan.
-				examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-				examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
-				createdPlan, planCreationErr := adminClient.CreatePlan(ctx, examplePlanInput)
+				exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+				exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
+				createdPlan, planCreationErr := adminClient.CreatePlan(ctx, exampleAccountSubscriptionPlanInput)
 				checkValueAndError(t, createdPlan, planCreationErr)
 
 				created = append(created, createdPlan)
@@ -141,13 +141,13 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			createdPlan, err := adminClient.CreatePlan(ctx, examplePlanInput)
+			createdPlan, err := adminClient.CreatePlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdPlan, err)
 
 			// Fetch plan.
@@ -155,7 +155,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			checkValueAndError(t, actual, err)
 
 			// Assert plan equality.
-			checkPlanEquality(t, examplePlan, actual)
+			checkPlanEquality(t, exampleAccountSubscriptionPlan, actual)
 
 			// Clean up plan.
 			assert.NoError(t, adminClient.ArchivePlan(ctx, createdPlan.ID))
@@ -171,13 +171,13 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-			examplePlan.ID = nonexistentID
+			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+			exampleAccountSubscriptionPlan.ID = nonexistentID
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			assert.Error(t, adminClient.UpdatePlan(ctx, examplePlan))
+			assert.Error(t, adminClient.UpdatePlan(ctx, exampleAccountSubscriptionPlan))
 		})
 
 		subtest.Run("it should be updatable", func(t *testing.T) {
@@ -187,17 +187,17 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			createdPlan, err := adminClient.CreatePlan(ctx, examplePlanInput)
+			createdPlan, err := adminClient.CreatePlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdPlan, err)
 
 			// Change plan.
-			createdPlan.Update(converters.ConvertAccountSubscriptionPlanToPlanUpdateInput(examplePlan))
+			createdPlan.Update(converters.ConvertAccountSubscriptionPlanToPlanUpdateInput(exampleAccountSubscriptionPlan))
 			assert.NoError(t, adminClient.UpdatePlan(ctx, createdPlan))
 
 			// Fetch plan.
@@ -205,7 +205,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			checkValueAndError(t, actual, err)
 
 			// Assert plan equality.
-			checkPlanEquality(t, examplePlan, actual)
+			checkPlanEquality(t, exampleAccountSubscriptionPlan, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
 			// Clean up plan.
@@ -235,13 +235,13 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer span.End()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			createdPlan, err := adminClient.CreatePlan(ctx, examplePlanInput)
+			createdPlan, err := adminClient.CreatePlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdPlan, err)
 
 			// Clean up plan.
@@ -258,12 +258,12 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			ctx, span := tracing.StartSpan(context.Background())
 			defer span.End()
 
-			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-			examplePlan.ID = nonexistentID
+			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+			exampleAccountSubscriptionPlan.ID = nonexistentID
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			x, err := adminClient.GetAuditLogForPlan(ctx, examplePlan.ID)
+			x, err := adminClient.GetAuditLogForPlan(ctx, exampleAccountSubscriptionPlan.ID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
@@ -280,9 +280,9 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			defer adminClientLock.Unlock()
 
 			// Create plan.
-			examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-			examplePlanInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
-			createdPlan, err := adminClient.CreatePlan(ctx, examplePlanInput)
+			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
+			createdPlan, err := adminClient.CreatePlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdPlan, err)
 
 			// fetch audit log entries

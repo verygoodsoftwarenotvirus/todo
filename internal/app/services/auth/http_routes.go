@@ -14,7 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/securecookie"
+	"github.com/o1egl/paseto"
 )
 
 const (
@@ -31,11 +33,11 @@ func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	cookie, err := req.Cookie(s.config.CookieName)
+	cookie, err := req.Cookie(s.config.Cookies.Name)
 	if !errors.Is(err, http.ErrNoCookie) && cookie != nil {
 		var token string
 
-		decodeErr := s.cookieManager.Decode(s.config.CookieName, cookie.Value, &token)
+		decodeErr := s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token)
 		if decodeErr != nil {
 			return nil, fmt.Errorf("decoding request cookie: %w", decodeErr)
 		}
@@ -53,32 +55,6 @@ func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 	}
 
 	return nil, http.ErrNoCookie
-}
-
-// WebsocketAuthFunction is provided to Newsman to determine if a user has access to websockets.
-func (s *service) WebsocketAuthFunction(req *http.Request) bool {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// First we check to see if there is an OAuth2 token for a valid client attached to the request.
-	// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
-	oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req)
-	if err == nil && oauth2Client != nil {
-		return true
-	}
-
-	// In the event there's not a valid OAuth2 token attached to the request, or there is some other OAuth2 issue,
-	// we next check to see if a valid cookie is attached to the request.
-	cookieAuth, cookieErr := s.DecodeCookieFromRequest(ctx, req)
-	if cookieErr == nil && cookieAuth != nil {
-		return true
-	}
-
-	// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-	logger.Error(err, "error authenticated token-authenticated request")
-	return false
 }
 
 // fetchUserFromCookie takes a request object and fetches the cookie, and then the user for that cookie.
@@ -106,6 +82,48 @@ func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 	return user, nil
 }
 
+// TokenGrantHandler is our login route.
+func (s *service) TokenGrantHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+	logger.Debug("TokenGrantHandler called")
+
+	loginData, ok := ctx.Value(pasetoCreationnputMiddlewareCtxKey).(*types.PASETOCreationInput)
+	if !ok || loginData == nil {
+		logger.Error(nil, "no PASETOCreationInput found for token grant request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
+		return
+	}
+
+	logger = logger.WithValue(keys.OAuth2ClientIDKey, loginData.ClientID)
+
+	// fetch client information here
+
+	now, exp := time.Now(), time.Now().Add(s.config.PASETO.Lifetime)
+
+	jsonToken := paseto.JSONToken{
+		Audience:   s.config.PASETO.Audience,
+		Issuer:     s.config.PASETO.Listener,
+		Jti:        uuid.New().String(),
+		Subject:    "user_id",
+		IssuedAt:   now,
+		Expiration: exp,
+		NotBefore:  now,
+	}
+
+	// Encrypt data
+	token, err := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, nil)
+	if err != nil {
+		logger.Error(err, "error encrypting token")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return
+	}
+
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, token, http.StatusCreated)
+}
+
 // LoginHandler is our login route.
 func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -122,8 +140,6 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	logger = logger.WithValue(keys.UsernameKey, loginData.Username)
-
-	logger.Info(fmt.Sprintf("userDB is nil: %v", s.userDB == nil))
 
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
 	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {
@@ -229,7 +245,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if cookie, cookieRetrievalErr := req.Cookie(s.config.CookieName); cookieRetrievalErr == nil && cookie != nil {
+	if cookie, cookieRetrievalErr := req.Cookie(s.config.Cookies.Name); cookieRetrievalErr == nil && cookie != nil {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
@@ -283,7 +299,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 
 	s.cookieManager = securecookie.New(
 		securecookie.GenerateRandomKey(cookieSecretSize),
-		[]byte(s.config.CookieSigningKey),
+		[]byte(s.config.Cookies.SigningKey),
 	)
 
 	s.auditLog.LogCycleCookieSecretEvent(ctx, si.UserID)
@@ -343,7 +359,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 
 // buildCookie provides a consistent way of constructing an HTTP cookie.
 func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
-	encoded, err := s.cookieManager.Encode(s.config.CookieName, value)
+	encoded, err := s.cookieManager.Encode(s.config.Cookies.Name, value)
 	if err != nil {
 		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
 		s.logger.WithName(cookieErrorLogName).Error(err, "error encoding cookie")
@@ -352,12 +368,12 @@ func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, err
 
 	// https://www.calhoun.io/securing-cookies-in-go/
 	cookie := &http.Cookie{
-		Name:     s.config.CookieName,
+		Name:     s.config.Cookies.Name,
 		Value:    encoded,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   s.config.SecureCookiesOnly,
-		Domain:   s.config.CookieDomain,
+		Secure:   s.config.Cookies.SecureOnly,
+		Domain:   s.config.Cookies.Domain,
 		Expires:  expiry,
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   int(time.Until(expiry).Seconds()),

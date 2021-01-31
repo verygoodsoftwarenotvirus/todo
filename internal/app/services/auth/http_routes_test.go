@@ -42,7 +42,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	assert.NotEmpty(t, token)
 	assert.NoError(t, err)
 
-	c, err := s.buildCookie(token, time.Now().Add(s.config.CookieLifetime))
+	c, err := s.buildCookie(token, time.Now().Add(s.config.Cookies.Lifetime))
 	require.NoError(t, err)
 	req.AddCookie(c)
 
@@ -88,7 +88,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		// NOTE: any code here is duplicated from service.buildAuthCookie
 		// any changes made there might need to be reflected here.
 		c := &http.Cookie{
-			Name:     s.config.CookieName,
+			Name:     s.config.Cookies.Name,
 			Value:    "blah blah blah this is not a real cookie",
 			Path:     "/",
 			HttpOnly: true,
@@ -115,94 +115,6 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, err, http.ErrNoCookie)
 		assert.Nil(t, cookie)
-	})
-}
-
-func TestService_WebsocketAuthFunction(T *testing.T) {
-	T.Parallel()
-
-	T.Run("with valid oauth2 client", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		oacv := &mocktypes.OAuth2ClientDataServer{}
-		oacv.On(
-			"ExtractOAuth2ClientFromRequest",
-			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
-		).Return(exampleOAuth2Client, nil)
-		s.oauth2ClientsService = oacv
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		actual := s.WebsocketAuthFunction(req)
-		assert.True(t, actual)
-
-		mock.AssertExpectationsForObjects(t, oacv)
-	})
-
-	T.Run("with valid cookie", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
-		}
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		oacv := &mocktypes.OAuth2ClientDataServer{}
-		oacv.On(
-			"ExtractOAuth2ClientFromRequest",
-			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
-		).Return(exampleOAuth2Client, errors.New("blah"))
-		s.oauth2ClientsService = oacv
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
-
-		actual := s.WebsocketAuthFunction(req)
-		assert.True(t, actual)
-
-		mock.AssertExpectationsForObjects(t, oacv)
-	})
-
-	T.Run("with nothing", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		oacv := &mocktypes.OAuth2ClientDataServer{}
-		oacv.On(
-			"ExtractOAuth2ClientFromRequest",
-			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
-		).Return(exampleOAuth2Client, errors.New("blah"))
-		s.oauth2ClientsService = oacv
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		actual := s.WebsocketAuthFunction(req)
-		assert.False(t, actual)
-
-		mock.AssertExpectationsForObjects(t, oacv)
 	})
 }
 
@@ -551,7 +463,7 @@ func TestService_LoginHandler(T *testing.T) {
 		cb.On(
 			"Encode",
 
-			s.config.CookieName,
+			s.config.Cookies.Name,
 			mock.AnythingOfType("string"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
@@ -606,7 +518,7 @@ func TestService_LoginHandler(T *testing.T) {
 		cb := &mockCookieEncoderDecoder{}
 		cb.On(
 			"Encode",
-			s.config.CookieName,
+			s.config.Cookies.Name,
 			mock.AnythingOfType("string"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
@@ -1060,12 +972,12 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		c := req.Cookies()[0]
 
 		var token string
-		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.Cookies.Name, c.Value, &token))
 
 		s.CycleCookieSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
-		assert.Error(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
+		assert.Error(t, s.cookieManager.Decode(s.config.Cookies.Name, c.Value, &token))
 
 		mock.AssertExpectationsForObjects(t, auditLog)
 	})
@@ -1090,12 +1002,12 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		c := req.Cookies()[0]
 
 		var token string
-		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.Cookies.Name, c.Value, &token))
 
 		s.CycleCookieSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
-		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.Cookies.Name, c.Value, &token))
 	})
 
 	T.Run("with invalid permissions", func(t *testing.T) {
@@ -1118,12 +1030,12 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		c := req.Cookies()[0]
 
 		var token string
-		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.Cookies.Name, c.Value, &token))
 
 		s.CycleCookieSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusForbidden, res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, res.Code)
-		assert.NoError(t, s.cookieManager.Decode(s.config.CookieName, c.Value, &token))
+		assert.NoError(t, s.cookieManager.Decode(s.config.Cookies.Name, c.Value, &token))
 	})
 }
 
@@ -1134,7 +1046,7 @@ func TestService_buildCookie(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		cookie, err := s.buildCookie("example", time.Now().Add(s.config.CookieLifetime))
+		cookie, err := s.buildCookie("example", time.Now().Add(s.config.Cookies.Lifetime))
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
 	})
@@ -1147,7 +1059,7 @@ func TestService_buildCookie(T *testing.T) {
 			[]byte(""),
 		)
 
-		cookie, err := s.buildCookie("example", time.Now().Add(s.config.CookieLifetime))
+		cookie, err := s.buildCookie("example", time.Now().Add(s.config.Cookies.Lifetime))
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})

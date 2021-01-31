@@ -16,12 +16,12 @@ var (
 )
 
 // BuildGetOAuth2ClientByClientIDQuery builds a SQL query for fetching an OAuth2 client by its ClientID.
-func (c *Sqlite) BuildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	var err error
 
 	// This query is more or less the same as the normal OAuth2 client retrieval query, only that it doesn't
 	// care about ownership. It does still care about archived status
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(querybuilding.OAuth2ClientsTableColumns...).
 		From(querybuilding.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -29,14 +29,14 @@ func (c *Sqlite) BuildGetOAuth2ClientByClientIDQuery(clientID string) (query str
 			fmt.Sprintf("%s.%s", querybuilding.OAuth2ClientsTableName, querybuilding.ArchivedOnColumn):                 nil,
 		}).ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetBatchOfOAuth2ClientsQuery returns a query that fetches every item in the database within a bucketed range.
-func (c *Sqlite) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := c.sqlBuilder.
+func (q *Sqlite) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.OAuth2ClientsTableColumns...).
 		From(querybuilding.OAuth2ClientsTableName).
 		Where(squirrel.Gt{
@@ -47,16 +47,16 @@ func (c *Sqlite) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (query
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
-func (c *Sqlite) BuildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(querybuilding.OAuth2ClientsTableColumns...).
 		From(querybuilding.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -65,17 +65,17 @@ func (c *Sqlite) BuildGetOAuth2ClientQuery(clientID, userID uint64) (query strin
 			fmt.Sprintf("%s.%s", querybuilding.OAuth2ClientsTableName, querybuilding.ArchivedOnColumn):                  nil,
 		}).ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetAllOAuth2ClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
-func (c *Sqlite) BuildGetAllOAuth2ClientsCountQuery() string {
+func (q *Sqlite) BuildGetAllOAuth2ClientsCountQuery() string {
 	var err error
 
-	getAllOAuth2ClientCountQuery, _, err := c.sqlBuilder.
+	getAllOAuth2ClientCountQuery, _, err := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.OAuth2ClientsTableName)).
 		From(querybuilding.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -83,15 +83,15 @@ func (c *Sqlite) BuildGetAllOAuth2ClientsCountQuery() string {
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return getAllOAuth2ClientCountQuery
 }
 
 // BuildGetOAuth2ClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // meet the given filter's criteria (if relevant) and belong to a given user.
-func (c *Sqlite) BuildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	return c.buildListQuery(
+func (q *Sqlite) BuildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+	return q.buildListQuery(
 		querybuilding.OAuth2ClientsTableName,
 		querybuilding.OAuth2ClientsTableOwnershipColumn,
 		querybuilding.OAuth2ClientsTableColumns,
@@ -102,12 +102,13 @@ func (c *Sqlite) BuildGetOAuth2ClientsQuery(userID uint64, filter *types.QueryFi
 }
 
 // BuildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
-func (c *Sqlite) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationInput) (query string, args []interface{}) {
+func (q *Sqlite) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationInput) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.OAuth2ClientsTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.OAuth2ClientsTableNameColumn,
 			querybuilding.OAuth2ClientsTableClientIDColumn,
 			querybuilding.OAuth2ClientsTableClientSecretColumn,
@@ -116,6 +117,7 @@ func (c *Sqlite) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationI
 			querybuilding.OAuth2ClientsTableOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.ClientID,
 			input.ClientSecret,
@@ -125,16 +127,16 @@ func (c *Sqlite) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationI
 		).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
-func (c *Sqlite) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
+func (q *Sqlite) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(querybuilding.OAuth2ClientsTableName).
 		Set(querybuilding.OAuth2ClientsTableClientIDColumn, input.ClientID).
 		Set(querybuilding.OAuth2ClientsTableClientSecretColumn, input.ClientSecret).
@@ -147,16 +149,16 @@ func (c *Sqlite) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query 
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
-func (c *Sqlite) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(querybuilding.OAuth2ClientsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -166,13 +168,13 @@ func (c *Sqlite) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query s
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetAuditLogEntriesForOAuth2ClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (c *Sqlite) BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{}) {
 	var err error
 
 	oauth2ClientIDKey := fmt.Sprintf(
@@ -181,14 +183,14 @@ func (c *Sqlite) BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (q
 		querybuilding.AuditLogEntriesTableContextColumn,
 		audit.OAuth2ClientAssignmentKey,
 	)
-	builder := c.sqlBuilder.
+	builder := q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
 		Where(squirrel.Eq{oauth2ClientIDKey: clientID}).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }

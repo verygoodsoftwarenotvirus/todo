@@ -32,6 +32,7 @@ func buildMockRowsFromItems(includeCounts bool, filteredCount uint64, items ...*
 	for _, x := range items {
 		rowValues := []driver.Value{
 			x.ID,
+			x.ExternalID,
 			x.Name,
 			x.Details,
 			x.CreatedOn,
@@ -966,6 +967,7 @@ func TestClient_CreateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleItem := fakes.BuildFakeItem()
+		exampleItem.ExternalID = ""
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 		exampleRows := newSuccessfulDatabaseResult(exampleItem.ID)
 

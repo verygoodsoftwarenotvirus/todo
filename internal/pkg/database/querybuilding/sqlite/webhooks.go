@@ -16,10 +16,10 @@ var (
 )
 
 // BuildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
-func (c *Sqlite) BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(querybuilding.WebhooksTableColumns...).
 		From(querybuilding.WebhooksTableName).
 		Where(squirrel.Eq{
@@ -27,16 +27,16 @@ func (c *Sqlite) BuildGetWebhookQuery(webhookID, userID uint64) (query string, a
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.WebhooksTableOwnershipColumn): userID,
 		}).ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
-func (c *Sqlite) BuildGetAllWebhooksCountQuery() string {
+func (q *Sqlite) BuildGetAllWebhooksCountQuery() string {
 	var err error
 
-	getAllWebhooksCountQuery, _, err := c.sqlBuilder.
+	getAllWebhooksCountQuery, _, err := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.WebhooksTableName)).
 		From(querybuilding.WebhooksTableName).
 		Where(squirrel.Eq{
@@ -44,14 +44,14 @@ func (c *Sqlite) BuildGetAllWebhooksCountQuery() string {
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return getAllWebhooksCountQuery
 }
 
 // BuildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
-func (c *Sqlite) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := c.sqlBuilder.
+func (q *Sqlite) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.WebhooksTableColumns...).
 		From(querybuilding.WebhooksTableName).
 		Where(squirrel.Gt{
@@ -62,14 +62,14 @@ func (c *Sqlite) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query stri
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
-func (c *Sqlite) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	return c.buildListQuery(
+func (q *Sqlite) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+	return q.buildListQuery(
 		querybuilding.WebhooksTableName,
 		querybuilding.WebhooksTableOwnershipColumn,
 		querybuilding.WebhooksTableColumns,
@@ -80,12 +80,13 @@ func (c *Sqlite) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter)
 }
 
 // BuildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
-func (c *Sqlite) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
+func (q *Sqlite) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.WebhooksTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.WebhooksTableNameColumn,
 			querybuilding.WebhooksTableContentTypeColumn,
 			querybuilding.WebhooksTableURLColumn,
@@ -96,6 +97,7 @@ func (c *Sqlite) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query s
 			querybuilding.WebhooksTableOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			x.Name,
 			x.ContentType,
 			x.URL,
@@ -107,16 +109,16 @@ func (c *Sqlite) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query s
 		).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
-func (c *Sqlite) BuildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
+func (q *Sqlite) BuildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(querybuilding.WebhooksTableName).
 		Set(querybuilding.WebhooksTableNameColumn, input.Name).
 		Set(querybuilding.WebhooksTableContentTypeColumn, input.ContentType).
@@ -132,16 +134,16 @@ func (c *Sqlite) BuildUpdateWebhookQuery(input *types.Webhook) (query string, ar
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
-func (c *Sqlite) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(querybuilding.WebhooksTableName).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -152,13 +154,13 @@ func (c *Sqlite) BuildArchiveWebhookQuery(webhookID, userID uint64) (query strin
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (c *Sqlite) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	var err error
 
 	webhookIDKey := fmt.Sprintf(
@@ -167,14 +169,14 @@ func (c *Sqlite) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query
 		querybuilding.AuditLogEntriesTableContextColumn,
 		audit.WebhookAssignmentKey,
 	)
-	builder := c.sqlBuilder.
+	builder := q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
 		Where(squirrel.Eq{webhookIDKey: webhookID}).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }

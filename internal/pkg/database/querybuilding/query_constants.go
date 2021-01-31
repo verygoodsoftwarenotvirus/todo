@@ -12,6 +12,8 @@ const (
 
 	// IDColumn is a common column name for the sequential ID column.
 	IDColumn = "id"
+	// ExternalIDColumn is a common column name for the external ID column.
+	ExternalIDColumn = "external_id"
 	// CreatedOnColumn is a common column name for the row creation time column.
 	CreatedOnColumn = "created_on"
 	// LastUpdatedOnColumn is a common column name for the latest row update column.

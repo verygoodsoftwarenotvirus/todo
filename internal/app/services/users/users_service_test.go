@@ -31,7 +31,7 @@ func buildTestService(t *testing.T) *service {
 	mockDB.UserDataManager.On("GetAllUsersCount", mock.MatchedBy(testutil.ContextMatcher())).Return(expectedUserCount, nil)
 
 	s, err := ProvideUsersService(
-		authservice.Config{},
+		&authservice.Config{},
 		noop.NewLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
@@ -57,7 +57,7 @@ func TestProvideUsersService(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		s, err := ProvideUsersService(
-			authservice.Config{},
+			&authservice.Config{},
 			noop.NewLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
@@ -81,7 +81,7 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		s, err := ProvideUsersService(
-			authservice.Config{},
+			&authservice.Config{},
 			noop.NewLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},

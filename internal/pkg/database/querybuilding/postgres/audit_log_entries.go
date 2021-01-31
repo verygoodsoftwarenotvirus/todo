@@ -90,10 +90,12 @@ func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreat
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.AuditLogEntriesTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.AuditLogEntriesTableEventTypeColumn,
 			querybuilding.AuditLogEntriesTableContextColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.EventType,
 			input.Context,
 		).

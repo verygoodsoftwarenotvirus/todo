@@ -3,6 +3,8 @@ package fakes
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -12,6 +14,7 @@ import (
 func BuildFakeOAuth2Client() *types.OAuth2Client {
 	return &types.OAuth2Client{
 		ID:           uint64(fake.Uint32()),
+		ExternalID:   uuid.New().String(),
 		Name:         fake.Word(),
 		ClientID:     fake.UUID(),
 		ClientSecret: fake.UUID(),

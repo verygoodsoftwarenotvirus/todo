@@ -12,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
@@ -35,10 +36,10 @@ var _ database.SQLQueryBuilder = (*Postgres)(nil)
 type (
 	// Postgres is our main Postgres interaction db.
 	Postgres struct {
-		logger     logging.Logger
-		db         *sql.DB
-		sqlBuilder squirrel.StatementBuilderType
-		debug      bool
+		logger              logging.Logger
+		db                  *sql.DB
+		sqlBuilder          squirrel.StatementBuilderType
+		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
 )
 
@@ -69,12 +70,12 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 }
 
 // ProvidePostgres provides a postgres db controller.
-func ProvidePostgres(debug bool, db *sql.DB, logger logging.Logger) *Postgres {
+func ProvidePostgres(db *sql.DB, logger logging.Logger) *Postgres {
 	return &Postgres{
-		db:         db,
-		debug:      debug,
-		logger:     logger.WithName(loggerName),
-		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		db:                  db,
+		logger:              logger.WithName(loggerName),
+		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
 }
 

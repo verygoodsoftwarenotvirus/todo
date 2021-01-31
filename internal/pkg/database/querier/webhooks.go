@@ -32,6 +32,7 @@ func (c *Client) scanWebhook(scan database.Scanner, includeCounts bool) (webhook
 
 	targetVars := []interface{}{
 		&webhook.ID,
+		&webhook.ExternalID,
 		&webhook.Name,
 		&webhook.ContentType,
 		&webhook.URL,

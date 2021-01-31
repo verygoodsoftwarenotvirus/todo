@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
@@ -35,10 +36,10 @@ var _ database.SQLQueryBuilder = (*MariaDB)(nil)
 type (
 	// MariaDB is our main MariaDB interaction db.
 	MariaDB struct {
-		logger     logging.Logger
-		db         *sql.DB
-		sqlBuilder squirrel.StatementBuilderType
-		debug      bool
+		logger              logging.Logger
+		db                  *sql.DB
+		sqlBuilder          squirrel.StatementBuilderType
+		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
 )
 
@@ -69,12 +70,12 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 }
 
 // ProvideMariaDB provides a maria DB controller.
-func ProvideMariaDB(debug bool, db *sql.DB, logger logging.Logger) *MariaDB {
+func ProvideMariaDB(db *sql.DB, logger logging.Logger) *MariaDB {
 	return &MariaDB{
-		db:         db,
-		debug:      debug,
-		logger:     logger.WithName(loggerName),
-		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
+		db:                  db,
+		logger:              logger.WithName(loggerName),
+		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
+		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
 }
 

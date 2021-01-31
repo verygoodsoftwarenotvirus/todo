@@ -65,9 +65,11 @@ func TestParseConfigFile(T *testing.T) {
 				RunMode: "development",
 			},
 			Auth: authservice.Config{
-				CookieName:            "todocookie",
-				CookieDomain:          "https://verygoodsoftwarenotvirus.ru",
-				CookieLifetime:        time.Second,
+				Cookies: authservice.CookieConfig{
+					Name:     "todocookie",
+					Domain:   "https://verygoodsoftwarenotvirus.ru",
+					Lifetime: time.Second,
+				},
 				MinimumUsernameLength: 4,
 				MinimumPasswordLength: 8,
 				EnableUserSignup:      true,

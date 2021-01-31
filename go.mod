@@ -28,7 +28,7 @@ require (
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
-	github.com/jmoiron/sqlx v1.2.0
+	github.com/jmoiron/sqlx v1.2.0 // indirect
 	github.com/lane-c-wagner/go-password-validator v0.1.0
 	github.com/lib/pq v1.9.0
 	github.com/luna-duclos/instrumentedsql v1.1.3
@@ -36,6 +36,7 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/o1egl/paseto v1.0.0
 	github.com/pquerna/otp v1.2.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3

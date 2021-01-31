@@ -25,6 +25,7 @@ func (c *Client) scanAccountSubscriptionPlan(scan database.Scanner, includeCount
 
 	targetVars := []interface{}{
 		&plan.ID,
+		&plan.ExternalID,
 		&plan.Name,
 		&plan.Description,
 		&plan.Price,

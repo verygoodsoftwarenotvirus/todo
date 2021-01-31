@@ -31,6 +31,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
 				event_type TEXT NOT NULL,
 				context JSONB NOT NULL,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW())
@@ -42,6 +43,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_subscription_plans (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
 				name TEXT NOT NULL,
 				description TEXT NOT NULL DEFAULT '',
 				price INTEGER NOT NULL,
@@ -58,6 +60,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
 				username TEXT NOT NULL,
 				avatar_src TEXT,
 				hashed_password TEXT NOT NULL,
@@ -82,6 +85,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
 				name CHARACTER VARYING NOT NULL,
 				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
@@ -111,6 +115,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
 				client_secret TEXT NOT NULL,
@@ -129,6 +134,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
 				name TEXT NOT NULL,
 				content_type TEXT NOT NULL,
 				url TEXT NOT NULL,
@@ -148,6 +154,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
 				name CHARACTER VARYING NOT NULL,
 				details CHARACTER VARYING NOT NULL DEFAULT '',
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),

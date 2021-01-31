@@ -158,6 +158,7 @@ func (q *MariaDB) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreat
 	query, args, err := q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
@@ -168,6 +169,7 @@ func (q *MariaDB) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreat
 			querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			testUserConfig.Username,
 			testUserConfig.HashedPassword,
 			[]byte("aaaaaaaaaaaaaaaa"),
@@ -191,6 +193,7 @@ func (q *MariaDB) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
@@ -200,6 +203,7 @@ func (q *MariaDB) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (
 			querybuilding.UsersTableAdminPermissionsColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Username,
 			input.HashedPassword,
 			input.Salt,

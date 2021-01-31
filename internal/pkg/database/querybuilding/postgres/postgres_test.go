@@ -23,7 +23,7 @@ func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	q := ProvidePostgres(true, db, noop.NewLogger())
+	q := ProvidePostgres(db, noop.NewLogger())
 
 	return q, mock
 }

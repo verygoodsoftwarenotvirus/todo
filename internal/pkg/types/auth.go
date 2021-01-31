@@ -23,7 +23,6 @@ type (
 	SessionInfo struct {
 		Username          string
 		UserID            uint64                                 `json:"-"`
-		ActiveAccountID   uint64                                 `json:"-"`
 		UserIsSiteAdmin   bool                                   `json:"-"`
 		UserAccountStatus userReputation                         `json:"-"`
 		AdminPermissions  permissions.SiteAdminPermissionChecker `json:"-"`

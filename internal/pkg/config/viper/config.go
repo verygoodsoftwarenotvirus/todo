@@ -46,15 +46,23 @@ const (
 	// ConfigKeyAuthDebug is the key viper will use to refer to the AuthSettings.debug setting.
 	ConfigKeyAuthDebug = "auth.debug"
 	// ConfigKeyAuthCookieName is the key viper will use to refer to the AuthSettings.CookieName setting.
-	ConfigKeyAuthCookieName = "auth.cookie_name"
+	ConfigKeyAuthCookieName = "auth.cookies.name"
 	// ConfigKeyAuthCookieDomain is the key viper will use to refer to the AuthSettings.CookieDomain setting.
-	ConfigKeyAuthCookieDomain = "auth.cookie_domain"
+	ConfigKeyAuthCookieDomain = "auth.cookies.domain"
 	// ConfigKeyAuthCookieSigningKey is the key viper will use to refer to the AuthSettings.CookieSecret setting.
-	ConfigKeyAuthCookieSigningKey = "auth.cookie_signing_key"
+	ConfigKeyAuthCookieSigningKey = "auth.cookies.signing_key"
 	// ConfigKeyAuthCookieLifetime is the key viper will use to refer to the AuthSettings.CookieLifetime setting.
-	ConfigKeyAuthCookieLifetime = "auth.cookie_lifetime"
+	ConfigKeyAuthCookieLifetime = "auth.cookies.lifetime"
 	// ConfigKeyAuthSecureCookiesOnly is the key viper will use to refer to the AuthSettings.SecureCookiesOnly setting.
-	ConfigKeyAuthSecureCookiesOnly = "auth.secure_cookies_only"
+	ConfigKeyAuthSecureCookiesOnly = "auth.cookies.secure_only"
+
+	// ConfigKeyAuthPASETOAudience is the key for paseto token settings.
+	ConfigKeyAuthPASETOAudience = "auth.paseto.audience"
+	// ConfigKeyAuthPASETOListener is the key for paseto token settings.
+	ConfigKeyAuthPASETOListener = "auth.paseto.listener"
+	// ConfigKeyAuthPASETOLocalModeKey is the key for paseto token settings.
+	ConfigKeyAuthPASETOLocalModeKey = "auth.paseto.local_mode_key"
+
 	// ConfigKeyAuthEnableUserSignup is the key viper will use to refer to the AuthSettings.nableUserSignup setting.
 	ConfigKeyAuthEnableUserSignup = "auth.enable_user_signup"
 	// ConfigKeyAuthMinimumUsernameLength is the key viper will use to refer to the AuthSettings.MinimumUsernameLength setting.
@@ -212,14 +220,19 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyFrontendCacheStatics, input.Frontend.CacheStaticFiles)
 
 	cfg.Set(ConfigKeyAuthDebug, input.Auth.Debug)
-	cfg.Set(ConfigKeyAuthCookieName, input.Auth.CookieName)
-	cfg.Set(ConfigKeyAuthCookieDomain, input.Auth.CookieDomain)
-	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Auth.CookieSigningKey)
-	cfg.Set(ConfigKeyAuthCookieLifetime, input.Auth.CookieLifetime)
-	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.SecureCookiesOnly)
 	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Auth.EnableUserSignup)
 	cfg.Set(ConfigKeyAuthMinimumUsernameLength, input.Auth.MinimumUsernameLength)
 	cfg.Set(ConfigKeyAuthMinimumPasswordLength, input.Auth.MinimumPasswordLength)
+
+	cfg.Set(ConfigKeyAuthCookieName, input.Auth.Cookies.Name)
+	cfg.Set(ConfigKeyAuthCookieDomain, input.Auth.Cookies.Domain)
+	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Auth.Cookies.SigningKey)
+	cfg.Set(ConfigKeyAuthCookieLifetime, input.Auth.Cookies.Lifetime)
+	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)
+
+	cfg.Set(ConfigKeyAuthPASETOAudience, input.Auth.PASETO.Audience)
+	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Listener)
+	cfg.Set(ConfigKeyAuthPASETOLocalModeKey, input.Auth.PASETO.LocalModeKey)
 
 	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)
 

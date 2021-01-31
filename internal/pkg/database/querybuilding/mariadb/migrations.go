@@ -52,6 +52,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS audit_log (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `event_type` VARCHAR(256) NOT NULL,",
 				"    `context` JSON NOT NULL,",
 				"    `created_on` BIGINT UNSIGNED,",
@@ -70,6 +71,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS account_subscription_plans (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` VARCHAR(128) NOT NULL,",
 				"    `description` VARCHAR(128) NOT NULL DEFAULT '',",
 				"    `price` INT UNSIGNED NOT NULL,",
@@ -93,6 +95,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `username` VARCHAR(128) NOT NULL,",
 				"    `avatar_src` VARCHAR(4096) NOT NULL DEFAULT '',",
 				"    `hashed_password` VARCHAR(100) NOT NULL,",
@@ -124,6 +127,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS accounts (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` LONGTEXT NOT NULL,",
 				"    `plan_id` BIGINT UNSIGNED,",
 				"    `created_on` BIGINT UNSIGNED,",
@@ -169,6 +173,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS oauth2_clients (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` VARCHAR(128) DEFAULT '',",
 				"    `client_id` VARCHAR(64) NOT NULL,",
 				"    `client_secret` VARCHAR(64) NOT NULL,",
@@ -195,6 +200,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` VARCHAR(128) NOT NULL,",
 				"    `content_type` VARCHAR(64) NOT NULL,",
 				"    `url` VARCHAR(4096) NOT NULL,",
@@ -222,6 +228,7 @@ var (
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` LONGTEXT NOT NULL,",
 				"    `details` LONGTEXT NOT NULL DEFAULT '',",
 				"    `created_on` BIGINT UNSIGNED,",

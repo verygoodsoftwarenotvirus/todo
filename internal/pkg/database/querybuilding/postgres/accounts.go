@@ -84,10 +84,12 @@ func (q *Postgres) BuildCreateAccountQuery(input *types.AccountCreationInput) (q
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.AccountsTableNameColumn,
 			querybuilding.AccountsTableUserOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.BelongsToUser,
 		).

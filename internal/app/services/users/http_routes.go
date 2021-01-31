@@ -493,7 +493,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// we're all good, log the user out
-	cookie, cookieRetrievalErr := req.Cookie(s.authSettings.CookieName)
+	cookie, cookieRetrievalErr := req.Cookie(s.authSettings.Cookies.Name)
 	if cookieRetrievalErr != nil {
 		// this should never occur in production
 		logger.Error(cookieRetrievalErr, "retrieving cookie to invalidate upon request")

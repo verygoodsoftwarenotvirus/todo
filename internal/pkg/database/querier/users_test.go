@@ -31,6 +31,7 @@ func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*
 	for _, user := range users {
 		rowValues := []driver.Value{
 			user.ID,
+			user.ExternalID,
 			user.Username,
 			user.AvatarSrc,
 			user.HashedPassword,
@@ -529,6 +530,7 @@ func TestClient_CreateUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleUser.ExternalID = ""
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 

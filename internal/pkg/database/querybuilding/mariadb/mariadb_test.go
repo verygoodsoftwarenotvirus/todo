@@ -16,16 +16,16 @@ const (
 	defaultLimit = uint8(20)
 )
 
+var (
+	queryArgRegexp = regexp.MustCompile(`\?+`)
+)
+
 func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	return ProvideMariaDB(true, db, noop.NewLogger()), mock
+	return ProvideMariaDB(db, noop.NewLogger()), mock
 }
-
-var (
-	queryArgRegexp = regexp.MustCompile(`\?+`)
-)
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
 	t.Helper()

@@ -136,11 +136,11 @@ func (cfg *ServerConfig) ProvideDatabaseClient(
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
 	case "sqlite":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, zqlite.ProvideSqlite(cfg.Database.Debug, rawDB, logger))
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, zqlite.ProvideSqlite(rawDB, logger))
 	case "mariadb":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, mariadb.ProvideMariaDB(cfg.Database.Debug, rawDB, logger))
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, mariadb.ProvideMariaDB(rawDB, logger))
 	case "postgres":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, postgres.ProvidePostgres(cfg.Database.Debug, rawDB, logger))
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, postgres.ProvidePostgres(rawDB, logger))
 	default:
 		return nil, fmt.Errorf("invalid provider: %q", cfg.Database.Provider)
 	}

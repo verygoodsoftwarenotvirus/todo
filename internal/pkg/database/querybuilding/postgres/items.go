@@ -27,16 +27,36 @@ func (q *Postgres) BuildItemExistsQuery(itemID, userID uint64) (query string, ar
 	)
 }
 
-// BuildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
-func (q *Postgres) BuildGetItemQuery(itemID, userID uint64) (query string, args []interface{}) {
-	return q.buildQuery(q.sqlBuilder.
+// buildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
+func (q *Postgres) buildGetItemQuery(userID uint64) squirrel.SelectBuilder {
+	return q.sqlBuilder.
 		Select(querybuilding.ItemsTableColumns...).
 		From(querybuilding.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                      itemID,
 			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableUserOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):              nil,
-		}),
+		})
+}
+
+// BuildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
+func (q *Postgres) BuildGetItemQuery(itemID, userID uint64) (query string, args []interface{}) {
+	builder := q.buildGetItemQuery(userID)
+
+	return q.buildQuery(
+		builder.Where(
+			squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn): itemID},
+		),
+	)
+}
+
+// BuildGetItemByExternalIDQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
+func (q *Postgres) BuildGetItemByExternalIDQuery(itemID string, userID uint64) (query string, args []interface{}) {
+	builder := q.buildGetItemQuery(userID)
+
+	return q.buildQuery(
+		builder.Where(
+			squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ExternalIDColumn): itemID},
+		),
 	)
 }
 
@@ -113,11 +133,13 @@ func (q *Postgres) BuildCreateItemQuery(input *types.ItemCreationInput) (query s
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.ItemsTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.ItemsTableNameColumn,
 			querybuilding.ItemsTableDetailsColumn,
 			querybuilding.ItemsTableUserOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.Details,
 			input.BelongsToUser,

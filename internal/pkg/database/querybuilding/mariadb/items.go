@@ -184,11 +184,13 @@ func (q *MariaDB) BuildCreateItemQuery(input *types.ItemCreationInput) (query st
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.ItemsTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.ItemsTableNameColumn,
 			querybuilding.ItemsTableDetailsColumn,
 			querybuilding.ItemsTableUserOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.Details,
 			input.BelongsToUser,

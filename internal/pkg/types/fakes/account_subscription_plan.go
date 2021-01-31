@@ -3,6 +3,8 @@ package fakes
 import (
 	"time"
 
+	"github.com/google/uuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -12,6 +14,7 @@ import (
 func BuildFakeAccountSubscriptionPlan() *types.AccountSubscriptionPlan {
 	return &types.AccountSubscriptionPlan{
 		ID:          uint64(fake.Uint32()),
+		ExternalID:  uuid.New().String(),
 		Name:        fake.Password(true, true, false, false, false, 32),
 		Description: fake.Word(),
 		Price:       uint32(fake.Price(10, 20) * 100),
@@ -51,11 +54,11 @@ func BuildFakePlanUpdateInputFromPlan(plan *types.AccountSubscriptionPlan) *type
 // BuildFakeAccountSubscriptionPlanCreationInput builds a faked AccountSubscriptionPlanCreationInput.
 func BuildFakeAccountSubscriptionPlanCreationInput() *types.AccountSubscriptionPlanCreationInput {
 	plan := BuildFakeAccountSubscriptionPlan()
-	return BuildFakePlanCreationInputFromPlan(plan)
+	return BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(plan)
 }
 
-// BuildFakePlanCreationInputFromPlan builds a faked AccountSubscriptionPlanCreationInput from an plan.
-func BuildFakePlanCreationInputFromPlan(plan *types.AccountSubscriptionPlan) *types.AccountSubscriptionPlanCreationInput {
+// BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan builds a faked AccountSubscriptionPlanCreationInput from an plan.
+func BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(plan *types.AccountSubscriptionPlan) *types.AccountSubscriptionPlanCreationInput {
 	return &types.AccountSubscriptionPlanCreationInput{
 		Name:        plan.Name,
 		Description: plan.Description,

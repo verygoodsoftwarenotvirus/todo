@@ -31,6 +31,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				external_id TEXT NOT NULL,
 				event_type TEXT NOT NULL,
 				context JSON NOT NULL,
 				created_on BIGINT NOT NULL DEFAULT (strftime('%s','now'))
@@ -42,6 +43,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_subscription_plans (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				external_id TEXT NOT NULL,
 				name TEXT NOT NULL,
 				description TEXT NOT NULL DEFAULT '',
 				price INTEGER NOT NULL,
@@ -58,6 +60,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				external_id TEXT NOT NULL,
 				username TEXT NOT NULL,
 				avatar_src TEXT,
 				hashed_password TEXT NOT NULL,
@@ -82,6 +85,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				external_id TEXT NOT NULL,
 				name CHARACTER VARYING NOT NULL,
 				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
 				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -107,6 +111,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS oauth2_clients (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				external_id TEXT NOT NULL,
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
 				client_secret TEXT NOT NULL,
@@ -125,6 +130,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				external_id TEXT NOT NULL,
 				name TEXT NOT NULL,
 				content_type TEXT NOT NULL,
 				url TEXT NOT NULL,
@@ -144,6 +150,7 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				external_id TEXT NOT NULL,
 				name CHARACTER VARYING NOT NULL,
 				details CHARACTER VARYING NOT NULL DEFAULT '',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
@@ -157,7 +164,7 @@ var (
 
 // BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a sqlite database.
-func (c *Sqlite) BuildMigrationFunc(db *sql.DB) func() {
+func (q *Sqlite) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		d := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
 		if err := darwin.Migrate(d, migrations, nil); err != nil {

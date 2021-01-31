@@ -84,6 +84,7 @@ func (q *Postgres) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.WebhooksTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.WebhooksTableNameColumn,
 			querybuilding.WebhooksTableContentTypeColumn,
 			querybuilding.WebhooksTableURLColumn,
@@ -94,6 +95,7 @@ func (q *Postgres) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query
 			querybuilding.WebhooksTableOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			x.Name,
 			x.ContentType,
 			x.URL,

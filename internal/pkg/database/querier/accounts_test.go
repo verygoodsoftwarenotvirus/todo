@@ -31,6 +31,7 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 	for _, x := range accounts {
 		rowValues := []driver.Value{
 			x.ID,
+			x.ExternalID,
 			x.Name,
 			x.PlanID,
 			x.PersonalAccount,
@@ -597,6 +598,7 @@ func TestClient_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.ExternalID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 

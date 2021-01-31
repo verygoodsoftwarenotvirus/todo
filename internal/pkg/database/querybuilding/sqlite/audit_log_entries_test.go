@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +22,7 @@ func TestSqlite_BuildGetAuditLogEntryQuery(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = ?"
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = ?"
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
@@ -55,7 +58,7 @@ func TestSqlite_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id > ? AND audit_log.id < ?"
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id > ? AND audit_log.id < ?"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -77,7 +80,7 @@ func TestSqlite_BuildGetAuditLogEntriesQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log) FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log) FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -99,18 +102,26 @@ func TestSqlite_BuildCreateAuditLogEntryQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleInput := fakes.BuildFakeAuditLogEntryCreationInput()
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		expectedQuery := "INSERT INTO audit_log (event_type,context) VALUES (?,?)"
+		exIDGen := &querybuilding.MockExternalIDGenerator{}
+		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
+		q.externalIDGenerator = exIDGen
+
+		expectedQuery := "INSERT INTO audit_log (external_id,event_type,context) VALUES (?,?,?)"
 		expectedArgs := []interface{}{
-			exampleInput.EventType,
-			exampleInput.Context,
+			exampleAuditLogEntry.ExternalID,
+			exampleAuditLogEntry.EventType,
+			exampleAuditLogEntry.Context,
 		}
 		actualQuery, actualArgs := q.BuildCreateAuditLogEntryQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
+
+		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }
 
@@ -126,6 +137,10 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
+		exIDGen := &querybuilding.MockExternalIDGenerator{}
+		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
+		q.externalIDGenerator = exIDGen
+
 		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleInput)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...)
@@ -133,6 +148,8 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 		q.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+
+		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
@@ -144,6 +161,10 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
+		exIDGen := &querybuilding.MockExternalIDGenerator{}
+		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
+		q.externalIDGenerator = exIDGen
+
 		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleInput)
 		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
 			WithArgs(interfaceToDriverValue(expectedArgs)...).
@@ -152,5 +173,7 @@ func TestSqlite_createAuditLogEntry(T *testing.T) {
 		q.createAuditLogEntry(ctx, exampleInput)
 
 		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
+
+		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }

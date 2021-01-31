@@ -12,6 +12,7 @@ var (
 	// AccountSubscriptionPlansTableColumns are the columns for the users table.
 	AccountSubscriptionPlansTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, IDColumn),
+		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableNameColumn),
 		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableDescriptionColumn),
 		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTablePriceColumn),
@@ -28,6 +29,7 @@ var (
 	// AccountsTableColumns are the columns for the items table.
 	AccountsTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountsTableName, IDColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableNameColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePlanIDColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePersonalAccountColumn),
@@ -44,6 +46,7 @@ var (
 	// UsersTableColumns are the columns for the users table.
 	UsersTableColumns = []string{
 		fmt.Sprintf("%s.%s", UsersTableName, IDColumn),
+		fmt.Sprintf("%s.%s", UsersTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableUsernameColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAvatarColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableHashedPasswordColumn),
@@ -68,6 +71,7 @@ var (
 	// AuditLogEntriesTableColumns are the columns for the audit log entries table.
 	AuditLogEntriesTableColumns = []string{
 		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, IDColumn),
+		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, AuditLogEntriesTableEventTypeColumn),
 		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, AuditLogEntriesTableContextColumn),
 		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, CreatedOnColumn),
@@ -80,6 +84,7 @@ var (
 	// OAuth2ClientsTableColumns are the columns for the oauth2 clients table.
 	OAuth2ClientsTableColumns = []string{
 		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, IDColumn),
+		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableNameColumn),
 		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableClientIDColumn),
 		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableScopesColumn),
@@ -98,6 +103,7 @@ var (
 	// WebhooksTableColumns are the columns for the webhooks table.
 	WebhooksTableColumns = []string{
 		fmt.Sprintf("%s.%s", WebhooksTableName, IDColumn),
+		fmt.Sprintf("%s.%s", WebhooksTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableNameColumn),
 		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableContentTypeColumn),
 		fmt.Sprintf("%s.%s", WebhooksTableName, WebhooksTableURLColumn),
@@ -118,6 +124,7 @@ var (
 	// ItemsTableColumns are the columns for the items table.
 	ItemsTableColumns = []string{
 		fmt.Sprintf("%s.%s", ItemsTableName, IDColumn),
+		fmt.Sprintf("%s.%s", ItemsTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableNameColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableDetailsColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, CreatedOnColumn),

@@ -14,36 +14,77 @@ const (
 	DefaultCookieDomain = "localhost"
 	// DefaultCookieLifetime is the how long a cookie is valid.
 	DefaultCookieLifetime = 24 * time.Hour
+
+	pasetoKeyRequiredLength = 32
 )
 
-// Config represents our authentication configuration.
-type Config struct {
-	// CookieName indicates what the cookies' name will be.
-	CookieName string `json:"cookie_name" mapstructure:"cookie_name" toml:"cookie_name,omitempty"`
-	// CookieDomain indicates what domain the cookies will have set for them.
-	CookieDomain string `json:"cookie_domain" mapstructure:"cookie_domain" toml:"cookie_domain,omitempty"`
-	// CookieSigningKey indicates the secret the cookie builder should use.
-	CookieSigningKey string `json:"cookie_signing_key" mapstructure:"cookie_signing_key" toml:"cookie_signing_key,omitempty"`
-	// CookieLifetime indicates how long the cookies built should last.
-	CookieLifetime time.Duration `json:"cookie_lifetime" mapstructure:"cookie_lifetime" toml:"cookie_lifetime,omitempty"`
-	// Debug determines if debug logging or other development conditions are active.
-	Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
-	// SecureCookiesOnly indicates if the cookies built should be marked as HTTPS only.
-	SecureCookiesOnly bool `json:"secure_cookies_only" mapstructure:"secure_cookies_only" toml:"secure_cookies_only,omitempty"`
-	// EnableUserSignup enables user signups.
-	EnableUserSignup bool `json:"enable_user_signup" mapstructure:"enable_user_signup" toml:"enable_user_signup,omitempty"`
-	// MinimumUsernameLength indicates how short a username can be.
-	MinimumUsernameLength uint8 `json:"minimum_username_length" mapstructure:"minimum_username_length" toml:"minimum_username_length,omitempty"`
-	// MinimumPasswordLength indicates how short a password can be.
-	MinimumPasswordLength uint8 `json:"minimum_password_length" mapstructure:"minimum_password_length" toml:"minimum_password_length,omitempty"`
+type (
+	// CookieConfig holds our cookie settings.
+	CookieConfig struct {
+		// Name indicates what the cookies' name will be.
+		Name string `json:"name" mapstructure:"name" toml:"name,omitempty"`
+		// Domain indicates what domain the cookies will have set for them.
+		Domain string `json:"domain" mapstructure:"domain" toml:"domain,omitempty"`
+		// SigningKey indicates the secret the cookie builder should use.
+		SigningKey string `json:"signing_key" mapstructure:"signing_key" toml:"signing_key,omitempty"`
+		// Lifetime indicates how long the cookies built should last.
+		Lifetime time.Duration `json:"lifetime" mapstructure:"lifetime" toml:"lifetime,omitempty"`
+		// SecureOnly indicates if the cookies built should be marked as HTTPS only.
+		SecureOnly bool `json:"secure_only" mapstructure:"secure_only" toml:"secure_only,omitempty"`
+	}
+
+	// PASETOConfig holds our PASETO token settings.
+	PASETOConfig struct {
+		// Audience is the Audience value that goes into our PASETO tokens.
+		Audience string `json:"audience" mapstructure:"audience" toml:"audience,omitempty"`
+		// Listener is the Listener value that goes into our PASETO tokens.
+		Listener string `json:"listener" mapstructure:"listener" toml:"listener,omitempty"`
+		// Lifetime indicates how long the cookies built should last.
+		Lifetime time.Duration `json:"lifetime" mapstructure:"lifetime" toml:"lifetime,omitempty"`
+		// LocalModeKey is the key used to sign local PASETO tokens.
+		LocalModeKey []byte `json:"local_mode_key" mapstructure:"local_mode_key" toml:"local_mode_key,omitempty"`
+	}
+
+	// Config represents our authentication configuration.
+	Config struct {
+		// Cookies configures our cookie settings.
+		Cookies CookieConfig `json:"cookies" mapstructure:"cookies" toml:"cookies,omitempty"`
+		// PASETO configures our PASETO token settings.
+		PASETO PASETOConfig `json:"paseto" mapstructure:"paseto" toml:"paseto,omitempty"`
+		// Debug determines if debug logging or other development conditions are active.
+		Debug bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
+		// EnableUserSignup enables user signups.
+		EnableUserSignup bool `json:"enable_user_signup" mapstructure:"enable_user_signup" toml:"enable_user_signup,omitempty"`
+		// MinimumUsernameLength indicates how short a username can be.
+		MinimumUsernameLength uint8 `json:"minimum_username_length" mapstructure:"minimum_username_length" toml:"minimum_username_length,omitempty"`
+		// MinimumPasswordLength indicates how short a password can be.
+		MinimumPasswordLength uint8 `json:"minimum_password_length" mapstructure:"minimum_password_length" toml:"minimum_password_length,omitempty"`
+	}
+)
+
+// Validate validates a CookieConfig struct.
+func (cfg *CookieConfig) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
+		validation.Field(&cfg.Name, validation.Required),
+		validation.Field(&cfg.Domain, validation.Required),
+		validation.Field(&cfg.Lifetime, validation.Required),
+	)
 }
 
-// Validate validates an AuthSettings struct.
+// Validate validates a PASETOConfig struct.
+func (cfg *PASETOConfig) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
+		validation.Field(&cfg.Listener, validation.Required),
+		validation.Field(&cfg.Audience, validation.Required),
+		validation.Field(&cfg.LocalModeKey, validation.Required, validation.Length(pasetoKeyRequiredLength, pasetoKeyRequiredLength)),
+	)
+}
+
+// Validate validates a Config struct.
 func (cfg *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.CookieName, validation.Required),
-		validation.Field(&cfg.CookieDomain, validation.Required),
-		validation.Field(&cfg.CookieLifetime, validation.Required),
+		validation.Field(&cfg.Cookies, validation.Required),
+		validation.Field(&cfg.PASETO, validation.Required),
 		validation.Field(&cfg.MinimumUsernameLength, validation.Required),
 		validation.Field(&cfg.MinimumPasswordLength, validation.Required),
 	)

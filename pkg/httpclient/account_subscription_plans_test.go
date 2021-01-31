@@ -204,7 +204,7 @@ func TestV1Client_BuildCreatePlanRequest(T *testing.T) {
 		ctx := context.Background()
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		ts := httptest.NewTLSServer(nil)
 
@@ -230,7 +230,7 @@ func TestV1Client_CreatePlan(T *testing.T) {
 		ctx := context.Background()
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -260,7 +260,7 @@ func TestV1Client_CreatePlan(T *testing.T) {
 		ctx := context.Background()
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(examplePlan)
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.CreatePlan(ctx, exampleInput)

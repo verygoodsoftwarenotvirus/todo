@@ -12,6 +12,8 @@ import (
 const (
 	// userLoginInputMiddlewareCtxKey is the context key for login input.
 	userLoginInputMiddlewareCtxKey types.ContextKey = "user_login_input"
+	// pasetoCreationInputMiddlewareCtxKey is the context key for login input.
+	pasetoCreationnputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
 
 	// usernameFormKey is the string we look for in request forms for username information.
 	usernameFormKey = "username"
@@ -197,6 +199,33 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, x)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
+}
+
+// PASETOCreationInputMiddleware fetches user login input from requests.
+func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+		logger.Debug("PASETOCreationInputMiddleware called")
+
+		x := new(types.PASETOCreationInput)
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
+			logger.Error(err, "error encountered decoding request body")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(ctx); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, pasetoCreationnputMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

@@ -27,6 +27,7 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 
 	targetVars := []interface{}{
 		&user.ID,
+		&user.ExternalID,
 		&user.Username,
 		&user.AvatarSrc,
 		&user.HashedPassword,

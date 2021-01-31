@@ -107,6 +107,7 @@ func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreatio
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.OAuth2ClientsTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.OAuth2ClientsTableNameColumn,
 			querybuilding.OAuth2ClientsTableClientIDColumn,
 			querybuilding.OAuth2ClientsTableClientSecretColumn,
@@ -115,6 +116,7 @@ func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreatio
 			querybuilding.OAuth2ClientsTableOwnershipColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.ClientID,
 			input.ClientSecret,

@@ -21,10 +21,11 @@ type (
 
 	// AuditLogEntry represents an event we might want to log for audit purposes.
 	AuditLogEntry struct {
-		ID        uint64          `json:"id"`
-		EventType string          `json:"eventType"`
-		Context   AuditLogContext `json:"context"`
-		CreatedOn uint64          `json:"createdOn"`
+		ID         uint64          `json:"id"`
+		ExternalID string          `json:"externalID"`
+		EventType  string          `json:"eventType"`
+		Context    AuditLogContext `json:"context"`
+		CreatedOn  uint64          `json:"createdOn"`
 	}
 
 	// AuditLogEntryList represents a list of items.

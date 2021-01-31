@@ -24,6 +24,7 @@ func (c *Client) scanAccount(scan database.Scanner, includeCounts bool) (account
 
 	targetVars := []interface{}{
 		&account.ID,
+		&account.ExternalID,
 		&account.Name,
 		&account.PlanID,
 		&account.PersonalAccount,

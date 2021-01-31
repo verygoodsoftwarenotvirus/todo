@@ -11,6 +11,7 @@ type (
 	// Account represents an account.
 	Account struct {
 		ID              uint64  `json:"id"`
+		ExternalID      string  `json:"externalID"`
 		Name            string  `json:"name"`
 		CreatedOn       uint64  `json:"createdOn"`
 		LastUpdatedOn   *uint64 `json:"lastUpdatedOn"`

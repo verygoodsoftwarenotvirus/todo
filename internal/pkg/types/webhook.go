@@ -12,6 +12,7 @@ type (
 	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event.
 	Webhook struct {
 		ID            uint64   `json:"id"`
+		ExternalID    string   `json:"externalID"`
 		Name          string   `json:"name"`
 		ContentType   string   `json:"contentType"`
 		URL           string   `json:"url"`

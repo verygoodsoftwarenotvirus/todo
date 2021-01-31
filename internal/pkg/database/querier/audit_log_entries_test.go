@@ -42,6 +42,7 @@ func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*typ
 	for _, x := range auditLogEntries {
 		rowValues := []driver.Value{
 			x.ID,
+			x.ExternalID,
 			x.EventType,
 			x.Context,
 			x.CreatedOn,

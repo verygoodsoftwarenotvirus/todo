@@ -18,6 +18,7 @@ type (
 	// Item represents an item.
 	Item struct {
 		ID            uint64  `json:"id"`
+		ExternalID    string  `json:"externalID"`
 		Name          string  `json:"name"`
 		Details       string  `json:"details"`
 		CreatedOn     uint64  `json:"createdOn"`

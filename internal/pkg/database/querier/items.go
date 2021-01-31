@@ -24,6 +24,7 @@ func (c *Client) scanItem(scan database.Scanner, includeCounts bool) (x *types.I
 
 	targetVars := []interface{}{
 		&x.ID,
+		&x.ExternalID,
 		&x.Name,
 		&x.Details,
 		&x.CreatedOn,

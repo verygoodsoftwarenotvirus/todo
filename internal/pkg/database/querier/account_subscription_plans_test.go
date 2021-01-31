@@ -31,6 +31,7 @@ func buildMockRowsFromAccountSubscriptionPlans(includeCounts bool, filteredCount
 	for _, x := range plans {
 		rowValues := []driver.Value{
 			x.ID,
+			x.ExternalID,
 			x.Name,
 			x.Description,
 			x.Price,
@@ -153,6 +154,7 @@ func TestClient_GetPlan(T *testing.T) {
 
 		exampleRows := sqlmock.NewRows(querybuilding.AccountSubscriptionPlansTableColumns).AddRow(
 			exampleAccountSubscriptionPlan.ID,
+			exampleAccountSubscriptionPlan.ExternalID,
 			exampleAccountSubscriptionPlan.Name,
 			exampleAccountSubscriptionPlan.Description,
 			exampleAccountSubscriptionPlan.Price,
@@ -351,7 +353,8 @@ func TestClient_CreateAccountSubscriptionPlan(T *testing.T) {
 		t.Parallel()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(exampleAccountSubscriptionPlan)
+		exampleAccountSubscriptionPlan.ExternalID = ""
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -383,7 +386,7 @@ func TestClient_CreateAccountSubscriptionPlan(T *testing.T) {
 
 		expectedError := errors.New(t.Name())
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleInput := fakes.BuildFakePlanCreationInputFromPlan(exampleAccountSubscriptionPlan)
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)

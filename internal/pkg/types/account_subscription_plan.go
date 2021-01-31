@@ -12,6 +12,7 @@ type (
 	// AccountSubscriptionPlan represents a plan.
 	AccountSubscriptionPlan struct {
 		ID            uint64        `json:"id"`
+		ExternalID    string        `json:"externalID"`
 		Name          string        `json:"name"`
 		Description   string        `json:"description"`
 		Price         uint32        `json:"price"`

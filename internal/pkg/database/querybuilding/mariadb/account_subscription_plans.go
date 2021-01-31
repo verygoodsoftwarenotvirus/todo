@@ -65,12 +65,14 @@ func (q *MariaDB) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSu
 	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.AccountSubscriptionPlansTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.AccountSubscriptionPlansTableNameColumn,
 			querybuilding.AccountSubscriptionPlansTableDescriptionColumn,
 			querybuilding.AccountSubscriptionPlansTablePriceColumn,
 			querybuilding.AccountSubscriptionPlansTablePeriodColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.Description,
 			input.Price,

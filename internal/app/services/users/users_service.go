@@ -41,7 +41,7 @@ type (
 		userDataManager      types.UserDataManager
 		accountDataManager   types.AccountDataManager
 		auditLog             types.UserAuditManager
-		authSettings         authservice.Config
+		authSettings         *authservice.Config
 		authenticator        password.Authenticator
 		logger               logging.Logger
 		encoderDecoder       encoding.EncoderDecoder
@@ -57,7 +57,7 @@ type (
 
 // ProvideUsersService builds a new UsersService.
 func ProvideUsersService(
-	authSettings authservice.Config,
+	authSettings *authservice.Config,
 	logger logging.Logger,
 	userDataManager types.UserDataManager,
 	accountDataManager types.AccountDataManager,

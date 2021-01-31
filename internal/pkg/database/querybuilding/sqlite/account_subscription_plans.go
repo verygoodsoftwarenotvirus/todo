@@ -15,10 +15,10 @@ var (
 )
 
 // BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
-func (c *Sqlite) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Select(querybuilding.AccountSubscriptionPlansTableColumns...).
 		From(querybuilding.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
@@ -27,30 +27,30 @@ func (c *Sqlite) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query stri
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (c *Sqlite) BuildGetAllAccountSubscriptionPlansCountQuery() string {
-	allPlansCountQuery, _, err := c.sqlBuilder.
+func (q *Sqlite) BuildGetAllAccountSubscriptionPlansCountQuery() string {
+	allPlansCountQuery, _, err := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountSubscriptionPlansTableName)).
 		From(querybuilding.AccountSubscriptionPlansTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.AccountSubscriptionPlansTableName, querybuilding.ArchivedOnColumn): nil,
 		}).
 		ToSql()
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return allPlansCountQuery
 }
 
 // BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
-func (c *Sqlite) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	return c.buildListQuery(
+func (q *Sqlite) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+	return q.buildListQuery(
 		querybuilding.AccountSubscriptionPlansTableName,
 		"",
 		querybuilding.AccountSubscriptionPlansTableColumns,
@@ -61,18 +61,20 @@ func (c *Sqlite) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter
 }
 
 // BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (c *Sqlite) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
+func (q *Sqlite) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Insert(querybuilding.AccountSubscriptionPlansTableName).
 		Columns(
+			querybuilding.ExternalIDColumn,
 			querybuilding.AccountSubscriptionPlansTableNameColumn,
 			querybuilding.AccountSubscriptionPlansTableDescriptionColumn,
 			querybuilding.AccountSubscriptionPlansTablePriceColumn,
 			querybuilding.AccountSubscriptionPlansTablePeriodColumn,
 		).
 		Values(
+			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.Description,
 			input.Price,
@@ -80,16 +82,16 @@ func (c *Sqlite) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSub
 		).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
-func (c *Sqlite) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+func (q *Sqlite) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(querybuilding.AccountSubscriptionPlansTableName).
 		Set(querybuilding.AccountSubscriptionPlansTableNameColumn, input.Name).
 		Set(querybuilding.AccountSubscriptionPlansTableDescriptionColumn, input.Description).
@@ -101,16 +103,16 @@ func (c *Sqlite) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSub
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildArchiveAccountSubscriptionPlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
-func (c *Sqlite) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
-	query, args, err = c.sqlBuilder.
+	query, args, err = q.sqlBuilder.
 		Update(querybuilding.AccountSubscriptionPlansTableName).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -120,25 +122,25 @@ func (c *Sqlite) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query 
 		}).
 		ToSql()
 
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
 // BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
-func (c *Sqlite) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	var err error
 
 	planIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)
-	builder := c.sqlBuilder.
+	builder := q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
 		Where(squirrel.Eq{planIDKey: planID}).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
 
 	query, args, err = builder.ToSql()
-	c.logQueryBuildingError(err)
+	q.logQueryBuildingError(err)
 
 	return query, args
 }

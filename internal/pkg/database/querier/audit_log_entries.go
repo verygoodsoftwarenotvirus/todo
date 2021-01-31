@@ -22,6 +22,7 @@ func (c *Client) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (e
 
 	targetVars := []interface{}{
 		&entry.ID,
+		&entry.ExternalID,
 		&entry.EventType,
 		&entry.Context,
 		&entry.CreatedOn,

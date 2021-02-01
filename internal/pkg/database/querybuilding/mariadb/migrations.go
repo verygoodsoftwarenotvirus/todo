@@ -196,6 +196,30 @@ var (
 		},
 		{
 			Version:     0.15,
+			Description: "create delegated_clients table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS delegated_clients (",
+				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
+				"    `external_id` VARCHAR(36) NOT NULL,",
+				"    `name` VARCHAR(128) DEFAULT '',",
+				"    `client_id` VARCHAR(64) NOT NULL,",
+				"    `client_secret` VARCHAR(64) NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `belongs_to_user` BIGINT UNSIGNED NOT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    FOREIGN KEY(`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE",
+				");",
+			}, "\n"),
+		},
+		{
+			Version:     0.16,
+			Description: "create delegated_clients table creation trigger",
+			Script:      buildCreationTriggerScript(querybuilding.DelegatedClientsTableName),
+		},
+		{
+			Version:     0.17,
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -218,12 +242,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.16,
+			Version:     0.18,
 			Description: "create webhooks table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.WebhooksTableName),
 		},
 		{
-			Version:     0.17,
+			Version:     0.19,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -241,7 +265,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.18,
+			Version:     0.20,
 			Description: "create items table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.ItemsTableName),
 		},

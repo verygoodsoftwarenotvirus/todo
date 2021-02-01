@@ -23,8 +23,10 @@ const (
 	FilterLimitKey = "filter_limit"
 	// FilterIsNilKey is the standard key for referring to a types.QueryFilter's null status.
 	FilterIsNilKey = "filter_is_nil"
+	// DelegatedClientIDKey is the standard key for referring to a delegated client's database ID.
+	DelegatedClientIDKey = "delegated_client_id"
 	// OAuth2ClientDatabaseIDKey is the standard key for referring to an oauth2 client's database ID.
-	OAuth2ClientDatabaseIDKey = "oauth2_client_databse_id"
+	OAuth2ClientDatabaseIDKey = "oauth2_client_database_id"
 	// OAuth2ClientIDKey is the standard key for referring to an oauth2 client's ClientID.
 	OAuth2ClientIDKey = "client_id"
 	// WebhookIDKey is the standard key for referring to a webhook's ID.

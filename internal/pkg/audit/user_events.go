@@ -7,6 +7,17 @@ import (
 const (
 	// UserAssignmentKey is the key we use to indicate that an audit log entry is associated with a user.
 	UserAssignmentKey = "user_id"
+
+	// UserCreationEvent events indicate a user was created.
+	UserCreationEvent = "user_account_created"
+	// UserVerifyTwoFactorSecretEvent events indicate a user was created.
+	UserVerifyTwoFactorSecretEvent = "user_two_factor_secret_verified"
+	// UserUpdateTwoFactorSecretEvent events indicate a user updated their two factor secret.
+	UserUpdateTwoFactorSecretEvent = "user_two_factor_secret_changed"
+	// UserUpdatePasswordEvent events indicate a user updated their two factor secret.
+	UserUpdatePasswordEvent = "user_password_updated"
+	// UserArchiveEvent events indicate a user was archived.
+	UserArchiveEvent = "user_archived"
 )
 
 // BuildUserCreationEventEntry builds an entry creation input for when a user is created.

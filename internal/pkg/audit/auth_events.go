@@ -13,6 +13,23 @@ const (
 	CreationAssignmentKey = "created"
 	// ReasonKey is the key we use to indicate the reason behind a given event.
 	ReasonKey = "reason"
+
+	// UserBannedEvent events indicate an admin cycled the cookie secret.
+	UserBannedEvent = "user_banned"
+	// AccountTerminatedEvent events indicate an admin cycled the cookie secret.
+	AccountTerminatedEvent = "account_terminated"
+	// CycleCookieSecretEvent events indicate an admin cycled the cookie secret.
+	CycleCookieSecretEvent = "cookie_secret_cycled"
+	// SuccessfulLoginEvent events indicate a user successfully authenticated into the service via username + password + 2fa.
+	SuccessfulLoginEvent = "user_logged_in"
+	// LogoutEvent events indicate a user successfully logged out.
+	LogoutEvent = "user_logged_out"
+	// BannedUserLoginAttemptEvent events indicate a user successfully authenticated into the service via username + password + 2fa.
+	BannedUserLoginAttemptEvent = "banned_user_login_attempt"
+	// UnsuccessfulLoginBadPasswordEvent events indicate a user attempted to authenticate into the service, but failed because of an invalid password.
+	UnsuccessfulLoginBadPasswordEvent = "user_login_failed_bad_password"
+	// UnsuccessfulLoginBad2FATokenEvent events indicate a user attempted to authenticate into the service, but failed because of a faulty two factor token.
+	UnsuccessfulLoginBad2FATokenEvent = "user_login_failed_bad_2FA_token"
 )
 
 // BuildCycleCookieSecretEvent builds an entry creation input for when a cookie secret is cycled.

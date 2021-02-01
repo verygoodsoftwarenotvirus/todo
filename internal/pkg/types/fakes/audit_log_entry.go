@@ -1,8 +1,6 @@
 package fakes
 
 import (
-	"github.com/google/uuid"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -13,7 +11,7 @@ import (
 func BuildFakeAuditLogEntry() *types.AuditLogEntry {
 	return &types.AuditLogEntry{
 		ID:         uint64(fake.Uint32()),
-		ExternalID: uuid.New().String(),
+		ExternalID: fake.UUID(),
 		EventType:  audit.SuccessfulLoginEvent,
 		Context:    map[string]interface{}{"fakes": "true"},
 		CreatedOn:  uint64(uint32(fake.Date().Unix())),

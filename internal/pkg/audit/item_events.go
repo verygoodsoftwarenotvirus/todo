@@ -7,6 +7,13 @@ import (
 const (
 	// ItemAssignmentKey is the key we use to indicate that an audit log entry is associated with an item.
 	ItemAssignmentKey = "item_id"
+
+	// ItemCreationEvent events indicate a user created an item.
+	ItemCreationEvent = "item_created"
+	// ItemUpdateEvent events indicate a user updated an item.
+	ItemUpdateEvent = "item_updated"
+	// ItemArchiveEvent events indicate a user deleted an item.
+	ItemArchiveEvent = "item_archived"
 )
 
 // BuildItemCreationEventEntry builds an entry creation input for when an item is created.

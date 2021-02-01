@@ -55,7 +55,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 		assert.Nil(t, actual)
 	})
 
-	T.Run("with empty strings", func(t *testing.T) {
+	T.Run("with invalid structure", func(t *testing.T) {
 		t.Parallel()
 
 		x := &ItemCreationInput{

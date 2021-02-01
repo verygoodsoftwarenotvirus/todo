@@ -53,7 +53,7 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 		return nil, 0, 0, scanErr
 	}
 
-	user.AdminPermissions = bitmask.NewPermissionBitmask(perms)
+	user.SiteAdminPermissions = bitmask.NewPermissionBitmask(perms)
 
 	return user, filteredCount, totalCount, nil
 }

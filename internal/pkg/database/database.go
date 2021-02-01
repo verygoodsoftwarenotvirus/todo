@@ -79,6 +79,7 @@ type (
 		types.AccountSubscriptionPlanSQLQueryBuilder
 		types.UserSQLQueryBuilder
 		types.AuditLogEntrySQLQueryBuilder
+		types.DelegatedClientSQLQueryBuilder
 		types.OAuth2ClientSQLQueryBuilder
 		types.WebhookSQLQueryBuilder
 		types.ItemSQLQueryBuilder

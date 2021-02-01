@@ -7,6 +7,13 @@ import (
 const (
 	// AccountSubscriptionPlanAssignmentKey is the key we use to indicate that an audit log entry is associated with an plan.
 	AccountSubscriptionPlanAssignmentKey = "plan_id"
+
+	// AccountSubscriptionPlanCreationEvent events indicate a user created a plan.
+	AccountSubscriptionPlanCreationEvent = "plan_created"
+	// AccountSubscriptionPlanUpdateEvent events indicate a user updated a plan.
+	AccountSubscriptionPlanUpdateEvent = "plan_updated"
+	// AccountSubscriptionPlanArchiveEvent events indicate a user deleted a plan.
+	AccountSubscriptionPlanArchiveEvent = "plan_archived"
 )
 
 // BuildAccountSubscriptionPlanCreationEventEntry builds an entry creation input for when an plan is created.

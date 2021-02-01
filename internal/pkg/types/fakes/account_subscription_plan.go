@@ -3,8 +3,6 @@ package fakes
 import (
 	"time"
 
-	"github.com/google/uuid"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -14,7 +12,7 @@ import (
 func BuildFakeAccountSubscriptionPlan() *types.AccountSubscriptionPlan {
 	return &types.AccountSubscriptionPlan{
 		ID:          uint64(fake.Uint32()),
-		ExternalID:  uuid.New().String(),
+		ExternalID:  fake.UUID(),
 		Name:        fake.Password(true, true, false, false, false, 32),
 		Description: fake.Word(),
 		Price:       uint32(fake.Price(10, 20) * 100),

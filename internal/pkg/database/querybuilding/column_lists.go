@@ -97,6 +97,23 @@ var (
 	}
 
 	//
+	// Delegated Clients Table.
+	//
+
+	// DelegatedClientsTableColumns are the columns for the oauth2 clients table.
+	DelegatedClientsTableColumns = []string{
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, IDColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ExternalIDColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableNameColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableClientIDColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableClientSecretColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, CreatedOnColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, LastUpdatedOnColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ArchivedOnColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, OAuth2ClientsTableOwnershipColumn),
+	}
+
+	//
 	// Webhooks Table.
 	//
 

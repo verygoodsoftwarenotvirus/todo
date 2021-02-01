@@ -3,8 +3,6 @@ package fakes
 import (
 	"net/http"
 
-	"github.com/google/uuid"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -14,7 +12,7 @@ import (
 func BuildFakeWebhook() *types.Webhook {
 	return &types.Webhook{
 		ID:            uint64(fake.Uint32()),
-		ExternalID:    uuid.New().String(),
+		ExternalID:    fake.UUID(),
 		Name:          fake.Word(),
 		ContentType:   "application/json",
 		URL:           fake.URL(),

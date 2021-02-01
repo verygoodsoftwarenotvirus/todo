@@ -130,6 +130,22 @@ var (
 		},
 		{
 			Version:     0.08,
+			Description: "create delegated_clients table",
+			Script: `
+			CREATE TABLE IF NOT EXISTS delegated_clients (
+				id BIGSERIAL NOT NULL PRIMARY KEY,
+				external_id TEXT NOT NULL,
+				name TEXT DEFAULT '',
+				client_id TEXT NOT NULL,
+				client_secret TEXT NOT NULL,
+				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
+				last_updated_on BIGINT DEFAULT NULL,
+				archived_on BIGINT DEFAULT NULL,
+				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+			);`,
+		},
+		{
+			Version:     0.09,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -149,7 +165,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.09,
+			Version:     0.10,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

@@ -6,8 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/uuid"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -19,14 +17,14 @@ import (
 func BuildFakeUser() *types.User {
 	return &types.User{
 		ID:         uint64(fake.Uint32()),
-		ExternalID: uuid.New().String(),
+		ExternalID: fake.UUID(),
 		Username:   fake.Password(true, true, true, false, false, 32),
 		// HashedPassword: "",
 		// Salt:           []byte(fakes.Word()),
 		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),
 		TwoFactorSecretVerifiedOn: func(i uint64) *uint64 { return &i }(uint64(uint32(fake.Date().Unix()))),
 		IsSiteAdmin:               false,
-		AdminPermissions:          bitmask.NewPermissionBitmask(0),
+		SiteAdminPermissions:      bitmask.NewPermissionBitmask(0),
 		CreatedOn:                 uint64(uint32(fake.Date().Unix())),
 	}
 }

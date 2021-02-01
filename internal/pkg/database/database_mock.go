@@ -65,6 +65,7 @@ func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 		AccountSubscriptionPlanSQLQueryBuilder: &mocktypes.AccountSubscriptionPlanSQLQueryBuilder{},
 		AuditLogEntrySQLQueryBuilder:           &mocktypes.AuditLogEntrySQLQueryBuilder{},
 		ItemSQLQueryBuilder:                    &mocktypes.ItemSQLQueryBuilder{},
+		DelegatedClientSQLQueryBuilder:         &mocktypes.DelegatedClientSQLQueryBuilder{},
 		OAuth2ClientSQLQueryBuilder:            &mocktypes.OAuth2ClientSQLQueryBuilder{},
 		UserSQLQueryBuilder:                    &mocktypes.UserSQLQueryBuilder{},
 		WebhookSQLQueryBuilder:                 &mocktypes.WebhookSQLQueryBuilder{},
@@ -80,6 +81,7 @@ type MockSQLQueryBuilder struct {
 	*mocktypes.AuditLogEntrySQLQueryBuilder
 	*mocktypes.ItemSQLQueryBuilder
 	*mocktypes.UserSQLQueryBuilder
+	*mocktypes.DelegatedClientSQLQueryBuilder
 	*mocktypes.OAuth2ClientSQLQueryBuilder
 	*mocktypes.WebhookSQLQueryBuilder
 }

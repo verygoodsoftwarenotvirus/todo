@@ -954,7 +954,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.AdminPermissions = bitmask.NewPermissionBitmask(math.MaxUint32)
+		exampleUser.SiteAdminPermissions = bitmask.NewPermissionBitmask(math.MaxUint32)
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
 			return exampleUser.ToSessionInfo(), nil
 		}

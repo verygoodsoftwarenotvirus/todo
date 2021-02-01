@@ -7,6 +7,11 @@ import (
 const (
 	// OAuth2ClientAssignmentKey is the key we use to indicate that an audit log entry is associated with an oauth2 client.
 	OAuth2ClientAssignmentKey = "client_id"
+
+	// OAuth2ClientCreationEvent events indicate a user created an item.
+	OAuth2ClientCreationEvent = "oauth2_client_created"
+	// OAuth2ClientArchiveEvent events indicate a user deleted an item.
+	OAuth2ClientArchiveEvent = "oauth2_client_archived"
 )
 
 // BuildOAuth2ClientCreationEventEntry builds an entry creation input for when an oauth2 client is created.

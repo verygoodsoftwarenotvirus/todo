@@ -49,12 +49,6 @@ type (
 		Scopes        []string `json:"scopes"`
 	}
 
-	// OAuth2ClientUpdateInput is a struct for use when updating OAuth2 clients.
-	OAuth2ClientUpdateInput struct {
-		RedirectURI string   `json:"redirectURI"`
-		Scopes      []string `json:"scopes"`
-	}
-
 	// OAuth2ClientSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	OAuth2ClientSQLQueryBuilder interface {
 		BuildGetOAuth2ClientByClientIDQuery(clientID string) (query string, args []interface{})

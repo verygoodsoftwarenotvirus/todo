@@ -58,7 +58,7 @@ type (
 		CreatedOn                 uint64                       `json:"createdOn"`
 		LastUpdatedOn             *uint64                      `json:"lastUpdatedOn"`
 		ArchivedOn                *uint64                      `json:"archivedOn"`
-		AdminPermissions          bitmask.SiteAdminPermissions `json:"siteAdminPermissions"`
+		SiteAdminPermissions      bitmask.SiteAdminPermissions `json:"siteAdminPermissions"`
 		IsSiteAdmin               bool                         `json:"isSiteAdmin"`
 		RequiresPasswordChange    bool                         `json:"requiresPasswordChange"`
 		AvatarSrc                 *string                      `json:"avatar"`
@@ -252,7 +252,7 @@ func (u *User) ToSessionInfo() *SessionInfo {
 		UserID:            u.ID,
 		UserIsSiteAdmin:   u.IsSiteAdmin,
 		UserAccountStatus: u.AccountStatus,
-		AdminPermissions:  u.AdminPermissions,
+		AdminPermissions:  u.SiteAdminPermissions,
 	}
 }
 
@@ -262,7 +262,7 @@ func (u *User) ToStatusResponse() *UserStatusResponse {
 		UserIsAdmin:              u.IsSiteAdmin,
 		UserAccountStatus:        u.AccountStatus,
 		AccountStatusExplanation: u.AccountStatusExplanation,
-		AdminPermissions:         u.AdminPermissions.SiteAdminPermissionsSummary(),
+		AdminPermissions:         u.SiteAdminPermissions.SiteAdminPermissionsSummary(),
 	}
 }
 

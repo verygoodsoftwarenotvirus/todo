@@ -112,6 +112,23 @@ const (
 	AuditLogEntriesTableContextColumn = "context"
 
 	//
+	// Delegated Clients.
+	//
+
+	// DelegatedClientsTableScopeSeparator is what the oauth2 clients table calls the <> column.
+	DelegatedClientsTableScopeSeparator = commaSeparator
+	// DelegatedClientsTableName is what the oauth2 clients table calls the <> column.
+	DelegatedClientsTableName = "delegated_clients"
+	// DelegatedClientsTableNameColumn is what the oauth2 clients table calls the <> column.
+	DelegatedClientsTableNameColumn = "name"
+	// DelegatedClientsTableClientIDColumn is what the oauth2 clients table calls the <> column.
+	DelegatedClientsTableClientIDColumn = "client_id"
+	// DelegatedClientsTableClientSecretColumn is what the oauth2 clients table calls the <> column.
+	DelegatedClientsTableClientSecretColumn = "client_secret"
+	// DelegatedClientsTableOwnershipColumn is what the oauth2 clients table calls the <> column.
+	DelegatedClientsTableOwnershipColumn = userOwnershipColumn
+
+	//
 	// OAuth2 Clients.
 	//
 

@@ -33,7 +33,7 @@ func TestMariaDB_BuildGetOAuth2ClientByClientIDQuery(T *testing.T) {
 	})
 }
 
-func TestMariDB_BuildGetBatchOfOAuth2ClientsQuery(T *testing.T) {
+func TestMariaDB_BuildGetBatchOfOAuth2ClientsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

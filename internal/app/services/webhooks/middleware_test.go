@@ -9,10 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -40,7 +39,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		exampleUpdateInput := fakes.BuildFakeWebhookCreationInput()
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
@@ -67,7 +66,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		exampleUpdateInput := &types.WebhookCreationInput{}
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
@@ -124,7 +123,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(fakes.BuildFakeWebhook())
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)

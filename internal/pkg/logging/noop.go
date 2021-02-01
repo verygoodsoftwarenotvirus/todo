@@ -1,0 +1,46 @@
+package logging
+
+import (
+	"net/http"
+)
+
+// noopLogger is a default logger we can provide that does nothing in case of dire emergencies.
+type noopLogger struct{}
+
+var logger = new(noopLogger)
+
+// NewNonOperationalLogger provides our noop logger to dependency managers.
+func NewNonOperationalLogger() Logger { return logger }
+
+// Info satisfies our interface.
+func (l *noopLogger) Info(string) {}
+
+// Debug satisfies our interface.
+func (l *noopLogger) Debug(string) {}
+
+// Error satisfies our interface.
+func (l *noopLogger) Error(error, string) {}
+
+// Fatal satisfies our interface.
+func (l *noopLogger) Fatal(error) {}
+
+// Printf satisfies our interface.
+func (l *noopLogger) Printf(_ string, _ ...interface{}) {}
+
+// SetLevel satisfies our interface.
+func (l *noopLogger) SetLevel(Level) {}
+
+// WithName satisfies our interface.
+func (l *noopLogger) WithName(string) Logger { return l }
+
+// WithValues satisfies our interface.
+func (l *noopLogger) WithValues(map[string]interface{}) Logger { return l }
+
+// WithValue satisfies our interface.
+func (l *noopLogger) WithValue(string, interface{}) Logger { return l }
+
+// WithRequest satisfies our interface.
+func (l *noopLogger) WithRequest(*http.Request) Logger { return l }
+
+// WithError satisfies our interface.
+func (l *noopLogger) WithError(error) Logger { return l }

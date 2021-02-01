@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -15,13 +16,11 @@ import (
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildTestService() *service {
 	return &service{
-		logger:             noop.NewLogger(),
+		logger:             logging.NewNonOperationalLogger(),
 		itemCounter:        &mockmetrics.UnitCounter{},
 		itemDataManager:    &mocktypes.ItemDataManager{},
 		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
@@ -42,7 +41,7 @@ func TestProvideItemsService(T *testing.T) {
 		}
 
 		s, err := ProvideService(
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			&mocktypes.ItemDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
@@ -64,7 +63,7 @@ func TestProvideItemsService(T *testing.T) {
 		}
 
 		s, err := ProvideService(
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			&mocktypes.ItemDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},

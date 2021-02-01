@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 )
 
 const (

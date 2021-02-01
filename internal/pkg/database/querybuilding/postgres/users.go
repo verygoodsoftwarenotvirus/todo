@@ -184,8 +184,6 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 		ToSql()
 	q.logQueryBuildingError(err)
 
-	q.logger.WithValue("query", query).WithValue("args", args).Info("test user creation query generated")
-
 	return query, args
 }
 

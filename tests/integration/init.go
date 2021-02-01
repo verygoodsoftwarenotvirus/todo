@@ -8,15 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging/zerolog"
 )
 
 const (
@@ -73,7 +72,7 @@ func initializeClient(oa2Client *types.OAuth2Client) *httpclient.Client {
 
 	c := httpclient.NewClient(
 		httpclient.WithURL(uri),
-		httpclient.WithLogger(noop.NewLogger()),
+		httpclient.WithLogger(logging.NewNonOperationalLogger()),
 		httpclient.WithHTTPClient(buildHTTPClient()),
 		httpclient.WithOAuth2ClientCredentials(
 			httpclient.BuildClientCredentialsConfig(

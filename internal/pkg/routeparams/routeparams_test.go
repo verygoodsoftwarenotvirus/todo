@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildRequest(t *testing.T) *http.Request {
@@ -96,7 +96,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 
 		ctx := context.Background()
 		exampleKey := "blah"
-		fn := BuildRouteParamIDFetcher(noop.NewLogger(), exampleKey, "thing")
+		fn := BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
 		expected := uint64(123)
 		req := buildRequest(t).WithContext(
 			context.WithValue(
@@ -121,7 +121,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 
 		ctx := context.Background()
 		exampleKey := "blah"
-		fn := BuildRouteParamIDFetcher(noop.NewLogger(), exampleKey, "thing")
+		fn := BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
 		expected := uint64(0)
 
 		req := buildRequest(t)

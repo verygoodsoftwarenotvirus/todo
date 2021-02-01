@@ -4,8 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 type (

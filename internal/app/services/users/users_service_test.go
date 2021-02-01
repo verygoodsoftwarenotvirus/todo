@@ -7,6 +7,7 @@ import (
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
@@ -18,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -32,7 +32,7 @@ func buildTestService(t *testing.T) *service {
 
 	s, err := ProvideUsersService(
 		&authservice.Config{},
-		noop.NewLogger(),
+		logging.NewNonOperationalLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
 		&mocktypes.AuditLogEntryDataManager{},
@@ -58,7 +58,7 @@ func TestProvideUsersService(T *testing.T) {
 		t.Parallel()
 		s, err := ProvideUsersService(
 			&authservice.Config{},
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
@@ -82,7 +82,7 @@ func TestProvideUsersService(T *testing.T) {
 
 		s, err := ProvideUsersService(
 			&authservice.Config{},
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},

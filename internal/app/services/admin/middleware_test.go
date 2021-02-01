@@ -9,10 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -30,7 +29,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		jsonBytes, err := json.Marshal(&exampleInput)
@@ -57,7 +56,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		exampleCreationInput := &types.UserReputationUpdateInput{}
 		jsonBytes, err := json.Marshal(&exampleCreationInput)

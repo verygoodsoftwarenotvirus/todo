@@ -11,8 +11,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging/zerolog"
 )
 
 const (
@@ -27,9 +27,8 @@ func main() {
 		configFilepath string
 	)
 
-	if x, err := strconv.ParseBool(os.Getenv(useNoOpLoggerEnvVar)); x {
-		_ = err
-		logger = noop.NewLogger()
+	if x, err := strconv.ParseBool(os.Getenv(useNoOpLoggerEnvVar)); x && err == nil {
+		logger = logging.NewNonOperationalLogger()
 	}
 
 	// find and validate our configuration filepath.

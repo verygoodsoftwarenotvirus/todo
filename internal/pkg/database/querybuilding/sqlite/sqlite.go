@@ -8,13 +8,13 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/luna-duclos/instrumentedsql"
 	sqlite "github.com/mattn/go-sqlite3"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 const (

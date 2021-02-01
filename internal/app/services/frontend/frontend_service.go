@@ -4,7 +4,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 )
 
 const (

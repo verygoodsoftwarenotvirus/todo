@@ -6,11 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -25,7 +24,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -77,7 +76,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -133,7 +132,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -185,7 +184,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideEncoderDecoder(noop.NewLogger())
+		s.encoderDecoder = encoding.ProvideEncoderDecoder(logging.NewNonOperationalLogger())
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()

@@ -6,7 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 )
 
 func TestV1Client_SetOption(T *testing.T) {
@@ -56,7 +57,7 @@ func TestWithLogger(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			WithLogger(noop.NewLogger()),
+			WithLogger(logging.NewNonOperationalLogger()),
 		)
 
 		assert.NotNil(t, c)

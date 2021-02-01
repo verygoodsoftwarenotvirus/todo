@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -23,8 +24,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
-
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -67,7 +66,7 @@ var files = map[string]configFunc{
 }
 
 func mustHashPass(password string) string {
-	hashed, err := bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost-1, noop.NewLogger()).
+	hashed, err := bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost-1, logging.NewNonOperationalLogger()).
 		HashPassword(context.Background(), password)
 
 	if err != nil {

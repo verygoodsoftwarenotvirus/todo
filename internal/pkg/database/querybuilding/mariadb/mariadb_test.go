@@ -9,7 +9,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 )
 
 const (
@@ -24,7 +25,7 @@ func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	return ProvideMariaDB(db, noop.NewLogger()), mock
+	return ProvideMariaDB(db, logging.NewNonOperationalLogger()), mock
 }
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
@@ -75,7 +76,7 @@ func TestProvideMariaDBConnection(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		_, err := ProvideMariaDBConnection(noop.NewLogger(), "")
+		_, err := ProvideMariaDBConnection(logging.NewNonOperationalLogger(), "")
 		assert.NoError(t, err)
 	})
 }

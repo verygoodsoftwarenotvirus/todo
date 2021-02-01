@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/google/wire"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 const (

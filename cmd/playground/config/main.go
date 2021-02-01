@@ -6,8 +6,7 @@ import (
 	"io/ioutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
-
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 )
 
 const exampleConfig = ``
@@ -25,7 +24,7 @@ func main() {
 	_, writeErr := f.WriteString(exampleConfig)
 	mustnt(writeErr)
 
-	cfg, configParseErr := viper.ParseConfigFile(context.Background(), noop.NewLogger(), f.Name())
+	cfg, configParseErr := viper.ParseConfigFile(context.Background(), logging.NewNonOperationalLogger(), f.Name())
 	mustnt(configParseErr)
 
 	fmt.Println(cfg.Database.CreateTestUser)

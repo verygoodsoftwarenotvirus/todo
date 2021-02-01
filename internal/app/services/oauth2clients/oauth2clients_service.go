@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
@@ -16,7 +17,6 @@ import (
 	"github.com/go-oauth2/oauth2/v4/manage"
 	oauth2server "github.com/go-oauth2/oauth2/v4/server"
 	oauth2store "github.com/go-oauth2/oauth2/v4/store"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 func init() {

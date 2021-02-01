@@ -6,15 +6,15 @@ import (
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildTestServer() *Server {
-	l := noop.NewLogger()
+	l := logging.NewNonOperationalLogger()
 
 	s := &Server{
 		logger:               l,
@@ -55,7 +55,7 @@ func TestProvideServer(T *testing.T) {
 			&mocktypes.WebhookDataServer{},
 			&mocktypes.AdminServer{},
 			database.BuildMockDatabase(),
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			&mockencoding.EncoderDecoder{},
 		)
 

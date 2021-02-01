@@ -7,7 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging/zerolog"
 )
 
 func main() {

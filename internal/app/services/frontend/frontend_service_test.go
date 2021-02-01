@@ -3,7 +3,7 @@ package frontend
 import (
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 )
 
 func TestProvideFrontendService(T *testing.T) {
@@ -11,6 +11,6 @@ func TestProvideFrontendService(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		ProvideService(noop.NewLogger(), Config{})
+		ProvideService(logging.NewNonOperationalLogger(), Config{})
 	})
 }

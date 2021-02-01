@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/go-chi/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 var routeParamRetrievalFunc = chi.URLParam

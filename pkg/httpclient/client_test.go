@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -87,7 +87,7 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	var (
 		u *url.URL
 		c *http.Client
-		l = noop.NewLogger()
+		l = logging.NewNonOperationalLogger()
 	)
 
 	if ts != nil {
@@ -108,7 +108,7 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 func buildTestClientWithInvalidURL(t *testing.T) *Client {
 	t.Helper()
 
-	l := noop.NewLogger()
+	l := logging.NewNonOperationalLogger()
 	u := MustParseURL("https://verygoodsoftwarenotvirus.ru")
 	u.Scheme = fmt.Sprintf(`%s://`, asciiControlChar)
 
@@ -171,7 +171,7 @@ func TestV1Client_TokenSource(T *testing.T) {
 
 		c := NewClient(
 			WithURL(MustParseURL(exampleURI)),
-			WithLogger(noop.NewLogger()),
+			WithLogger(logging.NewNonOperationalLogger()),
 			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
 			WithOAuth2ClientCredentials(
 				BuildClientCredentialsConfig(
@@ -192,7 +192,7 @@ func TestV1Client_TokenSource(T *testing.T) {
 
 		c := NewClient(
 			WithURL(MustParseURL(exampleURI)),
-			WithLogger(noop.NewLogger()),
+			WithLogger(logging.NewNonOperationalLogger()),
 			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
 		)
 
@@ -210,7 +210,7 @@ func TestNewClient(T *testing.T) {
 
 		c := NewClient(
 			WithURL(MustParseURL(exampleURI)),
-			WithLogger(noop.NewLogger()),
+			WithLogger(logging.NewNonOperationalLogger()),
 			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
 		)
 

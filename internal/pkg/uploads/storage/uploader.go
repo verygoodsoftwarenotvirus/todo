@@ -7,16 +7,16 @@ import (
 	"net/http"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"gocloud.dev/blob/s3blob"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 )
 
 const (

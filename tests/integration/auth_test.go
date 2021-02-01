@@ -8,6 +8,7 @@ import (
 	"time"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -17,7 +18,6 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func TestAuth(test *testing.T) {
@@ -367,7 +367,7 @@ func TestAuth(test *testing.T) {
 
 		c := httpclient.NewClient(
 			httpclient.WithURL(testClient.URL()),
-			httpclient.WithLogger(noop.NewLogger()),
+			httpclient.WithLogger(logging.NewNonOperationalLogger()),
 			httpclient.WithOAuth2ClientCredentials(
 				httpclient.BuildClientCredentialsConfig(
 					testClient.URL(),

@@ -25,6 +25,7 @@ require (
 	github.com/go-oauth2/oauth2/v4 v4.1.2
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/google/uuid v1.1.2
 	github.com/google/wire v0.4.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
@@ -36,20 +37,22 @@ require (
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/o1egl/paseto v1.0.0
+	github.com/o1egl/paseto v1.0.0 // indirect
 	github.com/pquerna/otp v1.2.0
+	github.com/rs/zerolog v1.15.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.3
 	github.com/stretchr/testify v1.6.1
 	github.com/tebeka/selenium v0.9.9
-	gitlab.com/verygoodsoftwarenotvirus/logging/v2 v2.0.0
 	go.opencensus.io v0.22.5
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.15.1
 	go.opentelemetry.io/otel v0.15.0
 	go.opentelemetry.io/otel/exporters/metric/prometheus v0.15.0
 	go.opentelemetry.io/otel/exporters/trace/jaeger v0.15.0
 	go.opentelemetry.io/otel/sdk v0.15.0
+	go.uber.org/zap v1.16.0
 	gocloud.dev v0.21.0
 	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c
 	golang.org/x/oauth2 v0.0.0-20201203001011-0b49973bad19

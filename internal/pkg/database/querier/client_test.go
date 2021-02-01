@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 const (
@@ -78,7 +78,7 @@ func buildTestClient(t *testing.T) (*Client, *sqlmockExpecterWrapper) {
 
 	c := &Client{
 		db:              db,
-		logger:          noop.NewLogger(),
+		logger:          logging.NewNonOperationalLogger(),
 		timeFunc:        defaultTimeFunc,
 		tracer:          tracing.NewTracer("test"),
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
@@ -188,7 +188,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		mockDB.ExpectPing().WillDelayFor(0)
 
-		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), db, exampleConfig, queryBuilder)
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
@@ -208,7 +208,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		mockDB.ExpectPing().WillReturnError(errors.New("blah"))
 
-		actual, err := ProvideDatabaseClient(ctx, noop.NewLogger(), db, exampleConfig, queryBuilder)
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 

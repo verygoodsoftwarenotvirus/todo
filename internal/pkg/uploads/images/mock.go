@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/stretchr/testify/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 )
 
 var _ ImageUploadProcessor = (*MockImageUploadProcessor)(nil)

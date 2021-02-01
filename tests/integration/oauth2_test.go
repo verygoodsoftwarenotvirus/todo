@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -13,7 +14,6 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func mustBuildCode(t *testing.T, totpSecret string) string {
@@ -220,7 +220,7 @@ func TestOAuth2Clients(test *testing.T) {
 			c2 := httpclient.NewClient(
 				httpclient.WithHTTPClient(buildHTTPClient()),
 				httpclient.WithURL(testClient.URL()),
-				httpclient.WithLogger(noop.NewLogger()),
+				httpclient.WithLogger(logging.NewNonOperationalLogger()),
 				httpclient.WithOAuth2ClientCredentials(
 					httpclient.BuildClientCredentialsConfig(
 						testClient.URL(),

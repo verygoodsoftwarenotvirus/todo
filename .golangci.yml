@@ -336,6 +336,10 @@ issues:
       linters:
         - gocyclo
 
+    - path: internal/pkg/logging/zap
+      linters:
+        - gocyclo
+
     - path: tests/load/main.go
       linters:
         - gocritic # gocritic complains about an interface implementation I have no control over

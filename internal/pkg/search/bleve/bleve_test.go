@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 type (
@@ -37,7 +37,7 @@ func TestNewBleveIndexManager(T *testing.T) {
 		t.Parallel()
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "constructor_test_happy_path.bleve"))
 
-		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)
 
 		assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
@@ -47,7 +47,7 @@ func TestNewBleveIndexManager(T *testing.T) {
 		t.Parallel()
 		exampleIndexPath := search.IndexPath("")
 
-		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.Error(t, err)
 	})
 
@@ -55,7 +55,7 @@ func TestNewBleveIndexManager(T *testing.T) {
 		t.Parallel()
 		exampleIndexPath := search.IndexPath("constructor_test_invalid_name.bleve")
 
-		_, err := NewBleveIndexManager(exampleIndexPath, "invalid", noop.NewLogger())
+		_, err := NewBleveIndexManager(exampleIndexPath, "invalid", logging.NewNonOperationalLogger())
 		assert.Error(t, err)
 	})
 }
@@ -73,7 +73,7 @@ func TestBleveIndexManager_Index(T *testing.T) {
 		const exampleQuery = "index_test"
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "index_test_obligatory.bleve"))
 
-		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)
 		require.NotNil(t, im)
 
@@ -101,7 +101,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		const exampleQuery = "search_test"
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_obligatory.bleve"))
 
-		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)
 		require.NotNil(t, im)
 
@@ -125,7 +125,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_empty_index.bleve"))
 
-		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)
 		require.NotNil(t, im)
 
@@ -143,7 +143,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		const exampleQuery = "search_test"
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_closed_index.bleve"))
 
-		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)
 		require.NotNil(t, im)
 
@@ -170,7 +170,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 		const exampleQuery = "search_test"
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "search_test_invalid_id.bleve"))
 
-		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)
 		require.NotNil(t, im)
 
@@ -202,7 +202,7 @@ func TestBleveIndexManager_Delete(T *testing.T) {
 		const exampleQuery = "delete_test"
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "delete_test.bleve"))
 
-		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, noop.NewLogger())
+		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)
 		require.NotNil(t, im)
 

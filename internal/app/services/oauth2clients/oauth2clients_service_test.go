@@ -10,6 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -24,7 +25,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -38,7 +38,7 @@ func buildTestService(t *testing.T) *service {
 
 	return &service{
 		clientDataManager:    database.BuildMockDatabase(),
-		logger:               noop.NewLogger(),
+		logger:               logging.NewNonOperationalLogger(),
 		encoderDecoder:       &mockencoding.EncoderDecoder{},
 		authenticator:        &mockauth.Authenticator{},
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
@@ -56,7 +56,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
 		s, err := ProvideOAuth2ClientsService(
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
@@ -77,7 +77,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
 		s, err := ProvideOAuth2ClientsService(
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},

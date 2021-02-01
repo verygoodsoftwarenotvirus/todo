@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
@@ -13,7 +14,6 @@ import (
 
 	bleve "github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/searcher"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 const (

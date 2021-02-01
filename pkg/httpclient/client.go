@@ -11,12 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/moul/http2curl"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 	"golang.org/x/oauth2"
 )
 
@@ -100,7 +99,7 @@ func NewClient(options ...option) *Client {
 		authedClient: http.DefaultClient,
 		plainClient:  http.DefaultClient,
 		debug:        false,
-		logger:       noop.NewLogger(),
+		logger:       logging.NewNonOperationalLogger(),
 		tracer:       tracing.NewTracer(clientName),
 	}
 

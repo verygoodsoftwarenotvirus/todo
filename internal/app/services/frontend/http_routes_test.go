@@ -7,11 +7,11 @@ import (
 	"os"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildRequest(t *testing.T) *http.Request {
@@ -37,7 +37,7 @@ func TestService_StaticDir(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		s := &service{
-			logger: noop.NewLogger(),
+			logger: logging.NewNonOperationalLogger(),
 			tracer: tracing.NewTracer("test"),
 		}
 
@@ -58,7 +58,7 @@ func TestService_StaticDir(T *testing.T) {
 	T.Run("with frontend routing path", func(t *testing.T) {
 		t.Parallel()
 		s := &service{
-			logger: noop.NewLogger(),
+			logger: logging.NewNonOperationalLogger(),
 			tracer: tracing.NewTracer("test"),
 		}
 

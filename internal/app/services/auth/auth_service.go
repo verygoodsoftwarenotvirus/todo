@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/gorilla/securecookie"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 const (

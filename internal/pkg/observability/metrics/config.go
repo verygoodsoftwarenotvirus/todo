@@ -5,7 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
 )
 

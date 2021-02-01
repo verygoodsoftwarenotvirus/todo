@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/azureblob"
 )

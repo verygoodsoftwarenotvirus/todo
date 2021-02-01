@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging/zerolog"
 )
 
 var urlToUse string

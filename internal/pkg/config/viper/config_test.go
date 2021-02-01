@@ -13,6 +13,7 @@ import (
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
@@ -21,7 +22,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func Test_RandString(t *testing.T) {
@@ -43,7 +43,7 @@ func TestParseConfigFile(T *testing.T) {
 	T.Parallel()
 
 	ctx := context.Background()
-	logger := noop.NewLogger()
+	logger := logging.NewNonOperationalLogger()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()

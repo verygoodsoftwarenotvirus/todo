@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/go-chi/chi/middleware"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
 )
 
 var idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\\d+`)

@@ -7,6 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2/noop"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -23,7 +23,7 @@ func buildTestService(t *testing.T) *service {
 
 	return &service{
 		clientDataManager:      database.BuildMockDatabase(),
-		logger:                 noop.NewLogger(),
+		logger:                 logging.NewNonOperationalLogger(),
 		encoderDecoder:         &mockencoding.EncoderDecoder{},
 		authenticator:          &mockauth.Authenticator{},
 		urlClientIDExtractor:   func(req *http.Request) uint64 { return 0 },
@@ -40,7 +40,7 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		mockDelegatedClientDataManager := &mocktypes.DelegatedClientDataManager{}
 
 		s, err := ProvideDelegatedClientsService(
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			mockDelegatedClientDataManager,
 			&mocktypes.UserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
@@ -61,7 +61,7 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		mockDelegatedClientDataManager := &mocktypes.DelegatedClientDataManager{}
 
 		s, err := ProvideDelegatedClientsService(
-			noop.NewLogger(),
+			logging.NewNonOperationalLogger(),
 			mockDelegatedClientDataManager,
 			&mocktypes.UserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},

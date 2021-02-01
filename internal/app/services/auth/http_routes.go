@@ -14,9 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/securecookie"
-	"github.com/o1egl/paseto"
 )
 
 const (
@@ -80,48 +78,6 @@ func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 	tracing.AttachUserIDToSpan(span, ca.UserID)
 
 	return user, nil
-}
-
-// TokenGrantHandler is our login route.
-func (s *service) TokenGrantHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	logger.Debug("TokenGrantHandler called")
-
-	loginData, ok := ctx.Value(pasetoCreationnputMiddlewareCtxKey).(*types.PASETOCreationInput)
-	if !ok || loginData == nil {
-		logger.Error(nil, "no PASETOCreationInput found for token grant request")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
-		return
-	}
-
-	logger = logger.WithValue(keys.OAuth2ClientIDKey, loginData.ClientID)
-
-	// fetch client information here
-
-	now, exp := time.Now(), time.Now().Add(s.config.PASETO.Lifetime)
-
-	jsonToken := paseto.JSONToken{
-		Audience:   s.config.PASETO.Audience,
-		Issuer:     s.config.PASETO.Listener,
-		Jti:        uuid.New().String(),
-		Subject:    "user_id",
-		IssuedAt:   now,
-		Expiration: exp,
-		NotBefore:  now,
-	}
-
-	// Encrypt data
-	token, err := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, nil)
-	if err != nil {
-		logger.Error(err, "error encrypting token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, token, http.StatusCreated)
 }
 
 // LoginHandler is our login route.

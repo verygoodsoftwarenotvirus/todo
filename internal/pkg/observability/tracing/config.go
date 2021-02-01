@@ -5,7 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v2"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+
 	"go.opencensus.io/trace"
 )
 

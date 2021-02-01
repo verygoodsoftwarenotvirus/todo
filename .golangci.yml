@@ -254,10 +254,10 @@ linters:
     - nlreturn # nlreturn checks for a new line before return and branch statements to increase code clarity
 
 issues:
-  # # List of regexps of issue texts to exclude, empty list by default.
-  # # But independently from this option we use default exclude patterns,
-  # # it can be disabled by `exclude-use-default: false`. To list all
-  # # excluded by default patterns execute `golangci-lint run --help`
+  # List of regexps of issue texts to exclude, empty list by default.
+  # But independently from this option we use default exclude patterns,
+  # it can be disabled by `exclude-use-default: false`. To list all
+  # excluded by default patterns execute `golangci-lint run --help`
   # exclude:
   #   -
 
@@ -304,14 +304,16 @@ issues:
       linters:
         - gosec
 
-    - path: cmd/config_gen
-      linters:
-        - gomnd
-
     - path: internal/app/services/
       linters:
         - wsl
       text: "return statements should not be cuddled if block has more than two lines"
+
+    ## BEGIN SPECIAL SNOWFLAKES
+
+    - path: cmd/config_gen
+      linters:
+        - gomnd
 
     - path: internal/pkg/database/querybuilding/mariadb/migrations.go
       linters:
@@ -324,8 +326,6 @@ issues:
     - path: internal/pkg/database/querybuilding/sqlite/migrations.go
       linters:
         - gomnd
-
-    ## BEGIN SPECIAL SNOWFLAKES
 
     - path: internal/pkg/permissions/permissions.go
       linters:
@@ -372,8 +372,7 @@ issues:
 
     ## END SPECIAL SNOWFLAKES
 
-    # Exclude known linters from partially hard-vendored code,
-    # which is impossible to exclude via "nolint" comments.
+    # Exclude known linters from partially hard-vendored code, which is impossible to exclude via "nolint" comments.
     # - path: internal/hmac/
     #   text: "weak cryptographic primitive"
     #   linters:
@@ -393,8 +392,7 @@ issues:
         - lll
       source: "^//go:generate "
 
-  # Independently from option `exclude` we use default exclude patterns,
-  # it can be disabled by this option. To list all
+  # Independently from option `exclude` we use default exclude patterns, it can be disabled by this option. To list all
   # excluded by default patterns execute `golangci-lint run --help`.
   # Default value for this option is true.
   exclude-use-default: false
@@ -405,12 +403,10 @@ issues:
   # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
 
-  # Show only new issues: if there are unstaged changes or untracked files,
-  # only those changes are analyzed, else only changes in HEAD~ are analyzed.
-  # It's a super-useful option for integration of golangci-lint into existing
-  # large codebase. It's not practical to fix all existing issues at the moment
-  # of integration: much better don't allow issues in new code.
-  # Default is false.
+  # Show only new issues: if there are unstaged changes or untracked files, only those changes are analyzed, else only
+  # changes in HEAD~ are analyzed. It's a super-useful option for integration of golangci-lint into existing large
+  # codebase. It's not practical to fix all existing issues at the moment of integration: much better don't allow issues
+  # in new code. Default is false.
   new: false
 
   #

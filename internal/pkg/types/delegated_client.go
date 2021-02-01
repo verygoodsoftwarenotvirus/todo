@@ -85,12 +85,6 @@ type (
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 
 		CreationInputMiddleware(next http.Handler) http.Handler
-		DelegatedClientInfoMiddleware(next http.Handler) http.Handler
-		ExtractDelegatedClientFromRequest(ctx context.Context, req *http.Request) (*DelegatedClient, error)
-
-		// wrappers for our implementation library.
-		HandleAuthorizeRequest(res http.ResponseWriter, req *http.Request) error
-		HandleTokenRequest(res http.ResponseWriter, req *http.Request) error
 	}
 )
 

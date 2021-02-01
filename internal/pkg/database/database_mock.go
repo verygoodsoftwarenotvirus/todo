@@ -21,6 +21,7 @@ func BuildMockDatabase() *MockDatabase {
 		ItemDataManager:                    &mocktypes.ItemDataManager{},
 		UserDataManager:                    &mocktypes.UserDataManager{},
 		AdminUserDataManager:               &mocktypes.AdminUserDataManager{},
+		DelegatedClientDataManager:         &mocktypes.DelegatedClientDataManager{},
 		OAuth2ClientDataManager:            &mocktypes.OAuth2ClientDataManager{},
 		WebhookDataManager:                 &mocktypes.WebhookDataManager{},
 	}
@@ -35,6 +36,7 @@ type MockDatabase struct {
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
 	*mocktypes.AdminUserDataManager
+	*mocktypes.DelegatedClientDataManager
 	*mocktypes.OAuth2ClientDataManager
 	*mocktypes.WebhookDataManager
 	*mocktypes.AccountDataManager

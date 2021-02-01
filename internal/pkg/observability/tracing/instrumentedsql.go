@@ -3,7 +3,7 @@ package tracing
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
 	"github.com/luna-duclos/instrumentedsql"
 	"go.opentelemetry.io/otel/label"

@@ -15,8 +15,8 @@ import (
 	"time"
 
 	flag "github.com/spf13/pflag"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 var (

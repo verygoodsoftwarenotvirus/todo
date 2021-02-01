@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 var _ ImageUploadProcessor = (*MockImageUploadProcessor)(nil)

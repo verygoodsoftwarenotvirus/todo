@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/moul/http2curl"

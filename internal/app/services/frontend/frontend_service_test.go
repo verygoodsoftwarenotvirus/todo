@@ -3,7 +3,7 @@ package frontend
 import (
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 func TestProvideFrontendService(T *testing.T) {

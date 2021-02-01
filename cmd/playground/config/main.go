@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 const exampleConfig = ``

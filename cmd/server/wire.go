@@ -30,7 +30,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
 
 	"github.com/google/wire"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 // BuildServer builds a server.

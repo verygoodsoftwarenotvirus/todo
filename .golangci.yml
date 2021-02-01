@@ -336,7 +336,7 @@ issues:
       linters:
         - gocyclo
 
-    - path: internal/pkg/logging/zap
+    - path: internal/pkg/observability/logging/zap
       linters:
         - gocyclo
 

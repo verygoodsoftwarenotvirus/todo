@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 var uploadCount = 0

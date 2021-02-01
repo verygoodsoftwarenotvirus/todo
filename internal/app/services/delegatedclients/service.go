@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 func init() {

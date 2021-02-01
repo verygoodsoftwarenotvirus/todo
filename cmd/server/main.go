@@ -11,8 +11,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 const (

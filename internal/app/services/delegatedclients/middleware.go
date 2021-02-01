@@ -2,17 +2,10 @@ package delegatedclients
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
-
-const (
-	scopesSeparator = ","
-)
-
-var errClientUnauthorizedForScope = errors.New("client not authorized for scope")
 
 // CreationInputMiddleware is a middleware for attaching Delegated client info to a request.
 func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {

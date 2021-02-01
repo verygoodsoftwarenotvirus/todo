@@ -6,7 +6,6 @@ import (
 	"encoding/base32"
 	"errors"
 	"net/http"
-	"path/filepath"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -17,8 +16,7 @@ const (
 	// DelegatedClientIDURIParamKey is used for referring to Delegated client IDs in router params.
 	DelegatedClientIDURIParamKey = "delegatedClientID"
 
-	delegatedClientIDURIParamKey                  = "client_id"
-	clientIDKey                  types.ContextKey = "client_id"
+	clientIDKey types.ContextKey = "client_id"
 )
 
 // randString produces a random string.
@@ -39,12 +37,6 @@ func (s *service) fetchUserID(req *http.Request) uint64 {
 		return si.UserID
 	}
 	return 0
-}
-
-// determineScope determines the scope of a request by its url.
-func determineScope(req *http.Request) string {
-	_, scope := filepath.Split(req.URL.Path)
-	return scope
 }
 
 // ListHandler is a handler that returns a list of Delegated clients.

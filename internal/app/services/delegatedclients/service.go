@@ -44,7 +44,6 @@ type (
 		encoderDecoder         encoding.EncoderDecoder
 		urlClientIDExtractor   func(req *http.Request) uint64
 		delegatedClientCounter metrics.UnitCounter
-		initialized            bool
 		tracer                 tracing.Tracer
 	}
 )

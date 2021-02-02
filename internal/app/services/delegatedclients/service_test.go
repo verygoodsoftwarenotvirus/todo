@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"testing"
 
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"

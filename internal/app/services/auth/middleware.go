@@ -17,8 +17,8 @@ const (
 
 	// usernameFormKey is the string we look for in request forms for username information.
 	usernameFormKey = "username"
-	// passwordFormKey is the string we look for in request forms for password information.
-	passwordFormKey = "password"
+	// passwordFormKey is the string we look for in request forms for authentication information.
+	passwordFormKey = "authentication"
 	// totpTokenFormKey is the string we look for in request forms for TOTP token information.
 	totpTokenFormKey = "totpToken"
 )

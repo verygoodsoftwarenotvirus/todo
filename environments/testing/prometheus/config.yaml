@@ -28,11 +28,11 @@ scrape_configs:
     #   key: 'value'
 
     # Sets the `Authorization` header on every scrape request with the
-    # configured username and password.
-    # password and password_file are mutually exclusive.
+    # configured username and authentication.
+    # authentication and password_file are mutually exclusive.
     #  basic_auth:
     #    username: <string>
-    #    password: <secret>
+    #    authentication: <secret>
     #    password_file: <string>
 
     # Sets the `Authorization` header on every scrape request with

@@ -103,7 +103,7 @@ func TestAuth(test *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 
-	test.Run("should not be able to log in with the wrong password", func(t *testing.T) {
+	test.Run("should not be able to log in with the wrong authentication", func(t *testing.T) {
 		t.Parallel()
 
 		ctx, span := tracing.StartSpan(context.Background())
@@ -195,7 +195,7 @@ func TestAuth(test *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})
 
-	test.Run("should be able to change password", func(t *testing.T) {
+	test.Run("should be able to change authentication", func(t *testing.T) {
 		t.Parallel()
 
 		ctx, span := tracing.StartSpan(context.Background())
@@ -212,13 +212,13 @@ func TestAuth(test *testing.T) {
 		require.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		// create new password.
+		// create new authentication.
 		var backwardsPass string
 		for _, v := range testUser.HashedPassword {
 			backwardsPass = string(v) + backwardsPass
 		}
 
-		// update password.
+		// update authentication.
 		assert.NoError(t, testClient.ChangePassword(ctx, cookie, &types.PasswordUpdateInput{
 			CurrentPassword: testUser.HashedPassword,
 			TOTPToken:       generateTOTPTokenForUser(t, testUser),
@@ -228,7 +228,7 @@ func TestAuth(test *testing.T) {
 		// logout.
 		assert.NoError(t, testClient.Logout(ctx))
 
-		// login again with new password.
+		// login again with new authentication.
 		cookie, err = testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  backwardsPass,

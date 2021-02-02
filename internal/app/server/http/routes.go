@@ -62,7 +62,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		// need creds beyond this point.
 		authedRouter := userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.AuthorizationMiddleware)
 		authedRouter.WithMiddleware(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
-		authedRouter.WithMiddleware(s.usersService.PasswordUpdateInputMiddleware).Put("/password/new", s.usersService.UpdatePasswordHandler)
+		authedRouter.WithMiddleware(s.usersService.PasswordUpdateInputMiddleware).Put("/authentication/new", s.usersService.UpdatePasswordHandler)
 	})
 
 	router.Route("/oauth2", func(oauth2Router routing.Router) {

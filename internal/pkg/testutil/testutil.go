@@ -195,7 +195,7 @@ func getLoginCookie(ctx context.Context, serviceURL string, u *types.User) (*htt
 				`
 					{
 						"username": %q,
-						"password": %q,
+						"authentication": %q,
 						"totpToken": %q
 					}
 				`,
@@ -249,12 +249,12 @@ func CreateObligatoryOAuth2Client(ctx context.Context, serviceURL string, u *typ
 		strings.NewReader(fmt.Sprintf(`
 	{
 		"username": %q,
-		"password": %q,
+		"authentication": %q,
 		"totpToken": %q,
 		"scopes": ["*"]
 	}
 		`, u.Username, u.HashedPassword, code)),
-		// remember we use u.HashedPassword as a temp container for the plain password
+		// remember we use u.HashedPassword as a temp container for the plain authentication
 	)
 	if err != nil {
 		return nil, err

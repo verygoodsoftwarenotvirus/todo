@@ -29,7 +29,7 @@ type (
 	// BasicAuthConfig contains settings related to .
 	BasicAuthConfig struct {
 		Username string `json:"username" mapstructure:"username" toml:"username,omitempty"`
-		Password string `json:"password" mapstructure:"password" toml:"password,omitempty"`
+		Password string `json:"authentication" mapstructure:"authentication" toml:"authentication,omitempty"`
 	}
 
 	// AuthConfig contains settings related to .

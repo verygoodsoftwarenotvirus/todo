@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"

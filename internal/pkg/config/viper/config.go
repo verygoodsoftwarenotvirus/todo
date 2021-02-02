@@ -91,7 +91,7 @@ const (
 	// ConfigKeyDatabaseCreateTestUserUsername is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.Username setting.
 	ConfigKeyDatabaseCreateTestUserUsername = "database.create_test_user.username"
 	// ConfigKeyDatabaseCreateTestUserPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.Password setting.
-	ConfigKeyDatabaseCreateTestUserPassword = "database.create_test_user.password"
+	ConfigKeyDatabaseCreateTestUserPassword = "database.create_test_user.authentication"
 	// ConfigKeyDatabaseCreateTestUserIsSiteAdmin is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.IsSiteAdmin setting.
 	ConfigKeyDatabaseCreateTestUserIsSiteAdmin = "database.create_test_user.is_site_admin"
 	// ConfigKeyDatabaseCreateTestUserHashedPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.HashedPassword setting.

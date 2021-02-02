@@ -17,20 +17,20 @@ import (
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
 
 	"github.com/google/wire"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 // BuildServer builds a server.
@@ -40,7 +40,7 @@ func BuildServer(
 	logger logging.Logger,
 	dbm database2.DataManager,
 	db *sql.DB,
-	authenticator password.Authenticator,
+	authenticator authentication.Authenticator,
 ) (*server2.Server, error) {
 	wire.Build(
 		// app

@@ -293,7 +293,7 @@ func TestService_ClientAuthorizedHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
-	T.Run("with password credentials grant", func(t *testing.T) {
+	T.Run("with authentication credentials grant", func(t *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 		exampleGrant := oauth2.PasswordCredentials

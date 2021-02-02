@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -54,7 +54,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "password"
+		examplePassword := "authentication"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
@@ -93,7 +93,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "password"
+		examplePassword := "authentication"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return((*types.User)(nil), sql.ErrNoRows)
@@ -120,7 +120,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "password"
+		examplePassword := "authentication"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
@@ -147,7 +147,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "password"
+		examplePassword := "authentication"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
@@ -186,7 +186,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "password"
+		examplePassword := "authentication"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
@@ -416,7 +416,7 @@ func TestService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 
-	T.Run("with error hashing password", func(t *testing.T) {
+	T.Run("with error authentication authentication", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -1283,7 +1283,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
-	T.Run("with error hashing password", func(t *testing.T) {
+	T.Run("with error authentication authentication", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)

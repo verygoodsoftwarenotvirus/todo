@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -58,7 +58,7 @@ type (
 		clientDataManager    types.OAuth2ClientDataManager
 		userDataManager      types.UserDataManager
 		auditLog             types.OAuth2ClientAuditManager
-		authenticator        password.Authenticator
+		authenticator        authentication.Authenticator
 		encoderDecoder       encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
 		oauth2Handler        oauth2Handler
@@ -74,7 +74,7 @@ func ProvideOAuth2ClientsService(
 	clientDataManager types.OAuth2ClientDataManager,
 	userDataManager types.UserDataManager,
 	auditLog types.OAuth2ClientAuditManager,
-	authenticator password.Authenticator,
+	authenticator authentication.Authenticator,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 ) (types.OAuth2ClientDataService, error) {

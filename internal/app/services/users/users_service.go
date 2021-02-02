@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
@@ -42,7 +42,7 @@ type (
 		accountDataManager   types.AccountDataManager
 		auditLog             types.UserAuditManager
 		authSettings         *authservice.Config
-		authenticator        password.Authenticator
+		authenticator        authentication.Authenticator
 		logger               logging.Logger
 		encoderDecoder       encoding.EncoderDecoder
 		userIDFetcher        func(*http.Request) uint64
@@ -62,7 +62,7 @@ func ProvideUsersService(
 	userDataManager types.UserDataManager,
 	accountDataManager types.AccountDataManager,
 	auditLog types.UserAuditManager,
-	authenticator password.Authenticator,
+	authenticator authentication.Authenticator,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	imageUploadProcessor images.ImageUploadProcessor,

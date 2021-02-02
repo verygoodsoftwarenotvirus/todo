@@ -142,13 +142,13 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UsernameKey, userInput.Username)
 	tracing.AttachUsernameToSpan(span, userInput.Username)
 
-	// ensure the password isn't garbage-tier
+	// ensure the authentication isn't garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "password too weak!", http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "authentication too weak!", http.StatusBadRequest)
 		return
 	}
 
-	// hash the password.
+	// hash the authentication.
 	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
 	if err != nil {
 		logger.Error(err, "valid input not attached to request")
@@ -427,7 +427,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, result, http.StatusAccepted)
 }
 
-// UpdatePasswordHandler updates a user's password, after validating that information received
+// UpdatePasswordHandler updates a user's authentication, after validating that information received
 // from PasswordUpdateInputContextMiddleware is valid.
 func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -471,16 +471,16 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	tracing.AttachUsernameToSpan(span, user.Username)
 
-	// ensure the password isn't garbage-tier
+	// ensure the authentication isn't garbage-tier
 	if err := passwordvalidator.Validate(input.NewPassword, minimumPasswordEntropy); err != nil {
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "new password is too weak!", http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "new authentication is too weak!", http.StatusBadRequest)
 		return
 	}
 
-	// hash the new password.
+	// hash the new authentication.
 	newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
-		logger.Error(err, "error hashing password")
+		logger.Error(err, "error authentication authentication")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

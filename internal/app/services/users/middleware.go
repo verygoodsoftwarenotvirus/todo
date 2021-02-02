@@ -11,7 +11,7 @@ const (
 	// userCreationMiddlewareCtxKey is the context key for creation input.
 	userCreationMiddlewareCtxKey types.ContextKey = "user_creation_input"
 
-	// passwordChangeMiddlewareCtxKey is the context key for password changes.
+	// passwordChangeMiddlewareCtxKey is the context key for authentication changes.
 	passwordChangeMiddlewareCtxKey types.ContextKey = "user_password_change"
 
 	// totpSecretVerificationMiddlewareCtxKey is the context key for TOTP token refreshes.
@@ -49,7 +49,7 @@ func (s *service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// PasswordUpdateInputMiddleware fetches password update input from requests.
+// PasswordUpdateInputMiddleware fetches authentication update input from requests.
 func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.PasswordUpdateInput)

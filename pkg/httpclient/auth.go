@@ -129,7 +129,7 @@ func (c *Client) Logout(ctx context.Context) error {
 	return nil
 }
 
-// BuildChangePasswordRequest builds a request to change a user's password.
+// BuildChangePasswordRequest builds a request to change a user's authentication.
 func (c *Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -138,7 +138,7 @@ func (c *Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Co
 		return nil, ErrNilInputProvided
 	}
 
-	uri := c.buildVersionlessURL(nil, usersBasePath, "password", "new")
+	uri := c.buildVersionlessURL(nil, usersBasePath, "authentication", "new")
 
 	req, err := c.buildDataRequest(ctx, http.MethodPut, uri, input)
 	if err != nil {
@@ -150,14 +150,14 @@ func (c *Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Co
 	return req, nil
 }
 
-// ChangePassword executes a request to change a user's password.
+// ChangePassword executes a request to change a user's authentication.
 func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildChangePasswordRequest(ctx, cookie, input)
 	if err != nil {
-		return fmt.Errorf("building password change request: %w", err)
+		return fmt.Errorf("building authentication change request: %w", err)
 	}
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
@@ -168,7 +168,7 @@ func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input 
 	c.closeResponseBody(res)
 
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("erroneous response code when changing password: %d", res.StatusCode)
+		return fmt.Errorf("erroneous response code when changing authentication: %d", res.StatusCode)
 	}
 
 	return nil
@@ -202,7 +202,7 @@ func (c *Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, 
 
 	req, err := c.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
 	if err != nil {
-		return nil, fmt.Errorf("building password change request: %w", err)
+		return nil, fmt.Errorf("building authentication change request: %w", err)
 	}
 
 	var output *types.TOTPSecretRefreshResponse

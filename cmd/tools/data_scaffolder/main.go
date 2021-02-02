@@ -104,7 +104,7 @@ func main() {
 
 			userLogger := logger.
 				WithValue("username", createdUser.Username).
-				WithValue("password", createdUser.HashedPassword).
+				WithValue("authentication", createdUser.HashedPassword).
 				WithValue("totp_secret", createdUser.TwoFactorSecret).
 				WithValue("user_id", createdUser.ID).
 				WithValue("user_number", x)
@@ -194,7 +194,7 @@ func main() {
 			fmt.Printf(`
 
 username:  %s
-password:  %s
+authentication:  %s
 2FA token: %s
 
 `, singleUser.Username, singleUser.HashedPassword, buildTOTPTokenForSecret(singleUser.TwoFactorSecret))

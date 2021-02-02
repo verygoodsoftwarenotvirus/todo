@@ -147,7 +147,7 @@ func (s *service) ClientAuthorizedHandler(clientID string, grant oauth2.GrantTyp
 
 	// reject invalid grant type.
 	if grant == oauth2.PasswordCredentials {
-		return false, errors.New("invalid grant type: password")
+		return false, errors.New("invalid grant type: authentication")
 	}
 
 	// fetch client data.

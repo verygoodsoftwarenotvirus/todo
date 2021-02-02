@@ -215,7 +215,7 @@ frontend-selenium-tests:
 # services:
 #   - docker:dind
 # script:
-#   - docker login --username=gitlab-ci-token --password=$CI_JOB_TOKEN registry.gitlab.com
+#   - docker login --username=gitlab-ci-token --authentication=$CI_JOB_TOKEN registry.gitlab.com
 #   - docker build --tag registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file environments/production/Dockerfile .
 #   - docker push registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest
 # only:

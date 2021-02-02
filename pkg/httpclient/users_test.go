@@ -49,7 +49,7 @@ func TestV1Client_GetUser(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleUser.ID)
 
-		// the hashed password is never transmitted over the wire.
+		// the hashed authentication is never transmitted over the wire.
 		exampleUser.HashedPassword = ""
 		// the two factor secret is transmitted over the wire only on creation.
 		exampleUser.TwoFactorSecret = ""
@@ -123,7 +123,7 @@ func TestV1Client_GetUsers(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUserList := fakes.BuildFakeUserList()
-		// the hashed password is never transmitted over the wire.
+		// the hashed authentication is never transmitted over the wire.
 		exampleUserList.Users[0].HashedPassword = ""
 		exampleUserList.Users[1].HashedPassword = ""
 		exampleUserList.Users[2].HashedPassword = ""
@@ -201,7 +201,7 @@ func TestV1Client_SearchForUsersByUsername(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
 
 		exampleUserList := fakes.BuildFakeUserList()
-		// the hashed password is never transmitted over the wire.
+		// the hashed authentication is never transmitted over the wire.
 		exampleUserList.Users[0].HashedPassword = ""
 		exampleUserList.Users[1].HashedPassword = ""
 		exampleUserList.Users[2].HashedPassword = ""

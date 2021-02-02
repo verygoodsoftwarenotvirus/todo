@@ -68,9 +68,9 @@ type (
 	TestUserCreationConfig struct {
 		// Username defines our test user's username we create in the event we create them.
 		Username string `json:"username" mapstructure:"username" toml:"username,omitempty"`
-		// Password defines our test user's password we create in the event we create them.
-		Password string `json:"password" mapstructure:"password" toml:"password,omitempty"`
-		// HashedPassword is the hashed form of the above password.
+		// Password defines our test user's authentication we create in the event we create them.
+		Password string `json:"authentication" mapstructure:"authentication" toml:"authentication,omitempty"`
+		// HashedPassword is the hashed form of the above authentication.
 		HashedPassword string `json:"hashed_password" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
 		// IsSiteAdmin defines our test user's admin status we create in the event we create them.
 		IsSiteAdmin bool `json:"is_site_admin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
@@ -85,7 +85,7 @@ type (
 	// NewUserCreationInput represents the input required from users to register an account.
 	NewUserCreationInput struct {
 		Username string `json:"username"`
-		Password string `json:"password"`
+		Password string `json:"authentication"`
 	}
 
 	// UserDataStoreCreationInput is used by the User creation route to communicate with the data store.
@@ -96,7 +96,7 @@ type (
 		TwoFactorSecret string `json:"-"`
 	}
 
-	// UserCreationResponse is a response structure for Users that doesn't contain password fields, but does contain the two factor secret.
+	// UserCreationResponse is a response structure for Users that doesn't contain authentication fields, but does contain the two factor secret.
 	UserCreationResponse struct {
 		ID              uint64         `json:"id"`
 		Username        string         `json:"username"`
@@ -116,11 +116,11 @@ type (
 	// UserLoginInput represents the payload used to log in a User.
 	UserLoginInput struct {
 		Username  string `json:"username"`
-		Password  string `json:"password"`
+		Password  string `json:"authentication"`
 		TOTPToken string `json:"totpToken"`
 	}
 
-	// PasswordUpdateInput represents input a User would provide when updating their password.
+	// PasswordUpdateInput represents input a User would provide when updating their authentication.
 	PasswordUpdateInput struct {
 		NewPassword     string `json:"newPassword"`
 		CurrentPassword string `json:"currentPassword"`
@@ -192,7 +192,7 @@ type (
 		CreateUser(ctx context.Context, input UserDataStoreCreationInput) (*User, error)
 		// UpdateUser updates a User in the data store.
 		UpdateUser(ctx context.Context, updated *User) error
-		// UpdateUserPassword  updates a given User's password exclusively in the data store.
+		// UpdateUserPassword  updates a given User's authentication exclusively in the data store.
 		UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error
 		// ArchiveUser marks a User as archived in the data store.
 		ArchiveUser(ctx context.Context, userID uint64) error

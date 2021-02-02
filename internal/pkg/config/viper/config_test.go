@@ -88,7 +88,7 @@ func TestParseConfigFile(T *testing.T) {
 				MetricsCollectionInterval: 2 * time.Second,
 				Debug:                     true,
 				RunMigrations:             true,
-				ConnectionDetails:         database.ConnectionDetails("postgres://username:password@host/table"),
+				ConnectionDetails:         database.ConnectionDetails("postgres://username:authentication@host/table"),
 			},
 		}
 

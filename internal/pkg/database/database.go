@@ -56,6 +56,7 @@ type (
 		types.AccountSubscriptionPlanDataManager
 		types.UserDataManager
 		types.AuditLogEntryDataManager
+		types.DelegatedClientDataManager
 		types.OAuth2ClientDataManager
 		types.WebhookDataManager
 		types.ItemDataManager
@@ -65,6 +66,7 @@ type (
 		types.AccountAuditManager
 		types.AuthAuditManager
 		types.UserAuditManager
+		types.DelegatedClientAuditManager
 		types.OAuth2ClientAuditManager
 		types.WebhookAuditManager
 		types.ItemAuditManager

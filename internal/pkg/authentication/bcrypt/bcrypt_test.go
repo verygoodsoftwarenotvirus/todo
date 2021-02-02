@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestBcrypt_HashPassword(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		actual, err := x.HashPassword(ctx, "password")
+		actual, err := x.HashPassword(ctx, "authentication")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, actual)
 	})
@@ -52,7 +52,7 @@ func TestBcrypt_PasswordMatches(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		actual := x.PasswordMatches(ctx, hashedExamplePassword, "password", nil)
+		actual := x.PasswordMatches(ctx, hashedExamplePassword, "authentication", nil)
 		assert.False(t, actual)
 	})
 }
@@ -112,7 +112,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 		assert.True(t, valid)
 	})
 
-	T.Run("with non-matching password", func(t *testing.T) {
+	T.Run("with non-matching authentication", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -128,7 +128,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 			nil,
 		)
 		assert.Error(t, err, "unexpected error encountered validating login: %v", err)
-		assert.Equal(t, err, password.ErrPasswordDoesNotMatch)
+		assert.Equal(t, err, authentication.ErrPasswordDoesNotMatch)
 		assert.False(t, valid)
 	})
 

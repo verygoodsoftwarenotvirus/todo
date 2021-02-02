@@ -1,4 +1,4 @@
-package password
+package authentication
 
 import (
 	"context"
@@ -8,10 +8,10 @@ import (
 var (
 	// ErrInvalidTwoFactorCode indicates that a provided two factor code is invalid.
 	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")
-	// ErrPasswordHashTooWeak indicates that a provided password hash is too weak.
-	ErrPasswordHashTooWeak = errors.New("password's hash is too weak")
-	// ErrPasswordDoesNotMatch indicates that a provided password does not match.
-	ErrPasswordDoesNotMatch = errors.New("password's hash is too weak")
+	// ErrPasswordHashTooWeak indicates that a provided authentication hash is too weak.
+	ErrPasswordHashTooWeak = errors.New("authentication's hash is too weak")
+	// ErrPasswordDoesNotMatch indicates that a provided authentication does not match.
+	ErrPasswordDoesNotMatch = errors.New("authentication's hash is too weak")
 )
 
 type (

@@ -51,7 +51,7 @@ func BuildUserUpdateTwoFactorSecretEventEntry(userID uint64) *types.AuditLogEntr
 	}
 }
 
-// BuildUserUpdatePasswordEventEntry builds an entry creation input for when a user updates their password.
+// BuildUserUpdatePasswordEventEntry builds an entry creation input for when a user updates their authentication.
 func BuildUserUpdatePasswordEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: UserUpdatePasswordEvent,

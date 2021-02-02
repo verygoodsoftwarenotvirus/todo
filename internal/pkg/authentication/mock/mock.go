@@ -3,12 +3,12 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 
 	"github.com/stretchr/testify/mock"
 )
 
-var _ password.Authenticator = (*Authenticator)(nil)
+var _ authentication.Authenticator = (*Authenticator)(nil)
 
 // Authenticator is a mock Authenticator.
 type Authenticator struct {

@@ -272,7 +272,7 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 	return c.performCreateQueryIgnoringReturn(ctx, "user update", query, args)
 }
 
-// UpdateUserPassword updates a user's password hash in the database.
+// UpdateUserPassword updates a user's authentication hash in the database.
 func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -282,7 +282,7 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "user password update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, "user authentication update", query, args)
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.

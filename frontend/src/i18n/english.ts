@@ -155,7 +155,7 @@ export const englishTranslations: SiteTranslationMap = {
         twoFactorCode: '123456',
       },
       linkTexts: {
-        forgotPassword: 'Forgot your password?',
+        forgotPassword: 'Forgot your authentication?',
         createAccount: 'Create account',
       },
     },
@@ -172,8 +172,8 @@ export const englishTranslations: SiteTranslationMap = {
       },
       inputPlaceholders: {
         username: _username.toLowerCase(),
-        password: 'your password',
-        passwordRepeat: 'your password again',
+        password: 'your authentication',
+        passwordRepeat: 'your authentication again',
         twoFactorCode: '123456',
       },
       linkTexts: {
@@ -213,8 +213,8 @@ export const englishTranslations: SiteTranslationMap = {
       },
       inputPlaceholders: {
         email: "we don't want your stinkin' email!",
-        currentPassword: 'current password',
-        newPassword: 'new password',
+        currentPassword: 'current authentication',
+        newPassword: 'new authentication',
         twoFactorToken: '123456',
       },
     },

@@ -252,7 +252,7 @@ func (q *Sqlite) BuildSetUserStatusQuery(userID uint64, input types.UserReputati
 	return query, args
 }
 
-// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
+// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's authentication.
 func (q *Sqlite) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 

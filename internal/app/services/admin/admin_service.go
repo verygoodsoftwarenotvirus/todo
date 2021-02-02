@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -23,7 +23,7 @@ type (
 	service struct {
 		config             *authservice.Config
 		logger             logging.Logger
-		authenticator      password.Authenticator
+		authenticator      authentication.Authenticator
 		userDB             types.AdminUserDataManager
 		auditLog           types.AdminAuditManager
 		encoderDecoder     encoding.EncoderDecoder
@@ -38,7 +38,7 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	cfg *authservice.Config,
-	authenticator password.Authenticator,
+	authenticator authentication.Authenticator,
 	userDataManager types.AdminUserDataManager,
 	auditLog types.AdminAuditManager,
 	sessionManager *scs.SessionManager,

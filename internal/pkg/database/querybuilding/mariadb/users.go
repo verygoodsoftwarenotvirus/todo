@@ -262,7 +262,7 @@ func (q *MariaDB) BuildUpdateUserQuery(input *types.User) (query string, args []
 	return query, args
 }
 
-// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's password.
+// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's authentication.
 func (q *MariaDB) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	var err error
 

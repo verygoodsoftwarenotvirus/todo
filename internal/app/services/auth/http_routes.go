@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
@@ -117,9 +117,9 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, user.ID).WithValue("login_valid", loginValid)
 
 	if err != nil {
-		if errors.Is(err, password.ErrInvalidTwoFactorCode) {
+		if errors.Is(err, authentication.ErrInvalidTwoFactorCode) {
 			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
-		} else if errors.Is(err, password.ErrPasswordDoesNotMatch) {
+		} else if errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
 			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		}
 
@@ -282,11 +282,11 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		user.Salt,
 	)
 
-	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, password.ErrPasswordHashTooWeak) {
+	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, authentication.ErrPasswordHashTooWeak) {
 		// if the login is otherwise valid, but the password is too weak, try to rehash it.
 		logger.Debug("hashed password was deemed to weak, updating its hash")
 
-		// re-hash the password
+		// re-hash the authentication
 		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
 		if hashErr != nil {
 			return false, fmt.Errorf("updating password hash: %w", hashErr)
@@ -301,7 +301,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		return loginValid, nil
 	}
 
-	if errors.Is(err, password.ErrInvalidTwoFactorCode) || errors.Is(err, password.ErrPasswordDoesNotMatch) {
+	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
 		return false, err
 	}
 

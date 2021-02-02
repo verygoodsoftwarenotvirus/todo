@@ -19,13 +19,13 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -35,7 +35,7 @@ import (
 // Injectors from wire.go:
 
 // BuildServer builds a server.
-func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator password.Authenticator) (*server.Server, error) {
+func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator authentication.Authenticator) (*server.Server, error) {
 	httpserverConfig := cfg.Server
 	frontendConfig := cfg.Frontend
 	observabilityConfig := &cfg.Observability
@@ -44,6 +44,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	authConfig := &cfg.Auth
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
+	delegatedClientDataManager := database.ProvideDelegatedClientDataManager(dbm)
 	oAuth2ClientDataManager := database.ProvideOAuth2ClientDataManager(dbm)
 	oAuth2ClientAuditManager := database.ProvideOAuth2ClientAuditManager(dbm)
 	encoderDecoder := encoding.ProvideEncoderDecoder(logger)
@@ -58,7 +59,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, oAuth2ClientDataService, sessionManager, encoderDecoder)
+	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, oAuth2ClientDataService, sessionManager, encoderDecoder)
 	if err != nil {
 		return nil, err
 	}

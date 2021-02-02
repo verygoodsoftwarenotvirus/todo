@@ -11,6 +11,7 @@ import (
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -19,7 +20,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
@@ -46,7 +46,7 @@ const (
 	mariadb  = "mariadb"
 
 	// test user stuff.
-	defaultPassword = "password"
+	defaultPassword = "authentication"
 
 	// search index paths.
 	defaultItemsSearchIndexPath = "items.bleve"

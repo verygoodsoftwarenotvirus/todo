@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/bcrypt"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -682,7 +682,7 @@ func TestService_validateLogin(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, authr)
 	})
 
-	T.Run("with too weak a password hash", func(t *testing.T) {
+	T.Run("with too weak a authentication hash", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -703,7 +703,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleLoginData.TOTPToken,
 			exampleUser.Salt,
-		).Return(true, password.ErrPasswordHashTooWeak)
+		).Return(true, authentication.ErrPasswordHashTooWeak)
 		s.authenticator = authr
 
 		authr.On(
@@ -727,7 +727,7 @@ func TestService_validateLogin(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, authr, udb)
 	})
 
-	T.Run("with too weak a password hash and error hashing the password", func(t *testing.T) {
+	T.Run("with too weak a authentication hash and error authentication the authentication", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -750,7 +750,7 @@ func TestService_validateLogin(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleLoginData.TOTPToken,
 			exampleUser.Salt,
-		).Return(true, password.ErrPasswordHashTooWeak)
+		).Return(true, authentication.ErrPasswordHashTooWeak)
 
 		authr.On(
 			"HashPassword",
@@ -766,7 +766,7 @@ func TestService_validateLogin(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, authr)
 	})
 
-	T.Run("with too weak a password hash and error updating user", func(t *testing.T) {
+	T.Run("with too weak a authentication hash and error updating user", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

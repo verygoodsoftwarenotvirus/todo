@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password"
 	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -31,17 +31,18 @@ type (
 
 	// service handles authentication service-wide.
 	service struct {
-		config               *Config
-		logger               logging.Logger
-		authenticator        password.Authenticator
-		userDB               types.UserDataManager
-		auditLog             types.AuthAuditManager
-		oauth2ClientsService types.OAuth2ClientDataService
-		encoderDecoder       encoding.EncoderDecoder
-		cookieManager        cookieEncoderDecoder
-		sessionManager       *scs.SessionManager
-		sessionInfoFetcher   func(*http.Request) (*types.SessionInfo, error)
-		tracer               tracing.Tracer
+		config                  *Config
+		logger                  logging.Logger
+		authenticator           authentication.Authenticator
+		userDB                  types.UserDataManager
+		auditLog                types.AuthAuditManager
+		delegatedClientsService types.DelegatedClientDataManager
+		oauth2ClientsService    types.OAuth2ClientDataService
+		encoderDecoder          encoding.EncoderDecoder
+		cookieManager           cookieEncoderDecoder
+		sessionManager          *scs.SessionManager
+		sessionInfoFetcher      func(*http.Request) (*types.SessionInfo, error)
+		tracer                  tracing.Tracer
 	}
 )
 
@@ -49,23 +50,25 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	cfg *Config,
-	authenticator password.Authenticator,
+	authenticator authentication.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
+	delegatedClientsService types.DelegatedClientDataManager,
 	oauth2ClientsService types.OAuth2ClientDataService,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
 ) (types.AuthService, error) {
 	svc := &service{
-		logger:               logger.WithName(serviceName),
-		encoderDecoder:       encoder,
-		config:               cfg,
-		userDB:               userDataManager,
-		auditLog:             auditLog,
-		oauth2ClientsService: oauth2ClientsService,
-		authenticator:        authenticator,
-		sessionManager:       sessionManager,
-		sessionInfoFetcher:   routeparams.SessionInfoFetcherFromRequestContext,
+		logger:                  logger.WithName(serviceName),
+		encoderDecoder:          encoder,
+		config:                  cfg,
+		userDB:                  userDataManager,
+		auditLog:                auditLog,
+		delegatedClientsService: delegatedClientsService,
+		oauth2ClientsService:    oauth2ClientsService,
+		authenticator:           authenticator,
+		sessionManager:          sessionManager,
+		sessionInfoFetcher:      routeparams.SessionInfoFetcherFromRequestContext,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.Cookies.SigningKey),

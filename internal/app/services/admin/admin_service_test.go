@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/password/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2"

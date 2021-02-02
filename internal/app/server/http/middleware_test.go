@@ -3,7 +3,6 @@ package httpserver
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,23 +35,11 @@ func Test_formatSpanNameForRequest(T *testing.T) {
 		req.Method = http.MethodPatch
 		req.URL.Path = "/blah"
 
-		expected := "PATCH /blah"
-		actual := formatSpanNameForRequest("", req)
+		exampleOperation := "fart"
+
+		expected := "PATCH /blah: fart"
+		actual := formatSpanNameForRequest(exampleOperation, req)
 
 		assert.Equal(t, expected, actual)
-	})
-}
-
-func TestServer_loggingMiddleware(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		s := buildTestServer()
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		buildLoggingMiddleware(s.logger, s.tracer)(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {})).ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
 	})
 }

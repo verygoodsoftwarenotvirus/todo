@@ -7,33 +7,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func buildTestServer() *Server {
-	l := logging.NewNonOperationalLogger()
-
-	s := &Server{
-		logger:               l,
-		db:                   database.BuildMockDatabase(),
-		serverSettings:       Config{},
-		frontendSettings:     frontendservice.Config{},
-		encoder:              &mockencoding.EncoderDecoder{},
-		httpServer:           provideHTTPServer(8888),
-		frontendService:      &mocktypes.FrontendService{},
-		webhooksService:      &mocktypes.WebhookDataServer{},
-		usersService:         &mocktypes.UserDataServer{},
-		authService:          &mocktypes.AuthService{},
-		itemsService:         &mocktypes.ItemDataServer{},
-		oauth2ClientsService: &mocktypes.OAuth2ClientDataServer{},
-		tracer:               tracing.NewTracer("test"),
-	}
-
-	return s
-}
 
 func TestProvideServer(T *testing.T) {
 	T.SkipNow()

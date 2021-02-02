@@ -1,4 +1,4 @@
-package routeparams
+package params
 
 import (
 	"context"

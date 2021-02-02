@@ -11,10 +11,9 @@ import (
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
+	chirouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/cors"
 	"github.com/heptiolabs/healthcheck"
 )
 
@@ -23,47 +22,12 @@ const (
 	auditRoute       = "/audit"
 	searchRoot       = "/search"
 	numericIDPattern = "{%s:[0-9]+}"
-	maxCORSAge       = 300
 )
 
 func (s *Server) setupRouter(metricsHandler metrics.Handler) {
-	// Basic CORS, for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
-	ch := cors.New(cors.Options{
-		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts,
-		AllowedOrigins: []string{"*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods: []string{
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPut,
-			http.MethodDelete,
-			http.MethodOptions,
-		},
-		AllowedHeaders: []string{
-			"Accept",
-			"Authorization",
-			"Content-Provider",
-			"X-CSRF-Token",
-		},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           maxCORSAge,
-	})
+	router := chirouting.NewRouter(s.logger)
 
-	mux := chi.NewRouter()
-	mux.Use(
-		middleware.RequestID,
-		middleware.RealIP,
-		middleware.Timeout(maxTimeout),
-		buildLoggingMiddleware(s.logger.WithName("middleware"), s.tracer),
-		ch.Handler,
-	)
-
-	authenticatedRouter := mux.With(s.authService.UserAttributionMiddleware)
-
-	// all middleware must be defined before routes on a mux.
-
-	mux.Route("/_meta_", func(metaRouter chi.Router) {
+	router.Route("/_meta_", func(metaRouter routing.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live
 		metaRouter.Get("/live", health.LiveEndpoint)
@@ -73,7 +37,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 
 	if metricsHandler != nil {
 		s.logger.Debug("establishing metrics handler")
-		mux.Handle("/metrics", metricsHandler)
+		router.Handle("/metrics", metricsHandler)
 	}
 
 	// Frontend routes.
@@ -83,30 +47,31 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 			s.logger.Error(err, "establishing static file server")
 		}
 
-		mux.Get("/*", staticFileServer)
+		router.Get("/*", staticFileServer)
 	}
 
+	authenticatedRouter := router.WithMiddleware(s.authService.UserAttributionMiddleware)
 	authenticatedRouter.Get("/auth/status", s.authService.StatusHandler)
 
-	mux.Route("/users", func(userRouter chi.Router) {
-		userRouter.With(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
-		userRouter.With(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
-		userRouter.With(s.usersService.UserCreationInputMiddleware).Post(root, s.usersService.CreateHandler)
-		userRouter.With(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
+	router.Route("/users", func(userRouter routing.Router) {
+		userRouter.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
+		userRouter.WithMiddleware(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
+		userRouter.WithMiddleware(s.usersService.UserCreationInputMiddleware).Post(root, s.usersService.CreateHandler)
+		userRouter.WithMiddleware(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 
 		// need creds beyond this point.
-		authedRouter := userRouter.With(s.authService.UserAttributionMiddleware, s.authService.AuthorizationMiddleware)
-		authedRouter.With(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
-		authedRouter.With(s.usersService.PasswordUpdateInputMiddleware).Put("/password/new", s.usersService.UpdatePasswordHandler)
+		authedRouter := userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.AuthorizationMiddleware)
+		authedRouter.WithMiddleware(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
+		authedRouter.WithMiddleware(s.usersService.PasswordUpdateInputMiddleware).Put("/password/new", s.usersService.UpdatePasswordHandler)
 	})
 
-	mux.Route("/oauth2", func(oauth2Router chi.Router) {
-		oauth2Router.With(
+	router.Route("/oauth2", func(oauth2Router routing.Router) {
+		oauth2Router.WithMiddleware(
 			s.authService.CookieAuthenticationMiddleware,
 			s.oauth2ClientsService.CreationInputMiddleware,
 		).Post("/client", s.oauth2ClientsService.CreateHandler)
 
-		oauth2Router.With(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
+		oauth2Router.WithMiddleware(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
 			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
 				if err := s.oauth2ClientsService.HandleAuthorizeRequest(res, req); err != nil {
 					http.Error(res, err.Error(), http.StatusBadRequest)
@@ -119,79 +84,77 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		})
 	})
 
-	authenticatedRouter.With(s.authService.AuthorizationMiddleware).Route("/api/v1", func(v1Router chi.Router) {
-		adminRouter := v1Router.With(s.authService.AdminMiddleware)
+	authenticatedRouter.WithMiddleware(s.authService.AuthorizationMiddleware).Route("/api/v1", func(v1Router routing.Router) {
+		adminRouter := v1Router.WithMiddleware(s.authService.AdminMiddleware)
 
 		// Users
-		v1Router.Route("/users", func(usersRouter chi.Router) {
+		v1Router.Route("/users", func(usersRouter routing.Router) {
 			singleUserRoute := fmt.Sprintf("/"+numericIDPattern, usersservice.UserIDURIParamKey)
 
-			usersRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
-			usersRouter.With(s.authService.AdminMiddleware).Get("/search", s.usersService.UsernameSearchHandler)
-			usersRouter.With(s.usersService.AvatarUploadMiddleware).Post("/avatar/upload", s.usersService.AvatarUploadHandler)
+			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
+			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get("/search", s.usersService.UsernameSearchHandler)
+			usersRouter.WithMiddleware(s.usersService.AvatarUploadMiddleware).Post("/avatar/upload", s.usersService.AvatarUploadHandler)
 			usersRouter.Get("/self", s.usersService.SelfHandler)
-			usersRouter.Route(singleUserRoute, func(singleUserRouter chi.Router) {
-				singleUserRouter.With(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
-				singleUserRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
+			usersRouter.Route(singleUserRoute, func(singleUserRouter routing.Router) {
+				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
+				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
 
 				singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
 			})
 		})
 
 		// AccountSubscriptionPlans
-		adminRouter.Route("/plans", func(plansRouter chi.Router) {
+		adminRouter.Route("/plans", func(plansRouter routing.Router) {
 			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.PlanIDURIParamKey)
 
-			plansRouter.With(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)
+			plansRouter.WithMiddleware(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)
 			plansRouter.Get(root, s.plansService.ListHandler)
-			plansRouter.Route(singlePlanRoute, func(singlePlanRouter chi.Router) {
+			plansRouter.Route(singlePlanRoute, func(singlePlanRouter routing.Router) {
 				singlePlanRouter.Get(root, s.plansService.ReadHandler)
 				singlePlanRouter.Get(auditRoute, s.plansService.AuditEntryHandler)
 				singlePlanRouter.Delete(root, s.plansService.ArchiveHandler)
-				singlePlanRouter.With(s.plansService.UpdateInputMiddleware).Put(root, s.plansService.UpdateHandler)
+				singlePlanRouter.WithMiddleware(s.plansService.UpdateInputMiddleware).Put(root, s.plansService.UpdateHandler)
 			})
 		})
 
 		// Admin
-		adminRouter.Route("/_admin_", func(adminRouter chi.Router) {
+		adminRouter.Route("/_admin_", func(adminRouter routing.Router) {
 			adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
-			adminRouter.With(s.adminService.AccountStatusUpdateInputMiddleware).
+			adminRouter.WithMiddleware(s.adminService.AccountStatusUpdateInputMiddleware).
 				Post("/users/status", s.adminService.UserAccountStatusChangeHandler)
 
-			adminRouter.Route("/audit_log", func(auditRouter chi.Router) {
+			adminRouter.Route("/audit_log", func(auditRouter routing.Router) {
 				entryIDRouteParam := fmt.Sprintf("/"+numericIDPattern, auditservice.LogEntryURIParamKey)
 				auditRouter.Get(root, s.auditService.ListHandler)
-				auditRouter.Route(entryIDRouteParam, func(singleEntryRouter chi.Router) {
+				auditRouter.Route(entryIDRouteParam, func(singleEntryRouter routing.Router) {
 					singleEntryRouter.Get(root, s.auditService.ReadHandler)
 				})
 			})
 		})
 
 		// OAuth2 Clients.
-		v1Router.Route("/oauth2/clients", func(clientRouter chi.Router) {
+		v1Router.Route("/oauth2/clients", func(clientRouter routing.Router) {
 			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, oauth2clientsservice.OAuth2ClientIDURIParamKey)
 			clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
-			// CreateHandler does not require preexisting authentication.
-			// UpdateHandler not supported for OAuth2 clients.
 
-			clientRouter.Route(singleClientRoute, func(singleClientRouter chi.Router) {
+			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
 				singleClientRouter.Get(root, s.oauth2ClientsService.ReadHandler)
 				singleClientRouter.Delete(root, s.oauth2ClientsService.ArchiveHandler)
-				singleClientRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.oauth2ClientsService.AuditEntryHandler)
+				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.oauth2ClientsService.AuditEntryHandler)
 			})
 		})
 
 		// Webhooks.
-		v1Router.Route("/webhooks", func(webhookRouter chi.Router) {
+		v1Router.Route("/webhooks", func(webhookRouter routing.Router) {
 			singleWebhookRoute := fmt.Sprintf("/"+numericIDPattern, webhooksservice.WebhookIDURIParamKey)
-			webhookRouter.With(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
+			webhookRouter.WithMiddleware(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
 			webhookRouter.Get(root, s.webhooksService.ListHandler)
 
-			webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter chi.Router) {
+			webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
 				singleWebhookRouter.Get(root, s.webhooksService.ReadHandler)
 				singleWebhookRouter.Delete(root, s.webhooksService.ArchiveHandler)
-				singleWebhookRouter.With(s.webhooksService.UpdateInputMiddleware).Put(root, s.webhooksService.UpdateHandler)
-				singleWebhookRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.webhooksService.AuditEntryHandler)
+				singleWebhookRouter.WithMiddleware(s.webhooksService.UpdateInputMiddleware).Put(root, s.webhooksService.UpdateHandler)
+				singleWebhookRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.webhooksService.AuditEntryHandler)
 			})
 		})
 
@@ -199,33 +162,20 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		itemPath := "items"
 		itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
 		itemIDRouteParam := fmt.Sprintf("/"+numericIDPattern, itemsservice.ItemIDURIParamKey)
-		v1Router.Route(itemsRouteWithPrefix, func(itemsRouter chi.Router) {
-			itemsRouter.With(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
+		v1Router.Route(itemsRouteWithPrefix, func(itemsRouter routing.Router) {
+			itemsRouter.WithMiddleware(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
 			itemsRouter.Get(root, s.itemsService.ListHandler)
 			itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
 
-			itemsRouter.Route(itemIDRouteParam, func(singleItemRouter chi.Router) {
+			itemsRouter.Route(itemIDRouteParam, func(singleItemRouter routing.Router) {
 				singleItemRouter.Get(root, s.itemsService.ReadHandler)
 				singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
 				singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
-				singleItemRouter.With(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
-				singleItemRouter.With(s.authService.AdminMiddleware).Get(auditRoute, s.itemsService.AuditEntryHandler)
+				singleItemRouter.WithMiddleware(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
+				singleItemRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.itemsService.AuditEntryHandler)
 			})
 		})
 	})
 
-	s.router = mux
-}
-
-func (s *Server) logRoutes() {
-	if err := chi.Walk(s.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
-		s.logger.WithValues(map[string]interface{}{
-			"method": method,
-			"route":  route,
-		}).Debug("route found")
-
-		return nil
-	}); err != nil {
-		s.logger.Error(err, "logging routes")
-	}
+	s.router = router
 }

@@ -14,9 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"github.com/go-chi/chi"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -43,7 +43,7 @@ type (
 		db               database.DataManager
 		serverSettings   Config
 		frontendSettings frontendservice.Config
-		router           *chi.Mux
+		router           routing.Router
 		httpServer       *http.Server
 		logger           logging.Logger
 		encoder          encoding.EncoderDecoder
@@ -102,7 +102,7 @@ func (s *Server) Serve() {
 	s.logger.Debug("setting up opentelemetry handler")
 
 	s.httpServer.Handler = otelhttp.NewHandler(
-		s.router,
+		s.router.Handler(),
 		serverNamespace,
 		otelhttp.WithSpanNameFormatter(formatSpanNameForRequest),
 	)

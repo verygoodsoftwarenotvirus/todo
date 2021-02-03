@@ -98,8 +98,7 @@ func TestItems(test *testing.T) {
 
 					// Clean up.
 					for _, createdItem := range actual.Items {
-						err = testClient.ArchiveItem(ctx, createdItem.ID)
-						assert.NoError(t, err)
+						assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 					}
 				}
 			})
@@ -142,8 +141,7 @@ func TestItems(test *testing.T) {
 
 				// Clean up.
 				for _, createdItem := range expected {
-					err = testClient.ArchiveItem(ctx, createdItem.ID)
-					assert.NoError(t, err)
+					assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 				}
 			}
 		})
@@ -199,13 +197,11 @@ func TestItems(test *testing.T) {
 
 				// Clean up.
 				for _, createdItem := range createdForA {
-					err = clientA.ArchiveItem(ctx, createdItem.ID)
-					assert.NoError(t, err)
+					assert.NoError(t, clientA.ArchiveItem(ctx, createdItem.ID))
 				}
 
 				for _, createdItem := range createdForB {
-					err = clientB.ArchiveItem(ctx, createdItem.ID)
-					assert.NoError(t, err)
+					assert.NoError(t, clientB.ArchiveItem(ctx, createdItem.ID))
 				}
 			}
 		})

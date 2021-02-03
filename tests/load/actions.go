@@ -50,7 +50,7 @@ func RandomAction(regularClient, adminClient *httpclient.Client) *Action {
 		},
 	}
 
-	for k, v := range buildPlanActions(false, adminClient) {
+	for k, v := range buildAccountSubscriptionPlanActions(false, adminClient) {
 		allActions[k] = v
 	}
 

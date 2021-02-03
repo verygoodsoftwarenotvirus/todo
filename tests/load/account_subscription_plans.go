@@ -11,9 +11,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 )
 
-// fetchRandomPlan retrieves a random plan from the list of available plans.
-func fetchRandomPlan(ctx context.Context, c *httpclient.Client) *types.AccountSubscriptionPlan {
-	plansRes, err := c.GetPlans(ctx, nil)
+// fetchRandomAccountSubscriptionPlan retrieves a random plan from the list of available plans.
+func fetchRandomAccountSubscriptionPlan(ctx context.Context, c *httpclient.Client) *types.AccountSubscriptionPlan {
+	plansRes, err := c.GetAccountSubscriptionPlans(ctx, nil)
 	if err != nil || plansRes == nil || len(plansRes.AccountSubscriptionPlans) == 0 {
 		return nil
 	}
@@ -23,7 +23,7 @@ func fetchRandomPlan(ctx context.Context, c *httpclient.Client) *types.AccountSu
 	return plansRes.AccountSubscriptionPlans[randIndex]
 }
 
-func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
+func buildAccountSubscriptionPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 	if shouldUse {
 		return nil
 	}
@@ -36,7 +36,7 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 
 				planInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
 
-				return c.BuildCreatePlanRequest(ctx, planInput)
+				return c.BuildCreateAccountSubscriptionPlanRequest(ctx, planInput)
 			},
 			Weight: 100,
 		},
@@ -45,12 +45,12 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
-				randomPlan := fetchRandomPlan(ctx, c)
-				if randomPlan == nil {
+				randomAccountSubscriptionPlan := fetchRandomAccountSubscriptionPlan(ctx, c)
+				if randomAccountSubscriptionPlan == nil {
 					return nil, fmt.Errorf("retrieving random plan: %w", ErrUnavailableYet)
 				}
 
-				return c.BuildGetPlanRequest(ctx, randomPlan.ID)
+				return c.BuildGetAccountSubscriptionPlanRequest(ctx, randomAccountSubscriptionPlan.ID)
 			},
 			Weight: 100,
 		},
@@ -59,7 +59,7 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
-				return c.BuildGetPlansRequest(ctx, nil)
+				return c.BuildGetAccountSubscriptionPlansRequest(ctx, nil)
 			},
 			Weight: 100,
 		},
@@ -68,13 +68,13 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
-				if randomPlan := fetchRandomPlan(ctx, c); randomPlan != nil {
-					newPlan := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
-					randomPlan.Name = newPlan.Name
-					randomPlan.Description = newPlan.Description
-					randomPlan.Price = newPlan.Price
-					randomPlan.Period = newPlan.Period
-					return c.BuildUpdatePlanRequest(ctx, randomPlan)
+				if randomAccountSubscriptionPlan := fetchRandomAccountSubscriptionPlan(ctx, c); randomAccountSubscriptionPlan != nil {
+					newAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
+					randomAccountSubscriptionPlan.Name = newAccountSubscriptionPlan.Name
+					randomAccountSubscriptionPlan.Description = newAccountSubscriptionPlan.Description
+					randomAccountSubscriptionPlan.Price = newAccountSubscriptionPlan.Price
+					randomAccountSubscriptionPlan.Period = newAccountSubscriptionPlan.Period
+					return c.BuildUpdateAccountSubscriptionPlanRequest(ctx, randomAccountSubscriptionPlan)
 				}
 
 				return nil, ErrUnavailableYet
@@ -86,12 +86,12 @@ func buildPlanActions(shouldUse bool, c *httpclient.Client) map[string]*Action {
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
-				randomPlan := fetchRandomPlan(ctx, c)
-				if randomPlan == nil {
+				randomAccountSubscriptionPlan := fetchRandomAccountSubscriptionPlan(ctx, c)
+				if randomAccountSubscriptionPlan == nil {
 					return nil, fmt.Errorf("retrieving random plan: %w", ErrUnavailableYet)
 				}
 
-				return c.BuildArchivePlanRequest(ctx, randomPlan.ID)
+				return c.BuildArchiveAccountSubscriptionPlanRequest(ctx, randomAccountSubscriptionPlan.ID)
 			},
 			Weight: 85,
 		},

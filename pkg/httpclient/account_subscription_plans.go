@@ -14,8 +14,8 @@ const (
 	plansBasePath = "plans"
 )
 
-// BuildGetPlanRequest builds an HTTP request for fetching an plan.
-func (c *Client) BuildGetPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
+// BuildGetAccountSubscriptionPlanRequest builds an HTTP request for fetching an plan.
+func (c *Client) BuildGetAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -29,12 +29,12 @@ func (c *Client) BuildGetPlanRequest(ctx context.Context, planID uint64) (*http.
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetPlan retrieves an plan.
-func (c *Client) GetPlan(ctx context.Context, planID uint64) (plan *types.AccountSubscriptionPlan, err error) {
+// GetAccountSubscriptionPlan retrieves an plan.
+func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (plan *types.AccountSubscriptionPlan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildGetPlanRequest(ctx, planID)
+	req, err := c.BuildGetAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -46,8 +46,8 @@ func (c *Client) GetPlan(ctx context.Context, planID uint64) (plan *types.Accoun
 	return plan, nil
 }
 
-// BuildGetPlansRequest builds an HTTP request for fetching plans.
-func (c *Client) BuildGetPlansRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
+// BuildGetAccountSubscriptionPlansRequest builds an HTTP request for fetching plans.
+func (c *Client) BuildGetAccountSubscriptionPlansRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -60,12 +60,12 @@ func (c *Client) BuildGetPlansRequest(ctx context.Context, filter *types.QueryFi
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetPlans retrieves a list of plans.
-func (c *Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (plans *types.AccountSubscriptionPlanList, err error) {
+// GetAccountSubscriptionPlans retrieves a list of plans.
+func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (plans *types.AccountSubscriptionPlanList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildGetPlansRequest(ctx, filter)
+	req, err := c.BuildGetAccountSubscriptionPlansRequest(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -77,8 +77,8 @@ func (c *Client) GetPlans(ctx context.Context, filter *types.QueryFilter) (plans
 	return plans, nil
 }
 
-// BuildCreatePlanRequest builds an HTTP request for creating an plan.
-func (c *Client) BuildCreatePlanRequest(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*http.Request, error) {
+// BuildCreateAccountSubscriptionPlanRequest builds an HTTP request for creating an plan.
+func (c *Client) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -91,12 +91,12 @@ func (c *Client) BuildCreatePlanRequest(ctx context.Context, input *types.Accoun
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// CreatePlan creates an plan.
-func (c *Client) CreatePlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (plan *types.AccountSubscriptionPlan, err error) {
+// CreateAccountSubscriptionPlan creates an plan.
+func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (plan *types.AccountSubscriptionPlan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildCreatePlanRequest(ctx, input)
+	req, err := c.BuildCreateAccountSubscriptionPlanRequest(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -106,8 +106,8 @@ func (c *Client) CreatePlan(ctx context.Context, input *types.AccountSubscriptio
 	return plan, err
 }
 
-// BuildUpdatePlanRequest builds an HTTP request for updating an plan.
-func (c *Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.AccountSubscriptionPlan) (*http.Request, error) {
+// BuildUpdateAccountSubscriptionPlanRequest builds an HTTP request for updating an plan.
+func (c *Client) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context, plan *types.AccountSubscriptionPlan) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -121,12 +121,12 @@ func (c *Client) BuildUpdatePlanRequest(ctx context.Context, plan *types.Account
 	return c.buildDataRequest(ctx, http.MethodPut, uri, plan)
 }
 
-// UpdatePlan updates an plan.
-func (c *Client) UpdatePlan(ctx context.Context, plan *types.AccountSubscriptionPlan) error {
+// UpdateAccountSubscriptionPlan updates an plan.
+func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, plan *types.AccountSubscriptionPlan) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildUpdatePlanRequest(ctx, plan)
+	req, err := c.BuildUpdateAccountSubscriptionPlanRequest(ctx, plan)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -134,8 +134,8 @@ func (c *Client) UpdatePlan(ctx context.Context, plan *types.AccountSubscription
 	return c.executeRequest(ctx, req, &plan)
 }
 
-// BuildArchivePlanRequest builds an HTTP request for updating an plan.
-func (c *Client) BuildArchivePlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
+// BuildArchiveAccountSubscriptionPlanRequest builds an HTTP request for updating an plan.
+func (c *Client) BuildArchiveAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -149,12 +149,12 @@ func (c *Client) BuildArchivePlanRequest(ctx context.Context, planID uint64) (*h
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
 
-// ArchivePlan archives an plan.
-func (c *Client) ArchivePlan(ctx context.Context, planID uint64) error {
+// ArchiveAccountSubscriptionPlan archives an plan.
+func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildArchivePlanRequest(ctx, planID)
+	req, err := c.BuildArchiveAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -162,8 +162,8 @@ func (c *Client) ArchivePlan(ctx context.Context, planID uint64) error {
 	return c.executeRequest(ctx, req, nil)
 }
 
-// BuildGetAuditLogForPlanRequest builds an HTTP request for fetching a list of audit log entries pertaining to an plan.
-func (c *Client) BuildGetAuditLogForPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
+// BuildGetAuditLogForAccountSubscriptionPlanRequest builds an HTTP request for fetching a list of audit log entries pertaining to an plan.
+func (c *Client) BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -178,12 +178,12 @@ func (c *Client) BuildGetAuditLogForPlanRequest(ctx context.Context, planID uint
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetAuditLogForPlan retrieves a list of audit log entries pertaining to an plan.
-func (c *Client) GetAuditLogForPlan(ctx context.Context, planID uint64) (entries []*types.AuditLogEntry, err error) {
+// GetAuditLogForAccountSubscriptionPlan retrieves a list of audit log entries pertaining to an plan.
+func (c *Client) GetAuditLogForAccountSubscriptionPlan(ctx context.Context, planID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildGetAuditLogForPlanRequest(ctx, planID)
+	req, err := c.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}

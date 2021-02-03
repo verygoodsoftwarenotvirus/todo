@@ -73,8 +73,7 @@ func TestWebhooks(test *testing.T) {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
 
 			// Clean up.
-			err = testClient.ArchiveWebhook(ctx, createdWebhook.ID)
-			assert.NoError(t, err)
+			assert.NoError(t, testClient.ArchiveWebhook(ctx, createdWebhook.ID))
 		})
 	})
 
@@ -116,8 +115,7 @@ func TestWebhooks(test *testing.T) {
 			checkWebhookEquality(t, exampleWebhook, actual)
 
 			// Clean up.
-			err = testClient.ArchiveWebhook(ctx, actual.ID)
-			assert.NoError(t, err)
+			assert.NoError(t, testClient.ArchiveWebhook(ctx, actual.ID))
 		})
 
 		subtest.Run("should be able to be read in a list", func(t *testing.T) {
@@ -146,8 +144,7 @@ func TestWebhooks(test *testing.T) {
 
 			// Clean up.
 			for _, webhook := range actual.Webhooks {
-				err = testClient.ArchiveWebhook(ctx, webhook.ID)
-				assert.NoError(t, err)
+				assert.NoError(t, testClient.ArchiveWebhook(ctx, webhook.ID))
 			}
 		})
 
@@ -215,8 +212,8 @@ func TestWebhooks(test *testing.T) {
 			// Change webhook.
 			createdWebhook.Name = reverse(createdWebhook.Name)
 			exampleWebhook.Name = createdWebhook.Name
-			err = testClient.UpdateWebhook(ctx, createdWebhook)
-			assert.NoError(t, err)
+
+			assert.NoError(t, testClient.UpdateWebhook(ctx, createdWebhook))
 
 			// Fetch webhook.
 			actual, err := testClient.GetWebhook(ctx, createdWebhook.ID)

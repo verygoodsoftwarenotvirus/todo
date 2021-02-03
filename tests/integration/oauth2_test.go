@@ -184,8 +184,7 @@ func TestOAuth2Clients(test *testing.T) {
 			checkOAuth2ClientEquality(t, convertInputToClient(input), actual)
 
 			// Clean up.
-			err = testClient.ArchiveOAuth2Client(ctx, actual.ID)
-			assert.NoError(t, err)
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, actual.ID))
 		})
 	})
 
@@ -232,8 +231,7 @@ func TestOAuth2Clients(test *testing.T) {
 
 			// Clean up.
 			for _, oa2c := range expected {
-				err = testClient.ArchiveOAuth2Client(ctx, oa2c.ID)
-				assert.NoError(t, err, "error deleting client %d: %v", oa2c.ID, err)
+				assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, oa2c.ID), "error deleting client %d: %v", oa2c.ID, err)
 			}
 		})
 	})

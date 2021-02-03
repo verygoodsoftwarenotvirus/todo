@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestV1Client_BuildGetPlanRequest(T *testing.T) {
+func TestV1Client_BuildGetAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
 	const expectedPathFormat = "/api/v1/plans/%d"
@@ -29,14 +29,14 @@ func TestV1Client_BuildGetPlanRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, examplePlan.ID)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildGetPlanRequest(ctx, examplePlan.ID)
+		actual, err := c.BuildGetAccountSubscriptionPlanRequest(ctx, examplePlan.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_GetPlan(T *testing.T) {
+func TestV1Client_GetAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	const expectedPathFormat = "/api/v1/plans/%d"
@@ -59,7 +59,7 @@ func TestV1Client_GetPlan(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetPlan(ctx, examplePlan.ID)
+		actual, err := c.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
@@ -73,7 +73,7 @@ func TestV1Client_GetPlan(T *testing.T) {
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetPlan(ctx, examplePlan.ID)
+		actual, err := c.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
@@ -97,14 +97,14 @@ func TestV1Client_GetPlan(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetPlan(ctx, examplePlan.ID)
+		actual, err := c.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildGetPlansRequest(T *testing.T) {
+func TestV1Client_BuildGetAccountSubscriptionPlansRequest(T *testing.T) {
 	T.Parallel()
 
 	const expectedPath = "/api/v1/plans"
@@ -118,14 +118,14 @@ func TestV1Client_BuildGetPlansRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildGetPlansRequest(ctx, filter)
+		actual, err := c.BuildGetAccountSubscriptionPlansRequest(ctx, filter)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_GetPlans(T *testing.T) {
+func TestV1Client_GetAccountSubscriptionPlans(T *testing.T) {
 	T.Parallel()
 
 	const expectedPath = "/api/v1/plans"
@@ -150,7 +150,7 @@ func TestV1Client_GetPlans(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetPlans(ctx, filter)
+		actual, err := c.GetAccountSubscriptionPlans(ctx, filter)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
@@ -164,7 +164,7 @@ func TestV1Client_GetPlans(T *testing.T) {
 		filter := (*types.QueryFilter)(nil)
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetPlans(ctx, filter)
+		actual, err := c.GetAccountSubscriptionPlans(ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
@@ -187,14 +187,14 @@ func TestV1Client_GetPlans(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetPlans(ctx, filter)
+		actual, err := c.GetAccountSubscriptionPlans(ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildCreatePlanRequest(T *testing.T) {
+func TestV1Client_BuildCreateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
 	const expectedPath = "/api/v1/plans"
@@ -209,7 +209,7 @@ func TestV1Client_BuildCreatePlanRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildCreatePlanRequest(ctx, exampleInput)
+		actual, err := c.BuildCreateAccountSubscriptionPlanRequest(ctx, exampleInput)
 		assert.NoError(t, err)
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
@@ -218,7 +218,7 @@ func TestV1Client_BuildCreatePlanRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_CreatePlan(T *testing.T) {
+func TestV1Client_CreateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	const expectedPath = "/api/v1/plans"
@@ -248,7 +248,7 @@ func TestV1Client_CreatePlan(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.CreatePlan(ctx, exampleInput)
+		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
@@ -263,14 +263,14 @@ func TestV1Client_CreatePlan(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.CreatePlan(ctx, exampleInput)
+		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildUpdatePlanRequest(T *testing.T) {
+func TestV1Client_BuildUpdateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
 	const expectedPathFormat = "/api/v1/plans/%d"
@@ -284,14 +284,14 @@ func TestV1Client_BuildUpdatePlanRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, examplePlan.ID)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildUpdatePlanRequest(ctx, examplePlan)
+		actual, err := c.BuildUpdateAccountSubscriptionPlanRequest(ctx, examplePlan)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_UpdatePlan(T *testing.T) {
+func TestV1Client_UpdateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	const expectedPathFormat = "/api/v1/plans/%d"
@@ -313,7 +313,7 @@ func TestV1Client_UpdatePlan(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).UpdatePlan(ctx, examplePlan)
+		err := buildTestClient(t, ts).UpdateAccountSubscriptionPlan(ctx, examplePlan)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
@@ -323,12 +323,12 @@ func TestV1Client_UpdatePlan(T *testing.T) {
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		err := buildTestClientWithInvalidURL(t).UpdatePlan(ctx, examplePlan)
+		err := buildTestClientWithInvalidURL(t).UpdateAccountSubscriptionPlan(ctx, examplePlan)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildArchivePlanRequest(T *testing.T) {
+func TestV1Client_BuildArchiveAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
 	const expectedPathFormat = "/api/v1/plans/%d"
@@ -342,14 +342,14 @@ func TestV1Client_BuildArchivePlanRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, examplePlan.ID)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.BuildArchivePlanRequest(ctx, examplePlan.ID)
+		actual, err := c.BuildArchiveAccountSubscriptionPlanRequest(ctx, examplePlan.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_ArchivePlan(T *testing.T) {
+func TestV1Client_ArchiveAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	const expectedPathFormat = "/api/v1/plans/%d"
@@ -371,7 +371,7 @@ func TestV1Client_ArchivePlan(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).ArchivePlan(ctx, examplePlan.ID)
+		err := buildTestClient(t, ts).ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
@@ -381,12 +381,12 @@ func TestV1Client_ArchivePlan(T *testing.T) {
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		err := buildTestClientWithInvalidURL(t).ArchivePlan(ctx, examplePlan.ID)
+		err := buildTestClientWithInvalidURL(t).ArchiveAccountSubscriptionPlan(ctx, examplePlan.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildGetAuditLogForPlanRequest(T *testing.T) {
+func TestV1Client_BuildGetAuditLogForAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
 	const expectedPath = "/api/v1/plans/%d/audit"
@@ -399,7 +399,7 @@ func TestV1Client_BuildGetAuditLogForPlanRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		actual, err := c.BuildGetAuditLogForPlanRequest(ctx, examplePlan.ID)
+		actual, err := c.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, examplePlan.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
@@ -408,7 +408,7 @@ func TestV1Client_BuildGetAuditLogForPlanRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_GetAuditLogForPlan(T *testing.T) {
+func TestV1Client_GetAuditLogForAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	const (
@@ -435,7 +435,7 @@ func TestV1Client_GetAuditLogForPlan(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForPlan(ctx, examplePlan.ID)
+		actual, err := c.GetAuditLogForAccountSubscriptionPlan(ctx, examplePlan.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
@@ -449,7 +449,7 @@ func TestV1Client_GetAuditLogForPlan(T *testing.T) {
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForPlan(ctx, examplePlan.ID)
+		actual, err := c.GetAuditLogForAccountSubscriptionPlan(ctx, examplePlan.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
@@ -473,7 +473,7 @@ func TestV1Client_GetAuditLogForPlan(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForPlan(ctx, examplePlan.ID)
+		actual, err := c.GetAuditLogForAccountSubscriptionPlan(ctx, examplePlan.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

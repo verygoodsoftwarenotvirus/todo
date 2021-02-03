@@ -65,7 +65,6 @@ type (
 		types.AccountSubscriptionPlanAuditManager
 		types.AccountAuditManager
 		types.AuthAuditManager
-		types.UserAuditManager
 		types.DelegatedClientAuditManager
 		types.OAuth2ClientAuditManager
 		types.WebhookAuditManager

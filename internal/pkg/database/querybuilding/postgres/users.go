@@ -15,9 +15,7 @@ var _ types.UserSQLQueryBuilder = (*Postgres)(nil)
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (q *Postgres) BuildGetUserQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Eq{
@@ -26,39 +24,27 @@ func (q *Postgres) BuildGetUserQuery(userID uint64) (query string, args []interf
 		}).
 		Where(squirrel.NotEq{
 			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableTwoFactorVerifiedOnColumn): nil,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
 func (q *Postgres) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.IDColumn):                            userID,
 			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableTwoFactorVerifiedOnColumn): nil,
 			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn):                    nil,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (q *Postgres) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Eq{
@@ -67,19 +53,13 @@ func (q *Postgres) BuildGetUserByUsernameQuery(username string) (query string, a
 		}).
 		Where(squirrel.NotEq{
 			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableTwoFactorVerifiedOnColumn): nil,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (q *Postgres) BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Expr(
@@ -91,31 +71,20 @@ func (q *Postgres) BuildSearchForUserByUsernameQuery(usernameQuery string) (quer
 		}).
 		Where(squirrel.NotEq{
 			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableTwoFactorVerifiedOnColumn): nil,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
 func (q *Postgres) BuildGetAllUsersCountQuery() (query string) {
-	var err error
-
-	builder := q.sqlBuilder.
+	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.UsersTableName)).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
-		})
-
-	query, _, err = builder.ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query
+		}),
+	)
 }
 
 // BuildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
@@ -155,14 +124,14 @@ func (q *Postgres) BuildGetUsersQuery(filter *types.QueryFilter) (query string, 
 
 // BuildTestUserCreationQuery returns a SQL query (and arguments) that would create a test user.
 func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
 			querybuilding.ExternalIDColumn,
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
-			querybuilding.UsersTableTwoFactorColumn,
+			querybuilding.UsersTableTwoFactorSekretColumn,
 			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableReputationColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
@@ -180,25 +149,25 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 			math.MaxUint32,
 			squirrel.Expr(currentUnixTimeQuery),
 		).
-		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)).
-		ToSql()
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+	)
 }
 
 // BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
 func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
-	var err error
+	// NOTE: we always default is_admin to false, on the assumption that
+	// admins have DB access and will change that value via SQL query.
+	// There should be no way to update a user via this structure
+	// such that they would have admin privileges.
 
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
 			querybuilding.ExternalIDColumn,
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
-			querybuilding.UsersTableTwoFactorColumn,
+			querybuilding.UsersTableTwoFactorSekretColumn,
 			querybuilding.UsersTableReputationColumn,
 			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
@@ -213,104 +182,75 @@ func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) 
 			false,
 			0,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)).
-		ToSql()
-
-	// NOTE: we always default is_admin to false, on the assumption that
-	// admins have DB access and will change that value via SQL query.
-	// There should be no way to update a user via this structure
-	// such that they would have admin privileges.
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+	)
 }
 
 // BuildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (q *Postgres) BuildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableUsernameColumn, input.Username).
 		Set(querybuilding.UsersTableHashedPasswordColumn, input.HashedPassword).
 		Set(querybuilding.UsersTableSaltColumn, input.Salt).
-		Set(querybuilding.UsersTableTwoFactorColumn, input.TwoFactorSecret).
+		Set(querybuilding.UsersTableTwoFactorSekretColumn, input.TwoFactorSecret).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn: input.ID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's authentication.
 func (q *Postgres) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableHashedPasswordColumn, newHash).
 		Set(querybuilding.UsersTableRequiresPasswordChangeColumn, false).
 		Set(querybuilding.UsersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}).
-		ToSql()
+		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+	)
+}
 
-	q.logQueryBuildingError(err)
-
-	return query, args
+// BuildUpdateUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
+func (q *Postgres) BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.UsersTableName).
+		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, nil).
+		Set(querybuilding.UsersTableTwoFactorSekretColumn, newSecret).
+		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+	)
 }
 
 // BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (q *Postgres) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.UsersTableReputationColumn, types.GoodStandingAccountStatus).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+	)
 }
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
 func (q *Postgres) BuildSetUserStatusQuery(userID uint64, input types.UserReputationUpdateInput) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
 		Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+	)
 }
 
 // BuildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (q *Postgres) BuildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+	)
 }
 
 // BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries

@@ -21,11 +21,17 @@ func joinUint64s(in []uint64) string {
 	return strings.Join(out, ",")
 }
 
+// BuildQueryOnly builds a given query, handles whatever errors and returns just the query and args.
+func (q *Postgres) buildQueryOnly(builder squirrel.Sqlizer) string {
+	query, _, err := builder.ToSql()
+	q.logQueryBuildingError(err)
+
+	return query
+}
+
 // BuildQuery builds a given query, handles whatever errors and returns just the query and args.
 func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = builder.ToSql()
+	query, args, err := builder.ToSql()
 	q.logQueryBuildingError(err)
 
 	return query, args

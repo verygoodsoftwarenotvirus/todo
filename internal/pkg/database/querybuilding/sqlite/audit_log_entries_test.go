@@ -1,8 +1,6 @@
 package sqlite
 
 import (
-	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -120,59 +118,6 @@ func TestSqlite_BuildCreateAuditLogEntryQuery(T *testing.T) {
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
-
-		mock.AssertExpectationsForObjects(t, exIDGen)
-	})
-}
-
-func TestSqlite_createAuditLogEntry(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		q, mockDB := buildTestService(t)
-
-		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
-
-		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
-		q.externalIDGenerator = exIDGen
-
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleInput)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...)
-
-		q.createAuditLogEntry(ctx, exampleInput)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-
-		mock.AssertExpectationsForObjects(t, exIDGen)
-	})
-
-	T.Run("with error writing to database", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		q, mockDB := buildTestService(t)
-
-		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
-
-		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
-		q.externalIDGenerator = exIDGen
-
-		expectedQuery, expectedArgs := q.BuildCreateAuditLogEntryQuery(exampleInput)
-		mockDB.ExpectExec(formatQueryForSQLMock(expectedQuery)).
-			WithArgs(interfaceToDriverValue(expectedArgs)...).
-			WillReturnError(errors.New("blah"))
-
-		q.createAuditLogEntry(ctx, exampleInput)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
 
 		mock.AssertExpectationsForObjects(t, exIDGen)
 	})

@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	_ types.UserDataManager  = (*Client)(nil)
-	_ types.UserAuditManager = (*Client)(nil)
+	_ types.UserDataManager = (*Client)(nil)
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
@@ -247,7 +246,7 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 		return nil, err
 	}
 
-	x := &types.User{
+	user := &types.User{
 		ID:              id,
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
@@ -255,7 +254,9 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 		CreatedOn:       c.currentTime(),
 	}
 
-	return x, nil
+	c.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
+
+	return user, nil
 }
 
 // UpdateUser receives a complete User struct and updates its record in the database.
@@ -282,7 +283,13 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "user authentication update", query, args)
+	if err := c.performCreateQueryIgnoringReturn(ctx, "user authentication update", query, args); err != nil {
+		return err
+	}
+
+	c.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
+
+	return nil
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
@@ -295,7 +302,13 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "user two factor secret verification", query, args)
+	if err := c.performCreateQueryIgnoringReturn(ctx, "user two factor secret verification", query, args); err != nil {
+		return err
+	}
+
+	c.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+
+	return nil
 }
 
 // ArchiveUser archives a user.
@@ -308,29 +321,13 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	query, args := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "user archive", query, args)
-}
+	if err := c.performCreateQueryIgnoringReturn(ctx, "user archive", query, args); err != nil {
+		return err
+	}
 
-// LogUserCreationEvent saves a UserCreationEvent in the audit log table.
-func (c *Client) LogUserCreationEvent(ctx context.Context, user *types.User) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
+	c.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
 
-	tracing.AttachUserIDToSpan(span, user.ID)
-	c.logger.WithValue(keys.UserIDKey, user.ID).Debug("LogUserCreationEvent called")
-
-	c.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
-}
-
-// LogUserVerifyTwoFactorSecretEvent saves a UserVerifyTwoFactorSecretEvent in the audit log table.
-func (c *Client) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserVerifyTwoFactorSecretEvent called")
-
-	c.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+	return nil
 }
 
 // LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
@@ -342,28 +339,6 @@ func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID u
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdateTwoFactorSecretEvent called")
 
 	c.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
-}
-
-// LogUserUpdatePasswordEvent saves a UserUpdatePasswordEvent in the audit log table.
-func (c *Client) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdatePasswordEvent called")
-
-	c.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
-}
-
-// LogUserArchiveEvent saves a UserArchiveEvent in the audit log table.
-func (c *Client) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
 }
 
 // GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.

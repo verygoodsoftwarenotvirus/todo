@@ -75,7 +75,6 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	accountDataManager := database.ProvideAccountDataManager(dbm)
-	userAuditManager := database.ProvideUserAuditManager(dbm)
 	imageUploadProcessor := images.NewImageUploadProcessor()
 	uploadsConfig := &cfg.Uploads
 	storageConfig := &uploadsConfig.Storage
@@ -84,7 +83,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	uploadManager := uploads.ProvideUploadManager(uploader)
-	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, userAuditManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager)
+	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager)
 	if err != nil {
 		return nil, err
 	}

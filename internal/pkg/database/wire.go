@@ -17,7 +17,6 @@ var (
 		ProvideItemDataManager,
 		ProvideItemAuditManager,
 		ProvideUserDataManager,
-		ProvideUserAuditManager,
 		ProvideAdminUserDataManager,
 		ProvideAccountDataManager,
 		ProvideAccountAuditManager,
@@ -77,11 +76,6 @@ func ProvideItemAuditManager(db DataManager) types.ItemAuditManager {
 
 // ProvideUserDataManager is an arbitrary function for dependency injection's sake.
 func ProvideUserDataManager(db DataManager) types.UserDataManager {
-	return db
-}
-
-// ProvideUserAuditManager is an arbitrary function for dependency injection's sake.
-func ProvideUserAuditManager(db DataManager) types.UserAuditManager {
 	return db
 }
 

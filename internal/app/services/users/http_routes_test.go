@@ -17,7 +17,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
 	mockuploads "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/mock"
 
@@ -353,10 +352,6 @@ func TestService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher()))
 		s.userCounter = mc
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserCreationEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser)
-		s.auditLog = auditLog
-
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.UserCreationResponse{}), http.StatusCreated)
 		s.encoderDecoder = ed
@@ -591,10 +586,6 @@ func TestService_CreateHandler(T *testing.T) {
 		db.AccountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountCreationInput{})).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = db
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserCreationEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser)
-		s.auditLog = auditLog
-
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
@@ -738,10 +729,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = auth
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserUpdateTwoFactorSecretEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
-		s.auditLog = auditLog
 
 		ed := &mockencoding.EncoderDecoder{}
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.TOTPSecretRefreshResponse{}), http.StatusAccepted)
@@ -967,10 +954,6 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserVerifyTwoFactorSecretEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
-		s.auditLog = auditLog
-
 		s.TOTPSecretVerificationHandler(res, req)
 
 		assert.Equal(t, http.StatusAccepted, res.Code)
@@ -1170,10 +1153,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
 		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
 		s.userDataManager = mockDB
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserUpdatePasswordEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
-		s.auditLog = auditLog
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
@@ -1586,10 +1565,6 @@ func TestService_Archive(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("ArchiveUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(nil)
 		s.userDataManager = mockDB
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserArchiveEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
-		s.auditLog = auditLog
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher()))

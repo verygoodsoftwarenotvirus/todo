@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
+	server "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
@@ -19,7 +19,7 @@ import (
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-	database2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -38,17 +38,15 @@ func BuildServer(
 	ctx context.Context,
 	cfg *config.ServerConfig,
 	logger logging.Logger,
-	dbm database2.DataManager,
+	dbm database.DataManager,
 	db *sql.DB,
 	authenticator authentication.Authenticator,
-) (*server2.Server, error) {
+) (*server.Server, error) {
 	wire.Build(
-		// app
-		server2.Providers,
-		// packages,
+		server.Providers,
 		bleve.Providers,
 		config.Providers,
-		database2.Providers,
+		database.Providers,
 		encoding.Providers,
 		httpserver.Providers,
 		metrics.Providers,
@@ -57,7 +55,6 @@ func BuildServer(
 		uploads.Providers,
 		observability.Providers,
 		storage.Providers,
-		// services,
 		adminservice.Providers,
 		auditservice.Providers,
 		authservice.Providers,

@@ -13,19 +13,13 @@ var _ types.AuditLogEntrySQLQueryBuilder = (*Postgres)(nil)
 
 // BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (q *Postgres) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.IDColumn): entryID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
@@ -42,7 +36,7 @@ func (q *Postgres) BuildGetAllAuditLogEntriesCountQuery() string {
 
 // BuildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
 func (q *Postgres) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
 		Where(squirrel.Gt{
@@ -50,12 +44,26 @@ func (q *Postgres) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (q
 		}).
 		Where(squirrel.Lt{
 			fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.IDColumn): endID,
-		}).
-		ToSql()
+		}),
+	)
+}
 
-	q.logQueryBuildingError(err)
-
-	return query, args
+// BuildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
+func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Insert(querybuilding.AuditLogEntriesTableName).
+		Columns(
+			querybuilding.ExternalIDColumn,
+			querybuilding.AuditLogEntriesTableEventTypeColumn,
+			querybuilding.AuditLogEntriesTableContextColumn,
+		).
+		Values(
+			q.externalIDGenerator.NewExternalID(),
+			input.EventType,
+			input.Context,
+		).
+		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+	)
 }
 
 // BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
@@ -81,28 +89,4 @@ func (q *Postgres) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (quer
 	q.logQueryBuildingError(err)
 
 	return query, append(countQueryArgs, selectArgs...)
-}
-
-// BuildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
-func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
-		Insert(querybuilding.AuditLogEntriesTableName).
-		Columns(
-			querybuilding.ExternalIDColumn,
-			querybuilding.AuditLogEntriesTableEventTypeColumn,
-			querybuilding.AuditLogEntriesTableContextColumn,
-		).
-		Values(
-			q.externalIDGenerator.NewExternalID(),
-			input.EventType,
-			input.Context,
-		).
-		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
 }

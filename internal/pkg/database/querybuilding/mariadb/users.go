@@ -15,9 +15,7 @@ var _ types.UserSQLQueryBuilder = (*MariaDB)(nil)
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (q *MariaDB) BuildGetUserQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Eq{
@@ -37,9 +35,7 @@ func (q *MariaDB) BuildGetUserQuery(userID uint64) (query string, args []interfa
 // BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
 func (q *MariaDB) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Eq{
@@ -56,9 +52,7 @@ func (q *MariaDB) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) 
 
 // BuildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (q *MariaDB) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Eq{
@@ -77,9 +71,7 @@ func (q *MariaDB) BuildGetUserByUsernameQuery(username string) (query string, ar
 
 // BuildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
 func (q *MariaDB) BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
 		Where(squirrel.Expr(
@@ -162,7 +154,7 @@ func (q *MariaDB) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreat
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
-			querybuilding.UsersTableTwoFactorColumn,
+			querybuilding.UsersTableTwoFactorSekretColumn,
 			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableReputationColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
@@ -188,16 +180,14 @@ func (q *MariaDB) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreat
 
 // BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
 func (q *MariaDB) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
 			querybuilding.ExternalIDColumn,
 			querybuilding.UsersTableUsernameColumn,
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
-			querybuilding.UsersTableTwoFactorColumn,
+			querybuilding.UsersTableTwoFactorSekretColumn,
 			querybuilding.UsersTableReputationColumn,
 			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
@@ -226,9 +216,7 @@ func (q *MariaDB) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
 func (q *MariaDB) BuildSetUserStatusQuery(userID uint64, input types.UserReputationUpdateInput) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
 		Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
@@ -242,14 +230,12 @@ func (q *MariaDB) BuildSetUserStatusQuery(userID uint64, input types.UserReputat
 
 // BuildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (q *MariaDB) BuildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableUsernameColumn, input.Username).
 		Set(querybuilding.UsersTableHashedPasswordColumn, input.HashedPassword).
 		Set(querybuilding.UsersTableSaltColumn, input.Salt).
-		Set(querybuilding.UsersTableTwoFactorColumn, input.TwoFactorSecret).
+		Set(querybuilding.UsersTableTwoFactorSekretColumn, input.TwoFactorSecret).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
@@ -264,9 +250,7 @@ func (q *MariaDB) BuildUpdateUserQuery(input *types.User) (query string, args []
 
 // BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's authentication.
 func (q *MariaDB) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableHashedPasswordColumn, newHash).
 		Set(querybuilding.UsersTableRequiresPasswordChangeColumn, false).
@@ -282,9 +266,7 @@ func (q *MariaDB) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (q
 
 // BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (q *MariaDB) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.UsersTableReputationColumn, types.GoodStandingAccountStatus).
@@ -298,9 +280,7 @@ func (q *MariaDB) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query stri
 
 // BuildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (q *MariaDB) BuildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{querybuilding.IDColumn: userID}).

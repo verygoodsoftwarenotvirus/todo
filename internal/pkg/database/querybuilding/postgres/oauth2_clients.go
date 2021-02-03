@@ -53,9 +53,7 @@ func (q *Postgres) BuildGetBatchOfOAuth2ClientsQuery(beginID, endID uint64) (que
 
 // BuildGetOAuth2ClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
 func (q *Postgres) BuildGetOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.OAuth2ClientsTableColumns...).
 		From(querybuilding.OAuth2ClientsTableName).
 		Where(squirrel.Eq{
@@ -102,9 +100,7 @@ func (q *Postgres) BuildGetOAuth2ClientsQuery(userID uint64, filter *types.Query
 
 // BuildCreateOAuth2ClientQuery returns a SQL query (and args) that will create the given OAuth2Client in the database.
 func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationInput) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Insert(querybuilding.OAuth2ClientsTableName).
 		Columns(
 			querybuilding.ExternalIDColumn,
@@ -134,9 +130,7 @@ func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreatio
 
 // BuildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
 func (q *Postgres) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Update(querybuilding.OAuth2ClientsTableName).
 		Set(querybuilding.OAuth2ClientsTableClientIDColumn, input.ClientID).
 		Set(querybuilding.OAuth2ClientsTableClientSecretColumn, input.ClientSecret).
@@ -163,9 +157,7 @@ func (q *Postgres) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Cl
 
 // BuildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
 func (q *Postgres) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Update(querybuilding.OAuth2ClientsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).

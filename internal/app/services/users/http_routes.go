@@ -206,7 +206,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify the relevant parties.
 	tracing.AttachUserIDToSpan(span, user.ID)
 	s.userCounter.Increment(ctx)
-	s.auditLog.LogUserCreationEvent(ctx, user)
 
 	// encode and peace.
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, ucr, http.StatusCreated)
@@ -348,8 +347,6 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return
 		}
-
-		s.auditLog.LogUserVerifyTwoFactorSecretEvent(ctx, user.ID)
 	}
 
 	res.WriteHeader(statusCode)
@@ -421,8 +418,6 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 		TwoFactorSecret: user.TwoFactorSecret,
 		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
 	}
-
-	s.auditLog.LogUserUpdateTwoFactorSecretEvent(ctx, user.ID)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, result, http.StatusAccepted)
 }
@@ -502,8 +497,6 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		http.SetCookie(res, cookie)
 	}
 
-	s.auditLog.LogUserUpdatePasswordEvent(ctx, user.ID)
-
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
 	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
 }
@@ -580,7 +573,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// inform the relatives.
 	s.userCounter.Decrement(ctx)
-	s.auditLog.LogUserArchiveEvent(ctx, userID)
 
 	// we're all good.
 	res.WriteHeader(http.StatusNoContent)
@@ -599,7 +591,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger = logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForUser(ctx, userID)
+	x, err := s.userDataManager.GetAuditLogEntriesForUser(ctx, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

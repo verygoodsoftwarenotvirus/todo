@@ -85,8 +85,8 @@ const (
 	UsersTableRequiresPasswordChangeColumn = "requires_password_change"
 	// UsersTablePasswordLastChangedOnColumn is what the users table calls the <> column.
 	UsersTablePasswordLastChangedOnColumn = "password_last_changed_on"
-	// UsersTableTwoFactorColumn is what the users table calls the <> column.
-	UsersTableTwoFactorColumn = "two_factor_secret"
+	// UsersTableTwoFactorSekretColumn is what the users table calls the <> column.
+	UsersTableTwoFactorSekretColumn = "two_factor_secret"
 	// UsersTableTwoFactorVerifiedOnColumn is what the users table calls the <> column.
 	UsersTableTwoFactorVerifiedOnColumn = "two_factor_secret_verified_on"
 	// UsersTableIsAdminColumn is what the users table calls the <> column.

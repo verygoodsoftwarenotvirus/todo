@@ -14,9 +14,7 @@ var _ types.AccountSQLQueryBuilder = (*MariaDB)(nil)
 
 // BuildAccountExistsQuery constructs a SQL query for checking if an account with a given ID belong to a user with a given ID exists.
 func (q *MariaDB) BuildAccountExistsQuery(accountID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn)).
 		Prefix(querybuilding.ExistencePrefix).
 		From(querybuilding.AccountsTableName).
@@ -25,30 +23,21 @@ func (q *MariaDB) BuildAccountExistsQuery(accountID, userID uint64) (query strin
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn):                         accountID,
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn):                 nil,
-		}).ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (q *MariaDB) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AccountsTableColumns...).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn):                         accountID,
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn):                 nil,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
@@ -70,7 +59,7 @@ func (q *MariaDB) BuildGetAllAccountsCountQuery() string {
 
 // BuildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
 func (q *MariaDB) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AccountsTableColumns...).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Gt{
@@ -78,12 +67,8 @@ func (q *MariaDB) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query str
 		}).
 		Where(squirrel.Lt{
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn): endID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
@@ -101,9 +86,7 @@ func (q *MariaDB) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *ty
 
 // BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
 func (q *MariaDB) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(
 			querybuilding.ExternalIDColumn,
@@ -114,38 +97,26 @@ func (q *MariaDB) BuildCreateAccountQuery(input *types.AccountCreationInput) (qu
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.BelongsToUser,
-		).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		),
+	)
 }
 
 // BuildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
 func (q *MariaDB) BuildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
 		Set(querybuilding.AccountsTableNameColumn, input.Name).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                         input.ID,
 			querybuilding.AccountsTableUserOwnershipColumn: input.BelongsToUser,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
 func (q *MariaDB) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -153,12 +124,8 @@ func (q *MariaDB) BuildArchiveAccountQuery(accountID, userID uint64) (query stri
 			querybuilding.IDColumn:                         accountID,
 			querybuilding.ArchivedOnColumn:                 nil,
 			querybuilding.AccountsTableUserOwnershipColumn: userID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.

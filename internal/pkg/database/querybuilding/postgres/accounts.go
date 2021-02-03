@@ -14,9 +14,7 @@ var _ types.AccountSQLQueryBuilder = (*Postgres)(nil)
 
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (q *Postgres) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	query, args, err := q.sqlBuilder.
 		Select(querybuilding.AccountsTableColumns...).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Eq{
@@ -48,7 +46,7 @@ func (q *Postgres) BuildGetAllAccountsCountQuery() string {
 
 // BuildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
 func (q *Postgres) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AccountsTableColumns...).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Gt{
@@ -56,12 +54,8 @@ func (q *Postgres) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query st
 		}).
 		Where(squirrel.Lt{
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn): endID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
@@ -79,9 +73,7 @@ func (q *Postgres) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *t
 
 // BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
 func (q *Postgres) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(
 			querybuilding.ExternalIDColumn,
@@ -93,38 +85,26 @@ func (q *Postgres) BuildCreateAccountQuery(input *types.AccountCreationInput) (q
 			input.Name,
 			input.BelongsToUser,
 		).
-		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+	)
 }
 
 // BuildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
 func (q *Postgres) BuildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
 		Set(querybuilding.AccountsTableNameColumn, input.Name).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                         input.ID,
 			querybuilding.AccountsTableUserOwnershipColumn: input.BelongsToUser,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
 func (q *Postgres) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
-	var err error
-
-	query, args, err = q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
@@ -132,23 +112,18 @@ func (q *Postgres) BuildArchiveAccountQuery(accountID, userID uint64) (query str
 			querybuilding.IDColumn:                         accountID,
 			querybuilding.ArchivedOnColumn:                 nil,
 			querybuilding.AccountsTableUserOwnershipColumn: userID,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
+		}),
+	)
 }
 
 // BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries
 // associated with a given account.
 func (q *Postgres) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
 	accountIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.AccountAssignmentKey)
-	builder := q.sqlBuilder.
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
 		Where(squirrel.Eq{accountIDKey: accountID}).
-		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
-
-	return q.buildQuery(builder)
+		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
+	)
 }

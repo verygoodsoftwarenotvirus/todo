@@ -40,10 +40,8 @@ func (q *Postgres) buildGetItemQuery(userID uint64) squirrel.SelectBuilder {
 
 // BuildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
 func (q *Postgres) BuildGetItemQuery(itemID, userID uint64) (query string, args []interface{}) {
-	builder := q.buildGetItemQuery(userID)
-
 	return q.buildQuery(
-		builder.Where(
+		q.buildGetItemQuery(userID).Where(
 			squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn): itemID},
 		),
 	)
@@ -51,10 +49,8 @@ func (q *Postgres) BuildGetItemQuery(itemID, userID uint64) (query string, args 
 
 // BuildGetItemByExternalIDQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
 func (q *Postgres) BuildGetItemByExternalIDQuery(itemID string, userID uint64) (query string, args []interface{}) {
-	builder := q.buildGetItemQuery(userID)
-
 	return q.buildQuery(
-		builder.Where(
+		q.buildGetItemQuery(userID).Where(
 			squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ExternalIDColumn): itemID},
 		),
 	)
@@ -63,15 +59,13 @@ func (q *Postgres) BuildGetItemByExternalIDQuery(itemID string, userID uint64) (
 // BuildGetAllItemsCountQuery returns a query that fetches the total number of items in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *Postgres) BuildGetAllItemsCountQuery() string {
-	query, _ := q.buildQuery(q.sqlBuilder.
+	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
 		From(querybuilding.ItemsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
 		}),
 	)
-
-	return query
 }
 
 // BuildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
@@ -112,6 +106,7 @@ func (q *Postgres) BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []u
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
 	}
+
 	if !forAdmin {
 		where[fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableUserOwnershipColumn)] = userID
 	}
@@ -120,12 +115,12 @@ func (q *Postgres) BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []u
 		From(querybuilding.ItemsTableName).
 		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
 		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
-	builder := q.sqlBuilder.
+
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.ItemsTableColumns...).
 		FromSelect(subqueryBuilder, querybuilding.ItemsTableName).
-		Where(where)
-
-	return q.buildQuery(builder)
+		Where(where),
+	)
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
@@ -180,11 +175,11 @@ func (q *Postgres) BuildArchiveItemQuery(itemID, userID uint64) (query string, a
 // associated with a given item.
 func (q *Postgres) BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	itemIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
-	builder := q.sqlBuilder.
+
+	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
 		Where(squirrel.Eq{itemIDKey: itemID}).
-		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
-
-	return q.buildQuery(builder)
+		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
+	)
 }

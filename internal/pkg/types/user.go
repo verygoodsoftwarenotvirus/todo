@@ -196,16 +196,7 @@ type (
 		UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error
 		// ArchiveUser marks a User as archived in the data store.
 		ArchiveUser(ctx context.Context, userID uint64) error
-	}
-
-	// UserAuditManager describes a structure capable of logging audit events related to users.
-	UserAuditManager interface {
 		GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*AuditLogEntry, error)
-		LogUserCreationEvent(ctx context.Context, user *User)
-		LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64)
-		LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64)
-		LogUserUpdatePasswordEvent(ctx context.Context, userID uint64)
-		LogUserArchiveEvent(ctx context.Context, userID uint64)
 	}
 
 	// UserDataService describes a structure capable of serving traffic related to users.

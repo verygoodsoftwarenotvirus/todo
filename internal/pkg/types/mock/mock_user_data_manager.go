@@ -78,6 +78,12 @@ func (m *UserDataManager) ArchiveUser(ctx context.Context, userID uint64) error 
 	return m.Called(ctx, userID).Error(0)
 }
 
+// GetAuditLogEntriesForUser is a mock function.
+func (m *UserDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+}
+
 // LogUserCreationEvent implements our interface.
 func (m *AuditLogEntryDataManager) LogUserCreationEvent(ctx context.Context, user *types.User) {
 	m.Called(ctx, user)
@@ -101,10 +107,4 @@ func (m *AuditLogEntryDataManager) LogUserUpdatePasswordEvent(ctx context.Contex
 // LogUserArchiveEvent implements our interface.
 func (m *AuditLogEntryDataManager) LogUserArchiveEvent(ctx context.Context, userID uint64) {
 	m.Called(ctx, userID)
-}
-
-// GetAuditLogEntriesForUser is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

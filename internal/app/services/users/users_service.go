@@ -40,7 +40,6 @@ type (
 	service struct {
 		userDataManager      types.UserDataManager
 		accountDataManager   types.AccountDataManager
-		auditLog             types.UserAuditManager
 		authSettings         *authservice.Config
 		authenticator        authentication.Authenticator
 		logger               logging.Logger
@@ -61,7 +60,6 @@ func ProvideUsersService(
 	logger logging.Logger,
 	userDataManager types.UserDataManager,
 	accountDataManager types.AccountDataManager,
-	auditLog types.UserAuditManager,
 	authenticator authentication.Authenticator,
 	encoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
@@ -77,7 +75,6 @@ func ProvideUsersService(
 		logger:               logger.WithName(serviceName),
 		userDataManager:      userDataManager,
 		accountDataManager:   accountDataManager,
-		auditLog:             auditLog,
 		authenticator:        authenticator,
 		userIDFetcher:        routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
 		sessionInfoFetcher:   routeparams.SessionInfoFetcherFromRequestContext,

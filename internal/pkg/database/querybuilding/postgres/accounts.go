@@ -120,6 +120,7 @@ func (q *Postgres) BuildArchiveAccountQuery(accountID, userID uint64) (query str
 // associated with a given account.
 func (q *Postgres) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
 	accountIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.AccountAssignmentKey)
+
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).

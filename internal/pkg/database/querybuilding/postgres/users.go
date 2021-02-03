@@ -154,12 +154,11 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 }
 
 // BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
+// NOTE: we always default is_admin to false, on the assumption that
+// admins have DB access and will change that value via SQL query.
+// There should be no way to update a user via this structure
+// such that they would have admin privileges.
 func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
-	// NOTE: we always default is_admin to false, on the assumption that
-	// admins have DB access and will change that value via SQL query.
-	// There should be no way to update a user via this structure
-	// such that they would have admin privileges.
-
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(

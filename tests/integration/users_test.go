@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -53,17 +54,35 @@ func TestUsers(test *testing.T) {
 
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
-			actual, err := testClient.CreateUser(ctx, exampleUserInput)
-			checkValueAndError(t, actual, err)
+			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
+			checkValueAndError(t, createdUser, err)
 
 			// Assert user equality.
-			checkUserCreationEquality(t, exampleUserInput, actual)
+			checkUserCreationEquality(t, exampleUserInput, createdUser)
 
 			// Clean up.
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			assert.NoError(t, adminClient.ArchiveUser(ctx, actual.ID))
+			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
+
+			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
+
+			require.NoError(t, err)
+			require.Len(t, auditLogEntries, 2)
+
+			expectedEventTypes := []string{
+				audit.UserCreationEvent,
+				audit.UserArchiveEvent,
+			}
+			actualEventTypes := []string{}
+
+			for _, e := range auditLogEntries {
+				actualEventTypes = append(actualEventTypes, e.EventType)
+				require.Contains(t, e.Context, audit.UserAssignmentKey)
+				assert.EqualValues(t, createdUser.ID, e.Context[audit.UserAssignmentKey])
+			}
+			assert.Subset(t, expectedEventTypes, actualEventTypes)
 		})
 	})
 

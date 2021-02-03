@@ -156,6 +156,7 @@ type (
 		BuildCreateUserQuery(input UserDataStoreCreationInput) (query string, args []interface{})
 		BuildUpdateUserQuery(input *User) (query string, args []interface{})
 		BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{})
+		BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{})
 		BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
 		BuildArchiveUserQuery(userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{})

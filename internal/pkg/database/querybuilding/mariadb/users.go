@@ -264,6 +264,16 @@ func (q *MariaDB) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (q
 	return query, args
 }
 
+// BuildUpdateUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
+func (q *MariaDB) BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.UsersTableName).
+		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, nil).
+		Set(querybuilding.UsersTableTwoFactorSekretColumn, newSecret).
+		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+	)
+}
+
 // BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
 func (q *MariaDB) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.

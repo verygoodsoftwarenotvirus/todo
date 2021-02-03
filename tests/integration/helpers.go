@@ -2,8 +2,11 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -42,8 +45,7 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 	return code
 }
 
-/*
-func runTestForClientAndCookie(ctx context.Context, t *testing.T, testFunc func(*testing.T, *httpclient.Client)) {
+func runTestForClientAndCookie(ctx context.Context, t *testing.T, testName string, testFunc func(*httpclient.Client) func(*testing.T)) {
 	t.Helper()
 
 	user, testClient := createUserAndClientForTest(ctx, t)
@@ -54,8 +56,30 @@ func runTestForClientAndCookie(ctx context.Context, t *testing.T, testFunc func(
 	})
 	require.NoError(t, err)
 
-	testFunc(t, testClient)
+	t.Run(fmt.Sprintf("%s without cookie", testName), testFunc(testClient))
 	testClient.SetOption(httpclient.WithCookieCredentials(cookie))
-	testFunc(t, testClient)
+	t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(testClient))
 }
-*/
+
+func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {
+	t.Helper()
+
+	require.Len(t, actualEntries, len(expectedEntries))
+
+	expectedEventTypes := []string{}
+	for _, e := range expectedEntries {
+		expectedEventTypes = append(expectedEventTypes, e.EventType)
+	}
+
+	actualEventTypes := []string{}
+	for _, e := range actualEntries {
+		actualEventTypes = append(actualEventTypes, e.EventType)
+
+		if relevantID != 0 && key != "" {
+			require.Contains(t, e.Context, key)
+			assert.EqualValues(t, relevantID, e.Context[key])
+		}
+	}
+
+	assert.Subset(t, expectedEventTypes, actualEventTypes)
+}

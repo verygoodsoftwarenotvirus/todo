@@ -138,12 +138,11 @@ func (q *Sqlite) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreati
 }
 
 // BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
+// NOTE: we always default is_admin to false, on the assumption that
+// admins have DB access and will change that value via SQL query.
+// There should be no way to update a user via this structure
+// such that they would have admin privileges.
 func (q *Sqlite) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
-	// NOTE: we always default is_admin to false, on the assumption that
-	// admins have DB access and will change that value via SQL query.
-	// There should be no way to update a user via this structure
-	// such that they would have admin privileges.
-
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
@@ -203,6 +202,16 @@ func (q *Sqlite) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (qu
 		Set(querybuilding.UsersTableRequiresPasswordChangeColumn, false).
 		Set(querybuilding.UsersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+	)
+}
+
+// BuildUpdateUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
+func (q *Sqlite) BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.UsersTableName).
+		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, nil).
+		Set(querybuilding.UsersTableTwoFactorSekretColumn, newSecret).
 		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
 	)
 }

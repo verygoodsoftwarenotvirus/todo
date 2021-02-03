@@ -270,7 +270,13 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "user update", query, args)
+	if err := c.performCreateQueryIgnoringReturn(ctx, "user update", query, args); err != nil {
+		return err
+	}
+
+	c.createAuditLogEntry(ctx, audit.BuildUserUpdateEventEntry(updated.ID, nil))
+
+	return nil
 }
 
 // UpdateUserPassword updates a user's authentication hash in the database.
@@ -288,6 +294,25 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 	}
 
 	c.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
+
+	return nil
+}
+
+// UpdateUserTwoFactorSecret marks a user's two factor secret as validated.
+func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, newSecret string) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserTwoFactorSecret called")
+
+	query, args := c.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(userID, newSecret)
+
+	if err := c.performCreateQueryIgnoringReturn(ctx, "user two factor secret update", query, args); err != nil {
+		return err
+	}
+
+	c.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 
 	return nil
 }
@@ -328,17 +353,6 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	c.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
 
 	return nil
-}
-
-// LogUserUpdateTwoFactorSecretEvent saves a UserUpdateTwoFactorSecretEvent in the audit log table.
-func (c *Client) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUserUpdateTwoFactorSecretEvent called")
-
-	c.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 }
 
 // GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.

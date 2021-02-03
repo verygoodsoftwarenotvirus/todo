@@ -62,6 +62,13 @@ func (m *UserSQLQueryBuilder) BuildUpdateUserPasswordQuery(userID uint64, newHas
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildUpdateUserTwoFactorSecretQuery implements our interface.
+func (m *UserSQLQueryBuilder) BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, newSecret)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
 // BuildVerifyUserTwoFactorSecretQuery implements our interface.
 func (m *UserSQLQueryBuilder) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(userID)

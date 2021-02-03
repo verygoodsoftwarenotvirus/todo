@@ -197,6 +197,29 @@ func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 	})
 }
 
+func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+
+		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = ?, two_factor_secret = ? WHERE id = ?"
+		expectedArgs := []interface{}{
+			nil,
+			exampleUser.TwoFactorSecret,
+			exampleUser.ID,
+		}
+		actualQuery, actualArgs := q.BuildUpdateUserTwoFactorSecretQuery(exampleUser.ID, exampleUser.TwoFactorSecret)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 

@@ -14,6 +14,8 @@ const (
 	UserVerifyTwoFactorSecretEvent = "user_two_factor_secret_verified"
 	// UserUpdateTwoFactorSecretEvent events indicate a user updated their two factor secret.
 	UserUpdateTwoFactorSecretEvent = "user_two_factor_secret_changed"
+	// UserUpdateEvent events indicate a user was updated.
+	UserUpdateEvent = "user_updated"
 	// UserUpdatePasswordEvent events indicate a user updated their two factor secret.
 	UserUpdatePasswordEvent = "user_password_updated"
 	// UserArchiveEvent events indicate a user was archived.
@@ -57,6 +59,17 @@ func BuildUserUpdatePasswordEventEntry(userID uint64) *types.AuditLogEntryCreati
 		EventType: UserUpdatePasswordEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
+		},
+	}
+}
+
+// BuildUserUpdateEventEntry builds an entry creation input for when a user is updated.
+func BuildUserUpdateEventEntry(userID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+	return &types.AuditLogEntryCreationInput{
+		EventType: UserUpdateEvent,
+		Context: map[string]interface{}{
+			ActorAssignmentKey:   userID,
+			ChangesAssignmentKey: changes,
 		},
 	}
 }

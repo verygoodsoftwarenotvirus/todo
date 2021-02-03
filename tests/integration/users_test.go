@@ -67,22 +67,13 @@ func TestUsers(test *testing.T) {
 			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
 
 			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
-
 			require.NoError(t, err)
-			require.Len(t, auditLogEntries, 2)
 
-			expectedEventTypes := []string{
-				audit.UserCreationEvent,
-				audit.UserArchiveEvent,
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.UserCreationEvent},
+				{EventType: audit.UserArchiveEvent},
 			}
-			actualEventTypes := []string{}
-
-			for _, e := range auditLogEntries {
-				actualEventTypes = append(actualEventTypes, e.EventType)
-				require.Contains(t, e.Context, audit.UserAssignmentKey)
-				assert.EqualValues(t, createdUser.ID, e.Context[audit.UserAssignmentKey])
-			}
-			assert.Subset(t, expectedEventTypes, actualEventTypes)
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
 		})
 	})
 
@@ -209,11 +200,11 @@ func TestUsers(test *testing.T) {
 
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
-			u, err := testClient.CreateUser(ctx, exampleUserInput)
+			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
 			assert.NoError(t, err)
-			assert.NotNil(t, u)
+			assert.NotNil(t, createdUser)
 
-			if u == nil || err != nil {
+			if createdUser == nil || err != nil {
 				t.Log("something has gone awry, user returned is nil")
 				t.FailNow()
 			}
@@ -221,7 +212,17 @@ func TestUsers(test *testing.T) {
 			// Execute.
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			assert.NoError(t, adminClient.ArchiveUser(ctx, u.ID))
+
+			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
+
+			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.UserCreationEvent},
+				{EventType: audit.UserArchiveEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
 		})
 	})
 

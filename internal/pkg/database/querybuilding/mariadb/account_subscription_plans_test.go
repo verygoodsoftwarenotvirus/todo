@@ -117,7 +117,7 @@ func TestMariaDB_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		expectedQuery := "UPDATE account_subscription_plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = UNIX_TIMESTAMP() WHERE id = ?"
+		expectedQuery := "UPDATE account_subscription_plans SET name = ?, description = ?, price = ?, period = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			exampleAccountSubscriptionPlan.Name,
 			exampleAccountSubscriptionPlan.Description,

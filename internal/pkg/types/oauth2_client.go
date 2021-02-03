@@ -57,7 +57,6 @@ type (
 		BuildGetAllOAuth2ClientsCountQuery() string
 		BuildGetOAuth2ClientsQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
 		BuildCreateOAuth2ClientQuery(input *OAuth2ClientCreationInput) (query string, args []interface{})
-		BuildUpdateOAuth2ClientQuery(input *OAuth2Client) (query string, args []interface{})
 		BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForOAuth2ClientQuery(clientID uint64) (query string, args []interface{})
 	}
@@ -70,7 +69,6 @@ type (
 		GetTotalOAuth2ClientCount(ctx context.Context) (uint64, error)
 		GetOAuth2Clients(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)
 		CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
-		UpdateOAuth2Client(ctx context.Context, updated *OAuth2Client) error
 		ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error
 	}
 

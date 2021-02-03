@@ -91,6 +91,7 @@ func (q *Sqlite) BuildUpdateAccountQuery(input *types.Account) (query string, ar
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                         input.ID,
+			querybuilding.ArchivedOnColumn:                 nil,
 			querybuilding.AccountsTableUserOwnershipColumn: input.BelongsToUser,
 		}),
 	)

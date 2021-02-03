@@ -23,6 +23,7 @@ func (q *Sqlite) BuildGetWebhookQuery(webhookID, userID uint64) (query string, a
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.IDColumn):                     webhookID,
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.WebhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.ArchivedOnColumn):             nil,
 		}),
 	)
 }
@@ -108,6 +109,7 @@ func (q *Sqlite) BuildUpdateWebhookQuery(input *types.Webhook) (query string, ar
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                     input.ID,
 			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToUser,
+			querybuilding.ArchivedOnColumn:             nil,
 		}),
 	)
 }

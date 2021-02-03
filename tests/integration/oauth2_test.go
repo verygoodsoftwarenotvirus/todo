@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -132,6 +133,16 @@ func TestOAuth2Clients(test *testing.T) {
 
 			checkValueAndError(t, createdClient, err)
 			checkOAuth2ClientEquality(t, convertInputToClient(input), createdClient)
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
+			auditLogEntries, err := adminClient.GetAuditLogForOAuth2Client(ctx, createdClient.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.OAuth2ClientCreationEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdClient.ID, audit.OAuth2ClientAssignmentKey)
 
 			// Clean up.
 			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdClient.ID))
@@ -175,66 +186,6 @@ func TestOAuth2Clients(test *testing.T) {
 			// Clean up.
 			err = testClient.ArchiveOAuth2Client(ctx, actual.ID)
 			assert.NoError(t, err)
-		})
-	})
-
-	test.Run("Deleting", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		subtest.Run("should be able to be deleted", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartSpan(context.Background())
-			defer span.End()
-
-			testUser, testClient := createUserAndClientForTest(ctx, t)
-
-			// Create oauth2Client.
-			_, createdClient := createOAuth2Client(ctx, t, testUser, testClient)
-
-			// Clean up.
-			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdClient.ID))
-		})
-
-		subtest.Run("should be unable to authorize after being deleted", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartSpan(context.Background())
-			defer span.End()
-
-			testUser, testClient := createUserAndClientForTest(ctx, t)
-			cookie, err := testClient.Login(ctx, &types.UserLoginInput{
-				Username:  testUser.Username,
-				Password:  testUser.HashedPassword,
-				TOTPToken: generateTOTPTokenForUser(t, testUser),
-			})
-			require.NoError(t, err)
-
-			input := buildDummyOAuth2ClientInput(test, testUser.Username, testUser.HashedPassword, testUser.TwoFactorSecret)
-			premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-			checkValueAndError(test, premade, err)
-
-			// archive oauth2Client.
-			require.NoError(t, testClient.ArchiveOAuth2Client(ctx, premade.ID))
-
-			c2 := httpclient.NewClient(
-				httpclient.WithHTTPClient(buildHTTPClient()),
-				httpclient.WithURL(testClient.URL()),
-				httpclient.WithLogger(logging.NewNonOperationalLogger()),
-				httpclient.WithOAuth2ClientCredentials(
-					httpclient.BuildClientCredentialsConfig(
-						testClient.URL(),
-						premade.ClientID,
-						premade.ClientSecret,
-						premade.Scopes...,
-					),
-				),
-				httpclient.WithDebugEnabled(),
-			)
-			checkValueAndError(test, c2, nil)
-
-			_, err = c2.GetOAuth2Clients(ctx, nil)
-			assert.Error(t, err, "expected error from what should be an unauthorized client")
 		})
 	})
 
@@ -284,6 +235,89 @@ func TestOAuth2Clients(test *testing.T) {
 				err = testClient.ArchiveOAuth2Client(ctx, oa2c.ID)
 				assert.NoError(t, err, "error deleting client %d: %v", oa2c.ID, err)
 			}
+		})
+	})
+
+	test.Run("Deleting", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		subtest.Run("should return an error trying to delete something that does not exist", func(t *testing.T) {
+			t.Parallel()
+
+			ctx, span := tracing.StartSpan(context.Background())
+			defer span.End()
+
+			_, testClient := createUserAndClientForTest(ctx, t)
+
+			assert.Error(t, testClient.ArchiveOAuth2Client(ctx, nonexistentID))
+		})
+
+		subtest.Run("should be able to be deleted", func(t *testing.T) {
+			t.Parallel()
+
+			ctx, span := tracing.StartSpan(context.Background())
+			defer span.End()
+
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+
+			// Create oauth2Client.
+			_, createdClient := createOAuth2Client(ctx, t, testUser, testClient)
+
+			// Clean up.
+			assert.NoError(t, testClient.ArchiveOAuth2Client(ctx, createdClient.ID))
+
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
+			auditLogEntries, err := adminClient.GetAuditLogForOAuth2Client(ctx, createdClient.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.OAuth2ClientCreationEvent},
+				{EventType: audit.OAuth2ClientArchiveEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdClient.ID, audit.OAuth2ClientAssignmentKey)
+		})
+
+		subtest.Run("should be unable to authorize after being deleted", func(t *testing.T) {
+			t.Parallel()
+
+			ctx, span := tracing.StartSpan(context.Background())
+			defer span.End()
+
+			testUser, testClient := createUserAndClientForTest(ctx, t)
+			cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+				Username:  testUser.Username,
+				Password:  testUser.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, testUser),
+			})
+			require.NoError(t, err)
+
+			input := buildDummyOAuth2ClientInput(test, testUser.Username, testUser.HashedPassword, testUser.TwoFactorSecret)
+			premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
+			checkValueAndError(test, premade, err)
+
+			// archive oauth2Client.
+			require.NoError(t, testClient.ArchiveOAuth2Client(ctx, premade.ID))
+
+			c2 := httpclient.NewClient(
+				httpclient.WithHTTPClient(buildHTTPClient()),
+				httpclient.WithURL(testClient.URL()),
+				httpclient.WithLogger(logging.NewNonOperationalLogger()),
+				httpclient.WithOAuth2ClientCredentials(
+					httpclient.BuildClientCredentialsConfig(
+						testClient.URL(),
+						premade.ClientID,
+						premade.ClientSecret,
+						premade.Scopes...,
+					),
+				),
+				httpclient.WithDebugEnabled(),
+			)
+			checkValueAndError(test, c2, nil)
+
+			_, err = c2.GetOAuth2Clients(ctx, nil)
+			assert.Error(t, err, "expected error from what should be an unauthorized client")
 		})
 	})
 

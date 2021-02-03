@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -128,33 +127,6 @@ func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreatio
 	return query, args
 }
 
-// BuildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
-func (q *Postgres) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
-	query, args, err := q.sqlBuilder.
-		Update(querybuilding.OAuth2ClientsTableName).
-		Set(querybuilding.OAuth2ClientsTableClientIDColumn, input.ClientID).
-		Set(querybuilding.OAuth2ClientsTableClientSecretColumn, input.ClientSecret).
-		Set(querybuilding.OAuth2ClientsTableScopesColumn, strings.Join(input.Scopes, querybuilding.OAuth2ClientsTableScopeSeparator)).
-		Set(querybuilding.OAuth2ClientsTableRedirectURIColumn, input.RedirectURI).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			querybuilding.IDColumn:                          input.ID,
-			querybuilding.OAuth2ClientsTableOwnershipColumn: input.BelongsToUser,
-		}).
-		ToSql()
-
-	q.logQueryBuildingError(err)
-
-	return query, args
-}
-
-// UpdateOAuth2Client updates a OAuth2 client.
-// NOTE: this function expects the input's ID field to be valid and non-zero.
-func (q *Postgres) UpdateOAuth2Client(ctx context.Context, input *types.OAuth2Client) error {
-	query, args := q.BuildUpdateOAuth2ClientQuery(input)
-	return q.db.QueryRowContext(ctx, query, args...).Scan(&input.LastUpdatedOn)
-}
-
 // BuildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
 func (q *Postgres) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
@@ -164,6 +136,7 @@ func (q *Postgres) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                          clientID,
 			querybuilding.OAuth2ClientsTableOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                  nil,
 		}).
 		ToSql()
 

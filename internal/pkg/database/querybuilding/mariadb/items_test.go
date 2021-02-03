@@ -202,7 +202,7 @@ func TestMariaDB_BuildUpdateItemQuery(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "UPDATE items SET name = ?, details = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE items SET name = ?, details = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleItem.Name,
 			exampleItem.Details,

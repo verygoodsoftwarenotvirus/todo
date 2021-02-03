@@ -653,35 +653,6 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateOAuth2Client(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		var expected error
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildUpdateOAuth2ClientQuery", exampleOAuth2Client).Return(fakeQuery, fakeArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleOAuth2Client.ID))
-
-		actual := c.UpdateOAuth2Client(ctx, exampleOAuth2Client)
-		assert.NoError(t, actual)
-		assert.Equal(t, expected, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
 func TestClient_ArchiveOAuth2Client(T *testing.T) {
 	T.Parallel()
 

@@ -157,7 +157,7 @@ func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
@@ -183,7 +183,7 @@ func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), last_updated_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = (strftime('%s','now')), last_updated_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.HashedPassword,
 			false,
@@ -206,7 +206,7 @@ func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = ?, two_factor_secret = ? WHERE id = ?"
+		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = ?, two_factor_secret = ? WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			nil,
 			exampleUser.TwoFactorSecret,
@@ -229,7 +229,7 @@ func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = (strftime('%s','now')), reputation = ? WHERE id = ?"
+		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = (strftime('%s','now')), reputation = ? WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			types.GoodStandingAccountStatus,
 			exampleUser.ID,
@@ -251,7 +251,7 @@ func TestSqlite_BuildArchiveUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET archived_on = (strftime('%s','now')) WHERE id = ?"
+		expectedQuery := "UPDATE users SET archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}

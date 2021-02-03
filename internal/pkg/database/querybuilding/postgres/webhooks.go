@@ -19,6 +19,7 @@ func (q *Postgres) BuildGetWebhookQuery(webhookID, userID uint64) (query string,
 		Select(querybuilding.WebhooksTableColumns...).
 		From(querybuilding.WebhooksTableName).
 		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.ArchivedOnColumn):             nil,
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.IDColumn):                     webhookID,
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.WebhooksTableOwnershipColumn): userID,
 		}),
@@ -105,6 +106,7 @@ func (q *Postgres) BuildUpdateWebhookQuery(input *types.Webhook) (query string, 
 		Set(querybuilding.WebhooksTableTopicsColumn, strings.Join(input.Topics, querybuilding.WebhooksTableTopicsSeparator)).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
+			querybuilding.ArchivedOnColumn:             nil,
 			querybuilding.IDColumn:                     input.ID,
 			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToUser,
 		}),

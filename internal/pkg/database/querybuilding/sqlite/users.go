@@ -179,7 +179,8 @@ func (q *Sqlite) BuildUpdateUserQuery(input *types.User) (query string, args []i
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			querybuilding.IDColumn: input.ID,
+			querybuilding.IDColumn:         input.ID,
+			querybuilding.ArchivedOnColumn: nil,
 		}),
 	)
 }
@@ -190,7 +191,10 @@ func (q *Sqlite) BuildSetUserStatusQuery(userID uint64, input types.UserReputati
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
 		Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:         userID,
+			querybuilding.ArchivedOnColumn: nil,
+		}),
 	)
 }
 
@@ -202,7 +206,10 @@ func (q *Sqlite) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (qu
 		Set(querybuilding.UsersTableRequiresPasswordChangeColumn, false).
 		Set(querybuilding.UsersTablePasswordLastChangedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:         userID,
+			querybuilding.ArchivedOnColumn: nil,
+		}),
 	)
 }
 
@@ -212,7 +219,10 @@ func (q *Sqlite) BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret st
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, nil).
 		Set(querybuilding.UsersTableTwoFactorSekretColumn, newSecret).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:         userID,
+			querybuilding.ArchivedOnColumn: nil,
+		}),
 	)
 }
 
@@ -222,7 +232,10 @@ func (q *Sqlite) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query strin
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Set(querybuilding.UsersTableReputationColumn, types.GoodStandingAccountStatus).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:         userID,
+			querybuilding.ArchivedOnColumn: nil,
+		}),
 	)
 }
 
@@ -231,7 +244,10 @@ func (q *Sqlite) BuildArchiveUserQuery(userID uint64) (query string, args []inte
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{querybuilding.IDColumn: userID}),
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:         userID,
+			querybuilding.ArchivedOnColumn: nil,
+		}),
 	)
 }
 

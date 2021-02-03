@@ -104,22 +104,6 @@ func (q *Sqlite) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationI
 	)
 }
 
-// BuildUpdateOAuth2ClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
-func (q *Sqlite) BuildUpdateOAuth2ClientQuery(input *types.OAuth2Client) (query string, args []interface{}) {
-	return q.buildQuery(q.sqlBuilder.
-		Update(querybuilding.OAuth2ClientsTableName).
-		Set(querybuilding.OAuth2ClientsTableClientIDColumn, input.ClientID).
-		Set(querybuilding.OAuth2ClientsTableClientSecretColumn, input.ClientSecret).
-		Set(querybuilding.OAuth2ClientsTableScopesColumn, strings.Join(input.Scopes, querybuilding.OAuth2ClientsTableScopeSeparator)).
-		Set(querybuilding.OAuth2ClientsTableRedirectURIColumn, input.RedirectURI).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Where(squirrel.Eq{
-			querybuilding.IDColumn:                          input.ID,
-			querybuilding.OAuth2ClientsTableOwnershipColumn: input.BelongsToUser,
-		}),
-	)
-}
-
 // BuildArchiveOAuth2ClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
 func (q *Sqlite) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
@@ -129,6 +113,7 @@ func (q *Sqlite) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query s
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                          clientID,
 			querybuilding.OAuth2ClientsTableOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                  nil,
 		}),
 	)
 }

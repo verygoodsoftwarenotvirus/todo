@@ -21,7 +21,7 @@ func TestPostgres_BuildGetWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = $1 AND webhooks.id = $2"
+		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = $1 AND webhooks.id = $2"
 		expectedArgs := []interface{}{
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
@@ -148,7 +148,7 @@ func TestPostgres_BuildUpdateWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
-		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $8 AND id = $9"
+		expectedQuery := "UPDATE webhooks SET name = $1, content_type = $2, url = $3, method = $4, events = $5, data_types = $6, topics = $7, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $8 AND id = $9"
 		expectedArgs := []interface{}{
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,

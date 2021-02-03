@@ -172,7 +172,7 @@ func TestMariaDB_BuildUpdateAccountQuery(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "UPDATE accounts SET name = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE accounts SET name = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleAccount.Name,
 			exampleAccount.BelongsToUser,

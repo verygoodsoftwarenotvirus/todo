@@ -109,6 +109,7 @@ func (q *MariaDB) BuildUpdateAccountQuery(input *types.Account) (query string, a
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                         input.ID,
+			querybuilding.ArchivedOnColumn:                 nil,
 			querybuilding.AccountsTableUserOwnershipColumn: input.BelongsToUser,
 		}),
 	)

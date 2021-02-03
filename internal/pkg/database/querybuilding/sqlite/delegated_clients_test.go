@@ -143,7 +143,7 @@ func TestSqlite_BuildUpdateDelegatedClientQuery(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 
-		expectedQuery := "UPDATE delegated_clients SET client_id = ?, client_secret = ?, last_updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE delegated_clients SET client_id = ?, client_secret = ?, last_updated_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.ClientID,
 			exampleDelegatedClient.ClientSecret,
@@ -167,7 +167,7 @@ func TestSqlite_BuildArchiveDelegatedClientQuery(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 
-		expectedQuery := "UPDATE delegated_clients SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE delegated_clients SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.BelongsToUser,
 			exampleDelegatedClient.ID,

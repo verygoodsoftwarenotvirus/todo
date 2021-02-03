@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -29,32 +28,10 @@ func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	return q, mock
 }
 
-var (
-	sqlMockReplacer = strings.NewReplacer(
-		"$", `\$`,
-		"(", `\(`,
-		")", `\)`,
-		"=", `\=`,
-		"*", `\*`,
-		".", `\.`,
-		"+", `\+`,
-		"?", `\?`,
-		",", `\,`,
-		"-", `\-`,
-		"[", `\[`,
-		"]", `\]`,
-	)
-	queryArgRegexp = regexp.MustCompile(`\$\d+`)
-)
-
-func formatQueryForSQLMock(query string) string {
-	return sqlMockReplacer.Replace(query)
-}
-
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
 	t.Helper()
 
-	queryArgCount := len(queryArgRegexp.FindAllString(query, -1))
+	queryArgCount := len(regexp.MustCompile(`\$\d+`).FindAllString(query, -1))
 
 	if len(args) > 0 {
 		assert.Equal(t, queryArgCount, len(args))

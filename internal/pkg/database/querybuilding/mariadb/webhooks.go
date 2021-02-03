@@ -21,6 +21,7 @@ func (q *MariaDB) BuildGetWebhookQuery(webhookID, userID uint64) (query string, 
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.IDColumn):                     webhookID,
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.WebhooksTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.ArchivedOnColumn):             nil,
 		}),
 	)
 }
@@ -105,6 +106,7 @@ func (q *MariaDB) BuildUpdateWebhookQuery(input *types.Webhook) (query string, a
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                     input.ID,
+			querybuilding.ArchivedOnColumn:             nil,
 			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToUser,
 		}),
 	)

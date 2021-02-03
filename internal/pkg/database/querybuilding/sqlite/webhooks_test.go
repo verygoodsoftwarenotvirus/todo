@@ -21,7 +21,7 @@ func TestSqlite_BuildGetWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.belongs_to_user = ? AND webhooks.id = ?"
+		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.id = ?"
 		expectedArgs := []interface{}{
 			exampleWebhook.BelongsToUser,
 			exampleWebhook.ID,
@@ -148,7 +148,7 @@ func TestSqlite_BuildUpdateWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
-		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, last_updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, last_updated_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,

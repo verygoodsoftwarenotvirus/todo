@@ -151,6 +151,7 @@ func (q *MariaDB) BuildUpdateItemQuery(input *types.Item) (query string, args []
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                      input.ID,
+			querybuilding.ArchivedOnColumn:              nil,
 			querybuilding.ItemsTableUserOwnershipColumn: input.BelongsToUser,
 		}),
 	)

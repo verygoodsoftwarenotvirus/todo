@@ -200,7 +200,7 @@ func TestPostgres_BuildUpdateItemQuery(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4"
+		expectedQuery := "UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $3 AND id = $4"
 		expectedArgs := []interface{}{
 			exampleItem.Name,
 			exampleItem.Details,

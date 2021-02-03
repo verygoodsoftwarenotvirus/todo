@@ -80,7 +80,8 @@ func (q *MariaDB) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSu
 		Set(querybuilding.AccountSubscriptionPlansTablePeriodColumn, input.Period.String()).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			querybuilding.IDColumn: input.ID,
+			querybuilding.ArchivedOnColumn: nil,
+			querybuilding.IDColumn:         input.ID,
 		}),
 	)
 }

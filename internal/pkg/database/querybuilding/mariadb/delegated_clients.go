@@ -96,6 +96,7 @@ func (q *MariaDB) BuildUpdateDelegatedClientQuery(input *types.DelegatedClient) 
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                             input.ID,
+			querybuilding.ArchivedOnColumn:                     nil,
 			querybuilding.DelegatedClientsTableOwnershipColumn: input.BelongsToUser,
 		}),
 	)
@@ -109,6 +110,7 @@ func (q *MariaDB) BuildArchiveDelegatedClientQuery(clientID, userID uint64) (que
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                             clientID,
+			querybuilding.ArchivedOnColumn:                     nil,
 			querybuilding.DelegatedClientsTableOwnershipColumn: userID,
 		}),
 	)

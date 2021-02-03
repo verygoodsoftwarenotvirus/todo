@@ -45,20 +45,19 @@ func TestItems(test *testing.T) {
 				// Assert item equality.
 				checkItemEquality(t, exampleItem, createdItem)
 
-				// Clean up.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
-
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
-				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
 
+				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
 				require.NoError(t, err)
 
 				expectedAuditLogEntries := []*types.AuditLogEntry{
 					{EventType: audit.ItemCreationEvent},
-					{EventType: audit.ItemArchiveEvent},
 				}
 				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
+
+				// Clean up.
+				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 			}
 		})
 	})
@@ -316,30 +315,20 @@ func TestItems(test *testing.T) {
 				checkItemEquality(t, exampleItem, actual)
 				assert.NotNil(t, actual.LastUpdatedOn)
 
-				// Clean up item.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
-
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
-				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
 
-				require.Len(t, auditLogEntries, 3)
+				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
 				require.NoError(t, err)
 
-				expectedEventTypes := []string{
-					audit.ItemCreationEvent,
-					audit.ItemUpdateEvent,
-					audit.ItemArchiveEvent,
+				expectedAuditLogEntries := []*types.AuditLogEntry{
+					{EventType: audit.ItemCreationEvent},
+					{EventType: audit.ItemUpdateEvent},
 				}
-				actualEventTypes := []string{}
+				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
 
-				for _, e := range auditLogEntries {
-					actualEventTypes = append(actualEventTypes, e.EventType)
-					require.Contains(t, e.Context, audit.ItemAssignmentKey)
-					assert.EqualValues(t, createdItem.ID, e.Context[audit.ItemAssignmentKey])
-				}
-
-				assert.Subset(t, expectedEventTypes, actualEventTypes)
+				// Clean up item.
+				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
 			}
 		})
 	})
@@ -366,6 +355,18 @@ func TestItems(test *testing.T) {
 
 				// Clean up item.
 				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+
+				adminClientLock.Lock()
+				defer adminClientLock.Unlock()
+
+				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
+				require.NoError(t, err)
+
+				expectedAuditLogEntries := []*types.AuditLogEntry{
+					{EventType: audit.ItemCreationEvent},
+					{EventType: audit.ItemArchiveEvent},
+				}
+				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
 			}
 		})
 	})

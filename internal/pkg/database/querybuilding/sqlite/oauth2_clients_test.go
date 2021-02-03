@@ -158,32 +158,6 @@ func TestSqlite_BuildCreateOAuth2ClientQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdateOAuth2ClientQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		expectedQuery := "UPDATE oauth2_clients SET client_id = ?, client_secret = ?, scopes = ?, redirect_uri = ?, last_updated_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
-		expectedArgs := []interface{}{
-			exampleOAuth2Client.ClientID,
-			exampleOAuth2Client.ClientSecret,
-			strings.Join(exampleOAuth2Client.Scopes, querybuilding.OAuth2ClientsTableScopeSeparator),
-			exampleOAuth2Client.RedirectURI,
-			exampleOAuth2Client.BelongsToUser,
-			exampleOAuth2Client.ID,
-		}
-		actualQuery, actualArgs := q.BuildUpdateOAuth2ClientQuery(exampleOAuth2Client)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
 func TestSqlite_BuildArchiveOAuth2ClientQuery(T *testing.T) {
 	T.Parallel()
 
@@ -193,7 +167,7 @@ func TestSqlite_BuildArchiveOAuth2ClientQuery(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		expectedQuery := "UPDATE oauth2_clients SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE oauth2_clients SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,

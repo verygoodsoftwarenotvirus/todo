@@ -83,7 +83,8 @@ func (q *Postgres) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountS
 		Set(querybuilding.AccountSubscriptionPlansTablePeriodColumn, input.Period.String()).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			querybuilding.IDColumn: input.ID,
+			querybuilding.IDColumn:         input.ID,
+			querybuilding.ArchivedOnColumn: nil,
 		}),
 	)
 }

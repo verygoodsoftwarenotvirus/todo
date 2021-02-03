@@ -116,7 +116,7 @@ func TestPostgres_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		expectedQuery := "UPDATE account_subscription_plans SET name = $1, description = $2, price = $3, period = $4, last_updated_on = extract(epoch FROM NOW()) WHERE id = $5"
+		expectedQuery := "UPDATE account_subscription_plans SET name = $1, description = $2, price = $3, period = $4, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $5"
 		expectedArgs := []interface{}{
 			exampleAccountSubscriptionPlan.Name,
 			exampleAccountSubscriptionPlan.Description,

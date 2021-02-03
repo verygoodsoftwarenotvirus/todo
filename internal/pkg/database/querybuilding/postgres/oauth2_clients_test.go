@@ -1,18 +1,14 @@
 package postgres
 
 import (
-	"context"
-	"errors"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -162,74 +158,6 @@ func TestPostgres_BuildCreateOAuth2ClientQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_BuildUpdateOAuth2ClientQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		expectedQuery := "UPDATE oauth2_clients SET client_id = $1, client_secret = $2, scopes = $3, redirect_uri = $4, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $5 AND id = $6"
-		expectedArgs := []interface{}{
-			exampleOAuth2Client.ClientID,
-			exampleOAuth2Client.ClientSecret,
-			strings.Join(exampleOAuth2Client.Scopes, querybuilding.OAuth2ClientsTableScopeSeparator),
-			exampleOAuth2Client.RedirectURI,
-			exampleOAuth2Client.BelongsToUser,
-			exampleOAuth2Client.ID,
-		}
-		actualQuery, actualArgs := q.BuildUpdateOAuth2ClientQuery(exampleOAuth2Client)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestPostgres_UpdateOAuth2Client(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.BuildUpdateOAuth2ClientQuery(exampleOAuth2Client)
-
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs().
-			WillReturnRows(sqlmock.NewRows([]string{"last_updated_on"}).AddRow(time.Now().Unix()))
-
-		err := q.UpdateOAuth2Client(ctx, exampleOAuth2Client)
-		assert.NoError(t, err)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-
-	T.Run("with error writing to database", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		q, mockDB := buildTestService(t)
-		expectedQuery, _ := q.BuildUpdateOAuth2ClientQuery(exampleOAuth2Client)
-
-		mockDB.ExpectQuery(formatQueryForSQLMock(expectedQuery)).
-			WithArgs().
-			WillReturnError(errors.New("blah"))
-
-		err := q.UpdateOAuth2Client(ctx, exampleOAuth2Client)
-		assert.Error(t, err)
-
-		assert.NoError(t, mockDB.ExpectationsWereMet(), "not all database expectations were met")
-	})
-}
-
 func TestPostgres_BuildArchiveOAuth2ClientQuery(T *testing.T) {
 	T.Parallel()
 
@@ -239,7 +167,7 @@ func TestPostgres_BuildArchiveOAuth2ClientQuery(T *testing.T) {
 
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
-		expectedQuery := "UPDATE oauth2_clients SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $1 AND id = $2"
+		expectedQuery := "UPDATE oauth2_clients SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2"
 		expectedArgs := []interface{}{
 			exampleOAuth2Client.BelongsToUser,
 			exampleOAuth2Client.ID,

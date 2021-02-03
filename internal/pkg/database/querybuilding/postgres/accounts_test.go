@@ -147,7 +147,7 @@ func TestPostgres_BuildUpdateAccountQuery(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "UPDATE accounts SET name = $1, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $2 AND id = $3"
+		expectedQuery := "UPDATE accounts SET name = $1, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $2 AND id = $3"
 		expectedArgs := []interface{}{
 			exampleAccount.Name,
 			exampleAccount.BelongsToUser,

@@ -97,6 +97,7 @@ func (q *Sqlite) BuildUpdateDelegatedClientQuery(input *types.DelegatedClient) (
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                             input.ID,
 			querybuilding.DelegatedClientsTableOwnershipColumn: input.BelongsToUser,
+			querybuilding.ArchivedOnColumn:                     nil,
 		}),
 	)
 }
@@ -109,6 +110,7 @@ func (q *Sqlite) BuildArchiveDelegatedClientQuery(clientID, userID uint64) (quer
 		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                             clientID,
+			querybuilding.ArchivedOnColumn:                     nil,
 			querybuilding.DelegatedClientsTableOwnershipColumn: userID,
 		}),
 	)

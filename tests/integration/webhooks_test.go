@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -48,20 +51,30 @@ func TestWebhooks(test *testing.T) {
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, premade, err)
+			createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			checkValueAndError(t, createdWebhook, err)
 
 			// Assert webhook equality.
-			checkWebhookEquality(t, exampleWebhook, premade)
+			checkWebhookEquality(t, exampleWebhook, createdWebhook)
 
-			// Clean up.
-			err = testClient.ArchiveWebhook(ctx, premade.ID)
-			assert.NoError(t, err)
-
-			actual, err := testClient.GetWebhook(ctx, premade.ID)
+			actual, err := testClient.GetWebhook(ctx, createdWebhook.ID)
 			checkValueAndError(t, actual, err)
 			checkWebhookEquality(t, exampleWebhook, actual)
-			assert.NotZero(t, actual.ArchivedOn)
+
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
+			auditLogEntries, err := adminClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.WebhookCreationEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
+
+			// Clean up.
+			err = testClient.ArchiveWebhook(ctx, createdWebhook.ID)
+			assert.NoError(t, err)
 		})
 	})
 
@@ -196,26 +209,37 @@ func TestWebhooks(test *testing.T) {
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, premade, err)
+			createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			checkValueAndError(t, createdWebhook, err)
 
 			// Change webhook.
-			premade.Name = reverse(premade.Name)
-			exampleWebhook.Name = premade.Name
-			err = testClient.UpdateWebhook(ctx, premade)
+			createdWebhook.Name = reverse(createdWebhook.Name)
+			exampleWebhook.Name = createdWebhook.Name
+			err = testClient.UpdateWebhook(ctx, createdWebhook)
 			assert.NoError(t, err)
 
 			// Fetch webhook.
-			actual, err := testClient.GetWebhook(ctx, premade.ID)
+			actual, err := testClient.GetWebhook(ctx, createdWebhook.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
+			auditLogEntries, err := adminClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.WebhookCreationEvent},
+				{EventType: audit.WebhookUpdateEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
+
 			// Clean up.
-			err = testClient.ArchiveWebhook(ctx, actual.ID)
-			assert.NoError(t, err)
+			assert.NoError(t, testClient.ArchiveWebhook(ctx, actual.ID))
 		})
 	})
 
@@ -233,12 +257,23 @@ func TestWebhooks(test *testing.T) {
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, premade, err)
+			createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			checkValueAndError(t, createdWebhook, err)
 
 			// Clean up.
-			err = testClient.ArchiveWebhook(ctx, premade.ID)
-			assert.NoError(t, err)
+			assert.NoError(t, testClient.ArchiveWebhook(ctx, createdWebhook.ID))
+
+			adminClientLock.Lock()
+			defer adminClientLock.Unlock()
+
+			auditLogEntries, err := adminClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.WebhookCreationEvent},
+				{EventType: audit.WebhookArchiveEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
 		})
 	})
 

@@ -220,7 +220,7 @@ func TestPostgres_BuildUpdateUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, salt = $3, two_factor_secret = $4, two_factor_secret_verified_on = $5, last_updated_on = extract(epoch FROM NOW()) WHERE id = $6"
+		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, salt = $3, two_factor_secret = $4, two_factor_secret_verified_on = $5, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $6"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
@@ -246,7 +246,7 @@ func TestPostgres_BuildUpdateUserPasswordQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE id = $3"
+		expectedQuery := "UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $3"
 		expectedArgs := []interface{}{
 			exampleUser.HashedPassword,
 			false,
@@ -269,7 +269,7 @@ func TestPostgres_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = $1, two_factor_secret = $2 WHERE id = $3"
+		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = $1, two_factor_secret = $2 WHERE archived_on IS NULL AND id = $3"
 		expectedArgs := []interface{}{
 			nil,
 			exampleUser.TwoFactorSecret,
@@ -292,7 +292,7 @@ func TestPostgres_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = extract(epoch FROM NOW()), reputation = $1 WHERE id = $2"
+		expectedQuery := "UPDATE users SET two_factor_secret_verified_on = extract(epoch FROM NOW()), reputation = $1 WHERE archived_on IS NULL AND id = $2"
 		expectedArgs := []interface{}{
 			types.GoodStandingAccountStatus,
 			exampleUser.ID,
@@ -319,7 +319,7 @@ func TestPostgres_BuildSetUserStatusQuery(T *testing.T) {
 			Reason:          "test",
 		}
 
-		expectedQuery := "UPDATE users SET reputation = $1, reputation_explanation = $2 WHERE id = $3"
+		expectedQuery := "UPDATE users SET reputation = $1, reputation_explanation = $2 WHERE archived_on IS NULL AND id = $3"
 		expectedArgs := []interface{}{
 			exampleInput.NewReputation,
 			exampleInput.Reason,
@@ -342,7 +342,7 @@ func TestPostgres_BuildArchiveUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET archived_on = extract(epoch FROM NOW()) WHERE id = $1"
+		expectedQuery := "UPDATE users SET archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $1"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}

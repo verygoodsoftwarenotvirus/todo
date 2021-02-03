@@ -143,7 +143,7 @@ func TestPostgres_BuildUpdateDelegatedClientQuery(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 
-		expectedQuery := "UPDATE delegated_clients SET client_id = $1, client_secret = $2, last_updated_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $3 AND id = $4"
+		expectedQuery := "UPDATE delegated_clients SET client_id = $1, client_secret = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $3 AND id = $4"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.ClientID,
 			exampleDelegatedClient.ClientSecret,
@@ -167,7 +167,7 @@ func TestPostgres_BuildArchiveDelegatedClientQuery(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 
-		expectedQuery := "UPDATE delegated_clients SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE belongs_to_user = $1 AND id = $2"
+		expectedQuery := "UPDATE delegated_clients SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.BelongsToUser,
 			exampleDelegatedClient.ID,

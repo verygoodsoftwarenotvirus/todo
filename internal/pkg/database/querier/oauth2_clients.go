@@ -259,17 +259,6 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 	return x, nil
 }
 
-// UpdateOAuth2Client updates a OAuth2 client. Note that this function expects the input's
-// ID field to be valid.
-func (c *Client) UpdateOAuth2Client(ctx context.Context, updated *types.OAuth2Client) error {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	query, args := c.sqlQueryBuilder.BuildUpdateOAuth2ClientQuery(updated)
-
-	return c.performCreateQueryIgnoringReturn(ctx, "oauth2 client update", query, args)
-}
-
 // ArchiveOAuth2Client archives an OAuth2 client.
 func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)

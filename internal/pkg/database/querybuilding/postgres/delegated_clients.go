@@ -96,6 +96,7 @@ func (q *Postgres) BuildUpdateDelegatedClientQuery(input *types.DelegatedClient)
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                             input.ID,
+			querybuilding.ArchivedOnColumn:                     nil,
 			querybuilding.DelegatedClientsTableOwnershipColumn: input.BelongsToUser,
 		}),
 	)
@@ -110,6 +111,7 @@ func (q *Postgres) BuildArchiveDelegatedClientQuery(clientID, userID uint64) (qu
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                             clientID,
 			querybuilding.DelegatedClientsTableOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                     nil,
 		}),
 	)
 }

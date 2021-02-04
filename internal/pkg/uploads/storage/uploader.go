@@ -7,16 +7,16 @@ import (
 	"net/http"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
-
 	"github.com/aws/aws-sdk-go/aws/session"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"gocloud.dev/blob/s3blob"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 )
 
 const (
@@ -66,7 +66,7 @@ func (c *Config) Validate(ctx context.Context) error {
 }
 
 // NewUploadManager provides a new uploads.UploadManager.
-func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config) (*Uploader, error) {
+func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config, routeParamManager routing.RouteParamManager) (*Uploader, error) {
 	if cfg == nil {
 		return nil, ErrNilConfig
 	}
@@ -75,7 +75,7 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config) (
 	u := &Uploader{
 		logger:          logger.WithName(serviceName),
 		tracer:          tracing.NewTracer(serviceName),
-		filenameFetcher: routeparams.BuildRouteParamStringIDFetcher(cfg.UploadFilename),
+		filenameFetcher: routeParamManager.BuildRouteParamStringIDFetcher(cfg.UploadFilename),
 	}
 
 	if err := cfg.Validate(ctx); err != nil {

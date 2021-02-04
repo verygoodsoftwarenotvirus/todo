@@ -1,4 +1,4 @@
-package plans
+package accountsubscriptionplans
 
 import (
 	"fmt"
@@ -7,22 +7,22 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 const (
-	counterName        metrics.CounterName = "plans"
-	counterDescription string              = "the number of plans managed by the plans service"
+	counterName        metrics.CounterName = "accountsubscriptionplans"
+	counterDescription string              = "the number of accountsubscriptionplans managed by the accountsubscriptionplans service"
 	serviceName        string              = "plans_service"
 )
 
 var _ types.AccountSubscriptionPlanDataService = (*service)(nil)
 
 type (
-	// service handles to-do list plans.
+	// service handles to-do list accountsubscriptionplans.
 	service struct {
 		logger             logging.Logger
 		planDataManager    types.AccountSubscriptionPlanDataManager
@@ -42,6 +42,7 @@ func ProvideService(
 	auditLog types.AccountSubscriptionPlanAuditManager,
 	encoder encoding.EncoderDecoder,
 	planCounterProvider metrics.UnitCounterProvider,
+	routeParamManager routing.RouteParamManager,
 ) (types.AccountSubscriptionPlanDataService, error) {
 	planCounter, err := planCounterProvider(counterName, counterDescription)
 	if err != nil {
@@ -50,8 +51,8 @@ func ProvideService(
 
 	svc := &service{
 		logger:             logger.WithName(serviceName),
-		planIDFetcher:      routeparams.BuildRouteParamIDFetcher(logger, PlanIDURIParamKey, "plan"),
-		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
+		planIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, PlanIDURIParamKey, "plan"),
+		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
 		planDataManager:    planDataManager,
 		auditLog:           auditLog,
 		encoderDecoder:     encoder,

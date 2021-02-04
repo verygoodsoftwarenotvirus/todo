@@ -1,6 +1,11 @@
 package routing
 
-import "net/http"
+import (
+	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+)
 
 // all interfaces HEAVILY inspired by github.com/go-chi/chi.
 
@@ -33,5 +38,14 @@ type (
 		Post(pattern string, handler http.HandlerFunc)
 		Put(pattern string, handler http.HandlerFunc)
 		Trace(pattern string, handler http.HandlerFunc)
+	}
+
+	// RouteParamManager builds route param fetchers for a compatible router.
+	RouteParamManager interface {
+		// Route params
+		UserIDFetcherFromRequestContext(req *http.Request) uint64
+		SessionInfoFetcherFromRequestContext(req *http.Request) (*types.SessionInfo, error)
+		BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string) func(req *http.Request) uint64
+		BuildRouteParamStringIDFetcher(key string) func(req *http.Request) string
 	}
 )

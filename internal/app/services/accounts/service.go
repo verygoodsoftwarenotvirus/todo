@@ -7,7 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -46,6 +46,7 @@ func ProvideService(
 	auditLog types.AccountAuditManager,
 	encoder encoding.EncoderDecoder,
 	accountCounterProvider metrics.UnitCounterProvider,
+	routeParamManager routing.RouteParamManager,
 ) (types.AccountDataService, error) {
 	accountCounter, err := accountCounterProvider(counterName, counterDescription)
 	if err != nil {
@@ -54,8 +55,8 @@ func ProvideService(
 
 	svc := &service{
 		logger:             logger.WithName(serviceName),
-		accountIDFetcher:   routeparams.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
-		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
+		accountIDFetcher:   routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
+		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
 		accountDataManager: accountDataManager,
 		auditLog:           auditLog,
 		encoderDecoder:     encoder,

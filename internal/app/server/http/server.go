@@ -68,6 +68,7 @@ func ProvideServer(
 	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.EncoderDecoder,
+	router routing.Router,
 ) (*Server, error) {
 	srv := &Server{
 		// infra things,
@@ -90,7 +91,7 @@ func ProvideServer(
 		tracer:               tracing.NewTracer(loggerName),
 	}
 
-	srv.setupRouter(metricsHandler)
+	srv.setupRouter(router, metricsHandler)
 
 	logger.Debug("HTTP server successfully constructed")
 

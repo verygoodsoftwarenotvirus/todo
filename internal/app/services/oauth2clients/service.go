@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	oauth2 "github.com/go-oauth2/oauth2/v4"
@@ -77,6 +77,7 @@ func ProvideOAuth2ClientsService(
 	authenticator authentication.Authenticator,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
+	routeParamManager routing.RouteParamManager,
 ) (types.OAuth2ClientDataService, error) {
 	tokenStore, tokenStoreErr := oauth2store.NewMemoryTokenStore()
 	tracer := tracing.NewTracer(serviceName)
@@ -97,7 +98,7 @@ func ProvideOAuth2ClientsService(
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
-		urlClientIDExtractor: routeparams.BuildRouteParamIDFetcher(logger, OAuth2ClientIDURIParamKey, "oauth2 client"),
+		urlClientIDExtractor: routeParamManager.BuildRouteParamIDFetcher(logger, OAuth2ClientIDURIParamKey, "oauth2 client"),
 		oauth2Handler:        oHandler,
 		tracer:               tracer,
 	}

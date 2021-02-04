@@ -12,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -49,6 +50,7 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, nil
 			},
+			routeparams.NewRouteParamManager(),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -70,6 +72,7 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, errors.New("blah")
 			},
+			routeparams.NewRouteParamManager(),
 		)
 
 		assert.Error(t, err)

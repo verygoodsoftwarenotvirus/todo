@@ -1,4 +1,4 @@
-package webhooks
+package accountsubscriptionplans
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -19,52 +20,53 @@ import (
 func buildTestService() *service {
 	return &service{
 		logger:             logging.NewNonOperationalLogger(),
-		webhookCounter:     &mockmetrics.UnitCounter{},
-		webhookDataManager: &mocktypes.WebhookDataManager{},
-		sessionInfoFetcher: func(req *http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		planCounter:        &mockmetrics.UnitCounter{},
+		planDataManager:    &mocktypes.AccountSubscriptionPlanDataManager{},
+		planIDFetcher:      func(req *http.Request) uint64 { return 0 },
+		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
 		tracer:             tracing.NewTracer("test"),
 	}
 }
 
-func TestProvideWebhooksService(T *testing.T) {
+func TestProvidePlansService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
 
-		actual, err := ProvideWebhooksService(
+		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.WebhookDataManager{},
+			&mocktypes.AccountSubscriptionPlanDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
+			routeparams.NewRouteParamManager(),
 		)
 
-		assert.NotNil(t, actual)
+		assert.NotNil(t, s)
 		assert.NoError(t, err)
 	})
 
-	T.Run("with error providing counter", func(t *testing.T) {
+	T.Run("with error providing unit counter", func(t *testing.T) {
 		t.Parallel()
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return nil, errors.New("blah")
 		}
 
-		actual, err := ProvideWebhooksService(
+		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.WebhookDataManager{},
+			&mocktypes.AccountSubscriptionPlanDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
+			routeparams.NewRouteParamManager(),
 		)
 
-		assert.Nil(t, actual)
+		assert.Nil(t, s)
 		assert.Error(t, err)
 	})
 }

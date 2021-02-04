@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -65,6 +66,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, nil
 			},
+			routeparams.NewRouteParamManager(),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -86,6 +88,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, errors.New("blah")
 			},
+			routeparams.NewRouteParamManager(),
 		)
 
 		assert.Error(t, err)

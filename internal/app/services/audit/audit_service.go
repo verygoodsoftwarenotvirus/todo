@@ -5,7 +5,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -36,12 +36,13 @@ func ProvideService(
 	logger logging.Logger,
 	auditLog types.AuditLogEntryDataManager,
 	encoder encoding.EncoderDecoder,
+	routeParamManager routing.RouteParamManager,
 ) types.AuditLogEntryDataService {
 	svc := &service{
 		logger:                 logger.WithName(serviceName),
 		auditLog:               auditLog,
-		auditLogEntryIDFetcher: routeparams.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
-		sessionInfoFetcher:     routeparams.SessionInfoFetcherFromRequestContext,
+		auditLogEntryIDFetcher: routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
+		sessionInfoFetcher:     routeParamManager.SessionInfoFetcherFromRequestContext,
 		encoderDecoder:         encoder,
 		tracer:                 tracing.NewTracer(serviceName),
 	}

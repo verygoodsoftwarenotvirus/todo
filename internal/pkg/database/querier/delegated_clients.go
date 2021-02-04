@@ -115,7 +115,7 @@ func (c *Client) GetTotalDelegatedClientCount(ctx context.Context) (count uint64
 	c.logger.Debug("GetTotalDelegatedClientCount called")
 
 	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllDelegatedClientsCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing account subscription plans count query: %w", err)
+		return 0, fmt.Errorf("executing account subscription accountsubscriptionplans count query: %w", err)
 	}
 
 	return count, nil

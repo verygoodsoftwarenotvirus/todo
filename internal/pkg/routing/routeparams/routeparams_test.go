@@ -1,4 +1,4 @@
-package params
+package routeparams
 
 import (
 	"context"
@@ -37,6 +37,8 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
+		r := &chirouteParamManager{}
+
 		expected := fakes.BuildFakeUser().ToSessionInfo()
 
 		req := buildRequest(t)
@@ -44,15 +46,17 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 			context.WithValue(req.Context(), types.SessionInfoKey, expected),
 		)
 
-		actual := UserIDFetcherFromRequestContext(req)
+		actual := r.UserIDFetcherFromRequestContext(req)
 		assert.Equal(t, expected.UserID, actual)
 	})
 
 	T.Run("without attached value", func(t *testing.T) {
 		t.Parallel()
 
+		r := &chirouteParamManager{}
+
 		req := buildRequest(t)
-		actual := UserIDFetcherFromRequestContext(req)
+		actual := r.UserIDFetcherFromRequestContext(req)
 
 		assert.Zero(t, actual)
 	})
@@ -64,6 +68,8 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
+		r := &chirouteParamManager{}
+
 		expected := fakes.BuildFakeUser().ToSessionInfo()
 
 		req := buildRequest(t)
@@ -71,7 +77,7 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 			context.WithValue(req.Context(), types.SessionInfoKey, expected),
 		)
 
-		actual, err := SessionInfoFetcherFromRequestContext(req)
+		actual, err := r.SessionInfoFetcherFromRequestContext(req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
@@ -80,8 +86,10 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 	T.Run("without attached value", func(t *testing.T) {
 		t.Parallel()
 
+		r := &chirouteParamManager{}
+
 		req := buildRequest(t)
-		actual, err := SessionInfoFetcherFromRequestContext(req)
+		actual, err := r.SessionInfoFetcherFromRequestContext(req)
 
 		assert.Error(t, err)
 		assert.Zero(t, actual)
@@ -94,9 +102,11 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
+		r := &chirouteParamManager{}
+
 		ctx := context.Background()
 		exampleKey := "blah"
-		fn := BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
+		fn := r.BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
 		expected := uint64(123)
 		req := buildRequest(t).WithContext(
 			context.WithValue(
@@ -119,9 +129,11 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 		// NOTE: This will probably never happen in dev or production
 		t.Parallel()
 
+		r := &chirouteParamManager{}
+
 		ctx := context.Background()
 		exampleKey := "blah"
-		fn := BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
+		fn := r.BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
 		expected := uint64(0)
 
 		req := buildRequest(t)

@@ -8,13 +8,13 @@ import (
 
 	server "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
-	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
@@ -25,6 +25,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -61,6 +63,8 @@ func BuildServer(
 		plansservice.Providers,
 		usersservice.Providers,
 		itemsservice.Providers,
+		chi.Providers,
+		routeparams.Providers,
 		frontendservice.Providers,
 		webhooksservice.Providers,
 		oauth2clientsservice.Providers,

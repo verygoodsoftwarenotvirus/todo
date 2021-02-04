@@ -7,7 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -49,6 +49,7 @@ func ProvideWebhooksService(
 	auditLog types.WebhookAuditManager,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
+	routeParamManager routing.RouteParamManager,
 ) (types.WebhookDataService, error) {
 	webhookCounter, err := webhookCounterProvider(counterName, counterDescription)
 	if err != nil {
@@ -61,8 +62,8 @@ func ProvideWebhooksService(
 		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		webhookCounter:     webhookCounter,
-		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
-		webhookIDFetcher:   routeparams.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
+		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
+		webhookIDFetcher:   routeParamManager.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
 		tracer:             tracing.NewTracer(serviceName),
 	}
 

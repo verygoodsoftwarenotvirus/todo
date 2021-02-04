@@ -17,7 +17,7 @@ import (
 func TestV1Client_BuildGetAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/plans/%d"
+	const expectedPathFormat = "/api/v1/accountsubscriptionplans/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -39,7 +39,7 @@ func TestV1Client_BuildGetAccountSubscriptionPlanRequest(T *testing.T) {
 func TestV1Client_GetAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/plans/%d"
+	const expectedPathFormat = "/api/v1/accountsubscriptionplans/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -107,7 +107,7 @@ func TestV1Client_GetAccountSubscriptionPlan(T *testing.T) {
 func TestV1Client_BuildGetAccountSubscriptionPlansRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/plans"
+	const expectedPath = "/api/v1/accountsubscriptionplans"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -128,7 +128,7 @@ func TestV1Client_BuildGetAccountSubscriptionPlansRequest(T *testing.T) {
 func TestV1Client_GetAccountSubscriptionPlans(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/plans"
+	const expectedPath = "/api/v1/accountsubscriptionplans"
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
@@ -197,7 +197,7 @@ func TestV1Client_GetAccountSubscriptionPlans(T *testing.T) {
 func TestV1Client_BuildCreateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/plans"
+	const expectedPath = "/api/v1/accountsubscriptionplans"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -221,7 +221,7 @@ func TestV1Client_BuildCreateAccountSubscriptionPlanRequest(T *testing.T) {
 func TestV1Client_CreateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/plans"
+	const expectedPath = "/api/v1/accountsubscriptionplans"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
@@ -273,7 +273,7 @@ func TestV1Client_CreateAccountSubscriptionPlan(T *testing.T) {
 func TestV1Client_BuildUpdateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/plans/%d"
+	const expectedPathFormat = "/api/v1/accountsubscriptionplans/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -294,7 +294,7 @@ func TestV1Client_BuildUpdateAccountSubscriptionPlanRequest(T *testing.T) {
 func TestV1Client_UpdateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/plans/%d"
+	const expectedPathFormat = "/api/v1/accountsubscriptionplans/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -331,7 +331,7 @@ func TestV1Client_UpdateAccountSubscriptionPlan(T *testing.T) {
 func TestV1Client_BuildArchiveAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/plans/%d"
+	const expectedPathFormat = "/api/v1/accountsubscriptionplans/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -352,7 +352,7 @@ func TestV1Client_BuildArchiveAccountSubscriptionPlanRequest(T *testing.T) {
 func TestV1Client_ArchiveAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/plans/%d"
+	const expectedPathFormat = "/api/v1/accountsubscriptionplans/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -389,7 +389,7 @@ func TestV1Client_ArchiveAccountSubscriptionPlan(T *testing.T) {
 func TestV1Client_BuildGetAuditLogForAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/plans/%d/audit"
+	const expectedPath = "/api/v1/accountsubscriptionplans/%d/audit"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -412,7 +412,7 @@ func TestV1Client_GetAuditLogForAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	const (
-		expectedPath   = "/api/v1/plans/%d/audit"
+		expectedPath   = "/api/v1/accountsubscriptionplans/%d/audit"
 		expectedMethod = http.MethodGet
 	)
 

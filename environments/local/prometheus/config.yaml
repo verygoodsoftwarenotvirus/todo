@@ -24,7 +24,7 @@ scrape_configs:
     scheme: 'http'
 
     # Optional HTTP URL parameters.
-    # params:
+    # routeparams:
     #   key: 'value'
 
     # Sets the `Authorization` header on every scrape request with the

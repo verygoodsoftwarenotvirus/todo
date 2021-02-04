@@ -1,4 +1,4 @@
-package items
+package webhooks
 
 import (
 	"errors"
@@ -10,8 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
-	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -21,60 +20,54 @@ import (
 func buildTestService() *service {
 	return &service{
 		logger:             logging.NewNonOperationalLogger(),
-		itemCounter:        &mockmetrics.UnitCounter{},
-		itemDataManager:    &mocktypes.ItemDataManager{},
-		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
-		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
+		webhookCounter:     &mockmetrics.UnitCounter{},
+		webhookDataManager: &mocktypes.WebhookDataManager{},
+		sessionInfoFetcher: func(req *http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
+		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
-		search:             &mocksearch.IndexManager{},
 		tracer:             tracing.NewTracer("test"),
 	}
 }
 
-func TestProvideItemsService(T *testing.T) {
+func TestProvideWebhooksService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
 
-		s, err := ProvideService(
+		actual, err := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.ItemDataManager{},
+			&mocktypes.WebhookDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			search.Config{ItemsIndexPath: "example/path"},
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
-				return &mocksearch.IndexManager{}, nil
-			},
+			routeparams.NewRouteParamManager(),
 		)
 
-		assert.NotNil(t, s)
+		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
 
-	T.Run("with error providing unit counter", func(t *testing.T) {
+	T.Run("with error providing counter", func(t *testing.T) {
 		t.Parallel()
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return nil, errors.New("blah")
 		}
 
-		s, err := ProvideService(
+		actual, err := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.ItemDataManager{},
+			&mocktypes.WebhookDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
-			search.Config{ItemsIndexPath: "example/path"},
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
-				return &mocksearch.IndexManager{}, nil
-			},
+			routeparams.NewRouteParamManager(),
 		)
 
-		assert.Nil(t, s)
+		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
 }

@@ -1,4 +1,4 @@
-package accounts
+package items
 
 import (
 	"errors"
@@ -10,6 +10,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -19,16 +22,17 @@ import (
 func buildTestService() *service {
 	return &service{
 		logger:             logging.NewNonOperationalLogger(),
-		accountCounter:     &mockmetrics.UnitCounter{},
-		accountDataManager: &mocktypes.AccountDataManager{},
-		accountIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		itemCounter:        &mockmetrics.UnitCounter{},
+		itemDataManager:    &mocktypes.ItemDataManager{},
+		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
+		search:             &mocksearch.IndexManager{},
 		tracer:             tracing.NewTracer("test"),
 	}
 }
 
-func TestProvideAccountsService(T *testing.T) {
+func TestProvideItemsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -39,10 +43,15 @@ func TestProvideAccountsService(T *testing.T) {
 
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.AccountDataManager{},
+			&mocktypes.ItemDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
+			search.Config{ItemsIndexPath: "example/path"},
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return &mocksearch.IndexManager{}, nil
+			},
+			routeparams.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, s)
@@ -57,10 +66,15 @@ func TestProvideAccountsService(T *testing.T) {
 
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.AccountDataManager{},
+			&mocktypes.ItemDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
+			search.Config{ItemsIndexPath: "example/path"},
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return &mocksearch.IndexManager{}, nil
+			},
+			routeparams.NewRouteParamManager(),
 		)
 
 		assert.Nil(t, s)

@@ -39,7 +39,7 @@ var (
 		},
 		{
 			Version:     0.03,
-			Description: "create account subscription plans table and default plan",
+			Description: "create account subscription accountsubscriptionplans table and default plan",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_subscription_plans (
 				id BIGSERIAL NOT NULL PRIMARY KEY,

@@ -22,13 +22,13 @@ type (
 		ArchivedOn    *uint64       `json:"archivedOn"`
 	}
 
-	// AccountSubscriptionPlanList represents a list of plans.
+	// AccountSubscriptionPlanList represents a list of accountsubscriptionplans.
 	AccountSubscriptionPlanList struct {
 		Pagination
 		AccountSubscriptionPlans []*AccountSubscriptionPlan `json:"accountSubscriptionPlans"`
 	}
 
-	// AccountSubscriptionPlanCreationInput represents what a User could set as input for creating plans.
+	// AccountSubscriptionPlanCreationInput represents what a User could set as input for creating accountsubscriptionplans.
 	AccountSubscriptionPlanCreationInput struct {
 		Name        string        `json:"name"`
 		Description string        `json:"description"`
@@ -36,7 +36,7 @@ type (
 		Period      time.Duration `json:"period"`
 	}
 
-	// AccountSubscriptionPlanUpdateInput represents what a User could set as input for updating plans.
+	// AccountSubscriptionPlanUpdateInput represents what a User could set as input for updating accountsubscriptionplans.
 	AccountSubscriptionPlanUpdateInput struct {
 		Name        string        `json:"name"`
 		Description string        `json:"description"`
@@ -55,7 +55,7 @@ type (
 		BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
 	}
 
-	// AccountSubscriptionPlanDataManager describes a structure capable of storing plans permanently.
+	// AccountSubscriptionPlanDataManager describes a structure capable of storing accountsubscriptionplans permanently.
 	AccountSubscriptionPlanDataManager interface {
 		GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*AccountSubscriptionPlan, error)
 		GetAllAccountSubscriptionPlansCount(ctx context.Context) (uint64, error)
@@ -73,7 +73,7 @@ type (
 		AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64)
 	}
 
-	// AccountSubscriptionPlanDataService describes a structure capable of serving traffic related to plans.
+	// AccountSubscriptionPlanDataService describes a structure capable of serving traffic related to accountsubscriptionplans.
 	AccountSubscriptionPlanDataService interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler

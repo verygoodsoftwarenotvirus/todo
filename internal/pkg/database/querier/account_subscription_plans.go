@@ -53,7 +53,7 @@ func (c *Client) scanAccountSubscriptionPlan(scan database.Scanner, includeCount
 	return plan, filteredCount, totalCount, nil
 }
 
-// scanPlans takes some database rows and turns them into a slice of plans.
+// scanPlans takes some database rows and turns them into a slice of accountsubscriptionplans.
 func (c *Client) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := c.scanAccountSubscriptionPlan(rows, includeCounts)
@@ -100,7 +100,7 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, accountSubscrip
 	return plan, nil
 }
 
-// GetAllAccountSubscriptionPlansCount fetches the count of plans from the database that meet a particular filter.
+// GetAllAccountSubscriptionPlansCount fetches the count of accountsubscriptionplans from the database that meet a particular filter.
 func (c *Client) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -108,13 +108,13 @@ func (c *Client) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count
 	c.logger.Debug("GetAllAccountSubscriptionPlansCount called")
 
 	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing account subscription plans count query: %w", err)
+		return 0, fmt.Errorf("executing account subscription accountsubscriptionplans count query: %w", err)
 	}
 
 	return count, nil
 }
 
-// GetAccountSubscriptionPlans fetches a list of plans from the database that meet a particular filter.
+// GetAccountSubscriptionPlans fetches a list of accountsubscriptionplans from the database that meet a particular filter.
 func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (x *types.AccountSubscriptionPlanList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -136,7 +136,7 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	}
 
 	if x.AccountSubscriptionPlans, x.FilteredCount, x.TotalCount, err = c.scanAccountSubscriptionPlans(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning account subscription plans: %w", err)
+		return nil, fmt.Errorf("scanning account subscription accountsubscriptionplans: %w", err)
 	}
 
 	return x, nil

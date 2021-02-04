@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -57,6 +57,7 @@ func ProvideDelegatedClientsService(
 	authenticator authentication.Authenticator,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
+	routeParamManager routing.RouteParamManager,
 ) (types.DelegatedClientDataService, error) {
 	svc := &service{
 		clientDataManager:    clientDataManager,
@@ -65,7 +66,7 @@ func ProvideDelegatedClientsService(
 		logger:               logger.WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
-		urlClientIDExtractor: routeparams.BuildRouteParamIDFetcher(logger, DelegatedClientIDURIParamKey, "delegated client"),
+		urlClientIDExtractor: routeParamManager.BuildRouteParamIDFetcher(logger, DelegatedClientIDURIParamKey, "delegated client"),
 		tracer:               tracing.NewTracer(serviceName),
 	}
 

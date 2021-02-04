@@ -8,7 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/alexedwards/scs/v2"
@@ -43,6 +43,7 @@ func ProvideService(
 	auditLog types.AdminAuditManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
+	routeParamManager routing.RouteParamManager,
 ) (types.AdminService, error) {
 	svc := &service{
 		logger:             logger.WithName(serviceName),
@@ -52,8 +53,8 @@ func ProvideService(
 		auditLog:           auditLog,
 		authenticator:      authenticator,
 		sessionManager:     sessionManager,
-		sessionInfoFetcher: routeparams.SessionInfoFetcherFromRequestContext,
-		userIDFetcher:      routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
+		userIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
 		tracer:             tracing.NewTracer(serviceName),
 	}
 	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime

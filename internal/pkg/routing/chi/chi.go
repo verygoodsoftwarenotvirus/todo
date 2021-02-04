@@ -1,14 +1,17 @@
 package chi
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
@@ -47,7 +50,7 @@ func buildLoggingMiddleware(logger logging.Logger, tracer tracing.Tracer) func(n
 
 			shouldLog := true
 			for route := range doNotLog {
-				if !strings.HasPrefix(req.URL.Path, route) || req.URL.Path == route {
+				if strings.HasPrefix(req.URL.Path, route) || req.URL.Path == route {
 					shouldLog = false
 					break
 				}
@@ -154,16 +157,14 @@ func (r *router) WithMiddleware(middleware ...routing.Middleware) routing.Router
 
 // LogRoutes logs the described routes.
 func (r *router) LogRoutes() {
-	err := chi.Walk(r.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+	if err := chi.Walk(r.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		r.logger.WithValues(map[string]interface{}{
 			"method": method,
 			"route":  route,
 		}).Debug("route found")
 
 		return nil
-	})
-
-	if err != nil {
+	}); err != nil {
 		r.logger.Error(err, "logging routes")
 	}
 }
@@ -263,4 +264,42 @@ func (r *router) Put(pattern string, handler http.HandlerFunc) {
 // Trace satisfies our interface by wrapping the underlying router's Trace method.
 func (r *router) Trace(pattern string, handler http.HandlerFunc) {
 	r.router.Trace(pattern, handler)
+}
+
+// UserIDFetcherFromRequestContext fetches a user ID from a request.
+func (r *router) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
+	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.SessionInfo); ok && si != nil {
+		return si.UserID
+	}
+
+	return 0
+}
+
+// SessionInfoFetcherFromRequestContext fetches a SessionInfo from a request.
+func (r *router) SessionInfoFetcherFromRequestContext(req *http.Request) (*types.SessionInfo, error) {
+	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.SessionInfo); ok && si != nil {
+		return si, nil
+	}
+
+	return nil, errors.New("no session info attached to request")
+}
+
+// BuildRouteParamIDFetcher builds a function that fetches a given key from a path with variables added by a router.
+func (r *router) BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string) func(req *http.Request) uint64 {
+	return func(req *http.Request) uint64 {
+		// this should never happen
+		u, err := strconv.ParseUint(chi.URLParam(req, key), 10, 64)
+		if err != nil && len(logDescription) > 0 {
+			logger.Error(err, fmt.Sprintf("fetching %s ID from request", logDescription))
+		}
+
+		return u
+	}
+}
+
+// BuildRouteParamStringIDFetcher builds a function that fetches a given key from a path with variables added by a router.
+func (r *router) BuildRouteParamStringIDFetcher(key string) func(req *http.Request) string {
+	return func(req *http.Request) string {
+		return chi.URLParam(req, key)
+	}
 }

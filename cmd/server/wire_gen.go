@@ -10,13 +10,13 @@ import (
 	"database/sql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
@@ -26,6 +26,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -49,7 +51,8 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	oAuth2ClientAuditManager := database.ProvideOAuth2ClientAuditManager(dbm)
 	encoderDecoder := encoding.ProvideEncoderDecoder(logger)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	oAuth2ClientDataService, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, oAuth2ClientAuditManager, authenticator, encoderDecoder, unitCounterProvider)
+	routeParamManager := routeparams.NewRouteParamManager()
+	oAuth2ClientDataService, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, oAuth2ClientAuditManager, authenticator, encoderDecoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -59,18 +62,18 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, oAuth2ClientDataService, sessionManager, encoderDecoder)
+	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, oAuth2ClientDataService, sessionManager, encoderDecoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	frontendService := frontend.ProvideService(logger, frontendConfig)
 	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
-	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, encoderDecoder)
+	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, encoderDecoder, routeParamManager)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	itemAuditManager := database.ProvideItemAuditManager(dbm)
 	searchConfig := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemDataService, err := items.ProvideService(logger, itemDataManager, itemAuditManager, encoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider)
+	itemDataService, err := items.ProvideService(logger, itemDataManager, itemAuditManager, encoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -78,34 +81,35 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	imageUploadProcessor := images.NewImageUploadProcessor()
 	uploadsConfig := &cfg.Uploads
 	storageConfig := &uploadsConfig.Storage
-	uploader, err := storage.NewUploadManager(ctx, logger, storageConfig)
+	uploader, err := storage.NewUploadManager(ctx, logger, storageConfig, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	uploadManager := uploads.ProvideUploadManager(uploader)
-	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager)
+	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
 	accountSubscriptionPlanAuditManager := database.ProvidePlanAuditManager(dbm)
-	accountSubscriptionPlanDataService, err := plans.ProvideService(logger, accountSubscriptionPlanDataManager, accountSubscriptionPlanAuditManager, encoderDecoder, unitCounterProvider)
+	accountSubscriptionPlanDataService, err := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, accountSubscriptionPlanAuditManager, encoderDecoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
 	webhookAuditManager := database.ProvideWebhookAuditManager(dbm)
-	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, encoderDecoder, unitCounterProvider)
+	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, encoderDecoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
-	adminService, err := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, encoderDecoder)
+	adminService, err := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, encoderDecoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder)
+	router := chi.NewRouter(logger)
+	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

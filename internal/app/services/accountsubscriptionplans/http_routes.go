@@ -1,4 +1,4 @@
-package plans
+package accountsubscriptionplans
 
 import (
 	"database/sql"
@@ -42,7 +42,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		// in the event no rows exist return an empty list.
 		plans = &types.AccountSubscriptionPlanList{AccountSubscriptionPlans: []*types.AccountSubscriptionPlan{}}
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching plans")
+		logger.Error(err, "error encountered fetching accountsubscriptionplans")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

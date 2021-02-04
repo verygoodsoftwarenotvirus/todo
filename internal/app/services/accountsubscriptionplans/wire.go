@@ -1,4 +1,4 @@
-package plans
+package accountsubscriptionplans
 
 import (
 	"github.com/google/wire"

@@ -8,7 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/alexedwards/scs/v2"
@@ -57,6 +57,7 @@ func ProvideService(
 	oauth2ClientsService types.OAuth2ClientDataService,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
+	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
 	svc := &service{
 		logger:                  logger.WithName(serviceName),
@@ -68,7 +69,7 @@ func ProvideService(
 		oauth2ClientsService:    oauth2ClientsService,
 		authenticator:           authenticator,
 		sessionManager:          sessionManager,
-		sessionInfoFetcher:      routeparams.SessionInfoFetcherFromRequestContext,
+		sessionInfoFetcher:      routeParamManager.SessionInfoFetcherFromRequestContext,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.Cookies.SigningKey),

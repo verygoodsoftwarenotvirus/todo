@@ -1,4 +1,4 @@
-package plans
+package accounts
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -19,16 +20,16 @@ import (
 func buildTestService() *service {
 	return &service{
 		logger:             logging.NewNonOperationalLogger(),
-		planCounter:        &mockmetrics.UnitCounter{},
-		planDataManager:    &mocktypes.AccountSubscriptionPlanDataManager{},
-		planIDFetcher:      func(req *http.Request) uint64 { return 0 },
+		accountCounter:     &mockmetrics.UnitCounter{},
+		accountDataManager: &mocktypes.AccountDataManager{},
+		accountIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		encoderDecoder:     &mockencoding.EncoderDecoder{},
 		tracer:             tracing.NewTracer("test"),
 	}
 }
 
-func TestProvidePlansService(T *testing.T) {
+func TestProvideAccountsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -39,10 +40,11 @@ func TestProvidePlansService(T *testing.T) {
 
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.AccountSubscriptionPlanDataManager{},
+			&mocktypes.AccountDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
+			routeparams.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, s)
@@ -57,10 +59,11 @@ func TestProvidePlansService(T *testing.T) {
 
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
-			&mocktypes.AccountSubscriptionPlanDataManager{},
+			&mocktypes.AccountDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
 			ucp,
+			routeparams.NewRouteParamManager(),
 		)
 
 		assert.Nil(t, s)

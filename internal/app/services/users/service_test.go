@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -42,6 +43,7 @@ func buildTestService(t *testing.T) *service {
 		},
 		&images.MockImageUploadProcessor{},
 		&mockuploads.UploadManager{},
+		routeparams.NewRouteParamManager(),
 	)
 	require.NoError(t, err)
 
@@ -67,6 +69,7 @@ func TestProvideUsersService(T *testing.T) {
 			},
 			&images.MockImageUploadProcessor{},
 			&mockuploads.UploadManager{},
+			routeparams.NewRouteParamManager(),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -88,6 +91,7 @@ func TestProvideUsersService(T *testing.T) {
 			ucp,
 			&images.MockImageUploadProcessor{},
 			&mockuploads.UploadManager{},
+			routeparams.NewRouteParamManager(),
 		)
 		assert.Error(t, err)
 		assert.Nil(t, s)

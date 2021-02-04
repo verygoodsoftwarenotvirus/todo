@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/heptiolabs/healthcheck"
+
+	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
-	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/plans"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
-	chirouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
-
-	"github.com/heptiolabs/healthcheck"
 )
 
 const (
@@ -24,9 +23,7 @@ const (
 	numericIDPattern = "{%s:[0-9]+}"
 )
 
-func (s *Server) setupRouter(metricsHandler metrics.Handler) {
-	router := chirouting.NewRouter(s.logger)
-
+func (s *Server) setupRouter(router routing.Router, metricsHandler metrics.Handler) {
 	router.Route("/_meta_", func(metaRouter routing.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live
@@ -104,7 +101,7 @@ func (s *Server) setupRouter(metricsHandler metrics.Handler) {
 		})
 
 		// AccountSubscriptionPlans
-		adminRouter.Route("/plans", func(plansRouter routing.Router) {
+		adminRouter.Route("/accountsubscriptionplans", func(plansRouter routing.Router) {
 			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.PlanIDURIParamKey)
 
 			plansRouter.WithMiddleware(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)

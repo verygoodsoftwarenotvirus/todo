@@ -7,6 +7,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -33,6 +34,7 @@ func TestProvideAuditService(T *testing.T) {
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AuditLogEntryDataManager{},
 			&mockencoding.EncoderDecoder{},
+			routeparams.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, s)

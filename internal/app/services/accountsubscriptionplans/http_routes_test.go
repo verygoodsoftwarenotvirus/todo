@@ -1,4 +1,4 @@
-package plans
+package accountsubscriptionplans
 
 import (
 	"context"
@@ -94,7 +94,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, planDataManager, ed)
 	})
 
-	T.Run("with error fetching plans from database", func(t *testing.T) {
+	T.Run("with error fetching accountsubscriptionplans from database", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	routeparams "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/params"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -65,6 +65,7 @@ func ProvideUsersService(
 	counterProvider metrics.UnitCounterProvider,
 	imageUploadProcessor images.ImageUploadProcessor,
 	uploadManager uploads.UploadManager,
+	routeParamManager routing.RouteParamManager,
 ) (types.UserDataService, error) {
 	counter, err := counterProvider(counterName, counterDescription)
 	if err != nil {
@@ -76,8 +77,8 @@ func ProvideUsersService(
 		userDataManager:      userDataManager,
 		accountDataManager:   accountDataManager,
 		authenticator:        authenticator,
-		userIDFetcher:        routeparams.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
-		sessionInfoFetcher:   routeparams.SessionInfoFetcherFromRequestContext,
+		userIDFetcher:        routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		sessionInfoFetcher:   routeParamManager.SessionInfoFetcherFromRequestContext,
 		encoderDecoder:       encoder,
 		authSettings:         authSettings,
 		userCounter:          counter,

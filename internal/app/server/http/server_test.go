@@ -7,6 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -34,6 +35,7 @@ func TestProvideServer(T *testing.T) {
 			database.BuildMockDatabase(),
 			logging.NewNonOperationalLogger(),
 			&mockencoding.EncoderDecoder{},
+			chi.NewRouter(logging.NewNonOperationalLogger()),
 		)
 
 		assert.NotNil(t, actual)

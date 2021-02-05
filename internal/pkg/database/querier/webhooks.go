@@ -221,7 +221,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
 
-	id, err := c.performCreateQuery(ctx, false, "webhook creation", query, args)
+	id, err := c.performCreateQuery(ctx, c.db, false, "webhook creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(input)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "webhook update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "webhook update", query, args)
 }
 
 // ArchiveWebhook archives a webhook from the database.
@@ -273,7 +273,7 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "webhook archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "webhook archive", query, args)
 }
 
 // LogWebhookCreationEvent implements our AuditLogEntryDataManager interface.
@@ -283,7 +283,7 @@ func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Web
 
 	c.logger.WithValue(keys.UserIDKey, webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildWebhookCreationEventEntry(webhook))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildWebhookCreationEventEntry(webhook))
 }
 
 // LogWebhookUpdateEvent implements our AuditLogEntryDataManager interface.
@@ -293,7 +293,7 @@ func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID ui
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookUpdateEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
 }
 
 // LogWebhookArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -303,7 +303,7 @@ func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID u
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookArchiveEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
 }
 
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.

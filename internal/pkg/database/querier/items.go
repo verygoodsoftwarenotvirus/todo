@@ -306,7 +306,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	query, args := c.sqlQueryBuilder.BuildCreateItemQuery(input)
 
 	// create the item.
-	id, err := c.performCreateQuery(ctx, false, "item creation", query, args)
+	id, err := c.performCreateQuery(ctx, c.db, false, "item creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "item update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "item update", query, args)
 }
 
 // ArchiveItem archives an item from the database by its ID.
@@ -351,7 +351,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "item archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "item archive", query, args)
 }
 
 // LogItemCreationEvent implements our AuditLogEntryDataManager interface.
@@ -361,7 +361,7 @@ func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
 
 	c.logger.WithValue(keys.UserIDKey, item.BelongsToUser).Debug("LogItemCreationEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildItemCreationEventEntry(item))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildItemCreationEventEntry(item))
 }
 
 // LogItemUpdateEvent implements our AuditLogEntryDataManager interface.
@@ -371,7 +371,7 @@ func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, 
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemUpdateEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildItemUpdateEventEntry(userID, itemID, changes))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildItemUpdateEventEntry(userID, itemID, changes))
 }
 
 // LogItemArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -381,7 +381,7 @@ func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemArchiveEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildItemArchiveEventEntry(userID, itemID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildItemArchiveEventEntry(userID, itemID))
 }
 
 // GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.

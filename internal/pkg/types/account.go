@@ -113,3 +113,11 @@ func (x *AccountUpdateInput) Validate(ctx context.Context) error {
 		validation.Field(&x.Name, validation.Required),
 	)
 }
+
+// NewAccountCreationInputForUser creates a new AccountInputCreation struct for a given user.
+func NewAccountCreationInputForUser(u *User) *AccountCreationInput {
+	return &AccountCreationInput{
+		Name:          u.Username,
+		BelongsToUser: u.ID,
+	}
+}

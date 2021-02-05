@@ -9,7 +9,7 @@ const (
 	UserAssignmentKey = "user_id"
 
 	// UserCreationEvent events indicate a user was created.
-	UserCreationEvent = "user_account_created"
+	UserCreationEvent = "user_created"
 	// UserVerifyTwoFactorSecretEvent events indicate a user was created.
 	UserVerifyTwoFactorSecretEvent = "user_two_factor_secret_verified"
 	// UserUpdateTwoFactorSecretEvent events indicate a user updated their two factor secret.
@@ -23,12 +23,11 @@ const (
 )
 
 // BuildUserCreationEventEntry builds an entry creation input for when a user is created.
-func BuildUserCreationEventEntry(user *types.User) *types.AuditLogEntryCreationInput {
+func BuildUserCreationEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: UserCreationEvent,
 		Context: map[string]interface{}{
-			UserAssignmentKey:     user.ID,
-			CreationAssignmentKey: user,
+			UserAssignmentKey: userID,
 		},
 	}
 }

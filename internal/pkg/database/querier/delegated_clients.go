@@ -209,7 +209,7 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 
 	query, args := c.sqlQueryBuilder.BuildCreateDelegatedClientQuery(input)
 
-	id, err := c.performCreateQuery(ctx, false, "oauth2 client creation", query, args)
+	id, err := c.performCreateQuery(ctx, c.db, false, "oauth2 client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (c *Client) UpdateDelegatedClient(ctx context.Context, updated *types.Deleg
 
 	query, args := c.sqlQueryBuilder.BuildUpdateDelegatedClientQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "oauth2 client update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client update", query, args)
 }
 
 // ArchiveDelegatedClient archives an Delegated client.
@@ -252,7 +252,7 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 
 	query, args := c.sqlQueryBuilder.BuildArchiveDelegatedClientQuery(clientID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "oauth2 client archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client archive", query, args)
 }
 
 // LogDelegatedClientCreationEvent implements our AuditLogEntryDataManager interface.
@@ -262,7 +262,7 @@ func (c *Client) LogDelegatedClientCreationEvent(ctx context.Context, client *ty
 
 	c.logger.WithValue(keys.UserIDKey, client.BelongsToUser).Debug("LogDelegatedClientCreationEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildDelegatedClientCreationEventEntry(client))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildDelegatedClientCreationEventEntry(client))
 }
 
 // LogDelegatedClientArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -272,7 +272,7 @@ func (c *Client) LogDelegatedClientArchiveEvent(ctx context.Context, userID, cli
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogDelegatedClientArchiveEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildDelegatedClientArchiveEventEntry(userID, clientID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildDelegatedClientArchiveEventEntry(userID, clientID))
 }
 
 // GetAuditLogEntriesForDelegatedClient fetches a list of audit log entries from the database that relate to a given client.

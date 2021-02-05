@@ -152,7 +152,7 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
 
 	// create the account subscription plan.
-	id, err := c.performCreateQuery(ctx, false, "account subscription plan creation", query, args)
+	id, err := c.performCreateQuery(ctx, c.db, false, "account subscription plan creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "account subscription plan update", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan update", query, args)
 }
 
 // ArchiveAccountSubscriptionPlan archives a plan from the database by its ID.
@@ -195,7 +195,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "account subscription plan archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan archive", query, args)
 }
 
 // LogAccountSubscriptionPlanCreationEvent implements our AuditLogEntryDataManager interface.
@@ -205,7 +205,7 @@ func (c *Client) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, pl
 
 	c.logger.Debug("LogAccountSubscriptionPlanCreationEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
 }
 
 // AccountSubscriptionLogPlanUpdateEvent implements our AuditLogEntryDataManager interface.
@@ -215,7 +215,7 @@ func (c *Client) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, user
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("AccountSubscriptionLogPlanUpdateEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, accountSubscriptionPlanID, changes))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, accountSubscriptionPlanID, changes))
 }
 
 // AccountSubscriptionLogPlanArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -225,7 +225,7 @@ func (c *Client) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, use
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("AccountSubscriptionLogPlanArchiveEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, accountSubscriptionPlanID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, accountSubscriptionPlanID))
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a list of audit log entries from the database that relate to a given plan.

@@ -1,6 +1,15 @@
 package querybuilding
 
+var (
+	// DefaultTestUserSalt is the default Salt we give to test users when we initialize them.
+	DefaultTestUserSalt = []byte("aaaaaaaaaaaaaaaa")
+)
+
 const (
+	// DefaultTestUserTwoFactorSecret is the default TwoFactorSecret we give to test users when we initialize them.
+	// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
+	DefaultTestUserTwoFactorSecret = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
 	//
 	// Common Columns.
 	//

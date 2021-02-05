@@ -185,15 +185,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if _, accountCreationErr := s.accountDataManager.CreateAccount(ctx, &types.AccountCreationInput{
-		Name:          user.Username,
-		BelongsToUser: user.ID,
-	}); accountCreationErr != nil {
-		logger.Error(accountCreationErr, "error creating account")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
 	// UserCreationResponse is a struct we can use to notify the user of
 	// their two factor secret, but ideally just this once and then never again.
 	ucr := &types.UserCreationResponse{

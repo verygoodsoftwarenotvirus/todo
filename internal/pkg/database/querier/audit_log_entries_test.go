@@ -507,7 +507,7 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		c.createAuditLogEntry(ctx, exampleInput)
+		c.createAuditLogEntry(ctx, c.db, exampleInput)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -525,7 +525,7 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 		prepareForAuditLogEntryCreation(t, exampleInput, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		c.createAuditLogEntry(ctx, exampleInput)
+		c.createAuditLogEntry(ctx, c.db, exampleInput)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -548,7 +548,7 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		c.createAuditLogEntry(ctx, exampleInput)
+		c.createAuditLogEntry(ctx, c.db, exampleInput)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

@@ -106,18 +106,9 @@ func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig 
 
 		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
 
-		createdUserID, userCreationErr := c.performCreateQuery(ctx, false, "test user creation query", query, args)
-		if userCreationErr != nil {
+		if userCreationErr := c.createUser(ctx, &types.User{}, &types.Account{}, query, args); userCreationErr != nil {
 			c.logger.Error(userCreationErr, "creating test user")
 			return fmt.Errorf("creating test user: %w", userCreationErr)
-		}
-
-		if _, accountCreationErr := c.CreateAccount(ctx, &types.AccountCreationInput{
-			Name:          fmt.Sprintf("%s_default", testUserConfig.Username),
-			BelongsToUser: createdUserID,
-		}); accountCreationErr != nil {
-			c.logger.Error(accountCreationErr, "creating test account")
-			return fmt.Errorf("creating test user: %w", accountCreationErr)
 		}
 
 		c.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
@@ -184,6 +175,12 @@ func (c *Client) handleRows(rows database.ResultIterator) error {
 	return nil
 }
 
+func (c *Client) rollbackTransaction(tx *sql.Tx) {
+	if err := tx.Rollback(); err != nil {
+		c.logger.WithValue(keys.RollbackErrorKey, true).Error(err, "rolling back transaction")
+	}
+}
+
 func (c *Client) getIDFromResult(res sql.Result) uint64 {
 	id, err := res.LastInsertId()
 	if err != nil {
@@ -193,35 +190,35 @@ func (c *Client) getIDFromResult(res sql.Result) uint64 {
 	return uint64(id)
 }
 
-func (c *Client) performCreateQueryIgnoringReturn(ctx context.Context, queryDescription, query string, args []interface{}) error {
-	_, err := c.performCreateQuery(ctx, true, queryDescription, query, args)
+func (c *Client) performCreateQueryIgnoringReturn(ctx context.Context, querier database.Querier, queryDescription, query string, args []interface{}) error {
+	_, err := c.performCreateQuery(ctx, querier, true, queryDescription, query, args)
 
 	return err
 }
 
-func (c *Client) performCreateQuery(ctx context.Context, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
+func (c *Client) performCreateQuery(ctx context.Context, querier database.Querier, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if !ignoreReturn && c.idStrategy == ReturningStatementIDRetrievalStrategy {
 		var id uint64
-		if err := c.db.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+		if err := querier.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
 		return id, nil
-	}
-
-	res, err := c.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
-	}
-
-	if res != nil {
-		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
-			return 0, sql.ErrNoRows
+	} else {
+		res, err := querier.ExecContext(ctx, query, args...)
+		if err != nil {
+			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
-	}
 
-	return c.getIDFromResult(res), nil
+		if res != nil {
+			if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+				return 0, sql.ErrNoRows
+			}
+		}
+
+		return c.getIDFromResult(res), nil
+	}
 }

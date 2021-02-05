@@ -230,6 +230,43 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *ty
 	return x, nil
 }
 
+// createUser creates a user.
+func (c *Client) createUser(ctx context.Context, user *types.User, account *types.Account, userCreationQuery string, userCreationArgs []interface{}) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if user.ID, err = c.performCreateQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs); err != nil {
+		c.rollbackTransaction(tx)
+		return err
+	}
+
+	c.createAuditLogEntry(ctx, tx, audit.BuildUserCreationEventEntry(user.ID))
+
+	account.BelongsToUser = user.ID
+
+	// create the account.
+	accountCreationInput := types.NewAccountCreationInputForUser(user)
+	accountCreationQuery, accountCreationArgs := c.sqlQueryBuilder.BuildCreateAccountQuery(accountCreationInput)
+
+	if account.ID, err = c.performCreateQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs); err != nil {
+		c.rollbackTransaction(tx)
+		return err
+	}
+
+	c.createAuditLogEntry(ctx, tx, audit.BuildAccountCreationEventEntry(account))
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
+}
+
 // CreateUser creates a user.
 func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
@@ -238,23 +275,26 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	tracing.AttachUsernameToSpan(span, input.Username)
 	c.logger.WithValue(keys.UsernameKey, input.Username).Debug("CreateUser called")
 
-	query, args := c.sqlQueryBuilder.BuildCreateUserQuery(input)
-
 	// create the user.
-	id, err := c.performCreateQuery(ctx, false, "user creation", query, args)
-	if err != nil {
-		return nil, err
-	}
+	userCreationQuery, userCreationArgs := c.sqlQueryBuilder.BuildCreateUserQuery(input)
 
 	user := &types.User{
-		ID:              id,
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
 		CreatedOn:       c.currentTime(),
 	}
 
-	c.createAuditLogEntry(ctx, audit.BuildUserCreationEventEntry(user))
+	account := &types.Account{
+		Name:            input.Username,
+		PlanID:          nil,
+		PersonalAccount: true,
+		CreatedOn:       c.currentTime(),
+	}
+
+	if err := c.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }
@@ -270,11 +310,11 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User) error {
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
 
-	if err := c.performCreateQueryIgnoringReturn(ctx, "user update", query, args); err != nil {
+	if err := c.performCreateQueryIgnoringReturn(ctx, c.db, "user update", query, args); err != nil {
 		return err
 	}
 
-	c.createAuditLogEntry(ctx, audit.BuildUserUpdateEventEntry(updated.ID, nil))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildUserUpdateEventEntry(updated.ID, nil))
 
 	return nil
 }
@@ -289,11 +329,11 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
 
-	if err := c.performCreateQueryIgnoringReturn(ctx, "user authentication update", query, args); err != nil {
+	if err := c.performCreateQueryIgnoringReturn(ctx, c.db, "user authentication update", query, args); err != nil {
 		return err
 	}
 
-	c.createAuditLogEntry(ctx, audit.BuildUserUpdatePasswordEventEntry(userID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildUserUpdatePasswordEventEntry(userID))
 
 	return nil
 }
@@ -308,11 +348,11 @@ func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, n
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(userID, newSecret)
 
-	if err := c.performCreateQueryIgnoringReturn(ctx, "user two factor secret update", query, args); err != nil {
+	if err := c.performCreateQueryIgnoringReturn(ctx, c.db, "user two factor secret update", query, args); err != nil {
 		return err
 	}
 
-	c.createAuditLogEntry(ctx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
 
 	return nil
 }
@@ -327,11 +367,11 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
 
-	if err := c.performCreateQueryIgnoringReturn(ctx, "user two factor secret verification", query, args); err != nil {
+	if err := c.performCreateQueryIgnoringReturn(ctx, c.db, "user two factor secret verification", query, args); err != nil {
 		return err
 	}
 
-	c.createAuditLogEntry(ctx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
 
 	return nil
 }
@@ -346,11 +386,11 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	query, args := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
 
-	if err := c.performCreateQueryIgnoringReturn(ctx, "user archive", query, args); err != nil {
+	if err := c.performCreateQueryIgnoringReturn(ctx, c.db, "user archive", query, args); err != nil {
 		return err
 	}
 
-	c.createAuditLogEntry(ctx, audit.BuildUserArchiveEventEntry(userID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildUserArchiveEventEntry(userID))
 
 	return nil
 }

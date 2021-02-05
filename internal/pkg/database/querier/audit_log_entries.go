@@ -173,7 +173,7 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 }
 
 // createAuditLogEntry creates an audit log entry in the database.
-func (c *Client) createAuditLogEntry(ctx context.Context, input *types.AuditLogEntryCreationInput) {
+func (c *Client) createAuditLogEntry(ctx context.Context, querier database.Querier, input *types.AuditLogEntryCreationInput) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -181,7 +181,7 @@ func (c *Client) createAuditLogEntry(ctx context.Context, input *types.AuditLogE
 	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	// create the audit log entry.
-	if err := c.performCreateQueryIgnoringReturn(ctx, "audit log entry creation", query, args); err != nil {
+	if err := c.performCreateQueryIgnoringReturn(ctx, querier, "audit log entry creation", query, args); err != nil {
 		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

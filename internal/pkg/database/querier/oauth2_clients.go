@@ -240,7 +240,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 
 	query, args := c.sqlQueryBuilder.BuildCreateOAuth2ClientQuery(input)
 
-	id, err := c.performCreateQuery(ctx, false, "oauth2 client creation", query, args)
+	id, err := c.performCreateQuery(ctx, c.db, false, "oauth2 client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 
 	query, args := c.sqlQueryBuilder.BuildArchiveOAuth2ClientQuery(clientID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, "oauth2 client archive", query, args)
+	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client archive", query, args)
 }
 
 // LogOAuth2ClientCreationEvent implements our AuditLogEntryDataManager interface.
@@ -284,7 +284,7 @@ func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types
 
 	c.logger.WithValue(keys.UserIDKey, client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildOAuth2ClientCreationEventEntry(client))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildOAuth2ClientCreationEventEntry(client))
 }
 
 // LogOAuth2ClientArchiveEvent implements our AuditLogEntryDataManager interface.
@@ -294,7 +294,7 @@ func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, client
 
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogOAuth2ClientArchiveEvent called")
 
-	c.createAuditLogEntry(ctx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
+	c.createAuditLogEntry(ctx, c.db, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches a list of audit log entries from the database that relate to a given client.

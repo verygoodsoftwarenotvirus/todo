@@ -141,9 +141,8 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 			q.externalIDGenerator.NewExternalID(),
 			testUserConfig.Username,
 			testUserConfig.HashedPassword,
-			[]byte("aaaaaaaaaaaaaaaa"),
-			// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
-			"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+			querybuilding.DefaultTestUserSalt,
+			querybuilding.DefaultTestUserTwoFactorSecret,
 			testUserConfig.IsSiteAdmin,
 			types.GoodStandingAccountStatus,
 			math.MaxUint32,

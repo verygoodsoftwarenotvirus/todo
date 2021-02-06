@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 const (
@@ -21,7 +20,7 @@ func TestUserEventBuilders(T *testing.T) {
 				audit.CreationAssignmentKey,
 				audit.UserAssignmentKey,
 			},
-			actual: audit.BuildUserCreationEventEntry(&types.User{}),
+			actual: audit.BuildUserCreationEventEntry(exampleUserID),
 		},
 		"BuildUserVerifyTwoFactorSecretEventEntry": {
 			expectedEventType: audit.UserVerifyTwoFactorSecretEvent,

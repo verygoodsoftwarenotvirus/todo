@@ -230,7 +230,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *ty
 	return x, nil
 }
 
-// createUser creates a user.
+// createUser creates a user. The `user` and `account` parameters are meant to be filled out.
 func (c *Client) createUser(ctx context.Context, user *types.User, account *types.Account, userCreationQuery string, userCreationArgs []interface{}) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

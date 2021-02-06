@@ -563,49 +563,6 @@ func TestService_CreateHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, auth, db, ed)
 	})
-
-	T.Run("with error creating account", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		auth := &mockauth.Authenticator{}
-		auth.On("HashPassword", mock.MatchedBy(testutil.ContextMatcher()), exampleInput.Password).Return(exampleUser.HashedPassword, nil)
-		s.authenticator = auth
-
-		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(types.UserDataStoreCreationInput{})).Return(exampleUser, nil)
-		s.userDataManager = db
-
-		db.AccountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountCreationInput{})).Return((*types.Account)(nil), errors.New("blah"))
-		s.accountDataManager = db
-
-		ed := &mockencoding.EncoderDecoder{}
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res, req := httptest.NewRecorder(), buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(
-				req.Context(),
-				userCreationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		s.authSettings.EnableUserSignup = true
-		s.CreateHandler(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, auth, db, ed)
-	})
 }
 
 func TestService_ReadHandler(T *testing.T) {

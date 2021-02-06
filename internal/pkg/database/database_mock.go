@@ -99,7 +99,7 @@ func (m *MockSQLQueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
 func (m *MockSQLQueryBuilder) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	returnValues := m.Called(testUserConfig)
 
-	return returnValues.Get(0).(string), returnValues.Get(0).([]interface{})
+	return returnValues.Get(0).(string), returnValues.Get(1).([]interface{})
 }
 
 var _ ResultIterator = (*MockResultIterator)(nil)

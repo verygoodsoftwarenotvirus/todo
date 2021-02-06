@@ -19,7 +19,7 @@ const (
 func BuildFakeSQLQuery() (query string, args []interface{}) {
 	s := fmt.Sprintf("%s %s WHERE things = ? AND stuff = ?",
 		fake.RandString([]string{"SELECT * FROM", "INSERT INTO", "UPDATE"}),
-		fake.Word(),
+		fake.Password(true, true, true, false, false, 32),
 	)
 
 	return s, []interface{}{"things", "stuff"}

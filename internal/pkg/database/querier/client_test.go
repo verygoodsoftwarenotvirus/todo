@@ -13,6 +13,7 @@ import (
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -104,13 +105,132 @@ func buildErroneousMockRow() *sqlmock.Rows {
 func TestClient_Migrate(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		c, _ := buildTestClient(t)
+		exampleCreationTime := fakes.BuildFakeTime()
 
-		c.Migrate(ctx, 1, nil)
+		exampleUser := fakes.BuildFakeUser()
+		exampleUser.ExternalID = ""
+		exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleUser.CreatedOn = exampleCreationTime
+
+		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
+		exampleAccount.ExternalID = ""
+		exampleAccountCreationInput := &types.AccountCreationInput{
+			Name:          exampleUser.Username,
+			BelongsToUser: exampleUser.ID,
+		}
+
+		exampleInput := &types.TestUserCreationConfig{
+			Username:       exampleUser.Username,
+			Password:       exampleUser.HashedPassword,
+			HashedPassword: exampleUser.HashedPassword,
+			IsSiteAdmin:    true,
+		}
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		c.timeFunc = func() uint64 {
+			return exampleCreationTime
+		}
+
+		// called by c.IsReady()
+		db.ExpectPing()
+
+		// expect transaction begin
+		db.ExpectBegin()
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		// expect BuildMigrationFunc to be called
+		mockQueryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).
+			Return(func() {})
+
+		// expect TestUser to be created
+		fakeTestUserCreationQuery, fakeTestUserCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.On("BuildTestUserCreationQuery", exampleInput).
+			Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeTestUserCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeTestUserCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
+
+		// create audit log entry for created TestUser
+		fakeAuditLogEntryEventQuery, fakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.AnythingOfType("*types.AuditLogEntryCreationInput")).
+			Return(fakeAuditLogEntryEventQuery, fakeAuditLogEntryEventArgs).
+			Twice()
+
+		db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryEventQuery)).
+			WithArgs(interfaceToDriverValue(fakeAuditLogEntryEventArgs)...).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// create account for created TestUser
+		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildCreateAccountQuery", exampleAccountCreationInput).
+			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectCommit()
+
+		assert.NoError(t, c.Migrate(ctx, 1, exampleInput))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with failure executing queries", func(t *testing.T) {
+		t.Parallel()
+
+		exampleCreationTime := fakes.BuildFakeTime()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleUser.ExternalID = ""
+		exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleUser.CreatedOn = exampleCreationTime
+
+		exampleInput := &types.TestUserCreationConfig{
+			Username:       exampleUser.Username,
+			Password:       exampleUser.HashedPassword,
+			HashedPassword: exampleUser.HashedPassword,
+			IsSiteAdmin:    true,
+		}
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		c.timeFunc = func() uint64 {
+			return exampleCreationTime
+		}
+
+		// called by c.IsReady()
+		db.ExpectPing()
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		// expect BuildMigrationFunc to be called
+		mockQueryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).
+			Return(func() {})
+
+		// expect TestUser to be created
+		fakeTestUserCreationQuery, fakeTestUserCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.On("BuildTestUserCreationQuery", exampleInput).
+			Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		// expect transaction begin
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		assert.Error(t, c.Migrate(ctx, 1, exampleInput))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
 
@@ -149,14 +269,7 @@ func TestClient_IsReady(T *testing.T) {
 
 		c.IsReady(ctx, 1)
 
-		select {
-		case <-time.After(1 * time.Second):
-			assert.Fail(t, "expired")
-		case <-ctx.Done():
-			assert.True(t, true)
-		}
-
-		db.ExpectPing().WillDelayFor(1034 * time.Minute)
+		db.ExpectPing().WillReturnError(errors.New("blah"))
 
 		assert.False(t, c.IsReady(ctx, 1))
 	})
@@ -164,12 +277,6 @@ func TestClient_IsReady(T *testing.T) {
 
 func TestProvideDatabaseClient(T *testing.T) {
 	T.Parallel()
-
-	exampleConfig := &dbconfig.Config{
-		Debug:           true,
-		RunMigrations:   true,
-		MaxPingAttempts: 1,
-	}
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -187,6 +294,44 @@ func TestProvideDatabaseClient(T *testing.T) {
 		queryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).Return(fakeMigrationFunc)
 
 		mockDB.ExpectPing().WillDelayFor(0)
+
+		exampleConfig := &dbconfig.Config{
+			Debug:           true,
+			RunMigrations:   true,
+			MaxPingAttempts: 1,
+		}
+
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder)
+		assert.NotNil(t, actual)
+		assert.NoError(t, err)
+
+		assert.True(t, migrationFunctionCalled)
+		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
+	})
+
+	T.Run("with PostgresProviderKey", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		var migrationFunctionCalled bool
+		fakeMigrationFunc := func() {
+			migrationFunctionCalled = true
+		}
+
+		db, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+		require.NoError(t, err)
+
+		queryBuilder := database.BuildMockSQLQueryBuilder()
+		queryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).Return(fakeMigrationFunc)
+
+		mockDB.ExpectPing().WillDelayFor(0)
+
+		exampleConfig := &dbconfig.Config{
+			Provider:        dbconfig.PostgresProviderKey,
+			Debug:           true,
+			RunMigrations:   true,
+			MaxPingAttempts: 1,
+		}
 
 		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder)
 		assert.NotNil(t, actual)
@@ -207,6 +352,12 @@ func TestProvideDatabaseClient(T *testing.T) {
 		queryBuilder := database.BuildMockSQLQueryBuilder()
 
 		mockDB.ExpectPing().WillReturnError(errors.New("blah"))
+
+		exampleConfig := &dbconfig.Config{
+			Debug:           true,
+			RunMigrations:   true,
+			MaxPingAttempts: 1,
+		}
 
 		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder)
 		assert.Nil(t, actual)
@@ -237,12 +388,31 @@ func TestClient_currentTime(T *testing.T) {
 		assert.NotEmpty(t, c.currentTime())
 	})
 
-	T.Run("hadnles nil", func(t *testing.T) {
+	T.Run("handles nil", func(t *testing.T) {
 		t.Parallel()
 
 		var c *Client
 
 		assert.NotEmpty(t, c.currentTime())
+	})
+}
+
+func TestClient_rollbackTransaction(T *testing.T) {
+	T.Parallel()
+
+	T.Run("obligatory", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin()
+		db.ExpectRollback().WillReturnError(errors.New("blah"))
+
+		tx, err := c.db.BeginTx(ctx, nil)
+		require.NoError(t, err)
+
+		c.rollbackTransaction(tx)
 	})
 }
 
@@ -324,7 +494,7 @@ func TestClient_handleRows(T *testing.T) {
 	})
 }
 
-func TestClient_execContext(T *testing.T) {
+func TestClient_performCreateQueryIgnoringReturn(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -345,7 +515,7 @@ func TestClient_execContext(T *testing.T) {
 	})
 }
 
-func TestClient_execContextAndReturnResult(T *testing.T) {
+func TestClient_performCreateQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -398,5 +568,42 @@ func TestClient_execContextAndReturnResult(T *testing.T) {
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
+	})
+
+	T.Run("with ReturningStatementIDRetrievalStrategy", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		c.idStrategy = ReturningStatementIDRetrievalStrategy
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uint64(123)))
+
+		_, err := c.performCreateQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+
+		assert.NoError(t, err)
+	})
+
+	T.Run("with ReturningStatementIDRetrievalStrategy and error", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		c.idStrategy = ReturningStatementIDRetrievalStrategy
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		id, err := c.performCreateQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+
+		assert.Zero(t, id)
+		assert.Error(t, err)
 	})
 }

@@ -106,7 +106,7 @@ func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig 
 
 		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
 
-		if userCreationErr := c.createUser(ctx, &types.User{}, &types.Account{}, query, args); userCreationErr != nil {
+		if userCreationErr := c.createUser(ctx, &types.User{Username: testUserConfig.Username}, &types.Account{}, query, args); userCreationErr != nil {
 			c.logger.Error(userCreationErr, "creating test user")
 			return fmt.Errorf("creating test user: %w", userCreationErr)
 		}
@@ -138,7 +138,7 @@ func (c *Client) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
 
 			attemptCount++
 			if attemptCount >= int(maxAttempts) {
-				return false
+				break
 			}
 		} else {
 			ready = true
@@ -207,18 +207,18 @@ func (c *Client) performCreateQuery(ctx context.Context, querier database.Querie
 		}
 
 		return id, nil
-	} else {
-		res, err := querier.ExecContext(ctx, query, args...)
-		if err != nil {
-			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
-		}
-
-		if res != nil {
-			if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
-				return 0, sql.ErrNoRows
-			}
-		}
-
-		return c.getIDFromResult(res), nil
 	}
+
+	res, err := querier.ExecContext(ctx, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
+	}
+
+	if res != nil {
+		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+			return 0, sql.ErrNoRows
+		}
+	}
+
+	return c.getIDFromResult(res), nil
 }

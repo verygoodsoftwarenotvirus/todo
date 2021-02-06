@@ -99,7 +99,7 @@ var (
 			Version:     0.06,
 			Description: "create accounts membership table",
 			Script: `
-			CREATE TABLE IF NOT EXISTS accounts_membership (
+			CREATE TABLE IF NOT EXISTS account_user_memberships (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
 				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
 				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

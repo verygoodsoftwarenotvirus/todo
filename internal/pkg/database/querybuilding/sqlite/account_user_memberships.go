@@ -11,30 +11,37 @@ import (
 
 var _ types.AccountUserMembershipSQLQueryBuilder = (*Sqlite)(nil)
 
+// BuildGetAccountUserMembershipQuery does .
 func (q *Sqlite) BuildGetAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildGetAllAccountUserMembershipsCountQuery does .
 func (q *Sqlite) BuildGetAllAccountUserMembershipsCountQuery() string {
 	panic("implement me")
 }
 
+// BuildGetBatchOfAccountUserMembershipsQuery does .
 func (q *Sqlite) BuildGetBatchOfAccountUserMembershipsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildGetAccountUserMembershipsQuery does .
 func (q *Sqlite) BuildGetAccountUserMembershipsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildCreateAccountUserMembershipQuery does .
 func (q *Sqlite) BuildCreateAccountUserMembershipQuery(input *types.AccountUserMembershipCreationInput) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildArchiveAccountUserMembershipQuery does .
 func (q *Sqlite) BuildArchiveAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildGetAuditLogEntriesForAccountUserMembershipQuery does .
 func (q *Sqlite) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }

@@ -96,7 +96,7 @@ var (
 			Version:     0.06,
 			Description: "create accounts membership table",
 			Script: `
-			CREATE TABLE IF NOT EXISTS accounts_membership (
+			CREATE TABLE IF NOT EXISTS account_user_memberships (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				primary_user_account BOOLEAN NOT NULL DEFAULT 'false',
 				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,

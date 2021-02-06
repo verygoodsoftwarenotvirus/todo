@@ -18,7 +18,7 @@ func TestPostgres_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "UPDATE accounts_membership SET is_primary_user_account = (belongs_to_user = $1 AND belongs_to_account = $2) WHERE belongs_to_user = $3 AND archived_on IS NOT NULL"
+		expectedQuery := "UPDATE account_user_memberships SET is_primary_user_account = (belongs_to_user = $1 AND belongs_to_account = $2) WHERE belongs_to_user = $3 AND archived_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,
@@ -42,7 +42,7 @@ func TestPostgres_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "SELECT EXISTS ( SELECT accounts_membership.id FROM accounts_membership WHERE accounts_membership.archived_on IS NULL AND accounts_membership.belongs_to_user = $1 )"
+		expectedQuery := "SELECT EXISTS ( SELECT account_user_memberships.id FROM account_user_memberships WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = $1 )"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -64,7 +64,7 @@ func TestPostgres_BuildAddUserToAccountQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "INSERT INTO accounts_membership (belongs_to_user,belongs_to_account) VALUES ($1,$2)"
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account) VALUES ($1,$2)"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,
@@ -87,7 +87,7 @@ func TestPostgres_BuildRemoveUserFromAccountQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "DELETE FROM accounts_membership WHERE accounts_membership.archived_on IS NULL AND accounts_membership.belongs_to_account = $1 AND accounts_membership.belongs_to_user = $2"
+		expectedQuery := "DELETE FROM account_user_memberships WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_account = $1 AND account_user_memberships.belongs_to_user = $2"
 		expectedArgs := []interface{}{
 			exampleAccount.ID,
 			exampleUser.ID,

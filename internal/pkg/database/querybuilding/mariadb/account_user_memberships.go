@@ -11,30 +11,37 @@ import (
 
 var _ types.AccountUserMembershipSQLQueryBuilder = (*MariaDB)(nil)
 
+// BuildGetAccountUserMembershipQuery does .
 func (q *MariaDB) BuildGetAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildGetAllAccountUserMembershipsCountQuery does .
 func (q *MariaDB) BuildGetAllAccountUserMembershipsCountQuery() string {
 	panic("implement me")
 }
 
+// BuildGetBatchOfAccountUserMembershipsQuery does .
 func (q *MariaDB) BuildGetBatchOfAccountUserMembershipsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildGetAccountUserMembershipsQuery does .
 func (q *MariaDB) BuildGetAccountUserMembershipsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildCreateAccountUserMembershipQuery does .
 func (q *MariaDB) BuildCreateAccountUserMembershipQuery(input *types.AccountUserMembershipCreationInput) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildArchiveAccountUserMembershipQuery does .
 func (q *MariaDB) BuildArchiveAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }
 
+// BuildGetAuditLogEntriesForAccountUserMembershipQuery does .
 func (q *MariaDB) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
 	panic("implement me")
 }

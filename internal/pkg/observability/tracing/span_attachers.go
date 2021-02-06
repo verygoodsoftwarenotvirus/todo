@@ -15,12 +15,6 @@ func attachUint64ToSpan(span trace.Span, attachmentKey string, id uint64) {
 	}
 }
 
-func attachIntToSpan(span trace.Span, attachmentKey string, id int) {
-	if span != nil {
-		span.SetAttributes(label.String(attachmentKey, strconv.FormatInt(int64(id), 10)))
-	}
-}
-
 func attachStringToSpan(span trace.Span, key, str string) {
 	if span != nil {
 		span.SetAttributes(label.String(key, str))

@@ -95,7 +95,7 @@ func (c *Client) GetAccountUserMembership(ctx context.Context, accountUserMember
 	return accountUserMembership, nil
 }
 
-// GetAllItemsCount fetches the count of account user memberships from the database that meet a particular filter.
+// GetAllAccountUserMembershipsCount fetches the count of account user memberships from the database that meet a particular filter.
 func (c *Client) GetAllAccountUserMembershipsCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -227,8 +227,9 @@ func (c *Client) CreateAccountUserMembership(ctx context.Context, input *types.A
 	x := &types.AccountUserMembership{
 		ID: id,
 		//
-		BelongsToUser: input.BelongsToUser,
-		CreatedOn:     c.currentTime(),
+		BelongsToUser:    input.BelongsToUser,
+		BelongsToAccount: input.BelongsToAccount,
+		CreatedOn:        c.currentTime(),
 	}
 
 	return x, nil

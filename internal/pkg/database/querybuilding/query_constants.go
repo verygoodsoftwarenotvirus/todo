@@ -53,7 +53,7 @@ const (
 	//
 
 	// AccountsUserMembershipTableName is what the accounts membership table calls itself.
-	AccountsUserMembershipTableName = "accounts_user_membership"
+	AccountsUserMembershipTableName = "account_user_memberships"
 	// AccountsUserMembershipTableUserPermissionsColumn is what the accounts membership table calls the column indicating primary status.
 	AccountsUserMembershipTableUserPermissionsColumn = "user_account_permissions"
 	// AccountsUserMembershipTableAccountOwnershipColumn is what the accounts membership table calls the user ownership column.
@@ -61,7 +61,7 @@ const (
 	// AccountsUserMembershipTableUserOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsUserMembershipTableUserOwnershipColumn = userOwnershipColumn
 	// AccountsUserMembershipTablePrimaryUserAccountColumn is DEPRECATED.
-	AccountsUserMembershipTablePrimaryUserAccountColumn = "primary_user_account"
+	AccountsUserMembershipTablePrimaryUserAccountColumn = "is_primary_user_account"
 
 	//
 	// AccountSubscriptionPlans Table.

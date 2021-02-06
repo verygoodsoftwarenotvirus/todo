@@ -1,7 +1,6 @@
 package fakes
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -14,7 +13,7 @@ func BuildFakeAccountUserMembership() *types.AccountUserMembership {
 		ExternalID:       fake.UUID(),
 		BelongsToUser:    fake.Uint64(),
 		BelongsToAccount: fake.Uint64(),
-		UserPermissions:  testutil.BuildMaxUserPerms(),
+		UserPermissions:  0,
 		CreatedOn:        0,
 		ArchivedOn:       nil,
 	}

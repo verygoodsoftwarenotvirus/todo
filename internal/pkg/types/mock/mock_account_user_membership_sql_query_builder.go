@@ -20,7 +20,7 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAccountUserMembershipQuer
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAllAccountUserMembershipCountQuery implements our interface.
+// BuildGetAllAccountUserMembershipsCountQuery implements our interface.
 func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAllAccountUserMembershipsCountQuery() string {
 	returnArgs := m.Called()
 

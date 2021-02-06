@@ -21,7 +21,6 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
@@ -52,12 +51,12 @@ func BuildMaxUserPerms() bitmask.SiteUserPermissions {
 }
 
 // BuildNoAdminPerms builds a helpful SiteAdminPermissionChecker.
-func BuildNoAdminPerms() permissions.SiteAdminPermissionChecker {
+func BuildNoAdminPerms() bitmask.SiteAdminPermissions {
 	return bitmask.NewSiteAdminPermissions(0)
 }
 
 // BuildNoUserPerms builds a helpful SiteAdminPermissionChecker.
-func BuildNoUserPerms() permissions.UserAccountPermissionChecker {
+func BuildNoUserPerms() bitmask.SiteUserPermissions {
 	return bitmask.NewAccountUserPermissions(0)
 }
 

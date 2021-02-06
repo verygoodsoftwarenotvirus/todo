@@ -149,7 +149,7 @@ var (
 			Version:     0.11,
 			Description: "create accounts membership table",
 			Script: strings.Join([]string{
-				"CREATE TABLE IF NOT EXISTS accounts_membership (",
+				"CREATE TABLE IF NOT EXISTS account_user_memberships (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `primary_user_account` BOOLEAN NOT NULL DEFAULT false,",
 				"    `belongs_to_account` BIGINT UNSIGNED NOT NULL,",
@@ -165,7 +165,7 @@ var (
 		{
 			Version:     0.12,
 			Description: "create accounts membership creation trigger",
-			Script:      buildCreationTriggerScript("accounts_membership"),
+			Script:      buildCreationTriggerScript("account_user_memberships"),
 		},
 		{
 			Version:     0.13,

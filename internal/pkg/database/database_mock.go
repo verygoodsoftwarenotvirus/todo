@@ -17,6 +17,7 @@ func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
 		AuditLogEntryDataManager:           &mocktypes.AuditLogEntryDataManager{},
 		AccountDataManager:                 &mocktypes.AccountDataManager{},
+		AccountUserMembershipDataManager:   &mocktypes.AccountUserMembershipDataManager{},
 		AccountSubscriptionPlanDataManager: &mocktypes.AccountSubscriptionPlanDataManager{},
 		ItemDataManager:                    &mocktypes.ItemDataManager{},
 		UserDataManager:                    &mocktypes.UserDataManager{},
@@ -32,6 +33,7 @@ type MockDatabase struct {
 	mock.Mock
 
 	*mocktypes.AuditLogEntryDataManager
+	*mocktypes.AccountUserMembershipDataManager
 	*mocktypes.AccountSubscriptionPlanDataManager
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
@@ -64,6 +66,7 @@ var _ SQLQueryBuilder = (*MockSQLQueryBuilder)(nil)
 func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 	return &MockSQLQueryBuilder{
 		AccountSQLQueryBuilder:                 &mocktypes.AccountSQLQueryBuilder{},
+		AccountUserMembershipSQLQueryBuilder:   &mocktypes.AccountUserMembershipSQLQueryBuilder{},
 		AccountSubscriptionPlanSQLQueryBuilder: &mocktypes.AccountSubscriptionPlanSQLQueryBuilder{},
 		AuditLogEntrySQLQueryBuilder:           &mocktypes.AuditLogEntrySQLQueryBuilder{},
 		ItemSQLQueryBuilder:                    &mocktypes.ItemSQLQueryBuilder{},
@@ -79,6 +82,7 @@ type MockSQLQueryBuilder struct {
 	mock.Mock
 
 	*mocktypes.AccountSQLQueryBuilder
+	*mocktypes.AccountUserMembershipSQLQueryBuilder
 	*mocktypes.AccountSubscriptionPlanSQLQueryBuilder
 	*mocktypes.AuditLogEntrySQLQueryBuilder
 	*mocktypes.ItemSQLQueryBuilder

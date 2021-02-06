@@ -5,8 +5,10 @@ const (
 	AuditLogEntryIDKey = "audit_log_entry_id"
 	// AuditLogEntryEventTypeKey is the standard key for referring to an audit log event type in a log.
 	AuditLogEntryEventTypeKey = "event_type"
-	// AccountSubscriptionPlanIDKey is the standard key for referring to a plan ID in a log.
-	AccountSubscriptionPlanIDKey = "plan_id"
+	// AccountSubscriptionPlanIDKey is the standard key for referring to an account subscription plan ID in a log.
+	AccountSubscriptionPlanIDKey = "account_subscription_plan_id"
+	// AccountUserMembershipIDKey  is the standard key for referring to a account user membership ID in a log.
+	AccountUserMembershipIDKey = "account_user_membership_id"
 	// AccountIDKey is the standard key for referring to an account ID in a log.
 	AccountIDKey = "account_id"
 	// UserIDKey is the standard key for referring to a user ID in a log.

@@ -26,6 +26,21 @@ var (
 	// Accounts Table.
 	//
 
+	// AccountsUserMembershipTableColumns are the columns for the items table.
+	AccountsUserMembershipTableColumns = []string{
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, IDColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, ExternalIDColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, userOwnershipColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, accountOwnershipColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableUserPermissionsColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, CreatedOnColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, ArchivedOnColumn),
+	}
+
+	//
+	// Accounts Table.
+	//
+
 	// AccountsTableColumns are the columns for the items table.
 	AccountsTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountsTableName, IDColumn),

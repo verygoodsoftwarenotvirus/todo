@@ -19,7 +19,7 @@ func TestUser_JSONUnmarshal(T *testing.T) {
 			Username:             "new_username",
 			HashedPassword:       "updated_hashed_pass",
 			TwoFactorSecret:      "new fancy secret",
-			SiteAdminPermissions: bitmask.NewPermissionBitmask(123),
+			SiteAdminPermissions: bitmask.NewSiteAdminPermissions(123),
 		}
 
 		jsonBytes, err := json.Marshal(&exampleInput)
@@ -60,7 +60,7 @@ func TestUser_ToSessionInfo(T *testing.T) {
 		exampleInput := User{
 			ID:                   12345,
 			IsSiteAdmin:          true,
-			SiteAdminPermissions: bitmask.NewPermissionBitmask(1),
+			SiteAdminPermissions: bitmask.NewSiteAdminPermissions(1),
 		}
 
 		expected := &SessionInfo{

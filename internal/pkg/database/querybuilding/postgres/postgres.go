@@ -6,15 +6,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Masterminds/squirrel"
+	postgres "github.com/lib/pq"
+	"github.com/luna-duclos/instrumentedsql"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
-	"github.com/Masterminds/squirrel"
-	postgres "github.com/lib/pq"
-	"github.com/luna-duclos/instrumentedsql"
 )
 
 const (

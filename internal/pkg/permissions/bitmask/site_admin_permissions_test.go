@@ -12,10 +12,10 @@ func TestSiteAdminPermissions_CanCycleCookieSecrets(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		x := NewPermissionBitmask(0)
+		x := NewSiteAdminPermissions(0)
 		assert.False(t, x.CanCycleCookieSecrets())
 
-		y := NewPermissionBitmask(0 | uint32(cycleCookieSecretPermission))
+		y := NewSiteAdminPermissions(0 | uint32(cycleCookieSecretPermission))
 		assert.True(t, y.CanCycleCookieSecrets())
 	})
 }

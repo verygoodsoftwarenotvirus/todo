@@ -85,7 +85,7 @@ func (cfg *Config) ProvideDatabaseDriver() driver.Driver {
 	case SqliteProviderKey:
 		return &sqlite.SQLiteDriver{}
 	default:
-		panic("aaaaaaaaaaaaaaaaaaaaaaaa")
+		panic("invalid provider")
 	}
 }
 

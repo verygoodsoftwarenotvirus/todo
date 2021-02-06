@@ -51,8 +51,8 @@ func init() {
 // SiteAdminPermissions is a bitmask for keeping track of admin user permissions.
 type SiteAdminPermissions uint32
 
-// NewPermissionBitmask builds a new SiteAdminPermissionChecker.
-func NewPermissionBitmask(x uint32) SiteAdminPermissions {
+// NewSiteAdminPermissions builds a new SiteAdminPermissionChecker.
+func NewSiteAdminPermissions(x uint32) SiteAdminPermissions {
 	return SiteAdminPermissions(x)
 }
 

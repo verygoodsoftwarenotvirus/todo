@@ -177,6 +177,8 @@ func (c *Client) createAuditLogEntry(ctx context.Context, querier database.Queri
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
+
 	c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Debug("createAuditLogEntry called")
 	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 

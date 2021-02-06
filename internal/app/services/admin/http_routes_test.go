@@ -34,7 +34,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
 				UserIsSiteAdmin:  true,
-				AdminPermissions: testutil.BuildMaxAdminPerms(),
+				AdminPermissions: testutil.BuildMaxSiteAdminPerms(),
 			}, nil
 		}
 
@@ -79,7 +79,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
 				UserIsSiteAdmin:  true,
-				AdminPermissions: testutil.BuildMaxAdminPerms(),
+				AdminPermissions: testutil.BuildMaxSiteAdminPerms(),
 			}, nil
 		}
 
@@ -124,7 +124,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
 				UserIsSiteAdmin:  true,
-				AdminPermissions: testutil.BuildMaxAdminPerms(),
+				AdminPermissions: testutil.BuildMaxSiteAdminPerms(),
 			}, nil
 		}
 
@@ -235,7 +235,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
 				UserIsSiteAdmin:  true,
-				AdminPermissions: testutil.BuildMaxAdminPerms(),
+				AdminPermissions: testutil.BuildMaxSiteAdminPerms(),
 			}, nil
 		}
 
@@ -276,7 +276,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
 				UserIsSiteAdmin:  true,
-				AdminPermissions: testutil.BuildMaxAdminPerms(),
+				AdminPermissions: testutil.BuildMaxSiteAdminPerms(),
 			}, nil
 		}
 
@@ -321,7 +321,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 			return &types.SessionInfo{
 				UserID:           exampleUser.ID,
 				UserIsSiteAdmin:  true,
-				AdminPermissions: testutil.BuildMaxAdminPerms(),
+				AdminPermissions: testutil.BuildMaxSiteAdminPerms(),
 			}, nil
 		}
 

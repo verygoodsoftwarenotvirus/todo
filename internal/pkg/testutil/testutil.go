@@ -41,14 +41,24 @@ func init() {
 	fake.Seed(time.Now().UnixNano())
 }
 
-// BuildMaxAdminPerms builds a helpful SiteAdminPermissionChecker.
-func BuildMaxAdminPerms() permissions.SiteAdminPermissionChecker {
-	return bitmask.NewPermissionBitmask(math.MaxUint32)
+// BuildMaxSiteAdminPerms builds a helpful SiteAdminPermissionChecker.
+func BuildMaxSiteAdminPerms() bitmask.SiteAdminPermissions {
+	return bitmask.NewSiteAdminPermissions(math.MaxUint32)
+}
+
+// BuildMaxUserPerms builds a helpful SiteAdminPermissionChecker.
+func BuildMaxUserPerms() bitmask.SiteUserPermissions {
+	return bitmask.NewAccountUserPermissions(math.MaxUint32)
 }
 
 // BuildNoAdminPerms builds a helpful SiteAdminPermissionChecker.
 func BuildNoAdminPerms() permissions.SiteAdminPermissionChecker {
-	return bitmask.NewPermissionBitmask(0)
+	return bitmask.NewSiteAdminPermissions(0)
+}
+
+// BuildNoUserPerms builds a helpful SiteAdminPermissionChecker.
+func BuildNoUserPerms() permissions.UserAccountPermissionChecker {
+	return bitmask.NewAccountUserPermissions(0)
 }
 
 // DetermineServiceURL returns the url, if properly configured.

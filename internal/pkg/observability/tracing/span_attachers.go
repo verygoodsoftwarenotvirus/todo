@@ -47,8 +47,8 @@ func AttachAuditLogEntryIDToSpan(span trace.Span, entryID uint64) {
 }
 
 // AttachAuditLogEntryEventTypeToSpan attaches an audit log entry ID to a given span.
-func AttachAuditLogEntryEventTypeToSpan(span trace.Span, eventType int) {
-	attachIntToSpan(span, keys.AuditLogEntryEventTypeKey, eventType)
+func AttachAuditLogEntryEventTypeToSpan(span trace.Span, eventType string) {
+	attachStringToSpan(span, keys.AuditLogEntryEventTypeKey, eventType)
 }
 
 // AttachItemIDToSpan attaches an item ID to a given span.
@@ -59,6 +59,11 @@ func AttachItemIDToSpan(span trace.Span, itemID uint64) {
 // AttachAccountIDToSpan provides a consistent way to attach an account's ID to a span.
 func AttachAccountIDToSpan(span trace.Span, accountID uint64) {
 	attachUint64ToSpan(span, keys.AccountIDKey, accountID)
+}
+
+// AttachAccountUserMembershipIDToSpan provides a consistent way to attach an account's ID to a span.
+func AttachAccountUserMembershipIDToSpan(span trace.Span, accountUserMembershipID uint64) {
+	attachUint64ToSpan(span, keys.AccountIDKey, accountUserMembershipID)
 }
 
 // AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.

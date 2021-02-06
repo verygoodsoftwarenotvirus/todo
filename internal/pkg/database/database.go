@@ -53,6 +53,7 @@ type (
 
 		types.AdminUserDataManager
 		types.AccountDataManager
+		types.AccountUserMembershipDataManager
 		types.AccountSubscriptionPlanDataManager
 		types.UserDataManager
 		types.AuditLogEntryDataManager
@@ -77,6 +78,7 @@ type (
 		BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{})
 
 		types.AccountSQLQueryBuilder
+		types.AccountUserMembershipSQLQueryBuilder
 		types.AccountSubscriptionPlanSQLQueryBuilder
 		types.UserSQLQueryBuilder
 		types.AuditLogEntrySQLQueryBuilder

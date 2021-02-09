@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
@@ -38,12 +40,15 @@ func TestProvideAccountsService(T *testing.T) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AccountDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.NotNil(t, s)
@@ -56,12 +61,15 @@ func TestProvideAccountsService(T *testing.T) {
 			return nil, errors.New("blah")
 		}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AccountDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.Nil(t, s)

@@ -69,7 +69,7 @@ func (q *MariaDB) buildFilteredCountQuery(tableName, ownershipColumn string, use
 	}
 
 	if filter != nil {
-		filteredCountQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, filteredCountQueryBuilder, tableName)
+		filteredCountQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, tableName, filteredCountQueryBuilder)
 	}
 
 	return q.buildQuery(filteredCountQueryBuilder)
@@ -118,7 +118,7 @@ func (q *MariaDB) buildListQuery(tableName, ownershipColumn string, columns []st
 	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, querybuilding.IDColumn))
 
 	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, builder, tableName)
+		builder = querybuilding.ApplyFilterToQueryBuilder(filter, tableName, builder)
 	}
 
 	query, selectArgs := q.buildQuery(builder)

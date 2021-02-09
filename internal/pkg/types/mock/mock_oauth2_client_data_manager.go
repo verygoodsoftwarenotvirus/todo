@@ -59,3 +59,9 @@ func (m *OAuth2ClientDataManager) UpdateOAuth2Client(ctx context.Context, update
 func (m *OAuth2ClientDataManager) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error {
 	return m.Called(ctx, clientID, userID).Error(0)
 }
+
+// GetAuditLogEntriesForOAuth2Client is a mock function.
+func (m *OAuth2ClientDataManager) GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
+	args := m.Called(ctx, clientID)
+	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+}

@@ -39,7 +39,7 @@ func ProvideService(
 	routeParamManager routing.RouteParamManager,
 ) types.AuditLogEntryDataService {
 	svc := &service{
-		logger:                 logger.WithName(serviceName),
+		logger:                 logging.EnsureLogger(logger).WithName(serviceName),
 		auditLog:               auditLog,
 		auditLogEntryIDFetcher: routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
 		sessionInfoFetcher:     routeParamManager.SessionInfoFetcherFromRequestContext,

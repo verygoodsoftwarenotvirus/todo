@@ -10,7 +10,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -704,75 +703,6 @@ func TestClient_ArchiveAccountUserMembership(T *testing.T) {
 
 		err := c.ArchiveAccountUserMembership(ctx, exampleAccountUserMembership.ID, exampleAccountUserMembership.BelongsToUser)
 		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogAccountUserMembershipCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAccountUserMembership := fakes.BuildFakeAccountUserMembership()
-		exampleAuditLogEntry := audit.BuildAccountUserMembershipCreationEventEntry(exampleAccountUserMembership)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogAccountUserMembershipCreationEvent(ctx, exampleAccountUserMembership)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogAccountUserMembershipUpdateEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccountUserMembership := fakes.BuildFakeAccountUserMembership()
-		exampleChanges := []types.FieldChangeSummary{}
-		exampleAuditLogEntry := audit.BuildAccountUserMembershipUpdateEventEntry(exampleUser.ID, exampleAccountUserMembership.ID, exampleChanges)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogAccountUserMembershipUpdateEvent(ctx, exampleUser.ID, exampleAccountUserMembership.ID, exampleChanges)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogAccountUserMembershipArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccountUserMembership := fakes.BuildFakeAccountUserMembership()
-		exampleAuditLogEntry := audit.BuildAccountUserMembershipArchiveEventEntry(exampleUser.ID, exampleAccountUserMembership.ID)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogAccountUserMembershipArchiveEvent(ctx, exampleUser.ID, exampleAccountUserMembership.ID)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
@@ -503,11 +504,18 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", exampleInput).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
+		db.ExpectBegin()
+
+		tx, err := c.db.BeginTx(ctx, nil)
+		require.NoError(t, err)
+
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		c.createAuditLogEntry(ctx, c.db, exampleInput)
+		db.ExpectCommit()
+
+		c.createAuditLogEntryInTransaction(ctx, tx, exampleInput)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -525,7 +533,12 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 		prepareForAuditLogEntryCreation(t, exampleInput, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		c.createAuditLogEntry(ctx, c.db, exampleInput)
+		db.ExpectBegin()
+
+		tx, err := c.db.BeginTx(ctx, nil)
+		require.NoError(t, err)
+
+		c.createAuditLogEntryInTransaction(ctx, tx, exampleInput)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -544,11 +557,17 @@ func TestClient_createAuditLogEntry(T *testing.T) {
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", exampleInput).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
+		db.ExpectBegin()
+		tx, err := c.db.BeginTx(ctx, nil)
+		require.NoError(t, err)
+
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		c.createAuditLogEntry(ctx, c.db, exampleInput)
+		db.ExpectRollback()
+
+		c.createAuditLogEntryInTransaction(ctx, tx, exampleInput)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

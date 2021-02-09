@@ -187,7 +187,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify interested parties.
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, client.ID)
 	s.oauth2ClientCounter.Increment(ctx)
-	s.auditLog.LogOAuth2ClientCreationEvent(ctx, client)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, client, http.StatusCreated)
 }
@@ -255,7 +254,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.oauth2ClientCounter.Decrement(ctx)
-	s.auditLog.LogOAuth2ClientArchiveEvent(ctx, userID, oauth2ClientID)
 
 	res.WriteHeader(http.StatusNoContent)
 }
@@ -277,7 +275,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachOAuth2ClientDatabaseIDToSpan(span, oauth2ClientID)
 	logger = logger.WithValue(keys.OAuth2ClientDatabaseIDKey, oauth2ClientID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForOAuth2Client(ctx, oauth2ClientID)
+	x, err := s.clientDataManager.GetAuditLogEntriesForOAuth2Client(ctx, oauth2ClientID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -37,13 +37,13 @@ func buildTestService(t *testing.T) *service {
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
 		&mockauth.Authenticator{},
-		&mockencoding.EncoderDecoder{},
+		mockencoding.NewMockEncoderDecoder(),
 		func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return uc, nil
 		},
 		&images.MockImageUploadProcessor{},
 		&mockuploads.UploadManager{},
-		routeparams.NewRouteParamManager(),
+		mockrouting.NewRouteParamManager(),
 	)
 	require.NoError(t, err)
 
@@ -63,13 +63,13 @@ func TestProvideUsersService(T *testing.T) {
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
 			&mockauth.Authenticator{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return &mockmetrics.UnitCounter{}, nil
 			},
 			&images.MockImageUploadProcessor{},
 			&mockuploads.UploadManager{},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -87,11 +87,11 @@ func TestProvideUsersService(T *testing.T) {
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
 			&mockauth.Authenticator{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			ucp,
 			&images.MockImageUploadProcessor{},
 			&mockuploads.UploadManager{},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 		assert.Error(t, err)
 		assert.Nil(t, s)

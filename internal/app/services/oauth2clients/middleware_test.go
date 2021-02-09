@@ -32,7 +32,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
 			"DecodeRequest",
 			mock.Anything,
@@ -70,7 +70,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
 			"DecodeRequest", mock.Anything,
 			mock.AnythingOfType("*http.Request"),

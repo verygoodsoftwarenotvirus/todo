@@ -34,7 +34,7 @@ func TestProvideServer(T *testing.T) {
 			&mocktypes.AdminServer{},
 			database.BuildMockDatabase(),
 			logging.NewNonOperationalLogger(),
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			chi.NewRouter(logging.NewNonOperationalLogger()),
 		)
 

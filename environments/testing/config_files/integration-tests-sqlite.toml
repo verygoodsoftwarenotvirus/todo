@@ -29,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$.9hFjYfLt9XQb5e3TKG69uxDBgMH0U2YlWICmkhF/uLSvPQUb1V1W"
+    hashed_password = "$2a$11$jar9pgGVsuEY/vUteZ6YRO4iq0m01Zw1Vf5obr7wXZwBacyNs38LO"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

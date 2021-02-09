@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -26,7 +26,7 @@ func buildTestService() *service {
 		itemDataManager:    &mocktypes.ItemDataManager{},
 		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-		encoderDecoder:     &mockencoding.EncoderDecoder{},
+		encoderDecoder:     mockencoding.NewMockEncoderDecoder(),
 		search:             &mocksearch.IndexManager{},
 		tracer:             tracing.NewTracer("test"),
 	}
@@ -44,14 +44,13 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.ItemDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			ucp,
 			search.Config{ItemsIndexPath: "example/path"},
 			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, s)
@@ -67,14 +66,13 @@ func TestProvideItemsService(T *testing.T) {
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.ItemDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			ucp,
 			search.Config{ItemsIndexPath: "example/path"},
 			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.Nil(t, s)

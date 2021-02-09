@@ -22,8 +22,8 @@ type (
 
 		// Handle and HandleFunc adds routes for `pattern` that matches
 		// all HTTP methods.
-		Handle(pattern string, h http.Handler)
-		HandleFunc(pattern string, h http.HandlerFunc)
+		Handle(pattern string, handler http.Handler)
+		HandleFunc(pattern string, handler http.HandlerFunc)
 
 		// Route mounts a sub-Router along a `pattern`` string.
 		Route(pattern string, fn func(r Router)) Router

@@ -14,8 +14,7 @@ import (
 )
 
 var (
-	_ types.ItemDataManager  = (*Client)(nil)
-	_ types.ItemAuditManager = (*Client)(nil)
+	_ types.ItemDataManager = (*Client)(nil)
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
@@ -87,13 +86,7 @@ func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (exists 
 
 	query, args := c.sqlQueryBuilder.BuildItemExistsQuery(itemID, userID)
 
-	if err = c.db.QueryRowContext(ctx, query, args...).Scan(&exists); errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	} else if err != nil {
-		return false, fmt.Errorf("executing item existence query: %w", err)
-	}
-
-	return exists, nil
+	return c.performBooleanQuery(ctx, c.db, query, args)
 }
 
 // GetItem fetches an item from the database.
@@ -127,11 +120,7 @@ func (c *Client) GetAllItemsCount(ctx context.Context) (count uint64, err error)
 
 	c.logger.Debug("GetAllItemsCount called")
 
-	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllItemsCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing items count query: %w", err)
-	}
-
-	return count, nil
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllItemsCountQuery())
 }
 
 // GetAllItems fetches a list of all items in the database.
@@ -305,9 +294,15 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 
 	query, args := c.sqlQueryBuilder.BuildCreateItemQuery(input)
 
-	// create the item.
-	id, err := c.performCreateQuery(ctx, c.db, false, "item creation", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	// create the item.
+	id, err := c.performCreateQuery(ctx, tx, false, "item creation", query, args)
+	if err != nil {
+		c.rollbackTransaction(tx)
 		return nil, err
 	}
 
@@ -319,12 +314,18 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 		CreatedOn:     c.currentTime(),
 	}
 
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
 	return x, nil
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the
 // provided input to have a valid ID.
-func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
+func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -333,7 +334,23 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item) error {
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "item update", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "item update", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating item: %w", err)
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // ArchiveItem archives an item from the database by its ID.
@@ -345,43 +362,29 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	c.logger.WithValues(map[string]interface{}{
-		"item_id":      itemID,
+		keys.ItemIDKey: itemID,
 		keys.UserIDKey: userID,
 	}).Debug("ArchiveItem called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "item archive", query, args)
-}
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
 
-// LogItemCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogItemCreationEvent(ctx context.Context, item *types.Item) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "item archive", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating item: %w", err)
+	}
 
-	c.logger.WithValue(keys.UserIDKey, item.BelongsToUser).Debug("LogItemCreationEvent called")
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(userID, itemID))
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildItemCreationEventEntry(item))
-}
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
 
-// LogItemUpdateEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []types.FieldChangeSummary) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemUpdateEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildItemUpdateEventEntry(userID, itemID, changes))
-}
-
-// LogItemArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogItemArchiveEvent(ctx context.Context, userID, itemID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogItemArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildItemArchiveEventEntry(userID, itemID))
+	return nil
 }
 
 // GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.

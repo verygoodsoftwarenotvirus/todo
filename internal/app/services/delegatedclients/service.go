@@ -39,7 +39,6 @@ type (
 		logger                 logging.Logger
 		clientDataManager      types.DelegatedClientDataManager
 		userDataManager        types.UserDataManager
-		auditLog               types.DelegatedClientAuditManager
 		authenticator          authentication.Authenticator
 		encoderDecoder         encoding.EncoderDecoder
 		urlClientIDExtractor   func(req *http.Request) uint64
@@ -53,7 +52,6 @@ func ProvideDelegatedClientsService(
 	logger logging.Logger,
 	clientDataManager types.DelegatedClientDataManager,
 	userDataManager types.UserDataManager,
-	auditLog types.DelegatedClientAuditManager,
 	authenticator authentication.Authenticator,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
@@ -61,9 +59,8 @@ func ProvideDelegatedClientsService(
 ) (types.DelegatedClientDataService, error) {
 	svc := &service{
 		clientDataManager:    clientDataManager,
-		auditLog:             auditLog,
 		userDataManager:      userDataManager,
-		logger:               logger.WithName(serviceName),
+		logger:               logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: routeParamManager.BuildRouteParamIDFetcher(logger, DelegatedClientIDURIParamKey, "delegated client"),

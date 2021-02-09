@@ -1,7 +1,6 @@
 package sqlite
 
 import (
-	"context"
 	"database/sql"
 	"sync"
 	"time"
@@ -39,7 +38,6 @@ type (
 	// Sqlite is our main Sqlite interaction db.
 	Sqlite struct {
 		logger              logging.Logger
-		db                  *sql.DB
 		sqlBuilder          squirrel.StatementBuilderType
 		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
@@ -72,23 +70,12 @@ func ProvideSqliteDB(logger logging.Logger, connectionDetails database.Connectio
 }
 
 // ProvideSqlite provides a sqlite db controller.
-func ProvideSqlite(db *sql.DB, logger logging.Logger) *Sqlite {
+func ProvideSqlite(logger logging.Logger) *Sqlite {
 	return &Sqlite{
-		db:                  db,
-		logger:              logger.WithName(loggerName),
+		logger:              logging.EnsureLogger(logger).WithName(loggerName),
 		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
-}
-
-// IsReady reports whether or not the db is ready.
-func (q *Sqlite) IsReady(_ context.Context, maxAttempts uint8) (ready bool) {
-	return true
-}
-
-// BeginTx begins a transaction.
-func (q *Sqlite) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return q.db.BeginTx(ctx, opts)
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.

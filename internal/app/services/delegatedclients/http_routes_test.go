@@ -8,6 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
@@ -15,11 +19,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_randString(T *testing.T) {
@@ -101,7 +100,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.DelegatedClientList{}))
 		s.encoderDecoder = ed
 
@@ -133,7 +132,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.DelegatedClientList{}))
 		s.encoderDecoder = ed
 
@@ -164,7 +163,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -225,11 +224,7 @@ func TestService_CreateHandler(T *testing.T) {
 		uc.On("Increment", mock.MatchedBy(testutil.ContextMatcher())).Return()
 		s.delegatedClientCounter = uc
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogDelegatedClientCreationEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleDelegatedClient)
-		s.auditLog = auditLog
-
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.DelegatedClient{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
@@ -253,7 +248,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -284,7 +279,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -338,7 +333,7 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(false, nil)
 		s.authenticator = a
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -392,7 +387,7 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(true, errors.New("blah"))
 		s.authenticator = a
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -446,7 +441,7 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = a
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -492,7 +487,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.DelegatedClient{}))
 		s.encoderDecoder = ed
 
@@ -529,7 +524,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -566,7 +561,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -613,10 +608,6 @@ func TestService_ArchiveHandler(T *testing.T) {
 		uc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()
 		s.delegatedClientCounter = uc
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogDelegatedClientArchiveEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleDelegatedClient.ID)
-		s.auditLog = auditLog
-
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
@@ -650,7 +641,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -687,7 +678,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 		s.clientDataManager = mockDB
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 

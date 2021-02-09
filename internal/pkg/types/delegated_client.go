@@ -64,15 +64,9 @@ type (
 		GetTotalDelegatedClientCount(ctx context.Context) (uint64, error)
 		GetDelegatedClients(ctx context.Context, userID uint64, filter *QueryFilter) (*DelegatedClientList, error)
 		CreateDelegatedClient(ctx context.Context, input *DelegatedClientCreationInput) (*DelegatedClient, error)
-		UpdateDelegatedClient(ctx context.Context, updated *DelegatedClient) error
+		UpdateDelegatedClient(ctx context.Context, updated *DelegatedClient, changes []FieldChangeSummary) error
 		ArchiveDelegatedClient(ctx context.Context, clientID, userID uint64) error
-	}
-
-	// DelegatedClientAuditManager describes a structure capable of .
-	DelegatedClientAuditManager interface {
 		GetAuditLogEntriesForDelegatedClient(ctx context.Context, clientID uint64) ([]*AuditLogEntry, error)
-		LogDelegatedClientCreationEvent(ctx context.Context, client *DelegatedClient)
-		LogDelegatedClientArchiveEvent(ctx context.Context, userID, clientID uint64)
 	}
 
 	// DelegatedClientDataService describes a structure capable of serving traffic related to delegated clients.

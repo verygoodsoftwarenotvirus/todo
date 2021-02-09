@@ -69,7 +69,7 @@ func (q *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, user
 	}
 
 	if filter != nil {
-		filteredCountQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, filteredCountQueryBuilder, tableName)
+		filteredCountQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, tableName, filteredCountQueryBuilder)
 	}
 
 	return q.buildQuery(filteredCountQueryBuilder)
@@ -118,7 +118,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, querybuilding.IDColumn))
 
 	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, builder, tableName)
+		builder = querybuilding.ApplyFilterToQueryBuilder(filter, tableName, builder)
 	}
 
 	query, selectArgs := q.buildQuery(builder)

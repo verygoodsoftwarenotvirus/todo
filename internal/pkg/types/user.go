@@ -69,7 +69,7 @@ type (
 		// Username defines our test user's username we create in the event we create them.
 		Username string `json:"username" mapstructure:"username" toml:"username,omitempty"`
 		// Password defines our test user's authentication we create in the event we create them.
-		Password string `json:"authentication" mapstructure:"authentication" toml:"authentication,omitempty"`
+		Password string `json:"password" mapstructure:"password" toml:"password,omitempty"`
 		// HashedPassword is the hashed form of the above authentication.
 		HashedPassword string `json:"hashed_password" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
 		// IsSiteAdmin defines our test user's admin status we create in the event we create them.
@@ -171,31 +171,16 @@ type (
 
 	// UserDataManager describes a structure which can manage users in permanent storage.
 	UserDataManager interface {
-		// GetUser retrieves a User from the data store via their identifier.
 		GetUser(ctx context.Context, userID uint64) (*User, error)
-		// GetUserWithUnverifiedTwoFactorSecret retrieves a User from the data store via their identifier, with the strict
-		// caveat that the User associated with that row must also have an unverified two factor secret. This is used
-		// for the two factor secret verification route, as all other User retrieval functions restrict to verified
-		// two factor secrets.
 		GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*User, error)
-		// VerifyUserTwoFactorSecret marks a User with a given identifier as having a verified two factor secret.
 		VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error
-		// GetUserByUsername retrieves a User via their username.
 		GetUserByUsername(ctx context.Context, username string) (*User, error)
-		// SearchForUsersByUsername is intended to be a SUPPORT ONLY function, used within an interface to find a
-		// User quickly while only typing the first few letters of their username. No search index is utilized.
 		SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*User, error)
-		// GetAllUsersCount fetches the current User count.
 		GetAllUsersCount(ctx context.Context) (uint64, error)
-		// GetUsers is intended to be a SUPPORT ONLY function, and fetches a page of users adhering to a given filter.
 		GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
-		// CreateUser creates a new User in the data store.
 		CreateUser(ctx context.Context, input UserDataStoreCreationInput) (*User, error)
-		// UpdateUser updates a User in the data store.
-		UpdateUser(ctx context.Context, updated *User) error
-		// UpdateUserPassword  updates a given User's authentication exclusively in the data store.
+		UpdateUser(ctx context.Context, updated *User, changes []FieldChangeSummary) error
 		UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error
-		// ArchiveUser marks a User as archived in the data store.
 		ArchiveUser(ctx context.Context, userID uint64) error
 		GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*AuditLogEntry, error)
 	}

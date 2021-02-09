@@ -58,13 +58,6 @@ type (
 		GetAccountUserMembershipsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountUserMembershipList, error)
 		CreateAccountUserMembership(ctx context.Context, input *AccountUserMembershipCreationInput) (*AccountUserMembership, error)
 		ArchiveAccountUserMembership(ctx context.Context, accountUserMembershipID, accountID uint64) error
-	}
-
-	// AccountUserMembershipAuditManager describes a structure capable of .
-	AccountUserMembershipAuditManager interface {
 		GetAuditLogEntriesForAccountUserMembership(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
-		LogAccountUserMembershipCreationEvent(ctx context.Context, item *AccountUserMembership)
-		LogAccountUserMembershipUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeSummary)
-		LogAccountUserMembershipArchiveEvent(ctx context.Context, userID, itemID uint64)
 	}
 )

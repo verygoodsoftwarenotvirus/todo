@@ -45,11 +45,17 @@ func (m *DelegatedClientDataManager) CreateDelegatedClient(ctx context.Context, 
 }
 
 // UpdateDelegatedClient is a mock function.
-func (m *DelegatedClientDataManager) UpdateDelegatedClient(ctx context.Context, updated *types.DelegatedClient) error {
+func (m *DelegatedClientDataManager) UpdateDelegatedClient(ctx context.Context, updated *types.DelegatedClient, changes []types.FieldChangeSummary) error {
 	return m.Called(ctx, updated).Error(0)
 }
 
 // ArchiveDelegatedClient is a mock function.
 func (m *DelegatedClientDataManager) ArchiveDelegatedClient(ctx context.Context, clientID, userID uint64) error {
 	return m.Called(ctx, clientID, userID).Error(0)
+}
+
+// GetAuditLogEntriesForDelegatedClient is a mock function.
+func (m *DelegatedClientDataManager) GetAuditLogEntriesForDelegatedClient(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
+	args := m.Called(ctx, clientID)
+	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

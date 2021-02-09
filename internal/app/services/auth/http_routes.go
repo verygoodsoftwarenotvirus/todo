@@ -294,7 +294,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 
 		// update stored hashed password in the database.
 		user.HashedPassword = updated
-		if updateErr := s.userDB.UpdateUser(ctx, user); updateErr != nil {
+		if updateErr := s.userDB.UpdateUser(ctx, user, nil); updateErr != nil {
 			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
 		}
 

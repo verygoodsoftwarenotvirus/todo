@@ -98,7 +98,7 @@ func (q *MariaDB) BuildGetUsersQuery(filter *types.QueryFilter) (query string, a
 		})
 
 	if filter != nil {
-		countQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, countQueryBuilder, querybuilding.ItemsTableName)
+		countQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, querybuilding.ItemsTableName, countQueryBuilder)
 	}
 
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
@@ -113,7 +113,7 @@ func (q *MariaDB) BuildGetUsersQuery(filter *types.QueryFilter) (query string, a
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.CreatedOnColumn))
 
 	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, builder, querybuilding.UsersTableName)
+		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.UsersTableName, builder)
 	}
 
 	query, selectArgs, err := builder.ToSql()

@@ -30,7 +30,6 @@ type (
 	service struct {
 		logger             logging.Logger
 		itemDataManager    types.ItemDataManager
-		auditLog           types.ItemAuditManager
 		itemIDFetcher      func(*http.Request) uint64
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		itemCounter        metrics.UnitCounter
@@ -44,7 +43,6 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	itemDataManager types.ItemDataManager,
-	auditLog types.ItemAuditManager,
 	encoder encoding.EncoderDecoder,
 	itemCounterProvider metrics.UnitCounterProvider,
 	searchSettings search.Config,
@@ -65,11 +63,10 @@ func ProvideService(
 	}
 
 	svc := &service{
-		logger:             logger.WithName(serviceName),
+		logger:             logging.EnsureLogger(logger).WithName(serviceName),
 		itemIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
 		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
 		itemDataManager:    itemDataManager,
-		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		itemCounter:        itemCounter,
 		search:             searchIndexManager,

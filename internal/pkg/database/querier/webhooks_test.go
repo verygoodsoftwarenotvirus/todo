@@ -11,7 +11,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -548,7 +547,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(exampleRows)
 
-		actual := c.UpdateWebhook(ctx, exampleWebhook)
+		actual := c.UpdateWebhook(ctx, exampleWebhook, nil)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
@@ -581,75 +580,6 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 		actual := c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogWebhookCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleAuditLogEntry := audit.BuildWebhookCreationEventEntry(exampleWebhook)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogWebhookCreationEvent(ctx, exampleWebhook)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogWebhookUpdateEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleChanges := []types.FieldChangeSummary{}
-		exampleAuditLogEntry := audit.BuildWebhookUpdateEventEntry(exampleUser.ID, exampleWebhook.ID, exampleChanges)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogWebhookUpdateEvent(ctx, exampleUser.ID, exampleWebhook.ID, exampleChanges)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogWebhookArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleAuditLogEntry := audit.BuildWebhookArchiveEventEntry(exampleUser.ID, exampleWebhook.ID)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogWebhookArchiveEvent(ctx, exampleUser.ID, exampleWebhook.ID)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

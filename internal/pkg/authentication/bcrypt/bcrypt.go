@@ -57,7 +57,7 @@ type (
 // ProvideAuthenticator returns a bcrypt powered Authenticator.
 func ProvideAuthenticator(hashCost HashCost, logger logging.Logger) authentication.Authenticator {
 	ba := &Authenticator{
-		logger:              logger.WithName(observableName),
+		logger:              logging.EnsureLogger(logger).WithName(observableName),
 		hashCost:            uint(math.Min(float64(DefaultHashCost), float64(hashCost))),
 		minimumPasswordSize: defaultMinimumPasswordSize,
 		tracer:              tracing.NewTracer(observableName),

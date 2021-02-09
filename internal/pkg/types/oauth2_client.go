@@ -70,13 +70,7 @@ type (
 		GetOAuth2Clients(ctx context.Context, userID uint64, filter *QueryFilter) (*OAuth2ClientList, error)
 		CreateOAuth2Client(ctx context.Context, input *OAuth2ClientCreationInput) (*OAuth2Client, error)
 		ArchiveOAuth2Client(ctx context.Context, clientID, userID uint64) error
-	}
-
-	// OAuth2ClientAuditManager describes a structure capable of .
-	OAuth2ClientAuditManager interface {
 		GetAuditLogEntriesForOAuth2Client(ctx context.Context, clientID uint64) ([]*AuditLogEntry, error)
-		LogOAuth2ClientCreationEvent(ctx context.Context, client *OAuth2Client)
-		LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64)
 	}
 
 	// OAuth2ClientDataService describes a structure capable of serving traffic related to oauth2 clients.

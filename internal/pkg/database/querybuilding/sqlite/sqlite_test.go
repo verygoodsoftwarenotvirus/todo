@@ -1,7 +1,6 @@
 package sqlite
 
 import (
-	"context"
 	"errors"
 	"regexp"
 	"testing"
@@ -19,10 +18,10 @@ const (
 )
 
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
-	db, mock, err := sqlmock.New()
+	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	q := ProvideSqlite(db, logging.NewNonOperationalLogger())
+	q := ProvideSqlite(logging.NewNonOperationalLogger())
 
 	return q, mock
 }
@@ -45,18 +44,6 @@ func TestProvideSqlite(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 		buildTestService(t)
-	})
-}
-
-func TestSqlite_IsReady(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		q, _ := buildTestService(t)
-		assert.True(t, q.IsReady(ctx, 1))
 	})
 }
 

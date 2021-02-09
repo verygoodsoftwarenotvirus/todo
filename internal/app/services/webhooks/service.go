@@ -34,7 +34,6 @@ type (
 		logger             logging.Logger
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager types.WebhookDataManager
-		auditLog           types.WebhookAuditManager
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		webhookIDFetcher   func(*http.Request) uint64
 		encoderDecoder     encoding.EncoderDecoder
@@ -46,7 +45,6 @@ type (
 func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager types.WebhookDataManager,
-	auditLog types.WebhookAuditManager,
 	encoder encoding.EncoderDecoder,
 	webhookCounterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
@@ -57,9 +55,8 @@ func ProvideWebhooksService(
 	}
 
 	svc := &service{
-		logger:             logger.WithName(serviceName),
+		logger:             logging.EnsureLogger(logger).WithName(serviceName),
 		webhookDataManager: webhookDataManager,
-		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		webhookCounter:     webhookCounter,
 		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,

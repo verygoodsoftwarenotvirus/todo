@@ -13,8 +13,7 @@ import (
 )
 
 var (
-	_ types.AccountSubscriptionPlanDataManager  = (*Client)(nil)
-	_ types.AccountSubscriptionPlanAuditManager = (*Client)(nil)
+	_ types.AccountSubscriptionPlanDataManager = (*Client)(nil)
 )
 
 // scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountSubscriptionPlan struct.
@@ -53,7 +52,7 @@ func (c *Client) scanAccountSubscriptionPlan(scan database.Scanner, includeCount
 	return plan, filteredCount, totalCount, nil
 }
 
-// scanPlans takes some database rows and turns them into a slice of accountsubscriptionplans.
+// scanAccountSubscriptionPlans takes some database rows and turns them into a slice of account subscription plans.
 func (c *Client) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
 	for rows.Next() {
 		x, fc, tc, scanErr := c.scanAccountSubscriptionPlan(rows, includeCounts)
@@ -100,21 +99,17 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, accountSubscrip
 	return plan, nil
 }
 
-// GetAllAccountSubscriptionPlansCount fetches the count of accountsubscriptionplans from the database that meet a particular filter.
+// GetAllAccountSubscriptionPlansCount fetches the count of account subscription plans from the database that meet a particular filter.
 func (c *Client) GetAllAccountSubscriptionPlansCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Debug("GetAllAccountSubscriptionPlansCount called")
 
-	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing account subscription accountsubscriptionplans count query: %w", err)
-	}
-
-	return count, nil
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery())
 }
 
-// GetAccountSubscriptionPlans fetches a list of accountsubscriptionplans from the database that meet a particular filter.
+// GetAccountSubscriptionPlans fetches a list of account subscription plans from the database that meet a particular filter.
 func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (x *types.AccountSubscriptionPlanList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -136,7 +131,7 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	}
 
 	if x.AccountSubscriptionPlans, x.FilteredCount, x.TotalCount, err = c.scanAccountSubscriptionPlans(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning account subscription accountsubscriptionplans: %w", err)
+		return nil, fmt.Errorf("scanning account subscription account subscription plans: %w", err)
 	}
 
 	return x, nil
@@ -151,8 +146,13 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 
 	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
 
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
+	}
+
 	// create the account subscription plan.
-	id, err := c.performCreateQuery(ctx, c.db, false, "account subscription plan creation", query, args)
+	id, err := c.performCreateQuery(ctx, tx, false, "account subscription plan creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -166,11 +166,17 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 		CreatedOn:   c.currentTime(),
 	}
 
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanCreationEventEntry(x))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
 	return x, nil
 }
 
 // UpdateAccountSubscriptionPlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
-func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan) error {
+func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan, changedBy uint64, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -179,11 +185,27 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan update", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan update", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating item: %w", err)
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(changedBy, updated.ID, changes))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // ArchiveAccountSubscriptionPlan archives a plan from the database by its ID.
-func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubscriptionPlanID uint64) error {
+func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubscriptionPlanID, archivedBy uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -191,41 +213,28 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.AccountSubscriptionPlanIDKey: accountSubscriptionPlanID,
+		keys.UserIDKey:                    archivedBy,
 	}).Debug("ArchiveAccountSubscriptionPlan called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan archive", query, args)
-}
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
 
-// LogAccountSubscriptionPlanCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan archive", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating item: %w", err)
+	}
 
-	c.logger.Debug("LogAccountSubscriptionPlanCreationEvent called")
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(archivedBy, accountSubscriptionPlanID))
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountSubscriptionPlanCreationEventEntry(plan))
-}
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
 
-// AccountSubscriptionLogPlanUpdateEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, accountSubscriptionPlanID uint64, changes []types.FieldChangeSummary) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("AccountSubscriptionLogPlanUpdateEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountSubscriptionPlanUpdateEventEntry(userID, accountSubscriptionPlanID, changes))
-}
-
-// AccountSubscriptionLogPlanArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, accountSubscriptionPlanID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("AccountSubscriptionLogPlanArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountSubscriptionPlanArchiveEventEntry(userID, accountSubscriptionPlanID))
+	return nil
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan fetches a list of audit log entries from the database that relate to a given plan.

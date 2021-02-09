@@ -30,7 +30,6 @@ type (
 	service struct {
 		logger             logging.Logger
 		accountDataManager types.AccountDataManager
-		auditLog           types.AccountAuditManager
 		accountIDFetcher   func(*http.Request) uint64
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		accountCounter     metrics.UnitCounter
@@ -43,7 +42,6 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	accountDataManager types.AccountDataManager,
-	auditLog types.AccountAuditManager,
 	encoder encoding.EncoderDecoder,
 	accountCounterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
@@ -54,11 +52,10 @@ func ProvideService(
 	}
 
 	svc := &service{
-		logger:             logger.WithName(serviceName),
+		logger:             logging.EnsureLogger(logger).WithName(serviceName),
 		accountIDFetcher:   routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
 		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
 		accountDataManager: accountDataManager,
-		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		accountCounter:     accountCounter,
 		tracer:             tracing.NewTracer(serviceName),

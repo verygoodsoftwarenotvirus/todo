@@ -410,7 +410,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		s := buildTestService(t)
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		ed.On("EncodeErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), "attached input is invalid", http.StatusBadRequest)
 		s.encoderDecoder = ed
@@ -448,7 +448,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 
 		s := buildTestService(t)
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 

@@ -10,7 +10,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -1053,7 +1052,7 @@ func TestClient_UpdateItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(exampleRows)
 
-		err := c.UpdateItem(ctx, exampleItem)
+		err := c.UpdateItem(ctx, exampleItem, nil)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
@@ -1087,75 +1086,6 @@ func TestClient_ArchiveItem(T *testing.T) {
 
 		err := c.ArchiveItem(ctx, exampleItem.ID, exampleItem.BelongsToUser)
 		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogItemCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleItem := fakes.BuildFakeItem()
-		exampleAuditLogEntry := audit.BuildItemCreationEventEntry(exampleItem)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogItemCreationEvent(ctx, exampleItem)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogItemUpdateEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleItem := fakes.BuildFakeItem()
-		exampleChanges := []types.FieldChangeSummary{}
-		exampleAuditLogEntry := audit.BuildItemUpdateEventEntry(exampleUser.ID, exampleItem.ID, exampleChanges)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogItemUpdateEvent(ctx, exampleUser.ID, exampleItem.ID, exampleChanges)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogItemArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleItem := fakes.BuildFakeItem()
-		exampleAuditLogEntry := audit.BuildItemArchiveEventEntry(exampleUser.ID, exampleItem.ID)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogItemArchiveEvent(ctx, exampleUser.ID, exampleItem.ID)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

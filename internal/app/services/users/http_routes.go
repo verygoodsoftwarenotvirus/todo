@@ -398,7 +398,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	user.TwoFactorSecretVerifiedOn = nil
 
 	// update the user in the database.
-	if err := s.userDataManager.UpdateUser(ctx, user); err != nil {
+	if err := s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
 		logger.Error(err, "error encountered updating TOTP token")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -536,7 +536,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 
 	user.AvatarSrc = s.determineAvatarWebPath(internalPath)
 
-	if userUpdateErr := s.userDataManager.UpdateUser(ctx, user); userUpdateErr != nil {
+	if userUpdateErr := s.userDataManager.UpdateUser(ctx, user, nil); userUpdateErr != nil {
 		logger.WithValue("file_size", len(img.Data)).Error(userUpdateErr, "updating user info")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

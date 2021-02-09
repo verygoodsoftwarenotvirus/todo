@@ -72,16 +72,9 @@ type (
 		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*Item, error)
 		GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
-		UpdateItem(ctx context.Context, updated *Item) error
+		UpdateItem(ctx context.Context, updated *Item, changes []FieldChangeSummary) error
 		ArchiveItem(ctx context.Context, itemID, accountID uint64) error
-	}
-
-	// ItemAuditManager describes a structure capable of .
-	ItemAuditManager interface {
 		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
-		LogItemCreationEvent(ctx context.Context, item *Item)
-		LogItemUpdateEvent(ctx context.Context, userID, itemID uint64, changes []FieldChangeSummary)
-		LogItemArchiveEvent(ctx context.Context, userID, itemID uint64)
 	}
 
 	// ItemDataService describes a structure capable of serving traffic related to items.

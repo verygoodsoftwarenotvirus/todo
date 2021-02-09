@@ -74,7 +74,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 
 	im := &bleveIndexManager{
 		index:  index,
-		logger: logger.WithName(serviceName),
+		logger: logging.EnsureLogger(logger).WithName(serviceName),
 		tracer: tracing.NewTracer(serviceName),
 	}
 

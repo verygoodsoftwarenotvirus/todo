@@ -46,7 +46,7 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) 
 	return plan, nil
 }
 
-// BuildGetAccountSubscriptionPlansRequest builds an HTTP request for fetching accountsubscriptionplans.
+// BuildGetAccountSubscriptionPlansRequest builds an HTTP request for fetching account subscription plans.
 func (c *Client) BuildGetAccountSubscriptionPlansRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -60,7 +60,7 @@ func (c *Client) BuildGetAccountSubscriptionPlansRequest(ctx context.Context, fi
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// GetAccountSubscriptionPlans retrieves a list of accountsubscriptionplans.
+// GetAccountSubscriptionPlans retrieves a list of account subscription plans.
 func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.QueryFilter) (plans *types.AccountSubscriptionPlanList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

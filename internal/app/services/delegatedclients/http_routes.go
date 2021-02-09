@@ -137,7 +137,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify interested parties.
 	tracing.AttachDelegatedClientIDToSpan(span, client.ID)
 	s.delegatedClientCounter.Increment(ctx)
-	s.auditLog.LogDelegatedClientCreationEvent(ctx, client)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, client, http.StatusCreated)
 }
@@ -205,7 +204,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.delegatedClientCounter.Decrement(ctx)
-	s.auditLog.LogDelegatedClientArchiveEvent(ctx, userID, delegatedClientID)
 
 	res.WriteHeader(http.StatusNoContent)
 }
@@ -227,7 +225,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachDelegatedClientIDToSpan(span, delegatedClientID)
 	logger = logger.WithValue(keys.DelegatedClientIDKey, delegatedClientID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForDelegatedClient(ctx, delegatedClientID)
+	x, err := s.clientDataManager.GetAuditLogEntriesForDelegatedClient(ctx, delegatedClientID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

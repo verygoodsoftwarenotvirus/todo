@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -62,7 +63,7 @@ func ProvideDatabaseClient(
 		config:          cfg,
 		tracer:          tracer,
 		timeFunc:        defaultTimeFunc,
-		logger:          logger.WithName(loggerName),
+		logger:          logging.EnsureLogger(logger).WithName(loggerName),
 		sqlQueryBuilder: sqlQueryBuilder,
 		idStrategy:      DefaultIDRetrievalStrategy,
 	}
@@ -188,6 +189,24 @@ func (c *Client) getIDFromResult(res sql.Result) uint64 {
 	}
 
 	return uint64(id)
+}
+
+func (c *Client) performCountQuery(ctx context.Context, querier database.Querier, query string) (count uint64, err error) {
+	if err = querier.QueryRowContext(ctx, query).Scan(&count); err != nil {
+		return 0, fmt.Errorf("executing count query: %w", err)
+	}
+
+	return count, nil
+}
+
+func (c *Client) performBooleanQuery(ctx context.Context, querier database.Querier, query string, args []interface{}) (exists bool, err error) {
+	if err = querier.QueryRowContext(ctx, query, args...).Scan(&exists); errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("executing existence query: %w", err)
+	}
+
+	return exists, nil
 }
 
 func (c *Client) performCreateQueryIgnoringReturn(ctx context.Context, querier database.Querier, queryDescription, query string, args []interface{}) error {

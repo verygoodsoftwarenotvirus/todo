@@ -57,7 +57,6 @@ type (
 		logger               logging.Logger
 		clientDataManager    types.OAuth2ClientDataManager
 		userDataManager      types.UserDataManager
-		auditLog             types.OAuth2ClientAuditManager
 		authenticator        authentication.Authenticator
 		encoderDecoder       encoding.EncoderDecoder
 		urlClientIDExtractor func(req *http.Request) uint64
@@ -73,7 +72,6 @@ func ProvideOAuth2ClientsService(
 	logger logging.Logger,
 	clientDataManager types.OAuth2ClientDataManager,
 	userDataManager types.UserDataManager,
-	auditLog types.OAuth2ClientAuditManager,
 	authenticator authentication.Authenticator,
 	encoderDecoder encoding.EncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
@@ -93,9 +91,8 @@ func ProvideOAuth2ClientsService(
 
 	svc := &service{
 		clientDataManager:    clientDataManager,
-		auditLog:             auditLog,
 		userDataManager:      userDataManager,
-		logger:               logger.WithName(serviceName),
+		logger:               logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
 		urlClientIDExtractor: routeParamManager.BuildRouteParamIDFetcher(logger, OAuth2ClientIDURIParamKey, "oauth2 client"),

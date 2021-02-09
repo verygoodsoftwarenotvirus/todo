@@ -114,7 +114,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify relevant parties.
 
 	s.accountCounter.Increment(ctx)
-	s.auditLog.LogAccountCreationEvent(ctx, x)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
 }
@@ -202,15 +201,11 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update account in database.
-	if err = s.accountDataManager.UpdateAccount(ctx, x); err != nil {
+	if err = s.accountDataManager.UpdateAccount(ctx, x, changeReport); err != nil {
 		logger.Error(err, "error encountered updating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	s.auditLog.LogAccountUpdateEvent(ctx, si.UserID, x.ID, changeReport)
-
-	// notify relevant parties.
 
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponse(ctx, res, x)
@@ -249,8 +244,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.auditLog.LogAccountArchiveEvent(ctx, si.UserID, accountID)
-
 	// notify relevant parties.
 	s.accountCounter.Decrement(ctx)
 
@@ -281,7 +274,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForAccount(ctx, accountID)
+	x, err := s.accountDataManager.GetAuditLogEntriesForAccount(ctx, accountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

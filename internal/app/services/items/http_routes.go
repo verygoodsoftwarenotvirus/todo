@@ -186,7 +186,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	s.itemCounter.Increment(ctx)
-	s.auditLog.LogItemCreationEvent(ctx, x)
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
 }
 
@@ -306,7 +305,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, x); err != nil {
+	if err = s.itemDataManager.UpdateItem(ctx, x, changeReport); err != nil {
 		logger.Error(err, "error encountered updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -316,8 +315,6 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
 		logger.Error(searchIndexErr, "updating item in search index")
 	}
-
-	s.auditLog.LogItemUpdateEvent(ctx, si.UserID, x.ID, changeReport)
 
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponse(ctx, res, x)
@@ -358,7 +355,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.itemCounter.Decrement(ctx)
-	s.auditLog.LogItemArchiveEvent(ctx, si.UserID, itemID)
 
 	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
 		logger.Error(indexDeleteErr, "error removing item from search index")
@@ -391,7 +387,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForItem(ctx, itemID)
+	x, err := s.itemDataManager.GetAuditLogEntriesForItem(ctx, itemID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

@@ -231,7 +231,7 @@ func TestService_ListHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUsers", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return(exampleUserList, nil)
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.UserList{}))
 		s.encoderDecoder = ed
 
@@ -252,7 +252,7 @@ func TestService_ListHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUsers", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return((*types.UserList)(nil), errors.New("blah"))
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -280,7 +280,7 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 		mockDB.UserDataManager.On("SearchForUsersByUsername", mock.MatchedBy(testutil.ContextMatcher()), exampleUsername).Return(exampleUserList, nil)
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.User{}))
 		s.encoderDecoder = ed
 
@@ -306,7 +306,7 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 		mockDB.UserDataManager.On("SearchForUsersByUsername", mock.MatchedBy(testutil.ContextMatcher()), exampleUsername).Return([]*types.User{}, errors.New("blah"))
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -352,7 +352,7 @@ func TestService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher()))
 		s.userCounter = mc
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.UserCreationResponse{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
@@ -378,7 +378,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
 			"EncodeErrorResponse",
 			mock.Anything,
@@ -400,7 +400,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -423,7 +423,7 @@ func TestService_CreateHandler(T *testing.T) {
 		auth.On("HashPassword", mock.MatchedBy(testutil.ContextMatcher()), exampleInput.Password).Return(exampleUser.HashedPassword, errors.New("blah"))
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -464,7 +464,7 @@ func TestService_CreateHandler(T *testing.T) {
 		sg.On("GenerateTwoFactorSecret").Return("", errors.New("blah"))
 		s.secretGenerator = sg
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -506,7 +506,7 @@ func TestService_CreateHandler(T *testing.T) {
 		sg.On("GenerateSalt").Return([]byte{}, errors.New("blah"))
 		s.secretGenerator = sg
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -543,7 +543,7 @@ func TestService_CreateHandler(T *testing.T) {
 		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(types.UserDataStoreCreationInput{})).Return(exampleUser, errors.New("blah"))
 		s.userDataManager = db
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -582,7 +582,7 @@ func TestService_ReadHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.User{}))
 		s.encoderDecoder = ed
 
@@ -608,7 +608,7 @@ func TestService_ReadHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, sql.ErrNoRows)
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -634,7 +634,7 @@ func TestService_ReadHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, errors.New("blah"))
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -687,7 +687,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.TOTPSecretRefreshResponse{}), http.StatusAccepted)
 		s.encoderDecoder = ed
 
@@ -703,7 +703,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -718,7 +718,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -825,7 +825,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		sg.On("GenerateTwoFactorSecret").Return("", errors.New("blah"))
 		s.secretGenerator = sg
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -873,7 +873,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -932,7 +932,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -961,7 +961,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 			),
 		)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -997,7 +997,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 
 		exampleUser.TwoFactorSecretVerifiedOn = og
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
 			"EncodeErrorResponse",
 			mock.Anything,
@@ -1071,7 +1071,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		mockDB.UserDataManager.On("VerifyUserTwoFactorSecret", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -1136,7 +1136,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -1153,7 +1153,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -1257,7 +1257,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		auth.On("HashPassword", mock.MatchedBy(testutil.ContextMatcher()), exampleInput.NewPassword).Return("blah", errors.New("blah"))
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -1306,7 +1306,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		auth.On("HashPassword", mock.MatchedBy(testutil.ContextMatcher()), exampleInput.NewPassword).Return("blah", nil)
 		s.authenticator = auth
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -1362,7 +1362,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher())).Return()
 		s.encoderDecoder = ed
 
@@ -1390,7 +1390,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher())).Return()
 		s.encoderDecoder = ed
 
@@ -1420,7 +1420,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher()), mock.AnythingOfType("*http.Request"), "avatar").Return((*images.Image)(nil), errors.New("blah"))
 		s.imageUploadProcessor = ip
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher())).Return()
 		s.encoderDecoder = ed
 
@@ -1456,7 +1456,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		um.On("SaveFile", mock.MatchedBy(testutil.ContextMatcher()), fmt.Sprintf("avatar_%d", exampleUser.ID), returnImage.Data).Return(errors.New("blah"))
 		s.uploadManager = um
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher())).Return()
 		s.encoderDecoder = ed
 
@@ -1493,7 +1493,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		um.On("SaveFile", mock.MatchedBy(testutil.ContextMatcher()), fmt.Sprintf("avatar_%d", exampleUser.ID), returnImage.Data).Return(nil)
 		s.uploadManager = um
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher())).Return()
 		s.encoderDecoder = ed
 
@@ -1549,7 +1549,7 @@ func TestService_Archive(T *testing.T) {
 		mockDB.UserDataManager.On("ArchiveUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 

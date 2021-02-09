@@ -92,7 +92,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// notify the relevant parties.
 	tracing.AttachWebhookIDToSpan(span, wh.ID)
 	s.webhookCounter.Increment(ctx)
-	s.auditLog.LogWebhookCreationEvent(ctx, wh)
 
 	// let everybody know we're good.
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, wh, http.StatusCreated)
@@ -224,14 +223,12 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changes := wh.Update(input)
 
 	// save the update in the database.
-	if err = s.webhookDataManager.UpdateWebhook(ctx, wh); err != nil {
+	if err = s.webhookDataManager.UpdateWebhook(ctx, wh, changes); err != nil {
 		logger.Error(err, "error encountered updating webhook")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		return
 	}
-
-	s.auditLog.LogWebhookUpdateEvent(ctx, si.UserID, webhookID, changes)
 
 	// let everybody know we're good.
 	s.encoderDecoder.EncodeResponse(ctx, res, wh)
@@ -275,7 +272,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// let the interested parties know.
 	s.webhookCounter.Decrement(ctx)
-	s.auditLog.LogWebhookArchiveEvent(ctx, si.UserID, webhookID)
 
 	// let everybody go home.
 	res.WriteHeader(http.StatusNoContent)
@@ -304,7 +300,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForWebhook(ctx, webhookID)
+	x, err := s.webhookDataManager.GetAuditLogEntriesForWebhook(ctx, webhookID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

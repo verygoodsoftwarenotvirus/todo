@@ -11,6 +11,11 @@ import (
 
 var _ encoding.EncoderDecoder = (*EncoderDecoder)(nil)
 
+// NewMockEncoderDecoder produces a mock EncoderDecoder.
+func NewMockEncoderDecoder() *EncoderDecoder {
+	return &EncoderDecoder{}
+}
+
 // EncoderDecoder is a mock EncoderDecoder.
 type EncoderDecoder struct {
 	mock.Mock

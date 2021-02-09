@@ -22,13 +22,13 @@ type (
 		ArchivedOn    *uint64       `json:"archivedOn"`
 	}
 
-	// AccountSubscriptionPlanList represents a list of accountsubscriptionplans.
+	// AccountSubscriptionPlanList represents a list of account subscription plans.
 	AccountSubscriptionPlanList struct {
 		Pagination
 		AccountSubscriptionPlans []*AccountSubscriptionPlan `json:"accountSubscriptionPlans"`
 	}
 
-	// AccountSubscriptionPlanCreationInput represents what a User could set as input for creating accountsubscriptionplans.
+	// AccountSubscriptionPlanCreationInput represents what a User could set as input for creating account subscription plans.
 	AccountSubscriptionPlanCreationInput struct {
 		Name        string        `json:"name"`
 		Description string        `json:"description"`
@@ -36,7 +36,7 @@ type (
 		Period      time.Duration `json:"period"`
 	}
 
-	// AccountSubscriptionPlanUpdateInput represents what a User could set as input for updating accountsubscriptionplans.
+	// AccountSubscriptionPlanUpdateInput represents what a User could set as input for updating account subscription plans.
 	AccountSubscriptionPlanUpdateInput struct {
 		Name        string        `json:"name"`
 		Description string        `json:"description"`
@@ -55,25 +55,18 @@ type (
 		BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
 	}
 
-	// AccountSubscriptionPlanDataManager describes a structure capable of storing accountsubscriptionplans permanently.
+	// AccountSubscriptionPlanDataManager describes a structure capable of storing account subscription plans permanently.
 	AccountSubscriptionPlanDataManager interface {
 		GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*AccountSubscriptionPlan, error)
 		GetAllAccountSubscriptionPlansCount(ctx context.Context) (uint64, error)
 		GetAccountSubscriptionPlans(ctx context.Context, filter *QueryFilter) (*AccountSubscriptionPlanList, error)
 		CreateAccountSubscriptionPlan(ctx context.Context, input *AccountSubscriptionPlanCreationInput) (*AccountSubscriptionPlan, error)
-		UpdateAccountSubscriptionPlan(ctx context.Context, updated *AccountSubscriptionPlan) error
-		ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error
-	}
-
-	// AccountSubscriptionPlanAuditManager describes a structure capable of .
-	AccountSubscriptionPlanAuditManager interface {
+		UpdateAccountSubscriptionPlan(ctx context.Context, updated *AccountSubscriptionPlan, changedBy uint64, changes []FieldChangeSummary) error
+		ArchiveAccountSubscriptionPlan(ctx context.Context, planID, archivedBy uint64) error
 		GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*AuditLogEntry, error)
-		LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *AccountSubscriptionPlan)
-		AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []FieldChangeSummary)
-		AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64)
 	}
 
-	// AccountSubscriptionPlanDataService describes a structure capable of serving traffic related to accountsubscriptionplans.
+	// AccountSubscriptionPlanDataService describes a structure capable of serving traffic related to account subscription plans.
 	AccountSubscriptionPlanDataService interface {
 		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler

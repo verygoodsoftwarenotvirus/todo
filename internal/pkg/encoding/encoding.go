@@ -202,7 +202,7 @@ const name = "response_encoder"
 // ProvideEncoderDecoder provides an EncoderDecoder.
 func ProvideEncoderDecoder(logger logging.Logger) EncoderDecoder {
 	return &serverEncoderDecoder{
-		logger: logger.WithName(name),
+		logger: logging.EnsureLogger(logger).WithName(name),
 		tracer: tracing.NewTracer(name),
 	}
 }

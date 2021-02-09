@@ -9,7 +9,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -433,7 +432,7 @@ func TestClient_UpdateAccountSubscriptionPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
 
-		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan)
+		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan, 0, nil)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
@@ -459,7 +458,7 @@ func TestClient_UpdateAccountSubscriptionPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(expectedError)
 
-		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan)
+		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan, 0, nil)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, expectedError))
 
@@ -489,7 +488,7 @@ func TestClient_ArchiveAccountSubscriptionPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
 
-		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID)
+		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID, 0)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
@@ -515,7 +514,7 @@ func TestClient_ArchiveAccountSubscriptionPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(expectedError)
 
-		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID)
+		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID, 0)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, expectedError))
 
@@ -541,78 +540,9 @@ func TestClient_ArchiveAccountSubscriptionPlan(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID)
+		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID, 0)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogAccountSubscriptionPlanCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleAuditLogEntry := audit.BuildAccountSubscriptionPlanCreationEventEntry(exampleAccountSubscriptionPlan)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogAccountSubscriptionPlanCreationEvent(ctx, exampleAccountSubscriptionPlan)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_AccountSubscriptionLogPlanUpdateEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleFieldChangeSummaryList := []types.FieldChangeSummary{}
-		exampleAuditLogEntry := audit.BuildAccountSubscriptionPlanUpdateEventEntry(exampleUser.ID, exampleAccountSubscriptionPlan.ID, exampleFieldChangeSummaryList)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.AccountSubscriptionLogPlanUpdateEvent(ctx, exampleUser.ID, exampleAccountSubscriptionPlan.ID, exampleFieldChangeSummaryList)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_AccountSubscriptionLogPlanArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-		exampleAuditLogEntry := audit.BuildAccountSubscriptionPlanArchiveEventEntry(exampleUser.ID, exampleAccountSubscriptionPlan.ID)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.AccountSubscriptionLogPlanArchiveEvent(ctx, exampleUser.ID, exampleAccountSubscriptionPlan.ID)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

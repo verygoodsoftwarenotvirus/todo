@@ -101,7 +101,7 @@ func (q *Sqlite) BuildGetUsersQuery(filter *types.QueryFilter) (query string, ar
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.CreatedOnColumn))
 
 	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, builder, querybuilding.UsersTableName)
+		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.UsersTableName, builder)
 	}
 
 	return q.buildQuery(builder)

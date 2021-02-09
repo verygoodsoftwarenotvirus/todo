@@ -1,4 +1,4 @@
 /*
-Package accountsubscriptionplans provides a series of HTTP handlers for managing accountsubscriptionplans in a compatible database.
+Package accountsubscriptionplans provides a series of HTTP handlers for managing account subscription plans in a compatible database.
 */
 package accountsubscriptionplans

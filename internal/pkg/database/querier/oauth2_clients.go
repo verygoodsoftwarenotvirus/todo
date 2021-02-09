@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -16,8 +15,7 @@ import (
 )
 
 var (
-	_ types.OAuth2ClientDataManager  = (*Client)(nil)
-	_ types.OAuth2ClientAuditManager = (*Client)(nil)
+	_ types.OAuth2ClientDataManager = (*Client)(nil)
 )
 
 // scanOAuth2Client takes a Scanner (i.e. *sql.Row) and scans its results into an OAuth2Client struct.
@@ -145,11 +143,7 @@ func (c *Client) GetTotalOAuth2ClientCount(ctx context.Context) (count uint64, e
 
 	c.logger.Debug("GetTotalOAuth2ClientCount called")
 
-	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllOAuth2ClientsCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing account subscription accountsubscriptionplans count query: %w", err)
-	}
-
-	return count, nil
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllOAuth2ClientsCountQuery())
 }
 
 // GetAllOAuth2Clients loads all OAuth2 clients into a channel.
@@ -275,26 +269,6 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 	query, args := c.sqlQueryBuilder.BuildArchiveOAuth2ClientQuery(clientID, userID)
 
 	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client archive", query, args)
-}
-
-// LogOAuth2ClientCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogOAuth2ClientCreationEvent(ctx context.Context, client *types.OAuth2Client) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, client.BelongsToUser).Debug("LogOAuth2ClientCreationEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildOAuth2ClientCreationEventEntry(client))
-}
-
-// LogOAuth2ClientArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogOAuth2ClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogOAuth2ClientArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches a list of audit log entries from the database that relate to a given client.

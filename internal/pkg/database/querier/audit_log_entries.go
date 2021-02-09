@@ -94,11 +94,7 @@ func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, 
 
 	c.logger.Debug("GetAllAuditLogEntriesCount called")
 
-	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing audit log entries count query: %w", err)
-	}
-
-	return count, nil
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery())
 }
 
 // GetAllAuditLogEntries fetches a list of all audit log entries in the database.
@@ -170,6 +166,23 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 	}
 
 	return x, nil
+}
+
+// createAuditLogEntryInTransaction creates an audit log entry in the database.
+func (c *Client) createAuditLogEntryInTransaction(ctx context.Context, transaction *sql.Tx, input *types.AuditLogEntryCreationInput) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
+
+	c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Debug("createAuditLogEntryInTransaction called")
+	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
+
+	// create the audit log entry.
+	if err := c.performCreateQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
+		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
+		c.rollbackTransaction(transaction)
+	}
 }
 
 // createAuditLogEntry creates an audit log entry in the database.

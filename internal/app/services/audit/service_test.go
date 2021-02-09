@@ -7,7 +7,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -20,7 +20,7 @@ func buildTestService() *service {
 		auditLog:               &mocktypes.AuditLogEntryDataManager{},
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher:     func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-		encoderDecoder:         &mockencoding.EncoderDecoder{},
+		encoderDecoder:         mockencoding.NewMockEncoderDecoder(),
 		tracer:                 tracing.NewTracer("test"),
 	}
 }
@@ -33,8 +33,8 @@ func TestProvideAuditService(T *testing.T) {
 		s := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AuditLogEntryDataManager{},
-			&mockencoding.EncoderDecoder{},
-			routeparams.NewRouteParamManager(),
+			mockencoding.NewMockEncoderDecoder(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, s)

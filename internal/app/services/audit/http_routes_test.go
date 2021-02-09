@@ -40,7 +40,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return(exampleAuditLogEntryList, nil)
 		s.auditLog = auditLogEntryManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
 		s.encoderDecoder = ed
 
@@ -71,7 +71,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
 		s.encoderDecoder = ed
 
@@ -102,7 +102,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -147,7 +147,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher()), exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
 		s.auditLog = auditLogEntryManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntry{}))
 		s.encoderDecoder = ed
 
@@ -183,7 +183,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher()), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -219,7 +219,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher()), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 

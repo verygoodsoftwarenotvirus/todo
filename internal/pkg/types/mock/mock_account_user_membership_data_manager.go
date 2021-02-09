@@ -56,23 +56,8 @@ func (m *AccountUserMembershipDataManager) ArchiveAccountUserMembership(ctx cont
 	return m.Called(ctx, itemID, userID).Error(0)
 }
 
-// LogAccountUserMembershipCreationEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountUserMembershipCreationEvent(ctx context.Context, item *types.AccountUserMembership) {
-	m.Called(ctx, item)
-}
-
-// LogAccountUserMembershipUpdateEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountUserMembershipUpdateEvent(ctx context.Context, userID, itemID uint64, changes []types.FieldChangeSummary) {
-	m.Called(ctx, userID, itemID, changes)
-}
-
-// LogAccountUserMembershipArchiveEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountUserMembershipArchiveEvent(ctx context.Context, userID, itemID uint64) {
-	m.Called(ctx, userID, itemID)
-}
-
 // GetAuditLogEntriesForAccountUserMembership is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForAccountUserMembership(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
+func (m *AccountUserMembershipDataManager) GetAuditLogEntriesForAccountUserMembership(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, itemID)
 	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

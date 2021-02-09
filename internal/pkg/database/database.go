@@ -63,13 +63,7 @@ type (
 		types.ItemDataManager
 
 		types.AdminAuditManager
-		types.AccountSubscriptionPlanAuditManager
-		types.AccountAuditManager
 		types.AuthAuditManager
-		types.DelegatedClientAuditManager
-		types.OAuth2ClientAuditManager
-		types.WebhookAuditManager
-		types.ItemAuditManager
 	}
 
 	// SQLQueryBuilder describes anything that builds SQL queries to manage our data.

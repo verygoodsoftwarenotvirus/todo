@@ -22,11 +22,10 @@ const (
 var _ types.AccountSubscriptionPlanDataService = (*service)(nil)
 
 type (
-	// service handles to-do list accountsubscriptionplans.
+	// service handles to-do list account subscription plans.
 	service struct {
 		logger             logging.Logger
 		planDataManager    types.AccountSubscriptionPlanDataManager
-		auditLog           types.AccountSubscriptionPlanAuditManager
 		planIDFetcher      func(*http.Request) uint64
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		planCounter        metrics.UnitCounter
@@ -39,7 +38,6 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	planDataManager types.AccountSubscriptionPlanDataManager,
-	auditLog types.AccountSubscriptionPlanAuditManager,
 	encoder encoding.EncoderDecoder,
 	planCounterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
@@ -50,11 +48,10 @@ func ProvideService(
 	}
 
 	svc := &service{
-		logger:             logger.WithName(serviceName),
+		logger:             logging.EnsureLogger(logger).WithName(serviceName),
 		planIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, PlanIDURIParamKey, "plan"),
 		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
 		planDataManager:    planDataManager,
-		auditLog:           auditLog,
 		encoderDecoder:     encoder,
 		planCounter:        planCounter,
 		tracer:             tracing.NewTracer(serviceName),

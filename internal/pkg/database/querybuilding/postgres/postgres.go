@@ -1,10 +1,8 @@
 package postgres
 
 import (
-	"context"
 	"database/sql"
 	"sync"
-	"time"
 
 	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
@@ -37,7 +35,6 @@ type (
 	// Postgres is our main Postgres interaction db.
 	Postgres struct {
 		logger              logging.Logger
-		db                  *sql.DB
 		sqlBuilder          squirrel.StatementBuilderType
 		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
@@ -70,42 +67,14 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 }
 
 // ProvidePostgres provides a postgres db controller.
-func ProvidePostgres(db *sql.DB, logger logging.Logger) *Postgres {
-	return &Postgres{
-		db:                  db,
-		logger:              logger.WithName(loggerName),
+func ProvidePostgres(logger logging.Logger) *Postgres {
+	pg := &Postgres{
+		logger:              logging.EnsureLogger(logger).WithName(loggerName),
 		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
-}
 
-// IsReady reports whether or not the db is ready.
-func (q *Postgres) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
-	attemptCount := 0
-
-	logger := q.logger.WithValues(map[string]interface{}{
-		"interval":     time.Second,
-		"max_attempts": maxAttempts,
-	})
-	logger.Debug("IsReady called")
-
-	for !ready {
-		err := q.db.PingContext(ctx)
-		if err != nil {
-			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for db")
-			time.Sleep(time.Second)
-
-			attemptCount++
-			if attemptCount >= int(maxAttempts) {
-				return false
-			}
-		} else {
-			ready = true
-			return ready
-		}
-	}
-
-	return false
+	return pg
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.

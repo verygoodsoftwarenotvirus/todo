@@ -76,16 +76,9 @@ type (
 		GetWebhooks(ctx context.Context, userID uint64, filter *QueryFilter) (*WebhookList, error)
 		GetAllWebhooks(ctx context.Context, resultChannel chan []*Webhook, bucketSize uint16) error
 		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
-		UpdateWebhook(ctx context.Context, updated *Webhook) error
+		UpdateWebhook(ctx context.Context, updated *Webhook, changes []FieldChangeSummary) error
 		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error
-	}
-
-	// WebhookAuditManager describes a structure capable of .
-	WebhookAuditManager interface {
 		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*AuditLogEntry, error)
-		LogWebhookCreationEvent(ctx context.Context, webhook *Webhook)
-		LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []FieldChangeSummary)
-		LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64)
 	}
 
 	// WebhookDataService describes a structure capable of serving traffic related to webhooks.

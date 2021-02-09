@@ -77,7 +77,7 @@ func ProvideServer(
 		frontendSettings: frontendSettings,
 		encoder:          encoder,
 		httpServer:       provideHTTPServer(serverSettings.HTTPPort),
-		logger:           logger.WithName(loggerName),
+		logger:           logging.EnsureLogger(logger).WithName(loggerName),
 		// services,
 		adminService:         adminService,
 		auditService:         auditService,

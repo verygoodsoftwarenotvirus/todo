@@ -11,43 +11,48 @@ import (
 
 var _ types.AccountUserMembershipSQLQueryBuilder = (*Postgres)(nil)
 
-// BuildGetAccountUserMembershipQuery does .
+// BuildGetAccountUserMembershipQuery builds a query that .
 func (q *Postgres) BuildGetAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
-	panic("implement me")
+	return "", nil
 }
 
-// BuildGetAllAccountUserMembershipsCountQuery does .
+// BuildGetAllAccountUserMembershipsCountQuery builds a query that .
 func (q *Postgres) BuildGetAllAccountUserMembershipsCountQuery() string {
-	panic("implement me")
+	return ""
 }
 
-// BuildGetBatchOfAccountUserMembershipsQuery does .
+// BuildGetBatchOfAccountUserMembershipsQuery builds a query that .
 func (q *Postgres) BuildGetBatchOfAccountUserMembershipsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	panic("implement me")
+	return "", nil
 }
 
-// BuildGetAccountUserMembershipsQuery does .
+// BuildGetAccountUserMembershipsQuery builds a query that .
 func (q *Postgres) BuildGetAccountUserMembershipsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	panic("implement me")
+	return "", nil
 }
 
-// BuildCreateAccountUserMembershipQuery does .
+// BuildCreateAccountUserMembershipQuery builds a query that .
 func (q *Postgres) BuildCreateAccountUserMembershipQuery(input *types.AccountUserMembershipCreationInput) (query string, args []interface{}) {
-	panic("implement me")
+	return "", nil
 }
 
-// BuildArchiveAccountUserMembershipQuery does .
+// BuildArchiveAccountUserMembershipQuery builds a query that .
 func (q *Postgres) BuildArchiveAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
-	panic("implement me")
+	return "", nil
 }
 
-// BuildGetAuditLogEntriesForAccountUserMembershipQuery does .
+// BuildGetAuditLogEntriesForAccountUserMembershipQuery builds a query that .
 func (q *Postgres) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
-	panic("implement me")
+	return "", nil
 }
 
-// BuildMarkAccountAsUserPrimaryQuery builds a query that marks a user's account as their primary.
-func (q *Postgres) BuildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (query string, args []interface{}) {
+// BuildGetAccountsForUserQuery builds a query that .
+func (q *Postgres) BuildGetAccountsForUserQuery() (query string, args []interface{}) {
+	return "", nil
+}
+
+// BuildMarkAccountAsUserDefaultQuery builds a query that marks a user's account as their primary.
+func (q *Postgres) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.AccountsUserMembershipTablePrimaryUserAccountColumn, squirrel.And{

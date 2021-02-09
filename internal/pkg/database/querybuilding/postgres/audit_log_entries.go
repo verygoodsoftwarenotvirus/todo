@@ -3,10 +3,10 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/Masterminds/squirrel"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
-	"github.com/Masterminds/squirrel"
 )
 
 var _ types.AuditLogEntrySQLQueryBuilder = (*Postgres)(nil)
@@ -69,24 +69,21 @@ func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreat
 // BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Postgres) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
-	countQueryBuilder := q.sqlBuilder.
+	countQuery, countQueryArgs := q.buildQuery(q.sqlBuilder.
 		Select(allCountQuery).
-		From(querybuilding.AuditLogEntriesTableName)
+		From(querybuilding.AuditLogEntriesTableName),
+	)
 
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	q.logQueryBuildingError(err)
-
-	builder := q.sqlBuilder.
-		Select(append(querybuilding.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(querybuilding.AuditLogEntriesTableName).
-		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
-
-	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, builder, querybuilding.AuditLogEntriesTableName)
-	}
-
-	query, selectArgs, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	query, selectArgs := q.buildQuery(
+		querybuilding.ApplyFilterToQueryBuilder(
+			filter,
+			querybuilding.AuditLogEntriesTableName,
+			q.sqlBuilder.
+				Select(append(querybuilding.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
+				From(querybuilding.AuditLogEntriesTableName).
+				OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
+		),
+	)
 
 	return query, append(countQueryArgs, selectArgs...)
 }

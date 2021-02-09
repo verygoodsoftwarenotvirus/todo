@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ func buildTestService(t *testing.T) *service {
 	return &service{
 		clientDataManager:      database.BuildMockDatabase(),
 		logger:                 logging.NewNonOperationalLogger(),
-		encoderDecoder:         &mockencoding.EncoderDecoder{},
+		encoderDecoder:         mockencoding.NewMockEncoderDecoder(),
 		authenticator:          &mockauth.Authenticator{},
 		urlClientIDExtractor:   func(req *http.Request) uint64 { return 0 },
 		delegatedClientCounter: &mockmetrics.UnitCounter{},
@@ -44,13 +44,12 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 			logging.NewNonOperationalLogger(),
 			mockDelegatedClientDataManager,
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, nil
 			},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -66,13 +65,12 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 			logging.NewNonOperationalLogger(),
 			mockDelegatedClientDataManager,
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, errors.New("blah")
 			},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.Error(t, err)

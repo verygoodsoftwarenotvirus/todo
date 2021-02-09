@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -14,8 +13,7 @@ import (
 )
 
 var (
-	_ types.DelegatedClientDataManager  = (*Client)(nil)
-	_ types.DelegatedClientAuditManager = (*Client)(nil)
+	_ types.DelegatedClientDataManager = (*Client)(nil)
 )
 
 // scanDelegatedClient takes a Scanner (i.e. *sql.Row) and scans its results into an DelegatedClient struct.
@@ -114,11 +112,7 @@ func (c *Client) GetTotalDelegatedClientCount(ctx context.Context) (count uint64
 
 	c.logger.Debug("GetTotalDelegatedClientCount called")
 
-	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllDelegatedClientsCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing account subscription accountsubscriptionplans count query: %w", err)
-	}
-
-	return count, nil
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllDelegatedClientsCountQuery())
 }
 
 // GetAllDelegatedClients loads all Delegated clients into a channel.
@@ -228,7 +222,7 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 
 // UpdateDelegatedClient updates a Delegated client. Note that this function expects the input's
 // ID field to be valid.
-func (c *Client) UpdateDelegatedClient(ctx context.Context, updated *types.DelegatedClient) error {
+func (c *Client) UpdateDelegatedClient(ctx context.Context, updated *types.DelegatedClient, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -253,26 +247,6 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 	query, args := c.sqlQueryBuilder.BuildArchiveDelegatedClientQuery(clientID, userID)
 
 	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client archive", query, args)
-}
-
-// LogDelegatedClientCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogDelegatedClientCreationEvent(ctx context.Context, client *types.DelegatedClient) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, client.BelongsToUser).Debug("LogDelegatedClientCreationEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildDelegatedClientCreationEventEntry(client))
-}
-
-// LogDelegatedClientArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogDelegatedClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogDelegatedClientArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildDelegatedClientArchiveEventEntry(userID, clientID))
 }
 
 // GetAuditLogEntriesForDelegatedClient fetches a list of audit log entries from the database that relate to a given client.

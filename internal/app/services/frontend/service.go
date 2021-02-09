@@ -24,7 +24,7 @@ type (
 func ProvideService(logger logging.Logger, cfg Config) types.FrontendService {
 	svc := &service{
 		config: cfg,
-		logger: logger.WithName(serviceName),
+		logger: logging.EnsureLogger(logger).WithName(serviceName),
 		tracer: tracing.NewTracer(serviceName),
 	}
 

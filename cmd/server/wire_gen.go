@@ -27,7 +27,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -48,11 +47,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
 	delegatedClientDataManager := database.ProvideDelegatedClientDataManager(dbm)
 	oAuth2ClientDataManager := database.ProvideOAuth2ClientDataManager(dbm)
-	oAuth2ClientAuditManager := database.ProvideOAuth2ClientAuditManager(dbm)
 	encoderDecoder := encoding.ProvideEncoderDecoder(logger)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	routeParamManager := routeparams.NewRouteParamManager()
-	oAuth2ClientDataService, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, oAuth2ClientAuditManager, authenticator, encoderDecoder, unitCounterProvider, routeParamManager)
+	routeParamManager := chi.NewRouteParamManager()
+	oAuth2ClientDataService, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, authenticator, encoderDecoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +68,9 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, encoderDecoder, routeParamManager)
 	itemDataManager := database.ProvideItemDataManager(dbm)
-	itemAuditManager := database.ProvideItemAuditManager(dbm)
 	searchConfig := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemDataService, err := items.ProvideService(logger, itemDataManager, itemAuditManager, encoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
+	itemDataService, err := items.ProvideService(logger, itemDataManager, encoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -91,14 +88,12 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
-	accountSubscriptionPlanAuditManager := database.ProvidePlanAuditManager(dbm)
-	accountSubscriptionPlanDataService, err := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, accountSubscriptionPlanAuditManager, encoderDecoder, unitCounterProvider, routeParamManager)
+	accountSubscriptionPlanDataService, err := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, encoderDecoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
-	webhookAuditManager := database.ProvideWebhookAuditManager(dbm)
-	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, webhookAuditManager, encoderDecoder, unitCounterProvider, routeParamManager)
+	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, encoderDecoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}

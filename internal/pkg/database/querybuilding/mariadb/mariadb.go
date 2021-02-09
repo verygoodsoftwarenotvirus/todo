@@ -1,10 +1,8 @@
 package mariadb
 
 import (
-	"context"
 	"database/sql"
 	"sync"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
@@ -37,7 +35,6 @@ type (
 	// MariaDB is our main MariaDB interaction db.
 	MariaDB struct {
 		logger              logging.Logger
-		db                  *sql.DB
 		sqlBuilder          squirrel.StatementBuilderType
 		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
@@ -70,47 +67,12 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 }
 
 // ProvideMariaDB provides a maria DB controller.
-func ProvideMariaDB(db *sql.DB, logger logging.Logger) *MariaDB {
+func ProvideMariaDB(logger logging.Logger) *MariaDB {
 	return &MariaDB{
-		db:                  db,
-		logger:              logger.WithName(loggerName),
+		logger:              logging.EnsureLogger(logger).WithName(loggerName),
 		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
-}
-
-// IsReady reports whether or not the db is ready.
-func (q *MariaDB) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
-	attemptCount := 0
-
-	logger := q.logger.WithValues(map[string]interface{}{
-		"interval":     time.Second,
-		"max_attempts": maxAttempts,
-	})
-	logger.Debug("IsReady called")
-
-	for !ready {
-		err := q.db.PingContext(ctx)
-		if err != nil {
-			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for db")
-			time.Sleep(time.Second)
-
-			attemptCount++
-			if attemptCount >= int(maxAttempts) {
-				return false
-			}
-		} else {
-			ready = true
-			return ready
-		}
-	}
-
-	return false
-}
-
-// BeginTx begins a transaction.
-func (q *MariaDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return q.db.BeginTx(ctx, opts)
 }
 
 // logQueryBuildingError logs errors that may occur during query construction.

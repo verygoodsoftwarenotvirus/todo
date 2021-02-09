@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -619,7 +618,7 @@ func TestClient_UpdateDelegatedClient(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleDelegatedClient.ID))
 
-		actual := c.UpdateDelegatedClient(ctx, exampleDelegatedClient)
+		actual := c.UpdateDelegatedClient(ctx, exampleDelegatedClient, nil)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
@@ -651,51 +650,6 @@ func TestClient_ArchiveDelegatedClient(T *testing.T) {
 		actual := c.ArchiveDelegatedClient(ctx, exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogDelegatedClientCreationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleClient := fakes.BuildFakeDelegatedClient()
-		exampleAuditLogEntry := audit.BuildDelegatedClientCreationEventEntry(exampleClient)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogDelegatedClientCreationEvent(ctx, exampleClient)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_LogDelegatedClientArchiveEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleClient := fakes.BuildFakeDelegatedClient()
-		exampleAuditLogEntry := audit.BuildDelegatedClientArchiveEventEntry(exampleUser.ID, exampleClient.ID)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogDelegatedClientArchiveEvent(ctx, exampleUser.ID, exampleClient.ID)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

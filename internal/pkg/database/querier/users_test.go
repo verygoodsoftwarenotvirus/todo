@@ -794,7 +794,7 @@ func TestClient_UpdateUser(T *testing.T) {
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.NoError(t, c.UpdateUser(ctx, exampleUser))
+		assert.NoError(t, c.UpdateUser(ctx, exampleUser, nil))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -818,7 +818,7 @@ func TestClient_UpdateUser(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.Error(t, c.UpdateUser(ctx, exampleUser))
+		assert.Error(t, c.UpdateUser(ctx, exampleUser, nil))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

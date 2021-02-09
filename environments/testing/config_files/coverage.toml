@@ -29,9 +29,9 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$5LXU0O17p1Xl2P2HftH2OOC39rD2DfL1uGRqKOhrmM2EIMgC6PG.y"
+    hashed_password = "$2a$11$fPvQbifXUFib8Pd8K7Ck9eqmvrvIRi/wYPDpnPQz1ejunSv6dhyPW"
     is_site_admin = false
-    password = "password"
+    password = "authentication"
     username = "coverageUser"
 
 [frontend]

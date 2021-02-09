@@ -15,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -40,7 +40,7 @@ func buildTestService(t *testing.T) *service {
 	return &service{
 		clientDataManager:    database.BuildMockDatabase(),
 		logger:               logging.NewNonOperationalLogger(),
-		encoderDecoder:       &mockencoding.EncoderDecoder{},
+		encoderDecoder:       mockencoding.NewMockEncoderDecoder(),
 		authenticator:        &mockauth.Authenticator{},
 		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
 		oauth2ClientCounter:  &mockmetrics.UnitCounter{},
@@ -60,13 +60,12 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			logging.NewNonOperationalLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, nil
 			},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -82,13 +81,12 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			logging.NewNonOperationalLogger(),
 			mockOAuth2ClientDataManager,
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
 			&mockauth.Authenticator{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, errors.New("blah")
 			},
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.Error(t, err)

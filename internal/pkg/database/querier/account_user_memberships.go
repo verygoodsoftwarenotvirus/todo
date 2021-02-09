@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -14,8 +13,7 @@ import (
 )
 
 var (
-	_ types.AccountUserMembershipDataManager  = (*Client)(nil)
-	_ types.AccountUserMembershipAuditManager = (*Client)(nil)
+	_ types.AccountUserMembershipDataManager = (*Client)(nil)
 )
 
 // scanAccountUserMembership takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountUserMembership struct.
@@ -102,11 +100,7 @@ func (c *Client) GetAllAccountUserMembershipsCount(ctx context.Context) (count u
 
 	c.logger.Debug("GetAllAccountUserMembershipsCount called")
 
-	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountUserMembershipsCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing accountUserMemberships count query: %w", err)
-	}
-
-	return count, nil
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllAccountUserMembershipsCountQuery())
 }
 
 // GetAllAccountUserMemberships fetches a list of all account user memberships in the database.
@@ -251,36 +245,6 @@ func (c *Client) ArchiveAccountUserMembership(ctx context.Context, accountUserMe
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountUserMembershipQuery(accountUserMembershipID, userID)
 
 	return c.performCreateQueryIgnoringReturn(ctx, c.db, "accountUserMembership archive", query, args)
-}
-
-// LogAccountUserMembershipCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogAccountUserMembershipCreationEvent(ctx context.Context, accountUserMembership *types.AccountUserMembership) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, accountUserMembership.BelongsToUser).Debug("LogAccountUserMembershipCreationEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountUserMembershipCreationEventEntry(accountUserMembership))
-}
-
-// LogAccountUserMembershipUpdateEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogAccountUserMembershipUpdateEvent(ctx context.Context, userID, accountUserMembershipID uint64, changes []types.FieldChangeSummary) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogAccountUserMembershipUpdateEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountUserMembershipUpdateEventEntry(userID, accountUserMembershipID, changes))
-}
-
-// LogAccountUserMembershipArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogAccountUserMembershipArchiveEvent(ctx context.Context, userID, accountUserMembershipID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogAccountUserMembershipArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountUserMembershipArchiveEventEntry(userID, accountUserMembershipID))
 }
 
 // GetAuditLogEntriesForAccountUserMembership fetches a list of audit log entries from the database that relate to a given accountUserMembership.

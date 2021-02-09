@@ -1,7 +1,6 @@
 package mariadb
 
 import (
-	"context"
 	"errors"
 	"regexp"
 	"testing"
@@ -18,10 +17,10 @@ const (
 )
 
 func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
-	db, mock, err := sqlmock.New()
+	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	return ProvideMariaDB(db, logging.NewNonOperationalLogger()), mock
+	return ProvideMariaDB(logging.NewNonOperationalLogger()), mock
 }
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
@@ -42,18 +41,6 @@ func TestProvideMariaDB(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 		buildTestService(t)
-	})
-}
-
-func TestMariaDB_IsReady(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		q, _ := buildTestService(t)
-		assert.True(t, q.IsReady(ctx, 1))
 	})
 }
 

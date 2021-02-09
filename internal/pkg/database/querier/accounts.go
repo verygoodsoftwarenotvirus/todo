@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -14,8 +13,7 @@ import (
 )
 
 var (
-	_ types.AccountDataManager  = (*Client)(nil)
-	_ types.AccountAuditManager = (*Client)(nil)
+	_ types.AccountDataManager = (*Client)(nil)
 )
 
 // scanAccount takes a database Scanner (i.e. *sql.Row) and scans the result into an Account struct.
@@ -104,11 +102,7 @@ func (c *Client) GetAllAccountsCount(ctx context.Context) (count uint64, err err
 
 	c.logger.Debug("GetAllAccountsCount called")
 
-	if err = c.db.QueryRowContext(ctx, c.sqlQueryBuilder.BuildGetAllAccountsCountQuery()).Scan(&count); err != nil {
-		return 0, fmt.Errorf("executing accounts count query: %w", err)
-	}
-
-	return count, nil
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllAccountsCountQuery())
 }
 
 // GetAllAccounts fetches a list of all accounts in the database.
@@ -223,6 +217,11 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	query, args := c.sqlQueryBuilder.BuildCreateAccountQuery(input)
 
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
+	}
+
 	// create the account.
 	id, err := c.performCreateQuery(ctx, c.db, false, "account creation", query, args)
 	if err != nil {
@@ -236,12 +235,16 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 		CreatedOn:     c.currentTime(),
 	}
 
+	if commitErr := tx.Commit(); commitErr != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
 	return x, nil
 }
 
 // UpdateAccount updates a particular account. Note that UpdateAccount expects the
 // provided input to have a valid ID.
-func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account) error {
+func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -269,36 +272,6 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountQuery(accountID, userID)
 
 	return c.performCreateQueryIgnoringReturn(ctx, c.db, "account archive", query, args)
-}
-
-// LogAccountCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogAccountCreationEvent(ctx context.Context, account *types.Account) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, account.BelongsToUser).Debug("LogAccountCreationEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountCreationEventEntry(account))
-}
-
-// LogAccountUpdateEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogAccountUpdateEvent(ctx context.Context, userID, accountID uint64, changes []types.FieldChangeSummary) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogAccountUpdateEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountUpdateEventEntry(userID, accountID, changes))
-}
-
-// LogAccountArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogAccountArchiveEvent(ctx context.Context, userID, accountID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogAccountArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountArchiveEventEntry(userID, accountID))
 }
 
 // GetAuditLogEntriesForAccount fetches a list of audit log entries from the database that relate to a given account.

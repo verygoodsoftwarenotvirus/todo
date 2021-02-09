@@ -24,7 +24,7 @@ func (q *Postgres) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query st
 	)
 }
 
-// BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of accountsubscriptionplans in the database.
+// BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of account subscription plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *Postgres) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	allPlansCountQuery, _ := q.buildQuery(q.sqlBuilder.
@@ -38,7 +38,7 @@ func (q *Postgres) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	return allPlansCountQuery
 }
 
-// BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting accountsubscriptionplans that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting account subscription plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Postgres) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(

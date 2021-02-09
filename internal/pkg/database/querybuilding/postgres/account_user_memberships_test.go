@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostgres_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
+func TestPostgres_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -24,7 +24,7 @@ func TestPostgres_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildMarkAccountAsUserPrimaryQuery(exampleUser.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildMarkAccountAsUserDefaultQuery(exampleUser.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

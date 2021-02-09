@@ -71,18 +71,8 @@ func (m *DelegatedClientDataServer) AuditEntryHandler(res http.ResponseWriter, r
 	m.Called(res, req)
 }
 
-// LogDelegatedClientCreationEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogDelegatedClientCreationEvent(ctx context.Context, client *types.DelegatedClient) {
-	m.Called(ctx, client)
-}
-
-// LogDelegatedClientArchiveEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogDelegatedClientArchiveEvent(ctx context.Context, userID, clientID uint64) {
-	m.Called(ctx, userID, clientID)
-}
-
 // GetAuditLogEntriesForDelegatedClient is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForDelegatedClient(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
+func (m *DelegatedClientDataServer) GetAuditLogEntriesForDelegatedClient(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, clientID)
 	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

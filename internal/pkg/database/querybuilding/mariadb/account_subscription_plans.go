@@ -24,7 +24,7 @@ func (q *MariaDB) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query str
 	)
 }
 
-// BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of accountsubscriptionplans in the database.
+// BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of account subscription plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *MariaDB) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
@@ -36,7 +36,7 @@ func (q *MariaDB) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	)
 }
 
-// BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting accountsubscriptionplans that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting account subscription plans that adhere to a given QueryFilter and belong to a given user,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *MariaDB) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
@@ -80,8 +80,8 @@ func (q *MariaDB) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSu
 		Set(querybuilding.AccountSubscriptionPlansTablePeriodColumn, input.Period.String()).
 		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
 		Where(squirrel.Eq{
-			querybuilding.ArchivedOnColumn: nil,
 			querybuilding.IDColumn:         input.ID,
+			querybuilding.ArchivedOnColumn: nil,
 		}),
 	)
 }

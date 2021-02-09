@@ -59,16 +59,9 @@ type (
 		GetAccounts(ctx context.Context, userID uint64, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
 		CreateAccount(ctx context.Context, input *AccountCreationInput) (*Account, error)
-		UpdateAccount(ctx context.Context, updated *Account) error
+		UpdateAccount(ctx context.Context, updated *Account, changes []FieldChangeSummary) error
 		ArchiveAccount(ctx context.Context, accountID, userID uint64) error
-	}
-
-	// AccountAuditManager describes a structure capable of .
-	AccountAuditManager interface {
 		GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*AuditLogEntry, error)
-		LogAccountCreationEvent(ctx context.Context, account *Account)
-		LogAccountUpdateEvent(ctx context.Context, userID, accountID uint64, changes []FieldChangeSummary)
-		LogAccountArchiveEvent(ctx context.Context, userID, accountID uint64)
 	}
 
 	// AccountDataService describes a structure capable of serving traffic related to accounts.

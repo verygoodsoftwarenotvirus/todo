@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -24,7 +24,7 @@ func buildTestService() *service {
 		accountDataManager: &mocktypes.AccountDataManager{},
 		accountIDFetcher:   func(req *http.Request) uint64 { return 0 },
 		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
-		encoderDecoder:     &mockencoding.EncoderDecoder{},
+		encoderDecoder:     mockencoding.NewMockEncoderDecoder(),
 		tracer:             tracing.NewTracer("test"),
 	}
 }
@@ -41,10 +41,9 @@ func TestProvideAccountsService(T *testing.T) {
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AccountDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, s)
@@ -60,10 +59,9 @@ func TestProvideAccountsService(T *testing.T) {
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AccountDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.Nil(t, s)

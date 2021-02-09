@@ -9,7 +9,7 @@ import (
 )
 
 // ApplyFilterToQueryBuilder applies the query filter to a query builder.
-func ApplyFilterToQueryBuilder(qf *types.QueryFilter, queryBuilder squirrel.SelectBuilder, tableName string) squirrel.SelectBuilder {
+func ApplyFilterToQueryBuilder(qf *types.QueryFilter, tableName string, queryBuilder squirrel.SelectBuilder) squirrel.SelectBuilder {
 	if qf == nil {
 		return queryBuilder
 	}
@@ -46,7 +46,7 @@ func ApplyFilterToQueryBuilder(qf *types.QueryFilter, queryBuilder squirrel.Sele
 }
 
 // ApplyFilterToSubCountQueryBuilder applies the query filter to a query builder.
-func ApplyFilterToSubCountQueryBuilder(qf *types.QueryFilter, queryBuilder squirrel.SelectBuilder, tableName string) squirrel.SelectBuilder {
+func ApplyFilterToSubCountQueryBuilder(qf *types.QueryFilter, tableName string, queryBuilder squirrel.SelectBuilder) squirrel.SelectBuilder {
 	if qf == nil {
 		return queryBuilder
 	}

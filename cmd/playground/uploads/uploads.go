@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
@@ -37,7 +37,7 @@ func main() {
 		ctx,
 		logger,
 		storageConfig,
-		routeparams.NewRouteParamManager(),
+		chi.NewRouteParamManager(),
 	)
 	if err != nil {
 		log.Fatal(err)

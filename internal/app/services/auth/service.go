@@ -60,7 +60,7 @@ func ProvideService(
 	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
 	svc := &service{
-		logger:                  logger.WithName(serviceName),
+		logger:                  logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:          encoder,
 		config:                  cfg,
 		userDB:                  userDataManager,

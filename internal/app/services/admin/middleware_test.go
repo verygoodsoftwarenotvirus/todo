@@ -79,7 +79,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",

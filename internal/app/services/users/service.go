@@ -73,7 +73,7 @@ func ProvideUsersService(
 	}
 
 	svc := &service{
-		logger:               logger.WithName(serviceName),
+		logger:               logging.EnsureLogger(logger).WithName(serviceName),
 		userDataManager:      userDataManager,
 		accountDataManager:   accountDataManager,
 		authenticator:        authenticator,

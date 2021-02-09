@@ -58,7 +58,7 @@ func (m *AccountDataManager) CreateAccount(ctx context.Context, input *types.Acc
 }
 
 // UpdateAccount is a mock function.
-func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account) error {
+func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account, changes []types.FieldChangeSummary) error {
 	return m.Called(ctx, updated).Error(0)
 }
 
@@ -67,23 +67,8 @@ func (m *AccountDataManager) ArchiveAccount(ctx context.Context, accountID, user
 	return m.Called(ctx, accountID, userID).Error(0)
 }
 
-// LogAccountCreationEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountCreationEvent(ctx context.Context, account *types.Account) {
-	m.Called(ctx, account)
-}
-
-// LogAccountUpdateEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountUpdateEvent(ctx context.Context, userID, accountID uint64, changes []types.FieldChangeSummary) {
-	m.Called(ctx, userID, accountID, changes)
-}
-
-// LogAccountArchiveEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountArchiveEvent(ctx context.Context, userID, accountID uint64) {
-	m.Called(ctx, userID, accountID)
-}
-
 // GetAuditLogEntriesForAccount is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
+func (m *AccountDataManager) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, accountID)
 	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

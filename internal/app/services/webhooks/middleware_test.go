@@ -89,7 +89,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
@@ -151,7 +151,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",

@@ -64,7 +64,7 @@ func (m *UserDataManager) CreateUser(ctx context.Context, input types.UserDataSt
 }
 
 // UpdateUser is a mock function.
-func (m *UserDataManager) UpdateUser(ctx context.Context, updated *types.User) error {
+func (m *UserDataManager) UpdateUser(ctx context.Context, updated *types.User, changes []types.FieldChangeSummary) error {
 	return m.Called(ctx, updated).Error(0)
 }
 
@@ -82,29 +82,4 @@ func (m *UserDataManager) ArchiveUser(ctx context.Context, userID uint64) error 
 func (m *UserDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
-}
-
-// LogUserCreationEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogUserCreationEvent(ctx context.Context, user *types.User) {
-	m.Called(ctx, user)
-}
-
-// LogUserVerifyTwoFactorSecretEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogUserVerifyTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	m.Called(ctx, userID)
-}
-
-// LogUserUpdateTwoFactorSecretEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogUserUpdateTwoFactorSecretEvent(ctx context.Context, userID uint64) {
-	m.Called(ctx, userID)
-}
-
-// LogUserUpdatePasswordEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogUserUpdatePasswordEvent(ctx context.Context, userID uint64) {
-	m.Called(ctx, userID)
-}
-
-// LogUserArchiveEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogUserArchiveEvent(ctx context.Context, userID uint64) {
-	m.Called(ctx, userID)
 }

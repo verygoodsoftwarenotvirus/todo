@@ -43,18 +43,13 @@ func (q *MariaDB) BuildGetAccountQuery(accountID, userID uint64) (query string, 
 // BuildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
 // This query only gets generated once, and is otherwise returned from cache.
 func (q *MariaDB) BuildGetAllAccountsCountQuery() string {
-	var err error
-
-	allAccountsCountQuery, _, err := q.sqlBuilder.
+	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn): nil,
-		}).
-		ToSql()
-	q.logQueryBuildingError(err)
-
-	return allAccountsCountQuery
+		}),
+	)
 }
 
 // BuildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.

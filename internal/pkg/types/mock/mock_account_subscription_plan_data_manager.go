@@ -40,32 +40,17 @@ func (m *AccountSubscriptionPlanDataManager) CreateAccountSubscriptionPlan(ctx c
 }
 
 // UpdateAccountSubscriptionPlan is a mock function.
-func (m *AccountSubscriptionPlanDataManager) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan) error {
+func (m *AccountSubscriptionPlanDataManager) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan, changedBy uint64, changes []types.FieldChangeSummary) error {
 	return m.Called(ctx, updated).Error(0)
 }
 
 // ArchiveAccountSubscriptionPlan is a mock function.
-func (m *AccountSubscriptionPlanDataManager) ArchiveAccountSubscriptionPlan(ctx context.Context, itemID uint64) error {
-	return m.Called(ctx, itemID).Error(0)
-}
-
-// LogAccountSubscriptionPlanCreationEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountSubscriptionPlanCreationEvent(ctx context.Context, plan *types.AccountSubscriptionPlan) {
-	m.Called(ctx, plan)
-}
-
-// AccountSubscriptionLogPlanUpdateEvent implements our interface.
-func (m *AuditLogEntryDataManager) AccountSubscriptionLogPlanUpdateEvent(ctx context.Context, userID, planID uint64, changes []types.FieldChangeSummary) {
-	m.Called(ctx, userID, planID, changes)
-}
-
-// AccountSubscriptionLogPlanArchiveEvent implements our interface.
-func (m *AuditLogEntryDataManager) AccountSubscriptionLogPlanArchiveEvent(ctx context.Context, userID, planID uint64) {
-	m.Called(ctx, userID, planID)
+func (m *AccountSubscriptionPlanDataManager) ArchiveAccountSubscriptionPlan(ctx context.Context, planID, archivedBy uint64) error {
+	return m.Called(ctx, planID, archivedBy).Error(0)
 }
 
 // GetAuditLogEntriesForAccountSubscriptionPlan is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
+func (m *AccountSubscriptionPlanDataManager) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, planID)
 	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

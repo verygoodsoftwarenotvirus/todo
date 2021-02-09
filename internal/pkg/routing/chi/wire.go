@@ -6,5 +6,6 @@ var (
 	// Providers is what we provide to the dependency injector.
 	Providers = wire.NewSet(
 		NewRouter,
+		NewRouteParamManager,
 	)
 )

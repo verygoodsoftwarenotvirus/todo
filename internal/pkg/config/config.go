@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
@@ -23,8 +21,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querier"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/postgres"
-	zqlite "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
 )
@@ -68,6 +68,7 @@ type (
 		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
 		Server        httpserver.Config      `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		Webhooks      webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
 		AuditLog      audit.Config           `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
@@ -136,11 +137,11 @@ func (cfg *ServerConfig) ProvideDatabaseClient(
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
 	case "sqlite":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, zqlite.ProvideSqlite(rawDB, logger))
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, sqlite.ProvideSqlite(logger))
 	case "mariadb":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, mariadb.ProvideMariaDB(rawDB, logger))
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, mariadb.ProvideMariaDB(logger))
 	case "postgres":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, postgres.ProvidePostgres(rawDB, logger))
+		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, postgres.ProvidePostgres(logger))
 	default:
 		return nil, fmt.Errorf("invalid provider: %q", cfg.Database.Provider)
 	}

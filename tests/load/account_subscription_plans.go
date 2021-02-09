@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 )
 
-// fetchRandomAccountSubscriptionPlan retrieves a random plan from the list of available accountsubscriptionplans.
+// fetchRandomAccountSubscriptionPlan retrieves a random plan from the list of available account subscription plans.
 func fetchRandomAccountSubscriptionPlan(ctx context.Context, c *httpclient.Client) *types.AccountSubscriptionPlan {
 	plansRes, err := c.GetAccountSubscriptionPlans(ctx, nil)
 	if err != nil || plansRes == nil || len(plansRes.AccountSubscriptionPlans) == 0 {

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -16,8 +15,7 @@ import (
 )
 
 var (
-	_ types.WebhookDataManager  = (*Client)(nil)
-	_ types.WebhookAuditManager = (*Client)(nil)
+	_ types.WebhookDataManager = (*Client)(nil)
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
@@ -129,11 +127,8 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 	defer span.End()
 
 	c.logger.Debug("GetAllWebhooksCount called")
-	query := c.sqlQueryBuilder.BuildGetAllWebhooksCountQuery()
 
-	err = c.db.QueryRowContext(ctx, query).Scan(&count)
-
-	return count, err
+	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllWebhooksCountQuery())
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
@@ -244,16 +239,16 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 // UpdateWebhook updates a particular webhook.
 // NOTE: this function expects the provided input to have a non-zero ID.
-func (c *Client) UpdateWebhook(ctx context.Context, input *types.Webhook) error {
+func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachWebhookIDToSpan(span, input.ID)
-	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
+	tracing.AttachWebhookIDToSpan(span, updated.ID)
+	tracing.AttachUserIDToSpan(span, updated.BelongsToUser)
 
-	c.logger.WithValue(keys.WebhookIDKey, input.ID).Debug("UpdateWebhook called")
+	c.logger.WithValue(keys.WebhookIDKey, updated.ID).Debug("UpdateWebhook called")
 
-	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(input)
+	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(updated)
 
 	return c.performCreateQueryIgnoringReturn(ctx, c.db, "webhook update", query, args)
 }
@@ -274,36 +269,6 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
 
 	return c.performCreateQueryIgnoringReturn(ctx, c.db, "webhook archive", query, args)
-}
-
-// LogWebhookCreationEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogWebhookCreationEvent(ctx context.Context, webhook *types.Webhook) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, webhook.BelongsToUser).Debug("LogWebhookCreationEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildWebhookCreationEventEntry(webhook))
-}
-
-// LogWebhookUpdateEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogWebhookUpdateEvent(ctx context.Context, userID, webhookID uint64, changes []types.FieldChangeSummary) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookUpdateEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildWebhookUpdateEventEntry(userID, webhookID, changes))
-}
-
-// LogWebhookArchiveEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogWebhookArchiveEvent(ctx context.Context, userID, webhookID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogWebhookArchiveEvent called")
-
-	c.createAuditLogEntry(ctx, c.db, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
 }
 
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.

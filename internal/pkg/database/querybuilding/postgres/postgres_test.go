@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	"errors"
 	"regexp"
 	"testing"
@@ -20,12 +19,10 @@ const (
 func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	t.Helper()
 
-	db, mock, err := sqlmock.New()
+	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	q := ProvidePostgres(db, logging.NewNonOperationalLogger())
-
-	return q, mock
+	return ProvidePostgres(logging.NewNonOperationalLogger()), mock
 }
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
@@ -46,18 +43,6 @@ func TestProvidePostgres(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 		buildTestService(t)
-	})
-}
-
-func TestPostgres_IsReady(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		q, _ := buildTestService(t)
-		assert.True(t, q.IsReady(ctx, 1))
 	})
 }
 

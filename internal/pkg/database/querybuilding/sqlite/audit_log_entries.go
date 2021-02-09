@@ -63,7 +63,7 @@ func (q *Sqlite) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query 
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
 
 	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, builder, querybuilding.AuditLogEntriesTableName)
+		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.AuditLogEntriesTableName, builder)
 	}
 
 	query, selectArgs, err := builder.ToSql()

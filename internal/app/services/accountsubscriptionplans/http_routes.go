@@ -98,7 +98,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("plan created")
 
 	s.planCounter.Increment(ctx)
-	s.auditLog.LogAccountSubscriptionPlanCreationEvent(ctx, x)
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
 }
 
@@ -184,13 +183,11 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update plan in database.
-	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x); err != nil {
+	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x, si.UserID, changeReport); err != nil {
 		logger.Error(err, "error encountered updating plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	s.auditLog.AccountSubscriptionLogPlanUpdateEvent(ctx, si.UserID, x.ID, changeReport)
 
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponse(ctx, res, x)
@@ -219,7 +216,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
-	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID)
+	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -231,7 +228,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// notify relevant parties.
 	s.planCounter.Decrement(ctx)
-	s.auditLog.AccountSubscriptionLogPlanArchiveEvent(ctx, si.UserID, planID)
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
@@ -260,7 +256,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachPlanIDToSpan(span, planID)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
-	x, err := s.auditLog.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)
+	x, err := s.planDataManager.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

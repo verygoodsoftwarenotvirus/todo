@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/routeparams"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -24,7 +24,7 @@ func buildTestService() *service {
 		webhookDataManager: &mocktypes.WebhookDataManager{},
 		sessionInfoFetcher: func(req *http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
 		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
-		encoderDecoder:     &mockencoding.EncoderDecoder{},
+		encoderDecoder:     mockencoding.NewMockEncoderDecoder(),
 		tracer:             tracing.NewTracer("test"),
 	}
 }
@@ -42,10 +42,9 @@ func TestProvideWebhooksService(T *testing.T) {
 		actual, err := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.WebhookDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, actual)
@@ -61,10 +60,9 @@ func TestProvideWebhooksService(T *testing.T) {
 		actual, err := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.WebhookDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
-			&mockencoding.EncoderDecoder{},
+			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			routeparams.NewRouteParamManager(),
+			mockrouting.NewRouteParamManager(),
 		)
 
 		assert.Nil(t, actual)

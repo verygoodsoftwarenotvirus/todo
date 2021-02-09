@@ -39,7 +39,7 @@ var (
 		},
 		{
 			Version:     0.03,
-			Description: "create account subscription accountsubscriptionplans table and default plan",
+			Description: "create account subscription plans table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_subscription_plans (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
@@ -92,7 +92,8 @@ var (
 				is_personal_account BOOLEAN NOT NULL DEFAULT 'false',
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				UNIQUE("belongs_to_user", "name")
 			);`,
 		},
 		{

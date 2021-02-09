@@ -41,7 +41,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleAccountList, nil)
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
 		s.encoderDecoder = ed
 
@@ -73,7 +73,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
 		s.encoderDecoder = ed
 
@@ -105,7 +105,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -154,11 +154,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher()))
 		s.accountCounter = mc
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogAccountCreationEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount)
-		s.auditLog = auditLog
-
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
@@ -188,7 +184,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -224,7 +220,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountCreationInput{})).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -273,7 +269,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
 		s.encoderDecoder = ed
 
@@ -311,7 +307,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -349,7 +345,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -399,11 +395,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.Account{})).Return(nil)
 		s.accountDataManager = accountDataManager
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogAccountUpdateEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleAccount.ID, mock.AnythingOfType("[]types.FieldChangeSummary"))
-		s.auditLog = auditLog
-
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
 		s.encoderDecoder = ed
 
@@ -423,7 +415,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, accountDataManager, s.accountDataManager, s.auditLog, ed)
+		mock.AssertExpectationsForObjects(t, accountDataManager, s.accountDataManager, ed)
 	})
 
 	T.Run("without update input", func(t *testing.T) {
@@ -433,7 +425,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		s := buildTestService()
 		s.sessionInfoFetcher = sessionInfoFetcher
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -473,7 +465,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -515,7 +507,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -558,7 +550,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.Account{})).Return(errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -607,10 +599,6 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(nil)
 		s.accountDataManager = accountDataManager
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogAccountArchiveEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleAccount.ID)
-		s.auditLog = auditLog
-
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()
 		s.accountCounter = mc
@@ -649,7 +637,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -687,7 +675,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
-		ed := &mockencoding.EncoderDecoder{}
+		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
@@ -724,10 +712,6 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(nil)
 		s.accountDataManager = accountDataManager
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogAccountArchiveEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, exampleAccount.ID)
-		s.auditLog = auditLog
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()

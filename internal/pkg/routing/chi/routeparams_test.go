@@ -1,4 +1,4 @@
-package routeparams
+package chi
 
 import (
 	"context"

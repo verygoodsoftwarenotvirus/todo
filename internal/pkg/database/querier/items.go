@@ -300,7 +300,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	}
 
 	// create the item.
-	id, err := c.performCreateQuery(ctx, tx, false, "item creation", query, args)
+	id, err := c.performWriteQuery(ctx, tx, false, "item creation", query, args)
 	if err != nil {
 		c.rollbackTransaction(tx)
 		return nil, err
@@ -339,7 +339,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "item update", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating item: %w", err)
 	}
@@ -373,7 +373,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "item archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating item: %w", err)
 	}

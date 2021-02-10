@@ -209,13 +209,13 @@ func (c *Client) performBooleanQuery(ctx context.Context, querier database.Queri
 	return exists, nil
 }
 
-func (c *Client) performCreateQueryIgnoringReturn(ctx context.Context, querier database.Querier, queryDescription, query string, args []interface{}) error {
-	_, err := c.performCreateQuery(ctx, querier, true, queryDescription, query, args)
+func (c *Client) performWriteQueryIgnoringReturn(ctx context.Context, querier database.Querier, queryDescription, query string, args []interface{}) error {
+	_, err := c.performWriteQuery(ctx, querier, true, queryDescription, query, args)
 
 	return err
 }
 
-func (c *Client) performCreateQuery(ctx context.Context, querier database.Querier, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
+func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

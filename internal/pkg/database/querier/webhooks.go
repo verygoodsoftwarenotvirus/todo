@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -216,8 +217,14 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
 
-	id, err := c.performCreateQuery(ctx, c.db, false, "webhook creation", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	id, err := c.performWriteQuery(ctx, tx, false, "webhook creation", query, args)
+	if err != nil {
+		c.rollbackTransaction(tx)
 		return nil, err
 	}
 
@@ -232,6 +239,12 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 		Topics:        input.Topics,
 		BelongsToUser: input.BelongsToUser,
 		CreatedOn:     c.currentTime(),
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return x, nil
@@ -250,7 +263,21 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "webhook update", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating webhook: %w", err)
+	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // ArchiveWebhook archives a webhook from the database.
@@ -268,7 +295,21 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "webhook archive", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook archive", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error archiving webhook: %w", err)
+	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.

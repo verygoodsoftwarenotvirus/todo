@@ -54,6 +54,8 @@ func TestProvideWebhooksService(T *testing.T) {
 
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
@@ -63,7 +65,6 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, WebhookIDURIParamKey, "webhook").Return(func(*http.Request) uint64 { return 0 })
 
 		actual, err := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),
@@ -75,5 +76,7 @@ func TestProvideWebhooksService(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 }

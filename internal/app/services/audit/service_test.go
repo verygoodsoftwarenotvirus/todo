@@ -44,5 +44,7 @@ func TestProvideAuditService(T *testing.T) {
 		)
 
 		assert.NotNil(t, s)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 }

@@ -73,7 +73,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
 
-		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager)
+		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager, rpm)
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, s)
 
-		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager)
+		mock.AssertExpectationsForObjects(t, mockOAuth2ClientDataManager, rpm)
 	})
 }
 

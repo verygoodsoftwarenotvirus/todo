@@ -240,7 +240,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 		return nil, fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	id, err := c.performCreateQuery(ctx, tx, false, "oauth2 client creation", query, args)
+	id, err := c.performWriteQuery(ctx, tx, false, "oauth2 client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +285,7 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "oauth2 client archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "oauth2 client archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating oauth2 client: %w", err)
 	}

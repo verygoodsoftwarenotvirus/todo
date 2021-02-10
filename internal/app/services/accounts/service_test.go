@@ -53,6 +53,8 @@ func TestProvideAccountsService(T *testing.T) {
 
 		assert.NotNil(t, s)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 
 	T.Run("with error providing unit counter", func(t *testing.T) {
@@ -62,7 +64,6 @@ func TestProvideAccountsService(T *testing.T) {
 		}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
 
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
@@ -74,5 +75,7 @@ func TestProvideAccountsService(T *testing.T) {
 
 		assert.Nil(t, s)
 		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 }

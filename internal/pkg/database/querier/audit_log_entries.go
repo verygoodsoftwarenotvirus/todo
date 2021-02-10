@@ -179,7 +179,7 @@ func (c *Client) createAuditLogEntryInTransaction(ctx context.Context, transacti
 	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	// create the audit log entry.
-	if err := c.performCreateQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
+	if err := c.performWriteQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
 		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 		c.rollbackTransaction(transaction)
 	}
@@ -196,7 +196,7 @@ func (c *Client) createAuditLogEntry(ctx context.Context, querier database.Queri
 	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	// create the audit log entry.
-	if err := c.performCreateQueryIgnoringReturn(ctx, querier, "audit log entry creation", query, args); err != nil {
+	if err := c.performWriteQueryIgnoringReturn(ctx, querier, "audit log entry creation", query, args); err != nil {
 		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
 	}
 }

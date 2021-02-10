@@ -39,6 +39,8 @@ func buildTestService(t *testing.T) *service {
 	)
 	require.NoError(t, err)
 
+	mock.AssertExpectationsForObjects(t, rpm)
+
 	return s.(*service)
 }
 
@@ -63,7 +65,10 @@ func TestProvideAdminService(T *testing.T) {
 			ed,
 			rpm,
 		)
+
 		assert.NotNil(t, s)
 		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 }

@@ -57,7 +57,7 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
 
-		mock.AssertExpectationsForObjects(t, mockDelegatedClientDataManager)
+		mock.AssertExpectationsForObjects(t, mockDelegatedClientDataManager, rpm)
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
@@ -82,6 +82,6 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, s)
 
-		mock.AssertExpectationsForObjects(t, mockDelegatedClientDataManager)
+		mock.AssertExpectationsForObjects(t, mockDelegatedClientDataManager, rpm)
 	})
 }

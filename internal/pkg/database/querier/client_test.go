@@ -509,7 +509,7 @@ func TestClient_performCreateQueryIgnoringReturn(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
 
-		err := c.performCreateQueryIgnoringReturn(ctx, c.db, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQueryIgnoringReturn(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.NoError(t, err)
 	})
@@ -530,7 +530,7 @@ func TestClient_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
 
-		_, err := c.performCreateQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
 
 		assert.NoError(t, err)
 	})
@@ -547,7 +547,7 @@ func TestClient_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		_, err := c.performCreateQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 	})
@@ -564,7 +564,7 @@ func TestClient_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(1), 0))
 
-		_, err := c.performCreateQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -583,7 +583,7 @@ func TestClient_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uint64(123)))
 
-		_, err := c.performCreateQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
 
 		assert.NoError(t, err)
 	})
@@ -601,7 +601,7 @@ func TestClient_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		id, err := c.performCreateQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		id, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
 
 		assert.Zero(t, id)
 		assert.Error(t, err)

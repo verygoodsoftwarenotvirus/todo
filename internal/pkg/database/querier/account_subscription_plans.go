@@ -152,7 +152,7 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	}
 
 	// create the account subscription plan.
-	id, err := c.performCreateQuery(ctx, tx, false, "account subscription plan creation", query, args)
+	id, err := c.performWriteQuery(ctx, tx, false, "account subscription plan creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan update", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, c.db, "account subscription plan update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating account subscription plan: %w", err)
 	}
@@ -223,7 +223,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, c.db, "account subscription plan archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating account subscription plan: %w", err)
 	}

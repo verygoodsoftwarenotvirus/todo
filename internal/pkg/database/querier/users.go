@@ -236,7 +236,7 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if user.ID, err = c.performCreateQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs); err != nil {
+	if user.ID, err = c.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs); err != nil {
 		c.rollbackTransaction(tx)
 		return err
 	}
@@ -249,7 +249,7 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 	accountCreationInput := types.NewAccountCreationInputForUser(user)
 	accountCreationQuery, accountCreationArgs := c.sqlQueryBuilder.BuildCreateAccountQuery(accountCreationInput)
 
-	if account.ID, err = c.performCreateQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs); err != nil {
+	if account.ID, err = c.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs); err != nil {
 		c.rollbackTransaction(tx)
 		return err
 	}
@@ -313,7 +313,7 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User, changes []
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "user update", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error doing something: %w", err)
 	}
@@ -342,7 +342,7 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "user authentication update", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user authentication update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error doing something: %w", err)
 	}
@@ -371,7 +371,7 @@ func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, n
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "user two factor secret update", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error doing something: %w", err)
 	}
@@ -400,7 +400,7 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error doing something: %w", err)
 	}
@@ -429,7 +429,7 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "user archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error doing something: %w", err)
 	}

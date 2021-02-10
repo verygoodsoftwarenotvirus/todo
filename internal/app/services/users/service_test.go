@@ -51,7 +51,7 @@ func buildTestService(t *testing.T) *service {
 	)
 	require.NoError(t, err)
 
-	mock.AssertExpectationsForObjects(t, mockDB, uc)
+	mock.AssertExpectationsForObjects(t, mockDB, uc, rpm)
 
 	return s.(*service)
 }
@@ -82,6 +82,8 @@ func TestProvideUsersService(T *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 
 	T.Run("with error initializing counter", func(t *testing.T) {
@@ -92,7 +94,6 @@ func TestProvideUsersService(T *testing.T) {
 		}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s, err := ProvideUsersService(
 			&authservice.Config{},
@@ -109,5 +110,7 @@ func TestProvideUsersService(T *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, s)
+
+		mock.AssertExpectationsForObjects(t, rpm)
 	})
 }

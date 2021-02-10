@@ -213,7 +213,7 @@ func (c *Client) CreateAccountUserMembership(ctx context.Context, input *types.A
 	query, args := c.sqlQueryBuilder.BuildCreateAccountUserMembershipQuery(input)
 
 	// create the accountUserMembership.
-	id, err := c.performCreateQuery(ctx, c.db, false, "accountUserMembership creation", query, args)
+	id, err := c.performWriteQuery(ctx, c.db, false, "accountUserMembership creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func (c *Client) ArchiveAccountUserMembership(ctx context.Context, accountUserMe
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountUserMembershipQuery(accountUserMembershipID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "accountUserMembership archive", query, args)
+	return c.performWriteQueryIgnoringReturn(ctx, c.db, "accountUserMembership archive", query, args)
 }
 
 // GetAuditLogEntriesForAccountUserMembership fetches a list of audit log entries from the database that relate to a given accountUserMembership.

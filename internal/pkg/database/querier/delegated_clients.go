@@ -209,7 +209,7 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 		return nil, fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	id, err := c.performCreateQuery(ctx, tx, false, "delegated client creation", query, args)
+	id, err := c.performWriteQuery(ctx, tx, false, "delegated client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func (c *Client) UpdateDelegatedClient(ctx context.Context, updated *types.Deleg
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "delegated client update", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "delegated client update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating delegated client: %w", err)
 	}
@@ -279,7 +279,7 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "delegated client archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, c.db, "delegated client archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating delegated client: %w", err)
 	}

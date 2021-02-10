@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -48,17 +47,22 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 func runTestForClientAndCookie(ctx context.Context, t *testing.T, testName string, testFunc func(*httpclient.Client) func(*testing.T)) {
 	t.Helper()
 
-	user, testClient := createUserAndClientForTest(ctx, t)
-	cookie, err := testClient.Login(ctx, &types.UserLoginInput{
-		Username:  user.Username,
-		Password:  user.HashedPassword,
-		TOTPToken: generateTOTPTokenForUser(t, user),
-	})
-	require.NoError(t, err)
+	_, testClient := createUserAndClientForTest(ctx, t)
+	/*
+		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+			Username:  user.Username,
+			Password:  user.HashedPassword,
+			TOTPToken: generateTOTPTokenForUser(t, user),
+		})
+		require.NoError(t, err)
+	*/
 
-	t.Run(fmt.Sprintf("%s without cookie", testName), testFunc(testClient))
-	testClient.SetOption(httpclient.WithCookieCredentials(cookie))
-	t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(testClient))
+	t.Run(testName, testFunc(testClient))
+
+	/*
+		testClient.SetOption(httpclient.WithCookieCredentials(cookie))
+		t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(testClient))
+	*/
 }
 
 func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {

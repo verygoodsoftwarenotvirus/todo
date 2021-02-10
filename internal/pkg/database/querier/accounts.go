@@ -224,7 +224,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	}
 
 	// create the account.
-	id, err := c.performCreateQuery(ctx, tx, false, "account creation", query, args)
+	id, err := c.performWriteQuery(ctx, tx, false, "account creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +259,7 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, chan
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "account update", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating account: %w", err)
 	}
@@ -293,7 +293,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "account archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating account: %w", err)
 	}
@@ -305,7 +305,6 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 	}
 
 	return nil
-
 }
 
 // GetAuditLogEntriesForAccount fetches a list of audit log entries from the database that relate to a given account.

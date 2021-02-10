@@ -21,7 +21,7 @@ func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, inp
 
 	query, args := c.sqlQueryBuilder.BuildSetUserStatusQuery(userID, input)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "user status update query", query, args)
+	return c.performWriteQueryIgnoringReturn(ctx, c.db, "user status update query", query, args)
 }
 
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.

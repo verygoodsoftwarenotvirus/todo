@@ -1084,7 +1084,7 @@ func TestClient_ArchiveItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(exampleRows)
 
-		err := c.ArchiveItem(ctx, exampleItem.ID, exampleItem.BelongsToUser)
+		err := c.ArchiveItem(ctx, exampleItem.ID, exampleItem.BelongsToUser, 0)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)

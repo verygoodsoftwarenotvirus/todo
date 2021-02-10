@@ -339,7 +339,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "item update", query, args); execErr != nil {
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "item update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating item: %w", err)
 	}
@@ -354,31 +354,31 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []
 }
 
 // ArchiveItem archives an item from the database by its ID.
-func (c *Client) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
+func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedBy uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, belongsToAccount)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.ItemIDKey: itemID,
-		keys.UserIDKey: userID,
+		keys.UserIDKey: belongsToAccount,
 	}).Debug("ArchiveItem called")
 
-	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, userID)
+	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, belongsToAccount)
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "item archive", query, args); execErr != nil {
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "item archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating item: %w", err)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(userID, itemID))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, itemID))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)

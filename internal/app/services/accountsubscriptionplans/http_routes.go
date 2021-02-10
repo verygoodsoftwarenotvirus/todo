@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// PlanIDURIParamKey is a standard string that we'll use to refer to plan IDs with.
-	PlanIDURIParamKey = "planID"
+	// AccountSubscriptionPlanIDURIParamKey is a standard string that we'll use to refer to plan IDs with.
+	AccountSubscriptionPlanIDURIParamKey = "accountSubscriptionPlanID"
 )
 
 // ListHandler is our list route.

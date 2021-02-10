@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -99,7 +100,7 @@ func (c *Client) GetDelegatedClient(ctx context.Context, clientID, userID uint64
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("querying for oauth2 client: %w", err)
+		return nil, fmt.Errorf("querying for delegated client: %w", err)
 	}
 
 	return client, nil
@@ -120,11 +121,11 @@ func (c *Client) GetAllDelegatedClients(ctx context.Context, results chan []*typ
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllItems called")
+	c.logger.Debug("GetAllDelegatedClients called")
 
 	count, countErr := c.GetTotalDelegatedClientCount(ctx)
 	if countErr != nil {
-		return fmt.Errorf("fetching count of oauth2 clients: %w", countErr)
+		return fmt.Errorf("fetching count of delegated clients: %w", countErr)
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
@@ -181,7 +182,7 @@ func (c *Client) GetDelegatedClients(ctx context.Context, userID uint64, filter 
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("querying for oauth2 clients: %w", err)
+		return nil, fmt.Errorf("querying for delegated clients: %w", err)
 	}
 
 	if x.Clients, x.FilteredCount, x.TotalCount, err = c.scanDelegatedClients(rows, true); err != nil {
@@ -203,7 +204,12 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 
 	query, args := c.sqlQueryBuilder.BuildCreateDelegatedClientQuery(input)
 
-	id, err := c.performCreateQuery(ctx, c.db, false, "oauth2 client creation", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	id, err := c.performCreateQuery(ctx, tx, false, "delegated client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +223,12 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 		CreatedOn:     c.currentTime(),
 	}
 
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildDelegatedClientCreationEventEntry(x))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
 	return x, nil
 }
 
@@ -228,7 +240,23 @@ func (c *Client) UpdateDelegatedClient(ctx context.Context, updated *types.Deleg
 
 	query, args := c.sqlQueryBuilder.BuildUpdateDelegatedClientQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client update", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "delegated client update", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating delegated client: %w", err)
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildDelegatedClientUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // ArchiveDelegatedClient archives an Delegated client.
@@ -246,7 +274,23 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 
 	query, args := c.sqlQueryBuilder.BuildArchiveDelegatedClientQuery(clientID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client archive", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "delegated client archive", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating delegated client: %w", err)
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildDelegatedClientArchiveEventEntry(userID, clientID))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // GetAuditLogEntriesForDelegatedClient fetches a list of audit log entries from the database that relate to a given client.

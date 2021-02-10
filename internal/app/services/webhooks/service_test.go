@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
@@ -39,12 +41,15 @@ func TestProvideWebhooksService(T *testing.T) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, WebhookIDURIParamKey, "webhook").Return(func(*http.Request) uint64 { return 0 })
+
 		actual, err := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.WebhookDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.NotNil(t, actual)
@@ -57,12 +62,15 @@ func TestProvideWebhooksService(T *testing.T) {
 			return nil, errors.New("blah")
 		}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, WebhookIDURIParamKey, "webhook").Return(func(*http.Request) uint64 { return 0 })
+
 		actual, err := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.WebhookDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.Nil(t, actual)

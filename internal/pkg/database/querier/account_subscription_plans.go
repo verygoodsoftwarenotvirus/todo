@@ -192,7 +192,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 
 	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating item: %w", err)
+		return fmt.Errorf("error updating account subscription plan: %w", err)
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(changedBy, updated.ID, changes))
@@ -225,7 +225,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 
 	if execErr := c.performCreateQueryIgnoringReturn(ctx, c.db, "account subscription plan archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating item: %w", err)
+		return fmt.Errorf("error updating account subscription plan: %w", err)
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(archivedBy, accountSubscriptionPlanID))

@@ -75,8 +75,8 @@ func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, c
 }
 
 // ArchiveItem is a mock function.
-func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, userID uint64) error {
-	return m.Called(ctx, itemID, userID).Error(0)
+func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedBy uint64) error {
+	return m.Called(ctx, itemID, belongsToAccount).Error(0)
 }
 
 // GetAuditLogEntriesForItem is a mock function.

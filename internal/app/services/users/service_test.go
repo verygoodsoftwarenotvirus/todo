@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
@@ -31,6 +32,9 @@ func buildTestService(t *testing.T) *service {
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On("GetAllUsersCount", mock.MatchedBy(testutil.ContextMatcher())).Return(expectedUserCount, nil)
 
+	rpm := mockrouting.NewRouteParamManager()
+	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+
 	s, err := ProvideUsersService(
 		&authservice.Config{},
 		logging.NewNonOperationalLogger(),
@@ -43,7 +47,7 @@ func buildTestService(t *testing.T) *service {
 		},
 		&images.MockImageUploadProcessor{},
 		&mockuploads.UploadManager{},
-		mockrouting.NewRouteParamManager(),
+		rpm,
 	)
 	require.NoError(t, err)
 
@@ -57,6 +61,10 @@ func TestProvideUsersService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideUsersService(
 			&authservice.Config{},
 			logging.NewNonOperationalLogger(),
@@ -69,17 +77,22 @@ func TestProvideUsersService(T *testing.T) {
 			},
 			&images.MockImageUploadProcessor{},
 			&mockuploads.UploadManager{},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
+
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
 	})
 
 	T.Run("with error initializing counter", func(t *testing.T) {
 		t.Parallel()
+
 		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 			return &mockmetrics.UnitCounter{}, errors.New("blah")
 		}
+
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s, err := ProvideUsersService(
 			&authservice.Config{},
@@ -91,8 +104,9 @@ func TestProvideUsersService(T *testing.T) {
 			ucp,
 			&images.MockImageUploadProcessor{},
 			&mockuploads.UploadManager{},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
+
 		assert.Error(t, err)
 		assert.Nil(t, s)
 	})

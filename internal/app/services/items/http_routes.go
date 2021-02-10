@@ -343,7 +343,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID)
+	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID, si.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

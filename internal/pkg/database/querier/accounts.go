@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -223,7 +224,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	}
 
 	// create the account.
-	id, err := c.performCreateQuery(ctx, c.db, false, "account creation", query, args)
+	id, err := c.performCreateQuery(ctx, tx, false, "account creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +254,23 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, chan
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountQuery(updated)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "account update", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "account update", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating account: %w", err)
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // ArchiveAccount archives an account from the database by its ID.
@@ -271,7 +288,24 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountQuery(accountID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "account archive", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "account archive", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating account: %w", err)
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountArchiveEventEntry(userID, accountID))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
+
 }
 
 // GetAuditLogEntriesForAccount fetches a list of audit log entries from the database that relate to a given account.

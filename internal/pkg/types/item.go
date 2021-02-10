@@ -73,7 +73,7 @@ type (
 		GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item, changes []FieldChangeSummary) error
-		ArchiveItem(ctx context.Context, itemID, accountID uint64) error
+		ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedBy uint64) error
 		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
 	}
 

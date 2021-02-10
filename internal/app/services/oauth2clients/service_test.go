@@ -56,6 +56,9 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		t.Parallel()
 		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, OAuth2ClientIDURIParamKey, "oauth2 client").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideOAuth2ClientsService(
 			logging.NewNonOperationalLogger(),
 			mockOAuth2ClientDataManager,
@@ -65,7 +68,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, nil
 			},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -77,6 +80,9 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 		t.Parallel()
 		mockOAuth2ClientDataManager := &mocktypes.OAuth2ClientDataManager{}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, OAuth2ClientIDURIParamKey, "oauth2 client").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideOAuth2ClientsService(
 			logging.NewNonOperationalLogger(),
 			mockOAuth2ClientDataManager,
@@ -86,7 +92,7 @@ func TestProvideOAuth2ClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, errors.New("blah")
 			},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.Error(t, err)

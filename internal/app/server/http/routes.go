@@ -102,7 +102,7 @@ func (s *Server) setupRouter(router routing.Router, metricsHandler metrics.Handl
 
 		// AccountSubscriptionPlans
 		adminRouter.Route("/accountsubscriptionplans", func(plansRouter routing.Router) {
-			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.PlanIDURIParamKey)
+			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.AccountSubscriptionPlanIDURIParamKey)
 
 			plansRouter.WithMiddleware(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)
 			plansRouter.Get(root, s.plansService.ListHandler)

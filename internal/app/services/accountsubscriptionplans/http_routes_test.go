@@ -586,7 +586,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return(nil)
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID, exampleUser.ID).Return(nil)
 		s.planDataManager = planDataManager
 
 		mc := &mockmetrics.UnitCounter{}
@@ -623,7 +623,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return(sql.ErrNoRows)
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID, exampleUser.ID).Return(sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -660,7 +660,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return(errors.New("blah"))
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID, exampleUser.ID).Return(errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -682,42 +682,5 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
 		mock.AssertExpectationsForObjects(t, planDataManager, ed)
-	})
-
-	T.Run("with error removing from search index", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
-
-		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
-		s.planIDFetcher = func(req *http.Request) uint64 {
-			return examplePlan.ID
-		}
-
-		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return(nil)
-		s.planDataManager = planDataManager
-
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()
-		s.planCounter = mc
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ArchiveHandler(res, req)
-
-		assert.Equal(t, http.StatusNoContent, res.Code)
-
-		mock.AssertExpectationsForObjects(t, planDataManager, mc)
 	})
 }

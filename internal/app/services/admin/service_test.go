@@ -1,7 +1,10 @@
 package admin
 
 import (
+	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
@@ -21,6 +24,9 @@ func buildTestService(t *testing.T) *service {
 	logger := logging.NewNonOperationalLogger()
 	ed := encoding.ProvideEncoderDecoder(logger)
 
+	rpm := mockrouting.NewRouteParamManager()
+	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+
 	s, err := ProvideService(
 		logger,
 		&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
@@ -29,7 +35,7 @@ func buildTestService(t *testing.T) *service {
 		&mocktypes.AuditLogEntryDataManager{},
 		scs.New(),
 		ed,
-		mockrouting.NewRouteParamManager(),
+		rpm,
 	)
 	require.NoError(t, err)
 
@@ -44,6 +50,9 @@ func TestProvideAdminService(T *testing.T) {
 		logger := logging.NewNonOperationalLogger()
 		ed := encoding.ProvideEncoderDecoder(logger)
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideService(
 			logger,
 			&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
@@ -52,7 +61,7 @@ func TestProvideAdminService(T *testing.T) {
 			&mocktypes.AuditLogEntryDataManager{},
 			scs.New(),
 			ed,
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 		assert.NotNil(t, s)
 		assert.NoError(t, err)

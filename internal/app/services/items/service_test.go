@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
@@ -41,6 +43,9 @@ func TestProvideItemsService(T *testing.T) {
 			return &mockmetrics.UnitCounter{}, nil
 		}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, ItemIDURIParamKey, "item").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.ItemDataManager{},
@@ -50,7 +55,7 @@ func TestProvideItemsService(T *testing.T) {
 			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.NotNil(t, s)
@@ -63,6 +68,9 @@ func TestProvideItemsService(T *testing.T) {
 			return nil, errors.New("blah")
 		}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, ItemIDURIParamKey, "item").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.ItemDataManager{},
@@ -72,7 +80,7 @@ func TestProvideItemsService(T *testing.T) {
 			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.Nil(t, s)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -151,7 +152,7 @@ func (c *Client) GetAllOAuth2Clients(ctx context.Context, results chan []*types.
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllItems called")
+	c.logger.Debug("GetAllOAuth2Clients called")
 
 	count, countErr := c.GetTotalOAuth2ClientCount(ctx)
 	if countErr != nil {
@@ -234,7 +235,12 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 
 	query, args := c.sqlQueryBuilder.BuildCreateOAuth2ClientQuery(input)
 
-	id, err := c.performCreateQuery(ctx, c.db, false, "oauth2 client creation", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	id, err := c.performCreateQuery(ctx, tx, false, "oauth2 client creation", query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +254,12 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 		Scopes:        input.Scopes,
 		BelongsToUser: input.BelongsToUser,
 		CreatedOn:     c.currentTime(),
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildOAuth2ClientCreationEventEntry(x))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return x, nil
@@ -268,7 +280,23 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 
 	query, args := c.sqlQueryBuilder.BuildArchiveOAuth2ClientQuery(clientID, userID)
 
-	return c.performCreateQueryIgnoringReturn(ctx, c.db, "oauth2 client archive", query, args)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error beginning transaction: %w", err)
+	}
+
+	if execErr := c.performCreateQueryIgnoringReturn(ctx, tx, "oauth2 client archive", query, args); execErr != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("error updating oauth2 client: %w", err)
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return nil
 }
 
 // GetAuditLogEntriesForOAuth2Client fetches a list of audit log entries from the database that relate to a given client.

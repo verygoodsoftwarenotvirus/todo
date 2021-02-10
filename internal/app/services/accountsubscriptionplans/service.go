@@ -49,7 +49,7 @@ func ProvideService(
 
 	svc := &service{
 		logger:             logging.EnsureLogger(logger).WithName(serviceName),
-		planIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, PlanIDURIParamKey, "plan"),
+		planIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, AccountSubscriptionPlanIDURIParamKey, "account subscription plan"),
 		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
 		planDataManager:    planDataManager,
 		encoderDecoder:     encoder,

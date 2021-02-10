@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromAccountUserMemberships(includeCounts bool, filteredCount uint64, items ...*types.AccountUserMembership) *sqlmock.Rows {
+func buildMockRowsFromAccountUserMemberships(includeCounts bool, filteredCount uint64, memberships ...*types.AccountUserMembership) *sqlmock.Rows {
 	columns := querybuilding.AccountsUserMembershipTableColumns
 
 	if includeCounts {
@@ -28,7 +28,7 @@ func buildMockRowsFromAccountUserMemberships(includeCounts bool, filteredCount u
 
 	exampleRows := sqlmock.NewRows(columns)
 
-	for _, x := range items {
+	for _, x := range memberships {
 		rowValues := []driver.Value{
 			x.ID,
 			x.ExternalID,
@@ -40,7 +40,7 @@ func buildMockRowsFromAccountUserMemberships(includeCounts bool, filteredCount u
 		}
 
 		if includeCounts {
-			rowValues = append(rowValues, filteredCount, len(items))
+			rowValues = append(rowValues, filteredCount, len(memberships))
 		}
 
 		exampleRows.AddRow(rowValues...)

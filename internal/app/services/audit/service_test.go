@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -30,11 +32,15 @@ func TestProvideAuditService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
+
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, LogEntryURIParamKey, "audit log entry").Return(func(*http.Request) uint64 { return 0 })
+
 		s := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AuditLogEntryDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.NotNil(t, s)

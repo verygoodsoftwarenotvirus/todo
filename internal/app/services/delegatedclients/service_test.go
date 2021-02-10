@@ -40,6 +40,9 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		t.Parallel()
 		mockDelegatedClientDataManager := &mocktypes.DelegatedClientDataManager{}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, DelegatedClientIDURIParamKey, "delegated client").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideDelegatedClientsService(
 			logging.NewNonOperationalLogger(),
 			mockDelegatedClientDataManager,
@@ -49,7 +52,7 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, nil
 			},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
@@ -61,6 +64,9 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		t.Parallel()
 		mockDelegatedClientDataManager := &mocktypes.DelegatedClientDataManager{}
 
+		rpm := mockrouting.NewRouteParamManager()
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, DelegatedClientIDURIParamKey, "delegated client").Return(func(*http.Request) uint64 { return 0 })
+
 		s, err := ProvideDelegatedClientsService(
 			logging.NewNonOperationalLogger(),
 			mockDelegatedClientDataManager,
@@ -70,7 +76,7 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
 				return nil, errors.New("blah")
 			},
-			mockrouting.NewRouteParamManager(),
+			rpm,
 		)
 
 		assert.Error(t, err)

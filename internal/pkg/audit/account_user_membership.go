@@ -3,47 +3,64 @@ package audit
 import "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 const (
-	// AccountUserMembershipAssignmentKey is the key we use to indicate that an audit log entry is associated with an item.
-	AccountUserMembershipAssignmentKey = "item_id"
-
-	// AccountUserMembershipCreationEvent events indicate a user created an item.
-	AccountUserMembershipCreationEvent = "item_created"
-	// AccountUserMembershipUpdateEvent events indicate a user updated an item.
-	AccountUserMembershipUpdateEvent = "item_updated"
-	// AccountUserMembershipArchiveEvent events indicate a user deleted an item.
-	AccountUserMembershipArchiveEvent = "item_archived"
+	// UserAddedToAccountEvent events indicate a user created a membership.
+	UserAddedToAccountEvent = "user_added_to_account"
+	// AccountUserMembershipArchiveEvent events indicate a user deleted a membership.
+	AccountUserMembershipArchiveEvent = "user_removed_from_account"
+	// AccountMarkedAsDefaultEvent events indicate a user deleted a membership.
+	AccountMarkedAsDefaultEvent = "account_marked_as_default"
 )
 
-// BuildAccountUserMembershipCreationEventEntry builds an entry creation input for when an item is created.
-func BuildAccountUserMembershipCreationEventEntry(item *types.AccountUserMembership) *types.AuditLogEntryCreationInput {
+// BuildUserAddedToAccountEventEntry builds an entry creation input for when a membership is created.
+func BuildUserAddedToAccountEventEntry(addedBy, added, accountID uint64, reason string) *types.AuditLogEntryCreationInput {
+	contextMap := map[string]interface{}{
+		ActorAssignmentKey:   addedBy,
+		AccountAssignmentKey: accountID,
+		UserAssignmentKey:    added,
+	}
+
+	if reason != "" {
+		contextMap[ReasonKey] = reason
+	}
+
 	return &types.AuditLogEntryCreationInput{
-		EventType: AccountUserMembershipCreationEvent,
-		Context: map[string]interface{}{
-			AccountUserMembershipAssignmentKey: item.ID,
-			CreationAssignmentKey:              item,
-		},
+		EventType: UserAddedToAccountEvent,
+		Context:   contextMap,
 	}
 }
 
-// BuildAccountUserMembershipUpdateEventEntry builds an entry creation input for when an item is updated.
-func BuildAccountUserMembershipUpdateEventEntry(userID, itemID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
-	return &types.AuditLogEntryCreationInput{
-		EventType: AccountUserMembershipUpdateEvent,
-		Context: map[string]interface{}{
-			ActorAssignmentKey:                 userID,
-			AccountUserMembershipAssignmentKey: itemID,
-			ChangesAssignmentKey:               changes,
-		},
+// BuildUserRemovedFromAccountEventEntry builds an entry creation input for when a membership is archived.
+func BuildUserRemovedFromAccountEventEntry(removedBy, removed, accountID uint64, reason string) *types.AuditLogEntryCreationInput {
+	contextMap := map[string]interface{}{
+		ActorAssignmentKey:   removedBy,
+		AccountAssignmentKey: accountID,
+		UserAssignmentKey:    removed,
 	}
-}
 
-// BuildAccountUserMembershipArchiveEventEntry builds an entry creation input for when an item is archived.
-func BuildAccountUserMembershipArchiveEventEntry(userID, itemID uint64) *types.AuditLogEntryCreationInput {
+	if reason != "" {
+		contextMap[ReasonKey] = reason
+	}
+
 	return &types.AuditLogEntryCreationInput{
 		EventType: AccountUserMembershipArchiveEvent,
-		Context: map[string]interface{}{
-			ActorAssignmentKey:                 userID,
-			AccountUserMembershipAssignmentKey: itemID,
-		},
+		Context:   contextMap,
+	}
+}
+
+// BuildUserMarkedAccountAsDefaultEventEntry builds an entry creation input for when a membership is created.
+func BuildUserMarkedAccountAsDefaultEventEntry(performedBy, userID, accountID uint64, reason string) *types.AuditLogEntryCreationInput {
+	contextMap := map[string]interface{}{
+		ActorAssignmentKey:   performedBy,
+		UserAssignmentKey:    userID,
+		AccountAssignmentKey: accountID,
+	}
+
+	if reason != "" {
+		contextMap[ReasonKey] = reason
+	}
+
+	return &types.AuditLogEntryCreationInput{
+		EventType: AccountMarkedAsDefaultEvent,
+		Context:   contextMap,
 	}
 }

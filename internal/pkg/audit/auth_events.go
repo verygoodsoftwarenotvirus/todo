@@ -11,6 +11,8 @@ const (
 	ChangesAssignmentKey = "changes"
 	// CreationAssignmentKey is the key we use to indicate which object was created for creation events.
 	CreationAssignmentKey = "created"
+	// PermissionsKey is the key we use to indicate which permissions were applicable to an event.
+	PermissionsKey = "permissions"
 	// ReasonKey is the key we use to indicate the reason behind a given event.
 	ReasonKey = "reason"
 

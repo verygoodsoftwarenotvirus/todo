@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	exampleUserID uint64 = 123
+	exampleAdminUserID uint64 = 321
+	exampleUserID      uint64 = 123
 )
 
 func TestUserEventBuilders(T *testing.T) {

@@ -43,6 +43,12 @@ const (
 	ConnectionDetailsKey = "connection_details"
 	// SearchQueryKey is the standard key for referring to a search query parameter value.
 	SearchQueryKey = "search_query"
+	// UserAgentOSKey is the standard key for referring to a search query parameter value.
+	UserAgentOSKey = "os"
+	// UserAgentBotKey is the standard key for referring to a search query parameter value.
+	UserAgentBotKey = "is_bot"
+	// UserAgentMobileKey is the standard key for referring to a search query parameter value.
+	UserAgentMobileKey = "is_mobile"
 	// RollbackErrorKey is the standard key for referring to an error rolling back a transaction.
 	RollbackErrorKey = "ROLLBACK_ERROR"
 	// QueryErrorKey is the standard key for referring to an error building a query.

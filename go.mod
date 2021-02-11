@@ -36,6 +36,7 @@ require (
 	github.com/makiuchi-d/gozxing v0.0.0-20200903113411-25f730ed83da
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/moul/http2curl v1.0.0
+	github.com/mssola/user_agent v0.5.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/o1egl/paseto v1.0.0 // indirect
 	github.com/pquerna/otp v1.2.0

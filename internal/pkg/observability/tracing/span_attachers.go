@@ -3,6 +3,8 @@ package tracing
 import (
 	"strconv"
 
+	useragent "github.com/mssola/user_agent"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 
 	"go.opentelemetry.io/otel/label"
@@ -43,11 +45,6 @@ func AttachAuditLogEntryIDToSpan(span trace.Span, entryID uint64) {
 // AttachAuditLogEntryEventTypeToSpan attaches an audit log entry ID to a given span.
 func AttachAuditLogEntryEventTypeToSpan(span trace.Span, eventType string) {
 	attachStringToSpan(span, keys.AuditLogEntryEventTypeKey, eventType)
-}
-
-// AttachItemIDToSpan attaches an item ID to a given span.
-func AttachItemIDToSpan(span trace.Span, itemID uint64) {
-	attachUint64ToSpan(span, keys.ItemIDKey, itemID)
 }
 
 // AttachAccountIDToSpan provides a consistent way to attach an account's ID to a span.
@@ -109,4 +106,18 @@ func AttachRequestURIToSpan(span trace.Span, uri string) {
 // AttachSearchQueryToSpan attaches a given search query to a span.
 func AttachSearchQueryToSpan(span trace.Span, query string) {
 	attachStringToSpan(span, keys.SearchQueryKey, query)
+}
+
+// AttachUserAgentDataToSpan attaches a given search query to a span.
+func AttachUserAgentDataToSpan(span trace.Span, ua *useragent.UserAgent) {
+	if ua != nil {
+		attachStringToSpan(span, keys.UserAgentOSKey, ua.OS())
+		attachBooleanToSpan(span, keys.UserAgentMobileKey, ua.Mobile())
+		attachBooleanToSpan(span, keys.UserAgentBotKey, ua.Bot())
+	}
+}
+
+// AttachItemIDToSpan attaches an item ID to a given span.
+func AttachItemIDToSpan(span trace.Span, itemID uint64) {
+	attachUint64ToSpan(span, keys.ItemIDKey, itemID)
 }

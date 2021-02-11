@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	useragent "github.com/mssola/user_agent"
 )
 
 const (
@@ -56,12 +57,13 @@ func buildLoggingMiddleware(logger logging.Logger, tracer tracing.Tracer) func(n
 				}
 			}
 
+			tracing.AttachUserAgentDataToSpan(span, useragent.New(req.UserAgent()))
+
 			if shouldLog {
 				logger.WithRequest(req).WithValues(map[string]interface{}{
-					"status":        ww.Status(),
-					"bytes_written": ww.BytesWritten(),
-					"elapsed":       time.Since(start),
-					"request_id":    chimiddleware.GetReqID(ctx),
+					"status":     ww.Status(),
+					"elapsed":    time.Since(start),
+					"request_id": chimiddleware.GetReqID(ctx),
 				}).Debug("responded to request")
 			}
 		})

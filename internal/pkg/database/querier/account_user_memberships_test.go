@@ -91,9 +91,9 @@ func TestClient_GetAccountUserMembership(T *testing.T) {
 		exampleAccountUserMembership.BelongsToUser = exampleUser.ID
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAccountUserMembershipQuery", exampleAccountUserMembership.ID, exampleUser.ID).
@@ -119,9 +119,9 @@ func TestClient_GetAccountUserMembership(T *testing.T) {
 		exampleAccountUserMembership.BelongsToUser = exampleUser.ID
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAccountUserMembershipQuery", exampleAccountUserMembership.ID, exampleUser.ID).
@@ -183,9 +183,9 @@ func TestClient_GetAllAccountUserMemberships(T *testing.T) {
 		exampleBatchSize := uint16(1000)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAllAccountUserMembershipsCountQuery").
@@ -411,9 +411,9 @@ func TestClient_GetAccountUserMemberships(T *testing.T) {
 		exampleAccountUserMembershipList.Limit = 0
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAccountUserMembershipsQuery", exampleUser.ID, false, filter).
@@ -531,9 +531,9 @@ func TestClient_GetAccountUserMembershipsForAdmin(T *testing.T) {
 		exampleAccountUserMembershipList.Limit = 0
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAccountUserMembershipsQuery", uint64(0), true, filter).
@@ -617,12 +617,11 @@ func TestClient_CreateAccountUserMembership(T *testing.T) {
 		exampleAccountUserMembership := fakes.BuildFakeAccountUserMembership()
 		exampleAccountUserMembership.ExternalID = ""
 		exampleInput := fakes.BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership(exampleAccountUserMembership)
-		exampleRows := newSuccessfulDatabaseResult(exampleAccountUserMembership.ID)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildCreateAccountUserMembershipQuery", exampleInput).
@@ -631,7 +630,7 @@ func TestClient_CreateAccountUserMembership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(exampleRows)
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountUserMembership.ID))
 
 		c.timeFunc = func() uint64 {
 			return exampleAccountUserMembership.CreatedOn
@@ -651,9 +650,9 @@ func TestClient_CreateAccountUserMembership(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership(exampleAccountUserMembership)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildCreateAccountUserMembershipQuery", exampleInput).
@@ -687,19 +686,18 @@ func TestClient_ArchiveAccountUserMembership(T *testing.T) {
 		exampleAccountUserMembership.BelongsToUser = exampleUser.ID
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildArchiveAccountUserMembershipQuery", exampleAccountUserMembership.ID, exampleAccountUserMembership.BelongsToUser).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		exampleRows := newSuccessfulDatabaseResult(exampleAccountUserMembership.ID)
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(exampleRows)
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountUserMembership.ID))
 
 		err := c.ArchiveAccountUserMembership(ctx, exampleAccountUserMembership.ID, exampleAccountUserMembership.BelongsToUser)
 		assert.NoError(t, err)
@@ -718,9 +716,9 @@ func TestClient_GetAuditLogEntriesForAccountUserMembership(T *testing.T) {
 		exampleAuditLogEntriesList := fakes.BuildFakeAuditLogEntryList()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAuditLogEntriesForAccountUserMembershipQuery", exampleAccountUserMembership.ID).
@@ -747,9 +745,9 @@ func TestClient_GetAuditLogEntriesForAccountUserMembership(T *testing.T) {
 		exampleAccountUserMembership := fakes.BuildFakeAccountUserMembership()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAuditLogEntriesForAccountUserMembershipQuery", exampleAccountUserMembership.ID).
@@ -773,9 +771,9 @@ func TestClient_GetAuditLogEntriesForAccountUserMembership(T *testing.T) {
 		exampleAccountUserMembership := fakes.BuildFakeAccountUserMembership()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildGetAuditLogEntriesForAccountUserMembershipQuery", exampleAccountUserMembership.ID).

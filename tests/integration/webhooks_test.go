@@ -80,7 +80,7 @@ func TestWebhooks(test *testing.T) {
 	test.Run("Reading", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("it should return an error when trying to read something that doesn't exist", func(t *testing.T) {
+		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
 			ctx, span := tracing.StartSpan(context.Background())

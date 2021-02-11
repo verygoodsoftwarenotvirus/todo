@@ -93,9 +93,9 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientQuery", exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -117,9 +117,9 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientQuery", exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -142,9 +142,9 @@ func TestClient_GetOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientQuery", exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -170,9 +170,9 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientByClientIDQuery", exampleOAuth2Client.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -194,9 +194,9 @@ func TestClient_GetOAuth2ClientByClientID(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientByClientIDQuery", exampleOAuth2Client.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -222,9 +222,9 @@ func TestClient_GetTotalOAuth2ClientCount(T *testing.T) {
 		exampleCount := uint64(123)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetAllOAuth2ClientsCountQuery").Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -244,9 +244,9 @@ func TestClient_GetTotalOAuth2ClientCount(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetAllOAuth2ClientsCountQuery").Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -471,9 +471,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -497,9 +497,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		filter := (*types.QueryFilter)(nil)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -521,9 +521,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -546,9 +546,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -570,9 +570,9 @@ func TestClient_GetOAuth2Clients(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildGetOAuth2ClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -600,20 +600,26 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		db.ExpectBegin()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildCreateOAuth2ClientQuery", exampleInput).Return(fakeQuery, fakeArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleOAuth2Client.ID))
 
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+
+		c.sqlQueryBuilder = mockQueryBuilder
 		c.timeFunc = func() uint64 {
 			return exampleOAuth2Client.CreatedOn
 		}
+
+		db.ExpectCommit()
 
 		actual, err := c.CreateOAuth2Client(ctx, exampleInput)
 		assert.NoError(t, err)
@@ -629,17 +635,21 @@ func TestClient_CreateOAuth2Client(T *testing.T) {
 		exampleInput := fakes.BuildFakeOAuth2ClientCreationInputFromClient(exampleOAuth2Client)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		db.ExpectBegin()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildCreateOAuth2ClientQuery", exampleInput).Return(fakeQuery, fakeArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
 		c.timeFunc = func() uint64 {
 			return exampleOAuth2Client.CreatedOn
 		}
@@ -662,16 +672,23 @@ func TestClient_ArchiveOAuth2Client(T *testing.T) {
 
 		var expected error
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		db.ExpectBegin()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.On("BuildArchiveOAuth2ClientQuery", exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser).Return(fakeQuery, fakeArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleOAuth2Client.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+
+		db.ExpectCommit()
+
+		c.sqlQueryBuilder = mockQueryBuilder
 
 		actual := c.ArchiveOAuth2Client(ctx, exampleOAuth2Client.ID, exampleOAuth2Client.BelongsToUser)
 		assert.NoError(t, actual)
@@ -691,9 +708,9 @@ func TestClient_GetAuditLogEntriesForOAuth2Client(T *testing.T) {
 		exampleAuditLogEntriesList := fakes.BuildFakeAuditLogEntryList()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.
 			On("BuildGetAuditLogEntriesForOAuth2ClientQuery", exampleOAuth2Client.ID).
@@ -720,9 +737,9 @@ func TestClient_GetAuditLogEntriesForOAuth2Client(T *testing.T) {
 		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.
 			On("BuildGetAuditLogEntriesForOAuth2ClientQuery", exampleOAuth2Client.ID).
@@ -732,32 +749,6 @@ func TestClient_GetAuditLogEntriesForOAuth2Client(T *testing.T) {
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		actual, err := c.GetAuditLogEntriesForOAuth2Client(ctx, exampleOAuth2Client.ID)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
-	T.Run("with erroneous response from database", func(t *testing.T) {
-		t.Parallel()
-
-		exampleOAuth2Client := fakes.BuildFakeOAuth2Client()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.OAuth2ClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForOAuth2ClientQuery", exampleOAuth2Client.ID).
-			Return(fakeQuery, fakeArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnRows(buildErroneousMockRow())
 
 		actual, err := c.GetAuditLogEntriesForOAuth2Client(ctx, exampleOAuth2Client.ID)
 		assert.Error(t, err)

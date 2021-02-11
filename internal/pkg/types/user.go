@@ -243,6 +243,14 @@ func (u *User) ToStatusResponse() *UserStatusResponse {
 	}
 }
 
+// ToUserDataStoreCreationInput creates a UserDataStoreCreationInput from a TestUserCreationConfig.
+func (cfg *TestUserCreationConfig) ToUserDataStoreCreationInput() UserDataStoreCreationInput {
+	return UserDataStoreCreationInput{
+		Username:       cfg.Username,
+		HashedPassword: cfg.HashedPassword,
+	}
+}
+
 // IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
 	return u.AccountStatus == BannedAccountStatus

@@ -71,6 +71,7 @@ func TestUsers(test *testing.T) {
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
 				{EventType: audit.UserCreationEvent},
+				{EventType: audit.AccountCreationEvent},
 				{EventType: audit.UserArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
@@ -80,7 +81,7 @@ func TestUsers(test *testing.T) {
 	test.Run("Reading", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("it should return an error when trying to read something that doesn'subtest exist", func(t *testing.T) {
+		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
 			ctx, span := tracing.StartSpan(context.Background())
@@ -220,6 +221,7 @@ func TestUsers(test *testing.T) {
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
 				{EventType: audit.UserCreationEvent},
+				{EventType: audit.AccountCreationEvent},
 				{EventType: audit.UserArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
@@ -266,9 +268,15 @@ func TestUsers(test *testing.T) {
 			// fetch audit log entries
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			actual, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
+
+			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
 			assert.NoError(t, err)
-			assert.Len(t, actual, 1)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.UserCreationEvent},
+				{EventType: audit.AccountCreationEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, 0, "")
 
 			// Clean up item.
 			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))

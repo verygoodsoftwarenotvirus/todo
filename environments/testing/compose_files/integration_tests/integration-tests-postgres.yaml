@@ -15,6 +15,8 @@ services:
         #     USE_NOOP_LOGGER: 'true'
         links:
             - database
+        logging:
+            driver: none
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-postgres.toml'
               target: '/etc/config.toml'

@@ -242,6 +242,7 @@ func (c *Client) CreateOAuth2Client(ctx context.Context, input *types.OAuth2Clie
 
 	id, err := c.performWriteQuery(ctx, tx, false, "oauth2 client creation", query, args)
 	if err != nil {
+		c.rollbackTransaction(tx)
 		return nil, err
 	}
 
@@ -280,20 +281,20 @@ func (c *Client) ArchiveOAuth2Client(ctx context.Context, clientID, userID uint6
 
 	query, args := c.sqlQueryBuilder.BuildArchiveOAuth2ClientQuery(clientID, userID)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
+	if transactionStartErr != nil {
+		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "oauth2 client archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating oauth2 client: %w", err)
+		return fmt.Errorf("error updating oauth2 client: %w", execErr)
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildOAuth2ClientArchiveEventEntry(userID, clientID))
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return nil

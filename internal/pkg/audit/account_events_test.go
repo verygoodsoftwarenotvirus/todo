@@ -18,7 +18,7 @@ func TestAccountEventBuilders(T *testing.T) {
 		"BuildAccountCreationEventEntry": {
 			expectedEventType: audit.AccountCreationEvent,
 			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
+				audit.UserAssignmentKey,
 				audit.AccountAssignmentKey,
 				audit.CreationAssignmentKey,
 			},

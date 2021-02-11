@@ -22,6 +22,7 @@ func BuildAccountCreationEventEntry(account *types.Account) *types.AuditLogEntry
 		EventType: AccountCreationEvent,
 		Context: map[string]interface{}{
 			AccountAssignmentKey:  account.ID,
+			UserAssignmentKey:     account.BelongsToUser,
 			CreationAssignmentKey: account,
 		},
 	}

@@ -9,10 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -100,6 +102,17 @@ func buildErroneousMockRow() *sqlmock.Rows {
 	return exampleRows
 }
 
+func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
+	fakeAuditLogEntryuery, fakeAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
+	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
+		On("BuildCreateAuditLogEntryQuery", mock.IsType(&types.AuditLogEntryCreationInput{})).
+		Return(fakeAuditLogEntryuery, fakeAuditLogEntryArgs)
+
+	db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryuery)).
+		WithArgs(interfaceToDriverValue(fakeAuditLogEntryArgs)...).
+		WillReturnResult(newSuccessfulDatabaseResult(123))
+}
+
 // end helper funcs
 
 func TestClient_Migrate(T *testing.T) {
@@ -130,6 +143,7 @@ func TestClient_Migrate(T *testing.T) {
 		}
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
 		c.timeFunc = func() uint64 {
@@ -139,14 +153,15 @@ func TestClient_Migrate(T *testing.T) {
 		// called by c.IsReady()
 		db.ExpectPing()
 
-		// expect transaction begin
-		db.ExpectBegin()
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		migrationFuncCalled := false
 
 		// expect BuildMigrationFunc to be called
 		mockQueryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).
-			Return(func() {})
+			Return(func() {
+				migrationFuncCalled = true
+			})
+
+		db.ExpectBegin()
 
 		// expect TestUser to be created
 		fakeTestUserCreationQuery, fakeTestUserCreationArgs := fakes.BuildFakeSQLQuery()
@@ -158,13 +173,12 @@ func TestClient_Migrate(T *testing.T) {
 			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
 
 		// create audit log entry for created TestUser
-		fakeAuditLogEntryEventQuery, fakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.AnythingOfType("*types.AuditLogEntryCreationInput")).
-			Return(fakeAuditLogEntryEventQuery, fakeAuditLogEntryEventArgs).
-			Twice()
+		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
+			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryEventQuery)).
-			WithArgs(interfaceToDriverValue(fakeAuditLogEntryEventArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
+			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		// create account for created TestUser
@@ -176,11 +190,20 @@ func TestClient_Migrate(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
 
-		c.sqlQueryBuilder = mockQueryBuilder
+		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
+			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
+			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		db.ExpectCommit()
 
+		c.sqlQueryBuilder = mockQueryBuilder
+
 		assert.NoError(t, c.Migrate(ctx, 1, exampleInput))
+		assert.True(t, migrationFuncCalled)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

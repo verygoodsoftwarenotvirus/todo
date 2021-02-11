@@ -152,7 +152,7 @@ func TestOAuth2Clients(test *testing.T) {
 	test.Run("Reading", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("it should return an error when trying to read one that doesn'subtest exist", func(t *testing.T) {
+		subtest.Run("it should return an error when trying to read one that does not exist", func(t *testing.T) {
 			t.Parallel()
 
 			ctx, span := tracing.StartSpan(context.Background())

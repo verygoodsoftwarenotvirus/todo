@@ -173,14 +173,16 @@ func (c *Client) createAuditLogEntryInTransaction(ctx context.Context, transacti
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
+	logger := c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
 
-	c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Debug("createAuditLogEntryInTransaction called")
+	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
+	logger.Debug("createAuditLogEntryInTransaction called")
+
 	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	// create the audit log entry.
 	if err := c.performWriteQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
-		c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).Error(err, "executing audit log entry creation query")
+		logger.Error(err, "executing audit log entry creation query")
 		c.rollbackTransaction(transaction)
 	}
 }

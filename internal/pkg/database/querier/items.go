@@ -334,20 +334,20 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
+	if transactionStartErr != nil {
+		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating item: %w", err)
+		return fmt.Errorf("error updating item: %w", execErr)
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return nil
@@ -368,20 +368,20 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, belongsToAccount)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
+	if transactionStartErr != nil {
+		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating item: %w", err)
+		return fmt.Errorf("error updating item: %w", execErr)
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, itemID))
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return nil

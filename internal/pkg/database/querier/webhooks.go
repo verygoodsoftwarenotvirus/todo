@@ -263,18 +263,20 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(updated)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
+	if transactionStartErr != nil {
+		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating webhook: %w", err)
+		return fmt.Errorf("error updating webhook: %w", execErr)
 	}
 
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
+
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return nil
@@ -295,18 +297,20 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
+	if transactionStartErr != nil {
+		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error archiving webhook: %w", err)
+		return fmt.Errorf("error archiving webhook: %w", execErr)
 	}
 
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
+
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return nil

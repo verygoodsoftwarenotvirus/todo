@@ -27,9 +27,9 @@ func TestClient_UpdateUserAccountStatus(T *testing.T) {
 		}
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.UserSQLQueryBuilder.
 			On("BuildSetUserStatusQuery", exampleUser.ID, exampleInput).
@@ -59,9 +59,9 @@ func TestClient_LogUserBanEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildUserBanEventEntry(exampleSiteAdmin.ID, exampleUser.ID, exampleReason)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -83,9 +83,9 @@ func TestClient_LogAccountTerminationEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildAccountTerminationEventEntry(exampleSiteAdmin.ID, exampleUser.ID, exampleReason)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -105,9 +105,9 @@ func TestClient_LogCycleCookieSecretEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildCycleCookieSecretEvent(exampleUser.ID)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -127,9 +127,9 @@ func TestClient_LogSuccessfulLoginEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildSuccessfulLoginEventEntry(exampleUser.ID)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -149,9 +149,9 @@ func TestClient_LogBannedUserLoginAttemptEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildBannedUserLoginAttemptEventEntry(exampleUser.ID)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -171,9 +171,9 @@ func TestClient_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleUser.ID)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -193,9 +193,9 @@ func TestClient_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleUser.ID)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -215,9 +215,9 @@ func TestClient_LogLogoutEvent(T *testing.T) {
 		exampleAuditLogEntry := audit.BuildLogoutEventEntry(exampleUser.ID)
 
 		ctx := context.Background()
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 

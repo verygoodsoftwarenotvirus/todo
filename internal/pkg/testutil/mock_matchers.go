@@ -22,6 +22,13 @@ func ContextMatcher(keys ...types.ContextKey) func(context.Context) bool {
 	}
 }
 
+// AuditLogEntryCreationInputMatcher is a matcher for use with testify/mock's MatchBy function.
+func AuditLogEntryCreationInputMatcher(eventType string) func(*types.AuditLogEntryCreationInput) bool {
+	return func(input *types.AuditLogEntryCreationInput) bool {
+		return input.EventType == eventType
+	}
+}
+
 // RequestMatcher is a matcher for use with testify/mock's MatchBy function. It provides some level of type
 // safety reassurance over mock.Anything, in that the resulting function will panic if anything other than
 // a *http.Request.

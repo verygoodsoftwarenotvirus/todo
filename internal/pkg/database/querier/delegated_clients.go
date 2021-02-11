@@ -211,6 +211,7 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 
 	id, err := c.performWriteQuery(ctx, tx, false, "delegated client creation", query, args)
 	if err != nil {
+		c.rollbackTransaction(tx)
 		return nil, err
 	}
 
@@ -240,20 +241,20 @@ func (c *Client) UpdateDelegatedClient(ctx context.Context, updated *types.Deleg
 
 	query, args := c.sqlQueryBuilder.BuildUpdateDelegatedClientQuery(updated)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
+	if transactionStartErr != nil {
+		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "delegated client update", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating delegated client: %w", err)
+		return fmt.Errorf("error updating delegated client: %w", execErr)
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildDelegatedClientUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return nil
@@ -274,20 +275,20 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 
 	query, args := c.sqlQueryBuilder.BuildArchiveDelegatedClientQuery(clientID, userID)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
+	if transactionStartErr != nil {
+		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, c.db, "delegated client archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating delegated client: %w", err)
+		return fmt.Errorf("error updating delegated client: %w", execErr)
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildDelegatedClientArchiveEventEntry(userID, clientID))
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return nil

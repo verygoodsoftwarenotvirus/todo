@@ -40,8 +40,9 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	httpserverConfig := cfg.Server
 	frontendConfig := cfg.Frontend
 	observabilityConfig := &cfg.Observability
-	metricsConfig := &observabilityConfig.Metrics
-	instrumentationHandler := metrics.ProvideMetricsInstrumentationHandlerForServer(metricsConfig, logger)
+	metricsConfig := observabilityConfig.Metrics
+	config3 := &observabilityConfig.Metrics
+	instrumentationHandler := metrics.ProvideMetricsInstrumentationHandlerForServer(config3, logger)
 	authConfig := &cfg.Auth
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
@@ -104,7 +105,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder, router)
+	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

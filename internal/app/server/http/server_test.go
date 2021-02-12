@@ -7,6 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -22,6 +23,7 @@ func TestProvideServer(T *testing.T) {
 		actual, err := ProvideServer(
 			Config{},
 			frontendservice.Config{},
+			metrics.Config{},
 			nil,
 			&mocktypes.AuthService{},
 			&mocktypes.FrontendService{},

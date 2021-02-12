@@ -26,24 +26,12 @@ const (
 )
 
 type (
-	// BasicAuthConfig contains settings related to .
-	BasicAuthConfig struct {
-		Username string `json:"username" mapstructure:"username" toml:"username,omitempty"`
-		Password string `json:"authentication" mapstructure:"authentication" toml:"authentication,omitempty"`
-	}
-
-	// AuthConfig contains settings related to .
-	AuthConfig struct {
-		Method    string           `json:"method" mapstructure:"method" toml:"method,omitempty"`
-		BasicAuth *BasicAuthConfig `json:"basic_auth" mapstructure:"basic_auth" toml:"basic_auth,omitempty"`
-	}
-
 	// Config contains settings related to .
 	Config struct {
 		// Provider indicates where our metrics should go.
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-		// RouteAuth indicates how the metrics route should be authenticated.
-		RouteAuth AuthConfig `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		// RouteToken indicates how the metrics route should be authenticated.
+		RouteToken string `json:"route_token" mapstructure:"route_token" toml:"route_token,omitempty"`
 	}
 )
 

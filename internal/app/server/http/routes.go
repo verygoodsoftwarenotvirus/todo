@@ -12,6 +12,7 @@ import (
 	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 )
@@ -23,7 +24,23 @@ const (
 	numericIDPattern = "{%s:[0-9]+}"
 )
 
-func (s *Server) setupRouter(router routing.Router, metricsHandler metrics.Handler) {
+func buildTokenRestrictionMiddleware(logger logging.Logger, token string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			if token != "" {
+				if req.Header.Get("Authorization") != token {
+					logger.Info("rejected unauthorized metrics scrape")
+					res.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+			}
+
+			next.ServeHTTP(res, req)
+		})
+	}
+}
+
+func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config, metricsHandler metrics.Handler) {
 	router.Route("/_meta_", func(metaRouter routing.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live
@@ -34,7 +51,7 @@ func (s *Server) setupRouter(router routing.Router, metricsHandler metrics.Handl
 
 	if metricsHandler != nil {
 		s.logger.Debug("establishing metrics handler")
-		router.Handle("/metrics", metricsHandler)
+		router.WithMiddleware(buildTokenRestrictionMiddleware(s.logger, metricsConfig.RouteToken)).Handle("/metrics", metricsHandler)
 	}
 
 	// Frontend routes.

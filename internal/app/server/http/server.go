@@ -55,6 +55,7 @@ type (
 func ProvideServer(
 	serverSettings Config,
 	frontendSettings frontendservice.Config,
+	metricsSettings metrics.Config,
 	metricsHandler metrics.InstrumentationHandler,
 	authService types.AuthService,
 	frontendService types.FrontendService,
@@ -91,7 +92,7 @@ func ProvideServer(
 		tracer:               tracing.NewTracer(loggerName),
 	}
 
-	srv.setupRouter(router, metricsHandler)
+	srv.setupRouter(router, metricsSettings, metricsHandler)
 
 	logger.Debug("HTTP server successfully constructed")
 

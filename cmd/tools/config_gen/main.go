@@ -121,11 +121,8 @@ func localDevelopmentConfig(filePath string) error {
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
-				Provider: "prometheus",
-				RouteAuth: metrics.AuthConfig{
-					Method:    "",
-					BasicAuth: nil,
-				},
+				Provider:   "prometheus",
+				RouteToken: "",
 			},
 			Tracing: tracing.Config{
 				Provider:                  "jaeger",
@@ -212,11 +209,8 @@ func frontendTestsConfig(filePath string) error {
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
-				Provider: "prometheus",
-				RouteAuth: metrics.AuthConfig{
-					Method:    "",
-					BasicAuth: nil,
-				},
+				Provider:   "prometheus",
+				RouteToken: "",
 			},
 			Tracing: tracing.Config{
 				Provider:                  "jaeger",
@@ -309,11 +303,8 @@ func coverageConfig(filePath string) error {
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
-				Provider: "",
-				RouteAuth: metrics.AuthConfig{
-					Method:    "",
-					BasicAuth: nil,
-				},
+				Provider:   "",
+				RouteToken: "",
 			},
 			Tracing: tracing.Config{
 				Provider:                  "",
@@ -413,11 +404,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			},
 			Observability: observability.Config{
 				Metrics: metrics.Config{
-					Provider: "",
-					RouteAuth: metrics.AuthConfig{
-						Method:    "",
-						BasicAuth: nil,
-					},
+					Provider:   "",
+					RouteToken: "",
 				},
 				Tracing: tracing.Config{
 					Provider:                  "",

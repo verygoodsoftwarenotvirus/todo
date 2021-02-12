@@ -40,24 +40,20 @@ type (
 
 	// AccountUserMembershipSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	AccountUserMembershipSQLQueryBuilder interface {
-		BuildGetAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{})
-		BuildGetAllAccountUserMembershipsCountQuery() string
-		BuildGetBatchOfAccountUserMembershipsQuery(beginID, endID uint64) (query string, args []interface{})
-		BuildGetAccountUserMembershipsQuery(userID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
-		BuildCreateAccountUserMembershipQuery(input *AccountUserMembershipCreationInput) (query string, args []interface{})
-		BuildArchiveAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{})
+		BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{})
+		BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{})
+		BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{})
+		BuildAddUserToAccountQuery(userID, accountID uint64) (query string, args []interface{})
+		BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{})
 	}
 
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
 	AccountUserMembershipDataManager interface {
-		GetAccountUserMembership(ctx context.Context, accountUserMembershipID, accountID uint64) (*AccountUserMembership, error)
-		GetAllAccountUserMembershipsCount(ctx context.Context) (uint64, error)
-		GetAllAccountUserMemberships(ctx context.Context, resultChannel chan []*AccountUserMembership, bucketSize uint16) error
-		GetAccountUserMemberships(ctx context.Context, accountID uint64, filter *QueryFilter) (*AccountUserMembershipList, error)
-		GetAccountUserMembershipsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountUserMembershipList, error)
-		CreateAccountUserMembership(ctx context.Context, input *AccountUserMembershipCreationInput) (*AccountUserMembership, error)
-		ArchiveAccountUserMembership(ctx context.Context, accountUserMembershipID, accountID uint64) error
+		MarkAccountAsUserDefault(ctx context.Context, userID, accountID, performedBy uint64) error
+		UserIsMemberOfAccount(ctx context.Context, userID, accountID, performedBy uint64) error
+		AddUserToAccount(ctx context.Context, userID, accountID, performedBy uint64) error
+		RemoveUserFromAccount(ctx context.Context, userID, accountID, performedBy uint64) error
 		GetAuditLogEntriesForAccountUserMembership(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
 	}
 )

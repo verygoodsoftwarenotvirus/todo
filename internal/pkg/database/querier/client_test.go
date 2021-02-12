@@ -198,6 +198,23 @@ func TestClient_Migrate(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
+		// create account user membership for created user
+		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On("BuildCreateMembershipForNewUserQuery", exampleUser.ID, exampleAccount.ID).
+			Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+
+		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
+			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
+			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
 		db.ExpectCommit()
 
 		c.sqlQueryBuilder = mockQueryBuilder

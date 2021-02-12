@@ -11,43 +11,23 @@ import (
 
 var _ types.AccountUserMembershipSQLQueryBuilder = (*Postgres)(nil)
 
-// BuildGetAccountUserMembershipQuery builds a query that .
-func (q *Postgres) BuildGetAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
-	return "", nil
-}
-
-// BuildGetAllAccountUserMembershipsCountQuery builds a query that .
-func (q *Postgres) BuildGetAllAccountUserMembershipsCountQuery() string {
-	return ""
-}
-
-// BuildGetBatchOfAccountUserMembershipsQuery builds a query that .
-func (q *Postgres) BuildGetBatchOfAccountUserMembershipsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	return "", nil
-}
-
-// BuildGetAccountUserMembershipsQuery builds a query that .
-func (q *Postgres) BuildGetAccountUserMembershipsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	return "", nil
-}
-
-// BuildCreateAccountUserMembershipQuery builds a query that .
-func (q *Postgres) BuildCreateAccountUserMembershipQuery(input *types.AccountUserMembershipCreationInput) (query string, args []interface{}) {
-	return "", nil
-}
-
-// BuildArchiveAccountUserMembershipQuery builds a query that .
-func (q *Postgres) BuildArchiveAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
-	return "", nil
+// BuildCreateMembershipForNewUserQuery builds a query that .
+func (q *Postgres) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Insert(querybuilding.AccountsUserMembershipTableName).
+		Columns(
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
+			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+		).
+		Values(
+			userID,
+			accountID,
+		),
+	)
 }
 
 // BuildGetAuditLogEntriesForAccountUserMembershipQuery builds a query that .
 func (q *Postgres) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
-	return "", nil
-}
-
-// BuildGetAccountsForUserQuery builds a query that .
-func (q *Postgres) BuildGetAccountsForUserQuery() (query string, args []interface{}) {
 	return "", nil
 }
 

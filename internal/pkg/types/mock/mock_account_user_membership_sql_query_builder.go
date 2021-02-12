@@ -13,51 +13,44 @@ type AccountUserMembershipSQLQueryBuilder struct {
 	mock.Mock
 }
 
-// BuildGetAccountUserMembershipQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAccountUserMembershipQuery(itemID, userID uint64) (query string, args []interface{}) {
-	returnArgs := m.Called(itemID, userID)
+// BuildMarkAccountAsUserDefaultQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAllAccountUserMembershipsCountQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAllAccountUserMembershipsCountQuery() string {
-	returnArgs := m.Called()
-
-	return returnArgs.String(0)
-}
-
-// BuildGetBatchOfAccountUserMembershipsQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildGetBatchOfAccountUserMembershipsQuery(beginID, endID uint64) (query string, args []interface{}) {
-	returnArgs := m.Called(beginID, endID)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}
-
-// BuildGetAccountUserMembershipsQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAccountUserMembershipsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	returnArgs := m.Called(userID, forAdmin, filter)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}
-
-// BuildCreateAccountUserMembershipQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildCreateAccountUserMembershipQuery(input *types.AccountUserMembershipCreationInput) (query string, args []interface{}) {
-	returnArgs := m.Called(input)
+// BuildCreateMembershipForNewUserQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetAuditLogEntriesForAccountUserMembershipQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAuditLogEntriesForAccountUserMembershipQuery(itemID uint64) (query string, args []interface{}) {
-	returnArgs := m.Called(itemID)
+func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(accountUserMembershipID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildArchiveAccountUserMembershipQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildArchiveAccountUserMembershipQuery(itemID, userID uint64) (query string, args []interface{}) {
-	returnArgs := m.Called(itemID, userID)
+// BuildUserIsMemberOfAccountQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, accountID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
+// BuildAddUserToAccountQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildAddUserToAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, accountID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
+// BuildRemoveUserFromAccountQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

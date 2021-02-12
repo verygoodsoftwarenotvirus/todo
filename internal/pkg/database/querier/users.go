@@ -261,7 +261,13 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account))
 
-	// LATER: create account user membership in transaction here
+	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(userID, accountID)
+	if accountMembershipErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); accountMembershipErr != nil {
+		c.rollbackTransaction(tx)
+		return accountMembershipErr
+	}
+
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, userID, accountID, "user creation"))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

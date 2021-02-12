@@ -147,7 +147,7 @@ var (
 		},
 		{
 			Version:     0.11,
-			Description: "create accounts membership table",
+			Description: "create account user memberships table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS account_user_memberships (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
@@ -157,8 +157,8 @@ var (
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    PRIMARY KEY (`id`),",
-				"    FOREIGN KEY (`belongs_to_user`) REFERENCES account_subscription_plans(`id`) ON DELETE CASCADE,",
-				"    FOREIGN KEY (`belongs_to_account`) REFERENCES account_subscription_plans(`id`) ON DELETE CASCADE",
+				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE,",
+				"    FOREIGN KEY (`belongs_to_account`) REFERENCES accounts(`id`) ON DELETE CASCADE",
 				");",
 			}, "\n"),
 		},

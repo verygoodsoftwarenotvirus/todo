@@ -53,7 +53,7 @@ type (
 
 		types.AdminUserDataManager
 		types.AccountDataManager
-		types.AccountUserMembershipDataManager
+		// types.AccountUserMembershipDataManager
 		types.AccountSubscriptionPlanDataManager
 		types.UserDataManager
 		types.AuditLogEntryDataManager

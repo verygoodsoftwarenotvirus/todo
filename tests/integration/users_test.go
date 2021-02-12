@@ -72,6 +72,7 @@ func TestUsers(test *testing.T) {
 			expectedAuditLogEntries := []*types.AuditLogEntry{
 				{EventType: audit.UserCreationEvent},
 				{EventType: audit.AccountCreationEvent},
+				{EventType: audit.UserAddedToAccountEvent},
 				{EventType: audit.UserArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
@@ -222,6 +223,7 @@ func TestUsers(test *testing.T) {
 			expectedAuditLogEntries := []*types.AuditLogEntry{
 				{EventType: audit.UserCreationEvent},
 				{EventType: audit.AccountCreationEvent},
+				{EventType: audit.UserAddedToAccountEvent},
 				{EventType: audit.UserArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
@@ -274,6 +276,7 @@ func TestUsers(test *testing.T) {
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
 				{EventType: audit.UserCreationEvent},
+				{EventType: audit.UserAddedToAccountEvent},
 				{EventType: audit.AccountCreationEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, 0, "")

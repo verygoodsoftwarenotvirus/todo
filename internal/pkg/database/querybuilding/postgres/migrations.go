@@ -98,7 +98,7 @@ var (
 		},
 		{
 			Version:     0.06,
-			Description: "create accounts membership table",
+			Description: "create account user memberships table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_user_memberships (
 				id BIGSERIAL NOT NULL PRIMARY KEY,

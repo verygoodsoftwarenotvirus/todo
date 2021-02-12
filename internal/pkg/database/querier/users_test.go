@@ -554,7 +554,7 @@ func TestClient_CreateUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeUserCreationArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
 
-		// create audit log entry for created TestUser
+		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
 			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
@@ -563,7 +563,7 @@ func TestClient_CreateUser(T *testing.T) {
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		// create account for created TestUser
+		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildCreateAccountQuery", exampleAccountCreationInput).
 			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
@@ -578,6 +578,23 @@ func TestClient_CreateUser(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// create account user membership for created user
+		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On("BuildCreateMembershipForNewUserQuery", exampleUser.ID, exampleAccount.ID).
+			Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+
+		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
+			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
+			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		db.ExpectCommit()
@@ -783,6 +800,23 @@ func TestClient_CreateUser(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// create account user membership for created user
+		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On("BuildCreateMembershipForNewUserQuery", exampleUser.ID, exampleAccount.ID).
+			Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+
+		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
+			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
+			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		db.ExpectCommit().WillReturnError(errors.New("blah"))

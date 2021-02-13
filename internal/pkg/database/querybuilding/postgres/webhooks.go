@@ -104,7 +104,7 @@ func (q *Postgres) BuildUpdateWebhookQuery(input *types.Webhook) (query string, 
 		Set(querybuilding.WebhooksTableEventsColumn, strings.Join(input.Events, querybuilding.WebhooksTableTopicsSeparator)).
 		Set(querybuilding.WebhooksTableDataTypesColumn, strings.Join(input.DataTypes, querybuilding.WebhooksTableDataTypesSeparator)).
 		Set(querybuilding.WebhooksTableTopicsColumn, strings.Join(input.Topics, querybuilding.WebhooksTableTopicsSeparator)).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.ArchivedOnColumn:             nil,
 			querybuilding.IDColumn:                     input.ID,
@@ -117,8 +117,8 @@ func (q *Postgres) BuildUpdateWebhookQuery(input *types.Webhook) (query string, 
 func (q *Postgres) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.WebhooksTableName).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                     webhookID,
 			querybuilding.WebhooksTableOwnershipColumn: userID,

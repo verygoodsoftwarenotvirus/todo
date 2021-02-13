@@ -78,7 +78,7 @@ func (q *MariaDB) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSu
 		Set(querybuilding.AccountSubscriptionPlansTableDescriptionColumn, input.Description).
 		Set(querybuilding.AccountSubscriptionPlansTablePriceColumn, input.Price).
 		Set(querybuilding.AccountSubscriptionPlansTablePeriodColumn, input.Period.String()).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:         input.ID,
 			querybuilding.ArchivedOnColumn: nil,
@@ -90,8 +90,8 @@ func (q *MariaDB) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSu
 func (q *MariaDB) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountSubscriptionPlansTableName).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:         planID,
 			querybuilding.ArchivedOnColumn: nil,

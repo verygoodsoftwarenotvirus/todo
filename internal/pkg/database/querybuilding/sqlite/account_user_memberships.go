@@ -11,6 +11,30 @@ import (
 
 var _ types.AccountUserMembershipSQLQueryBuilder = (*Sqlite)(nil)
 
+// BuildArchiveAccountMembershipsForUserQuery does .
+func (q *Sqlite) BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
+		Where(squirrel.Eq{
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                               nil,
+		}),
+	)
+}
+
+// BuildGetAccountMembershipsForUserQuery does .
+func (q *Sqlite) BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	return q.buildListQuery(
+		querybuilding.AccountsUserMembershipTableName,
+		querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
+		querybuilding.AccountsUserMembershipTableColumns,
+		userID,
+		false,
+		nil,
+	)
+}
+
 // BuildMarkAccountAsUserDefaultQuery does .
 func (q *Sqlite) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
 	panic("implement me")
@@ -46,9 +70,7 @@ func (q *Sqlite) BuildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (q
 		}).
 		Where(squirrel.Eq{
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
-		}).
-		Where(squirrel.NotEq{
-			querybuilding.ArchivedOnColumn: nil,
+			querybuilding.ArchivedOnColumn:                               nil,
 		}),
 	)
 }

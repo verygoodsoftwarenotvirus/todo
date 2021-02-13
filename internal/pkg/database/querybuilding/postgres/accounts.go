@@ -94,7 +94,7 @@ func (q *Postgres) BuildUpdateAccountQuery(input *types.Account) (query string, 
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
 		Set(querybuilding.AccountsTableNameColumn, input.Name).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                         input.ID,
 			querybuilding.ArchivedOnColumn:                 nil,
@@ -107,8 +107,8 @@ func (q *Postgres) BuildUpdateAccountQuery(input *types.Account) (query string, 
 func (q *Postgres) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                         accountID,
 			querybuilding.ArchivedOnColumn:                 nil,

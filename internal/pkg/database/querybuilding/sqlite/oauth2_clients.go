@@ -108,8 +108,8 @@ func (q *Sqlite) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreationI
 func (q *Sqlite) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.OAuth2ClientsTableName).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                          clientID,
 			querybuilding.OAuth2ClientsTableOwnershipColumn: userID,

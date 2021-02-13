@@ -2,7 +2,6 @@ package querier
 
 import (
 	"context"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -74,26 +73,4 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, userID, accountID, p
 	logger.Debug("RemoveUserFromAccount called")
 
 	return nil
-}
-
-// GetAuditLogEntriesForAccountUserMembership fetches a list of audit log entries from the database that relate to a given accountUserMembership.
-func (c *Client) GetAuditLogEntriesForAccountUserMembership(ctx context.Context, accountUserMembershipID uint64) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	c.logger.Debug("GetAuditLogEntriesForAccountUserMembership called")
-
-	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID)
-
-	rows, err := c.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
-	}
-
-	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
-	if err != nil {
-		return nil, fmt.Errorf("scanning audit log entries: %w", err)
-	}
-
-	return auditLogEntries, nil
 }

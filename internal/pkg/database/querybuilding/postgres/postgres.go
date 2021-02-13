@@ -25,8 +25,11 @@ const (
 	allCountQuery = `COUNT(*)`
 	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
 	jsonPluckQuery = `%s.%s->'%s'`
+)
+
+var (
 	// currentUnixTimeQuery is the query postgres uses to determine the current unix time.
-	currentUnixTimeQuery = `extract(epoch FROM NOW())`
+	currentUnixTimeQuery = squirrel.Expr(`extract(epoch FROM NOW())`)
 )
 
 var _ database.SQLQueryBuilder = (*Postgres)(nil)

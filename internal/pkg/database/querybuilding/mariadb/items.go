@@ -148,7 +148,7 @@ func (q *MariaDB) BuildUpdateItemQuery(input *types.Item) (query string, args []
 		Update(querybuilding.ItemsTableName).
 		Set(querybuilding.ItemsTableNameColumn, input.Name).
 		Set(querybuilding.ItemsTableDetailsColumn, input.Details).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                      input.ID,
 			querybuilding.ArchivedOnColumn:              nil,
@@ -161,8 +161,8 @@ func (q *MariaDB) BuildUpdateItemQuery(input *types.Item) (query string, args []
 func (q *MariaDB) BuildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.ItemsTableName).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                      itemID,
 			querybuilding.ArchivedOnColumn:              nil,

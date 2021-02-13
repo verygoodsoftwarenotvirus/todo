@@ -26,13 +26,14 @@ const (
 	allCountQuery = `COUNT(*)`
 	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
 	jsonPluckQuery = `json_extract(%s.%s, '$.%s')`
-	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
-	currentUnixTimeQuery = `(strftime('%s','now'))`
 )
 
 var (
-	_ database.SQLQueryBuilder = (*Sqlite)(nil)
+	// currentUnixTimeQuery is the query sqlite uses to determine the current unix time.
+	currentUnixTimeQuery = squirrel.Expr(`(strftime('%s','now'))`)
 )
+
+var _ database.SQLQueryBuilder = (*Sqlite)(nil)
 
 type (
 	// Sqlite is our main Sqlite interaction db.

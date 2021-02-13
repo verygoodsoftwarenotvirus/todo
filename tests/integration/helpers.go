@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -66,8 +67,6 @@ func runTestForClientAndCookie(ctx context.Context, t *testing.T, testName strin
 func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {
 	t.Helper()
 
-	require.Len(t, actualEntries, len(expectedEntries))
-
 	expectedEventTypes := []string{}
 	for _, e := range expectedEntries {
 		expectedEventTypes = append(expectedEventTypes, e.EventType)
@@ -78,10 +77,13 @@ func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*typ
 		actualEventTypes = append(actualEventTypes, e.EventType)
 
 		if relevantID != 0 && key != "" {
-			require.Contains(t, e.Context, key)
-			assert.EqualValues(t, relevantID, e.Context[key])
+			if assert.Contains(t, e.Context, key) {
+				assert.EqualValues(t, relevantID, e.Context[key])
+			}
 		}
 	}
+
+	assert.Equal(t, len(actualEntries), len(expectedEntries), "expected %q, got %q", strings.Join(expectedEventTypes, ","), strings.Join(actualEventTypes, ","))
 
 	assert.Subset(t, expectedEventTypes, actualEventTypes)
 }

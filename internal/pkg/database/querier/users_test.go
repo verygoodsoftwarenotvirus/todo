@@ -1093,15 +1093,23 @@ func TestClient_ArchiveUser(T *testing.T) {
 
 		db.ExpectBegin()
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		fakeArchiveQuery, fakeArchiveArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.UserSQLQueryBuilder.On("BuildArchiveUserQuery", exampleUser.ID).
-			Return(fakeQuery, fakeArgs)
+			Return(fakeArchiveQuery, fakeArchiveArgs)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(fakeArchiveQuery)).
+			WithArgs(interfaceToDriverValue(fakeArchiveArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+
+		fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On("BuildArchiveAccountMembershipsForUserQuery", exampleUser.ID).
+			Return(fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeArchiveMembershipsQuery)).
+			WithArgs(interfaceToDriverValue(fakeArchiveMembershipsArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
 
 		db.ExpectCommit()
 

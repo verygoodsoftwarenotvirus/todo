@@ -25,8 +25,11 @@ const (
 	allCountQuery = `COUNT(*)`
 	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
 	jsonPluckQuery = `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
+)
+
+var (
 	// currentUnixTimeQuery is the query maria DB uses to determine the current unix time.
-	currentUnixTimeQuery = `UNIX_TIMESTAMP()`
+	currentUnixTimeQuery = squirrel.Expr(`UNIX_TIMESTAMP()`)
 )
 
 var _ database.SQLQueryBuilder = (*MariaDB)(nil)

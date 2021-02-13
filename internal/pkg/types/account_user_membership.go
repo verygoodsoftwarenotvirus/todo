@@ -40,12 +40,13 @@ type (
 
 	// AccountUserMembershipSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	AccountUserMembershipSQLQueryBuilder interface {
+		BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{})
+		BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{})
 		BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildAddUserToAccountQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{})
 	}
 
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
@@ -54,6 +55,5 @@ type (
 		UserIsMemberOfAccount(ctx context.Context, userID, accountID, performedBy uint64) error
 		AddUserToAccount(ctx context.Context, userID, accountID, performedBy uint64) error
 		RemoveUserFromAccount(ctx context.Context, userID, accountID, performedBy uint64) error
-		GetAuditLogEntriesForAccountUserMembership(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
 	}
 )

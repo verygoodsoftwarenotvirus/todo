@@ -11,6 +11,30 @@ import (
 
 var _ types.AccountUserMembershipSQLQueryBuilder = (*Postgres)(nil)
 
+// BuildArchiveAccountMembershipsForUserQuery does .
+func (q *Postgres) BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
+		Where(squirrel.Eq{
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                               nil,
+		}),
+	)
+}
+
+// BuildGetAccountMembershipsForUserQuery does .
+func (q *Postgres) BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	return q.buildListQuery(
+		querybuilding.AccountsUserMembershipTableName,
+		querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
+		querybuilding.AccountsUserMembershipTableColumns,
+		userID,
+		false,
+		nil,
+	)
+}
+
 // BuildCreateMembershipForNewUserQuery builds a query that .
 func (q *Postgres) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
@@ -26,11 +50,6 @@ func (q *Postgres) BuildCreateMembershipForNewUserQuery(userID, accountID uint64
 	)
 }
 
-// BuildGetAuditLogEntriesForAccountUserMembershipQuery builds a query that .
-func (q *Postgres) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
-	return "", nil
-}
-
 // BuildMarkAccountAsUserDefaultQuery builds a query that marks a user's account as their primary.
 func (q *Postgres) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
@@ -41,9 +60,7 @@ func (q *Postgres) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) 
 		}).
 		Where(squirrel.Eq{
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
-		}).
-		Where(squirrel.NotEq{
-			querybuilding.ArchivedOnColumn: nil,
+			querybuilding.ArchivedOnColumn:                               nil,
 		}),
 	)
 }

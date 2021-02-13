@@ -13,6 +13,20 @@ type AccountUserMembershipSQLQueryBuilder struct {
 	mock.Mock
 }
 
+// BuildArchiveAccountMembershipsForUserQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(userID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
+// BuildGetAccountMembershipsForUserQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(userID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
 // BuildMarkAccountAsUserDefaultQuery implements our interface.
 func (m *AccountUserMembershipSQLQueryBuilder) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(userID, accountID)

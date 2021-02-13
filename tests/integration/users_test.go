@@ -64,8 +64,6 @@ func TestUsers(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
-
 			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
 			require.NoError(t, err)
 
@@ -73,9 +71,10 @@ func TestUsers(test *testing.T) {
 				{EventType: audit.UserCreationEvent},
 				{EventType: audit.AccountCreationEvent},
 				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.UserArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
+
+			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
 		})
 	})
 

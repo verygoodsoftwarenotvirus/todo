@@ -16,6 +16,30 @@ func (q *MariaDB) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (
 	panic("implement me")
 }
 
+// BuildArchiveAccountMembershipsForUserQuery does .
+func (q *MariaDB) BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
+		Where(squirrel.Eq{
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                               nil,
+		}),
+	)
+}
+
+// BuildGetAccountMembershipsForUserQuery does .
+func (q *MariaDB) BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+	return q.buildListQuery(
+		querybuilding.AccountsUserMembershipTableName,
+		querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
+		querybuilding.AccountsUserMembershipTableColumns,
+		userID,
+		false,
+		nil,
+	)
+}
+
 // BuildCreateMembershipForNewUserQuery builds a query that .
 func (q *MariaDB) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
@@ -51,9 +75,7 @@ func (q *MariaDB) BuildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (
 		}).
 		Where(squirrel.Eq{
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
-		}).
-		Where(squirrel.NotEq{
-			querybuilding.ArchivedOnColumn: nil,
+			querybuilding.ArchivedOnColumn:                               nil,
 		}),
 	)
 }

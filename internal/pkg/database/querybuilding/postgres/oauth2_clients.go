@@ -131,8 +131,8 @@ func (q *Postgres) BuildCreateOAuth2ClientQuery(input *types.OAuth2ClientCreatio
 func (q *Postgres) BuildArchiveOAuth2ClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	query, args, err := q.sqlBuilder.
 		Update(querybuilding.OAuth2ClientsTableName).
-		Set(querybuilding.LastUpdatedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
-		Set(querybuilding.ArchivedOnColumn, squirrel.Expr(currentUnixTimeQuery)).
+		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
+		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                          clientID,
 			querybuilding.OAuth2ClientsTableOwnershipColumn: userID,

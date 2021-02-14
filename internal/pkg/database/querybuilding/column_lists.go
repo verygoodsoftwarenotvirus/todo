@@ -29,10 +29,10 @@ var (
 	// AccountsUserMembershipTableColumns are the columns for the items table.
 	AccountsUserMembershipTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, IDColumn),
-		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, userOwnershipColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, accountOwnershipColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableUserPermissionsColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTablePrimaryUserAccountColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, ArchivedOnColumn),
 	}
@@ -70,7 +70,6 @@ var (
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTablePasswordLastChangedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorSekretColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorVerifiedOnColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableIsAdminColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAdminPermissionsColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableReputationColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableStatusExplanationColumn),

@@ -60,8 +60,8 @@ const (
 	AccountsUserMembershipTableAccountOwnershipColumn = accountOwnershipColumn
 	// AccountsUserMembershipTableUserOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsUserMembershipTableUserOwnershipColumn = userOwnershipColumn
-	// AccountsUserMembershipTablePrimaryUserAccountColumn is DEPRECATED.
-	AccountsUserMembershipTablePrimaryUserAccountColumn = "is_primary_user_account"
+	// AccountsUserMembershipTablePrimaryUserAccountColumn is what the accounts membership table calls the .
+	AccountsUserMembershipTablePrimaryUserAccountColumn = "default_account"
 
 	//
 	// AccountSubscriptionPlans Table.
@@ -98,8 +98,6 @@ const (
 	UsersTableTwoFactorSekretColumn = "two_factor_secret"
 	// UsersTableTwoFactorVerifiedOnColumn is what the users table calls the <> column.
 	UsersTableTwoFactorVerifiedOnColumn = "two_factor_secret_verified_on"
-	// UsersTableIsAdminColumn is what the users table calls the <> column.
-	UsersTableIsAdminColumn = "is_site_admin"
 	// UsersTableAdminPermissionsColumn is what the users table calls the <> column.
 	UsersTableAdminPermissionsColumn = "site_admin_permissions"
 	// UsersTableReputationColumn is what the users table calls the <> column.

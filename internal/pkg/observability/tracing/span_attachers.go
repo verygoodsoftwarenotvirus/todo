@@ -68,9 +68,9 @@ func AttachPlanIDToSpan(span trace.Span, planID uint64) {
 }
 
 // AttachSessionInfoToSpan provides a consistent way to attach a SessionInfo object to a span.
-func AttachSessionInfoToSpan(span trace.Span, userID uint64, userIsSiteAdmin bool) {
+func AttachSessionInfoToSpan(span trace.Span, userID uint64, userIsServiceAdmin bool) {
 	attachUint64ToSpan(span, keys.UserIDKey, userID)
-	attachBooleanToSpan(span, keys.UserIsAdminKey, userIsSiteAdmin)
+	attachBooleanToSpan(span, keys.UserIsAdminKey, userIsServiceAdmin)
 }
 
 // AttachDelegatedClientIDToSpan is a consistent way to attach an oauth2 client's ID to a span.

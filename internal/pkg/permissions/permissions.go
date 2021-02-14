@@ -1,14 +1,15 @@
 package permissions
 
-// SiteAdminPermissionChecker returns whether or not a given permission applies to a user.
-type SiteAdminPermissionChecker interface {
+// ServiceAdminPermissionChecker returns whether or not a given permission applies to a user.
+type ServiceAdminPermissionChecker interface {
+	IsServiceAdmin() bool
 	CanCycleCookieSecrets() bool
 	CanBanUsers() bool
 	CanTerminateAccounts() bool
 }
 
-// SiteAdminPermissionsSummary summarizes a user's permissions.
-type SiteAdminPermissionsSummary struct {
+// ServiceAdminPermissionsSummary summarizes a user's permissions.
+type ServiceAdminPermissionsSummary struct {
 	CanCycleCookieSecrets bool `json:"canCycleCookieSecret"`
 	CanBanUsers           bool `json:"canBanUsers"`
 	CanTerminateAccounts  bool `json:"canTerminateAccounts"`

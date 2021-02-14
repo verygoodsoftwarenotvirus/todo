@@ -53,10 +53,10 @@ func TestClient_LogUserBanEvent(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
-		exampleSiteAdmin := fakes.BuildFakeUser()
+		exampleServiceAdmin := fakes.BuildFakeUser()
 		exampleUser := fakes.BuildFakeUser()
 		exampleReason := "smells bad"
-		exampleAuditLogEntry := audit.BuildUserBanEventEntry(exampleSiteAdmin.ID, exampleUser.ID, exampleReason)
+		exampleAuditLogEntry := audit.BuildUserBanEventEntry(exampleServiceAdmin.ID, exampleUser.ID, exampleReason)
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -65,7 +65,7 @@ func TestClient_LogUserBanEvent(T *testing.T) {
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		c.LogUserBanEvent(ctx, exampleSiteAdmin.ID, exampleUser.ID, exampleReason)
+		c.LogUserBanEvent(ctx, exampleServiceAdmin.ID, exampleUser.ID, exampleReason)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -77,10 +77,10 @@ func TestClient_LogAccountTerminationEvent(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
-		exampleSiteAdmin := fakes.BuildFakeUser()
+		exampleServiceAdmin := fakes.BuildFakeUser()
 		exampleUser := fakes.BuildFakeUser()
 		exampleReason := "smells bad"
-		exampleAuditLogEntry := audit.BuildAccountTerminationEventEntry(exampleSiteAdmin.ID, exampleUser.ID, exampleReason)
+		exampleAuditLogEntry := audit.BuildAccountTerminationEventEntry(exampleServiceAdmin.ID, exampleUser.ID, exampleReason)
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -89,7 +89,7 @@ func TestClient_LogAccountTerminationEvent(T *testing.T) {
 		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		c.LogAccountTerminationEvent(ctx, exampleSiteAdmin.ID, exampleUser.ID, exampleReason)
+		c.LogAccountTerminationEvent(ctx, exampleServiceAdmin.ID, exampleUser.ID, exampleReason)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

@@ -17,17 +17,17 @@ const (
 type (
 	// DelegatedClient represents a User-authorized API client.
 	DelegatedClient struct {
-		ID                     uint64                       `json:"id"`
-		ExternalID             string                       `json:"externalID"`
-		Name                   string                       `json:"name"`
-		ClientID               string                       `json:"clientID"`
-		ClientSecret           string                       `json:"clientSecret"`
-		AccountUserPermissions bitmask.SiteUserPermissions  `json:"siteUserPermissions"`
-		SiteAdminPermissions   bitmask.SiteAdminPermissions `json:"siteAdminPermissions"`
-		CreatedOn              uint64                       `json:"createdOn"`
-		LastUpdatedOn          *uint64                      `json:"lastUpdatedOn"`
-		ArchivedOn             *uint64                      `json:"archivedOn"`
-		BelongsToUser          uint64                       `json:"belongsToUser"`
+		ID                      uint64                          `json:"id"`
+		ExternalID              string                          `json:"externalID"`
+		Name                    string                          `json:"name"`
+		ClientID                string                          `json:"clientID"`
+		ClientSecret            string                          `json:"clientSecret"`
+		AccountUserPermissions  bitmask.ServiceUserPermissions  `json:"siteUserPermissions"`
+		ServiceAdminPermissions bitmask.ServiceAdminPermissions `json:"ServiceAdminPermissions"`
+		CreatedOn               uint64                          `json:"createdOn"`
+		LastUpdatedOn           *uint64                         `json:"lastUpdatedOn"`
+		ArchivedOn              *uint64                         `json:"archivedOn"`
+		BelongsToUser           uint64                          `json:"belongsToUser"`
 	}
 
 	// DelegatedClientList is a response struct containing a list of DelegatedClients.

@@ -104,7 +104,7 @@ linters-settings:
     local-prefixes: gitlab.com/verygoodsoftwarenotvirus/todo
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 15
+    min-complexity: 20
   gosec:
     exclude:
       - G304
@@ -291,12 +291,17 @@ issues:
     - path: mock_.*\.go
       linters:
         - lll
+        - mnd
 
     - path: internal/pkg/types/
       linters:
         - gocyclo # the update funcs can have very high cyclomatic complexities
 
     - path: internal/pkg/types/fakes
+      linters:
+        - gomnd
+
+    - path: internal/pkg/types/mock
       linters:
         - gomnd
 

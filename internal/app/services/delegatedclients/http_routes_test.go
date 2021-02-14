@@ -58,7 +58,7 @@ func Test_fetchUserID(T *testing.T) {
 
 		// for the service.fetchUserID() call
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		s := buildTestService(t)
 
@@ -107,7 +107,7 @@ func TestService_ListHandler(T *testing.T) {
 		req := buildRequest(t)
 		// for the service.fetchUserID() call
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -138,7 +138,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -169,7 +169,7 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -233,7 +233,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -288,7 +288,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -342,7 +342,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -396,7 +396,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -450,7 +450,7 @@ func TestService_CreateHandler(T *testing.T) {
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -493,7 +493,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -530,7 +530,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -567,7 +567,7 @@ func TestService_ReadHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -610,7 +610,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -647,7 +647,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 
@@ -684,7 +684,7 @@ func TestService_ArchiveHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, exampleUser.ToSessionInfo()),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
 		)
 		res := httptest.NewRecorder()
 

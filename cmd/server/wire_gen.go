@@ -55,13 +55,14 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
+	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
 	cookieConfig := authConfig.Cookies
 	configConfig := cfg.Database
 	sessionManager, err := config2.ProvideSessionManager(cookieConfig, configConfig, db)
 	if err != nil {
 		return nil, err
 	}
-	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, oAuth2ClientDataService, sessionManager, encoderDecoder, routeParamManager)
+	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, oAuth2ClientDataService, accountUserMembershipDataManager, sessionManager, encoderDecoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}

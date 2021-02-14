@@ -112,7 +112,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	if input.Database.CreateTestUser != nil {
 		cfg.Set(ConfigKeyDatabaseCreateTestUserUsername, input.Database.CreateTestUser.Username)
 		cfg.Set(ConfigKeyDatabaseCreateTestUserPassword, input.Database.CreateTestUser.Password)
-		cfg.Set(ConfigKeyDatabaseCreateTestUserIsSiteAdmin, input.Database.CreateTestUser.IsSiteAdmin)
+		cfg.Set(ConfigKeyDatabaseCreateTestUserIsServiceAdmin, input.Database.CreateTestUser.IsServiceAdmin)
 		cfg.Set(ConfigKeyDatabaseCreateTestUserHashedPassword, input.Database.CreateTestUser.HashedPassword)
 	}
 

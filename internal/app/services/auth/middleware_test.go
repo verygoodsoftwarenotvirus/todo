@@ -127,7 +127,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)))
 
 		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
@@ -215,7 +215,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)))
 
 		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
@@ -249,7 +249,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)))
 
 		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
@@ -278,7 +278,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)))
 
 		s.AuthorizationMiddleware(h).ServeHTTP(res, req)
 
@@ -301,7 +301,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, exampleUser.ToSessionInfo()))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)))
 
 		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
 
@@ -474,14 +474,14 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.IsSiteAdmin = true
+		exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
 
 		res := httptest.NewRecorder()
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
 				types.SessionInfoKey,
-				exampleUser.ToSessionInfo(),
+				types.SessionInfoFromUser(exampleUser),
 			),
 		)
 
@@ -526,14 +526,14 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NotNil(t, req)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.IsSiteAdmin = false
+		exampleUser.ServiceAdminPermissions = testutil.BuildNoAdminPerms()
 
 		res := httptest.NewRecorder()
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
 				types.SessionInfoKey,
-				exampleUser.ToSessionInfo(),
+				types.SessionInfoFromUser(exampleUser),
 			),
 		)
 

@@ -24,7 +24,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return exampleUser.ToSessionInfo(), nil
+		return types.SessionInfoFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return exampleUser.ToSessionInfo(), nil
+		return types.SessionInfoFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

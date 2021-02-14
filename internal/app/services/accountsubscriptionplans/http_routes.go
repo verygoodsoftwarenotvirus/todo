@@ -33,7 +33,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	plans, err := s.planDataManager.GetAccountSubscriptionPlans(ctx, filter)
@@ -74,7 +74,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// create plan in database.
@@ -115,7 +115,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.
@@ -160,7 +160,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.
@@ -207,7 +207,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.
@@ -248,7 +248,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine plan ID.

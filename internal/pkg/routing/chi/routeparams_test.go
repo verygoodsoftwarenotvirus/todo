@@ -39,7 +39,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		expected := fakes.BuildFakeUser().ToSessionInfo()
+		expected := types.SessionInfoFromUser(fakes.BuildFakeUser())
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -70,7 +70,7 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		expected := fakes.BuildFakeUser().ToSessionInfo()
+		expected := types.SessionInfoFromUser(fakes.BuildFakeUser())
 
 		req := buildRequest(t)
 		req = req.WithContext(

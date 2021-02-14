@@ -45,23 +45,22 @@ type (
 
 	// User represents a User.
 	User struct {
-		Salt                      []byte                       `json:"-"`
-		Username                  string                       `json:"username"`
-		HashedPassword            string                       `json:"-"`
-		TwoFactorSecret           string                       `json:"-"`
-		AccountStatus             userReputation               `json:"accountStatus"`
-		AccountStatusExplanation  string                       `json:"accountStatusExplanation"`
-		ID                        uint64                       `json:"id"`
-		ExternalID                string                       `json:"externalID"`
-		PasswordLastChangedOn     *uint64                      `json:"passwordLastChangedOn"`
-		TwoFactorSecretVerifiedOn *uint64                      `json:"-"`
-		CreatedOn                 uint64                       `json:"createdOn"`
-		LastUpdatedOn             *uint64                      `json:"lastUpdatedOn"`
-		ArchivedOn                *uint64                      `json:"archivedOn"`
-		SiteAdminPermissions      bitmask.SiteAdminPermissions `json:"siteAdminPermissions"`
-		IsSiteAdmin               bool                         `json:"isSiteAdmin"`
-		RequiresPasswordChange    bool                         `json:"requiresPasswordChange"`
-		AvatarSrc                 *string                      `json:"avatar"`
+		Salt                      []byte                          `json:"-"`
+		Username                  string                          `json:"username"`
+		HashedPassword            string                          `json:"-"`
+		TwoFactorSecret           string                          `json:"-"`
+		AccountStatus             userReputation                  `json:"accountStatus"`
+		AccountStatusExplanation  string                          `json:"accountStatusExplanation"`
+		ID                        uint64                          `json:"id"`
+		ExternalID                string                          `json:"externalID"`
+		PasswordLastChangedOn     *uint64                         `json:"passwordLastChangedOn"`
+		TwoFactorSecretVerifiedOn *uint64                         `json:"-"`
+		CreatedOn                 uint64                          `json:"createdOn"`
+		LastUpdatedOn             *uint64                         `json:"lastUpdatedOn"`
+		ArchivedOn                *uint64                         `json:"archivedOn"`
+		ServiceAdminPermissions   bitmask.ServiceAdminPermissions `json:"serviceAdminPermissions"`
+		RequiresPasswordChange    bool                            `json:"requiresPasswordChange"`
+		AvatarSrc                 *string                         `json:"avatar"`
 	}
 
 	// TestUserCreationConfig is a helper struct because of cyclical imports.
@@ -72,8 +71,8 @@ type (
 		Password string `json:"password" mapstructure:"password" toml:"password,omitempty"`
 		// HashedPassword is the hashed form of the above authentication.
 		HashedPassword string `json:"hashed_password" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
-		// IsSiteAdmin defines our test user's admin status we create in the event we create them.
-		IsSiteAdmin bool `json:"is_site_admin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
+		// IsServiceAdmin defines our test user's admin status we create in the event we create them.
+		IsServiceAdmin bool `json:"is_site_admin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
 	}
 
 	// UserList represents a list of users.
@@ -222,24 +221,22 @@ func (u *User) Update(input *User) {
 	}
 }
 
-// ToSessionInfo produces a SessionInfo object from a User's data.
-func (u *User) ToSessionInfo() *SessionInfo {
+// SessionInfoFromUser produces a SessionInfo object from a User's data.
+func SessionInfoFromUser(user *User) *SessionInfo {
 	return &SessionInfo{
-		Username:          u.Username,
-		UserID:            u.ID,
-		UserIsSiteAdmin:   u.IsSiteAdmin,
-		UserAccountStatus: u.AccountStatus,
-		AdminPermissions:  u.SiteAdminPermissions,
+		UserID:                  user.ID,
+		Username:                user.Username,
+		UserAccountStatus:       user.AccountStatus,
+		ServiceAdminPermissions: user.ServiceAdminPermissions,
 	}
 }
 
 // ToStatusResponse produces a UserStatusResponse object from a User's data.
 func (u *User) ToStatusResponse() *UserStatusResponse {
 	return &UserStatusResponse{
-		UserIsAdmin:              u.IsSiteAdmin,
 		UserAccountStatus:        u.AccountStatus,
 		AccountStatusExplanation: u.AccountStatusExplanation,
-		AdminPermissions:         u.SiteAdminPermissions.SiteAdminPermissionsSummary(),
+		ServiceAdminPermissions:  u.ServiceAdminPermissions.ServiceAdminPermissionsSummary(),
 	}
 }
 

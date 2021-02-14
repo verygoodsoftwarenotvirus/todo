@@ -30,13 +30,13 @@ func (q *MariaDB) BuildArchiveAccountMembershipsForUserQuery(userID uint64) (que
 
 // BuildGetAccountMembershipsForUserQuery does .
 func (q *MariaDB) BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
-	return q.buildListQuery(
-		querybuilding.AccountsUserMembershipTableName,
-		querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
-		querybuilding.AccountsUserMembershipTableColumns,
-		userID,
-		false,
-		nil,
+	return q.buildQuery(q.sqlBuilder.
+		Select(querybuilding.AccountsUserMembershipTableColumns...).
+		From(querybuilding.AccountsUserMembershipTableName).
+		Where(squirrel.Eq{
+			querybuilding.ArchivedOnColumn:                               nil,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+		}),
 	)
 }
 

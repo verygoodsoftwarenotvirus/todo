@@ -70,10 +70,9 @@ func TestAuth(test *testing.T) {
 
 		expected := &types.UserStatusResponse{
 			UserIsAuthenticated:      true,
-			UserIsAdmin:              false,
 			UserAccountStatus:        types.GoodStandingAccountStatus,
 			AccountStatusExplanation: "",
-			AdminPermissions:         nil,
+			ServiceAdminPermissions:  nil,
 		}
 
 		assert.Equal(t, expected, actual)

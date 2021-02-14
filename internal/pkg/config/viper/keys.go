@@ -84,8 +84,8 @@ const (
 	ConfigKeyDatabaseCreateTestUserUsername = databaseKey + x + createTestUserKey + x + "username"
 	// ConfigKeyDatabaseCreateTestUserPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.Password setting.
 	ConfigKeyDatabaseCreateTestUserPassword = databaseKey + x + createTestUserKey + x + "password"
-	// ConfigKeyDatabaseCreateTestUserIsSiteAdmin is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.IsSiteAdmin setting.
-	ConfigKeyDatabaseCreateTestUserIsSiteAdmin = databaseKey + x + createTestUserKey + x + "is_site_admin"
+	// ConfigKeyDatabaseCreateTestUserIsServiceAdmin is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.IsServiceAdmin setting.
+	ConfigKeyDatabaseCreateTestUserIsServiceAdmin = databaseKey + x + createTestUserKey + x + "is_site_admin"
 	// ConfigKeyDatabaseCreateTestUserHashedPassword is the key viper will use to refer to the DatabaseSettings.CreateTestUserConfig.HashedPassword setting.
 	ConfigKeyDatabaseCreateTestUserHashedPassword = databaseKey + x + createTestUserKey + x + "hashed_password"
 	// ConfigKeyDatabaseRunMigrations is the key viper will use to refer to the DatabaseSettings.RunMigrations setting.

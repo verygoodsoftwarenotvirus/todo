@@ -16,10 +16,10 @@ func TestUser_JSONUnmarshal(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		exampleInput := User{
-			Username:             "new_username",
-			HashedPassword:       "updated_hashed_pass",
-			TwoFactorSecret:      "new fancy secret",
-			SiteAdminPermissions: bitmask.NewSiteAdminPermissions(123),
+			Username:                "new_username",
+			HashedPassword:          "updated_hashed_pass",
+			TwoFactorSecret:         "new fancy secret",
+			ServiceAdminPermissions: bitmask.NewServiceAdminPermissions(123),
 		}
 
 		jsonBytes, err := json.Marshal(&exampleInput)
@@ -57,18 +57,16 @@ func TestUser_ToSessionInfo(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleInput := User{
-			ID:                   12345,
-			IsSiteAdmin:          true,
-			SiteAdminPermissions: bitmask.NewSiteAdminPermissions(1),
+		exampleInput := &User{
+			ID:                      12345,
+			ServiceAdminPermissions: bitmask.NewServiceAdminPermissions(1),
 		}
 
 		expected := &SessionInfo{
-			UserID:           exampleInput.ID,
-			UserIsSiteAdmin:  exampleInput.IsSiteAdmin,
-			AdminPermissions: exampleInput.SiteAdminPermissions,
+			UserID:                  exampleInput.ID,
+			ServiceAdminPermissions: exampleInput.ServiceAdminPermissions,
 		}
-		actual := exampleInput.ToSessionInfo()
+		actual := SessionInfoFromUser(exampleInput)
 
 		assert.Equal(t, expected, actual)
 	})

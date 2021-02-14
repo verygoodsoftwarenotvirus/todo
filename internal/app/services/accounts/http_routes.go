@@ -43,20 +43,20 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := si.UserIsSiteAdmin && adminQueryPresent
+	isAdminRequest := si.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		accounts *types.AccountList
 		err      error
 	)
 
-	if si.UserIsSiteAdmin && isAdminRequest {
+	if si.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
 	} else {
 		accounts, err = s.accountDataManager.GetAccounts(ctx, si.UserID, filter)
@@ -97,7 +97,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 	input.BelongsToUser = si.UserID
 
@@ -132,7 +132,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine account ID.
@@ -177,7 +177,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 	input.BelongsToUser = si.UserID
 
@@ -225,7 +225,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine account ID.
@@ -266,7 +266,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.UserIsSiteAdmin)
+	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine account ID.

@@ -124,6 +124,11 @@ func (q *Postgres) BuildGetUsersQuery(filter *types.QueryFilter) (query string, 
 
 // BuildTestUserCreationQuery returns a SQL query (and arguments) that would create a test user.
 func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
+	perms := 0
+	if testUserConfig.IsServiceAdmin {
+		perms = math.MaxUint32
+	}
+
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
@@ -132,7 +137,6 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
 			querybuilding.UsersTableTwoFactorSekretColumn,
-			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableReputationColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
 			querybuilding.UsersTableTwoFactorVerifiedOnColumn,
@@ -143,9 +147,8 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 			testUserConfig.HashedPassword,
 			querybuilding.DefaultTestUserSalt,
 			querybuilding.DefaultTestUserTwoFactorSecret,
-			testUserConfig.IsSiteAdmin,
 			types.GoodStandingAccountStatus,
-			math.MaxUint32,
+			perms,
 			currentUnixTimeQuery,
 		).
 		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
@@ -167,7 +170,6 @@ func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) 
 			querybuilding.UsersTableSaltColumn,
 			querybuilding.UsersTableTwoFactorSekretColumn,
 			querybuilding.UsersTableReputationColumn,
-			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
 		).
 		Values(
@@ -177,7 +179,6 @@ func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) 
 			input.Salt,
 			input.TwoFactorSecret,
 			types.UnverifiedAccountStatus,
-			false,
 			0,
 		).
 		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),

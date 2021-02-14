@@ -139,7 +139,7 @@ func TestClient_Migrate(T *testing.T) {
 			Username:       exampleUser.Username,
 			Password:       exampleUser.HashedPassword,
 			HashedPassword: exampleUser.HashedPassword,
-			IsSiteAdmin:    true,
+			IsServiceAdmin: true,
 		}
 
 		ctx := context.Background()
@@ -239,7 +239,7 @@ func TestClient_Migrate(T *testing.T) {
 			Username:       exampleUser.Username,
 			Password:       exampleUser.HashedPassword,
 			HashedPassword: exampleUser.HashedPassword,
-			IsSiteAdmin:    true,
+			IsServiceAdmin: true,
 		}
 
 		ctx := context.Background()

@@ -36,7 +36,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	require.NoError(t, s.sessionManager.RenewToken(ctx))
 
 	// Then make the privilege-level change.
-	s.sessionManager.Put(ctx, sessionInfoKey, user.ToSessionInfo())
+	s.sessionManager.Put(ctx, sessionInfoKey, types.SessionInfoFromUser(user))
 
 	token, _, err := s.sessionManager.Commit(ctx)
 	assert.NotEmpty(t, token)
@@ -60,7 +60,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -129,7 +129,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -176,7 +176,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -210,9 +210,14 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+
+		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
+			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		}
 
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -238,6 +243,14 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.Anything,
+			exampleUser.ID,
+		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		s.accountMembershipManager = membershipDB
+
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogSuccessfulLoginEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
 		s.auditLog = auditLog
@@ -252,7 +265,7 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Equal(t, http.StatusAccepted, res.Code)
 		assert.NotEmpty(t, res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, udb, authr, auditLog)
+		mock.AssertExpectationsForObjects(t, udb, authr, auditLog, membershipDB)
 	})
 
 	T.Run("with error fetching login data from request", func(t *testing.T) {
@@ -280,7 +293,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -316,7 +329,7 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleUser.AccountStatusExplanation = "bad behavior"
 
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -355,7 +368,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -406,7 +419,7 @@ func TestService_LoginHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -452,8 +465,14 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+
+		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
+			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		}
+
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -488,6 +507,14 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.Anything,
+			exampleUser.ID,
+		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		s.accountMembershipManager = membershipDB
+
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
@@ -498,7 +525,7 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, cb, udb, authr)
+		mock.AssertExpectationsForObjects(t, cb, udb, authr, membershipDB)
 	})
 
 	T.Run("with error building cookie and error encoding cookie response", func(t *testing.T) {
@@ -508,8 +535,14 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+
+		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
+			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		}
+
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -543,6 +576,14 @@ func TestService_LoginHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = authr
 
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.Anything,
+			exampleUser.ID,
+		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		s.accountMembershipManager = membershipDB
+
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
 		require.NoError(t, err)
@@ -553,7 +594,7 @@ func TestService_LoginHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 		assert.Empty(t, res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, cb, udb, authr)
+		mock.AssertExpectationsForObjects(t, cb, udb, authr, membershipDB)
 	})
 }
 
@@ -568,7 +609,7 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -599,7 +640,7 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		ctx, sessionErr := s.sessionManager.Load(ctx, "")
@@ -607,7 +648,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		require.NoError(t, s.sessionManager.RenewToken(ctx))
 
 		// Then make the privilege-level change.
-		s.sessionManager.Put(ctx, sessionInfoKey, exampleUser.ToSessionInfo())
+		s.sessionManager.Put(ctx, sessionInfoKey, types.SessionInfoFromUser(exampleUser))
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
@@ -627,7 +668,7 @@ func TestService_LogoutHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -659,7 +700,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -690,7 +731,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -737,7 +778,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -775,7 +816,7 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -821,7 +862,7 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -852,7 +893,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -887,7 +928,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -919,7 +960,7 @@ func TestService_StatusHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -954,9 +995,9 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.SiteAdminPermissions = bitmask.NewSiteAdminPermissions(math.MaxUint32)
+		exampleUser.ServiceAdminPermissions = bitmask.NewServiceAdminPermissions(math.MaxUint32)
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1018,7 +1059,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return exampleUser.ToSessionInfo(), nil
+			return types.SessionInfoFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()

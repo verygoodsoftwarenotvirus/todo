@@ -10,7 +10,6 @@ import (
 func BuildFakeAccountUserMembership() *types.AccountUserMembership {
 	return &types.AccountUserMembership{
 		ID:               uint64(fake.Uint32()),
-		ExternalID:       fake.UUID(),
 		BelongsToUser:    fake.Uint64(),
 		BelongsToAccount: fake.Uint64(),
 		UserPermissions:  0,

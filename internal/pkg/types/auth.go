@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 )
 
 const (
@@ -21,20 +22,20 @@ func init() {
 type (
 	// SessionInfo represents what we encode in our authentication cookies.
 	SessionInfo struct {
-		Username          string
-		UserID            uint64                                 `json:"-"`
-		UserIsSiteAdmin   bool                                   `json:"-"`
-		UserAccountStatus userReputation                         `json:"-"`
-		AdminPermissions  permissions.SiteAdminPermissionChecker `json:"-"`
+		Username                string
+		UserID                  uint64                                    `json:"-"`
+		ActiveAccount           uint64                                    `json:"-"`
+		UserAccountStatus       userReputation                            `json:"-"`
+		AccountPermissionsMap   map[uint64]bitmask.ServiceUserPermissions `json:"-"`
+		ServiceAdminPermissions permissions.ServiceAdminPermissionChecker `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		UserIsAuthenticated      bool                                     `json:"isAuthenticated"`
-		UserIsAdmin              bool                                     `json:"isAdmin"`
-		UserAccountStatus        userReputation                           `json:"accountStatus,omitempty"`
-		AccountStatusExplanation string                                   `json:"statusExplanation,omitempty"`
-		AdminPermissions         *permissions.SiteAdminPermissionsSummary `json:"permissions,omitempty"`
+		UserIsAuthenticated      bool                                        `json:"isAuthenticated"`
+		UserAccountStatus        userReputation                              `json:"accountStatus,omitempty"`
+		AccountStatusExplanation string                                      `json:"statusExplanation,omitempty"`
+		ServiceAdminPermissions  *permissions.ServiceAdminPermissionsSummary `json:"permissions,omitempty"`
 	}
 
 	// AuthService describes a structure capable of handling authentication and authorization requests.

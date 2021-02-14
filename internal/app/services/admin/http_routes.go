@@ -37,7 +37,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	if !si.UserIsSiteAdmin {
+	if !si.ServiceAdminPermissions.IsServiceAdmin() {
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -48,9 +48,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		allowed = si.AdminPermissions.CanBanUsers()
+		allowed = si.ServiceAdminPermissions.CanBanUsers()
 	case types.TerminatedAccountStatus:
-		allowed = si.AdminPermissions.CanTerminateAccounts()
+		allowed = si.ServiceAdminPermissions.CanTerminateAccounts()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 

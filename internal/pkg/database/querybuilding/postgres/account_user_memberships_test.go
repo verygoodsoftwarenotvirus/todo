@@ -38,10 +38,8 @@ func TestPostgres_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.external_id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.user_account_permissions, account_user_memberships.created_on, account_user_memberships.archived_on, (SELECT COUNT(account_user_memberships.id) FROM account_user_memberships WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = $1) as total_count, (SELECT COUNT(account_user_memberships.id) FROM account_user_memberships WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = $2) as filtered_count FROM account_user_memberships WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = $3 GROUP BY account_user_memberships.id"
+		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.archived_on FROM account_user_memberships WHERE archived_on IS NULL AND belongs_to_user = $1"
 		expectedArgs := []interface{}{
-			exampleUser.ID,
-			exampleUser.ID,
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := q.BuildGetAccountMembershipsForUserQuery(exampleUser.ID)
@@ -62,7 +60,7 @@ func TestPostgres_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "UPDATE account_user_memberships SET is_primary_user_account = (belongs_to_user = $1 AND belongs_to_account = $2) WHERE archived_on IS NULL AND belongs_to_user = $3"
+		expectedQuery := "UPDATE account_user_memberships SET default_account = (belongs_to_user = $1 AND belongs_to_account = $2) WHERE archived_on IS NULL AND belongs_to_user = $3"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,

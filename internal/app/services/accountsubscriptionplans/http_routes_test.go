@@ -25,7 +25,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return exampleUser.ToSessionInfo(), nil
+		return types.SessionInfoFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return exampleUser.ToSessionInfo(), nil
+		return types.SessionInfoFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -247,7 +247,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return exampleUser.ToSessionInfo(), nil
+		return types.SessionInfoFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -367,7 +367,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return exampleUser.ToSessionInfo(), nil
+		return types.SessionInfoFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -570,7 +570,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return exampleUser.ToSessionInfo(), nil
+		return types.SessionInfoFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

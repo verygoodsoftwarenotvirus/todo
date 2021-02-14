@@ -18,7 +18,7 @@ func TestMariaDB_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "UPDATE account_user_memberships SET is_primary_user_account = (belongs_to_user = ? AND belongs_to_account = ?) WHERE archived_on IS NULL AND belongs_to_user = ?"
+		expectedQuery := "UPDATE account_user_memberships SET default_account = (belongs_to_user = ? AND belongs_to_account = ?) WHERE archived_on IS NULL AND belongs_to_user = ?"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,

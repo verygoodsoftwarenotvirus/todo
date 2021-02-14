@@ -40,23 +40,23 @@ func init() {
 	fake.Seed(time.Now().UnixNano())
 }
 
-// BuildMaxSiteAdminPerms builds a helpful SiteAdminPermissionChecker.
-func BuildMaxSiteAdminPerms() bitmask.SiteAdminPermissions {
-	return bitmask.NewSiteAdminPermissions(math.MaxUint32)
+// BuildMaxServiceAdminPerms builds a helpful ServiceAdminPermissionChecker.
+func BuildMaxServiceAdminPerms() bitmask.ServiceAdminPermissions {
+	return bitmask.NewServiceAdminPermissions(math.MaxUint32)
 }
 
-// BuildMaxUserPerms builds a helpful SiteAdminPermissionChecker.
-func BuildMaxUserPerms() bitmask.SiteUserPermissions {
+// BuildMaxUserPerms builds a helpful ServiceAdminPermissionChecker.
+func BuildMaxUserPerms() bitmask.ServiceUserPermissions {
 	return bitmask.NewAccountUserPermissions(math.MaxUint32)
 }
 
-// BuildNoAdminPerms builds a helpful SiteAdminPermissionChecker.
-func BuildNoAdminPerms() bitmask.SiteAdminPermissions {
-	return bitmask.NewSiteAdminPermissions(0)
+// BuildNoAdminPerms builds a helpful ServiceAdminPermissionChecker.
+func BuildNoAdminPerms() bitmask.ServiceAdminPermissions {
+	return bitmask.NewServiceAdminPermissions(0)
 }
 
-// BuildNoUserPerms builds a helpful SiteAdminPermissionChecker.
-func BuildNoUserPerms() bitmask.SiteUserPermissions {
+// BuildNoUserPerms builds a helpful ServiceAdminPermissionChecker.
+func BuildNoUserPerms() bitmask.ServiceUserPermissions {
 	return bitmask.NewAccountUserPermissions(0)
 }
 

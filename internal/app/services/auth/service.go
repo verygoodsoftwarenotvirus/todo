@@ -31,18 +31,19 @@ type (
 
 	// service handles authentication service-wide.
 	service struct {
-		config                  *Config
-		logger                  logging.Logger
-		authenticator           authentication.Authenticator
-		userDB                  types.UserDataManager
-		auditLog                types.AuthAuditManager
-		delegatedClientsService types.DelegatedClientDataManager
-		oauth2ClientsService    types.OAuth2ClientDataService
-		encoderDecoder          encoding.EncoderDecoder
-		cookieManager           cookieEncoderDecoder
-		sessionManager          *scs.SessionManager
-		sessionInfoFetcher      func(*http.Request) (*types.SessionInfo, error)
-		tracer                  tracing.Tracer
+		config                   *Config
+		logger                   logging.Logger
+		authenticator            authentication.Authenticator
+		userDB                   types.UserDataManager
+		auditLog                 types.AuthAuditManager
+		delegatedClientsService  types.DelegatedClientDataManager
+		oauth2ClientsService     types.OAuth2ClientDataService
+		accountMembershipManager types.AccountUserMembershipDataManager
+		encoderDecoder           encoding.EncoderDecoder
+		cookieManager            cookieEncoderDecoder
+		sessionManager           *scs.SessionManager
+		sessionInfoFetcher       func(*http.Request) (*types.SessionInfo, error)
+		tracer                   tracing.Tracer
 	}
 )
 
@@ -55,21 +56,23 @@ func ProvideService(
 	auditLog types.AuthAuditManager,
 	delegatedClientsService types.DelegatedClientDataManager,
 	oauth2ClientsService types.OAuth2ClientDataService,
+	accountMembershipManager types.AccountUserMembershipDataManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
 	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
 	svc := &service{
-		logger:                  logging.EnsureLogger(logger).WithName(serviceName),
-		encoderDecoder:          encoder,
-		config:                  cfg,
-		userDB:                  userDataManager,
-		auditLog:                auditLog,
-		delegatedClientsService: delegatedClientsService,
-		oauth2ClientsService:    oauth2ClientsService,
-		authenticator:           authenticator,
-		sessionManager:          sessionManager,
-		sessionInfoFetcher:      routeParamManager.SessionInfoFetcherFromRequestContext,
+		logger:                   logging.EnsureLogger(logger).WithName(serviceName),
+		encoderDecoder:           encoder,
+		config:                   cfg,
+		userDB:                   userDataManager,
+		auditLog:                 auditLog,
+		delegatedClientsService:  delegatedClientsService,
+		oauth2ClientsService:     oauth2ClientsService,
+		accountMembershipManager: accountMembershipManager,
+		authenticator:            authenticator,
+		sessionManager:           sessionManager,
+		sessionInfoFetcher:       routeParamManager.SessionInfoFetcherFromRequestContext,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.Cookies.SigningKey),

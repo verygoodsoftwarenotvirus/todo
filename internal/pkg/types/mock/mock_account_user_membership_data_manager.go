@@ -3,6 +3,7 @@ package mock
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/stretchr/testify/mock"
@@ -15,28 +16,9 @@ type AccountUserMembershipDataManager struct {
 	mock.Mock
 }
 
-// MarkAccountAsUserDefault satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) MarkAccountAsUserDefault(ctx context.Context, userID, accountID, performedBy uint64) error {
-	return m.Called(ctx, userID, accountID, performedBy).Error(0)
-}
+// GetMembershipsForUser satisfies our interface contract.
+func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]bitmask.ServiceUserPermissions, err error) {
+	args := m.Called(ctx, userID)
 
-// UserIsMemberOfAccount satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) UserIsMemberOfAccount(ctx context.Context, userID, accountID, performedBy uint64) error {
-	return m.Called(ctx, userID, accountID, performedBy).Error(0)
-}
-
-// AddUserToAccount satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, userID, accountID, performedBy uint64) error {
-	return m.Called(ctx, userID, accountID, performedBy).Error(0)
-}
-
-// RemoveUserFromAccount satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) RemoveUserFromAccount(ctx context.Context, userID, accountID, performedBy uint64) error {
-	return m.Called(ctx, userID, accountID, performedBy).Error(0)
-}
-
-// GetAuditLogEntriesForAccountUserMembership is a mock function.
-func (m *AccountUserMembershipDataManager) GetAuditLogEntriesForAccountUserMembership(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, itemID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+	return args.Get(0).(uint64), args.Get(1).(map[uint64]bitmask.ServiceUserPermissions), args.Error(2)
 }

@@ -109,6 +109,11 @@ func (q *Sqlite) BuildGetUsersQuery(filter *types.QueryFilter) (query string, ar
 
 // BuildTestUserCreationQuery builds a query and arguments that creates a test user.
 func (q *Sqlite) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
+	perms := 0
+	if testUserConfig.IsServiceAdmin {
+		perms = math.MaxUint32
+	}
+
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
@@ -117,7 +122,6 @@ func (q *Sqlite) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreati
 			querybuilding.UsersTableHashedPasswordColumn,
 			querybuilding.UsersTableSaltColumn,
 			querybuilding.UsersTableTwoFactorSekretColumn,
-			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableReputationColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
 			querybuilding.UsersTableTwoFactorVerifiedOnColumn,
@@ -128,9 +132,8 @@ func (q *Sqlite) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreati
 			testUserConfig.HashedPassword,
 			querybuilding.DefaultTestUserSalt,
 			querybuilding.DefaultTestUserTwoFactorSecret,
-			testUserConfig.IsSiteAdmin,
 			types.GoodStandingAccountStatus,
-			math.MaxUint32,
+			perms,
 			currentUnixTimeQuery,
 		),
 	)
@@ -151,7 +154,6 @@ func (q *Sqlite) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (q
 			querybuilding.UsersTableSaltColumn,
 			querybuilding.UsersTableTwoFactorSekretColumn,
 			querybuilding.UsersTableReputationColumn,
-			querybuilding.UsersTableIsAdminColumn,
 			querybuilding.UsersTableAdminPermissionsColumn,
 		).
 		Values(
@@ -161,7 +163,6 @@ func (q *Sqlite) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (q
 			input.Salt,
 			input.TwoFactorSecret,
 			types.UnverifiedAccountStatus,
-			false,
 			0,
 		),
 	)

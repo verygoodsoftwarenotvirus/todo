@@ -69,7 +69,6 @@ var (
 				requires_password_change BOOLEAN NOT NULL DEFAULT 'false',
 				two_factor_secret TEXT NOT NULL,
 				two_factor_secret_verified_on INTEGER DEFAULT NULL,
-				is_site_admin BOOLEAN NOT NULL DEFAULT 'false',
 				site_admin_permissions INTEGER NOT NULL DEFAULT 0,
 				reputation TEXT NOT NULL DEFAULT 'unverified',
 				reputation_explanation TEXT NOT NULL DEFAULT '',
@@ -98,9 +97,10 @@ var (
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_user_memberships (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				primary_user_account BOOLEAN NOT NULL DEFAULT 'false',
 				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
 				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				user_account_permissions INTEGER NOT NULL DEFAULT 0,
+				default_account BOOLEAN NOT NULL DEFAULT 'false',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				archived_on INTEGER DEFAULT NULL
 			);`,

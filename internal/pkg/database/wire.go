@@ -17,6 +17,7 @@ var (
 		ProvideUserDataManager,
 		ProvideAdminUserDataManager,
 		ProvideAccountDataManager,
+		ProvideAccountUserMembershipDataManager,
 		ProvideDelegatedClientDataManager,
 		ProvideOAuth2ClientDataManager,
 		ProvideWebhookDataManager,
@@ -45,6 +46,11 @@ func ProvidePlanDataManager(db DataManager) types.AccountSubscriptionPlanDataMan
 
 // ProvideAccountDataManager is an arbitrary function for dependency injection's sake.
 func ProvideAccountDataManager(db DataManager) types.AccountDataManager {
+	return db
+}
+
+// ProvideAccountUserMembershipDataManager is an arbitrary function for dependency injection's sake.
+func ProvideAccountUserMembershipDataManager(db DataManager) types.AccountUserMembershipDataManager {
 	return db
 }
 

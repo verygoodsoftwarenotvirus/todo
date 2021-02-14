@@ -42,7 +42,7 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 				context.WithValue(
 					ctx,
 					types.SessionInfoKey,
-					user.ToSessionInfo(),
+					types.SessionInfoFromUser(user),
 				),
 			)
 			next.ServeHTTP(res, req)
@@ -94,7 +94,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 		if user != nil {
 			tracing.AttachUserIDToSpan(span, user.ID)
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, user.ToSessionInfo())))
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(user))))
 			return
 		}
 
@@ -147,7 +147,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 
 		logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
-		if !si.UserIsSiteAdmin {
+		if !si.ServiceAdminPermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return

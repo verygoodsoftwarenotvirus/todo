@@ -35,7 +35,6 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 		&user.PasswordLastChangedOn,
 		&user.TwoFactorSecret,
 		&user.TwoFactorSecretVerifiedOn,
-		&user.IsSiteAdmin,
 		&perms,
 		&user.AccountStatus,
 		&user.AccountStatusExplanation,
@@ -52,7 +51,7 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 		return nil, 0, 0, scanErr
 	}
 
-	user.SiteAdminPermissions = bitmask.NewSiteAdminPermissions(perms)
+	user.ServiceAdminPermissions = bitmask.NewServiceAdminPermissions(perms)
 
 	return user, filteredCount, totalCount, nil
 }

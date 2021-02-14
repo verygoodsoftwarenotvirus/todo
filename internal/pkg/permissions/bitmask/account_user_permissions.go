@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	canCreateItemPermissions SiteUserPermissions = 1 << iota
+	canCreateItemPermissions ServiceUserPermissions = 1 << iota
 	canUpdateItemPermissions
 	canDeleteItemPermissions
 	unusedAccountUserPermission4
@@ -42,182 +42,182 @@ const (
 )
 
 func init() {
-	gob.Register(SiteUserPermissions(0))
+	gob.Register(ServiceUserPermissions(0))
 }
 
-// SiteUserPermissions is a bitmask for keeping track of admin user permissions.
-type SiteUserPermissions uint32
+// ServiceUserPermissions is a bitmask for keeping track of admin user permissions.
+type ServiceUserPermissions uint32
 
-// NewAccountUserPermissions builds a new SiteUserPermissions.
-func NewAccountUserPermissions(x uint32) SiteUserPermissions {
-	return SiteUserPermissions(x)
+// NewAccountUserPermissions builds a new ServiceUserPermissions.
+func NewAccountUserPermissions(x uint32) ServiceUserPermissions {
+	return ServiceUserPermissions(x)
 }
 
 // Value implements the driver.Valuer interface.
-func (p SiteUserPermissions) Value() (driver.Value, error) {
+func (p ServiceUserPermissions) Value() (driver.Value, error) {
 	return driver.Value(int64(p)), nil
 }
 
 // Scan implements the sql.Scanner interface.
-func (p *SiteUserPermissions) Scan(value interface{}) error {
+func (p *ServiceUserPermissions) Scan(value interface{}) error {
 	b, ok := value.(int32)
 	if !ok {
-		*p = SiteUserPermissions(0)
+		*p = ServiceUserPermissions(0)
 	}
 
-	*p = SiteUserPermissions(b)
+	*p = ServiceUserPermissions(b)
 
 	return nil
 }
 
-var _ json.Marshaler = (*SiteUserPermissions)(nil)
+var _ json.Marshaler = (*ServiceUserPermissions)(nil)
 
 // MarshalJSON implements the json.Marshaler interface.
-func (p *SiteUserPermissions) MarshalJSON() ([]byte, error) {
+func (p *ServiceUserPermissions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(uint32(*p))
 }
 
-var _ json.Unmarshaler = (*SiteUserPermissions)(nil)
+var _ json.Unmarshaler = (*ServiceUserPermissions)(nil)
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (p *SiteUserPermissions) UnmarshalJSON(data []byte) error {
+func (p *ServiceUserPermissions) UnmarshalJSON(data []byte) error {
 	var v uint32
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*p = SiteUserPermissions(v)
+	*p = ServiceUserPermissions(v)
 
 	return nil
 }
 
 // CanCreateItems determines whether or not a user can create items.
-func (p SiteUserPermissions) CanCreateItems() bool {
+func (p ServiceUserPermissions) CanCreateItems() bool {
 	return p&canCreateItemPermissions != 0
 }
 
 // CanUpdateItems determines whether or not a user can update items.
-func (p SiteUserPermissions) CanUpdateItems() bool {
+func (p ServiceUserPermissions) CanUpdateItems() bool {
 	return p&canUpdateItemPermissions != 0
 }
 
 // CanArchiveItems determines whether or not a user can archive items.
-func (p SiteUserPermissions) CanArchiveItems() bool {
+func (p ServiceUserPermissions) CanArchiveItems() bool {
 	return p&canDeleteItemPermissions != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission4() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission4() bool {
 	return p&unusedAccountUserPermission4 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission5() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission5() bool {
 	return p&unusedAccountUserPermission5 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission6() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission6() bool {
 	return p&unusedAccountUserPermission6 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission7() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission7() bool {
 	return p&unusedAccountUserPermission7 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission8() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission8() bool {
 	return p&unusedAccountUserPermission8 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission9() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission9() bool {
 	return p&unusedAccountUserPermission9 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission10() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission10() bool {
 	return p&unusedAccountUserPermission10 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission11() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission11() bool {
 	return p&unusedAccountUserPermission11 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission12() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission12() bool {
 	return p&unusedAccountUserPermission12 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission13() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission13() bool {
 	return p&unusedAccountUserPermission13 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission14() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission14() bool {
 	return p&unusedAccountUserPermission14 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission15() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission15() bool {
 	return p&unusedAccountUserPermission15 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission16() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission16() bool {
 	return p&unusedAccountUserPermission16 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission17() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission17() bool {
 	return p&unusedAccountUserPermission17 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission18() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission18() bool {
 	return p&unusedAccountUserPermission18 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission19() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission19() bool {
 	return p&unusedAccountUserPermission19 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission20() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission20() bool {
 	return p&unusedAccountUserPermission20 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission21() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission21() bool {
 	return p&unusedAccountUserPermission21 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission22() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission22() bool {
 	return p&unusedAccountUserPermission22 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission23() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission23() bool {
 	return p&unusedAccountUserPermission23 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission24() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission24() bool {
 	return p&unusedAccountUserPermission24 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission25() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission25() bool {
 	return p&unusedAccountUserPermission25 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission26() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission26() bool {
 	return p&unusedAccountUserPermission26 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission27() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission27() bool {
 	return p&unusedAccountUserPermission27 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission28() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission28() bool {
 	return p&unusedAccountUserPermission28 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission29() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission29() bool {
 	return p&unusedAccountUserPermission29 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission30() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission30() bool {
 	return p&unusedAccountUserPermission30 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission31() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission31() bool {
 	return p&unusedAccountUserPermission31 != 0
 }
 
-func (p SiteUserPermissions) hasReservedUnusedPermission32() bool {
+func (p ServiceUserPermissions) hasReservedUnusedPermission32() bool {
 	return p&unusedAccountUserPermission32 != 0
 }

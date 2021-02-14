@@ -12,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
@@ -134,6 +135,13 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	defaultAccount, memberships, membershipsCheckErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+	if membershipsCheckErr != nil {
+		logger.Error(membershipsCheckErr, "error encountered checking for user memberships")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return
+	}
+
 	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
 		logger.Error(sessionErr, "error loading token")
@@ -147,7 +155,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.sessionManager.Put(ctx, sessionInfoKey, user.ToSessionInfo())
+	s.sessionManager.Put(ctx, sessionInfoKey, buildSessionInfoForUserLogin(user, defaultAccount, memberships))
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
@@ -171,6 +179,17 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	statusResponse.UserIsAuthenticated = true
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
+}
+
+func buildSessionInfoForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]bitmask.ServiceUserPermissions) *types.SessionInfo {
+	return &types.SessionInfo{
+		Username:                user.Username,
+		UserID:                  user.ID,
+		ActiveAccount:           defaultAccount,
+		UserAccountStatus:       user.AccountStatus,
+		AccountPermissionsMap:   permsMap,
+		ServiceAdminPermissions: user.ServiceAdminPermissions,
+	}
 }
 
 // LogoutHandler is our logout route.
@@ -247,8 +266,8 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if !si.AdminPermissions.CanCycleCookieSecrets() {
-		logger.WithValue("admin_permissions", si.AdminPermissions).Debug("invalid permissions")
+	if !si.ServiceAdminPermissions.CanCycleCookieSecrets() {
+		logger.WithValue("admin_permissions", si.ServiceAdminPermissions).Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}

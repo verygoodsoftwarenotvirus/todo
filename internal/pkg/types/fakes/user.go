@@ -23,8 +23,7 @@ func BuildFakeUser() *types.User {
 		// Salt:           []byte(fakes.Word()),
 		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),
 		TwoFactorSecretVerifiedOn: func(i uint64) *uint64 { return &i }(uint64(uint32(fake.Date().Unix()))),
-		IsSiteAdmin:               false,
-		SiteAdminPermissions:      bitmask.NewSiteAdminPermissions(0),
+		ServiceAdminPermissions:   bitmask.NewServiceAdminPermissions(0),
 		CreatedOn:                 uint64(uint32(fake.Date().Unix())),
 	}
 }
@@ -34,7 +33,6 @@ func BuildUserCreationResponseFromUser(user *types.User) *types.UserCreationResp
 	return &types.UserCreationResponse{
 		ID:        user.ID,
 		Username:  user.Username,
-		IsAdmin:   user.IsSiteAdmin,
 		CreatedOn: user.CreatedOn,
 	}
 }
@@ -75,7 +73,7 @@ func BuildTestUserCreationConfig() *types.TestUserCreationConfig {
 		Username:       exampleUser.Username,
 		Password:       exampleUser.Password,
 		HashedPassword: "hashed authentication",
-		IsSiteAdmin:    false,
+		IsServiceAdmin: false,
 	}
 }
 

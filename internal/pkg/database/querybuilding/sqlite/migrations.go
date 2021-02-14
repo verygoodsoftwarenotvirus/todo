@@ -172,7 +172,8 @@ var (
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
-				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
+				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				belongs_to_account INTEGER REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 	}

@@ -197,4 +197,6 @@ const (
 	ItemsTableDetailsColumn = "details"
 	// ItemsTableUserOwnershipColumn is what the items table calls the user ownership column.
 	ItemsTableUserOwnershipColumn = userOwnershipColumn
+	// ItemsTableAccountOwnershipColumn is what the items table calls the user ownership column.
+	ItemsTableAccountOwnershipColumn = accountOwnershipColumn
 )

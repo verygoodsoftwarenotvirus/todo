@@ -30,6 +30,7 @@ func (c *Client) scanItem(scan database.Scanner, includeCounts bool) (x *types.I
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&x.BelongsToUser,
+		&x.BelongsToAccount,
 	}
 
 	if includeCounts {

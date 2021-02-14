@@ -38,6 +38,7 @@ func buildMockRowsFromItems(includeCounts bool, filteredCount uint64, items ...*
 			x.LastUpdatedOn,
 			x.ArchivedOn,
 			x.BelongsToUser,
+			&x.BelongsToAccount,
 		}
 
 		if includeCounts {

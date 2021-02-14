@@ -17,14 +17,15 @@ const (
 type (
 	// Item represents an item.
 	Item struct {
-		ID            uint64  `json:"id"`
-		ExternalID    string  `json:"externalID"`
-		Name          string  `json:"name"`
-		Details       string  `json:"details"`
-		CreatedOn     uint64  `json:"createdOn"`
-		LastUpdatedOn *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn    *uint64 `json:"archivedOn"`
-		BelongsToUser uint64  `json:"belongsToUser"`
+		ID               uint64  `json:"id"`
+		ExternalID       string  `json:"externalID"`
+		Name             string  `json:"name"`
+		Details          string  `json:"details"`
+		CreatedOn        uint64  `json:"createdOn"`
+		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
+		ArchivedOn       *uint64 `json:"archivedOn"`
+		BelongsToUser    uint64  `json:"belongsToUser"`
+		BelongsToAccount *uint64 `json:"belongsToAccount"`
 	}
 
 	// ItemList represents a list of items.
@@ -35,16 +36,18 @@ type (
 
 	// ItemCreationInput represents what a User could set as input for creating items.
 	ItemCreationInput struct {
-		Name          string `json:"name"`
-		Details       string `json:"details"`
-		BelongsToUser uint64 `json:"-"`
+		Name             string `json:"name"`
+		Details          string `json:"details"`
+		BelongsToUser    uint64 `json:"-"`
+		BelongsToAccount uint64 `json:"-"`
 	}
 
 	// ItemUpdateInput represents what a User could set as input for updating items.
 	ItemUpdateInput struct {
-		Name          string `json:"name"`
-		Details       string `json:"details"`
-		BelongsToUser uint64 `json:"-"`
+		Name             string `json:"name"`
+		Details          string `json:"details"`
+		BelongsToUser    uint64 `json:"-"`
+		BelongsToAccount uint64 `json:"-"`
 	}
 
 	// ItemSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.

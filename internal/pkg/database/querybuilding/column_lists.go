@@ -162,5 +162,6 @@ var (
 		fmt.Sprintf("%s.%s", ItemsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, ArchivedOnColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableUserOwnershipColumn),
+		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableAccountOwnershipColumn),
 	}
 )

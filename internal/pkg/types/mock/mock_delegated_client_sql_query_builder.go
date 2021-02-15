@@ -21,8 +21,8 @@ func (m *DelegatedClientSQLQueryBuilder) BuildGetBatchOfDelegatedClientsQuery(be
 }
 
 // BuildGetDelegatedClientQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildGetDelegatedClientQuery(clientID string, userID uint64) (query string, args []interface{}) {
-	returnArgs := m.Called(clientID, userID)
+func (m *DelegatedClientSQLQueryBuilder) BuildGetDelegatedClientQuery(clientID string) (query string, args []interface{}) {
+	returnArgs := m.Called(clientID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

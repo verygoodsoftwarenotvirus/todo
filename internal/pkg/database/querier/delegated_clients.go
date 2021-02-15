@@ -89,7 +89,7 @@ func (c *Client) GetDelegatedClient(ctx context.Context, clientID string) (*type
 	})
 	logger.Debug("GetDelegatedClient called")
 
-	query, args := c.sqlQueryBuilder.BuildGetDelegatedClientQuery(clientID, 0)
+	query, args := c.sqlQueryBuilder.BuildGetDelegatedClientQuery(clientID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	client, _, _, err := c.scanDelegatedClient(row, false)

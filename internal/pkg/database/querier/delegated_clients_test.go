@@ -94,7 +94,7 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -118,7 +118,7 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -143,7 +143,7 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -542,6 +542,7 @@ func TestClient_CreateDelegatedClient(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 		exampleDelegatedClient.ExternalID = ""
+		exampleDelegatedClient.HMACKey = nil
 		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
 
 		ctx := context.Background()

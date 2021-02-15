@@ -47,7 +47,7 @@ type (
 	// DelegatedClientSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	DelegatedClientSQLQueryBuilder interface {
 		BuildGetBatchOfDelegatedClientsQuery(beginID, endID uint64) (query string, args []interface{})
-		BuildGetDelegatedClientQuery(clientID string, userID uint64) (query string, args []interface{})
+		BuildGetDelegatedClientQuery(clientID string) (query string, args []interface{})
 		BuildGetAllDelegatedClientsCountQuery() string
 		BuildGetDelegatedClientsQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
 		BuildCreateDelegatedClientQuery(input *DelegatedClientCreationInput) (query string, args []interface{})

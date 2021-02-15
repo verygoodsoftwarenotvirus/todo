@@ -29,14 +29,13 @@ func (q *Sqlite) BuildGetBatchOfDelegatedClientsQuery(beginID, endID uint64) (qu
 }
 
 // BuildGetDelegatedClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
-func (q *Sqlite) BuildGetDelegatedClientQuery(clientID string, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetDelegatedClientQuery(clientID string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.DelegatedClientsTableColumns...).
 		From(querybuilding.DelegatedClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn):  clientID,
-			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                     nil,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn): clientID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                    nil,
 		}),
 	)
 }

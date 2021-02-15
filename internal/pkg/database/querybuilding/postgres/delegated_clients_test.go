@@ -42,12 +42,11 @@ func TestPostgres_BuildGetDelegatedClientQuery(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 
-		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.hmac_key, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $1 AND delegated_clients.client_id = $2"
+		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.hmac_key, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.client_id = $1"
 		expectedArgs := []interface{}{
-			exampleDelegatedClient.BelongsToUser,
 			exampleDelegatedClient.ClientID,
 		}
-		actualQuery, actualArgs := q.BuildGetDelegatedClientQuery(exampleDelegatedClient.ClientID, exampleDelegatedClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildGetDelegatedClientQuery(exampleDelegatedClient.ClientID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

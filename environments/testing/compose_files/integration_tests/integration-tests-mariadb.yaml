@@ -8,8 +8,8 @@ services:
             MYSQL_PASSWORD: 'hunter2'
             MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
             MYSQL_USER: 'dbuser'
-#        logging:
-#            driver: none
+        logging:
+            driver: none
         ports:
             - 3306:3306
     todo-server:

@@ -16,7 +16,6 @@ const (
 type authMode struct{}
 
 var (
-	oauth2AuthMode = new(authMode)
 	cookieAuthMode = new(authMode)
 )
 

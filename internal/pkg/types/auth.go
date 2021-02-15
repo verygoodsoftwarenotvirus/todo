@@ -44,6 +44,7 @@ type (
 		LoginHandler(res http.ResponseWriter, req *http.Request)
 		LogoutHandler(res http.ResponseWriter, req *http.Request)
 		CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request)
+		PASETOHandler(res http.ResponseWriter, req *http.Request)
 
 		CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler

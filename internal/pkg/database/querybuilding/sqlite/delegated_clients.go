@@ -29,12 +29,12 @@ func (q *Sqlite) BuildGetBatchOfDelegatedClientsQuery(beginID, endID uint64) (qu
 }
 
 // BuildGetDelegatedClientQuery returns a SQL query which requests a given OAuth2 client by its database ID.
-func (q *Sqlite) BuildGetDelegatedClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetDelegatedClientQuery(clientID string, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.DelegatedClientsTableColumns...).
 		From(querybuilding.DelegatedClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.IDColumn):                             clientID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn):  clientID,
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableOwnershipColumn): userID,
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                     nil,
 		}),
@@ -74,14 +74,14 @@ func (q *Sqlite) BuildCreateDelegatedClientQuery(input *types.DelegatedClientCre
 			querybuilding.ExternalIDColumn,
 			querybuilding.DelegatedClientsTableNameColumn,
 			querybuilding.DelegatedClientsTableClientIDColumn,
-			querybuilding.DelegatedClientsTableClientSecretColumn,
+			querybuilding.DelegatedClientsTableHMACKeyColumn,
 			querybuilding.DelegatedClientsTableOwnershipColumn,
 		).
 		Values(
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.ClientID,
-			input.ClientSecret,
+			input.HMACKey,
 			input.BelongsToUser,
 		),
 	)
@@ -92,7 +92,6 @@ func (q *Sqlite) BuildUpdateDelegatedClientQuery(input *types.DelegatedClient) (
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.DelegatedClientsTableName).
 		Set(querybuilding.DelegatedClientsTableClientIDColumn, input.ClientID).
-		Set(querybuilding.DelegatedClientsTableClientSecretColumn, input.ClientSecret).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                             input.ID,

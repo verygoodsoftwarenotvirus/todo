@@ -95,7 +95,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)
 
 	cfg.Set(ConfigKeyAuthPASETOAudience, input.Auth.PASETO.Audience)
-	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Listener)
+	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Issuer)
 	cfg.Set(ConfigKeyAuthPASETOLocalModeKey, input.Auth.PASETO.LocalModeKey)
 
 	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)

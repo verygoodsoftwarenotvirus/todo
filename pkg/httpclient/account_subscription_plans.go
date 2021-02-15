@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	plansBasePath = "accountsubscriptionplans"
+	plansBasePath = "account_subscription_plans"
 )
 
 // BuildGetAccountSubscriptionPlanRequest builds an HTTP request for fetching an plan.

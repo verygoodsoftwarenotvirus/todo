@@ -13,7 +13,9 @@ const (
 	// userLoginInputMiddlewareCtxKey is the context key for login input.
 	userLoginInputMiddlewareCtxKey types.ContextKey = "user_login_input"
 	// pasetoCreationInputMiddlewareCtxKey is the context key for login input.
-	pasetoCreationnputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
+	pasetoCreationInputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
+
+	signatureHeaderKey = "Signature"
 
 	// usernameFormKey is the string we look for in request forms for username information.
 	usernameFormKey = "username"
@@ -60,45 +62,27 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
-		var user *types.User
 		logger := s.logger.WithRequest(req)
 
 		// check for a cookie first if we can.
 		if cookieAuth, err := s.DecodeCookieFromRequest(ctx, req); err == nil && cookieAuth != nil {
-			if user, err = s.userDB.GetUser(ctx, cookieAuth.UserID); err != nil {
-				logger.Error(err, "error authenticating request")
-				next.ServeHTTP(res, req)
+			user, userRetrievalErr := s.userDB.GetUser(ctx, cookieAuth.UserID)
+			if userRetrievalErr != nil {
+				logger.Error(userRetrievalErr, "error authenticating request")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			logger.WithValue("user_found", user != nil).Debug("serving request")
+
+			if user != nil {
+				tracing.AttachUserIDToSpan(span, user.ID)
+				next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(user))))
 				return
 			}
 		}
 
-		logger.WithValue("user_found", user != nil).Debug("checked for cookie")
-
-		// if the cookie wasn't present, or didn't indicate who the user is.
-		if user == nil {
-			// check to see if there is an OAuth2 token for a valid client attached to the request.
-			// We do this first because it is presumed to be the primary means by which requests are made to the httpServer.
-			if oauth2Client, err := s.oauth2ClientsService.ExtractOAuth2ClientFromRequest(ctx, req); err == nil && oauth2Client != nil {
-				ctx = context.WithValue(ctx, types.OAuth2ClientKey, oauth2Client)
-				tracing.AttachOAuth2ClientIDToSpan(span, oauth2Client.ClientID)
-
-				logger.Debug("getting user")
-				// attach the oauth2 client and user's info to the request.
-				if user, err = s.userDB.GetUser(ctx, oauth2Client.BelongsToUser); err != nil {
-					logger.Error(err, "error fetching user info for authentication")
-				}
-			}
-		}
-
-		logger.Debug("serving request")
-
-		if user != nil {
-			tracing.AttachUserIDToSpan(span, user.ID)
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(user))))
-			return
-		}
-
-		next.ServeHTTP(res, req)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 	})
 }
 
@@ -225,7 +209,7 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 			return
 		}
 
-		ctx = context.WithValue(ctx, pasetoCreationnputMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, pasetoCreationInputMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

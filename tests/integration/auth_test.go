@@ -7,17 +7,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pquerna/otp/totp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
-
-	"github.com/pquerna/otp/totp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAuth(test *testing.T) {
@@ -342,45 +340,5 @@ func TestAuth(test *testing.T) {
 		res, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
-	})
-
-	test.Run("should only allow clients with a given scope to see that scope's content", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, span := tracing.StartSpan(context.Background())
-		defer span.End()
-
-		testUser, testClient := createUserAndClientForTest(ctx, t)
-		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
-			Username:  testUser.Username,
-			Password:  testUser.HashedPassword,
-			TOTPToken: generateTOTPTokenForUser(t, testUser),
-		})
-		require.NoError(t, err)
-
-		// create user.
-		input := buildDummyOAuth2ClientInput(test, testUser.Username, testUser.HashedPassword, testUser.TwoFactorSecret)
-		input.Scopes = []string{"absolutelynevergonnaexistascopelikethis"}
-		premade, err := testClient.CreateOAuth2Client(ctx, cookie, input)
-		checkValueAndError(test, premade, err)
-
-		c := httpclient.NewClient(
-			httpclient.WithURL(testClient.URL()),
-			httpclient.WithLogger(logging.NewNonOperationalLogger()),
-			httpclient.WithOAuth2ClientCredentials(
-				httpclient.BuildClientCredentialsConfig(
-					testClient.URL(),
-					premade.ClientID,
-					premade.ClientSecret,
-					premade.Scopes...,
-				),
-			),
-			httpclient.WithDebugEnabled(),
-		)
-		checkValueAndError(test, c, nil)
-
-		i, err := c.GetOAuth2Clients(ctx, nil)
-		assert.Nil(t, i)
-		assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
 	})
 }

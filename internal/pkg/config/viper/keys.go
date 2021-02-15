@@ -46,7 +46,7 @@ const (
 	// ConfigKeyAuthPASETOAudience is the key for PASETO token settings.
 	ConfigKeyAuthPASETOAudience = authKey + x + pasetoKey + x + "audience"
 	// ConfigKeyAuthPASETOListener is the key for PASETO token settings.
-	ConfigKeyAuthPASETOListener = authKey + x + pasetoKey + x + "listener"
+	ConfigKeyAuthPASETOListener = authKey + x + pasetoKey + x + "issuer"
 	// ConfigKeyAuthPASETOLocalModeKey is the key for PASETO token settings.
 	ConfigKeyAuthPASETOLocalModeKey = authKey + x + pasetoKey + x + "local_mode_key"
 

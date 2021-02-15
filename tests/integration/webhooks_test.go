@@ -4,14 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
@@ -43,7 +42,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should be createable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -83,7 +84,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -96,7 +99,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should be readable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -121,7 +126,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should be able to be read in a list", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -151,7 +158,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should only allow users to see their own webhooks", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, clientA := createUserAndClientForTest(ctx, t)
@@ -183,7 +192,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -198,7 +209,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should be updatable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -246,7 +259,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should be able to be deleted", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -280,7 +295,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -298,7 +315,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should be auditable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)
@@ -329,7 +348,9 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			_, testClient := createUserAndClientForTest(ctx, t)

@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	debug         = false
-	timeout       = 5 * time.Second
-	nonexistentID = 999999999
+	debug                 = false
+	timeout               = 5 * time.Second
+	defaultSubtestTimeout = 15 * time.Second
+	nonexistentID         = 999999999
 )
 
 var (
@@ -48,12 +49,12 @@ func init() {
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	adminOAuth2Client, err := testutil.CreateObligatoryOAuth2Client(ctx, urlToUse, premadeAdminUser)
+	adminCookie, err := testutil.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	adminClient = initializeClient(adminOAuth2Client)
+	adminClient = initializeClient(adminCookie)
 	adminClient.SetOption(httpclient.WithDebugEnabled())
 
 	fiftySpaces := strings.Repeat("\n", 50)
@@ -67,21 +68,14 @@ func buildHTTPClient() *http.Client {
 	}
 }
 
-func initializeClient(oa2Client *types.OAuth2Client) *httpclient.Client {
+func initializeClient(cookie *http.Cookie) *httpclient.Client {
 	uri := httpclient.MustParseURL(urlToUse)
 
 	c := httpclient.NewClient(
 		httpclient.WithURL(uri),
 		httpclient.WithLogger(logging.NewNonOperationalLogger()),
 		httpclient.WithHTTPClient(buildHTTPClient()),
-		httpclient.WithOAuth2ClientCredentials(
-			httpclient.BuildClientCredentialsConfig(
-				uri,
-				oa2Client.ClientID,
-				oa2Client.ClientSecret,
-				oa2Client.Scopes...,
-			),
-		),
+		httpclient.WithCookieCredentials(cookie),
 	)
 
 	if debug {

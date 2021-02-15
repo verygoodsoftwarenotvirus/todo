@@ -1,6 +1,7 @@
 package encoding
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
@@ -9,6 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/google/wire"
@@ -46,12 +48,14 @@ type (
 		EncodeUnauthorizedResponse(ctx context.Context, res http.ResponseWriter)
 		EncodeInvalidPermissionsResponse(ctx context.Context, res http.ResponseWriter)
 		DecodeRequest(ctx context.Context, req *http.Request, dest interface{}) error
+		MustJSON(v interface{}) []byte
 	}
 
 	// serverEncoderDecoder is our concrete implementation of EncoderDecoder.
 	serverEncoderDecoder struct {
-		logger logging.Logger
-		tracer tracing.Tracer
+		logger   logging.Logger
+		tracer   tracing.Tracer
+		panicker panicking.Panicker
 	}
 
 	encoder interface {
@@ -156,6 +160,16 @@ func (ed *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.Res
 	}
 }
 
+func (ed *serverEncoderDecoder) MustJSON(v interface{}) []byte {
+	var b bytes.Buffer
+
+	if err := json.NewEncoder(&b).Encode(v); err != nil {
+		ed.panicker.Panicf("error marshaling object to JSON: %v", err)
+	}
+
+	return b.Bytes()
+}
+
 // EncodeResponse encodes successful responses.
 func (ed *serverEncoderDecoder) EncodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}) {
 	ctx, span := ed.tracer.StartSpan(ctx)
@@ -202,7 +216,8 @@ const name = "response_encoder"
 // ProvideEncoderDecoder provides an EncoderDecoder.
 func ProvideEncoderDecoder(logger logging.Logger) EncoderDecoder {
 	return &serverEncoderDecoder{
-		logger: logging.EnsureLogger(logger).WithName(name),
-		tracer: tracing.NewTracer(name),
+		logger:   logging.EnsureLogger(logger).WithName(name),
+		tracer:   tracing.NewTracer(name),
+		panicker: panicking.NewProductionPanicker(),
 	}
 }

@@ -31,12 +31,6 @@ var (
 	// webhooksUserFrontendPathRegex matches URLs for specific webhook routes.
 	webhooksUserFrontendPathRegex = regexp.MustCompile(`/user/webhooks/\d+`)
 
-	// oauth2ClientsAdminFrontendPathRegex matches URLs for specific oauth2 client routes.
-	oauth2ClientsAdminFrontendPathRegex = regexp.MustCompile(`/admin/oauth2_clients/\d+`)
-
-	// oauth2ClientsAdminFrontendPathRegex matches URLs for specific oauth2 client routes.
-	oauth2ClientsUserFrontendPathRegex = regexp.MustCompile(`/user/oauth2_clients/\d+`)
-
 	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
 	itemsFrontendPathRegex = regexp.MustCompile(`/things/items/\d+`)
 
@@ -48,25 +42,22 @@ var (
 		loginRoute:        {},
 		registrationRoute: {},
 		// admin routes
-		"/admin":                {},
-		"/admin/dashboard":      {},
-		"/admin/users":          {},
-		"/admin/oauth2_clients": {},
-		"/admin/webhooks":       {},
-		"/admin/audit_log":      {},
-		"/admin/settings":       {},
+		"/admin":           {},
+		"/admin/dashboard": {},
+		"/admin/users":     {},
+		"/admin/webhooks":  {},
+		"/admin/audit_log": {},
+		"/admin/settings":  {},
 		// user routes
-		"/items":                   {},
-		"/items/new":               {},
-		"/things/items":            {},
-		"/things/items/new":        {},
-		"/dashboard":               {},
-		"/user/oauth2_clients/new": {},
-		"/user/oauth2_clients":     {},
-		"/user/webhooks":           {},
-		"/user/webhooks/nu":        {},
-		"/user/webhooks/new":       {},
-		"/user/settings":           {},
+		"/items":             {},
+		"/items/new":         {},
+		"/things/items":      {},
+		"/things/items/new":  {},
+		"/dashboard":         {},
+		"/user/webhooks":     {},
+		"/user/webhooks/nu":  {},
+		"/user/webhooks/new": {},
+		"/user/settings":     {},
 	}
 
 	redirections = map[string]string{
@@ -160,9 +151,7 @@ func (s *service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			itemsAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			usersAdminFrontendPathRegex.MatchString(req.URL.Path) ||
 			webhooksAdminFrontendPathRegex.MatchString(req.URL.Path) ||
-			webhooksUserFrontendPathRegex.MatchString(req.URL.Path) ||
-			oauth2ClientsAdminFrontendPathRegex.MatchString(req.URL.Path) ||
-			oauth2ClientsUserFrontendPathRegex.MatchString(req.URL.Path) {
+			webhooksUserFrontendPathRegex.MatchString(req.URL.Path) {
 			if s.config.LogStaticFiles {
 				rl.Debug("rerouting request")
 			}

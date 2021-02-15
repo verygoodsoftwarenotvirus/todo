@@ -111,45 +111,17 @@ func main() {
 
 			userLogger.Debug("created user")
 
-			var (
-				createdOAuth2Client     *types.OAuth2Client
-				oauth2ClientCreationErr error
-			)
-
-			createdOAuth2Client, oauth2ClientCreationErr = testutil.CreateObligatoryOAuth2Client(ctx, uri, createdUser)
-			if oauth2ClientCreationErr != nil {
-				quitter.ComplainAndQuit(fmt.Errorf("creating oauth2 client for user #%d: %w", x, oauth2ClientCreationErr))
+			cookie, cookieErr := testutil.GetLoginCookie(ctx, uri, createdUser)
+			if cookieErr != nil {
+				quitter.ComplainAndQuit(fmt.Errorf("getting cookie: %v", cookieErr))
 			}
-			userLogger.WithValue(keys.OAuth2ClientIDKey, createdOAuth2Client.ClientID).Debug("created oauth2 client")
 
 			userClient := httpclient.NewClient(
 				httpclient.WithURL(parsedURI),
 				httpclient.WithLogger(userLogger),
-				httpclient.WithOAuth2ClientCredentials(
-					httpclient.BuildClientCredentialsConfig(
-						parsedURI,
-						createdOAuth2Client.ClientID,
-						createdOAuth2Client.ClientSecret,
-						"*",
-					),
-				),
+				httpclient.WithCookieCredentials(cookie),
 			)
 			userLogger.Debug("assigned user API client")
-
-			wg.Add(1)
-			go func(wg *sync.WaitGroup) {
-				for j := 0; j < count-1; j++ {
-					iterationLogger := userLogger.WithValue("iteration", j)
-
-					createdOAuth2Client, oauth2ClientCreationErr = testutil.CreateObligatoryOAuth2Client(ctx, uri, createdUser)
-					if oauth2ClientCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("creating oauth2 client #%d for user #%d: %w", j, x, oauth2ClientCreationErr))
-					}
-
-					iterationLogger.WithValue(keys.OAuth2ClientIDKey, createdOAuth2Client.ClientID).Debug("created oauth2 client")
-				}
-				wg.Done()
-			}(wg)
 
 			wg.Add(1)
 			go func(wg *sync.WaitGroup) {

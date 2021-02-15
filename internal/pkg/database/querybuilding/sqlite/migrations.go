@@ -107,17 +107,14 @@ var (
 		},
 		{
 			Version:     0.07,
-			Description: "create oauth2_clients table",
+			Description: "create delegated_clients table",
 			Script: `
-			CREATE TABLE IF NOT EXISTS oauth2_clients (
+			CREATE TABLE IF NOT EXISTS delegated_clients (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				external_id TEXT NOT NULL,
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
-				client_secret TEXT NOT NULL,
-				redirect_uri TEXT DEFAULT '',
-				scopes TEXT NOT NULL,
-				implicit_allowed BOOLEAN NOT NULL DEFAULT 'false',
+				hmac_key TEXT NOT NULL,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER,
 				archived_on INTEGER DEFAULT NULL,
@@ -126,22 +123,6 @@ var (
 		},
 		{
 			Version:     0.08,
-			Description: "create delegated_clients table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS delegated_clients (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
-				name TEXT DEFAULT '',
-				client_id TEXT NOT NULL,
-				client_secret TEXT NOT NULL,
-				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				last_updated_on INTEGER,
-				archived_on INTEGER DEFAULT NULL,
-				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
-			);`,
-		},
-		{
-			Version:     0.09,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -161,7 +142,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.10,
+			Version:     0.09,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

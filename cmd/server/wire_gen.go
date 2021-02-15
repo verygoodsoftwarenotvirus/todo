@@ -14,9 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/delegatedclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
@@ -47,14 +47,6 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
 	delegatedClientDataManager := database.ProvideDelegatedClientDataManager(dbm)
-	oAuth2ClientDataManager := database.ProvideOAuth2ClientDataManager(dbm)
-	encoderDecoder := encoding.ProvideEncoderDecoder(logger)
-	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	routeParamManager := chi.NewRouteParamManager()
-	oAuth2ClientDataService, err := oauth2clients.ProvideOAuth2ClientsService(logger, oAuth2ClientDataManager, userDataManager, authenticator, encoderDecoder, unitCounterProvider, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
 	cookieConfig := authConfig.Cookies
 	configConfig := cfg.Database
@@ -62,7 +54,9 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, oAuth2ClientDataService, accountUserMembershipDataManager, sessionManager, encoderDecoder, routeParamManager)
+	encoderDecoder := encoding.ProvideEncoderDecoder(logger)
+	routeParamManager := chi.NewRouteParamManager()
+	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, accountUserMembershipDataManager, sessionManager, encoderDecoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +64,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, encoderDecoder, routeParamManager)
 	itemDataManager := database.ProvideItemDataManager(dbm)
+	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	searchConfig := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
 	itemDataService, err := items.ProvideService(logger, itemDataManager, encoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
@@ -94,6 +89,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
+	delegatedClientDataService, err := delegatedclients.ProvideDelegatedClientsService(logger, delegatedClientDataManager, userDataManager, authenticator, encoderDecoder, unitCounterProvider, routeParamManager)
+	if err != nil {
+		return nil, err
+	}
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
 	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, encoderDecoder, unitCounterProvider, routeParamManager)
 	if err != nil {
@@ -106,7 +105,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, oAuth2ClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder, router)
+	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, delegatedClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

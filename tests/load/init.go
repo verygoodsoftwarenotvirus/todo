@@ -3,20 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 var (
-	debug     bool
-	urlToUse  string
-	oa2Client *types.OAuth2Client
+	debug    bool
+	urlToUse string
+	cookie   *http.Cookie
 )
 
 func init() {
@@ -32,7 +32,7 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	oa2Client, err = testutil.CreateObligatoryOAuth2Client(ctx, urlToUse, u)
+	cookie, err = testutil.GetLoginCookie(ctx, urlToUse, u)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -41,20 +41,13 @@ func init() {
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
 }
 
-func initializeClient(oa2Client *types.OAuth2Client) *httpclient.Client {
+func initializeClient() *httpclient.Client {
 	uri := httpclient.MustParseURL(urlToUse)
 
 	c := httpclient.NewClient(
 		httpclient.WithURL(uri),
 		httpclient.WithLogger(zerolog.NewLogger()),
-		httpclient.WithOAuth2ClientCredentials(
-			httpclient.BuildClientCredentialsConfig(
-				uri,
-				oa2Client.ClientID,
-				oa2Client.ClientSecret,
-				oa2Client.Scopes...,
-			),
-		),
+		httpclient.WithCookieCredentials(cookie),
 	)
 
 	return c

@@ -8,8 +8,8 @@ import (
 
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/delegatedclients"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
-	oauth2clientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/oauth2clients"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -64,6 +64,8 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 		router.Get("/*", staticFileServer)
 	}
 
+	router.Post("/paseto", s.authService.PASETOHandler)
+
 	authenticatedRouter := router.WithMiddleware(s.authService.UserAttributionMiddleware)
 	authenticatedRouter.Get("/auth/status", s.authService.StatusHandler)
 
@@ -77,25 +79,6 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 		authedRouter := userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.AuthorizationMiddleware)
 		authedRouter.WithMiddleware(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
 		authedRouter.WithMiddleware(s.usersService.PasswordUpdateInputMiddleware).Put("/authentication/new", s.usersService.UpdatePasswordHandler)
-	})
-
-	router.Route("/oauth2", func(oauth2Router routing.Router) {
-		oauth2Router.WithMiddleware(
-			s.authService.CookieAuthenticationMiddleware,
-			s.oauth2ClientsService.CreationInputMiddleware,
-		).Post("/client", s.oauth2ClientsService.CreateHandler)
-
-		oauth2Router.WithMiddleware(s.oauth2ClientsService.OAuth2ClientInfoMiddleware).
-			Post("/authorize", func(res http.ResponseWriter, req *http.Request) {
-				if err := s.oauth2ClientsService.HandleAuthorizeRequest(res, req); err != nil {
-					http.Error(res, err.Error(), http.StatusBadRequest)
-				}
-			})
-		oauth2Router.Post("/token", func(res http.ResponseWriter, req *http.Request) {
-			if err := s.oauth2ClientsService.HandleTokenRequest(res, req); err != nil {
-				http.Error(res, err.Error(), http.StatusBadRequest)
-			}
-		})
 	})
 
 	authenticatedRouter.WithMiddleware(s.authService.AuthorizationMiddleware).Route("/api/v1", func(v1Router routing.Router) {
@@ -118,7 +101,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 		})
 
 		// AccountSubscriptionPlans
-		adminRouter.Route("/accountsubscriptionplans", func(plansRouter routing.Router) {
+		adminRouter.Route("/account_subscription_plans", func(plansRouter routing.Router) {
 			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.AccountSubscriptionPlanIDURIParamKey)
 
 			plansRouter.WithMiddleware(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)
@@ -146,15 +129,13 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			})
 		})
 
-		// OAuth2 Clients.
-		v1Router.Route("/oauth2/clients", func(clientRouter routing.Router) {
-			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, oauth2clientsservice.OAuth2ClientIDURIParamKey)
-			clientRouter.Get(root, s.oauth2ClientsService.ListHandler)
+		// Delegated Clients.
+		v1Router.Route("/delegated_clients", func(clientRouter routing.Router) {
+			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, delegatedclients.DelegatedClientIDURIParamKey)
+			clientRouter.Get(root, s.delegatedClientsService.ListHandler)
 
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
-				singleClientRouter.Get(root, s.oauth2ClientsService.ReadHandler)
-				singleClientRouter.Delete(root, s.oauth2ClientsService.ArchiveHandler)
-				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.oauth2ClientsService.AuditEntryHandler)
+				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.delegatedClientsService.AuditEntryHandler)
 			})
 		})
 

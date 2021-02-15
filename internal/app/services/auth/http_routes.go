@@ -1,12 +1,19 @@
 package auth
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
@@ -16,6 +23,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
+	"github.com/o1egl/paseto"
 )
 
 const (
@@ -248,6 +256,86 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	s.encoderDecoder.EncodeResponse(ctx, res, statusResponse)
+}
+
+// PASETOHandler returns the user info for the user making the request.
+func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	pasetoRequest, ok := ctx.Value(pasetoCreationInputMiddlewareCtxKey).(*types.PASETOCreationInput)
+	if !ok || pasetoRequest == nil {
+		logger.Error(nil, "no UserLoginInput found for /login request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
+		return
+	}
+
+	sum := req.Header.Get(signatureHeaderKey)
+
+	logger = logger.WithValue(keys.DelegatedClientIDKey, pasetoRequest.ClientID)
+
+	client, clientRetrievalErr := s.delegatedClientsService.GetDelegatedClient(ctx, pasetoRequest.ClientID)
+	if clientRetrievalErr != nil {
+		logger.Error(clientRetrievalErr, "retrieving delegated client")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	logger = logger.WithValue(keys.UserIDKey, client.BelongsToUser)
+
+	defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToUser)
+	if membershipRetrievalErr != nil {
+		logger.Error(membershipRetrievalErr, "retrieving permissions for delegated client")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	mac := hmac.New(sha256.New, client.HMACKey)
+	if _, macWriteErr := mac.Write(s.encoderDecoder.MustJSON(pasetoRequest)); macWriteErr != nil {
+		logger.Error(membershipRetrievalErr, "writing HMAC message for comparison")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	if !hmac.Equal([]byte(sum), mac.Sum(nil)) {
+		logger.Info("invalid credentials passed to PASETO creation route")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid checksum", http.StatusUnauthorized)
+		return
+	}
+
+	now := time.Now()
+
+	jsonToken := paseto.JSONToken{
+		Audience:   s.config.PASETO.Audience,
+		Issuer:     s.config.PASETO.Issuer,
+		Jti:        uuid.New().String(),
+		Subject:    strconv.FormatUint(client.BelongsToUser, 10),
+		IssuedAt:   now,
+		NotBefore:  now,
+		Expiration: now.Add(s.config.PASETO.Lifetime),
+	}
+
+	var permBytes bytes.Buffer
+	if gobEncodeErr := gob.NewEncoder(&permBytes).Encode(permissions); gobEncodeErr != nil {
+		logger.Error(gobEncodeErr, "encoding permissions to string")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid checksum", http.StatusUnauthorized)
+		return
+	}
+
+	jsonToken.Set(keys.PermissionsKey, permBytes.String())
+	jsonToken.Set(keys.ActiveAccountIDKey, strconv.FormatUint(defaultAccount, 10))
+
+	// Encrypt data
+	token, tokenEncryptErr := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, "")
+	if tokenEncryptErr != nil {
+		logger.Error(tokenEncryptErr, "encrypting PASETO")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	s.encoderDecoder.EncodeResponse(ctx, res, token)
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.

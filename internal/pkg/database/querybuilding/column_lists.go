@@ -92,25 +92,6 @@ var (
 	}
 
 	//
-	// OAuth2 Clients Table.
-	//
-
-	// OAuth2ClientsTableColumns are the columns for the oauth2 clients table.
-	OAuth2ClientsTableColumns = []string{
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, IDColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, ExternalIDColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableNameColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableClientIDColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableScopesColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableRedirectURIColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableClientSecretColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", OAuth2ClientsTableName, OAuth2ClientsTableOwnershipColumn),
-	}
-
-	//
 	// Delegated Clients Table.
 	//
 
@@ -120,11 +101,11 @@ var (
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableNameColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableClientIDColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableClientSecretColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableHMACKeyColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, OAuth2ClientsTableOwnershipColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableOwnershipColumn),
 	}
 
 	//

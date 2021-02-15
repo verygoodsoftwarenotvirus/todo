@@ -29,10 +29,10 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User,
 	user, err := testutil.CreateServiceUser(ctx, urlToUse, "", debug)
 	require.NoError(t, err)
 
-	oa2Client, err := testutil.CreateObligatoryOAuth2Client(ctx, urlToUse, user)
+	cookie, err := testutil.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
-	return user, initializeClient(oa2Client)
+	return user, initializeClient(cookie)
 }
 
 func generateTOTPTokenForUser(t *testing.T, u *types.User) string {

@@ -7,8 +7,10 @@ const (
 	AuditLogEntryEventTypeKey = "event_type"
 	// AccountSubscriptionPlanIDKey is the standard key for referring to an account subscription plan ID in a log.
 	AccountSubscriptionPlanIDKey = "account_subscription_plan_id"
-	// AccountUserMembershipIDKey is the standard key for referring to an account user membership ID in a log.
-	AccountUserMembershipIDKey = "account_user_membership_id"
+	// PermissionsKey is the standard key for referring to an account user membership ID in a log.
+	PermissionsKey = "permissions"
+	// ActiveAccountIDKey is the standard key for referring to an account user membership ID in a log.
+	ActiveAccountIDKey = "active_account_id"
 	// PerformedByKey is the standard key for referring to a requesting user's ID in a log.
 	PerformedByKey = "performed_by"
 	// AccountIDKey is the standard key for referring to an account ID in a log.
@@ -27,10 +29,8 @@ const (
 	FilterIsNilKey = "filter_is_nil"
 	// DelegatedClientIDKey is the standard key for referring to a delegated client's database ID in a log.
 	DelegatedClientIDKey = "delegated_client_id"
-	// OAuth2ClientDatabaseIDKey is the standard key for referring to an oauth2 client's database ID in a log.
-	OAuth2ClientDatabaseIDKey = "oauth2_client_database_id"
-	// OAuth2ClientIDKey is the standard key for referring to an oauth2 client's ClientID in a log.
-	OAuth2ClientIDKey = "client_id"
+	// DelegatedClientDatabaseIDKey is the standard key for referring to a delegated client's database ID in a log.
+	DelegatedClientDatabaseIDKey = "delegated_client_row_id"
 	// WebhookIDKey is the standard key for referring to a webhook's ID in a log.
 	WebhookIDKey = "webhook_id"
 	// URLKey is the standard key for referring to a url in a log.

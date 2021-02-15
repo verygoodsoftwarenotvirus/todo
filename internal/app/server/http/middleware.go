@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-var idReplacementRegex = regexp.MustCompile(`[^(v|oauth)]\\d+`)
+var idReplacementRegex = regexp.MustCompile(`[^(v)]\\d+`)
 
 func formatSpanNameForRequest(operation string, req *http.Request) string {
 	return fmt.Sprintf(

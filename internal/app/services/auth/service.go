@@ -37,7 +37,6 @@ type (
 		userDB                   types.UserDataManager
 		auditLog                 types.AuthAuditManager
 		delegatedClientsService  types.DelegatedClientDataManager
-		oauth2ClientsService     types.OAuth2ClientDataService
 		accountMembershipManager types.AccountUserMembershipDataManager
 		encoderDecoder           encoding.EncoderDecoder
 		cookieManager            cookieEncoderDecoder
@@ -55,7 +54,6 @@ func ProvideService(
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
 	delegatedClientsService types.DelegatedClientDataManager,
-	oauth2ClientsService types.OAuth2ClientDataService,
 	accountMembershipManager types.AccountUserMembershipDataManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.EncoderDecoder,
@@ -68,7 +66,6 @@ func ProvideService(
 		userDB:                   userDataManager,
 		auditLog:                 auditLog,
 		delegatedClientsService:  delegatedClientsService,
-		oauth2ClientsService:     oauth2ClientsService,
 		accountMembershipManager: accountMembershipManager,
 		authenticator:            authenticator,
 		sessionManager:           sessionManager,

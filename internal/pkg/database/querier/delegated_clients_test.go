@@ -33,7 +33,7 @@ func buildMockRowsFromDelegatedClients(includeCounts bool, filteredCount uint64,
 			c.ExternalID,
 			c.Name,
 			c.ClientID,
-			c.ClientSecret,
+			c.HMACKey,
 			c.CreatedOn,
 			c.LastUpdatedOn,
 			c.ArchivedOn,
@@ -94,14 +94,14 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromDelegatedClients(false, 0, exampleDelegatedClient))
 
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser)
+		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ClientID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleDelegatedClient, actual)
 
@@ -125,7 +125,7 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser)
+		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ClientID)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
 		assert.Nil(t, actual)
@@ -150,7 +150,7 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser)
+		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ClientID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

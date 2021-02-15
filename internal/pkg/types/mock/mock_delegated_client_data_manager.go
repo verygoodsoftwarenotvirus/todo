@@ -16,8 +16,8 @@ type DelegatedClientDataManager struct {
 }
 
 // GetDelegatedClient is a mock function.
-func (m *DelegatedClientDataManager) GetDelegatedClient(ctx context.Context, clientID, userID uint64) (*types.DelegatedClient, error) {
-	args := m.Called(ctx, clientID, userID)
+func (m *DelegatedClientDataManager) GetDelegatedClient(ctx context.Context, clientID string) (*types.DelegatedClient, error) {
+	args := m.Called(ctx, clientID)
 	return args.Get(0).(*types.DelegatedClient), args.Error(1)
 }
 

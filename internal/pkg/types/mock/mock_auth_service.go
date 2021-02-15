@@ -35,6 +35,11 @@ func (m *AuthService) CycleCookieSecretHandler(res http.ResponseWriter, req *htt
 	m.Called(res, req)
 }
 
+// PASETOHandler implements our AuthService interface.
+func (m *AuthService) PASETOHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
 // CookieAuthenticationMiddleware implements our AuthService interface.
 func (m *AuthService) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return m.Called(next).Get(0).(http.Handler)

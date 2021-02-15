@@ -68,7 +68,9 @@ func TestItems(test *testing.T) {
 		subtest.Run("should be able to be read in a list", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, span := tracing.StartSpan(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
+			defer cancel()
+			ctx, span := tracing.StartSpan(ctx)
 			defer span.End()
 
 			runTestForClientAndCookie(ctx, subtest, "should be able to be read in a list", func(testClient *httpclient.Client) func(t *testing.T) {

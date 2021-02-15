@@ -1,7 +1,6 @@
 package httpclient
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 	"time"
@@ -9,8 +8,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 )
 
 type option func(*Client)
@@ -91,21 +88,11 @@ func WithCookieCredentials(cookie *http.Cookie) func(*Client) {
 
 		c.authMode = cookieAuthMode
 		c.authCookie = cookie
-	}
-}
 
-// WithOAuth2ClientCredentials sets the oauth2 credentials for the client.
-func WithOAuth2ClientCredentials(conf *clientcredentials.Config) func(*Client) {
-	return func(c *Client) {
-		c.tokenSource = oauth2.ReuseTokenSource(nil, conf.TokenSource(context.Background()))
-		c.authedClient = &http.Client{
-			Transport: &oauth2.Transport{
-				Base:   otelhttp.NewTransport(newDefaultRoundTripper()),
-				Source: c.tokenSource,
-			},
-			Timeout: defaultTimeout,
+		c.authedClient.Transport = &cookieRoundtripper{
+			cookie: cookie,
+			logger: c.logger,
+			base:   otelhttp.NewTransport(newDefaultRoundTripper()),
 		}
-
-		c.authMode = oauth2AuthMode
 	}
 }

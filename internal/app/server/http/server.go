@@ -29,15 +29,15 @@ type (
 	// Server is our API httpServer.
 	Server struct {
 		// Services.
-		authService          types.AuthService
-		frontendService      types.FrontendService
-		auditService         types.AuditLogEntryDataService
-		usersService         types.UserDataService
-		plansService         types.AccountSubscriptionPlanDataService
-		adminService         types.AdminService
-		oauth2ClientsService types.OAuth2ClientDataService
-		webhooksService      types.WebhookDataService
-		itemsService         types.ItemDataService
+		authService             types.AuthService
+		frontendService         types.FrontendService
+		auditService            types.AuditLogEntryDataService
+		usersService            types.UserDataService
+		plansService            types.AccountSubscriptionPlanDataService
+		adminService            types.AdminService
+		delegatedClientsService types.DelegatedClientDataService
+		webhooksService         types.WebhookDataService
+		itemsService            types.ItemDataService
 
 		// infra things.
 		db               database.DataManager
@@ -63,7 +63,7 @@ func ProvideServer(
 	itemsService types.ItemDataService,
 	usersService types.UserDataService,
 	plansService types.AccountSubscriptionPlanDataService,
-	oauth2Service types.OAuth2ClientDataService,
+	delegatedClientsService types.DelegatedClientDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,
 	db database.DataManager,
@@ -79,17 +79,18 @@ func ProvideServer(
 		encoder:          encoder,
 		httpServer:       provideHTTPServer(serverSettings.HTTPPort),
 		logger:           logging.EnsureLogger(logger).WithName(loggerName),
+
 		// services,
-		adminService:         adminService,
-		auditService:         auditService,
-		webhooksService:      webhooksService,
-		frontendService:      frontendService,
-		usersService:         usersService,
-		authService:          authService,
-		itemsService:         itemsService,
-		oauth2ClientsService: oauth2Service,
-		plansService:         plansService,
-		tracer:               tracing.NewTracer(loggerName),
+		adminService:            adminService,
+		auditService:            auditService,
+		webhooksService:         webhooksService,
+		frontendService:         frontendService,
+		usersService:            usersService,
+		authService:             authService,
+		itemsService:            itemsService,
+		delegatedClientsService: delegatedClientsService,
+		plansService:            plansService,
+		tracer:                  tracing.NewTracer(loggerName),
 	}
 
 	srv.setupRouter(router, metricsSettings, metricsHandler)

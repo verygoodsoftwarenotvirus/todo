@@ -107,9 +107,8 @@ type (
 
 	// PASETOCreationInput represents the payload used to create a PASETO token.
 	PASETOCreationInput struct {
-		ClientID     string `json:"clientID"`
-		ClientSecret string `json:"clientSecret"`
-		TOTPToken    string `json:"totpToken"`
+		ClientID  string `json:"clientID"`
+		NonceUUID string `json:"nonceUUID"`
 	}
 
 	// UserLoginInput represents the payload used to log in a User.
@@ -274,8 +273,7 @@ func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPas
 func (i *PASETOCreationInput) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.ClientID, validation.Required),
-		validation.Field(&i.ClientSecret, validation.Required),
-		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
+		validation.Field(&i.NonceUUID, validation.Required, &uuidValidator{}),
 	)
 }
 

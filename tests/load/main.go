@@ -91,7 +91,7 @@ func (a *ServiceAttacker) Clone() hazana.Attack {
 
 func main() {
 	runTime := 10 * time.Minute
-	todoClient := initializeClient(oa2Client)
+	todoClient := initializeClient()
 
 	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
 		_rt, err := time.ParseDuration(rt)

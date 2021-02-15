@@ -124,17 +124,6 @@ func buildTestClientWithInvalidURL(t *testing.T) *Client {
 
 // end helper funcs
 
-func TestV1Client_EnableAdminMode(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		ts := httptest.NewTLSServer(nil)
-
-		buildTestClient(t, ts).EnableAdminMode()
-	})
-}
-
 func TestV1Client_AuthenticatedClient(T *testing.T) {
 	T.Parallel()
 
@@ -160,45 +149,6 @@ func TestV1Client_PlainClient(T *testing.T) {
 		actual := c.PlainClient()
 
 		assert.Equal(t, ts.Client(), actual, "PlainClient should return the assigned plainClient")
-	})
-}
-
-func TestV1Client_TokenSource(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-
-		c := NewClient(
-			WithURL(MustParseURL(exampleURI)),
-			WithLogger(logging.NewNonOperationalLogger()),
-			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
-			WithOAuth2ClientCredentials(
-				BuildClientCredentialsConfig(
-					MustParseURL(exampleURI),
-					"clientID",
-					"clientSecret",
-				),
-			),
-		)
-
-		actual := c.TokenSource()
-
-		assert.NotNil(t, actual)
-	})
-
-	T.Run("nil without oauth2 credentials", func(t *testing.T) {
-		t.Parallel()
-
-		c := NewClient(
-			WithURL(MustParseURL(exampleURI)),
-			WithLogger(logging.NewNonOperationalLogger()),
-			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
-		)
-
-		actual := c.TokenSource()
-
-		assert.Nil(t, actual)
 	})
 }
 

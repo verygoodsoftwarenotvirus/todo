@@ -187,7 +187,8 @@ func buildURL(address string, parts ...string) string {
 	return tu.ResolveReference(u).String()
 }
 
-func getLoginCookie(ctx context.Context, serviceURL string, u *types.User) (*http.Cookie, error) {
+// GetLoginCookie fetches a login cookie for a given user.
+func GetLoginCookie(ctx context.Context, serviceURL string, u *types.User) (*http.Cookie, error) {
 	uri := buildURL(serviceURL, "users", "login")
 
 	code, err := totp.GenerateCode(strings.ToUpper(u.TwoFactorSecret), time.Now().UTC())
@@ -195,25 +196,16 @@ func getLoginCookie(ctx context.Context, serviceURL string, u *types.User) (*htt
 		return nil, fmt.Errorf("generating totp token: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		uri,
-		strings.NewReader(
-			fmt.Sprintf(
-				`
-					{
-						"username": %q,
-						"authentication": %q,
-						"totpToken": %q
-					}
-				`,
-				u.Username,
-				u.HashedPassword,
-				code,
-			),
-		),
-	)
+	body, err := json.Marshal(&types.UserLoginInput{
+		Username:  u.Username,
+		Password:  u.HashedPassword,
+		TOTPToken: code,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("generating login request body: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -233,66 +225,6 @@ func getLoginCookie(ctx context.Context, serviceURL string, u *types.User) (*htt
 	}
 
 	return nil, errors.New("no cookie found :(")
-}
-
-// CreateObligatoryOAuth2Client creates the OAuth2 httpclient we need for tests.
-func CreateObligatoryOAuth2Client(ctx context.Context, serviceURL string, u *types.User) (*types.OAuth2Client, error) {
-	if u == nil {
-		return nil, errors.New("user is nil")
-	}
-
-	firstOAuth2ClientURI := buildURL(serviceURL, "oauth2", "client")
-
-	code, err := totp.GenerateCode(
-		strings.ToUpper(u.TwoFactorSecret),
-		time.Now().UTC(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		firstOAuth2ClientURI,
-		strings.NewReader(fmt.Sprintf(`
-	{
-		"username": %q,
-		"authentication": %q,
-		"totpToken": %q,
-		"scopes": ["*"]
-	}
-		`, u.Username, u.HashedPassword, code)),
-		// remember we use u.HashedPassword as a temp container for the plain authentication
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	cookie, err := getLoginCookie(ctx, serviceURL, u)
-	if err != nil || cookie == nil {
-		log.Fatalf("\ncookie problems!\n\tcookie == nil: %v\n\terr: %v\n\t", cookie == nil, err)
-	}
-
-	req.AddCookie(cookie)
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	} else if res.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("bad status: %d", res.StatusCode)
-	}
-
-	defer func() {
-		if err = res.Body.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	var o types.OAuth2Client
-	err = json.NewDecoder(res.Body).Decode(&o)
-
-	return &o, err
 }
 
 // ParseTwoFactorSecretFromBase64EncodedQRCode accepts a base64-encoded QR code representing an otpauth:// URI,

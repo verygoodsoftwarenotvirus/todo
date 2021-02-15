@@ -26,7 +26,7 @@ func (c *Client) scanDelegatedClient(scan database.Scanner, includeCounts bool) 
 		&client.ExternalID,
 		&client.Name,
 		&client.ClientID,
-		&client.ClientSecret,
+		&client.HMACKey,
 		&client.CreatedOn,
 		&client.LastUpdatedOn,
 		&client.ArchivedOn,
@@ -78,20 +78,18 @@ func (c *Client) scanDelegatedClients(rows database.ResultIterator, includeCount
 }
 
 // GetDelegatedClient gets an Delegated client from the database.
-func (c *Client) GetDelegatedClient(ctx context.Context, clientID, userID uint64) (*types.DelegatedClient, error) {
+func (c *Client) GetDelegatedClient(ctx context.Context, clientID string) (*types.DelegatedClient, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachDelegatedClientIDToSpan(span, clientID)
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		"client_id":    clientID,
-		keys.UserIDKey: userID,
+		"client_id": clientID,
 	})
 	logger.Debug("GetDelegatedClient called")
 
-	query, args := c.sqlQueryBuilder.BuildGetDelegatedClientQuery(clientID, userID)
+	query, args := c.sqlQueryBuilder.BuildGetDelegatedClientQuery(clientID, 0)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	client, _, _, err := c.scanDelegatedClient(row, false)
@@ -219,7 +217,6 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 		ID:            id,
 		Name:          input.Name,
 		ClientID:      input.ClientID,
-		ClientSecret:  input.ClientSecret,
 		BelongsToUser: input.BelongsToUser,
 		CreatedOn:     c.currentTime(),
 	}
@@ -266,7 +263,7 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	tracing.AttachDelegatedClientIDToSpan(span, clientID)
+	tracing.AttachDelegatedClientDatabaseIDToSpan(span, clientID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.DelegatedClientIDKey: clientID,

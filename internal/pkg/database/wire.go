@@ -19,7 +19,6 @@ var (
 		ProvideAccountDataManager,
 		ProvideAccountUserMembershipDataManager,
 		ProvideDelegatedClientDataManager,
-		ProvideOAuth2ClientDataManager,
 		ProvideWebhookDataManager,
 	)
 )
@@ -71,11 +70,6 @@ func ProvideAdminUserDataManager(db DataManager) types.AdminUserDataManager {
 
 // ProvideDelegatedClientDataManager is an arbitrary function for dependency injection's sake.
 func ProvideDelegatedClientDataManager(db DataManager) types.DelegatedClientDataManager {
-	return db
-}
-
-// ProvideOAuth2ClientDataManager is an arbitrary function for dependency injection's sake.
-func ProvideOAuth2ClientDataManager(db DataManager) types.OAuth2ClientDataManager {
 	return db
 }
 

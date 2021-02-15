@@ -20,7 +20,7 @@ func TestPostgres_BuildGetBatchOfDelegatedClientsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.client_secret, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user FROM delegated_clients WHERE delegated_clients.id > $1 AND delegated_clients.id < $2"
+		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.hmac_key, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user FROM delegated_clients WHERE delegated_clients.id > $1 AND delegated_clients.id < $2"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -42,12 +42,12 @@ func TestPostgres_BuildGetDelegatedClientQuery(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 
-		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.client_secret, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $1 AND delegated_clients.id = $2"
+		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.hmac_key, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $1 AND delegated_clients.client_id = $2"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.BelongsToUser,
-			exampleDelegatedClient.ID,
+			exampleDelegatedClient.ClientID,
 		}
-		actualQuery, actualArgs := q.BuildGetDelegatedClientQuery(exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildGetDelegatedClientQuery(exampleDelegatedClient.ClientID, exampleDelegatedClient.BelongsToUser)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -80,7 +80,7 @@ func TestPostgres_BuildGetDelegatedClientsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.client_secret, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user, (SELECT COUNT(delegated_clients.id) FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $1) as total_count, (SELECT COUNT(delegated_clients.id) FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $2 AND delegated_clients.created_on > $3 AND delegated_clients.created_on < $4 AND delegated_clients.last_updated_on > $5 AND delegated_clients.last_updated_on < $6) as filtered_count FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $7 AND delegated_clients.created_on > $8 AND delegated_clients.created_on < $9 AND delegated_clients.last_updated_on > $10 AND delegated_clients.last_updated_on < $11 GROUP BY delegated_clients.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT delegated_clients.id, delegated_clients.external_id, delegated_clients.name, delegated_clients.client_id, delegated_clients.hmac_key, delegated_clients.created_on, delegated_clients.last_updated_on, delegated_clients.archived_on, delegated_clients.belongs_to_user, (SELECT COUNT(delegated_clients.id) FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $1) as total_count, (SELECT COUNT(delegated_clients.id) FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $2 AND delegated_clients.created_on > $3 AND delegated_clients.created_on < $4 AND delegated_clients.last_updated_on > $5 AND delegated_clients.last_updated_on < $6) as filtered_count FROM delegated_clients WHERE delegated_clients.archived_on IS NULL AND delegated_clients.belongs_to_user = $7 AND delegated_clients.created_on > $8 AND delegated_clients.created_on < $9 AND delegated_clients.last_updated_on > $10 AND delegated_clients.last_updated_on < $11 GROUP BY delegated_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -116,12 +116,12 @@ func TestPostgres_BuildCreateDelegatedClientQuery(T *testing.T) {
 		exIDGen.On("NewExternalID").Return(exampleDelegatedClient.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO delegated_clients (external_id,name,client_id,client_secret,belongs_to_user) VALUES ($1,$2,$3,$4,$5)"
+		expectedQuery := "INSERT INTO delegated_clients (external_id,name,client_id,hmac_key,belongs_to_user) VALUES ($1,$2,$3,$4,$5)"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.ExternalID,
 			exampleDelegatedClient.Name,
 			exampleDelegatedClient.ClientID,
-			exampleDelegatedClient.ClientSecret,
+			exampleDelegatedClient.HMACKey,
 			exampleDelegatedClient.BelongsToUser,
 		}
 		actualQuery, actualArgs := q.BuildCreateDelegatedClientQuery(exampleDelegatedClientInput)
@@ -143,10 +143,9 @@ func TestPostgres_BuildUpdateDelegatedClientQuery(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 
-		expectedQuery := "UPDATE delegated_clients SET client_id = $1, client_secret = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $3 AND id = $4"
+		expectedQuery := "UPDATE delegated_clients SET client_id = $1, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $2 AND id = $3"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.ClientID,
-			exampleDelegatedClient.ClientSecret,
 			exampleDelegatedClient.BelongsToUser,
 			exampleDelegatedClient.ID,
 		}

@@ -122,39 +122,18 @@ const (
 	// Delegated Clients.
 	//
 
-	// DelegatedClientsTableScopeSeparator is what the oauth2 clients table calls the <> column.
+	// DelegatedClientsTableScopeSeparator is what the delegated clients table calls the <> column.
 	DelegatedClientsTableScopeSeparator = commaSeparator
-	// DelegatedClientsTableName is what the oauth2 clients table calls the <> column.
+	// DelegatedClientsTableName is what the delegated clients table calls the <> column.
 	DelegatedClientsTableName = "delegated_clients"
-	// DelegatedClientsTableNameColumn is what the oauth2 clients table calls the <> column.
+	// DelegatedClientsTableNameColumn is what the delegated clients table calls the <> column.
 	DelegatedClientsTableNameColumn = "name"
-	// DelegatedClientsTableClientIDColumn is what the oauth2 clients table calls the <> column.
+	// DelegatedClientsTableClientIDColumn is what the delegated clients table calls the <> column.
 	DelegatedClientsTableClientIDColumn = "client_id"
-	// DelegatedClientsTableClientSecretColumn is what the oauth2 clients table calls the <> column.
-	DelegatedClientsTableClientSecretColumn = "client_secret"
-	// DelegatedClientsTableOwnershipColumn is what the oauth2 clients table calls the <> column.
+	// DelegatedClientsTableHMACKeyColumn is what the delegated clients table calls the <> column.
+	DelegatedClientsTableHMACKeyColumn = "hmac_key"
+	// DelegatedClientsTableOwnershipColumn is what the delegated clients table calls the <> column.
 	DelegatedClientsTableOwnershipColumn = userOwnershipColumn
-
-	//
-	// OAuth2 Clients.
-	//
-
-	// OAuth2ClientsTableScopeSeparator is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableScopeSeparator = commaSeparator
-	// OAuth2ClientsTableName is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableName = "oauth2_clients"
-	// OAuth2ClientsTableNameColumn is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableNameColumn = "name"
-	// OAuth2ClientsTableClientIDColumn is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableClientIDColumn = "client_id"
-	// OAuth2ClientsTableScopesColumn is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableScopesColumn = "scopes"
-	// OAuth2ClientsTableRedirectURIColumn is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableRedirectURIColumn = "redirect_uri"
-	// OAuth2ClientsTableClientSecretColumn is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableClientSecretColumn = "client_secret"
-	// OAuth2ClientsTableOwnershipColumn is what the oauth2 clients table calls the <> column.
-	OAuth2ClientsTableOwnershipColumn = userOwnershipColumn
 
 	//
 	// Webhooks Table.

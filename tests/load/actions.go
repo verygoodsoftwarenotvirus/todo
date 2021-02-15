@@ -62,10 +62,6 @@ func RandomAction(regularClient, adminClient *httpclient.Client) *Action {
 		allActions[k] = v
 	}
 
-	for k, v := range buildOAuth2ClientActions(regularClient) {
-		allActions[k] = v
-	}
-
 	var totalWeight uint = 0
 	for _, rb := range allActions {
 		totalWeight += rb.Weight

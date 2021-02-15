@@ -37,8 +37,8 @@ type (
 	PASETOConfig struct {
 		// Audience is the Audience value that goes into our PASETO tokens.
 		Audience string `json:"audience" mapstructure:"audience" toml:"audience,omitempty"`
-		// Listener is the Listener value that goes into our PASETO tokens.
-		Listener string `json:"listener" mapstructure:"listener" toml:"listener,omitempty"`
+		// Issuer is the Issuer value that goes into our PASETO tokens.
+		Issuer string `json:"issuer" mapstructure:"issuer" toml:"issuer,omitempty"`
 		// Lifetime indicates how long the cookies built should last.
 		Lifetime time.Duration `json:"lifetime" mapstructure:"lifetime" toml:"lifetime,omitempty"`
 		// LocalModeKey is the key used to sign local PASETO tokens.
@@ -74,7 +74,7 @@ func (cfg *CookieConfig) Validate(ctx context.Context) error {
 // Validate validates a PASETOConfig struct.
 func (cfg *PASETOConfig) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.Listener, validation.Required),
+		validation.Field(&cfg.Issuer, validation.Required),
 		validation.Field(&cfg.Audience, validation.Required),
 		validation.Field(&cfg.LocalModeKey, validation.Required, validation.Length(pasetoKeyRequiredLength, pasetoKeyRequiredLength)),
 	)

@@ -87,8 +87,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// set some data.
-	input.ClientID, input.ClientSecret = randString(), randString()
-	input.BelongsToUser = s.fetchUserID(req)
+	input.ClientID, input.BelongsToUser = randString(), s.fetchUserID(req)
 
 	// keep relevant data in mind.
 	logger = logger.WithValues(map[string]interface{}{
@@ -102,6 +101,8 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
+
+	input.ServiceAdminPermissions = user.ServiceAdminPermissions
 
 	// tag span since we have the info.
 	tracing.AttachUserIDToSpan(span, user.ID)
@@ -135,77 +136,10 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// notify interested parties.
-	tracing.AttachDelegatedClientIDToSpan(span, client.ID)
+	tracing.AttachDelegatedClientDatabaseIDToSpan(span, client.ID)
 	s.delegatedClientCounter.Increment(ctx)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, client, http.StatusCreated)
-}
-
-// ReadHandler is a route handler for retrieving an Delegated client.
-func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// determine subject of request.
-	userID := s.fetchUserID(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue(keys.UserIDKey, userID)
-
-	// determine relevant delegated client ID.
-	delegatedClientID := s.urlClientIDExtractor(req)
-	tracing.AttachDelegatedClientIDToSpan(span, delegatedClientID)
-	logger = logger.WithValue(keys.DelegatedClientIDKey, delegatedClientID)
-
-	// fetch delegated client.
-	x, err := s.clientDataManager.GetDelegatedClient(ctx, delegatedClientID, userID)
-	if errors.Is(err, sql.ErrNoRows) {
-		logger.Debug("ReadHandler called on nonexistent client")
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		logger.Error(err, "error fetching delegatedClient from clientDataManager")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
-}
-
-// ArchiveHandler is a route handler for archiving an Delegated client.
-func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// determine subject of request.
-	userID := s.fetchUserID(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue(keys.UserIDKey, userID)
-
-	// determine relevant delegated client ID.
-	delegatedClientID := s.urlClientIDExtractor(req)
-	tracing.AttachDelegatedClientIDToSpan(span, delegatedClientID)
-	logger = logger.WithValue(keys.DelegatedClientIDKey, delegatedClientID)
-
-	// mark client as archived.
-	err := s.clientDataManager.ArchiveDelegatedClient(ctx, delegatedClientID, userID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		logger.Error(err, "encountered error deleting delegated client")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// notify relevant parties.
-	s.delegatedClientCounter.Decrement(ctx)
-
-	res.WriteHeader(http.StatusNoContent)
 }
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
@@ -222,7 +156,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	// determine relevant delegated client ID.
 	delegatedClientID := s.urlClientIDExtractor(req)
-	tracing.AttachDelegatedClientIDToSpan(span, delegatedClientID)
+	tracing.AttachDelegatedClientDatabaseIDToSpan(span, delegatedClientID)
 	logger = logger.WithValue(keys.DelegatedClientIDKey, delegatedClientID)
 
 	x, err := s.clientDataManager.GetAuditLogEntriesForDelegatedClient(ctx, delegatedClientID)

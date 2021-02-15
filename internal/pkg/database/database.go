@@ -58,7 +58,6 @@ type (
 		types.UserDataManager
 		types.AuditLogEntryDataManager
 		types.DelegatedClientDataManager
-		types.OAuth2ClientDataManager
 		types.WebhookDataManager
 		types.ItemDataManager
 
@@ -77,7 +76,6 @@ type (
 		types.UserSQLQueryBuilder
 		types.AuditLogEntrySQLQueryBuilder
 		types.DelegatedClientSQLQueryBuilder
-		types.OAuth2ClientSQLQueryBuilder
 		types.WebhookSQLQueryBuilder
 		types.ItemSQLQueryBuilder
 	}

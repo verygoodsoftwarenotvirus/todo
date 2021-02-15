@@ -15,7 +15,7 @@ func BuildFakeDelegatedClient() *types.DelegatedClient {
 		ExternalID:    fake.UUID(),
 		Name:          fake.Word(),
 		ClientID:      fake.UUID(),
-		ClientSecret:  fake.UUID(),
+		HMACKey:       []byte(fake.UUID()),
 		BelongsToUser: fake.Uint64(),
 		CreatedOn:     uint64(uint32(fake.Date().Unix())),
 	}
@@ -51,7 +51,6 @@ func BuildFakeDelegatedClientCreationInput() *types.DelegatedClientCreationInput
 		},
 		Name:          client.Name,
 		ClientID:      client.ClientID,
-		ClientSecret:  client.ClientSecret,
 		BelongsToUser: client.BelongsToUser,
 	}
 }
@@ -66,7 +65,7 @@ func BuildFakeDelegatedClientCreationInputFromClient(client *types.DelegatedClie
 		},
 		Name:          client.Name,
 		ClientID:      client.ClientID,
-		ClientSecret:  client.ClientSecret,
+		HMACKey:       client.HMACKey,
 		BelongsToUser: client.BelongsToUser,
 	}
 }

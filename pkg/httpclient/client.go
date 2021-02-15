@@ -16,7 +16,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/moul/http2curl"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -47,17 +46,11 @@ type Client struct {
 	logger logging.Logger
 	tracer tracing.Tracer
 
-	debug     bool
-	adminMode bool
+	debug bool
 
-	authMode    *authMode
-	authCookie  *http.Cookie
-	tokenSource oauth2.TokenSource
-}
+	authMode *authMode
 
-// EnableAdminMode enables admin mode.
-func (c *Client) EnableAdminMode() {
-	c.adminMode = true
+	authCookie *http.Cookie
 }
 
 // AuthenticatedClient returns the authenticated *http.Client that we use to make most requests.
@@ -70,32 +63,15 @@ func (c *Client) PlainClient() *http.Client {
 	return c.plainClient
 }
 
-// TokenSource provides the client's token source.
-func (c *Client) TokenSource() oauth2.TokenSource {
-	return c.tokenSource
-}
-
 // URL provides the client's URL.
 func (c *Client) URL() *url.URL {
 	return c.url
-}
-
-// tokenEndpoint provides the oauth2 Endpoint for a given host.
-func tokenEndpoint(baseURL *url.URL) oauth2.Endpoint {
-	tu, au := *baseURL, *baseURL
-	tu.Path, au.Path = "oauth2/token", "oauth2/authorize"
-
-	return oauth2.Endpoint{
-		TokenURL: tu.String(),
-		AuthURL:  au.String(),
-	}
 }
 
 // NewClient builds a new API client for us.
 func NewClient(options ...option) *Client {
 	c := &Client{
 		url:          MustParseURL(""),
-		tokenSource:  nil,
 		authedClient: http.DefaultClient,
 		plainClient:  http.DefaultClient,
 		debug:        false,

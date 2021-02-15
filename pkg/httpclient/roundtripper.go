@@ -24,9 +24,9 @@ type defaultRoundTripper struct {
 }
 
 // newDefaultRoundTripper constructs a new http.RoundTripper.
-func newDefaultRoundTripper() *defaultRoundTripper {
+func newDefaultRoundTripper(timeout time.Duration) *defaultRoundTripper {
 	return &defaultRoundTripper{
-		baseTransport: buildDefaultTransport(),
+		baseTransport: buildDefaultTransport(timeout),
 	}
 }
 
@@ -37,11 +37,15 @@ func (t *defaultRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 }
 
 // buildDefaultTransport constructs a new http.Transport.
-func buildDefaultTransport() *http.Transport {
+func buildDefaultTransport(timeout time.Duration) *http.Transport {
+	if timeout == 0 {
+		timeout = defaultTimeout
+	}
+
 	return &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
-			Timeout:   defaultTimeout,
+			Timeout:   timeout,
 			KeepAlive: keepAlive,
 		}).DialContext,
 		MaxIdleConns:          maxIdleConns,

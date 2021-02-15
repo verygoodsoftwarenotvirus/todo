@@ -15,7 +15,7 @@ func Test_buildDefaultTransport(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		_ = buildDefaultTransport()
+		_ = buildDefaultTransport(0)
 	})
 }
 
@@ -34,7 +34,7 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 			),
 		)
 
-		transport := newDefaultRoundTripper()
+		transport := newDefaultRoundTripper(0)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL, nil)
 
 		require.NotNil(t, req)
@@ -50,6 +50,6 @@ func Test_newDefaultRoundTripper(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		_ = newDefaultRoundTripper()
+		_ = newDefaultRoundTripper(0)
 	})
 }

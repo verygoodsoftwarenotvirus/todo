@@ -151,11 +151,11 @@
           "refId": "A"
         },
         {
-          "expr": "todo_server_oauth2_clients_count",
+          "expr": "todo_server_delegated_clients_count",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
-          "legendFormat": "oauth2 clients",
+          "legendFormat": "delegated clients",
           "refId": "C"
         },
         {

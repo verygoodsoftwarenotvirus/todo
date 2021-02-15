@@ -106,21 +106,6 @@ s
             <i class="fa fa-cog"></i>&nbsp;&nbsp;{translationsToUse.settings}
           </h6>
 
-          <!-- OAUTH2 CLIENTS -->
-
-          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-            <li class="items-center">
-              <a
-                use:link
-                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                href="{frontendRoutes.USER_LIST_OAUTH2_CLIENTS}"
-              >
-                <i class="fas fa-robot text-gray-400 mr-2 text-sm"></i>
-                {translationsToUse.oauth2Clients}
-              </a>
-            </li>
-          </ul>
-
           <!-- WEBHOOKS -->
 
           <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">

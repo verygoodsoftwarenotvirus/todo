@@ -53,7 +53,8 @@ func WithHTTPClient(client *http.Client) func(*Client) {
 			client.Timeout = defaultTimeout
 		}
 
-		client.Transport = otelhttp.NewTransport(buildDefaultTransport())
+		client.Transport = otelhttp.NewTransport(buildDefaultTransport(client.Timeout))
+
 		c.plainClient = client
 		c.authedClient = client
 	}
@@ -86,13 +87,10 @@ func WithCookieCredentials(cookie *http.Cookie) func(*Client) {
 			return
 		}
 
-		c.authMode = cookieAuthMode
-		c.authCookie = cookie
-
 		c.authedClient.Transport = &cookieRoundtripper{
 			cookie: cookie,
 			logger: c.logger,
-			base:   otelhttp.NewTransport(newDefaultRoundTripper()),
+			base:   otelhttp.NewTransport(newDefaultRoundTripper(c.plainClient.Timeout)),
 		}
 	}
 }

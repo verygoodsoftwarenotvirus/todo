@@ -49,7 +49,6 @@ export type primarySidebarTranslations = {
   admin: string;
   settings: string;
   users: string;
-  oauth2Clients: string;
   webhooks: string;
   auditLog: string;
   userSettings: string;

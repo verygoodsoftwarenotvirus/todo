@@ -13,12 +13,6 @@ const (
 	authBasePath = "auth"
 )
 
-type authMode struct{}
-
-var (
-	cookieAuthMode = new(authMode)
-)
-
 // BuildStatusRequest builds an HTTP request that fetches a user's status.
 func (c *Client) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)

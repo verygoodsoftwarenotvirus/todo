@@ -141,7 +141,7 @@ func TestV1Client_BanUser(T *testing.T) {
 			),
 		)
 		c := buildTestClient(t, ts)
-		c.plainClient.Timeout = time.Millisecond
+		c.SetOption(WithTimeout(time.Millisecond))
 
 		err := c.UpdateAccountStatus(ctx, exampleInput)
 		assert.Error(t, err)

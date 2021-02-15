@@ -7,12 +7,10 @@ import Sidebar from '../components/Sidebar/Sidebar.svelte';
 import AdminFooter from '../components/Footers/AdminFooter.svelte';
 import WebhookEditor from '../components/Webhooks/Editor.svelte';
 import WebhookCreator from '../components/Webhooks/Creator.svelte';
-import OAuth2ClientEditor from '../components/OAuth2Clients/Editor.svelte';
 
 // pages for this layout
 import Webhooks from '../views/user/Webhooks.svelte';
 import UserSettings from '../views/user/Settings.svelte';
-import OAuth2Clients from '../views/user/OAuth2Clients.svelte';
 
 import { Logger } from '../logger';
 
@@ -27,10 +25,6 @@ export let location: Location;
     <AdminNavbar />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="user">
-        <Route path="oauth2_clients" component="{OAuth2Clients}" />
-        <Route path="oauth2_clients/:id" let:params>
-          <OAuth2ClientEditor oauth2ClientID="{params.id}" />
-        </Route>
         <Route path="webhooks" component="{Webhooks}" />
         <Route path="webhooks/new" component="{WebhookCreator}" />
         <Route path="webhooks/nu" component="{WebhookEditor}" />

@@ -4,7 +4,6 @@ export * from './audit_log_entries';
 export * from './auth_requests';
 // things
 export * from './items';
-export * from './oauth2clients';
 export * from './queryFilter';
 export * from './session_settings';
 // default types

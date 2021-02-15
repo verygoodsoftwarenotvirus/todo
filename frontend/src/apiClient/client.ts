@@ -26,13 +26,6 @@ import {
   searchForItems,
 } from './items';
 import {
-  createOAuth2Client,
-  deleteOAuth2Client,
-  fetchAuditLogEntriesForOAuth2Client,
-  fetchListOfOAuth2Clients,
-  fetchOAuth2Client,
-} from './oauth2clients';
-import {
   deleteUser,
   fetchAuditLogEntriesForUser,
   fetchListOfUsers,
@@ -98,13 +91,6 @@ export class V1APIClient {
   // audit log entries
   static fetchListOfAuditLogEntries = fetchListOfAuditLogEntries;
   static fetchAuditLogEntry = fetchAuditLogEntry;
-
-  // oauth2 clients stuff
-  static createOAuth2Client = createOAuth2Client;
-  static fetchOAuth2Client = fetchOAuth2Client;
-  static deleteOAuth2Client = deleteOAuth2Client;
-  static fetchListOfOAuth2Clients = fetchListOfOAuth2Clients;
-  static fetchAuditLogEntriesForOAuth2Client = fetchAuditLogEntriesForOAuth2Client;
 
   // webhooks stuff
   static createWebhook = createWebhook;

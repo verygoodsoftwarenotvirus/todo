@@ -47,10 +47,6 @@ type Client struct {
 	tracer tracing.Tracer
 
 	debug bool
-
-	authMode *authMode
-
-	authCookie *http.Cookie
 }
 
 // AuthenticatedClient returns the authenticated *http.Client that we use to make most requests.
@@ -192,10 +188,6 @@ func (c *Client) buildDataRequest(ctx context.Context, method, uri string, in in
 		return nil, err
 	}
 
-	if c.authMode == cookieAuthMode && c.authCookie != nil {
-		req.AddCookie(c.authCookie)
-	}
-
 	req.Header.Set("Content-type", "application/json")
 
 	return req, nil
@@ -209,13 +201,6 @@ func (c *Client) executeRequest(ctx context.Context, req *http.Request, out inte
 
 	logger := c.logger.WithRequest(req)
 	logger.Debug("executing request")
-
-	// ensure cookie is attached
-	if c.authMode == cookieAuthMode && c.authCookie != nil {
-		if _, err := req.Cookie(c.authCookie.Name); err == nil {
-			req.AddCookie(c.authCookie)
-		}
-	}
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
@@ -248,13 +233,6 @@ func (c *Client) executeRawRequest(ctx context.Context, client *http.Client, req
 
 	logger := c.logger.WithRequest(req)
 	logger.Debug("executing request")
-
-	// ensure cookie is attached
-	if c.authMode == cookieAuthMode && c.authCookie != nil {
-		if _, err := req.Cookie(c.authCookie.Name); err == nil {
-			req.AddCookie(c.authCookie)
-		}
-	}
 
 	if command, err := http2curl.GetCurlCommand(req); err == nil && c.debug {
 		logger = c.logger.WithValue("curl", command.String())

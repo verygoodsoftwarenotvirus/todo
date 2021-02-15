@@ -9,7 +9,6 @@ import type {
   itemModelTranslations,
   loginPageTranslations,
   mainFooterTranslations,
-  oauth2ClientModelTranslations,
   primarySidebarTranslations,
   registrationPageTranslations,
   siteSettingsPageTranslations,
@@ -72,7 +71,6 @@ export type SiteTranslationMap = {
     item: itemModelTranslations;
     user: userModelTranslations;
     auditLogEntry: auditLogEntryTranslations;
-    oauth2Client: oauth2ClientModelTranslations;
     webhook: webhookModelTranslations;
   };
 };

@@ -131,7 +131,7 @@ const (
 	// DelegatedClientsTableClientIDColumn is what the delegated clients table calls the <> column.
 	DelegatedClientsTableClientIDColumn = "client_id"
 	// DelegatedClientsTableHMACKeyColumn is what the delegated clients table calls the <> column.
-	DelegatedClientsTableHMACKeyColumn = "hmac_key"
+	DelegatedClientsTableHMACKeyColumn = "secret_key"
 	// DelegatedClientsTableOwnershipColumn is what the delegated clients table calls the <> column.
 	DelegatedClientsTableOwnershipColumn = userOwnershipColumn
 

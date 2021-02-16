@@ -101,6 +101,7 @@ func UsingCookie(cookie *http.Cookie) func(*Client) {
 			return
 		}
 
+		c.authMethod = cookieAuthMethod
 		c.authedClient.Transport = newCookieRoundTripper(c, cookie)
 	}
 }
@@ -108,6 +109,7 @@ func UsingCookie(cookie *http.Cookie) func(*Client) {
 // UsingPASETO sets the authCookie value on the client.
 func UsingPASETO(clientID string, secretKey []byte) func(*Client) {
 	return func(c *Client) {
+		c.authMethod = pasetoAuthMethod
 		c.authedClient.Transport = newPASETORoundTripper(c, clientID, secretKey)
 	}
 }

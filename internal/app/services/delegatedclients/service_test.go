@@ -29,6 +29,7 @@ func buildTestService(t *testing.T) *service {
 		authenticator:          &mockauth.Authenticator{},
 		urlClientIDExtractor:   func(req *http.Request) uint64 { return 0 },
 		delegatedClientCounter: &mockmetrics.UnitCounter{},
+		secretGenerator:        &mockSecretGenerator{},
 		tracer:                 tracing.NewTracer(serviceName),
 	}
 }

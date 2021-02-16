@@ -80,7 +80,7 @@ func (q *Sqlite) BuildCreateDelegatedClientQuery(input *types.DelegatedClientCre
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.ClientID,
-			input.HMACKey,
+			input.ClientSecret,
 			input.BelongsToUser,
 		),
 	)

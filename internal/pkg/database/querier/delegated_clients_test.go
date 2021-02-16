@@ -33,7 +33,7 @@ func buildMockRowsFromDelegatedClients(includeCounts bool, filteredCount uint64,
 			c.ExternalID,
 			c.Name,
 			c.ClientID,
-			c.HMACKey,
+			c.ClientSecret,
 			c.CreatedOn,
 			c.LastUpdatedOn,
 			c.ArchivedOn,
@@ -542,7 +542,7 @@ func TestClient_CreateDelegatedClient(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 		exampleDelegatedClient.ExternalID = ""
-		exampleDelegatedClient.HMACKey = nil
+		exampleDelegatedClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
 
 		ctx := context.Background()

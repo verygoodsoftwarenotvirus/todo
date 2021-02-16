@@ -44,7 +44,7 @@ func TestV1Client_GetDelegatedClient(T *testing.T) {
 		ctx := context.Background()
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.HMACKey = nil
+		exampleDelegatedClient.ClientSecret = nil
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleDelegatedClient.ID)
 
 		ts := httptest.NewTLSServer(
@@ -70,7 +70,7 @@ func TestV1Client_GetDelegatedClient(T *testing.T) {
 		ctx := context.Background()
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.HMACKey = nil
+		exampleDelegatedClient.ClientSecret = nil
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ID)
@@ -113,7 +113,7 @@ func TestV1Client_GetDelegatedClients(T *testing.T) {
 
 		exampleDelegatedClientList := fakes.BuildFakeDelegatedClientList()
 		for i := 0; i < len(exampleDelegatedClientList.Clients); i++ {
-			exampleDelegatedClientList.Clients[i].HMACKey = nil
+			exampleDelegatedClientList.Clients[i].ClientSecret = nil
 		}
 
 		ts := httptest.NewTLSServer(
@@ -181,7 +181,7 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 		ctx := context.Background()
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.HMACKey = nil
+		exampleDelegatedClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
 
 		ts := httptest.NewTLSServer(

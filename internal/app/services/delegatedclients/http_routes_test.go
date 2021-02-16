@@ -21,12 +21,22 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-func Test_randString(T *testing.T) {
+func Test_buildClientID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		actual := randString()
+		actual := buildClientID()
+		assert.NotEmpty(t, actual)
+	})
+}
+
+func Test_buildClientSecret(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		actual := buildClientSecret()
 		assert.NotEmpty(t, actual)
 	})
 }

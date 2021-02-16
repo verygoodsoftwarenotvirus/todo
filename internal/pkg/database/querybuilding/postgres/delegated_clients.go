@@ -80,7 +80,7 @@ func (q *Postgres) BuildCreateDelegatedClientQuery(input *types.DelegatedClientC
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.ClientID,
-			input.HMACKey,
+			input.ClientSecret,
 			input.BelongsToUser,
 		),
 	)

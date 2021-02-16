@@ -110,7 +110,7 @@ func (c *Client) CreateDelegatedClient(
 
 	var delegatedClient *types.DelegatedClient
 
-	if cookie == nil {
+	if cookie == nil && c.authMethod != cookieAuthMethod {
 		return nil, errors.New("cookie required for request")
 	}
 

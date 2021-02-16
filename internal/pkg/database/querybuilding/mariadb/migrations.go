@@ -176,7 +176,7 @@ var (
 				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` VARCHAR(128) DEFAULT '',",
 				"    `client_id` VARCHAR(64) NOT NULL,",
-				"    `hmac_key` LONGTEXT NOT NULL,",
+				"    `secret_key` LONGTEXT NOT NULL,",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",

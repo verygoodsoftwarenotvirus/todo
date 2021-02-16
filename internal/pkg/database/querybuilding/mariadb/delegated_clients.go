@@ -80,7 +80,7 @@ func (q *MariaDB) BuildCreateDelegatedClientQuery(input *types.DelegatedClientCr
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.ClientID,
-			input.HMACKey,
+			input.ClientSecret,
 			input.BelongsToUser,
 		),
 	)

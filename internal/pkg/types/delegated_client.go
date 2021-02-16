@@ -21,7 +21,7 @@ type (
 		ExternalID    string  `json:"externalID"`
 		Name          string  `json:"name"`
 		ClientID      string  `json:"clientID"`
-		HMACKey       []byte  `json:"-"`
+		ClientSecret  []byte  `json:"-"`
 		CreatedOn     uint64  `json:"createdOn"`
 		LastUpdatedOn *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn    *uint64 `json:"archivedOn"`
@@ -39,9 +39,15 @@ type (
 		UserLoginInput
 		Name                    string                          `json:"name"`
 		ClientID                string                          `json:"-"`
-		HMACKey                 []byte                          `json:"-"`
+		ClientSecret            []byte                          `json:"-"`
 		ServiceAdminPermissions bitmask.ServiceAdminPermissions `json:"-"`
 		BelongsToUser           uint64                          `json:"-"`
+	}
+
+	// DelegatedClientCreationResponse is a struct for informing users of what their delegated client's secret key is.
+	DelegatedClientCreationResponse struct {
+		ClientID     string `json:"clientID"`
+		ClientSecret []byte `json:"clientSecret"`
 	}
 
 	// DelegatedClientSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.

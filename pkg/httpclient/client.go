@@ -23,6 +23,8 @@ const (
 	clientName     = "todo_client_v1"
 )
 
+type authMethod struct{}
+
 var (
 	// ErrNotFound is a handy error to return when we receive a 404 response.
 	ErrNotFound = fmt.Errorf("%d: not found", http.StatusNotFound)
@@ -35,6 +37,9 @@ var (
 
 	// ErrNilInputProvided indicates nil input was provided in an unacceptable context.
 	ErrNilInputProvided = errors.New("nil input provided")
+
+	cookieAuthMethod = new(authMethod)
+	pasetoAuthMethod = new(authMethod)
 )
 
 // Client is a client for interacting with v1 of our HTTP API.
@@ -42,7 +47,9 @@ type Client struct {
 	url          *url.URL
 	plainClient  *http.Client
 	authedClient *http.Client
-	contentType  string
+
+	authMethod  *authMethod
+	contentType string
 
 	logger logging.Logger
 	tracer tracing.Tracer

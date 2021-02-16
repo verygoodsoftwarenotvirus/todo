@@ -21,14 +21,26 @@ const (
 
 // randString produces a random string.
 // https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func randString() string {
-	b := make([]byte, 32)
+func buildClientID() string {
+	b := randByteArrayOfLength(32)
+
+	// this is so that we don't end up with `=` in IDs
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
+}
+
+// randString produces a random string.
+// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
+func buildClientSecret() []byte {
+	return randByteArrayOfLength(128)
+}
+
+func randByteArrayOfLength(length uint) []byte {
+	b := make([]byte, length)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
 
-	// this is so that we don't end up with `=` in IDs
-	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
+	return b
 }
 
 // fetchUserID grabs a userID out of the request context.
@@ -86,9 +98,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// set some data.
-	input.ClientID, input.BelongsToUser = randString(), s.fetchUserID(req)
-
 	// keep relevant data in mind.
 	logger = logger.WithValues(map[string]interface{}{
 		"username": input.Username,
@@ -101,8 +110,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	input.ServiceAdminPermissions = user.ServiceAdminPermissions
 
 	// tag span since we have the info.
 	tracing.AttachUserIDToSpan(span, user.ID)
@@ -127,6 +134,22 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// set some data.
+	if input.ClientID, err = s.secretGenerator.GenerateClientID(); err != nil {
+		logger.Error(err, "generating client id")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	if input.ClientSecret, err = s.secretGenerator.GenerateClientSecret(); err != nil {
+		logger.Error(err, "generating client secret")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	input.BelongsToUser = s.fetchUserID(req)
+	input.ServiceAdminPermissions = user.ServiceAdminPermissions
+
 	// create the client.
 	client, err := s.clientDataManager.CreateDelegatedClient(ctx, input)
 	if err != nil {
@@ -139,7 +162,12 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachDelegatedClientDatabaseIDToSpan(span, client.ID)
 	s.delegatedClientCounter.Increment(ctx)
 
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, client, http.StatusCreated)
+	resObj := &types.DelegatedClientCreationResponse{
+		ClientID:     client.ClientID,
+		ClientSecret: client.ClientSecret,
+	}
+
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, resObj, http.StatusCreated)
 }
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.

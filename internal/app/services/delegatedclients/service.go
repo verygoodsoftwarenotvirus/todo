@@ -43,6 +43,7 @@ type (
 		encoderDecoder         encoding.HTTPResponseEncoder
 		urlClientIDExtractor   func(req *http.Request) uint64
 		delegatedClientCounter metrics.UnitCounter
+		secretGenerator        secretGenerator
 		tracer                 tracing.Tracer
 	}
 )
@@ -63,6 +64,7 @@ func ProvideDelegatedClientsService(
 		logger:               logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:       encoderDecoder,
 		authenticator:        authenticator,
+		secretGenerator:      &standardSecretGenerator{},
 		urlClientIDExtractor: routeParamManager.BuildRouteParamIDFetcher(logger, DelegatedClientIDURIParamKey, "delegated client"),
 		tracer:               tracing.NewTracer(serviceName),
 	}

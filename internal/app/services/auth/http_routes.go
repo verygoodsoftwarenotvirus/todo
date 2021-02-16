@@ -292,7 +292,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	mac := hmac.New(sha256.New, client.HMACKey)
+	mac := hmac.New(sha256.New, client.ClientSecret)
 	if _, macWriteErr := mac.Write(s.encoderDecoder.MustJSON(pasetoRequest)); macWriteErr != nil {
 		logger.Error(membershipRetrievalErr, "writing HMAC message for comparison")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)

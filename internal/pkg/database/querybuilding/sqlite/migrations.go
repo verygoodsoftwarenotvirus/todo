@@ -114,7 +114,7 @@ var (
 				external_id TEXT NOT NULL,
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
-				hmac_key TEXT NOT NULL,
+				secret_key TEXT NOT NULL,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER,
 				archived_on INTEGER DEFAULT NULL,

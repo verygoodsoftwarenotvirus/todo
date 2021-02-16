@@ -26,7 +26,7 @@ func (c *Client) scanDelegatedClient(scan database.Scanner, includeCounts bool) 
 		&client.ExternalID,
 		&client.Name,
 		&client.ClientID,
-		&client.HMACKey,
+		&client.ClientSecret,
 		&client.CreatedOn,
 		&client.LastUpdatedOn,
 		&client.ArchivedOn,

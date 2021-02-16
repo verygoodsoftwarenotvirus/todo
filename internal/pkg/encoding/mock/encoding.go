@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ encoding.EncoderDecoder = (*EncoderDecoder)(nil)
+var _ encoding.HTTPResponseEncoder = (*EncoderDecoder)(nil)
 
 // NewMockEncoderDecoder produces a mock EncoderDecoder.
 func NewMockEncoderDecoder() *EncoderDecoder {

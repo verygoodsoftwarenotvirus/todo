@@ -3,16 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/pquerna/otp/totp"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
-	"net/url"
-	"strings"
-	"sync"
-	"time"
 
 	flag "github.com/spf13/pflag"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -117,9 +118,9 @@ func main() {
 			}
 
 			userClient := httpclient.NewClient(
-				httpclient.WithURL(parsedURI),
-				httpclient.WithLogger(userLogger),
-				httpclient.WithCookieCredentials(cookie),
+				httpclient.UsingURL(parsedURI),
+				httpclient.UsingLogger(userLogger),
+				httpclient.UsingCookie(cookie),
 			)
 			userLogger.Debug("assigned user API client")
 

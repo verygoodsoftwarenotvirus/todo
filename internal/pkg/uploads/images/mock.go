@@ -25,7 +25,7 @@ func (m *MockImageUploadProcessor) Process(ctx context.Context, req *http.Reques
 }
 
 // BuildAvatarUploadMiddleware satisfies the ImageUploadProcessor interface.
-func (m *MockImageUploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, logger logging.Logger, encoderDecoder encoding.EncoderDecoder, filename string) http.Handler {
+func (m *MockImageUploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, logger logging.Logger, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler {
 	args := m.Called(next, logger, encoderDecoder, filename)
 
 	return args.Get(0).(http.Handler)

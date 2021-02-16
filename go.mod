@@ -22,7 +22,7 @@ require (
 	github.com/emicklei/hazana v1.6.2
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-chi/cors v1.0.0
-	github.com/go-oauth2/oauth2/v4 v4.1.2
+	github.com/go-oauth2/oauth2/v4 v4.1.2 // indirect
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/uuid v1.1.2

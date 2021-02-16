@@ -43,7 +43,7 @@ type (
 		authSettings         *authservice.Config
 		authenticator        authentication.Authenticator
 		logger               logging.Logger
-		encoderDecoder       encoding.EncoderDecoder
+		encoderDecoder       encoding.HTTPResponseEncoder
 		userIDFetcher        func(*http.Request) uint64
 		sessionInfoFetcher   func(*http.Request) (*types.SessionInfo, error)
 		userCounter          metrics.UnitCounter
@@ -61,7 +61,7 @@ func ProvideUsersService(
 	userDataManager types.UserDataManager,
 	accountDataManager types.AccountDataManager,
 	authenticator authentication.Authenticator,
-	encoder encoding.EncoderDecoder,
+	encoder encoding.HTTPResponseEncoder,
 	counterProvider metrics.UnitCounterProvider,
 	imageUploadProcessor images.ImageUploadProcessor,
 	uploadManager uploads.UploadManager,

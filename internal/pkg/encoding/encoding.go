@@ -30,15 +30,15 @@ const (
 var (
 	// Providers provides ResponseEncoders for dependency injection.
 	Providers = wire.NewSet(
-		ProvideEncoderDecoder,
+		ProvideHTTPResponseEncoder,
 	)
 
-	_ EncoderDecoder = (*serverEncoderDecoder)(nil)
+	_ HTTPResponseEncoder = (*serverEncoderDecoder)(nil)
 )
 
 type (
-	// EncoderDecoder is an interface that allows for multiple implementations of HTTP response formats.
-	EncoderDecoder interface {
+	// HTTPResponseEncoder is an interface that allows for multiple implementations of HTTP response formats.
+	HTTPResponseEncoder interface {
 		EncodeResponse(ctx context.Context, res http.ResponseWriter, val interface{})
 		EncodeResponseWithStatus(ctx context.Context, res http.ResponseWriter, val interface{}, statusCode int)
 		EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int)
@@ -213,8 +213,8 @@ func (ed *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Req
 
 const name = "response_encoder"
 
-// ProvideEncoderDecoder provides an EncoderDecoder.
-func ProvideEncoderDecoder(logger logging.Logger) EncoderDecoder {
+// ProvideHTTPResponseEncoder provides an HTTPResponseEncoder.
+func ProvideHTTPResponseEncoder(logger logging.Logger) HTTPResponseEncoder {
 	return &serverEncoderDecoder{
 		logger:   logging.EnsureLogger(logger).WithName(name),
 		tracer:   tracing.NewTracer(name),

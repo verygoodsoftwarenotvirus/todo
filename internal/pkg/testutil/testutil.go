@@ -132,7 +132,7 @@ func CreateServiceUser(ctx context.Context, address, username string, debug bool
 
 	tu := httpclient.MustParseURL(address)
 	c := httpclient.NewClient(
-		httpclient.WithURL(tu),
+		httpclient.UsingURL(tu),
 	)
 
 	in := &types.NewUserCreationInput{

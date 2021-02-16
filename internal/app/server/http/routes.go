@@ -8,7 +8,7 @@ import (
 
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/delegatedclients"
+	delegatedclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/delegatedclients"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
@@ -131,7 +131,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 
 		// Delegated Clients.
 		v1Router.Route("/delegated_clients", func(clientRouter routing.Router) {
-			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, delegatedclients.DelegatedClientIDURIParamKey)
+			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, delegatedclientsservice.DelegatedClientIDURIParamKey)
 			clientRouter.Get(root, s.delegatedClientsService.ListHandler)
 
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {

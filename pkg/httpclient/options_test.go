@@ -42,7 +42,7 @@ func TestWithURL(T *testing.T) {
 		require.NoError(t, err)
 
 		c := NewClient(
-			WithURL(expectedURL),
+			UsingURL(expectedURL),
 		)
 
 		assert.NotNil(t, c)
@@ -57,7 +57,7 @@ func TestWithLogger(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			WithLogger(logging.NewNonOperationalLogger()),
+			UsingLogger(logging.NewNonOperationalLogger()),
 		)
 
 		assert.NotNil(t, c)

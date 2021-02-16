@@ -26,7 +26,7 @@ type (
 		authenticator      authentication.Authenticator
 		userDB             types.AdminUserDataManager
 		auditLog           types.AdminAuditManager
-		encoderDecoder     encoding.EncoderDecoder
+		encoderDecoder     encoding.HTTPResponseEncoder
 		sessionManager     *scs.SessionManager
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		userIDFetcher      func(*http.Request) uint64
@@ -42,7 +42,7 @@ func ProvideService(
 	userDataManager types.AdminUserDataManager,
 	auditLog types.AdminAuditManager,
 	sessionManager *scs.SessionManager,
-	encoder encoding.EncoderDecoder,
+	encoder encoding.HTTPResponseEncoder,
 	routeParamManager routing.RouteParamManager,
 ) (types.AdminService, error) {
 	svc := &service{

@@ -38,7 +38,7 @@ type (
 		auditLog                 types.AuthAuditManager
 		delegatedClientsService  types.DelegatedClientDataManager
 		accountMembershipManager types.AccountUserMembershipDataManager
-		encoderDecoder           encoding.EncoderDecoder
+		encoderDecoder           encoding.HTTPResponseEncoder
 		cookieManager            cookieEncoderDecoder
 		sessionManager           *scs.SessionManager
 		sessionInfoFetcher       func(*http.Request) (*types.SessionInfo, error)
@@ -56,7 +56,7 @@ func ProvideService(
 	delegatedClientsService types.DelegatedClientDataManager,
 	accountMembershipManager types.AccountUserMembershipDataManager,
 	sessionManager *scs.SessionManager,
-	encoder encoding.EncoderDecoder,
+	encoder encoding.HTTPResponseEncoder,
 	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
 	svc := &service{

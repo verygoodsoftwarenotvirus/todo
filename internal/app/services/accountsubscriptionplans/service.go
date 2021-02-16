@@ -29,7 +29,7 @@ type (
 		planIDFetcher      func(*http.Request) uint64
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		planCounter        metrics.UnitCounter
-		encoderDecoder     encoding.EncoderDecoder
+		encoderDecoder     encoding.HTTPResponseEncoder
 		tracer             tracing.Tracer
 	}
 )
@@ -38,7 +38,7 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	planDataManager types.AccountSubscriptionPlanDataManager,
-	encoder encoding.EncoderDecoder,
+	encoder encoding.HTTPResponseEncoder,
 	planCounterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
 ) (types.AccountSubscriptionPlanDataService, error) {

@@ -17,19 +17,19 @@ clear:
 	@printf "\033[2J\033[3J\033[1;1H"
 
 clean:
-	rm --recursive --force $(ARTIFACTS_DIR)
+	rm -rf $(ARTIFACTS_DIR)
 
 $(ARTIFACTS_DIR):
 	@mkdir --parents $(ARTIFACTS_DIR)
 
 clean-$(ARTIFACTS_DIR):
-	@rm --recursive --force $(ARTIFACTS_DIR)
+	@rm -rf $(ARTIFACTS_DIR)
 
 $(SEARCH_INDICES_DIR):
 	@mkdir --parents $(SEARCH_INDICES_DIR)
 
 clean-search-indices:
-	@rm --recursive --force $(SEARCH_INDICES_DIR)
+	@rm -rf $(SEARCH_INDICES_DIR)
 
 .PHONY: setup
 setup: $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) revendor frontend-vendor rewire configs
@@ -57,7 +57,7 @@ endif
 
 .PHONY: clean-vendor
 clean-vendor:
-	rm --recursive --force vendor go.sum
+	rm -rf vendor go.sum
 
 vendor:
 	if [ ! -f go.mod ]; then go mod init; fi
@@ -83,7 +83,7 @@ rewire: ensure-wire clean-wire wire
 
 .PHONY: clean-frontend
 clean-frontend:
-	@(cd $(FRONTEND_DIR) && rm --recursive --force dist/build/)
+	@(cd $(FRONTEND_DIR) && rm -rf dist/build/)
 
 .PHONY: frontend-vendor
 frontend-vendor:

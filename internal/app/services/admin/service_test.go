@@ -22,7 +22,7 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	logger := logging.NewNonOperationalLogger()
-	ed := encoding.ProvideEncoderDecoder(logger)
+	ed := encoding.ProvideHTTPResponseEncoder(logger)
 
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
@@ -50,7 +50,7 @@ func TestProvideAdminService(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		logger := logging.NewNonOperationalLogger()
-		ed := encoding.ProvideEncoderDecoder(logger)
+		ed := encoding.ProvideHTTPResponseEncoder(logger)
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })

@@ -46,7 +46,7 @@ type (
 		router           routing.Router
 		httpServer       *http.Server
 		logger           logging.Logger
-		encoder          encoding.EncoderDecoder
+		encoder          encoding.HTTPResponseEncoder
 		tracer           tracing.Tracer
 	}
 )
@@ -68,7 +68,7 @@ func ProvideServer(
 	adminService types.AdminService,
 	db database.DataManager,
 	logger logging.Logger,
-	encoder encoding.EncoderDecoder,
+	encoder encoding.HTTPResponseEncoder,
 	router routing.Router,
 ) (*Server, error) {
 	srv := &Server{

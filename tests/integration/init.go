@@ -55,7 +55,7 @@ func init() {
 	}
 
 	adminClient = initializeClient(adminCookie)
-	adminClient.SetOption(httpclient.WithDebugEnabled())
+	adminClient.SetOption(httpclient.WithDebug())
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
@@ -72,19 +72,19 @@ func initializeClient(cookie *http.Cookie) *httpclient.Client {
 	uri := httpclient.MustParseURL(urlToUse)
 
 	c := httpclient.NewClient(
-		httpclient.WithURL(uri),
-		httpclient.WithLogger(logging.NewNonOperationalLogger()),
-		httpclient.WithHTTPClient(buildHTTPClient()),
-		httpclient.WithCookieCredentials(cookie),
+		httpclient.UsingURL(uri),
+		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
+		httpclient.UsingHTTPClient(buildHTTPClient()),
+		httpclient.UsingCookie(cookie),
 	)
 
 	if debug {
-		c.SetOption(httpclient.WithDebugEnabled())
+		c.SetOption(httpclient.WithDebug())
 	}
 
 	return c
 }
 
 func buildSimpleClient() *httpclient.Client {
-	return httpclient.NewClient(httpclient.WithURL(httpclient.MustParseURL(urlToUse)))
+	return httpclient.NewClient(httpclient.UsingURL(httpclient.MustParseURL(urlToUse)))
 }

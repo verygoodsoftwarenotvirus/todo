@@ -33,7 +33,7 @@ type (
 		accountIDFetcher   func(*http.Request) uint64
 		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
 		accountCounter     metrics.UnitCounter
-		encoderDecoder     encoding.EncoderDecoder
+		encoderDecoder     encoding.HTTPResponseEncoder
 		tracer             tracing.Tracer
 	}
 )
@@ -42,7 +42,7 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	accountDataManager types.AccountDataManager,
-	encoder encoding.EncoderDecoder,
+	encoder encoding.HTTPResponseEncoder,
 	accountCounterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
 ) (types.AccountDataService, error) {

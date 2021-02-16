@@ -159,9 +159,9 @@ func TestNewClient(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			WithURL(MustParseURL(exampleURI)),
-			WithLogger(logging.NewNonOperationalLogger()),
-			WithHTTPClient(httptest.NewTLSServer(nil).Client()),
+			UsingURL(MustParseURL(exampleURI)),
+			UsingLogger(logging.NewNonOperationalLogger()),
+			UsingHTTPClient(httptest.NewTLSServer(nil).Client()),
 		)
 
 		require.NotNil(t, c)
@@ -182,7 +182,7 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 			StatusCode: http.StatusOK,
 		}
 
-		c := NewClient(WithURL(MustParseURL(exampleURI)))
+		c := NewClient(UsingURL(MustParseURL(exampleURI)))
 		assert.NotNil(t, c)
 
 		c.closeResponseBody(res)
@@ -198,7 +198,7 @@ func TestBuildURL(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			WithURL(MustParseURL(exampleURI)),
+			UsingURL(MustParseURL(exampleURI)),
 		)
 
 		testCases := []struct {
@@ -245,7 +245,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			WithURL(MustParseURL(exampleURI)),
+			UsingURL(MustParseURL(exampleURI)),
 		)
 
 		testCases := []struct {
@@ -292,7 +292,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			WithURL(MustParseURL(exampleURI)),
+			UsingURL(MustParseURL(exampleURI)),
 		)
 
 		expected := "ws://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff"

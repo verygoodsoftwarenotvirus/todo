@@ -42,6 +42,7 @@ type Client struct {
 	url          *url.URL
 	plainClient  *http.Client
 	authedClient *http.Client
+	contentType  string
 
 	logger logging.Logger
 	tracer tracing.Tracer
@@ -71,6 +72,7 @@ func NewClient(options ...option) *Client {
 		authedClient: http.DefaultClient,
 		plainClient:  http.DefaultClient,
 		debug:        false,
+		contentType:  "application/json",
 		logger:       logging.NewNonOperationalLogger(),
 		tracer:       tracing.NewTracer(clientName),
 	}
@@ -83,12 +85,17 @@ func NewClient(options ...option) *Client {
 }
 
 // closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
-func (c *Client) closeResponseBody(res *http.Response) {
+func closeResponseBody(logger logging.Logger, res *http.Response) {
 	if res != nil {
 		if err := res.Body.Close(); err != nil {
-			c.logger.Error(err, "closing response body")
+			logger.Error(err, "closing response body")
 		}
 	}
+}
+
+// closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
+func (c *Client) closeResponseBody(res *http.Response) {
+	closeResponseBody(c.logger, res)
 }
 
 // BuildURL builds standard service URLs.

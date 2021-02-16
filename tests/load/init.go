@@ -45,9 +45,9 @@ func initializeClient() *httpclient.Client {
 	uri := httpclient.MustParseURL(urlToUse)
 
 	c := httpclient.NewClient(
-		httpclient.WithURL(uri),
-		httpclient.WithLogger(zerolog.NewLogger()),
-		httpclient.WithCookieCredentials(cookie),
+		httpclient.UsingURL(uri),
+		httpclient.UsingLogger(zerolog.NewLogger()),
+		httpclient.UsingCookie(cookie),
 	)
 
 	return c

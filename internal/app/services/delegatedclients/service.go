@@ -40,7 +40,7 @@ type (
 		clientDataManager      types.DelegatedClientDataManager
 		userDataManager        types.UserDataManager
 		authenticator          authentication.Authenticator
-		encoderDecoder         encoding.EncoderDecoder
+		encoderDecoder         encoding.HTTPResponseEncoder
 		urlClientIDExtractor   func(req *http.Request) uint64
 		delegatedClientCounter metrics.UnitCounter
 		tracer                 tracing.Tracer
@@ -53,7 +53,7 @@ func ProvideDelegatedClientsService(
 	clientDataManager types.DelegatedClientDataManager,
 	userDataManager types.UserDataManager,
 	authenticator authentication.Authenticator,
-	encoderDecoder encoding.EncoderDecoder,
+	encoderDecoder encoding.HTTPResponseEncoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
 ) (types.DelegatedClientDataService, error) {

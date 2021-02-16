@@ -17,22 +17,36 @@ func (c *Client) SetOption(opt option) {
 	opt(c)
 }
 
-// WithRawURL sets the url on the client.
-func WithRawURL(raw string) func(*Client) {
+// UsingJSON sets the url on the client.
+func UsingJSON() func(*Client) {
+	return func(c *Client) {
+		c.contentType = "application/json"
+	}
+}
+
+// UsingXML sets the url on the client.
+func UsingXML() func(*Client) {
+	return func(c *Client) {
+		c.contentType = "application/xml"
+	}
+}
+
+// UsingURI sets the url on the client.
+func UsingURI(raw string) func(*Client) {
 	return func(c *Client) {
 		c.url = MustParseURL(raw)
 	}
 }
 
-// WithURL sets the url on the client.
-func WithURL(u *url.URL) func(*Client) {
+// UsingURL sets the url on the client.
+func UsingURL(u *url.URL) func(*Client) {
 	return func(c *Client) {
 		c.url = u
 	}
 }
 
-// WithLogger sets the logger on the client.
-func WithLogger(logger logging.Logger) func(*Client) {
+// UsingLogger sets the logger on the client.
+func UsingLogger(logger logging.Logger) func(*Client) {
 	return func(c *Client) {
 		if logger == nil {
 			return
@@ -42,8 +56,8 @@ func WithLogger(logger logging.Logger) func(*Client) {
 	}
 }
 
-// WithHTTPClient sets the plainClient value on the client.
-func WithHTTPClient(client *http.Client) func(*Client) {
+// UsingHTTPClient sets the plainClient value on the client.
+func UsingHTTPClient(client *http.Client) func(*Client) {
 	return func(c *Client) {
 		if client == nil {
 			return
@@ -60,16 +74,16 @@ func WithHTTPClient(client *http.Client) func(*Client) {
 	}
 }
 
-// WithDebugEnabled sets the debug value on the client.
-func WithDebugEnabled() func(*Client) {
+// WithDebug sets the debug value on the client.
+func WithDebug() func(*Client) {
 	return func(c *Client) {
 		c.debug = true
 		c.logger.SetLevel(logging.DebugLevel)
 	}
 }
 
-// WithTimeout sets the debug value on the client.
-func WithTimeout(timeout time.Duration) func(*Client) {
+// UsingTimeout sets the debug value on the client.
+func UsingTimeout(timeout time.Duration) func(*Client) {
 	return func(c *Client) {
 		if timeout == 0 {
 			timeout = defaultTimeout
@@ -80,17 +94,20 @@ func WithTimeout(timeout time.Duration) func(*Client) {
 	}
 }
 
-// WithCookieCredentials sets the authCookie value on the client.
-func WithCookieCredentials(cookie *http.Cookie) func(*Client) {
+// UsingCookie sets the authCookie value on the client.
+func UsingCookie(cookie *http.Cookie) func(*Client) {
 	return func(c *Client) {
 		if cookie == nil {
 			return
 		}
 
-		c.authedClient.Transport = &cookieRoundtripper{
-			cookie: cookie,
-			logger: c.logger,
-			base:   otelhttp.NewTransport(newDefaultRoundTripper(c.plainClient.Timeout)),
-		}
+		c.authedClient.Transport = newCookieRoundTripper(c, cookie)
+	}
+}
+
+// UsingPASETO sets the authCookie value on the client.
+func UsingPASETO(clientID string, secretKey []byte) func(*Client) {
+	return func(c *Client) {
+		c.authedClient.Transport = newPASETORoundTripper(c, clientID, secretKey)
 	}
 }

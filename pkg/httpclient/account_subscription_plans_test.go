@@ -61,7 +61,6 @@ func TestV1Client_GetAccountSubscriptionPlan(T *testing.T) {
 		c := buildTestClient(t, ts)
 		actual, err := c.GetAccountSubscriptionPlan(ctx, examplePlan.ID)
 
-		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.Equal(t, examplePlan, actual)
 	})

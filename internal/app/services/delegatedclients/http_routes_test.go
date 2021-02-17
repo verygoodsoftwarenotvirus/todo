@@ -21,26 +21,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-func Test_buildClientID(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		actual := buildClientID()
-		assert.NotEmpty(t, actual)
-	})
-}
-
-func Test_buildClientSecret(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		actual := buildClientSecret()
-		assert.NotEmpty(t, actual)
-	})
-}
-
 func buildRequest(t *testing.T) *http.Request {
 	t.Helper()
 
@@ -107,7 +87,7 @@ func TestService_ListHandler(T *testing.T) {
 			exampleUser.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleDelegatedClientList, nil)
-		s.clientDataManager = mockDB
+		s.delegatedClientDataManager = mockDB
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -139,7 +119,7 @@ func TestService_ListHandler(T *testing.T) {
 			exampleUser.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.DelegatedClientList)(nil), sql.ErrNoRows)
-		s.clientDataManager = mockDB
+		s.delegatedClientDataManager = mockDB
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -158,7 +138,7 @@ func TestService_ListHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
 
-	T.Run("with error fetching from clientDataManager", func(t *testing.T) {
+	T.Run("with error fetching from delegatedClientDataManager", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -170,7 +150,7 @@ func TestService_ListHandler(T *testing.T) {
 			exampleUser.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.DelegatedClientList)(nil), errors.New("blah"))
-		s.clientDataManager = mockDB
+		s.delegatedClientDataManager = mockDB
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -203,20 +183,13 @@ func TestService_CreateHandler(T *testing.T) {
 		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
 
 		s := buildTestService(t)
-
 		mockDB := database.BuildMockDatabase()
+
 		mockDB.UserDataManager.On(
 			"GetUserByUsername",
 			mock.Anything,
 			exampleInput.Username,
 		).Return(exampleUser, nil)
-		mockDB.DelegatedClientDataManager.On(
-			"CreateDelegatedClient",
-			mock.Anything,
-			exampleInput,
-		).Return(exampleDelegatedClient, nil)
-		s.clientDataManager = mockDB
-		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
 		a.On(
@@ -230,12 +203,26 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(true, nil)
 		s.authenticator = a
 
+		sg := &mockSecretGenerator{}
+		sg.On("GenerateClientID").Return(exampleDelegatedClient.ClientID, nil)
+		sg.On("GenerateClientSecret").Return(exampleDelegatedClient.ClientSecret, nil)
+		s.secretGenerator = sg
+
+		mockDB.DelegatedClientDataManager.On(
+			"CreateDelegatedClient",
+			mock.Anything,
+			exampleInput,
+		).Return(exampleDelegatedClient, nil)
+
+		s.delegatedClientDataManager = mockDB
+		s.userDataManager = mockDB
+
 		uc := &mockmetrics.UnitCounter{}
 		uc.On("Increment", mock.MatchedBy(testutil.ContextMatcher())).Return()
 		s.delegatedClientCounter = uc
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.DelegatedClient{}), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.DelegatedClientCreationResponse{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -250,7 +237,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusCreated, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, uc, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, uc, ed)
 	})
 
 	T.Run("with missing input", func(t *testing.T) {
@@ -286,7 +273,7 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput.Username,
 		).Return((*types.User)(nil), errors.New("blah"))
-		s.clientDataManager = mockDB
+		s.delegatedClientDataManager = mockDB
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -328,7 +315,7 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput,
 		).Return(exampleDelegatedClient, nil)
-		s.clientDataManager = mockDB
+		s.delegatedClientDataManager = mockDB
 		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
@@ -382,7 +369,7 @@ func TestService_CreateHandler(T *testing.T) {
 			mock.Anything,
 			exampleInput,
 		).Return(exampleDelegatedClient, nil)
-		s.clientDataManager = mockDB
+		s.delegatedClientDataManager = mockDB
 		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
@@ -416,7 +403,7 @@ func TestService_CreateHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB, a, ed)
 	})
 
-	T.Run("with error creating delegated client", func(t *testing.T) {
+	T.Run("with error generating client ID", func(t *testing.T) {
 		t.Parallel()
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
@@ -424,20 +411,13 @@ func TestService_CreateHandler(T *testing.T) {
 		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
 
 		s := buildTestService(t)
-
 		mockDB := database.BuildMockDatabase()
+
 		mockDB.UserDataManager.On(
 			"GetUserByUsername",
 			mock.Anything,
 			exampleInput.Username,
 		).Return(exampleUser, nil)
-		mockDB.DelegatedClientDataManager.On(
-			"CreateDelegatedClient",
-			mock.Anything,
-			exampleInput,
-		).Return((*types.DelegatedClient)(nil), errors.New("blah"))
-		s.clientDataManager = mockDB
-		s.userDataManager = mockDB
 
 		a := &mockauth.Authenticator{}
 		a.On(
@@ -450,6 +430,19 @@ func TestService_CreateHandler(T *testing.T) {
 			exampleUser.Salt,
 		).Return(true, nil)
 		s.authenticator = a
+
+		sg := &mockSecretGenerator{}
+		sg.On("GenerateClientID").Return("", errors.New("blah"))
+		s.secretGenerator = sg
+
+		mockDB.DelegatedClientDataManager.On(
+			"CreateDelegatedClient",
+			mock.Anything,
+			exampleInput,
+		).Return(exampleDelegatedClient, nil)
+
+		s.delegatedClientDataManager = mockDB
+		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -467,6 +460,128 @@ func TestService_CreateHandler(T *testing.T) {
 		s.CreateHandler(res, req)
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
+	})
+
+	T.Run("with error generating client secret", func(t *testing.T) {
+		t.Parallel()
+
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+
+		s := buildTestService(t)
+		mockDB := database.BuildMockDatabase()
+
+		mockDB.UserDataManager.On(
+			"GetUserByUsername",
+			mock.Anything,
+			exampleInput.Username,
+		).Return(exampleUser, nil)
+
+		a := &mockauth.Authenticator{}
+		a.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleInput.Password,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+			exampleUser.Salt,
+		).Return(true, nil)
+		s.authenticator = a
+
+		sg := &mockSecretGenerator{}
+		sg.On("GenerateClientID").Return(exampleDelegatedClient.ClientID, nil)
+		sg.On("GenerateClientSecret").Return([]byte(nil), errors.New("blah"))
+		s.secretGenerator = sg
+
+		mockDB.DelegatedClientDataManager.On(
+			"CreateDelegatedClient",
+			mock.Anything,
+			exampleInput,
+		).Return(exampleDelegatedClient, nil)
+
+		s.delegatedClientDataManager = mockDB
+		s.userDataManager = mockDB
+
+		ed := mockencoding.NewMockEncoderDecoder()
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		s.encoderDecoder = ed
+
+		req := buildRequest(t)
+		req = req.WithContext(
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
+		)
+		req = req.WithContext(
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+		)
+		res := httptest.NewRecorder()
+
+		s.CreateHandler(res, req)
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
+	})
+
+	T.Run("with error creating delegated client", func(t *testing.T) {
+		t.Parallel()
+
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+
+		s := buildTestService(t)
+		mockDB := database.BuildMockDatabase()
+
+		mockDB.UserDataManager.On(
+			"GetUserByUsername",
+			mock.Anything,
+			exampleInput.Username,
+		).Return(exampleUser, nil)
+
+		a := &mockauth.Authenticator{}
+		a.On(
+			"ValidateLogin",
+			mock.Anything,
+			exampleUser.HashedPassword,
+			exampleInput.Password,
+			exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+			exampleUser.Salt,
+		).Return(true, nil)
+		s.authenticator = a
+
+		sg := &mockSecretGenerator{}
+		sg.On("GenerateClientID").Return(exampleDelegatedClient.ClientID, nil)
+		sg.On("GenerateClientSecret").Return(exampleDelegatedClient.ClientSecret, nil)
+		s.secretGenerator = sg
+
+		mockDB.DelegatedClientDataManager.On(
+			"CreateDelegatedClient",
+			mock.Anything,
+			exampleInput,
+		).Return((*types.DelegatedClient)(nil), errors.New("blah"))
+
+		s.delegatedClientDataManager = mockDB
+		s.userDataManager = mockDB
+
+		ed := mockencoding.NewMockEncoderDecoder()
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		s.encoderDecoder = ed
+
+		req := buildRequest(t)
+		req = req.WithContext(
+			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
+		)
+		req = req.WithContext(
+			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+		)
+		res := httptest.NewRecorder()
+
+		s.CreateHandler(res, req)
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
 	})
 }

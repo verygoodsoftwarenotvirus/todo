@@ -130,9 +130,8 @@ func CreateServiceUser(ctx context.Context, address, username string, debug bool
 		username = fake.Password(true, true, true, false, false, 32)
 	}
 
-	tu := httpclient.MustParseURL(address)
 	c := httpclient.NewClient(
-		httpclient.UsingURL(tu),
+		httpclient.UsingURI(address),
 	)
 
 	in := &types.NewUserCreationInput{

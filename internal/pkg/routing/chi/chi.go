@@ -41,7 +41,7 @@ var doNotLog = map[string]struct{}{
 func buildLoggingMiddleware(logger logging.Logger, tracer tracing.Tracer) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			ctx, span := tracer.StartSpan(req.Context())
+			_, span := tracer.StartSpan(req.Context())
 			defer span.End()
 
 			ww := chimiddleware.NewWrapResponseWriter(res, req.ProtoMajor)
@@ -61,9 +61,8 @@ func buildLoggingMiddleware(logger logging.Logger, tracer tracing.Tracer) func(n
 
 			if shouldLog {
 				logger.WithRequest(req).WithValues(map[string]interface{}{
-					"status":     ww.Status(),
-					"elapsed":    time.Since(start),
-					"request_id": chimiddleware.GetReqID(ctx),
+					"status":  ww.Status(),
+					"elapsed": time.Since(start),
 				}).Debug("responded to request")
 			}
 		})

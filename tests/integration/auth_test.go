@@ -27,7 +27,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, testClient := createUserAndClientForTest(ctx, t)
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
 		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
@@ -53,7 +53,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, testClient := createUserAndClientForTest(ctx, t)
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
 		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
@@ -79,13 +79,39 @@ func TestAuth(test *testing.T) {
 		assert.NoError(t, testClient.Logout(ctx))
 	})
 
+	test.Run("should be able to generate a PASETO", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, span := tracing.StartSpan(context.Background())
+		defer span.End()
+
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
+		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+			Username:  testUser.Username,
+			Password:  testUser.HashedPassword,
+			TOTPToken: generateTOTPTokenForUser(t, testUser),
+		})
+
+		assert.NotNil(t, cookie)
+		assert.NoError(t, err)
+
+		assert.Equal(t, authservice.DefaultCookieName, cookie.Name)
+		assert.NotEmpty(t, cookie.Value)
+		assert.NotZero(t, cookie.MaxAge)
+		assert.True(t, cookie.HttpOnly)
+		assert.Equal(t, "/", cookie.Path)
+		assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
+
+		assert.NoError(t, testClient.Logout(ctx))
+	})
+
 	test.Run("login request without body fails", func(t *testing.T) {
 		t.Parallel()
 
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		_, testClient := createUserAndClientForTest(ctx, t)
+		_, _, testClient := createUserAndClientForTest(ctx, t)
 
 		u, err := url.Parse(testClient.BuildURL(nil))
 		require.NoError(t, err)
@@ -106,7 +132,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, testClient := createUserAndClientForTest(ctx, t)
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
 
 		// create login request.
 		var badPassword string
@@ -131,7 +157,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, testClient := createUserAndClientForTest(ctx, t)
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
 
 		exampleUserCreationInput := fakes.BuildFakeUserCreationInput()
 		r := &types.UserLoginInput{
@@ -198,7 +224,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, testClient := createUserAndClientForTest(ctx, t)
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
 
 		// login.
 		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
@@ -282,7 +308,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, testClient := createUserAndClientForTest(ctx, t)
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
 
 		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
@@ -324,7 +350,7 @@ func TestAuth(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, testClient := createUserAndClientForTest(ctx, t)
+		testUser, _, testClient := createUserAndClientForTest(ctx, t)
 		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,

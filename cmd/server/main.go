@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+
+	chimiddleware "github.com/go-chi/chi/middleware"
 )
 
 const (
@@ -26,6 +28,10 @@ func main() {
 		logger         = zerolog.NewLogger()
 		configFilepath string
 	)
+
+	logger.SetRequestIDFunc(func(req *http.Request) string {
+		return chimiddleware.GetReqID(req.Context())
+	})
 
 	if x, err := strconv.ParseBool(os.Getenv(useNoOpLoggerEnvVar)); x && err == nil {
 		logger = logging.NewNonOperationalLogger()

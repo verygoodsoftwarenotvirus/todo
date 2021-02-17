@@ -40,6 +40,19 @@ func (q *MariaDB) BuildGetDelegatedClientQuery(clientID string) (query string, a
 	)
 }
 
+// BuildGetDelegatedClientByDatabaseIDQuery returns a SQL query which requests a given delegated client by its database ID.
+func (q *MariaDB) BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Select(querybuilding.DelegatedClientsTableColumns...).
+		From(querybuilding.DelegatedClientsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn):  clientID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                     nil,
+		}),
+	)
+}
+
 // BuildGetAllDelegatedClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // in the database, regardless of ownership.
 func (q *MariaDB) BuildGetAllDelegatedClientsCountQuery() string {
@@ -73,7 +86,7 @@ func (q *MariaDB) BuildCreateDelegatedClientQuery(input *types.DelegatedClientCr
 			querybuilding.ExternalIDColumn,
 			querybuilding.DelegatedClientsTableNameColumn,
 			querybuilding.DelegatedClientsTableClientIDColumn,
-			querybuilding.DelegatedClientsTableHMACKeyColumn,
+			querybuilding.DelegatedClientsTableSecretKeyColumn,
 			querybuilding.DelegatedClientsTableOwnershipColumn,
 		).
 		Values(

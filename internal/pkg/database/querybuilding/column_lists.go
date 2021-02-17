@@ -101,7 +101,7 @@ var (
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableNameColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableClientIDColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableHMACKeyColumn),
+		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableSecretKeyColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ArchivedOnColumn),

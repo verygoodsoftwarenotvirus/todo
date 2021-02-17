@@ -42,12 +42,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should be createable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -84,12 +82,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Fetch webhook.
 			_, err := testClient.GetWebhook(ctx, nonexistentID)
@@ -99,12 +95,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should be readable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -126,12 +120,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should be able to be read in a list", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Create webhooks.
 			var expected []*types.Webhook
@@ -158,13 +150,11 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should only allow users to see their own webhooks", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, clientA := createUserAndClientForTest(ctx, t)
-			_, clientB := createUserAndClientForTest(ctx, t)
+			_, _, clientA := createUserAndClientForTest(ctx, t)
+			_, _, clientB := createUserAndClientForTest(ctx, t)
 
 			// create webhook for user A.
 			wciA := fakes.BuildFakeWebhookCreationInput()
@@ -192,12 +182,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhook.ID = nonexistentID
@@ -209,12 +197,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should be updatable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -259,12 +245,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("should be able to be deleted", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -295,9 +279,7 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -315,12 +297,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should be auditable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -348,12 +328,10 @@ func TestWebhooks(test *testing.T) {
 		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()

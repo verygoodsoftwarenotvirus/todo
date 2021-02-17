@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -69,11 +68,9 @@ func buildHTTPClient() *http.Client {
 }
 
 func initializeClient(cookie *http.Cookie) *httpclient.Client {
-	uri := httpclient.MustParseURL(urlToUse)
-
 	c := httpclient.NewClient(
-		httpclient.UsingURL(uri),
-		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
+		httpclient.UsingURI(urlToUse),
+		httpclient.UsingLogger(zerolog.NewLogger()),
 		httpclient.UsingHTTPClient(buildHTTPClient()),
 		httpclient.UsingCookie(cookie),
 	)
@@ -86,5 +83,5 @@ func initializeClient(cookie *http.Cookie) *httpclient.Client {
 }
 
 func buildSimpleClient() *httpclient.Client {
-	return httpclient.NewClient(httpclient.UsingURL(httpclient.MustParseURL(urlToUse)))
+	return httpclient.NewClient(httpclient.UsingURI(urlToUse))
 }

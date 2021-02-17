@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -48,8 +49,9 @@ type Client struct {
 	plainClient  *http.Client
 	authedClient *http.Client
 
-	authMethod  *authMethod
-	contentType string
+	authMethod     *authMethod
+	encoderDecoder encoding.HTTPResponseEncoder
+	contentType    string
 
 	logger logging.Logger
 	tracer tracing.Tracer
@@ -74,14 +76,17 @@ func (c *Client) URL() *url.URL {
 
 // NewClient builds a new API client for us.
 func NewClient(options ...option) *Client {
+	l := logging.NewNonOperationalLogger()
+
 	c := &Client{
-		url:          MustParseURL(""),
-		authedClient: http.DefaultClient,
-		plainClient:  http.DefaultClient,
-		debug:        false,
-		contentType:  "application/json",
-		logger:       logging.NewNonOperationalLogger(),
-		tracer:       tracing.NewTracer(clientName),
+		url:            mustParseURL(""),
+		authedClient:   http.DefaultClient,
+		plainClient:    http.DefaultClient,
+		debug:          false,
+		contentType:    "application/json",
+		encoderDecoder: encoding.ProvideHTTPResponseEncoder(l),
+		logger:         l,
+		tracer:         tracing.NewTracer(clientName),
 	}
 
 	for _, opt := range options {

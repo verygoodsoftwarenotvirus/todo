@@ -11,7 +11,8 @@ import (
 
 // entryWrapper has repeats of many functions for the sake of interface implementation.
 type entryWrapper struct {
-	entry *logrus.Entry
+	entry         *logrus.Entry
+	requestIDFunc logging.RequestIDFunc
 }
 
 // SetLevel is a noop used for the sake of interface implementation
@@ -29,6 +30,11 @@ func (e *entryWrapper) SetLevel(level logging.Level) {
 	case logging.WarnLevel:
 		e.entry.Level = logrus.WarnLevel
 	}
+}
+
+// SetRequestIDFunc satisfies our interface.
+func (e *entryWrapper) SetRequestIDFunc(f logging.RequestIDFunc) {
+	e.requestIDFunc = f
 }
 
 // WithName is our obligatory contract fulfillment function. Logrus doesn't support named loggers.

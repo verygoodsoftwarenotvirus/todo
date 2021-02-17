@@ -38,6 +38,17 @@ type (
 		ServiceAdminPermissions  *permissions.ServiceAdminPermissionsSummary `json:"permissions,omitempty"`
 	}
 
+	// PASETOCreationInput is used to create a PASETO.
+	PASETOCreationInput struct {
+		ClientID  string `json:"clientID"`
+		NonceUUID string `json:"nonceUUID"`
+	}
+
+	// PASETOResponse is used to respond to a PASETO request.
+	PASETOResponse struct {
+		Token string `json:"token"`
+	}
+
 	// AuthService describes a structure capable of handling authentication and authorization requests.
 	AuthService interface {
 		StatusHandler(res http.ResponseWriter, req *http.Request)

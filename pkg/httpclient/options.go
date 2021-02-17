@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -34,7 +35,7 @@ func UsingXML() func(*Client) {
 // UsingURI sets the url on the client.
 func UsingURI(raw string) func(*Client) {
 	return func(c *Client) {
-		c.url = MustParseURL(raw)
+		c.url = mustParseURL(raw)
 	}
 }
 
@@ -53,6 +54,7 @@ func UsingLogger(logger logging.Logger) func(*Client) {
 		}
 
 		c.logger = logger
+		c.encoderDecoder = encoding.ProvideHTTPResponseEncoder(logger)
 	}
 }
 

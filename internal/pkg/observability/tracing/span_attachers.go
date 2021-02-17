@@ -6,6 +6,7 @@ import (
 	useragent "github.com/mssola/user_agent"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/trace"
@@ -81,9 +82,11 @@ func AttachPlanIDToSpan(span trace.Span, planID uint64) {
 }
 
 // AttachSessionInfoToSpan provides a consistent way to attach a SessionInfo object to a span.
-func AttachSessionInfoToSpan(span trace.Span, userID uint64, userIsServiceAdmin bool) {
-	attachToSpan(span, keys.UserIDKey, userID)
-	attachToSpan(span, keys.UserIsAdminKey, userIsServiceAdmin)
+func AttachSessionInfoToSpan(span trace.Span, sessionInfo *types.SessionInfo) {
+	if sessionInfo != nil {
+		attachToSpan(span, keys.UserIDKey, sessionInfo.UserID)
+		attachToSpan(span, keys.UserIsAdminKey, sessionInfo.ServiceAdminPermissions.IsServiceAdmin())
+	}
 }
 
 // AttachDelegatedClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span.

@@ -19,9 +19,7 @@ func TestAdmin(test *testing.T) {
 		t.Parallel()
 
 		t.Run("it should return an error when trying to ban a user that does not exist", func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
@@ -36,12 +34,10 @@ func TestAdmin(test *testing.T) {
 		t.Run("users should be bannable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			user, testClient := createUserAndClientForTest(ctx, t)
+			user, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Assert that user can access service
 			_, initialCheckErr := testClient.GetItems(ctx, nil)

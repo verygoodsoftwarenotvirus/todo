@@ -34,9 +34,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("should be createable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create plan.
@@ -71,9 +69,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("should be able to be read in a list", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			adminClientLock.Lock()
@@ -115,9 +111,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			adminClientLock.Lock()
@@ -131,9 +125,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("it should be readable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create plan.
@@ -164,9 +156,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
@@ -181,9 +171,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("it should be updatable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create plan.
@@ -228,9 +216,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("it should return an error when trying to delete something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			adminClientLock.Lock()
@@ -242,9 +228,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("should be able to be deleted", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Create plan.
@@ -277,18 +261,13 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
-
-			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-			exampleAccountSubscriptionPlan.ID = nonexistentID
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			x, err := adminClient.GetAuditLogForAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID)
+			x, err := adminClient.GetAuditLogForAccountSubscriptionPlan(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
@@ -296,12 +275,10 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()

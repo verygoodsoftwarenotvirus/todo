@@ -65,6 +65,19 @@ func (q *Postgres) BuildGetDelegatedClientsQuery(userID uint64, filter *types.Qu
 	)
 }
 
+// BuildGetDelegatedClientByDatabaseIDQuery returns a SQL query which requests a given delegated client by its database ID.
+func (q *Postgres) BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Select(querybuilding.DelegatedClientsTableColumns...).
+		From(querybuilding.DelegatedClientsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn):  clientID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                     nil,
+		}),
+	)
+}
+
 // BuildCreateDelegatedClientQuery returns a SQL query (and args) that will create the given DelegatedClient in the database.
 func (q *Postgres) BuildCreateDelegatedClientQuery(input *types.DelegatedClientCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
@@ -73,7 +86,7 @@ func (q *Postgres) BuildCreateDelegatedClientQuery(input *types.DelegatedClientC
 			querybuilding.ExternalIDColumn,
 			querybuilding.DelegatedClientsTableNameColumn,
 			querybuilding.DelegatedClientsTableClientIDColumn,
-			querybuilding.DelegatedClientsTableHMACKeyColumn,
+			querybuilding.DelegatedClientsTableSecretKeyColumn,
 			querybuilding.DelegatedClientsTableOwnershipColumn,
 		).
 		Values(

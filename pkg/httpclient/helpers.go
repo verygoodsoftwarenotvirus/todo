@@ -15,8 +15,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-// MustParseURL parses a url or otherwise panics.
-func MustParseURL(raw string) *url.URL {
+// mustParseURL parses a url or otherwise panics.
+func mustParseURL(raw string) *url.URL {
 	u, err := url.Parse(raw)
 	if err != nil {
 		panic(err)
@@ -98,7 +98,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 		}
 
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
-			return fmt.Errorf("unmarshaling error: %w", err)
+			c.logger.Error(err, "unmarshalling error response")
 		}
 
 		return apiErr

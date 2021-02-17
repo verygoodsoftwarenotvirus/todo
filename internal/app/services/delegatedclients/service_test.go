@@ -23,14 +23,14 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	return &service{
-		clientDataManager:      database.BuildMockDatabase(),
-		logger:                 logging.NewNonOperationalLogger(),
-		encoderDecoder:         mockencoding.NewMockEncoderDecoder(),
-		authenticator:          &mockauth.Authenticator{},
-		urlClientIDExtractor:   func(req *http.Request) uint64 { return 0 },
-		delegatedClientCounter: &mockmetrics.UnitCounter{},
-		secretGenerator:        &mockSecretGenerator{},
-		tracer:                 tracing.NewTracer(serviceName),
+		delegatedClientDataManager: database.BuildMockDatabase(),
+		logger:                     logging.NewNonOperationalLogger(),
+		encoderDecoder:             mockencoding.NewMockEncoderDecoder(),
+		authenticator:              &mockauth.Authenticator{},
+		urlClientIDExtractor:       func(req *http.Request) uint64 { return 0 },
+		delegatedClientCounter:     &mockmetrics.UnitCounter{},
+		secretGenerator:            &mockSecretGenerator{},
+		tracer:                     tracing.NewTracer(serviceName),
 	}
 }
 

@@ -27,6 +27,13 @@ func (m *DelegatedClientSQLQueryBuilder) BuildGetDelegatedClientQuery(clientID s
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
+// BuildGetDelegatedClientByDatabaseIDQuery implements our interface.
+func (m *DelegatedClientSQLQueryBuilder) BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(clientID, userID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
 // BuildGetAllDelegatedClientsCountQuery implements our interface.
 func (m *DelegatedClientSQLQueryBuilder) BuildGetAllDelegatedClientsCountQuery() string {
 	returnArgs := m.Called()

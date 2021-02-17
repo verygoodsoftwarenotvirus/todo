@@ -32,32 +32,3 @@ func (rw *ResponseWriter) WriteHeader(statusCode int) {
 	})
 	rw.Wrapped.WriteHeader(statusCode)
 }
-
-// BuildMiddleware builds a logging middleware.
-func BuildMiddleware(logger Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-			lrw := &ResponseWriter{
-				Wrapped: w,
-				Logger: logger.WithValues(map[string]interface{}{
-					"request_id": r.Header.Get("X-Request-Id"),
-					"method":     r.Method,
-					"url":        r.URL.String(),
-					"host_ip":    r.Host,
-				}),
-			}
-
-			defer func() {
-				lrw.Logger = lrw.Logger.WithValues(map[string]interface{}{
-					"latency":      time.Since(start).String(),
-					"content_size": lrw.writeCount,
-				})
-			}()
-
-			w = lrw
-
-			next.ServeHTTP(w, r)
-		})
-	}
-}

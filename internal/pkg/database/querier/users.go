@@ -448,8 +448,6 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	archiveMembershipsQuery, archiveMembershipsArgs := c.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(userID)
 
-	c.logger.WithValue("query", archiveMembershipsQuery).WithValue("args", archiveMembershipsArgs).Info("WTF")
-
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error archiving user account memberships: %w", execErr)

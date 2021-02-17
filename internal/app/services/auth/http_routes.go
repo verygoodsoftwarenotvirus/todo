@@ -335,7 +335,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.encoderDecoder.EncodeResponse(ctx, res, token)
+	tokenRes := &types.PASETOResponse{Token: token}
+
+	s.encoderDecoder.EncodeResponse(ctx, res, tokenRes)
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.

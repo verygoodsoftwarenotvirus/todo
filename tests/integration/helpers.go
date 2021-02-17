@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -23,16 +24,18 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 	require.NotNil(t, i)
 }
 
-func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User, *httpclient.Client) {
+func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User, *http.Cookie, *httpclient.Client) {
 	t.Helper()
 
 	user, err := testutil.CreateServiceUser(ctx, urlToUse, "", debug)
 	require.NoError(t, err)
 
+	t.Logf("created user: %q", user.Username)
+
 	cookie, err := testutil.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
-	return user, initializeClient(cookie)
+	return user, cookie, initializeClient(cookie)
 }
 
 func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
@@ -45,10 +48,10 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 	return code
 }
 
-func runTestForClientAndCookie(ctx context.Context, t *testing.T, testName string, testFunc func(*httpclient.Client) func(*testing.T)) {
+func runTestForAllAuthMethods(ctx context.Context, t *testing.T, testName string, testFunc func(user *types.User, cookie *http.Cookie, client *httpclient.Client) func(*testing.T)) {
 	t.Helper()
 
-	_, testClient := createUserAndClientForTest(ctx, t)
+	user, cookie, testClient := createUserAndClientForTest(ctx, t)
 
 	//	, cookie, err := testClient.Login(ctx, &types.UserLoginInput{
 	//	, 	Username:  user.Username,
@@ -61,7 +64,7 @@ func runTestForClientAndCookie(ctx context.Context, t *testing.T, testName strin
 	//	, testClient.SetOption(httpclient.WithCookieCredentials(cookie))
 	//	, t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(testClient))
 
-	t.Run(testName, testFunc(testClient))
+	t.Run(testName, testFunc(user, cookie, testClient))
 }
 
 func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {
@@ -83,7 +86,7 @@ func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*typ
 		}
 	}
 
-	assert.Equal(t, len(actualEntries), len(expectedEntries), "expected %q, got %q", strings.Join(expectedEventTypes, ","), strings.Join(actualEventTypes, ","))
+	assert.Equal(t, len(expectedEntries), len(actualEntries), "expected %q, got %q", strings.Join(expectedEventTypes, ","), strings.Join(actualEventTypes, ","))
 
 	assert.Subset(t, expectedEventTypes, actualEventTypes)
 }

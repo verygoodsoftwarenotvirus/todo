@@ -104,6 +104,35 @@ func (c *Client) GetDelegatedClient(ctx context.Context, clientID string) (*type
 	return client, nil
 }
 
+// GetDelegatedClientByDatabaseID gets an Delegated client from the database.
+func (c *Client) GetDelegatedClientByDatabaseID(ctx context.Context, clientID, userID uint64) (*types.DelegatedClient, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachDelegatedClientDatabaseIDToSpan(span, clientID)
+	tracing.AttachUserIDToSpan(span, userID)
+
+	logger := c.logger.WithValues(map[string]interface{}{
+		"client_id": clientID,
+		"user_id":   userID,
+	})
+	logger.Debug("GetDelegatedClient called")
+
+	query, args := c.sqlQueryBuilder.BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID)
+	row := c.db.QueryRowContext(ctx, query, args...)
+
+	client, _, _, err := c.scanDelegatedClient(row, false)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("querying for delegated client: %w", err)
+	}
+
+	return client, nil
+}
+
 // GetTotalDelegatedClientCount gets the count of Delegated clients that match the current filter.
 func (c *Client) GetTotalDelegatedClientCount(ctx context.Context) (count uint64, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
@@ -217,6 +246,7 @@ func (c *Client) CreateDelegatedClient(ctx context.Context, input *types.Delegat
 		ID:            id,
 		Name:          input.Name,
 		ClientID:      input.ClientID,
+		ClientSecret:  input.ClientSecret,
 		BelongsToUser: input.BelongsToUser,
 		CreatedOn:     c.currentTime(),
 	}

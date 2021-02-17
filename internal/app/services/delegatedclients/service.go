@@ -36,15 +36,16 @@ var _ types.DelegatedClientDataService = (*service)(nil)
 type (
 	// service manages our Delegated clients via HTTP.
 	service struct {
-		logger                 logging.Logger
-		clientDataManager      types.DelegatedClientDataManager
-		userDataManager        types.UserDataManager
-		authenticator          authentication.Authenticator
-		encoderDecoder         encoding.HTTPResponseEncoder
-		urlClientIDExtractor   func(req *http.Request) uint64
-		delegatedClientCounter metrics.UnitCounter
-		secretGenerator        secretGenerator
-		tracer                 tracing.Tracer
+		logger                     logging.Logger
+		delegatedClientDataManager types.DelegatedClientDataManager
+		userDataManager            types.UserDataManager
+		authenticator              authentication.Authenticator
+		encoderDecoder             encoding.HTTPResponseEncoder
+		urlClientIDExtractor       func(req *http.Request) uint64
+		sessionInfoFetcher         func(*http.Request) (*types.SessionInfo, error)
+		delegatedClientCounter     metrics.UnitCounter
+		secretGenerator            secretGenerator
+		tracer                     tracing.Tracer
 	}
 )
 
@@ -59,14 +60,15 @@ func ProvideDelegatedClientsService(
 	routeParamManager routing.RouteParamManager,
 ) (types.DelegatedClientDataService, error) {
 	svc := &service{
-		clientDataManager:    clientDataManager,
-		userDataManager:      userDataManager,
-		logger:               logging.EnsureLogger(logger).WithName(serviceName),
-		encoderDecoder:       encoderDecoder,
-		authenticator:        authenticator,
-		secretGenerator:      &standardSecretGenerator{},
-		urlClientIDExtractor: routeParamManager.BuildRouteParamIDFetcher(logger, DelegatedClientIDURIParamKey, "delegated client"),
-		tracer:               tracing.NewTracer(serviceName),
+		delegatedClientDataManager: clientDataManager,
+		userDataManager:            userDataManager,
+		logger:                     logging.EnsureLogger(logger).WithName(serviceName),
+		encoderDecoder:             encoderDecoder,
+		authenticator:              authenticator,
+		secretGenerator:            &standardSecretGenerator{},
+		sessionInfoFetcher:         routeParamManager.SessionInfoFetcherFromRequestContext,
+		urlClientIDExtractor:       routeParamManager.BuildRouteParamIDFetcher(logger, DelegatedClientIDURIParamKey, "delegated client"),
+		tracer:                     tracing.NewTracer(serviceName),
 	}
 
 	var err error

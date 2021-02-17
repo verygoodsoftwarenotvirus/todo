@@ -47,9 +47,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("should be creatable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			testClient := buildSimpleClient()
@@ -86,9 +84,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Fetch user.
@@ -103,12 +99,10 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should be readable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			createdUser, _ := createUserAndClientForTest(ctx, t)
+			createdUser, _, _ := createUserAndClientForTest(ctx, t)
 
 			// Fetch user.
 			adminClientLock.Lock()
@@ -134,9 +128,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should return empty slice when searching for a username that doesn'subtest exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			// Search For user.
@@ -150,12 +142,10 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should only be accessible to admins", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient := createUserAndClientForTest(ctx, t)
 
 			// Search For user.
 			actual, err := testClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
@@ -166,9 +156,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should be searchable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			exampleUsername := fakes.BuildFakeUser().Username
@@ -206,9 +194,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("should be able to be deleted", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			testClient := buildSimpleClient()
@@ -249,9 +235,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
@@ -271,9 +255,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should be auditable", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			testClient := buildSimpleClient()
@@ -305,9 +287,7 @@ func TestUsers(test *testing.T) {
 		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			testClient := buildSimpleClient()

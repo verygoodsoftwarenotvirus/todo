@@ -13,12 +13,13 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 const (
@@ -91,17 +92,18 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	)
 
 	if ts != nil {
-		u = MustParseURL(ts.URL)
+		u = mustParseURL(ts.URL)
 		c = ts.Client()
 	}
 
 	return &Client{
-		url:          u,
-		plainClient:  c,
-		logger:       l,
-		debug:        true,
-		authedClient: c,
-		tracer:       tracing.NewTracer("test"),
+		url:            u,
+		plainClient:    c,
+		logger:         l,
+		debug:          true,
+		authedClient:   c,
+		encoderDecoder: encoding.ProvideHTTPResponseEncoder(l),
+		tracer:         tracing.NewTracer("test"),
 	}
 }
 
@@ -109,16 +111,17 @@ func buildTestClientWithInvalidURL(t *testing.T) *Client {
 	t.Helper()
 
 	l := logging.NewNonOperationalLogger()
-	u := MustParseURL("https://verygoodsoftwarenotvirus.ru")
+	u := mustParseURL("https://verygoodsoftwarenotvirus.ru")
 	u.Scheme = fmt.Sprintf(`%s://`, asciiControlChar)
 
 	return &Client{
-		url:          u,
-		plainClient:  http.DefaultClient,
-		logger:       l,
-		debug:        true,
-		authedClient: http.DefaultClient,
-		tracer:       tracing.NewTracer("test"),
+		url:            u,
+		plainClient:    http.DefaultClient,
+		encoderDecoder: encoding.ProvideHTTPResponseEncoder(l),
+		logger:         l,
+		debug:          true,
+		authedClient:   http.DefaultClient,
+		tracer:         tracing.NewTracer("test"),
 	}
 }
 
@@ -159,7 +162,7 @@ func TestNewClient(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			UsingURL(MustParseURL(exampleURI)),
+			UsingURL(mustParseURL(exampleURI)),
 			UsingLogger(logging.NewNonOperationalLogger()),
 			UsingHTTPClient(httptest.NewTLSServer(nil).Client()),
 		)
@@ -182,7 +185,7 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 			StatusCode: http.StatusOK,
 		}
 
-		c := NewClient(UsingURL(MustParseURL(exampleURI)))
+		c := NewClient(UsingURL(mustParseURL(exampleURI)))
 		assert.NotNil(t, c)
 
 		c.closeResponseBody(res)
@@ -198,7 +201,7 @@ func TestBuildURL(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			UsingURL(MustParseURL(exampleURI)),
+			UsingURL(mustParseURL(exampleURI)),
 		)
 
 		testCases := []struct {
@@ -245,7 +248,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			UsingURL(MustParseURL(exampleURI)),
+			UsingURL(mustParseURL(exampleURI)),
 		)
 
 		testCases := []struct {
@@ -292,7 +295,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 		t.Parallel()
 
 		c := NewClient(
-			UsingURL(MustParseURL(exampleURI)),
+			UsingURL(mustParseURL(exampleURI)),
 		)
 
 		expected := "ws://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff"

@@ -58,7 +58,7 @@ func (w *instrumentedSQLSpanWrapper) Finish() {
 
 // NewInstrumentedSQLLogger wraps a logging.Logger for instrumentedsql.
 func NewInstrumentedSQLLogger(logger logging.Logger) instrumentedsql.Logger {
-	return &instrumentedSQLLoggerWrapper{logger: logger}
+	return &instrumentedSQLLoggerWrapper{logger: logging.EnsureLogger(logger).WithName("sql")}
 }
 
 type instrumentedSQLLoggerWrapper struct {

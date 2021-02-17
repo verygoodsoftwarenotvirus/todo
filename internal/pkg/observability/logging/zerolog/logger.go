@@ -16,7 +16,7 @@ func init() {
 // Logger is our log wrapper.
 type Logger struct {
 	logger        zerolog.Logger
-	requestIDFunc func(r *http.Request) string
+	requestIDFunc logging.RequestIDFunc
 }
 
 // buildZerologger builds a new zerologger.
@@ -67,7 +67,7 @@ func (l *Logger) SetLevel(level logging.Level) {
 }
 
 // SetRequestIDFunc sets the request ID retrieval function.
-func (l *Logger) SetRequestIDFunc(f func(r *http.Request) string) {
+func (l *Logger) SetRequestIDFunc(f logging.RequestIDFunc) {
 	if f != nil {
 		l.requestIDFunc = f
 	}
@@ -123,19 +123,16 @@ func (l *Logger) WithError(err error) logging.Logger {
 
 // WithRequest satisfies our contract for the logging.Logger WithRequest method.
 func (l *Logger) WithRequest(req *http.Request) logging.Logger {
-	var reqID string
-	if l.requestIDFunc != nil {
-		reqID = l.requestIDFunc(req)
-	}
-
 	l2 := l.logger.With().
 		Str("path", req.URL.Path).
 		Str("method", req.Method).
 		Str("query", req.URL.RawQuery).
 		Logger()
 
-	if reqID != "" {
-		l2 = l2.With().Str("request_id", reqID).Logger()
+	if l.requestIDFunc != nil {
+		if reqID := l.requestIDFunc(req); reqID != "" {
+			l2 = l2.With().Str("request_id", reqID).Logger()
+		}
 	}
 
 	return &Logger{logger: l2}

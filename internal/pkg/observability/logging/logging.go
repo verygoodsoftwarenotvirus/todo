@@ -14,6 +14,9 @@ type (
 
 	// Level is a simple string alias for dependency injection's sake.
 	Level *level
+
+	// RequestIDFunc fetches a string ID from a request.
+	RequestIDFunc func(*http.Request) string
 )
 
 var (
@@ -36,6 +39,7 @@ type Logger interface {
 	Printf(string, ...interface{})
 
 	SetLevel(Level)
+	SetRequestIDFunc(RequestIDFunc)
 
 	// Builder functions
 	WithName(string) Logger

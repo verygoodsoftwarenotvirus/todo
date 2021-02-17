@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	delegatedClientBasePath  = "delegated_client"
 	delegatedClientsBasePath = "delegated_clients"
 )
 
@@ -83,9 +82,9 @@ func (c *Client) BuildCreateDelegatedClientRequest(
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.buildVersionlessURL(
+	uri := c.BuildURL(
 		nil,
-		delegatedClientBasePath,
+		delegatedClientsBasePath,
 	)
 
 	req, err := c.buildDataRequest(ctx, http.MethodPost, uri, body)
@@ -104,11 +103,11 @@ func (c *Client) CreateDelegatedClient(
 	ctx context.Context,
 	cookie *http.Cookie,
 	input *types.DelegatedClientCreationInput,
-) (*types.DelegatedClient, error) {
+) (*types.DelegatedClientCreationResponse, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var delegatedClient *types.DelegatedClient
+	var delegatedClientResponse *types.DelegatedClientCreationResponse
 
 	if cookie == nil && c.authMethod != cookieAuthMethod {
 		return nil, errors.New("cookie required for request")
@@ -119,11 +118,11 @@ func (c *Client) CreateDelegatedClient(
 		return nil, err
 	}
 
-	if resErr := c.executeUnauthenticatedDataRequest(ctx, req, &delegatedClient); resErr != nil {
+	if resErr := c.executeRequest(ctx, req, &delegatedClientResponse); resErr != nil {
 		return nil, fmt.Errorf("executing request: %w", resErr)
 	}
 
-	return delegatedClient, nil
+	return delegatedClientResponse, nil
 }
 
 // BuildArchiveDelegatedClientRequest builds an HTTP request for archiving an oauth2 client.

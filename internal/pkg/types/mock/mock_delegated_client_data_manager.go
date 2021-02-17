@@ -21,6 +21,12 @@ func (m *DelegatedClientDataManager) GetDelegatedClient(ctx context.Context, cli
 	return args.Get(0).(*types.DelegatedClient), args.Error(1)
 }
 
+// GetDelegatedClientByDatabaseID is a mock function.
+func (m *DelegatedClientDataManager) GetDelegatedClientByDatabaseID(ctx context.Context, clientID, userID uint64) (*types.DelegatedClient, error) {
+	args := m.Called(ctx, clientID, userID)
+	return args.Get(0).(*types.DelegatedClient), args.Error(1)
+}
+
 // GetTotalDelegatedClientCount is a mock function.
 func (m *DelegatedClientDataManager) GetTotalDelegatedClientCount(ctx context.Context) (uint64, error) {
 	args := m.Called(ctx)

@@ -84,7 +84,7 @@ type (
 	// NewUserCreationInput represents the input required from users to register an account.
 	NewUserCreationInput struct {
 		Username string `json:"username"`
-		Password string `json:"authentication"`
+		Password string `json:"password"`
 	}
 
 	// UserDataStoreCreationInput is used by the User creation route to communicate with the data store.
@@ -105,16 +105,10 @@ type (
 		TwoFactorQRCode string         `json:"qrCode"`
 	}
 
-	// PASETOCreationInput represents the payload used to create a PASETO token.
-	PASETOCreationInput struct {
-		ClientID  string `json:"clientID"`
-		NonceUUID string `json:"nonceUUID"`
-	}
-
 	// UserLoginInput represents the payload used to log in a User.
 	UserLoginInput struct {
 		Username  string `json:"username"`
-		Password  string `json:"authentication"`
+		Password  string `json:"password"`
 		TOTPToken string `json:"totpToken"`
 	}
 

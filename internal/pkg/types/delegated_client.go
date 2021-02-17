@@ -46,14 +46,16 @@ type (
 
 	// DelegatedClientCreationResponse is a struct for informing users of what their delegated client's secret key is.
 	DelegatedClientCreationResponse struct {
+		ID           uint64 `json:"id"`
 		ClientID     string `json:"clientID"`
-		ClientSecret []byte `json:"clientSecret"`
+		ClientSecret string `json:"clientSecret"`
 	}
 
 	// DelegatedClientSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	DelegatedClientSQLQueryBuilder interface {
 		BuildGetBatchOfDelegatedClientsQuery(beginID, endID uint64) (query string, args []interface{})
 		BuildGetDelegatedClientQuery(clientID string) (query string, args []interface{})
+		BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{})
 		BuildGetAllDelegatedClientsCountQuery() string
 		BuildGetDelegatedClientsQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
 		BuildCreateDelegatedClientQuery(input *DelegatedClientCreationInput) (query string, args []interface{})
@@ -65,6 +67,7 @@ type (
 	// DelegatedClientDataManager handles delegated clients.
 	DelegatedClientDataManager interface {
 		GetDelegatedClient(ctx context.Context, clientID string) (*DelegatedClient, error)
+		GetDelegatedClientByDatabaseID(ctx context.Context, clientID, userID uint64) (*DelegatedClient, error)
 		GetAllDelegatedClients(ctx context.Context, resultChannel chan []*DelegatedClient, bucketSize uint16) error
 		GetTotalDelegatedClientCount(ctx context.Context) (uint64, error)
 		GetDelegatedClients(ctx context.Context, userID uint64, filter *QueryFilter) (*DelegatedClientList, error)
@@ -78,6 +81,8 @@ type (
 	DelegatedClientDataService interface {
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
+		ReadHandler(res http.ResponseWriter, req *http.Request)
+		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 
 		CreationInputMiddleware(next http.Handler) http.Handler

@@ -43,7 +43,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine if it's an admin request
@@ -95,7 +95,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine if it's an admin request
@@ -165,7 +165,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 	input.BelongsToUser = si.UserID
 
@@ -203,7 +203,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
@@ -236,7 +236,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
@@ -281,7 +281,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 	input.BelongsToUser = si.UserID
 
@@ -334,7 +334,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.
@@ -379,7 +379,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si.UserID, si.ServiceAdminPermissions.IsServiceAdmin())
+	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.UserID)
 
 	// determine item ID.

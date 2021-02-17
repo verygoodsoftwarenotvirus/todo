@@ -12,7 +12,8 @@ var _ logging.Logger = (*Logger)(nil)
 
 // Logger is our log wrapper.
 type Logger struct {
-	logger *logrus.Logger
+	logger        *logrus.Logger
+	requestIDFunc logging.RequestIDFunc
 }
 
 // buildLogrus builds a logrus logger to our specs.
@@ -62,6 +63,11 @@ func (l *Logger) SetLevel(level logging.Level) {
 	l.logger.SetLevel(lvl)
 }
 
+// SetLevel satisfies our interface.
+func (l *Logger) SetRequestIDFunc(f logging.RequestIDFunc) {
+	l.requestIDFunc = f
+}
+
 // Info satisfies our contract for the logging.Logger Info method.
 func (l *Logger) Info(input string) {
 	l.logger.Infoln(input)
@@ -104,9 +110,17 @@ func (l *Logger) WithError(err error) logging.Logger {
 
 // WithRequest satisfies our contract for the logging.Logger WithRequest method.
 func (l *Logger) WithRequest(req *http.Request) logging.Logger {
-	return &entryWrapper{entry: l.logger.WithFields(map[string]interface{}{
+	l2 := &entryWrapper{entry: l.logger.WithFields(map[string]interface{}{
 		"path":   req.URL.Path,
 		"method": req.Method,
 		"query":  req.URL.RawQuery,
 	})}
+
+	if l.requestIDFunc != nil {
+		if reqID := l.requestIDFunc(req); reqID != "" {
+			l2.entry = l2.entry.WithField("request_id", reqID)
+		}
+	}
+
+	return l2
 }

@@ -2,17 +2,11 @@ package delegatedclients
 
 import (
 	"crypto/rand"
-	"encoding/base32"
-)
-
-const (
-	clientSecretSize = 128
-	clientIDSize     = 32
+	"encoding/base64"
 )
 
 func init() {
-	b := make([]byte, clientSecretSize)
-	if _, err := rand.Read(b); err != nil {
+	if _, err := rand.Read(make([]byte, clientSecretSize)); err != nil {
 		panic(err)
 	}
 }
@@ -33,12 +27,13 @@ func (g *standardSecretGenerator) GenerateClientID() (string, error) {
 		return "", err
 	}
 
-	return base32.StdEncoding.EncodeToString(b), nil
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
 func (g *standardSecretGenerator) GenerateClientSecret() ([]byte, error) {
 	b := make([]byte, clientSecretSize)
 
+	// Note that err == nil only if we read len(b) bytes.
 	if _, err := rand.Read(b); err != nil {
 		return nil, err
 	}

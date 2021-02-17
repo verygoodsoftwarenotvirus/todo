@@ -7,6 +7,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// StartCustomSpan starts an anonymous custom span.
+func StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+	return otel.Tracer("_anon_").Start(ctx, name)
+}
+
 // StartSpan starts an anonymous span.
 func StartSpan(ctx context.Context) (context.Context, trace.Span) {
 	return otel.Tracer("_anon_").Start(ctx, GetCallerName())

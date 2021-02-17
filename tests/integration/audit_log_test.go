@@ -16,9 +16,7 @@ func TestAuditLogEntries(test *testing.T) {
 		t.Parallel()
 
 		t.Run("should be able to be read in a list by an admin", func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			adminClientLock.Lock()
@@ -35,9 +33,7 @@ func TestAuditLogEntries(test *testing.T) {
 		t.Parallel()
 
 		t.Run("should be able to be read as an individual by an admin", func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), defaultSubtestTimeout)
-			defer cancel()
-			ctx, span := tracing.StartSpan(ctx)
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			adminClientLock.Lock()

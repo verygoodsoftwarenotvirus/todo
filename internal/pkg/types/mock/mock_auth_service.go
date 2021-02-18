@@ -64,3 +64,8 @@ func (m *AuthService) AdminMiddleware(next http.Handler) http.Handler {
 func (m *AuthService) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return m.Called(next).Get(0).(http.Handler)
 }
+
+// PASETOCreationInputMiddleware implements our AuthService interface.
+func (m *AuthService) PASETOCreationInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
+}

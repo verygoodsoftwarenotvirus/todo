@@ -30,7 +30,7 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 			NonceUUID: "11111111-aaaa-2222-bbbb-333333333333",
 		}
 
-		req, err := c.buildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
+		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
 
 		assert.NoError(t, err)
 		require.NotNil(t, req)
@@ -54,7 +54,7 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 			NonceUUID: "11111111-aaaa-2222-bbbb-333333333333",
 		}
 
-		req, err := c.buildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
+		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Nil(t, req)
@@ -69,7 +69,7 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 
 		exampleInput := &types.PASETOCreationInput{}
 
-		req, err := c.buildDelegatedClientAuthTokenRequest(ctx, exampleInput, nil)
+		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, req)
@@ -102,7 +102,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.FetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
 
 		assert.NoError(t, err)
 		assert.Equal(t, anticipatedResult, token)
@@ -117,7 +117,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.FetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -143,7 +143,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.FetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -168,7 +168,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.FetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -194,7 +194,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.FetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)

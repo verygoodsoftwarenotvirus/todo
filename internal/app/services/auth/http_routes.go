@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -267,14 +268,20 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	pasetoRequest, ok := ctx.Value(pasetoCreationInputMiddlewareCtxKey).(*types.PASETOCreationInput)
 	if !ok || pasetoRequest == nil {
-		logger.Error(nil, "no UserLoginInput found for /login request")
+		logger.Error(nil, "no PASETOCreationInput found for /paseto request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
 		return
 	}
 
-	sum := req.Header.Get(signatureHeaderKey)
+	sum, decodeErr := base64.RawStdEncoding.DecodeString(req.Header.Get(signatureHeaderKey))
+	if decodeErr != nil {
+		logger.Error(decodeErr, "invalid signature")
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		return
+	}
 
 	logger = logger.WithValue(keys.DelegatedClientIDKey, pasetoRequest.ClientID)
+	logger = logger.WithValue("signature_sum", sum)
 
 	client, clientRetrievalErr := s.delegatedClientsService.GetDelegatedClient(ctx, pasetoRequest.ClientID)
 	if clientRetrievalErr != nil {
@@ -299,8 +306,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !hmac.Equal([]byte(sum), mac.Sum(nil)) {
-		logger.Info("invalid credentials passed to PASETO creation route")
+	newSum := mac.Sum(nil)
+	if !hmac.Equal(sum, newSum) {
+		logger.WithValue("new_sum", newSum).Info("invalid credentials passed to PASETO creation route")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid checksum", http.StatusUnauthorized)
 		return
 	}
@@ -308,7 +316,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	now := time.Now()
 
 	jsonToken := paseto.JSONToken{
-		Audience:   s.config.PASETO.Audience,
+		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
 		Issuer:     s.config.PASETO.Issuer,
 		Jti:        uuid.New().String(),
 		Subject:    strconv.FormatUint(client.BelongsToUser, 10),

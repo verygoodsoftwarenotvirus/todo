@@ -62,6 +62,7 @@ type (
 		AuthorizationMiddleware(next http.Handler) http.Handler
 		AdminMiddleware(next http.Handler) http.Handler
 		UserLoginInputMiddleware(next http.Handler) http.Handler
+		PASETOCreationInputMiddleware(next http.Handler) http.Handler
 	}
 
 	// AuthAuditManager describes a structure capable of auditing auth events.

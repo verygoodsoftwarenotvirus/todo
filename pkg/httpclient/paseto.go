@@ -35,7 +35,8 @@ func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
 	return nil
 }
 
-func (c *Client) buildDelegatedClientAuthTokenRequest(ctx context.Context, input *types.PASETOCreationInput, secretKey []byte) (*http.Request, error) {
+// BuildDelegatedClientAuthTokenRequest builds a request.
+func (c *Client) BuildDelegatedClientAuthTokenRequest(ctx context.Context, input *types.PASETOCreationInput, secretKey []byte) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -56,7 +57,7 @@ func (c *Client) buildDelegatedClientAuthTokenRequest(ctx context.Context, input
 	return req, nil
 }
 
-func (c *Client) FetchDelegatedClientAuthToken(ctx context.Context, clientID string, secretKey []byte) (string, error) {
+func (c *Client) fetchDelegatedClientAuthToken(ctx context.Context, clientID string, secretKey []byte) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -65,7 +66,7 @@ func (c *Client) FetchDelegatedClientAuthToken(ctx context.Context, clientID str
 		NonceUUID: uuid.New().String(),
 	}
 
-	req, err := c.buildDelegatedClientAuthTokenRequest(ctx, input, secretKey)
+	req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, input, secretKey)
 	if err != nil {
 		return "", err
 	}

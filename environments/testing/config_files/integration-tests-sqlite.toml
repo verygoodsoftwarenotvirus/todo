@@ -16,9 +16,8 @@
     signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
 
   [auth.paseto]
-    audience = ""
-    listener = ""
-    local_mode_key = []
+    issuer = "todo_service"
+    local_mode_key = [126,3,28,8,28,30,19,191,100,177,94,34,31,178,208,128,131,19,173,232,11,162,139,40,2,106,248,254,102,220,163,165]
 
 [database]
   connection_details = "/tmp/db"
@@ -29,7 +28,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$jar9pgGVsuEY/vUteZ6YRO4iq0m01Zw1Vf5obr7wXZwBacyNs38LO"
+    hashed_password = "$2a$11$BgKHAdCGTUV3QfTb6KqzyOCp50cjQy7NeKX3DTblMv0ppjdFc.cky"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

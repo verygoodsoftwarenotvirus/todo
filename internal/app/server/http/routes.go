@@ -64,7 +64,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 		router.Get("/*", staticFileServer)
 	}
 
-	router.Post("/paseto", s.authService.PASETOHandler)
+	router.WithMiddleware(s.authService.PASETOCreationInputMiddleware).Post("/paseto", s.authService.PASETOHandler)
 
 	authenticatedRouter := router.WithMiddleware(s.authService.UserAttributionMiddleware)
 	authenticatedRouter.Get("/auth/status", s.authService.StatusHandler)

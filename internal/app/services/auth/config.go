@@ -35,13 +35,11 @@ type (
 
 	// PASETOConfig holds our PASETO token settings.
 	PASETOConfig struct {
-		// Audience is the Audience value that goes into our PASETO tokens.
-		Audience string `json:"audience" mapstructure:"audience" toml:"audience,omitempty"`
 		// Issuer is the Issuer value that goes into our PASETO tokens.
 		Issuer string `json:"issuer" mapstructure:"issuer" toml:"issuer,omitempty"`
 		// Lifetime indicates how long the cookies built should last.
 		Lifetime time.Duration `json:"lifetime" mapstructure:"lifetime" toml:"lifetime,omitempty"`
-		// LocalModeKey is the key used to sign local PASETO tokens.
+		// LocalModeKey is the key used to sign local PASETO tokens. Needs to be 32 bytes.
 		LocalModeKey []byte `json:"local_mode_key" mapstructure:"local_mode_key" toml:"local_mode_key,omitempty"`
 	}
 
@@ -75,7 +73,6 @@ func (cfg *CookieConfig) Validate(ctx context.Context) error {
 func (cfg *PASETOConfig) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Issuer, validation.Required),
-		validation.Field(&cfg.Audience, validation.Required),
 		validation.Field(&cfg.LocalModeKey, validation.Required, validation.Length(pasetoKeyRequiredLength, pasetoKeyRequiredLength)),
 	)
 }

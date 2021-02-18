@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"log"
 	"time"
@@ -51,7 +52,12 @@ const (
 	// search index paths.
 	defaultItemsSearchIndexPath = "items.bleve"
 
-	maxAttempts = 50
+	pasetoSecretSize = 32
+	maxAttempts      = 50
+)
+
+var (
+	examplePASETOKey = generatePASETOKey()
 )
 
 type configFunc func(filePath string) error
@@ -76,6 +82,17 @@ func mustHashPass(password string) string {
 	return hashed
 }
 
+func generatePASETOKey() []byte {
+	b := make([]byte, pasetoSecretSize)
+
+	// Note that err == nil only if we read len(b) bytes.
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
 func localDevelopmentConfig(filePath string) error {
 	cfg := &config.ServerConfig{
 		Meta: config.MetaSettings{
@@ -94,6 +111,11 @@ func localDevelopmentConfig(filePath string) error {
 			CacheStaticFiles:     false,
 		},
 		Auth: authservice.Config{
+			PASETO: authservice.PASETOConfig{
+				Issuer:       "todo_service",
+				Lifetime:     5 * time.Minute,
+				LocalModeKey: examplePASETOKey,
+			},
 			Cookies: authservice.CookieConfig{
 				Name:       defaultCookieName,
 				Domain:     defaultCookieDomain,
@@ -188,6 +210,11 @@ func frontendTestsConfig(filePath string) error {
 			CacheStaticFiles:     false,
 		},
 		Auth: authservice.Config{
+			PASETO: authservice.PASETOConfig{
+				Issuer:       "todo_service",
+				Lifetime:     5 * time.Minute,
+				LocalModeKey: examplePASETOKey,
+			},
 			Cookies: authservice.CookieConfig{
 				Name:       defaultCookieName,
 				Domain:     defaultCookieDomain,
@@ -276,6 +303,11 @@ func coverageConfig(filePath string) error {
 			CacheStaticFiles:     false,
 		},
 		Auth: authservice.Config{
+			PASETO: authservice.PASETOConfig{
+				Issuer:       "todo_service",
+				Lifetime:     5 * time.Minute,
+				LocalModeKey: examplePASETOKey,
+			},
 			Cookies: authservice.CookieConfig{
 				Name:       defaultCookieName,
 				Domain:     defaultCookieDomain,
@@ -376,6 +408,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				CacheStaticFiles:     false,
 			},
 			Auth: authservice.Config{
+				PASETO: authservice.PASETOConfig{
+					Issuer:       "todo_service",
+					Lifetime:     5 * time.Minute,
+					LocalModeKey: examplePASETOKey,
+				},
 				Cookies: authservice.CookieConfig{
 					Name:       defaultCookieName,
 					Domain:     defaultCookieDomain,

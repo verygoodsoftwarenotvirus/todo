@@ -3,11 +3,13 @@ package integration
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,34 +83,43 @@ func TestAuth(test *testing.T) {
 		assert.NoError(t, testClient.Logout(ctx))
 	})
 
-	test.Run("should be able to generate a PASETO", func(subtest *testing.T) {
-		subtest.Parallel()
+	runTestForAllAuthMethods(context.Background(), test, "should be able to generate a PASETO", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		return func(t *testing.T) {
+			pasetoContext, pasetoSpan := tracing.StartSpan(context.Background())
+			defer pasetoSpan.End()
 
-		ctx, span := tracing.StartSpan(context.Background())
-		defer span.End()
-
-		runTestForAllAuthMethods(ctx, test, "should be able to generate a PASETO", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create delegated client.
-				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-				exampleDelegatedClientInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
-				exampleDelegatedClientInput.UserLoginInput = types.UserLoginInput{
-					Username:  user.Username,
-					Password:  user.HashedPassword,
-					TOTPToken: generateTOTPTokenForUser(t, user),
-				}
-
-				createdDelegatedClient, delegatedClientCreationErr := testClient.CreateDelegatedClient(ctx, cookie, exampleDelegatedClientInput)
-				checkValueAndError(t, createdDelegatedClient, delegatedClientCreationErr)
-
-				actualKey, keyDecodeErr := base64.RawURLEncoding.DecodeString(createdDelegatedClient.ClientSecret)
-				require.NoError(t, keyDecodeErr)
-
-				token, tokenErr := testClient.FetchDelegatedClientAuthToken(ctx, createdDelegatedClient.ClientID, actualKey)
-				assert.NotEmpty(t, token)
-				assert.NoError(t, tokenErr)
+			// Create delegated client.
+			exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+			exampleDelegatedClientInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+			exampleDelegatedClientInput.UserLoginInput = types.UserLoginInput{
+				Username:  user.Username,
+				Password:  user.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, user),
 			}
-		})
+
+			createdDelegatedClient, delegatedClientCreationErr := testClient.CreateDelegatedClient(pasetoContext, cookie, exampleDelegatedClientInput)
+			checkValueAndError(t, createdDelegatedClient, delegatedClientCreationErr)
+
+			actualKey, keyDecodeErr := base64.RawURLEncoding.DecodeString(createdDelegatedClient.ClientSecret)
+			require.NoError(t, keyDecodeErr)
+
+			input := &types.PASETOCreationInput{
+				ClientID:  createdDelegatedClient.ClientID,
+				NonceUUID: uuid.New().String(),
+			}
+
+			req, err := testClient.BuildDelegatedClientAuthTokenRequest(pasetoContext, input, actualKey)
+			require.NoError(t, err)
+
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NotNil(t, res)
+
+			var tokenRes types.PASETOResponse
+			require.NoError(t, json.NewDecoder(res.Body).Decode(&tokenRes))
+
+			assert.NotEmpty(t, tokenRes.Token)
+		}
 	})
 
 	test.Run("login request without body fails", func(t *testing.T) {

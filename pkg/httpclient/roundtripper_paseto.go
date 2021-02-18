@@ -51,7 +51,7 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 		}()
 	}
 
-	token, tokenRetrievalErr := t.client.FetchDelegatedClientAuthToken(ctx, t.clientID, t.secretKey)
+	token, tokenRetrievalErr := t.client.fetchDelegatedClientAuthToken(ctx, t.clientID, t.secretKey)
 	if tokenRetrievalErr != nil {
 		return nil, fmt.Errorf("error fetching prerequisite PASETO: %w", tokenRetrievalErr)
 	}

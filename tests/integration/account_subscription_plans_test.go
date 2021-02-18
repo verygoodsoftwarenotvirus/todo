@@ -31,7 +31,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 	test.Run("Creating", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("should be createable", func(t *testing.T) {
+		subtest.Run("should be creatable", func(t *testing.T) {
 			t.Parallel()
 
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())

@@ -72,7 +72,7 @@ func (q *Postgres) BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uin
 		From(querybuilding.DelegatedClientsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn):  clientID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.IDColumn):                             clientID,
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                     nil,
 		}),
 	)
@@ -95,7 +95,8 @@ func (q *Postgres) BuildCreateDelegatedClientQuery(input *types.DelegatedClientC
 			input.ClientID,
 			input.ClientSecret,
 			input.BelongsToUser,
-		),
+		).
+		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
 	)
 }
 
@@ -129,7 +130,7 @@ func (q *Postgres) BuildArchiveDelegatedClientQuery(clientID, userID uint64) (qu
 
 // BuildGetAuditLogEntriesForDelegatedClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (q *Postgres) BuildGetAuditLogEntriesForDelegatedClientQuery(clientID uint64) (query string, args []interface{}) {
-	oauth2ClientIDKey := fmt.Sprintf(
+	delegatedClientIDKey := fmt.Sprintf(
 		jsonPluckQuery,
 		querybuilding.AuditLogEntriesTableName,
 		querybuilding.AuditLogEntriesTableContextColumn,
@@ -139,7 +140,7 @@ func (q *Postgres) BuildGetAuditLogEntriesForDelegatedClientQuery(clientID uint6
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
-		Where(squirrel.Eq{oauth2ClientIDKey: clientID}).
+		Where(squirrel.Eq{delegatedClientIDKey: clientID}).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

@@ -21,6 +21,15 @@ func BuildFakeDelegatedClient() *types.DelegatedClient {
 	}
 }
 
+// BuildFakeDelegatedClientCreationResponseFromClient builds a faked DelegatedClientCreationResponse.
+func BuildFakeDelegatedClientCreationResponseFromClient(client *types.DelegatedClient) *types.DelegatedClientCreationResponse {
+	return &types.DelegatedClientCreationResponse{
+		ID:           client.ID,
+		ClientID:     client.ClientID,
+		ClientSecret: string(client.ClientSecret),
+	}
+}
+
 // BuildFakeDelegatedClientList builds a faked DelegatedClientList.
 func BuildFakeDelegatedClientList() *types.DelegatedClientList {
 	var examples []*types.DelegatedClient

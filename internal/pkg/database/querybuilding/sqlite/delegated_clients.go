@@ -72,7 +72,7 @@ func (q *Sqlite) BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uint6
 		From(querybuilding.DelegatedClientsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn):  clientID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.IDColumn):                             clientID,
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                     nil,
 		}),
 	)
@@ -129,7 +129,7 @@ func (q *Sqlite) BuildArchiveDelegatedClientQuery(clientID, userID uint64) (quer
 
 // BuildGetAuditLogEntriesForDelegatedClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (q *Sqlite) BuildGetAuditLogEntriesForDelegatedClientQuery(clientID uint64) (query string, args []interface{}) {
-	oauth2ClientIDKey := fmt.Sprintf(
+	delegatedClientIDKey := fmt.Sprintf(
 		jsonPluckQuery,
 		querybuilding.AuditLogEntriesTableName,
 		querybuilding.AuditLogEntriesTableContextColumn,
@@ -139,7 +139,7 @@ func (q *Sqlite) BuildGetAuditLogEntriesForDelegatedClientQuery(clientID uint64)
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
-		Where(squirrel.Eq{oauth2ClientIDKey: clientID}).
+		Where(squirrel.Eq{delegatedClientIDKey: clientID}).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

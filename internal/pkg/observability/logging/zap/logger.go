@@ -60,7 +60,7 @@ func (l *Logger) SetLevel(level logging.Level) {
 	l.logger = l.logger.WithOptions(zap.IncreaseLevel(lvl))
 }
 
-// SetLevel satisfies our interface.
+// SetRequestIDFunc satisfies our interface.
 func (l *Logger) SetRequestIDFunc(f logging.RequestIDFunc) {
 	l.requestIDFunc = f
 }

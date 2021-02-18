@@ -116,7 +116,7 @@ func (c *Client) GetDelegatedClientByDatabaseID(ctx context.Context, clientID, u
 		"client_id": clientID,
 		"user_id":   userID,
 	})
-	logger.Debug("GetDelegatedClient called")
+	logger.Debug("GetDelegatedClientByDatabaseID called")
 
 	query, args := c.sqlQueryBuilder.BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID)
 	row := c.db.QueryRowContext(ctx, query, args...)
@@ -296,8 +296,8 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 	tracing.AttachDelegatedClientDatabaseIDToSpan(span, clientID)
 
 	c.logger.WithValues(map[string]interface{}{
-		keys.DelegatedClientIDKey: clientID,
-		keys.UserIDKey:            userID,
+		keys.DelegatedClientDatabaseIDKey: clientID,
+		keys.UserIDKey:                    userID,
 	}).Debug("ArchiveDelegatedClient called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveDelegatedClientQuery(clientID, userID)
@@ -307,7 +307,7 @@ func (c *Client) ArchiveDelegatedClient(ctx context.Context, clientID, userID ui
 		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, c.db, "delegated client archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "delegated client archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating delegated client: %w", execErr)
 	}
@@ -334,6 +334,8 @@ func (c *Client) GetAuditLogEntriesForDelegatedClient(ctx context.Context, clien
 	if err != nil {
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
+
+	c.logger.WithValue("query", query).Info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
 	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {

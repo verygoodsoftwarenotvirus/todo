@@ -18,10 +18,9 @@ import (
 )
 
 const (
-	debug                 = false
-	timeout               = 5 * time.Second
-	defaultSubtestTimeout = 15 * time.Second
-	nonexistentID         = 999999999
+	debug         = false
+	timeout       = 5 * time.Second
+	nonexistentID = 999999999
 )
 
 var (

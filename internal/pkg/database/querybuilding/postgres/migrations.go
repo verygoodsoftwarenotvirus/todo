@@ -119,7 +119,7 @@ var (
 				external_id TEXT NOT NULL,
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
-				secret_key TEXT NOT NULL,
+				secret_key BYTEA NOT NULL,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,

@@ -115,7 +115,7 @@ func TestPostgres_BuildCreateDelegatedClientQuery(T *testing.T) {
 		exIDGen.On("NewExternalID").Return(exampleDelegatedClient.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO delegated_clients (external_id,name,client_id,secret_key,belongs_to_user) VALUES ($1,$2,$3,$4,$5)"
+		expectedQuery := "INSERT INTO delegated_clients (external_id,name,client_id,secret_key,belongs_to_user) VALUES ($1,$2,$3,$4,$5) RETURNING id"
 		expectedArgs := []interface{}{
 			exampleDelegatedClient.ExternalID,
 			exampleDelegatedClient.Name,

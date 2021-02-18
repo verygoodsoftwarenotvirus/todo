@@ -47,7 +47,7 @@ func (q *MariaDB) BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uint
 		From(querybuilding.DelegatedClientsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.DelegatedClientsTableClientIDColumn):  clientID,
+			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.IDColumn):                             clientID,
 			fmt.Sprintf("%s.%s", querybuilding.DelegatedClientsTableName, querybuilding.ArchivedOnColumn):                     nil,
 		}),
 	)
@@ -129,18 +129,18 @@ func (q *MariaDB) BuildArchiveDelegatedClientQuery(clientID, userID uint64) (que
 
 // BuildGetAuditLogEntriesForDelegatedClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
 func (q *MariaDB) BuildGetAuditLogEntriesForDelegatedClientQuery(clientID uint64) (query string, args []interface{}) {
-	oauth2ClientIDKey := fmt.Sprintf(
-		jsonPluckQuery,
-		querybuilding.AuditLogEntriesTableName,
-		querybuilding.AuditLogEntriesTableContextColumn,
-		clientID,
-		audit.DelegatedClientAssignmentKey,
-	)
-
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
-		Where(squirrel.Eq{oauth2ClientIDKey: clientID}).
+		Where(squirrel.Expr(
+			fmt.Sprintf(
+				jsonPluckQuery,
+				querybuilding.AuditLogEntriesTableName,
+				querybuilding.AuditLogEntriesTableContextColumn,
+				clientID,
+				audit.DelegatedClientAssignmentKey,
+			),
+		)).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

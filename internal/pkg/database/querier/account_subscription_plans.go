@@ -224,7 +224,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, c.db, "account subscription plan archive", query, args); execErr != nil {
+	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account subscription plan archive", query, args); execErr != nil {
 		c.rollbackTransaction(tx)
 		return fmt.Errorf("error updating account subscription plan: %w", execErr)
 	}

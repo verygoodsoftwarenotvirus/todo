@@ -5,8 +5,8 @@ services:
             - source: '../../../../environments/testing/config_files/integration-tests-sqlite.toml'
               target: '/etc/config.toml'
               type: 'bind'
-#        logging:
-#          driver: none
+        logging:
+          driver: none
     test:
         environment:
             TARGET_ADDRESS: 'http://todo-server:8888'

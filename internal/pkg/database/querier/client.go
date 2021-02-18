@@ -219,13 +219,25 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if !ignoreReturn && c.idStrategy == ReturningStatementIDRetrievalStrategy {
+	if c.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {
 		var id uint64
+
 		if err := querier.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
 		return id, nil
+	} else if c.idStrategy == ReturningStatementIDRetrievalStrategy {
+		res, err := querier.ExecContext(ctx, query, args...)
+		if err != nil {
+			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
+		}
+
+		if count, rowsCountErr := res.RowsAffected(); count == 0 || rowsCountErr != nil {
+			return 0, sql.ErrNoRows
+		}
+
+		return 0, nil
 	}
 
 	res, err := querier.ExecContext(ctx, query, args...)

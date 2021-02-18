@@ -35,7 +35,7 @@ func TestItems(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		runTestForAllAuthMethods(ctx, subtest, "should be createable", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(ctx, subtest, "should be creatable", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Create item.
 				exampleItem := fakes.BuildFakeItem()

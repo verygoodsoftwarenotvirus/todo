@@ -149,7 +149,7 @@ func TestV1Client_GetDelegatedClients(T *testing.T) {
 func TestV1Client_BuildCreateDelegatedClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/delegated_client"
+	const expectedPath = "/api/v1/delegated_clients"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -172,7 +172,7 @@ func TestV1Client_BuildCreateDelegatedClientRequest(T *testing.T) {
 func TestV1Client_CreateDelegatedClient(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/delegated_client"
+	const expectedPath = "/api/v1/delegated_clients"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
@@ -182,6 +182,7 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 
 		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 		exampleDelegatedClient.ClientSecret = nil
+		exampleResponse := fakes.BuildFakeDelegatedClientCreationResponseFromClient(exampleDelegatedClient)
 		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
 
 		ts := httptest.NewTLSServer(
@@ -189,7 +190,7 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleDelegatedClient))
+					require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
 				},
 			),
 		)
@@ -197,7 +198,7 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 
 		actual, err := c.CreateDelegatedClient(ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleDelegatedClient, actual)
+		assert.Equal(t, exampleResponse, actual)
 	})
 
 	T.Run("with invalid client url", func(t *testing.T) {

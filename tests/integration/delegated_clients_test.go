@@ -19,11 +19,11 @@ func checkDelegatedClientEquality(t *testing.T, expected, actual *types.Delegate
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected Name for delegated client #%d to be %q, but it was %q ", expected.ID, expected.Name, actual.Name)
-	assert.NotEmpty(t, actual.ExternalID, "expected ExternalID for delegated client #%d to not be empty, but it was", expected.ID)
-	assert.NotEmpty(t, actual.ClientID, "expected ClientID for delegated client #%d to not be empty, but it was", expected.ID)
-	assert.NotEmpty(t, actual.ClientSecret, "expected ClientSecret for delegated client #%d to not be empty, but it was", expected.ID)
-	assert.NotZero(t, actual.BelongsToUser, "expected BelongsToUser for delegated client #%d to not be zero, but it was", expected.ID)
+	assert.Equal(t, expected.Name, actual.Name, "expected Name for delegated client #%d to be %q, but it was %q ", actual.ID, expected.Name, actual.Name)
+	assert.NotEmpty(t, actual.ExternalID, "expected ExternalID for delegated client #%d to not be empty, but it was", actual.ID)
+	assert.NotEmpty(t, actual.ClientID, "expected ClientID for delegated client #%d to not be empty, but it was", actual.ID)
+	assert.Empty(t, actual.ClientSecret, "expected ClientSecret for delegated client #%d to not be empty, but it was", actual.ID)
+	assert.NotZero(t, actual.BelongsToUser, "expected BelongsToUser for delegated client #%d to not be zero, but it was", actual.ID)
 	assert.NotZero(t, actual.CreatedOn)
 }
 
@@ -36,7 +36,7 @@ func TestDelegatedClients(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		runTestForAllAuthMethods(ctx, subtest, "should be createable", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(ctx, subtest, "should be creatable", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Create delegated client.
 				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
@@ -212,22 +212,17 @@ func TestDelegatedClients(test *testing.T) {
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		runTestForAllAuthMethods(ctx, subtest, "it should return an error when trying to audit something that does not exist", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-				x, err := adminClient.GetAuditLogForDelegatedClient(ctx, nonexistentID)
-
-				assert.NoError(t, err)
-				assert.Empty(t, x)
-			}
-		})
-
 		runTestForAllAuthMethods(ctx, subtest, "it should not be auditable by a non-admin", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Create delegated client.
 				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
 				exampleDelegatedClientInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+				exampleDelegatedClientInput.UserLoginInput = types.UserLoginInput{
+					Username:  user.Username,
+					Password:  user.HashedPassword,
+					TOTPToken: generateTOTPTokenForUser(t, user),
+				}
+
 				createdDelegatedClient, err := testClient.CreateDelegatedClient(ctx, cookie, exampleDelegatedClientInput)
 				checkValueAndError(t, createdDelegatedClient, err)
 

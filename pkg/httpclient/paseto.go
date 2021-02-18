@@ -56,7 +56,7 @@ func (c *Client) buildDelegatedClientAuthTokenRequest(ctx context.Context, input
 	return req, nil
 }
 
-func (c *Client) fetchDelegatedClientAuthToken(ctx context.Context, clientID string, secretKey []byte) (string, error) {
+func (c *Client) FetchDelegatedClientAuthToken(ctx context.Context, clientID string, secretKey []byte) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

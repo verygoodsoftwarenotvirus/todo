@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 	"net/url"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 )
 
 func TestAuth(test *testing.T) {
@@ -79,30 +81,34 @@ func TestAuth(test *testing.T) {
 		assert.NoError(t, testClient.Logout(ctx))
 	})
 
-	test.Run("should be able to generate a PASETO", func(t *testing.T) {
-		t.Parallel()
+	test.Run("should be able to generate a PASETO", func(subtest *testing.T) {
+		subtest.Parallel()
 
 		ctx, span := tracing.StartSpan(context.Background())
 		defer span.End()
 
-		testUser, _, testClient := createUserAndClientForTest(ctx, t)
-		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
-			Username:  testUser.Username,
-			Password:  testUser.HashedPassword,
-			TOTPToken: generateTOTPTokenForUser(t, testUser),
+		runTestForAllAuthMethods(ctx, test, "should be able to generate a PASETO", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+			return func(t *testing.T) {
+				// Create delegated client.
+				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+				exampleDelegatedClientInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+				exampleDelegatedClientInput.UserLoginInput = types.UserLoginInput{
+					Username:  user.Username,
+					Password:  user.HashedPassword,
+					TOTPToken: generateTOTPTokenForUser(t, user),
+				}
+
+				createdDelegatedClient, delegatedClientCreationErr := testClient.CreateDelegatedClient(ctx, cookie, exampleDelegatedClientInput)
+				checkValueAndError(t, createdDelegatedClient, delegatedClientCreationErr)
+
+				actualKey, keyDecodeErr := base64.RawURLEncoding.DecodeString(createdDelegatedClient.ClientSecret)
+				require.NoError(t, keyDecodeErr)
+
+				token, tokenErr := testClient.FetchDelegatedClientAuthToken(ctx, createdDelegatedClient.ClientID, actualKey)
+				assert.NotEmpty(t, token)
+				assert.NoError(t, tokenErr)
+			}
 		})
-
-		assert.NotNil(t, cookie)
-		assert.NoError(t, err)
-
-		assert.Equal(t, authservice.DefaultCookieName, cookie.Name)
-		assert.NotEmpty(t, cookie.Value)
-		assert.NotZero(t, cookie.MaxAge)
-		assert.True(t, cookie.HttpOnly)
-		assert.Equal(t, "/", cookie.Path)
-		assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
-
-		assert.NoError(t, testClient.Logout(ctx))
 	})
 
 	test.Run("login request without body fails", func(t *testing.T) {
@@ -342,29 +348,5 @@ func TestAuth(test *testing.T) {
 		})
 		assert.NoError(t, err)
 		assert.NotNil(t, secondCookie)
-	})
-
-	test.Run("should accept a cookie if a token is missing", func(t *testing.T) {
-		t.Parallel()
-
-		ctx, span := tracing.StartSpan(context.Background())
-		defer span.End()
-
-		testUser, _, testClient := createUserAndClientForTest(ctx, t)
-		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
-			Username:  testUser.Username,
-			Password:  testUser.HashedPassword,
-			TOTPToken: generateTOTPTokenForUser(t, testUser),
-		})
-		require.NoError(t, err)
-
-		// make arbitrary request.
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testClient.BuildURL(nil, "webhooks"), nil)
-		assert.NoError(t, err)
-		req.AddCookie(cookie)
-
-		res, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
 	})
 }

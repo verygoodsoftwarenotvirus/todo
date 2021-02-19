@@ -78,7 +78,7 @@ func runTestForAllAuthMethodsAsAdmin(t *testing.T, testName string, testFunc fun
 	defer adminClientLock.Unlock()
 
 	t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(ctx, adminCookieClient))
-	t.Run(fmt.Sprintf("%s with paseto", testName), testFunc(ctx, adminPASETOClient))
+	t.Run(fmt.Sprintf("%s with PASETO", testName), testFunc(ctx, adminPASETOClient))
 }
 
 func runTestForAllAuthMethods(t *testing.T, testName string, testFunc func(ctx context.Context, user *types.User, cookie *http.Cookie, client *httpclient.Client) func(*testing.T)) {
@@ -90,7 +90,7 @@ func runTestForAllAuthMethods(t *testing.T, testName string, testFunc func(ctx c
 	user, cookie, cookieClient, pasetoClient := createUserAndClientForTest(ctx, t)
 
 	t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(ctx, user, cookie, cookieClient))
-	t.Run(fmt.Sprintf("%s with paseto token", testName), testFunc(ctx, user, cookie, pasetoClient))
+	t.Run(fmt.Sprintf("%s with PASETO", testName), testFunc(ctx, user, cookie, pasetoClient))
 }
 
 func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {

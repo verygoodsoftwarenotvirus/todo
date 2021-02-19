@@ -27,7 +27,7 @@ type (
 		logger             logging.Logger
 		planDataManager    types.AccountSubscriptionPlanDataManager
 		planIDFetcher      func(*http.Request) uint64
-		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
 		planCounter        metrics.UnitCounter
 		encoderDecoder     encoding.HTTPResponseEncoder
 		tracer             tracing.Tracer

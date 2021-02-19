@@ -41,7 +41,7 @@ type (
 		encoderDecoder           encoding.HTTPResponseEncoder
 		cookieManager            cookieEncoderDecoder
 		sessionManager           *scs.SessionManager
-		sessionInfoFetcher       func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher       func(*http.Request) (*types.RequestContext, error)
 		tracer                   tracing.Tracer
 	}
 )

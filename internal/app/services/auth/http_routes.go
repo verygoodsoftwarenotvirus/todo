@@ -36,7 +36,7 @@ var (
 )
 
 // DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present.
-func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *types.SessionInfo, err error) {
+func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *types.RequestContext, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -53,7 +53,7 @@ func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 			return nil, errTokenLoading
 		}
 
-		si, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*types.SessionInfo)
+		si, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*types.RequestContext)
 		if !ok {
 			return nil, errNoSessionInfo
 		}
@@ -78,13 +78,13 @@ func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
 	}
 
-	user, userFetchErr := s.userDB.GetUser(req.Context(), ca.UserID)
+	user, userFetchErr := s.userDB.GetUser(req.Context(), ca.User.ID)
 	if userFetchErr != nil {
 		s.logger.Debug("unable to determine user from request")
 		return nil, fmt.Errorf("determining user from request: %w", userFetchErr)
 	}
 
-	tracing.AttachUserIDToSpan(span, ca.UserID)
+	tracing.AttachUserIDToSpan(span, ca.User.ID)
 
 	return user, nil
 }
@@ -189,14 +189,16 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
 }
 
-func buildSessionInfoForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]bitmask.ServiceUserPermissions) *types.SessionInfo {
-	return &types.SessionInfo{
-		Username:                user.Username,
-		UserID:                  user.ID,
-		ActiveAccount:           defaultAccount,
-		UserAccountStatus:       user.AccountStatus,
-		AccountPermissionsMap:   permsMap,
-		ServiceAdminPermissions: user.ServiceAdminPermissions,
+func buildSessionInfoForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]bitmask.ServiceUserPermissions) *types.RequestContext {
+	return &types.RequestContext{
+		User: types.UserRequestContext{
+			Username:                user.Username,
+			ID:                      user.ID,
+			ActiveAccountID:         defaultAccount,
+			UserAccountStatus:       user.AccountStatus,
+			AccountPermissionsMap:   permsMap,
+			ServiceAdminPermissions: user.ServiceAdminPermissions,
+		},
 	}
 }
 
@@ -232,7 +234,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
-			s.auditLog.LogLogoutEvent(ctx, si.UserID)
+			s.auditLog.LogLogoutEvent(ctx, si.User.ID)
 		} else {
 			logger.Error(cookieBuildingErr, "error encountered building cookie")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
@@ -340,13 +342,15 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		Expiration: now.Add(s.config.PASETO.Lifetime),
 	}
 
-	si := &types.SessionInfo{
-		Username:                user.Username,
-		UserID:                  user.ID,
-		ActiveAccount:           defaultAccount,
-		UserAccountStatus:       user.AccountStatus,
-		AccountPermissionsMap:   permissions,
-		ServiceAdminPermissions: user.ServiceAdminPermissions,
+	si := &types.RequestContext{
+		User: types.UserRequestContext{
+			Username:                user.Username,
+			ID:                      user.ID,
+			ActiveAccountID:         defaultAccount,
+			UserAccountStatus:       user.AccountStatus,
+			AccountPermissionsMap:   permissions,
+			ServiceAdminPermissions: user.ServiceAdminPermissions,
+		},
 	}
 
 	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(si.ToBytes()))
@@ -360,8 +364,8 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tokenRes := &types.PASETOResponse{
-		Token:   token,
-		Expires: jsonToken.Expiration.String(),
+		Token:     token,
+		ExpiresAt: jsonToken.Expiration.String(),
 	}
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
@@ -383,8 +387,8 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if !si.ServiceAdminPermissions.CanCycleCookieSecrets() {
-		logger.WithValue("admin_permissions", si.ServiceAdminPermissions).Debug("invalid permissions")
+	if !si.User.ServiceAdminPermissions.CanCycleCookieSecrets() {
+		logger.WithValue("admin_permissions", si.User.ServiceAdminPermissions).Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}
@@ -394,7 +398,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		[]byte(s.config.Cookies.SigningKey),
 	)
 
-	s.auditLog.LogCycleCookieSecretEvent(ctx, si.UserID)
+	s.auditLog.LogCycleCookieSecretEvent(ctx, si.User.ID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

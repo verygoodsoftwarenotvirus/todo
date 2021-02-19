@@ -25,8 +25,8 @@ func TestWebhooksService_List(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -182,8 +182,8 @@ func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -342,8 +342,8 @@ func TestWebhooksService_Read(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -480,8 +480,8 @@ func TestWebhooksService_Update(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -712,8 +712,8 @@ func TestWebhooksService_Archive(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

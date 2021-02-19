@@ -26,8 +26,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -133,8 +133,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -309,8 +309,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -430,8 +430,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -549,8 +549,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -672,8 +672,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -883,8 +883,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.SessionInfo, error) {
-		return types.SessionInfoFromUser(exampleUser), nil
+	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(exampleUser), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

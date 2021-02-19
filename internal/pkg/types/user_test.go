@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 )
 
 func TestUser_JSONUnmarshal(T *testing.T) {
@@ -62,11 +62,13 @@ func TestUser_ToSessionInfo(T *testing.T) {
 			ServiceAdminPermissions: bitmask.NewServiceAdminPermissions(1),
 		}
 
-		expected := &SessionInfo{
-			UserID:                  exampleInput.ID,
-			ServiceAdminPermissions: exampleInput.ServiceAdminPermissions,
+		expected := &RequestContext{
+			User: UserRequestContext{
+				ID:                      exampleInput.ID,
+				ServiceAdminPermissions: exampleInput.ServiceAdminPermissions,
+			},
 		}
-		actual := SessionInfoFromUser(exampleInput)
+		actual := RequestContextFromUser(exampleInput)
 
 		assert.Equal(t, expected, actual)
 	})

@@ -25,7 +25,7 @@ type (
 		logger                 logging.Logger
 		auditLog               types.AuditLogEntryDataManager
 		auditLogEntryIDFetcher func(*http.Request) uint64
-		sessionInfoFetcher     func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher     func(*http.Request) (*types.RequestContext, error)
 		encoderDecoder         encoding.HTTPResponseEncoder
 		tracer                 tracing.Tracer
 	}

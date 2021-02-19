@@ -81,11 +81,11 @@ func AttachPlanIDToSpan(span trace.Span, planID uint64) {
 	attachToSpan(span, keys.AccountSubscriptionPlanIDKey, planID)
 }
 
-// AttachSessionInfoToSpan provides a consistent way to attach a SessionInfo object to a span.
-func AttachSessionInfoToSpan(span trace.Span, sessionInfo *types.SessionInfo) {
+// AttachSessionInfoToSpan provides a consistent way to attach a RequestContext object to a span.
+func AttachSessionInfoToSpan(span trace.Span, sessionInfo *types.RequestContext) {
 	if sessionInfo != nil {
-		attachToSpan(span, keys.UserIDKey, sessionInfo.UserID)
-		attachToSpan(span, keys.UserIsAdminKey, sessionInfo.ServiceAdminPermissions.IsServiceAdmin())
+		attachToSpan(span, keys.UserIDKey, sessionInfo.User.ID)
+		attachToSpan(span, keys.UserIsAdminKey, sessionInfo.User.ServiceAdminPermissions.IsServiceAdmin())
 	}
 }
 

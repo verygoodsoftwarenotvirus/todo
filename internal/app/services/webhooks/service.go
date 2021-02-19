@@ -34,7 +34,7 @@ type (
 		logger             logging.Logger
 		webhookCounter     metrics.UnitCounter
 		webhookDataManager types.WebhookDataManager
-		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
 		webhookIDFetcher   func(*http.Request) uint64
 		encoderDecoder     encoding.HTTPResponseEncoder
 		tracer             tracing.Tracer

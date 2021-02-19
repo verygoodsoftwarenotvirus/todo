@@ -45,7 +45,7 @@ type (
 		logger               logging.Logger
 		encoderDecoder       encoding.HTTPResponseEncoder
 		userIDFetcher        func(*http.Request) uint64
-		sessionInfoFetcher   func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher   func(*http.Request) (*types.RequestContext, error)
 		userCounter          metrics.UnitCounter
 		secretGenerator      secretGenerator
 		imageUploadProcessor images.ImageUploadProcessor

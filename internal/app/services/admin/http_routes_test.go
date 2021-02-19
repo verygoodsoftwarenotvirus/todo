@@ -30,10 +30,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+				},
 			}, nil
 		}
 
@@ -74,10 +76,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+				},
 			}, nil
 		}
 
@@ -118,10 +122,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+				},
 			}, nil
 		}
 
@@ -142,7 +148,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		ctx, err := s.sessionManager.Load(context.Background(), "")
 		require.NoError(t, err)
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
 			return nil, errors.New("blah")
 		}
 
@@ -168,10 +174,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildNoAdminPerms(),
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildNoAdminPerms(),
+				},
 			}, nil
 		}
 
@@ -197,10 +205,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildNoAdminPerms() + 1,
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildNoAdminPerms() + 1,
+				},
 			}, nil
 		}
 
@@ -226,10 +236,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+				},
 			}, nil
 		}
 
@@ -266,10 +278,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+				},
 			}, nil
 		}
 
@@ -310,10 +324,12 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		s.sessionManager.Store = ms
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return &types.SessionInfo{
-				UserID:                  exampleUser.ID,
-				ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return &types.RequestContext{
+				User: types.UserRequestContext{
+					ID:                      exampleUser.ID,
+					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
+				},
 			}, nil
 		}
 

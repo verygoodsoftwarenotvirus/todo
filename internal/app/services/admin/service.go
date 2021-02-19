@@ -28,7 +28,7 @@ type (
 		auditLog           types.AdminAuditManager
 		encoderDecoder     encoding.HTTPResponseEncoder
 		sessionManager     *scs.SessionManager
-		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
 		userIDFetcher      func(*http.Request) uint64
 		tracer             tracing.Tracer
 	}

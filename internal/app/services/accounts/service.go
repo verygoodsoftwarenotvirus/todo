@@ -31,7 +31,7 @@ type (
 		logger             logging.Logger
 		accountDataManager types.AccountDataManager
 		accountIDFetcher   func(*http.Request) uint64
-		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
 		accountCounter     metrics.UnitCounter
 		encoderDecoder     encoding.HTTPResponseEncoder
 		tracer             tracing.Tracer

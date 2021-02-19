@@ -42,7 +42,7 @@ type (
 		authenticator              authentication.Authenticator
 		encoderDecoder             encoding.HTTPResponseEncoder
 		urlClientIDExtractor       func(req *http.Request) uint64
-		sessionInfoFetcher         func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher         func(*http.Request) (*types.RequestContext, error)
 		delegatedClientCounter     metrics.UnitCounter
 		secretGenerator            secretGenerator
 		tracer                     tracing.Tracer

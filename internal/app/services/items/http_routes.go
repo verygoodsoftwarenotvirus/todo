@@ -44,22 +44,22 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := si.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := si.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		items *types.ItemList
 		err   error
 	)
 
-	if si.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
+	if si.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
 	} else {
-		items, err = s.itemDataManager.GetItems(ctx, si.UserID, filter)
+		items, err = s.itemDataManager.GetItems(ctx, si.User.ID, filter)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -96,12 +96,12 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := si.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := si.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		relevantIDs []uint64
@@ -114,7 +114,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		relevantIDs, searchErr = s.search.SearchForAdmin(ctx, query)
 	} else {
-		relevantIDs, searchErr = s.search.Search(ctx, query, si.UserID)
+		relevantIDs, searchErr = s.search.Search(ctx, query, si.User.ID)
 	}
 
 	if searchErr != nil {
@@ -127,7 +127,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		items, dbErr = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
 	} else {
-		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.UserID, filter.Limit, relevantIDs)
+		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.User.ID, filter.Limit, relevantIDs)
 	}
 
 	if errors.Is(dbErr, sql.ErrNoRows) {
@@ -166,8 +166,8 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
-	input.BelongsToUser = si.UserID
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	input.BelongsToUser = si.User.ID
 
 	// create item in database.
 	x, err := s.itemDataManager.CreateItem(ctx, input)
@@ -204,7 +204,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -212,7 +212,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
-	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.UserID)
+	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Error(err, "error checking item existence in database")
 	}
@@ -237,7 +237,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -245,7 +245,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -282,8 +282,8 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
-	input.BelongsToUser = si.UserID
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	input.BelongsToUser = si.User.ID
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -291,7 +291,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, si.UserID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -335,7 +335,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -343,7 +343,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.UserID, si.UserID)
+	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.User.ID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -380,7 +380,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)

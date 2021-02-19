@@ -51,7 +51,7 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 				context.WithValue(
 					ctx,
 					types.SessionInfoKey,
-					types.SessionInfoFromUser(user),
+					types.RequestContextFromUser(user),
 				),
 			)
 			next.ServeHTTP(res, req)
@@ -72,8 +72,8 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		// check for a cookie first if we can.
-		if cookieAuth, err := s.DecodeCookieFromRequest(ctx, req); err == nil && cookieAuth != nil {
-			user, userRetrievalErr := s.userDB.GetUser(ctx, cookieAuth.UserID)
+		if requestContext, err := s.DecodeCookieFromRequest(ctx, req); err == nil && requestContext != nil {
+			user, userRetrievalErr := s.userDB.GetUser(ctx, requestContext.User.ID)
 			if userRetrievalErr != nil {
 				logger.Error(userRetrievalErr, "error authenticating request")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -84,7 +84,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 			if user != nil {
 				tracing.AttachUserIDToSpan(span, user.ID)
-				next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(user))))
+				next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(user))))
 				return
 			}
 		}
@@ -101,10 +101,6 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			}
 
 			if time.Now().UTC().After(token.Expiration) {
-				logger.WithValues(map[string]interface{}{
-					"current_time": time.Now().UTC().String(),
-					"token_expiry": token.Expiration.String(),
-				}).Debug("PASETO expired")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
@@ -118,7 +114,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			var si *types.SessionInfo
+			var si *types.RequestContext
 			gobDecodeErr := gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&si)
 			if gobDecodeErr != nil {
 				logger.Error(gobDecodeErr, "error decoding GOB encoded session info payload")
@@ -143,9 +139,9 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		// UserAttributionMiddleware should be called before this middleware.
-		if si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo); ok {
+		if si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext); ok {
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if si.UserAccountStatus == types.BannedAccountStatus {
+			if si.User.UserAccountStatus == types.BannedAccountStatus {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return
@@ -169,7 +165,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
+		si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
 
 		if !ok || si == nil {
 			logger.Debug("AdminMiddleware called without user attached to context")
@@ -177,9 +173,9 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		logger = logger.WithValue(keys.UserIDKey, si.UserID)
+		logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
-		if !si.ServiceAdminPermissions.IsServiceAdmin() {
+		if !si.User.ServiceAdminPermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return

@@ -31,7 +31,7 @@ type (
 		logger             logging.Logger
 		itemDataManager    types.ItemDataManager
 		itemIDFetcher      func(*http.Request) uint64
-		sessionInfoFetcher func(*http.Request) (*types.SessionInfo, error)
+		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
 		itemCounter        metrics.UnitCounter
 		encoderDecoder     encoding.HTTPResponseEncoder
 		tracer             tracing.Tracer

@@ -667,7 +667,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -757,7 +757,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -801,7 +801,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -853,7 +853,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1103,7 +1103,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1192,7 +1192,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1236,7 +1236,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1285,7 +1285,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1332,7 +1332,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1383,7 +1383,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1409,7 +1409,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1440,7 +1440,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1476,7 +1476,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
 		)
 
 		mockDB := database.BuildMockDatabase()

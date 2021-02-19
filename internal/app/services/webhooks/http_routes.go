@@ -59,7 +59,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// try to pluck the parsed input from the request context.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.WebhookCreationInput)
@@ -70,7 +70,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	input.BelongsToUser = si.UserID
+	input.BelongsToUser = si.User.ID
 
 	// ensure everything's on the up-and-up
 	if err := validateWebhook(input); err != nil {
@@ -115,10 +115,10 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// find the webhooks.
-	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, si.UserID, filter)
+	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, si.User.ID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		webhooks = &types.WebhookList{
 			Webhooks: []*types.Webhook{},
@@ -149,7 +149,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -157,7 +157,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// fetch the webhook from the database.
-	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.UserID)
+	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("No rows found in webhook database")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -189,7 +189,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -206,7 +206,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch the webhook in question.
-	wh, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.UserID)
+	wh, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -249,7 +249,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -257,7 +257,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// do the deed.
-	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, si.UserID)
+	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -293,7 +293,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)

@@ -209,7 +209,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(exampleUser)))
 
 		s.AuthorizationMiddleware(h).ServeHTTP(res, req)
 
@@ -232,7 +232,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(exampleUser)))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(exampleUser)))
 
 		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
 
@@ -412,7 +412,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 			context.WithValue(
 				req.Context(),
 				types.SessionInfoKey,
-				types.SessionInfoFromUser(exampleUser),
+				types.RequestContextFromUser(exampleUser),
 			),
 		)
 
@@ -464,7 +464,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 			context.WithValue(
 				req.Context(),
 				types.SessionInfoKey,
-				types.SessionInfoFromUser(exampleUser),
+				types.RequestContextFromUser(exampleUser),
 			),
 		)
 

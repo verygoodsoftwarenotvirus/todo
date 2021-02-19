@@ -44,22 +44,22 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := si.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := si.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		accounts *types.AccountList
 		err      error
 	)
 
-	if si.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
+	if si.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
 	} else {
-		accounts, err = s.accountDataManager.GetAccounts(ctx, si.UserID, filter)
+		accounts, err = s.accountDataManager.GetAccounts(ctx, si.User.ID, filter)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -98,8 +98,8 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
-	input.BelongsToUser = si.UserID
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	input.BelongsToUser = si.User.ID
 
 	// create account in database.
 	x, err := s.accountDataManager.CreateAccount(ctx, input)
@@ -133,7 +133,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -141,7 +141,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// fetch account from database.
-	x, err := s.accountDataManager.GetAccount(ctx, accountID, si.UserID)
+	x, err := s.accountDataManager.GetAccount(ctx, accountID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -178,8 +178,8 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
-	input.BelongsToUser = si.UserID
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	input.BelongsToUser = si.User.ID
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -187,7 +187,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// fetch account from database.
-	x, err := s.accountDataManager.GetAccount(ctx, accountID, si.UserID)
+	x, err := s.accountDataManager.GetAccount(ctx, accountID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -226,7 +226,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -234,7 +234,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// archive the account in the database.
-	err := s.accountDataManager.ArchiveAccount(ctx, accountID, si.UserID)
+	err := s.accountDataManager.ArchiveAccount(ctx, accountID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -267,7 +267,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)

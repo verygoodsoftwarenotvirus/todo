@@ -37,20 +37,20 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	if !si.ServiceAdminPermissions.IsServiceAdmin() {
+	if !si.User.ServiceAdminPermissions.IsServiceAdmin() {
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
-	logger = logger.WithValue("ban_giver", si.UserID)
+	logger = logger.WithValue("ban_giver", si.User.ID)
 
 	var allowed bool
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		allowed = si.ServiceAdminPermissions.CanBanUsers()
+		allowed = si.User.ServiceAdminPermissions.CanBanUsers()
 	case types.TerminatedAccountStatus:
-		allowed = si.ServiceAdminPermissions.CanTerminateAccounts()
+		allowed = si.User.ServiceAdminPermissions.CanTerminateAccounts()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 
@@ -76,9 +76,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		s.auditLog.LogUserBanEvent(ctx, si.UserID, input.TargetAccountID, input.Reason)
+		s.auditLog.LogUserBanEvent(ctx, si.User.ID, input.TargetAccountID, input.Reason)
 	case types.TerminatedAccountStatus:
-		s.auditLog.LogAccountTerminationEvent(ctx, si.UserID, input.TargetAccountID, input.Reason)
+		s.auditLog.LogAccountTerminationEvent(ctx, si.User.ID, input.TargetAccountID, input.Reason)
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 

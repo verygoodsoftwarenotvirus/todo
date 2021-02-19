@@ -25,8 +25,8 @@ const (
 
 // fetchUserID grabs a userID out of the request context.
 func (s *service) fetchUserID(req *http.Request) uint64 {
-	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.SessionInfo); ok && si != nil {
-		return si.UserID
+	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.RequestContext); ok && si != nil {
+		return si.User.ID
 	}
 	return 0
 }
@@ -169,7 +169,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine item ID.
 	delegatedClientID := s.urlClientIDExtractor(req)
@@ -177,7 +177,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.DelegatedClientDatabaseIDKey, delegatedClientID)
 
 	// fetch item from database.
-	x, err := s.delegatedClientDataManager.GetDelegatedClientByDatabaseID(ctx, delegatedClientID, si.UserID)
+	x, err := s.delegatedClientDataManager.GetDelegatedClientByDatabaseID(ctx, delegatedClientID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -206,7 +206,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine delegated client ID.
 	delegatedClientID := s.urlClientIDExtractor(req)
@@ -214,7 +214,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, delegatedClientID)
 
 	// archive the delegated client in the database.
-	err := s.delegatedClientDataManager.ArchiveDelegatedClient(ctx, delegatedClientID, si.UserID)
+	err := s.delegatedClientDataManager.ArchiveDelegatedClient(ctx, delegatedClientID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

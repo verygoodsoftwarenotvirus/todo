@@ -34,7 +34,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	plans, err := s.planDataManager.GetAccountSubscriptionPlans(ctx, filter)
 
@@ -75,7 +75,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// create plan in database.
 	x, err := s.planDataManager.CreateAccountSubscriptionPlan(ctx, input)
@@ -116,7 +116,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
@@ -161,7 +161,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
@@ -183,7 +183,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update plan in database.
-	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x, si.UserID, changeReport); err != nil {
+	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x, si.User.ID, changeReport); err != nil {
 		logger.Error(err, "error encountered updating plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -208,7 +208,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
@@ -216,7 +216,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
-	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, si.UserID)
+	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -249,7 +249,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)

@@ -27,7 +27,7 @@ func buildTestService() *service {
 		itemCounter:        &mockmetrics.UnitCounter{},
 		itemDataManager:    &mocktypes.ItemDataManager{},
 		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
-		sessionInfoFetcher: func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
+		sessionInfoFetcher: func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
 		encoderDecoder:     mockencoding.NewMockEncoderDecoder(),
 		search:             &mocksearch.IndexManager{},
 		tracer:             tracing.NewTracer("test"),

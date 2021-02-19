@@ -248,7 +248,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// figure out who this is all for.
-	userID := si.UserID
+	userID := si.User.ID
 	logger = logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
@@ -360,7 +360,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	// also check for the user's ID.
-	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
+	si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to TOTP secret refresh request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -370,7 +370,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// make sure this is all on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
 		ctx,
-		si.UserID,
+		si.User.ID,
 		input.CurrentPassword,
 		input.TOTPToken,
 	)
@@ -382,7 +382,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	// document who this is for.
-	tracing.AttachUserIDToSpan(span, si.UserID)
+	tracing.AttachUserIDToSpan(span, si.User.ID)
 	tracing.AttachUsernameToSpan(span, user.Username)
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
@@ -430,7 +430,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// check request context for user ID.
-	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
+	si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdatePasswordHandler request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -438,13 +438,13 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// determine relevant user ID.
-	tracing.AttachUserIDToSpan(span, si.UserID)
-	logger = logger.WithValue(keys.UserIDKey, si.UserID)
+	tracing.AttachUserIDToSpan(span, si.User.ID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// make sure everything's on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
 		ctx,
-		si.UserID,
+		si.User.ID,
 		input.CurrentPassword,
 		input.TOTPToken,
 	)
@@ -505,14 +505,14 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 	logger := s.logger.WithRequest(req)
 
 	// check request context for user ID.
-	si, ok := ctx.Value(types.SessionInfoKey).(*types.SessionInfo)
+	si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdateAvatarHandler request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
-	user, userFetchErr := s.userDataManager.GetUser(ctx, si.UserID)
+	user, userFetchErr := s.userDataManager.GetUser(ctx, si.User.ID)
 	if userFetchErr != nil {
 		logger.Error(userFetchErr, "fetching associated user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -526,7 +526,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	internalPath := fmt.Sprintf("avatar_%d", si.UserID)
+	internalPath := fmt.Sprintf("avatar_%d", si.User.ID)
 
 	if saveErr := s.uploadManager.SaveFile(ctx, internalPath, img.Data); saveErr != nil {
 		logger.WithValue("file_size", len(img.Data)).Error(saveErr, "saving provided avatar")

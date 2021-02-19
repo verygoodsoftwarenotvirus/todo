@@ -214,16 +214,6 @@ func (u *User) Update(input *User) {
 	}
 }
 
-// SessionInfoFromUser produces a SessionInfo object from a User's data.
-func SessionInfoFromUser(user *User) *SessionInfo {
-	return &SessionInfo{
-		UserID:                  user.ID,
-		Username:                user.Username,
-		UserAccountStatus:       user.AccountStatus,
-		ServiceAdminPermissions: user.ServiceAdminPermissions,
-	}
-}
-
 // ToStatusResponse produces a UserStatusResponse object from a User's data.
 func (u *User) ToStatusResponse() *UserStatusResponse {
 	return &UserStatusResponse{

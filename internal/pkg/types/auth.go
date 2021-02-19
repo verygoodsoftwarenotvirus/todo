@@ -11,23 +11,28 @@ import (
 )
 
 const (
-	// SessionInfoKey is the non-string type we use for referencing SessionInfo structs.
+	// SessionInfoKey is the non-string type we use for referencing RequestContext structs.
 	SessionInfoKey ContextKey = "session_info"
 )
 
 func init() {
-	gob.Register(&SessionInfo{})
+	gob.Register(&RequestContext{})
 }
 
 type (
-	// SessionInfo represents what we encode in our authentication cookies.
-	SessionInfo struct {
+	// UserRequestContext contains data relevant to the user making a request.
+	UserRequestContext struct {
 		Username                string                                    `json:"-"`
-		UserID                  uint64                                    `json:"-"`
-		ActiveAccount           uint64                                    `json:"-"`
+		ID                      uint64                                    `json:"-"`
+		ActiveAccountID         uint64                                    `json:"-"`
 		UserAccountStatus       userReputation                            `json:"-"`
 		AccountPermissionsMap   map[uint64]bitmask.ServiceUserPermissions `json:"-"`
 		ServiceAdminPermissions permissions.ServiceAdminPermissionChecker `json:"-"`
+	}
+
+	// RequestContext represents what we encode in our authentication cookies.
+	RequestContext struct {
+		User UserRequestContext `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
@@ -40,14 +45,15 @@ type (
 
 	// PASETOCreationInput is used to create a PASETO.
 	PASETOCreationInput struct {
-		ClientID    string `json:"clientID"`
-		RequestTime int64  `json:"requestTime"`
+		ClientID          string `json:"clientID"`
+		RequestTime       int64  `json:"requestTime"`
+		RequestedLifetime uint64 `json:"requestedLifetime,omitempty"`
 	}
 
 	// PASETOResponse is used to respond to a PASETO request.
 	PASETOResponse struct {
-		Token   string `json:"token"`
-		Expires string `json:"expires"`
+		Token     string `json:"token"`
+		ExpiresAt string `json:"expiresAt"`
 	}
 
 	// AuthService describes a structure capable of handling authentication and authorization requests.
@@ -78,12 +84,24 @@ type (
 )
 
 // ToBytes returns the gob encoded session info.
-func (i *SessionInfo) ToBytes() []byte {
+func (x *RequestContext) ToBytes() []byte {
 	var b bytes.Buffer
 
-	if err := gob.NewEncoder(&b).Encode(i); err != nil {
+	if err := gob.NewEncoder(&b).Encode(x); err != nil {
 		panic(err)
 	}
 
 	return b.Bytes()
+}
+
+// RequestContextFromUser produces a RequestContext object from a User's data.
+func RequestContextFromUser(user *User) *RequestContext {
+	return &RequestContext{
+		User: UserRequestContext{
+			ID:                      user.ID,
+			Username:                user.Username,
+			UserAccountStatus:       user.AccountStatus,
+			ServiceAdminPermissions: user.ServiceAdminPermissions,
+		},
+	}
 }

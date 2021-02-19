@@ -21,7 +21,7 @@ func buildTestService() *service {
 		logger:                 logging.NewNonOperationalLogger(),
 		auditLog:               &mocktypes.AuditLogEntryDataManager{},
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },
-		sessionInfoFetcher:     func(*http.Request) (*types.SessionInfo, error) { return &types.SessionInfo{}, nil },
+		sessionInfoFetcher:     func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
 		encoderDecoder:         mockencoding.NewMockEncoderDecoder(),
 		tracer:                 tracing.NewTracer("test"),
 	}

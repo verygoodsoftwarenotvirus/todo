@@ -39,7 +39,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		expected := types.SessionInfoFromUser(fakes.BuildFakeUser())
+		expected := types.RequestContextFromUser(fakes.BuildFakeUser())
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -47,7 +47,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 		)
 
 		actual := r.UserIDFetcherFromRequestContext(req)
-		assert.Equal(t, expected.UserID, actual)
+		assert.Equal(t, expected.User.ID, actual)
 	})
 
 	T.Run("without attached value", func(t *testing.T) {
@@ -70,7 +70,7 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		expected := types.SessionInfoFromUser(fakes.BuildFakeUser())
+		expected := types.RequestContextFromUser(fakes.BuildFakeUser())
 
 		req := buildRequest(t)
 		req = req.WithContext(

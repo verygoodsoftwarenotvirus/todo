@@ -45,7 +45,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	require.NoError(t, s.sessionManager.RenewToken(ctx))
 
 	// Then make the privilege-level change.
-	s.sessionManager.Put(ctx, sessionInfoKey, types.SessionInfoFromUser(user))
+	s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(user))
 
 	token, _, err := s.sessionManager.Commit(ctx)
 	assert.NotEmpty(t, token)
@@ -68,8 +68,8 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -137,8 +137,8 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -184,8 +184,8 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -225,8 +225,8 @@ func TestService_LoginHandler(T *testing.T) {
 			exampleAccount.ID: testutil.BuildMaxUserPerms(),
 		}
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -305,8 +305,8 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -341,8 +341,8 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleUser.AccountStatus = types.BannedAccountStatus
 		exampleUser.AccountStatusExplanation = "bad behavior"
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -380,8 +380,8 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -431,8 +431,8 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -484,8 +484,8 @@ func TestService_LoginHandler(T *testing.T) {
 			exampleAccount.ID: testutil.BuildMaxUserPerms(),
 		}
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -554,8 +554,8 @@ func TestService_LoginHandler(T *testing.T) {
 			exampleAccount.ID: testutil.BuildMaxUserPerms(),
 		}
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -621,8 +621,8 @@ func TestService_LogoutHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -652,8 +652,8 @@ func TestService_LogoutHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		ctx, sessionErr := s.sessionManager.Load(ctx, "")
@@ -661,7 +661,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		require.NoError(t, s.sessionManager.RenewToken(ctx))
 
 		// Then make the privilege-level change.
-		s.sessionManager.Put(ctx, sessionInfoKey, types.SessionInfoFromUser(exampleUser))
+		s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(exampleUser))
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
@@ -680,8 +680,8 @@ func TestService_LogoutHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -712,8 +712,8 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -743,8 +743,8 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -790,8 +790,8 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -828,8 +828,8 @@ func TestService_validateLogin(T *testing.T) {
 
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -874,8 +874,8 @@ func TestService_validateLogin(T *testing.T) {
 
 		expectedErr := errors.New("arbitrary")
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -905,8 +905,8 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -940,8 +940,8 @@ func TestService_StatusHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -972,8 +972,8 @@ func TestService_StatusHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1009,8 +1009,8 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.ServiceAdminPermissions = bitmask.NewServiceAdminPermissions(math.MaxUint32)
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1043,7 +1043,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
 			return nil, errors.New("blah")
 		}
 
@@ -1071,8 +1071,8 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.SessionInfo, error) {
-			return types.SessionInfoFromUser(exampleUser), nil
+		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1143,13 +1143,15 @@ func TestService_PASETOHandler(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		expectedOutput := &types.SessionInfo{
-			Username:                exampleUser.Username,
-			UserID:                  exampleUser.ID,
-			ActiveAccount:           exampleAccount.ID,
-			UserAccountStatus:       exampleUser.AccountStatus,
-			AccountPermissionsMap:   examplePermissionMap,
-			ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
+		expectedOutput := &types.RequestContext{
+			User: types.UserRequestContext{
+				Username:                exampleUser.Username,
+				ID:                      exampleUser.ID,
+				ActiveAccountID:         exampleAccount.ID,
+				UserAccountStatus:       exampleUser.AccountStatus,
+				AccountPermissionsMap:   examplePermissionMap,
+				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
+			},
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
@@ -1214,7 +1216,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		gobEncoding, err := base64.RawURLEncoding.DecodeString(payload)
 		require.NoError(t, err)
 
-		var si *types.SessionInfo
+		var si *types.RequestContext
 		require.NoError(t, gob.NewDecoder(bytes.NewReader(gobEncoding)).Decode(&si))
 
 		assert.Equal(t, expectedOutput, si)

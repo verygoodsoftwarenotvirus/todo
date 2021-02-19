@@ -18,7 +18,7 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [168,32,117,129,247,132,230,190,231,80,177,205,101,211,141,162,142,166,252,181,218,2,237,173,90,101,3,123,5,128,246,163]
+    local_mode_key = [221,103,7,252,19,165,191,101,151,132,147,253,57,236,232,102,141,3,126,139,146,58,135,84,38,62,109,227,169,18,71,189]
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
@@ -29,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$2jld/hG0yc4WeXbLTK0IruVXxAnnKJBDHxWWYAcywifrOAxHiw7kW"
+    hashed_password = "$2a$11$OHvJbYHQustzX32snwegSu4L.5aeuLVVMoOVCrV8UlFe/oXm/wcqy"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

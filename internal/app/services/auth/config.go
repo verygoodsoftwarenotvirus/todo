@@ -15,7 +15,10 @@ const (
 	// DefaultCookieLifetime is the how long a cookie is valid.
 	DefaultCookieLifetime = 24 * time.Hour
 
+	staticError             = "error encountered, please try again later"
 	pasetoKeyRequiredLength = 32
+	pasetoDataKey           = "paseto_data"
+	maxPASETOLifetime       = 10 * time.Minute
 )
 
 type (
@@ -65,7 +68,7 @@ func (cfg *CookieConfig) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Name, validation.Required),
 		validation.Field(&cfg.Domain, validation.Required),
-		validation.Field(&cfg.Lifetime, validation.Required), // TODO: validate more better
+		validation.Field(&cfg.Lifetime, validation.Required),
 	)
 }
 

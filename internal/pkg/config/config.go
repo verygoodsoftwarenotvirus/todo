@@ -95,10 +95,6 @@ func (cfg *ServerConfig) Validate(ctx context.Context) error {
 		return fmt.Errorf("validating the Database portion of config: %w", err)
 	}
 
-	if err := cfg.Frontend.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Frontend portion of config: %w", err)
-	}
-
 	if err := cfg.Observability.Validate(ctx); err != nil {
 		return fmt.Errorf("validating the Observability portion of config: %w", err)
 	}
@@ -107,8 +103,32 @@ func (cfg *ServerConfig) Validate(ctx context.Context) error {
 		return fmt.Errorf("validating the Meta portion of config: %w", err)
 	}
 
+	if err := cfg.Frontend.Validate(ctx); err != nil {
+		return fmt.Errorf("validating the Frontend portion of config: %w", err)
+	}
+
+	if err := cfg.Uploads.Validate(ctx); err != nil {
+		return fmt.Errorf("validating the Uploads portion of config: %w", err)
+	}
+
 	if err := cfg.Search.Validate(ctx); err != nil {
 		return fmt.Errorf("validating the Search portion of config: %w", err)
+	}
+
+	if err := cfg.Routing.Validate(ctx); err != nil {
+		return fmt.Errorf("validating the Routing portion of config: %w", err)
+	}
+
+	if err := cfg.Server.Validate(ctx); err != nil {
+		return fmt.Errorf("validating the Server portion of config: %w", err)
+	}
+
+	if err := cfg.Webhooks.Validate(ctx); err != nil {
+		return fmt.Errorf("validating the Webhooks portion of config: %w", err)
+	}
+
+	if err := cfg.AuditLog.Validate(ctx); err != nil {
+		return fmt.Errorf("validating the AuditLog portion of config: %w", err)
 	}
 
 	return nil

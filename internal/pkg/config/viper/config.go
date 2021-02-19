@@ -5,6 +5,8 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"math"
+	"time"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
@@ -95,7 +97,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)
 
 	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Issuer)
-	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, input.Auth.PASETO.Lifetime)
+	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, time.Duration(math.Min(float64(input.Auth.PASETO.Lifetime), float64(10*time.Minute))))
 	cfg.Set(ConfigKeyAuthPASETOLocalModeKey, input.Auth.PASETO.LocalModeKey)
 
 	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)
@@ -178,10 +180,6 @@ func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string
 	var serverConfig *config.ServerConfig
 	if err := cfg.Unmarshal(&serverConfig); err != nil {
 		return nil, fmt.Errorf("trying to unmarshal the config: %w", err)
-	}
-
-	if err := serverConfig.Validate(ctx); err != nil {
-		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
 	if serverConfig.Database.CreateTestUser != nil && serverConfig.Meta.RunMode == config.ProductionRunMode {

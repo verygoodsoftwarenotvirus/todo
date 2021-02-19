@@ -26,12 +26,6 @@ import (
 	"github.com/o1egl/paseto"
 )
 
-const (
-	staticError       = "error encountered, please try again later"
-	pasetoDataKey     = "paseto_data"
-	maxPASETOLifetime = 30 * time.Minute
-)
-
 var (
 	errNoSessionInfo = errors.New("no session info attached to context")
 	errTokenLoading  = errors.New("error loading token")

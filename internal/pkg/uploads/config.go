@@ -19,7 +19,7 @@ type Config struct {
 }
 
 // Validate validates an Config struct.
-func (cfg *Config) Validate(ctx context.Context) error {
+func (cfg Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &cfg,
 		validation.Field(&cfg.Provider),
 		validation.Field(&cfg.Storage),

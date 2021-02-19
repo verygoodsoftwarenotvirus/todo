@@ -28,7 +28,7 @@ func TestAdmin(test *testing.T) {
 			// Ban user.
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			assert.Error(t, adminClient.UpdateAccountStatus(ctx, input))
+			assert.Error(t, adminCookieClient.UpdateAccountStatus(ctx, input))
 		})
 
 		t.Run("users should be bannable", func(t *testing.T) {
@@ -51,14 +51,14 @@ func TestAdmin(test *testing.T) {
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			assert.NoError(t, adminClient.UpdateAccountStatus(ctx, input))
+			assert.NoError(t, adminCookieClient.UpdateAccountStatus(ctx, input))
 
 			// Assert user can no longer access service
 			_, subsequentCheckErr := testClient.GetItems(ctx, nil)
 			assert.Error(t, subsequentCheckErr)
 
 			// Clean up.
-			assert.NoError(t, adminClient.ArchiveUser(ctx, user.ID))
+			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, user.ID))
 		})
 	})
 }

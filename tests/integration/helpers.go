@@ -68,6 +68,19 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 	return code
 }
 
+func runTestForAllAuthMethodsAsAdmin(t *testing.T, testName string, testFunc func(ctx context.Context, client *httpclient.Client) func(*testing.T)) {
+	t.Helper()
+
+	ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+	defer span.End()
+
+	adminClientLock.Lock()
+	defer adminClientLock.Unlock()
+
+	t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(ctx, adminCookieClient))
+	t.Run(fmt.Sprintf("%s with paseto", testName), testFunc(ctx, adminPASETOClient))
+}
+
 func runTestForAllAuthMethods(t *testing.T, testName string, testFunc func(ctx context.Context, user *types.User, cookie *http.Cookie, client *httpclient.Client) func(*testing.T)) {
 	t.Helper()
 

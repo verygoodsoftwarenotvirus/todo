@@ -55,7 +55,7 @@ func TestDelegatedClients(test *testing.T) {
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
 
-				auditLogEntries, err := adminClient.GetAuditLogForDelegatedClient(ctx, createdDelegatedClient.ID)
+				auditLogEntries, err := adminCookieClient.GetAuditLogForDelegatedClient(ctx, createdDelegatedClient.ID)
 				require.NoError(t, err)
 
 				expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -178,7 +178,7 @@ func TestDelegatedClients(test *testing.T) {
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
 
-				auditLogEntries, err := adminClient.GetAuditLogForDelegatedClient(ctx, createdDelegatedClient.ID)
+				auditLogEntries, err := adminCookieClient.GetAuditLogForDelegatedClient(ctx, createdDelegatedClient.ID)
 				require.NoError(t, err)
 
 				expectedAuditLogEntries := []*types.AuditLogEntry{

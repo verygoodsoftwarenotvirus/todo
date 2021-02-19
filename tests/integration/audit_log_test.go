@@ -22,7 +22,7 @@ func TestAuditLogEntries(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
+			actual, err := adminCookieClient.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 
 			assert.NotEmpty(t, actual.Entries)
@@ -39,11 +39,11 @@ func TestAuditLogEntries(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			actual, err := adminClient.GetAuditLogEntries(ctx, nil)
+			actual, err := adminCookieClient.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 
 			for _, x := range actual.Entries {
-				y, entryFetchErr := adminClient.GetAuditLogEntry(ctx, x.ID)
+				y, entryFetchErr := adminCookieClient.GetAuditLogEntry(ctx, x.ID)
 				checkValueAndError(t, y, entryFetchErr)
 			}
 

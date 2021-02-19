@@ -45,7 +45,7 @@ func TestItems(test *testing.T) {
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
 
-				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
+				auditLogEntries, err := adminCookieClient.GetAuditLogForItem(ctx, createdItem.ID)
 				require.NoError(t, err)
 
 				expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -296,7 +296,7 @@ func TestItems(test *testing.T) {
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
 
-				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
+				auditLogEntries, err := adminCookieClient.GetAuditLogForItem(ctx, createdItem.ID)
 				require.NoError(t, err)
 
 				expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -334,7 +334,7 @@ func TestItems(test *testing.T) {
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
 
-				auditLogEntries, err := adminClient.GetAuditLogForItem(ctx, createdItem.ID)
+				auditLogEntries, err := adminCookieClient.GetAuditLogForItem(ctx, createdItem.ID)
 				require.NoError(t, err)
 
 				expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -353,7 +353,7 @@ func TestItems(test *testing.T) {
 			return func(t *testing.T) {
 				adminClientLock.Lock()
 				defer adminClientLock.Unlock()
-				x, err := adminClient.GetAuditLogForItem(ctx, nonexistentID)
+				x, err := adminCookieClient.GetAuditLogForItem(ctx, nonexistentID)
 
 				assert.NoError(t, err)
 				assert.Empty(t, x)

@@ -9,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,76 +32,64 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 	test.Run("Creating", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("should be creatable", func(t *testing.T) {
-			t.Parallel()
+		runTestForAllAuthMethodsAsAdmin(subtest, "should be creatable", func(ctx context.Context, client *httpclient.Client) func(t *testing.T) {
+			return func(t *testing.T) {
+				// Create plan.
+				exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+				exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
-			defer span.End()
+				createdAccountSubscriptionPlan, err := client.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
+				checkValueAndError(t, createdAccountSubscriptionPlan, err)
 
-			// Create plan.
-			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
+				// Assert plan equality.
+				checkPlanEquality(t, exampleAccountSubscriptionPlan, createdAccountSubscriptionPlan)
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
+				auditLogEntries, err := client.GetAuditLogForAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
+				require.NoError(t, err)
 
-			createdAccountSubscriptionPlan, err := adminClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-			checkValueAndError(t, createdAccountSubscriptionPlan, err)
+				expectedAuditLogEntries := []*types.AuditLogEntry{
+					{EventType: audit.AccountSubscriptionPlanCreationEvent},
+				}
+				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccountSubscriptionPlan.ID, audit.AccountSubscriptionPlanAssignmentKey)
 
-			// Assert plan equality.
-			checkPlanEquality(t, exampleAccountSubscriptionPlan, createdAccountSubscriptionPlan)
-
-			auditLogEntries, err := adminClient.GetAuditLogForAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountSubscriptionPlanCreationEvent},
+				// Clean up.
+				assert.NoError(t, client.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
 			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccountSubscriptionPlan.ID, audit.AccountSubscriptionPlanAssignmentKey)
-
-			// Clean up.
-			assert.NoError(t, adminClient.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
 		})
 	})
 
 	test.Run("Listing", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("should be able to be read in a list", func(t *testing.T) {
-			t.Parallel()
+		runTestForAllAuthMethodsAsAdmin(subtest, "should be able to be read in a list", func(ctx context.Context, client *httpclient.Client) func(t *testing.T) {
+			return func(t *testing.T) {
+				// Create plans.
+				var created []*types.AccountSubscriptionPlan
+				for i := 0; i < 5; i++ {
+					// Create plan.
+					exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+					exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
+					createdPlan, planCreationErr := client.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
+					checkValueAndError(t, createdPlan, planCreationErr)
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
-			defer span.End()
+					created = append(created, createdPlan)
+				}
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
+				// Assert plan list equality.
+				actual, err := client.GetAccountSubscriptionPlans(ctx, nil)
+				checkValueAndError(t, actual, err)
+				assert.True(
+					t,
+					len(created) <= len(actual.AccountSubscriptionPlans),
+					"created %d to be <= %d",
+					len(created),
+					len(actual.AccountSubscriptionPlans),
+				)
 
-			// Create plans.
-			var created []*types.AccountSubscriptionPlan
-			for i := 0; i < 5; i++ {
-				// Create plan.
-				exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
-				exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
-				createdPlan, planCreationErr := adminClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-				checkValueAndError(t, createdPlan, planCreationErr)
-
-				created = append(created, createdPlan)
-			}
-
-			// Assert plan list equality.
-			actual, err := adminClient.GetAccountSubscriptionPlans(ctx, nil)
-			checkValueAndError(t, actual, err)
-			assert.True(
-				t,
-				len(created) <= len(actual.AccountSubscriptionPlans),
-				"created %d to be <= %d",
-				len(created),
-				len(actual.AccountSubscriptionPlans),
-			)
-
-			// Clean up.
-			for _, plan := range created {
-				assert.NoError(t, adminClient.ArchiveAccountSubscriptionPlan(ctx, plan.ID))
+				// Clean up.
+				for _, plan := range created {
+					assert.NoError(t, client.ArchiveAccountSubscriptionPlan(ctx, plan.ID))
+				}
 			}
 		})
 	})
@@ -108,18 +97,20 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 	test.Run("Reading", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
-			t.Parallel()
+		runTestForAllAuthMethodsAsAdmin(subtest, "it should return an error when trying to read something that does not exist", func(ctx context.Context, client *httpclient.Client) func(t *testing.T) {
+			return func(t *testing.T) {
+				// Attempt to fetch nonexistent plan.
+				_, err := adminCookieClient.GetAccountSubscriptionPlan(ctx, nonexistentID)
+				assert.Error(t, err)
+			}
+		})
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
-			defer span.End()
-
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			// Attempt to fetch nonexistent plan.
-			_, err := adminClient.GetAccountSubscriptionPlan(ctx, nonexistentID)
-			assert.Error(t, err)
+		runTestForAllAuthMethodsAsAdmin(subtest, "it should be readable", func(ctx context.Context, client *httpclient.Client) func(t *testing.T) {
+			return func(t *testing.T) {
+				// Attempt to fetch nonexistent plan.
+				_, err := adminCookieClient.GetAccountSubscriptionPlan(ctx, nonexistentID)
+				assert.Error(t, err)
+			}
 		})
 
 		subtest.Run("it should be readable", func(t *testing.T) {
@@ -135,18 +126,18 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			createdPlan, err := adminClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
+			createdPlan, err := adminCookieClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdPlan, err)
 
 			// Fetch plan.
-			actual, err := adminClient.GetAccountSubscriptionPlan(ctx, createdPlan.ID)
+			actual, err := adminCookieClient.GetAccountSubscriptionPlan(ctx, createdPlan.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert plan equality.
 			checkPlanEquality(t, exampleAccountSubscriptionPlan, actual)
 
 			// Clean up plan.
-			assert.NoError(t, adminClient.ArchiveAccountSubscriptionPlan(ctx, createdPlan.ID))
+			assert.NoError(t, adminCookieClient.ArchiveAccountSubscriptionPlan(ctx, createdPlan.ID))
 		})
 	})
 
@@ -165,7 +156,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			assert.Error(t, adminClient.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan))
+			assert.Error(t, adminCookieClient.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan))
 		})
 
 		subtest.Run("it should be updatable", func(t *testing.T) {
@@ -181,22 +172,22 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			createdAccountSubscriptionPlan, err := adminClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
+			createdAccountSubscriptionPlan, err := adminCookieClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdAccountSubscriptionPlan, err)
 
 			// Change plan.
 			createdAccountSubscriptionPlan.Update(converters.ConvertAccountSubscriptionPlanToPlanUpdateInput(exampleAccountSubscriptionPlan))
-			assert.NoError(t, adminClient.UpdateAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan))
+			assert.NoError(t, adminCookieClient.UpdateAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan))
 
 			// Fetch plan.
-			actual, err := adminClient.GetAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
+			actual, err := adminCookieClient.GetAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert plan equality.
 			checkPlanEquality(t, exampleAccountSubscriptionPlan, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
-			auditLogEntries, err := adminClient.GetAuditLogForAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -206,7 +197,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccountSubscriptionPlan.ID, audit.AccountSubscriptionPlanAssignmentKey)
 
 			// Clean up plan.
-			assert.NoError(t, adminClient.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
+			assert.NoError(t, adminCookieClient.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
 		})
 	})
 
@@ -222,7 +213,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			assert.Error(t, adminClient.ArchiveAccountSubscriptionPlan(ctx, nonexistentID))
+			assert.Error(t, adminCookieClient.ArchiveAccountSubscriptionPlan(ctx, nonexistentID))
 		})
 
 		subtest.Run("should be able to be deleted", func(t *testing.T) {
@@ -238,13 +229,13 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			createdAccountSubscriptionPlan, err := adminClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
+			createdAccountSubscriptionPlan, err := adminCookieClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdAccountSubscriptionPlan, err)
 
 			// Clean up plan.
-			assert.NoError(t, adminClient.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
+			assert.NoError(t, adminCookieClient.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
 
-			auditLogEntries, err := adminClient.GetAuditLogForAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -267,7 +258,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			x, err := adminClient.GetAuditLogForAccountSubscriptionPlan(ctx, nonexistentID)
+			x, err := adminCookieClient.GetAuditLogForAccountSubscriptionPlan(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
@@ -286,7 +277,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			// Create plan.
 			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
-			createdPlan, err := adminClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
+			createdPlan, err := adminCookieClient.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
 			checkValueAndError(t, createdPlan, err)
 
 			// fetch audit log entries
@@ -295,7 +286,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			assert.Nil(t, actual)
 
 			// Clean up plan.
-			assert.NoError(t, adminClient.ArchiveAccountSubscriptionPlan(ctx, createdPlan.ID))
+			assert.NoError(t, adminCookieClient.ArchiveAccountSubscriptionPlan(ctx, createdPlan.ID))
 		})
 	})
 }

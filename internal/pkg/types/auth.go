@@ -46,7 +46,8 @@ type (
 
 	// PASETOResponse is used to respond to a PASETO request.
 	PASETOResponse struct {
-		Token string `json:"token"`
+		Token   string `json:"token"`
+		Expires string `json:"expires"`
 	}
 
 	// AuthService describes a structure capable of handling authentication and authorization requests.

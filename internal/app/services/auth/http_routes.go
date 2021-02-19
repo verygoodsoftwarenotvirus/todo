@@ -271,7 +271,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	pasetoRequest, ok := ctx.Value(pasetoCreationInputMiddlewareCtxKey).(*types.PASETOCreationInput)
 	if !ok || pasetoRequest == nil {
-		logger.Error(nil, "no PASETOCreationInput found for /paseto request")
+		logger.Error(nil, "no input found for PASETO request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -280,7 +280,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	reqTime := time.Unix(0, pasetoRequest.RequestTime)
 	if time.Until(reqTime) > requestTimeThreshold || time.Since(reqTime) > requestTimeThreshold {
-		logger.WithValue("provided_request_time", reqTime.String()).Debug("PASETO request denied because it's out of threshold")
+		logger.WithValue("provided_request_time", reqTime.String()).Debug("PASETO request denied because its time is out of threshold")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -301,7 +301,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	user, userRetrievalErr := s.userDB.GetUser(ctx, client.BelongsToUser)
 	if userRetrievalErr != nil {
-		logger.Error(userRetrievalErr, "retrieving delegated client")
+		logger.Error(userRetrievalErr, "retrieving user")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -328,7 +328,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	jsonToken := paseto.JSONToken{
 		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
@@ -359,7 +359,10 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tokenRes := &types.PASETOResponse{Token: token}
+	tokenRes := &types.PASETOResponse{
+		Token:   token,
+		Expires: jsonToken.Expiration.String(),
+	}
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
 }

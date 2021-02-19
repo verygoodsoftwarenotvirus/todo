@@ -43,8 +43,8 @@ const (
 	ConfigKeyAuthSecureCookiesOnly = authKey + x + cookiesKey + x + "secure_only"
 
 	pasetoKey = "paseto"
-	// ConfigKeyAuthPASETOAudience is the key for PASETO token settings.
-	ConfigKeyAuthPASETOAudience = authKey + x + pasetoKey + x + "audience"
+	// ConfigKeyAuthPASETOLifetimeKey is the key for PASETO token settings.
+	ConfigKeyAuthPASETOLifetimeKey = authKey + x + pasetoKey + x + "lifetime"
 	// ConfigKeyAuthPASETOListener is the key for PASETO token settings.
 	ConfigKeyAuthPASETOListener = authKey + x + pasetoKey + x + "issuer"
 	// ConfigKeyAuthPASETOLocalModeKey is the key for PASETO token settings.

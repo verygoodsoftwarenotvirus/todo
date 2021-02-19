@@ -2,11 +2,14 @@ package integration
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pquerna/otp/totp"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -26,8 +29,9 @@ const (
 var (
 	urlToUse string
 
-	adminClientLock sync.Mutex
-	adminClient     *httpclient.Client
+	adminClientLock   sync.Mutex
+	adminCookieClient *httpclient.Client
+	adminPASETOClient *httpclient.Client
 
 	premadeAdminUser = &types.User{
 		ID:              1,
@@ -52,7 +56,31 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	adminClient = initializeCookiePoweredClient(adminCookie)
+	adminCookieClient = initializeCookiePoweredClient(adminCookie)
+
+	code, err := totp.GenerateCode(premadeAdminUser.TwoFactorSecret, time.Now().UTC())
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	delegatedClient, err := adminCookieClient.CreateDelegatedClient(ctx, adminCookie, &types.DelegatedClientCreationInput{
+		Name: "admin_paseto_client",
+		UserLoginInput: types.UserLoginInput{
+			Username:  premadeAdminUser.Username,
+			Password:  premadeAdminUser.HashedPassword,
+			TOTPToken: code,
+		},
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	secretKey, err := base64.RawURLEncoding.DecodeString(delegatedClient.ClientSecret)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	adminPASETOClient = initializePASETOPoweredClient(delegatedClient.ClientID, secretKey)
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

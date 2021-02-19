@@ -64,7 +64,7 @@ func TestUsers(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForUser(ctx, createdUser.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -74,7 +74,7 @@ func TestUsers(test *testing.T) {
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
 
-			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
 		})
 	})
 
@@ -91,7 +91,7 @@ func TestUsers(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			actual, err := adminClient.GetUser(ctx, nonexistentID)
+			actual, err := adminCookieClient.GetUser(ctx, nonexistentID)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
@@ -108,7 +108,7 @@ func TestUsers(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			actual, err := adminClient.GetUser(ctx, createdUser.ID)
+			actual, err := adminCookieClient.GetUser(ctx, createdUser.ID)
 			if err != nil {
 				t.Logf("error encountered trying to fetch user %q: %v\n", createdUser.Username, err)
 			}
@@ -118,7 +118,7 @@ func TestUsers(test *testing.T) {
 			checkUserEquality(t, createdUser, actual)
 
 			// Clean up.
-			assert.NoError(t, adminClient.ArchiveUser(ctx, actual.ID))
+			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, actual.ID))
 		})
 	})
 
@@ -134,7 +134,7 @@ func TestUsers(test *testing.T) {
 			// Search For user.
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			actual, err := adminClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
+			actual, err := adminCookieClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
 			assert.Nil(t, actual)
 			assert.NoError(t, err)
 		})
@@ -172,7 +172,7 @@ func TestUsers(test *testing.T) {
 			// execute search
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			actual, err := adminClient.SearchForUsersByUsername(ctx, exampleUsername)
+			actual, err := adminCookieClient.SearchForUsersByUsername(ctx, exampleUsername)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, actual)
 
@@ -183,7 +183,7 @@ func TestUsers(test *testing.T) {
 
 			// clean up
 			for _, id := range createdUserIDs {
-				require.NoError(t, adminClient.ArchiveUser(ctx, id))
+				require.NoError(t, adminCookieClient.ArchiveUser(ctx, id))
 			}
 		})
 	})
@@ -214,9 +214,9 @@ func TestUsers(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
 
-			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForUser(ctx, createdUser.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -245,9 +245,9 @@ func TestUsers(test *testing.T) {
 			// Ban user.
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			assert.Error(t, adminClient.UpdateAccountStatus(ctx, input))
+			assert.Error(t, adminCookieClient.UpdateAccountStatus(ctx, input))
 
-			x, err := adminClient.GetAuditLogForUser(ctx, nonexistentID)
+			x, err := adminCookieClient.GetAuditLogForUser(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
@@ -270,7 +270,7 @@ func TestUsers(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			auditLogEntries, err := adminClient.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForUser(ctx, createdUser.ID)
 			assert.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -281,7 +281,7 @@ func TestUsers(test *testing.T) {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, 0, "")
 
 			// Clean up item.
-			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
 		})
 
 		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
@@ -306,7 +306,7 @@ func TestUsers(test *testing.T) {
 			// Clean up item.
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
-			assert.NoError(t, adminClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
 		})
 	})
 }

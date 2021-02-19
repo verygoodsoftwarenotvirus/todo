@@ -63,7 +63,7 @@ func TestWebhooks(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			auditLogEntries, err := adminClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -225,7 +225,7 @@ func TestWebhooks(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			auditLogEntries, err := adminClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -262,7 +262,7 @@ func TestWebhooks(test *testing.T) {
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()
 
-			auditLogEntries, err := adminClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			auditLogEntries, err := adminCookieClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -289,7 +289,7 @@ func TestWebhooks(test *testing.T) {
 			defer adminClientLock.Unlock()
 
 			// fetch audit log entries
-			x, err := adminClient.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
+			x, err := adminCookieClient.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
@@ -317,7 +317,7 @@ func TestWebhooks(test *testing.T) {
 			defer adminClientLock.Unlock()
 
 			// fetch audit log entries
-			actual, err := adminClient.GetAuditLogForWebhook(ctx, premade.ID)
+			actual, err := adminCookieClient.GetAuditLogForWebhook(ctx, premade.ID)
 			assert.NoError(t, err)
 			assert.Len(t, actual, 2)
 

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"net/http"
+	"time"
 
 	"github.com/o1egl/paseto"
 
@@ -88,18 +89,27 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		token := req.Header.Get(pasetoAuthorizationKey)
+		rawToken := req.Header.Get(pasetoAuthorizationKey)
 
-		if token != "" {
-			var targetPayload paseto.JSONToken
+		if rawToken != "" {
+			var token paseto.JSONToken
 
-			if decryptErr := paseto.NewV2().Decrypt(token, s.config.PASETO.LocalModeKey, &targetPayload, nil); decryptErr != nil {
+			if decryptErr := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); decryptErr != nil {
 				logger.Error(decryptErr, "error decrypting PASETO")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			payload := targetPayload.Get(pasetoDataKey)
+			if time.Now().UTC().After(token.Expiration) {
+				logger.WithValues(map[string]interface{}{
+					"current_time": time.Now().UTC().String(),
+					"token_expiry": token.Expiration.String(),
+				}).Debug("PASETO expired")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			payload := token.Get(pasetoDataKey)
 
 			gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(payload)
 			if base64DecodeErr != nil {

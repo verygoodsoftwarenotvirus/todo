@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,8 +27,9 @@ import (
 )
 
 const (
-	staticError   = "error encountered, please try again later"
-	pasetoDataKey = "paseto_data"
+	staticError       = "error encountered, please try again later"
+	pasetoDataKey     = "paseto_data"
+	maxPASETOLifetime = 30 * time.Minute
 )
 
 var (
@@ -332,6 +334,8 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	now := time.Now().UTC()
 
+	lifetime := time.Duration(math.Min(float64(maxPASETOLifetime), float64(s.config.PASETO.Lifetime)))
+
 	jsonToken := paseto.JSONToken{
 		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
 		Issuer:     s.config.PASETO.Issuer,
@@ -339,7 +343,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		Subject:    strconv.FormatUint(client.BelongsToUser, 10),
 		IssuedAt:   now,
 		NotBefore:  now,
-		Expiration: now.Add(s.config.PASETO.Lifetime),
+		Expiration: now.Add(lifetime),
 	}
 
 	si := &types.RequestContext{

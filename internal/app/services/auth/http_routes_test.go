@@ -1127,6 +1127,7 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		s := buildTestService(t)
 		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.Lifetime = time.Minute
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -1210,6 +1211,113 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		var targetPayload paseto.JSONToken
 		require.NoError(t, paseto.NewV2().Decrypt(result.Token, s.config.PASETO.LocalModeKey, &targetPayload, nil))
+
+		assert.True(t, targetPayload.Expiration.After(time.Now().UTC()))
+
+		payload := targetPayload.Get(pasetoDataKey)
+
+		gobEncoding, err := base64.RawURLEncoding.DecodeString(payload)
+		require.NoError(t, err)
+
+		var si *types.RequestContext
+		require.NoError(t, gob.NewDecoder(bytes.NewReader(gobEncoding)).Decode(&si))
+
+		assert.Equal(t, expectedOutput, si)
+
+		mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
+	})
+
+	T.Run("never issues token that has a longer lifetime than package maximum", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.Lifetime = 24 * time.Hour * 365 // one year
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
+			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		}
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
+		}
+
+		expectedOutput := &types.RequestContext{
+			User: types.UserRequestContext{
+				Username:                exampleUser.Username,
+				ID:                      exampleUser.ID,
+				ActiveAccountID:         exampleAccount.ID,
+				UserAccountStatus:       exampleUser.AccountStatus,
+				AccountPermissionsMap:   examplePermissionMap,
+				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
+			},
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm.On(
+			"GetDelegatedClient",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleDelegatedClient.ClientID,
+		).Return(exampleDelegatedClient, nil)
+		s.delegatedClientManager = dcm
+
+		udb := &mocktypes.UserDataManager{}
+		udb.On(
+			"GetUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleUser, nil)
+		s.userDB = udb
+
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		s.accountMembershipManager = membershipDB
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		var bodyBytes bytes.Buffer
+		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
+		require.NoError(t, marshalErr)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusAccepted, res.Code)
+
+		// validate results
+
+		var result *types.PASETOResponse
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+
+		assert.NotEmpty(t, result.Token)
+
+		var targetPayload paseto.JSONToken
+		require.NoError(t, paseto.NewV2().Decrypt(result.Token, s.config.PASETO.LocalModeKey, &targetPayload, nil))
+
+		assert.True(t, targetPayload.Expiration.Before(time.Now().UTC().Add(maxPASETOLifetime)))
 
 		payload := targetPayload.Get(pasetoDataKey)
 

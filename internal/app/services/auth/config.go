@@ -65,7 +65,7 @@ func (cfg *CookieConfig) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Name, validation.Required),
 		validation.Field(&cfg.Domain, validation.Required),
-		validation.Field(&cfg.Lifetime, validation.Required),
+		validation.Field(&cfg.Lifetime, validation.Required), // TODO: validate more better
 	)
 }
 

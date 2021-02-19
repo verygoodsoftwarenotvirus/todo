@@ -40,8 +40,8 @@ type (
 
 	// PASETOCreationInput is used to create a PASETO.
 	PASETOCreationInput struct {
-		ClientID  string `json:"clientID"`
-		NonceUUID string `json:"nonceUUID"`
+		ClientID    string `json:"clientID"`
+		RequestTime int64  `json:"requestTime"`
 	}
 
 	// PASETOResponse is used to respond to a PASETO request.

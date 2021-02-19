@@ -258,6 +258,10 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.EncodeResponse(ctx, res, statusResponse)
 }
 
+const (
+	requestTimeThreshold = 2 * time.Minute
+)
+
 // PASETOHandler returns the user info for the user making the request.
 func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -273,6 +277,13 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	logger = logger.WithValue(keys.DelegatedClientIDKey, pasetoRequest.ClientID)
+
+	reqTime := time.Unix(0, pasetoRequest.RequestTime)
+	if time.Until(reqTime) > requestTimeThreshold || time.Since(reqTime) > requestTimeThreshold {
+		logger.WithValue("provided_request_time", reqTime.String()).Debug("PASETO request denied because it's out of threshold")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		return
+	}
 
 	sum, decodeErr := base64.RawURLEncoding.DecodeString(req.Header.Get(signatureHeaderKey))
 	if decodeErr != nil || len(sum) == 0 {

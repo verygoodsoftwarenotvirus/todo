@@ -70,8 +70,8 @@ func TestBleveIndexManager_Index(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		const exampleQuery = "index_test"
-		exampleIndexPath := search.IndexPath(filepath.Join(temp, "index_test_obligatory.bleve"))
+		const exampleQuery = "_test"
+		exampleIndexPath := search.IndexPath(filepath.Join(temp, "_test_obligatory.bleve"))
 
 		im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 		assert.NoError(t, err)

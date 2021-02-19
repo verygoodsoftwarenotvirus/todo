@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/o1egl/paseto"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
@@ -1140,8 +1139,8 @@ func TestService_PASETOHandler(T *testing.T) {
 		}
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  exampleDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		expectedOutput := &types.SessionInfo{
@@ -1247,6 +1246,35 @@ func TestService_PASETOHandler(T *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 
+	T.Run("with invalid request time", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: 1,
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
 	T.Run("error decoding signature header", func(t *testing.T) {
 		t.Parallel()
 
@@ -1260,8 +1288,8 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleDelegatedClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  exampleDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
@@ -1301,8 +1329,8 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleDelegatedClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  exampleDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
@@ -1352,8 +1380,8 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleDelegatedClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  exampleDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
@@ -1411,8 +1439,8 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleDelegatedClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  exampleDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
@@ -1482,8 +1510,8 @@ func TestService_PASETOHandler(T *testing.T) {
 		}
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  exampleDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
@@ -1549,8 +1577,8 @@ func TestService_PASETOHandler(T *testing.T) {
 		}
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  exampleDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    exampleDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)

@@ -267,7 +267,7 @@ func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPas
 func (i *PASETOCreationInput) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.ClientID, validation.Required),
-		validation.Field(&i.NonceUUID, validation.Required, &uuidValidator{}),
+		validation.Field(&i.RequestTime, validation.Required),
 	)
 }
 

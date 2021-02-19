@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -104,8 +103,8 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, keyDecodeErr)
 
 		input := &types.PASETOCreationInput{
-			ClientID:  createdDelegatedClient.ClientID,
-			NonceUUID: uuid.New().String(),
+			ClientID:    createdDelegatedClient.ClientID,
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		req, err := testClient.BuildDelegatedClientAuthTokenRequest(ctx, input, actualKey)

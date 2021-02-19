@@ -26,8 +26,8 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 
 		exampleSecret := make([]byte, validClientSecretSize)
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  "example_client_id",
-			NonceUUID: "11111111-aaaa-2222-bbbb-333333333333",
+			ClientID:    "example_client_id",
+			RequestTime: 1234567890,
 		}
 
 		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
@@ -36,7 +36,7 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 		require.NotNil(t, req)
 		assert.Equal(t, http.MethodPost, req.Method)
 
-		expectedSignature := `q482eqjNy9YN5Ej4rej7TQQVLQGPuRO2SdTk69TbHQI`
+		expectedSignature := `CHHTy1DUKxXxPokkUh0VbWV8wP9s-ejYIeGogq-FG0o`
 		actualSignature := req.Header.Get(signatureHeaderKey)
 
 		assert.Equal(t, expectedSignature, actualSignature, "expected and actual signature header do not match")
@@ -50,8 +50,8 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 
 		exampleSecret := make([]byte, validClientSecretSize)
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:  "example_client_id",
-			NonceUUID: "11111111-aaaa-2222-bbbb-333333333333",
+			ClientID:    "example_client_id",
+			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)

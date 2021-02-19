@@ -7,8 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-
-	"github.com/google/uuid"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -61,8 +60,8 @@ func (c *Client) fetchDelegatedClientAuthToken(ctx context.Context, httpclient *
 	defer span.End()
 
 	input := &types.PASETOCreationInput{
-		ClientID:  clientID,
-		NonceUUID: uuid.New().String(),
+		ClientID:    clientID,
+		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
 	req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, input, secretKey)

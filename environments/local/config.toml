@@ -17,8 +17,8 @@
 
   [auth.paseto]
     issuer = "todo_service"
-    lifetime = "5m0s"
-    local_mode_key = [192,116,130,53,59,253,205,14,170,211,179,157,71,226,230,75,43,26,237,233,74,11,185,130,116,170,248,65,249,211,122,195]
+    lifetime = "1m0s"
+    local_mode_key = [168,32,117,129,247,132,230,190,231,80,177,205,101,211,141,162,142,166,252,181,218,2,237,173,90,101,3,123,5,128,246,163]
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
@@ -29,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$f22JSxUk9zSPmNhHvBLlB.7nU0y5IN8SOsuXIUdhRYqwKYdsoxxZ2"
+    hashed_password = "$2a$11$xma1VhmDRxbLRLcpH3o5yuvCS0mOgR7xX5SCdGSCSXJtzZt8ify7i"
     is_site_admin = true
     password = "authentication"
     username = "username"

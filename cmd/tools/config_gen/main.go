@@ -52,8 +52,9 @@ const (
 	// search index paths.
 	defaultItemsSearchIndexPath = "items.bleve"
 
-	pasetoSecretSize = 32
-	maxAttempts      = 50
+	pasetoSecretSize      = 32
+	maxAttempts           = 50
+	defaultPASETOLifetime = 1 * time.Minute
 )
 
 var (
@@ -113,7 +114,7 @@ func localDevelopmentConfig(filePath string) error {
 		Auth: authservice.Config{
 			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
-				Lifetime:     5 * time.Minute,
+				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
 			},
 			Cookies: authservice.CookieConfig{
@@ -212,7 +213,7 @@ func frontendTestsConfig(filePath string) error {
 		Auth: authservice.Config{
 			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
-				Lifetime:     5 * time.Minute,
+				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
 			},
 			Cookies: authservice.CookieConfig{
@@ -305,7 +306,7 @@ func coverageConfig(filePath string) error {
 		Auth: authservice.Config{
 			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
-				Lifetime:     5 * time.Minute,
+				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
 			},
 			Cookies: authservice.CookieConfig{
@@ -410,7 +411,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
-					Lifetime:     5 * time.Minute,
+					Lifetime:     defaultPASETOLifetime,
 					LocalModeKey: examplePASETOKey,
 				},
 				Cookies: authservice.CookieConfig{

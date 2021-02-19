@@ -118,6 +118,7 @@ func TestAuth(test *testing.T) {
 		require.NoError(t, json.NewDecoder(res.Body).Decode(&tokenRes))
 
 		assert.NotEmpty(t, tokenRes.Token)
+		assert.NotEmpty(t, tokenRes.Expires)
 	})
 
 	test.Run("login request without body fails", func(t *testing.T) {

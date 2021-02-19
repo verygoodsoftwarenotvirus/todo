@@ -10,16 +10,8 @@ import (
 // ContextMatcher is a matcher for use with testify/mock's MatchBy function. It provides some level of type
 // safety reassurance over mock.Anything, in that the resulting function will panic if anything other than
 // a context.Context.
-func ContextMatcher(keys ...types.ContextKey) func(context.Context) bool {
-	return func(ctx context.Context) bool {
-		for key := range keys {
-			if x := ctx.Value(key); x == nil {
-				return false
-			}
-		}
-
-		return true
-	}
+func ContextMatcher(context.Context) bool {
+	return true
 }
 
 // AuditLogEntryCreationInputMatcher is a matcher for use with testify/mock's MatchBy function.

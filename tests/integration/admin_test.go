@@ -37,7 +37,7 @@ func TestAdmin(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			user, _, testClient := createUserAndClientForTest(ctx, t)
+			user, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Assert that user can access service
 			_, initialCheckErr := testClient.GetItems(ctx, nil)

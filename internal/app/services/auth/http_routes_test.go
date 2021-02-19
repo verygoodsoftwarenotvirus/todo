@@ -1,13 +1,23 @@
 package auth
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base32"
+	"encoding/base64"
+	"encoding/gob"
+	"encoding/json"
 	"errors"
 	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/o1egl/paseto"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
@@ -226,7 +236,7 @@ func TestService_LoginHandler(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return(exampleUser, nil)
 		s.userDB = udb
@@ -234,7 +244,7 @@ func TestService_LoginHandler(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -246,13 +256,17 @@ func TestService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetMembershipsForUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleAccount.ID, examplePermissionMap, nil)
 		s.accountMembershipManager = membershipDB
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogSuccessfulLoginEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
+		auditLog.On(
+			"LogSuccessfulLoginEvent",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		)
 		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
@@ -344,7 +358,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogBannedUserLoginAttemptEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
+		auditLog.On("LogBannedUserLoginAttemptEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID)
 		s.auditLog = auditLog
 
 		res := httptest.NewRecorder()
@@ -395,7 +409,7 @@ func TestService_LoginHandler(T *testing.T) {
 		s.authenticator = authr
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
+		auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID)
 		s.auditLog = auditLog
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -613,7 +627,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		}
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogLogoutEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
+		auditLog.On("LogLogoutEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID)
 		s.auditLog = auditLog
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -1006,7 +1020,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogCycleCookieSecretEvent", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID)
+		auditLog.On("LogCycleCookieSecretEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID)
 		s.auditLog = auditLog
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
@@ -1103,5 +1117,489 @@ func TestService_buildCookie(T *testing.T) {
 		cookie, err := s.buildCookie("example", time.Now().Add(s.config.Cookies.Lifetime))
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
+	})
+}
+
+func TestService_PASETOHandler(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
+			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		}
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:  exampleDelegatedClient.ClientID,
+			NonceUUID: uuid.New().String(),
+		}
+
+		expectedOutput := &types.SessionInfo{
+			Username:                exampleUser.Username,
+			UserID:                  exampleUser.ID,
+			ActiveAccount:           exampleAccount.ID,
+			UserAccountStatus:       exampleUser.AccountStatus,
+			AccountPermissionsMap:   examplePermissionMap,
+			ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm.On(
+			"GetDelegatedClient",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleDelegatedClient.ClientID,
+		).Return(exampleDelegatedClient, nil)
+		s.delegatedClientManager = dcm
+
+		udb := &mocktypes.UserDataManager{}
+		udb.On(
+			"GetUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleUser, nil)
+		s.userDB = udb
+
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		s.accountMembershipManager = membershipDB
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		var bodyBytes bytes.Buffer
+		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
+		require.NoError(t, marshalErr)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusAccepted, res.Code)
+
+		// validate results
+
+		var result *types.PASETOResponse
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+
+		assert.NotEmpty(t, result.Token)
+
+		var targetPayload paseto.JSONToken
+		require.NoError(t, paseto.NewV2().Decrypt(result.Token, s.config.PASETO.LocalModeKey, &targetPayload, nil))
+
+		payload := targetPayload.Get(pasetoDataKey)
+
+		gobEncoding, err := base64.RawURLEncoding.DecodeString(payload)
+		require.NoError(t, err)
+
+		var si *types.SessionInfo
+		require.NoError(t, gob.NewDecoder(bytes.NewReader(gobEncoding)).Decode(&si))
+
+		assert.Equal(t, expectedOutput, si)
+
+		mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
+	})
+
+	T.Run("missing input", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		ctx := context.Background()
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
+	T.Run("error decoding signature header", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:  exampleDelegatedClient.ClientID,
+			NonceUUID: uuid.New().String(),
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		var bodyBytes bytes.Buffer
+		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
+		require.NoError(t, marshalErr)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base32.HexEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+
+	T.Run("error fetching delegated client", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:  exampleDelegatedClient.ClientID,
+			NonceUUID: uuid.New().String(),
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm.On(
+			"GetDelegatedClient",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleDelegatedClient.ClientID,
+		).Return((*types.DelegatedClient)(nil), errors.New("blah"))
+		s.delegatedClientManager = dcm
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		var bodyBytes bytes.Buffer
+		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
+		require.NoError(t, marshalErr)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, dcm)
+	})
+
+	T.Run("error fetching user", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:  exampleDelegatedClient.ClientID,
+			NonceUUID: uuid.New().String(),
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm.On(
+			"GetDelegatedClient",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleDelegatedClient.ClientID,
+		).Return(exampleDelegatedClient, nil)
+		s.delegatedClientManager = dcm
+
+		udb := &mocktypes.UserDataManager{}
+		udb.On(
+			"GetUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return((*types.User)(nil), errors.New("blah"))
+		s.userDB = udb
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		var bodyBytes bytes.Buffer
+		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
+		require.NoError(t, marshalErr)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, dcm, udb)
+	})
+
+	T.Run("error fetching account memberships", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:  exampleDelegatedClient.ClientID,
+			NonceUUID: uuid.New().String(),
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm.On(
+			"GetDelegatedClient",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleDelegatedClient.ClientID,
+		).Return(exampleDelegatedClient, nil)
+		s.delegatedClientManager = dcm
+
+		udb := &mocktypes.UserDataManager{}
+		udb.On(
+			"GetUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleUser, nil)
+		s.userDB = udb
+
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(uint64(0), map[uint64]bitmask.ServiceUserPermissions(nil), errors.New("blah"))
+		s.accountMembershipManager = membershipDB
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		var bodyBytes bytes.Buffer
+		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
+		require.NoError(t, marshalErr)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
+	})
+
+	T.Run("invalid checksum", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
+			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		}
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:  exampleDelegatedClient.ClientID,
+			NonceUUID: uuid.New().String(),
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm.On(
+			"GetDelegatedClient",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleDelegatedClient.ClientID,
+		).Return(exampleDelegatedClient, nil)
+		s.delegatedClientManager = dcm
+
+		udb := &mocktypes.UserDataManager{}
+		udb.On(
+			"GetUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleUser, nil)
+		s.userDB = udb
+
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		s.accountMembershipManager = membershipDB
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write([]byte("lol"))
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+
+		mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
+	})
+
+	T.Run("token encryption error", func(t *testing.T) {
+		t.Parallel()
+
+		s := buildTestService(t)
+		s.config.PASETO.LocalModeKey = nil
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+
+		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
+			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		}
+
+		exampleInput := &types.PASETOCreationInput{
+			ClientID:  exampleDelegatedClient.ClientID,
+			NonceUUID: uuid.New().String(),
+		}
+
+		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+
+		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm.On(
+			"GetDelegatedClient",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleDelegatedClient.ClientID,
+		).Return(exampleDelegatedClient, nil)
+		s.delegatedClientManager = dcm
+
+		udb := &mocktypes.UserDataManager{}
+		udb.On(
+			"GetUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleUser, nil)
+		s.userDB = udb
+
+		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
+		membershipDB.On(
+			"GetMembershipsForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID,
+		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		s.accountMembershipManager = membershipDB
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
+		require.NotNil(t, req)
+		require.NoError(t, err)
+
+		var bodyBytes bytes.Buffer
+		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
+		require.NoError(t, marshalErr)
+
+		// set HMAC signature
+		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		require.NoError(t, macWriteErr)
+
+		sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+		req.Header.Set(signatureHeaderKey, sigHeader)
+
+		s.PASETOHandler(res, req)
+
+		assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+		mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
 	})
 }

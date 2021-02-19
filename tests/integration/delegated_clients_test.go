@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
@@ -33,10 +32,7 @@ func TestDelegatedClients(test *testing.T) {
 	test.Run("Creating", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		ctx, span := tracing.StartSpan(context.Background())
-		defer span.End()
-
-		runTestForAllAuthMethods(ctx, subtest, "should be creatable", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(subtest, "should be creatable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Create delegated client.
 				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
@@ -77,57 +73,48 @@ func TestDelegatedClients(test *testing.T) {
 		subtest.Parallel()
 
 		subtest.Run("should be able to be read in a list", func(t *testing.T) {
-			t.Parallel()
+			ctx := context.Background()
+			user, cookie, testClient, _ := createUserAndClientForTest(ctx, t)
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
-			defer span.End()
-
-			runTestForAllAuthMethods(ctx, subtest, "should be able to be read in a list", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-				return func(t *testing.T) {
-					// Create delegated clients.
-					var expected []uint64
-					for i := 0; i < 5; i++ {
-						// Create delegated client.
-						exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-						exampleDelegatedClientInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
-						exampleDelegatedClientInput.UserLoginInput = types.UserLoginInput{
-							Username:  user.Username,
-							Password:  user.HashedPassword,
-							TOTPToken: generateTOTPTokenForUser(t, user),
-						}
-						createdDelegatedClient, delegatedClientCreationErr := testClient.CreateDelegatedClient(ctx, cookie, exampleDelegatedClientInput)
-						checkValueAndError(t, createdDelegatedClient, delegatedClientCreationErr)
-
-						expected = append(expected, createdDelegatedClient.ID)
-					}
-
-					// Assert delegated client list equality.
-					actual, err := testClient.GetDelegatedClients(ctx, nil)
-					checkValueAndError(t, actual, err)
-					assert.True(
-						t,
-						len(expected) <= len(actual.Clients),
-						"expected %d to be <= %d",
-						len(expected),
-						len(actual.Clients),
-					)
-
-					// Clean up.
-					for _, createdDelegatedClient := range actual.Clients {
-						assert.NoError(t, testClient.ArchiveDelegatedClient(ctx, createdDelegatedClient.ID))
-					}
+			// Create delegated clients.
+			var expected []uint64
+			for i := 0; i < 5; i++ {
+				// Create delegated client.
+				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+				exampleDelegatedClientInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+				exampleDelegatedClientInput.UserLoginInput = types.UserLoginInput{
+					Username:  user.Username,
+					Password:  user.HashedPassword,
+					TOTPToken: generateTOTPTokenForUser(t, user),
 				}
-			})
+				createdDelegatedClient, delegatedClientCreationErr := testClient.CreateDelegatedClient(ctx, cookie, exampleDelegatedClientInput)
+				checkValueAndError(t, createdDelegatedClient, delegatedClientCreationErr)
+
+				expected = append(expected, createdDelegatedClient.ID)
+			}
+
+			// Assert delegated client list equality.
+			actual, err := testClient.GetDelegatedClients(ctx, nil)
+			checkValueAndError(t, actual, err)
+			assert.True(
+				t,
+				len(expected) <= len(actual.Clients),
+				"expected %d to be <= %d",
+				len(expected),
+				len(actual.Clients),
+			)
+
+			// Clean up.
+			for _, createdDelegatedClient := range actual.Clients {
+				assert.NoError(t, testClient.ArchiveDelegatedClient(ctx, createdDelegatedClient.ID))
+			}
 		})
 	})
 
 	test.Run("Reading", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		ctx, span := tracing.StartSpan(context.Background())
-		defer span.End()
-
-		runTestForAllAuthMethods(ctx, subtest, "it should return an error when trying to read something that does not exist", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(subtest, "it should return an error when trying to read something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Attempt to fetch nonexistent delegated client.
 				_, err := testClient.GetDelegatedClient(ctx, nonexistentID)
@@ -135,7 +122,7 @@ func TestDelegatedClients(test *testing.T) {
 			}
 		})
 
-		runTestForAllAuthMethods(ctx, subtest, "it should be readable", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(subtest, "it should be readable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Create delegated client.
 				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
@@ -165,16 +152,13 @@ func TestDelegatedClients(test *testing.T) {
 	test.Run("Deleting", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		ctx, span := tracing.StartSpan(context.Background())
-		defer span.End()
-
-		runTestForAllAuthMethods(ctx, subtest, "it should return an error when trying to delete something that does not exist", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(subtest, "it should return an error when trying to delete something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				assert.Error(t, testClient.ArchiveDelegatedClient(ctx, nonexistentID))
 			}
 		})
 
-		runTestForAllAuthMethods(ctx, subtest, "it should be deletable", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(subtest, "it should be deletable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Create delegated client.
 				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
@@ -209,10 +193,7 @@ func TestDelegatedClients(test *testing.T) {
 	test.Run("Auditing", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		ctx, span := tracing.StartSpan(context.Background())
-		defer span.End()
-
-		runTestForAllAuthMethods(ctx, subtest, "it should not be auditable by a non-admin", func(user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+		runTestForAllAuthMethods(subtest, "it should not be auditable by a non-admin", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// Create delegated client.
 				exampleDelegatedClient := fakes.BuildFakeDelegatedClient()

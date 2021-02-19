@@ -9,6 +9,8 @@ const (
 	AccountSubscriptionPlanIDKey = "account_subscription_plan_id"
 	// PermissionsKey is the standard key for referring to an account user membership ID in a log.
 	PermissionsKey = "permissions"
+	// SessionInfoKey is the standard key for referring to a session info struct.
+	SessionInfoKey = "session_info"
 	// ActiveAccountIDKey is the standard key for referring to an account user membership ID in a log.
 	ActiveAccountIDKey = "active_account_id"
 	// PerformedByKey is the standard key for referring to a requesting user's ID in a log.

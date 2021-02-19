@@ -34,7 +34,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return(exampleUser, nil)
+		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleUser, nil)
 		s.userDB = md
 
 		ms := &MockHTTPHandler{}
@@ -61,7 +61,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return((*types.User)(nil), nil)
+		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return((*types.User)(nil), nil)
 		s.userDB = md
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -111,7 +111,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return(exampleUser, nil)
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
 		s.userDB = mockDB
 
 		h := &MockHTTPHandler{}
@@ -138,11 +138,11 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything)
+		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher), mock.Anything)
 		s.encoderDecoder = ed
 
 		h := &MockHTTPHandler{}
@@ -168,11 +168,11 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID).Return((*types.User)(nil), nil)
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), nil)
 		s.userDB = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything)
+		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher), mock.Anything)
 		s.encoderDecoder = ed
 
 		h := &MockHTTPHandler{}
@@ -342,8 +342,8 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
-		ed.On("EncodeErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), "attached input is invalid", http.StatusBadRequest)
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("EncodeErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), "attached input is invalid", http.StatusBadRequest)
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}
@@ -380,7 +380,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}

@@ -126,8 +126,11 @@ func (l *Logger) WithRequest(req *http.Request) logging.Logger {
 	l2 := l.logger.With().
 		Str("path", req.URL.Path).
 		Str("method", req.Method).
-		Str("query", req.URL.RawQuery).
 		Logger()
+
+	if req.URL.RawQuery != "" {
+		l2 = l2.With().Str("query", req.URL.RawQuery).Logger()
+	}
 
 	if l.requestIDFunc != nil {
 		if reqID := l.requestIDFunc(req); reqID != "" {

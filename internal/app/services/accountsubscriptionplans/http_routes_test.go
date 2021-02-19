@@ -38,11 +38,11 @@ func TestPlansService_ListHandler(T *testing.T) {
 		examplePlanList := fakes.BuildFakePlanList()
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return(examplePlanList, nil)
+		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return(examplePlanList, nil)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -70,11 +70,11 @@ func TestPlansService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return((*types.AccountSubscriptionPlanList)(nil), sql.ErrNoRows)
+		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AccountSubscriptionPlanList)(nil), sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -102,11 +102,11 @@ func TestPlansService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return((*types.AccountSubscriptionPlanList)(nil), errors.New("blah"))
+		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AccountSubscriptionPlanList)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -146,15 +146,15 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("CreateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountSubscriptionPlanCreationInput{})).Return(examplePlan, nil)
+		planDataManager.On("CreateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountSubscriptionPlanCreationInput{})).Return(examplePlan, nil)
 		s.planDataManager = planDataManager
 
 		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher()))
+		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher))
 		s.planCounter = mc
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -184,7 +184,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -215,11 +215,11 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("CreateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountSubscriptionPlanCreationInput{})).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
+		planDataManager.On("CreateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountSubscriptionPlanCreationInput{})).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -263,11 +263,11 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return(examplePlan, nil)
+		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID).Return(examplePlan, nil)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -300,11 +300,11 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), sql.ErrNoRows)
+		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -337,11 +337,11 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
+		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -385,12 +385,12 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return(examplePlan, nil)
-		planDataManager.On("UpdateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountSubscriptionPlan{})).Return(nil)
+		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID).Return(examplePlan, nil)
+		planDataManager.On("UpdateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountSubscriptionPlan{})).Return(nil)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -420,7 +420,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -455,11 +455,11 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), sql.ErrNoRows)
+		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -496,11 +496,11 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
+		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -537,12 +537,12 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID).Return(examplePlan, nil)
-		planDataManager.On("UpdateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountSubscriptionPlan{})).Return(errors.New("blah"))
+		planDataManager.On("GetAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID).Return(examplePlan, nil)
+		planDataManager.On("UpdateAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountSubscriptionPlan{})).Return(errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -586,11 +586,11 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID, exampleUser.ID).Return(nil)
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID, exampleUser.ID).Return(nil)
 		s.planDataManager = planDataManager
 
 		mc := &mockmetrics.UnitCounter{}
-		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()
+		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
 		s.planCounter = mc
 
 		res := httptest.NewRecorder()
@@ -623,11 +623,11 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID, exampleUser.ID).Return(sql.ErrNoRows)
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID, exampleUser.ID).Return(sql.ErrNoRows)
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -660,11 +660,11 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		}
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
-		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher()), examplePlan.ID, exampleUser.ID).Return(errors.New("blah"))
+		planDataManager.On("ArchiveAccountSubscriptionPlan", mock.MatchedBy(testutil.ContextMatcher), examplePlan.ID, exampleUser.ID).Return(errors.New("blah"))
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

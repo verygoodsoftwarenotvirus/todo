@@ -46,7 +46,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
 			mock.Anything,
@@ -98,11 +98,11 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUserCount", mock.MatchedBy(testutil.ContextMatcher()), mock.Anything).Return(uint64(123), nil)
+		mockDB.UserDataManager.On("GetUserCount", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(uint64(123), nil)
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
 			mock.Anything,
@@ -161,7 +161,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -206,7 +206,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
 			mock.Anything,

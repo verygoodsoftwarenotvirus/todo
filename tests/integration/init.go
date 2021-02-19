@@ -52,8 +52,7 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	adminClient = initializeClient(adminCookie)
-	adminClient.SetOption(httpclient.WithDebug())
+	adminClient = initializeCookiePoweredClient(adminCookie)
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
@@ -66,12 +65,26 @@ func buildHTTPClient() *http.Client {
 	}
 }
 
-func initializeClient(cookie *http.Cookie) *httpclient.Client {
+func initializeCookiePoweredClient(cookie *http.Cookie) *httpclient.Client {
 	c := httpclient.NewClient(
 		httpclient.UsingURI(urlToUse),
 		httpclient.UsingLogger(zerolog.NewLogger()),
 		httpclient.UsingHTTPClient(buildHTTPClient()),
 		httpclient.UsingCookie(cookie),
+	)
+
+	if debug {
+		c.SetOption(httpclient.WithDebug())
+	}
+
+	return c
+}
+func initializePASETOPoweredClient(clientID string, secretKey []byte) *httpclient.Client {
+	c := httpclient.NewClient(
+		httpclient.UsingURI(urlToUse),
+		httpclient.UsingLogger(zerolog.NewLogger()),
+		httpclient.UsingHTTPClient(buildHTTPClient()),
+		httpclient.UsingPASETO(clientID, secretKey),
 	)
 
 	if debug {

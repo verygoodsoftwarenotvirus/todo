@@ -102,7 +102,7 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			createdUser, _, _ := createUserAndClientForTest(ctx, t)
+			createdUser, _, _, _ := createUserAndClientForTest(ctx, t)
 
 			// Fetch user.
 			adminClientLock.Lock()
@@ -145,7 +145,7 @@ func TestUsers(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Search For user.
 			actual, err := testClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")

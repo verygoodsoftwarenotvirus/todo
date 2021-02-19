@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
@@ -24,18 +27,35 @@ func checkValueAndError(t *testing.T, i interface{}, err error) {
 	require.NotNil(t, i)
 }
 
-func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User, *http.Cookie, *httpclient.Client) {
+func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.User, cookie *http.Cookie, cookieClient, pasetoClient *httpclient.Client) {
 	t.Helper()
 
-	user, err := testutil.CreateServiceUser(ctx, urlToUse, "", debug)
+	var err error
+
+	user, err = testutil.CreateServiceUser(ctx, urlToUse, "", debug)
 	require.NoError(t, err)
 
 	t.Logf("created user: %q", user.Username)
 
-	cookie, err := testutil.GetLoginCookie(ctx, urlToUse, user)
+	cookie, err = testutil.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
-	return user, cookie, initializeClient(cookie)
+	cookieClient = initializeCookiePoweredClient(cookie)
+
+	delegatedClient, err := cookieClient.CreateDelegatedClient(ctx, cookie, &types.DelegatedClientCreationInput{
+		Name: t.Name(),
+		UserLoginInput: types.UserLoginInput{
+			Username:  user.Username,
+			Password:  user.HashedPassword,
+			TOTPToken: generateTOTPTokenForUser(t, user),
+		},
+	})
+	require.NoError(t, err)
+
+	secretKey, err := base64.RawURLEncoding.DecodeString(delegatedClient.ClientSecret)
+	require.NoError(t, err)
+
+	return user, cookie, cookieClient, initializePASETOPoweredClient(delegatedClient.ClientID, secretKey)
 }
 
 func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
@@ -48,34 +68,28 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 	return code
 }
 
-func runTestForAllAuthMethods(ctx context.Context, t *testing.T, testName string, testFunc func(user *types.User, cookie *http.Cookie, client *httpclient.Client) func(*testing.T)) {
+func runTestForAllAuthMethods(t *testing.T, testName string, testFunc func(ctx context.Context, user *types.User, cookie *http.Cookie, client *httpclient.Client) func(*testing.T)) {
 	t.Helper()
 
-	user, cookie, testClient := createUserAndClientForTest(ctx, t)
+	ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+	defer span.End()
 
-	//	, cookie, err := testClient.Login(ctx, &types.UserLoginInput{
-	//	, 	Username:  user.Username,
-	//	, 	Password:  user.HashedPassword,
-	//	, 	TOTPToken: generateTOTPTokenForUser(t, user),
-	//	, })
-	//	, require.NoError(t, err)
-	//  ,
-	//	, t.Run(testName, testFunc(testClient))
-	//	, testClient.SetOption(httpclient.WithCookieCredentials(cookie))
-	//	, t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(testClient))
+	user, cookie, cookieClient, pasetoClient := createUserAndClientForTest(ctx, t)
 
-	t.Run(testName, testFunc(user, cookie, testClient))
+	t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(ctx, user, cookie, cookieClient))
+	t.Run(fmt.Sprintf("%s with paseto token", testName), testFunc(ctx, user, cookie, pasetoClient))
 }
 
 func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {
 	t.Helper()
 
 	expectedEventTypes := []string{}
+	actualEventTypes := []string{}
+
 	for _, e := range expectedEntries {
 		expectedEventTypes = append(expectedEventTypes, e.EventType)
 	}
 
-	actualEventTypes := []string{}
 	for _, e := range actualEntries {
 		actualEventTypes = append(actualEventTypes, e.EventType)
 

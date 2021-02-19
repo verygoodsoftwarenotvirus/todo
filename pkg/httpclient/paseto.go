@@ -16,7 +16,7 @@ import (
 
 const (
 	pasetoBasePath        = "paseto"
-	signatureKey          = "Signature"
+	signatureHeaderKey    = "Signature"
 	validClientSecretSize = 128
 )
 
@@ -30,7 +30,7 @@ func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
 		return fmt.Errorf("error writing hash content: %w", macWriteErr)
 	}
 
-	req.Header.Set(signatureKey, base64.RawStdEncoding.EncodeToString(mac.Sum(nil)))
+	req.Header.Set(signatureHeaderKey, base64.RawURLEncoding.EncodeToString(mac.Sum(nil)))
 
 	return nil
 }
@@ -40,7 +40,6 @@ func (c *Client) BuildDelegatedClientAuthTokenRequest(ctx context.Context, input
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	reqBytes := c.encoderDecoder.MustJSON(input)
 	uri := c.buildVersionlessURL(nil, pasetoBasePath)
 
 	tracing.AttachRequestURIToSpan(span, uri)
@@ -50,14 +49,14 @@ func (c *Client) BuildDelegatedClientAuthTokenRequest(ctx context.Context, input
 		return nil, fmt.Errorf("error building request: %w", requestBuildErr)
 	}
 
-	if signErr := setSignatureForRequest(req, reqBytes, secretKey); signErr != nil {
+	if signErr := setSignatureForRequest(req, c.encoderDecoder.MustJSON(input), secretKey); signErr != nil {
 		return nil, signErr
 	}
 
 	return req, nil
 }
 
-func (c *Client) fetchDelegatedClientAuthToken(ctx context.Context, clientID string, secretKey []byte) (string, error) {
+func (c *Client) fetchDelegatedClientAuthToken(ctx context.Context, httpclient *http.Client, clientID string, secretKey []byte) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -72,7 +71,7 @@ func (c *Client) fetchDelegatedClientAuthToken(ctx context.Context, clientID str
 	}
 
 	// use the default client here because we want a transport that doesn't worry about cookies or tokens.
-	res, err := c.executeRawRequest(ctx, c.plainClient, req)
+	res, err := c.executeRawRequest(ctx, httpclient, req)
 	if err != nil {
 		return "", fmt.Errorf("executing request: %w", err)
 	}

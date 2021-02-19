@@ -36,7 +36,7 @@ type (
 		authenticator            authentication.Authenticator
 		userDB                   types.UserDataManager
 		auditLog                 types.AuthAuditManager
-		delegatedClientsService  types.DelegatedClientDataManager
+		delegatedClientManager   types.DelegatedClientDataManager
 		accountMembershipManager types.AccountUserMembershipDataManager
 		encoderDecoder           encoding.HTTPResponseEncoder
 		cookieManager            cookieEncoderDecoder
@@ -65,7 +65,7 @@ func ProvideService(
 		config:                   cfg,
 		userDB:                   userDataManager,
 		auditLog:                 auditLog,
-		delegatedClientsService:  delegatedClientsService,
+		delegatedClientManager:   delegatedClientsService,
 		accountMembershipManager: accountMembershipManager,
 		authenticator:            authenticator,
 		sessionManager:           sessionManager,

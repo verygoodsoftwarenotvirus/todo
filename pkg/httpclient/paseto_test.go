@@ -37,7 +37,7 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 		assert.Equal(t, http.MethodPost, req.Method)
 
 		expectedSignature := `q482eqjNy9YN5Ej4rej7TQQVLQGPuRO2SdTk69TbHQI`
-		actualSignature := req.Header.Get(signatureKey)
+		actualSignature := req.Header.Get(signatureHeaderKey)
 
 		assert.Equal(t, expectedSignature, actualSignature, "expected and actual signature header do not match")
 	})
@@ -89,7 +89,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 				func(res http.ResponseWriter, req *http.Request) {
 					response := &types.PASETOResponse{Token: anticipatedResult}
 
-					assert.NotEmpty(t, req.Header.Get(signatureKey))
+					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
 					require.NoError(t, json.NewEncoder(res).Encode(response))
 				},
@@ -102,7 +102,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.NoError(t, err)
 		assert.Equal(t, anticipatedResult, token)
@@ -117,7 +117,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -129,7 +129,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.NotEmpty(t, req.Header.Get(signatureKey))
+					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
 					time.Sleep(time.Minute)
 				},
@@ -143,7 +143,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -155,7 +155,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.NotEmpty(t, req.Header.Get(signatureKey))
+					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
 					res.WriteHeader(http.StatusUnauthorized)
 				},
@@ -168,7 +168,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -180,7 +180,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
-					assert.NotEmpty(t, req.Header.Get(signatureKey))
+					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
 					_, err := res.Write([]byte("BLAH"))
 					assert.NoError(t, err)
@@ -194,7 +194,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, exampleClientID, exampleSecret)
+		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)

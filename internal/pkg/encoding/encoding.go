@@ -10,7 +10,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/google/wire"
@@ -53,9 +52,8 @@ type (
 
 	// serverEncoderDecoder is our concrete implementation of EncoderDecoder.
 	serverEncoderDecoder struct {
-		logger   logging.Logger
-		tracer   tracing.Tracer
-		panicker panicking.Panicker
+		logger logging.Logger
+		tracer tracing.Tracer
 	}
 
 	encoder interface {
@@ -164,7 +162,8 @@ func (ed *serverEncoderDecoder) MustJSON(v interface{}) []byte {
 	var b bytes.Buffer
 
 	if err := json.NewEncoder(&b).Encode(v); err != nil {
-		ed.panicker.Panicf("error marshaling object to JSON: %v", err)
+		ed.logger.Error(err, "marshaling to JSON: %v")
+		return []byte{}
 	}
 
 	return b.Bytes()
@@ -216,8 +215,7 @@ const name = "response_encoder"
 // ProvideHTTPResponseEncoder provides an HTTPResponseEncoder.
 func ProvideHTTPResponseEncoder(logger logging.Logger) HTTPResponseEncoder {
 	return &serverEncoderDecoder{
-		logger:   logging.EnsureLogger(logger).WithName(name),
-		tracer:   tracing.NewTracer(name),
-		panicker: panicking.NewProductionPanicker(),
+		logger: logging.EnsureLogger(logger).WithName(name),
+		tracer: tracing.NewTracer(name),
 	}
 }

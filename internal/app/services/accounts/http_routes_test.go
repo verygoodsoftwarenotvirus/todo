@@ -38,11 +38,11 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		exampleAccountList := fakes.BuildFakeAccountList()
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleAccountList, nil)
+		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleAccountList, nil)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -70,11 +70,11 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
+		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -102,11 +102,11 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher()), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
+		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -147,15 +147,15 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountCreationInput{})).Return(exampleAccount, nil)
+		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{})).Return(exampleAccount, nil)
 		s.accountDataManager = accountDataManager
 
 		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher()))
+		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher))
 		s.accountCounter = mc
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}), http.StatusCreated)
+		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -185,7 +185,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -217,11 +217,11 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.AccountCreationInput{})).Return((*types.Account)(nil), errors.New("blah"))
+		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{})).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -266,11 +266,11 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
+		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -304,11 +304,11 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
+		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -342,11 +342,11 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -391,12 +391,12 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
-		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.Account{})).Return(nil)
+		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
+		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{})).Return(nil)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -426,7 +426,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -462,11 +462,11 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
+		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -504,11 +504,11 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -546,12 +546,12 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
-		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.Account{})).Return(errors.New("blah"))
+		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
+		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{})).Return(errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -596,11 +596,11 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(nil)
+		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(nil)
 		s.accountDataManager = accountDataManager
 
 		mc := &mockmetrics.UnitCounter{}
-		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()
+		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
 		s.accountCounter = mc
 
 		res := httptest.NewRecorder()
@@ -634,11 +634,11 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(sql.ErrNoRows)
+		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -672,11 +672,11 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(errors.New("blah"))
+		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -710,11 +710,11 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher()), exampleAccount.ID, exampleUser.ID).Return(nil)
+		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(nil)
 		s.accountDataManager = accountDataManager
 
 		mc := &mockmetrics.UnitCounter{}
-		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher())).Return()
+		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
 		s.accountCounter = mc
 
 		res := httptest.NewRecorder()

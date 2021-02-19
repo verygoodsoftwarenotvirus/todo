@@ -1,13 +1,11 @@
 package auth
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"net/http"
@@ -28,7 +26,8 @@ import (
 )
 
 const (
-	staticError = "error encountered, please try again later"
+	staticError   = "error encountered, please try again later"
+	pasetoDataKey = "paseto_data"
 )
 
 var (
@@ -269,47 +268,52 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	pasetoRequest, ok := ctx.Value(pasetoCreationInputMiddlewareCtxKey).(*types.PASETOCreationInput)
 	if !ok || pasetoRequest == nil {
 		logger.Error(nil, "no PASETOCreationInput found for /paseto request")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
-		return
-	}
-
-	sum, decodeErr := base64.RawStdEncoding.DecodeString(req.Header.Get(signatureHeaderKey))
-	if decodeErr != nil {
-		logger.Error(decodeErr, "invalid signature")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	logger = logger.WithValue(keys.DelegatedClientIDKey, pasetoRequest.ClientID)
-	logger = logger.WithValue("signature_sum", sum)
 
-	client, clientRetrievalErr := s.delegatedClientsService.GetDelegatedClient(ctx, pasetoRequest.ClientID)
-	if clientRetrievalErr != nil {
-		logger.Error(clientRetrievalErr, "retrieving delegated client")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+	sum, decodeErr := base64.RawURLEncoding.DecodeString(req.Header.Get(signatureHeaderKey))
+	if decodeErr != nil || len(sum) == 0 {
+		logger.WithValue("sum_length", len(sum)).Error(decodeErr, "invalid signature")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
-	logger = logger.WithValue(keys.UserIDKey, client.BelongsToUser)
+	client, clientRetrievalErr := s.delegatedClientManager.GetDelegatedClient(ctx, pasetoRequest.ClientID)
+	if clientRetrievalErr != nil {
+		logger.Error(clientRetrievalErr, "retrieving delegated client")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		return
+	}
+
+	user, userRetrievalErr := s.userDB.GetUser(ctx, client.BelongsToUser)
+	if userRetrievalErr != nil {
+		logger.Error(userRetrievalErr, "retrieving delegated client")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		return
+	}
+
+	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
 	defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToUser)
 	if membershipRetrievalErr != nil {
 		logger.Error(membershipRetrievalErr, "retrieving permissions for delegated client")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	mac := hmac.New(sha256.New, client.ClientSecret)
 	if _, macWriteErr := mac.Write(s.encoderDecoder.MustJSON(pasetoRequest)); macWriteErr != nil {
 		logger.Error(membershipRetrievalErr, "writing HMAC message for comparison")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
-	newSum := mac.Sum(nil)
-	if !hmac.Equal(sum, newSum) {
-		logger.WithValue("new_sum", newSum).Info("invalid credentials passed to PASETO creation route")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid checksum", http.StatusUnauthorized)
+	if !hmac.Equal(sum, mac.Sum(nil)) {
+		logger.Info("invalid credentials passed to PASETO creation route")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
@@ -325,15 +329,16 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		Expiration: now.Add(s.config.PASETO.Lifetime),
 	}
 
-	var permBytes bytes.Buffer
-	if gobEncodeErr := gob.NewEncoder(&permBytes).Encode(permissions); gobEncodeErr != nil {
-		logger.Error(gobEncodeErr, "encoding permissions to string")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid checksum", http.StatusUnauthorized)
-		return
+	si := &types.SessionInfo{
+		Username:                user.Username,
+		UserID:                  user.ID,
+		ActiveAccount:           defaultAccount,
+		UserAccountStatus:       user.AccountStatus,
+		AccountPermissionsMap:   permissions,
+		ServiceAdminPermissions: user.ServiceAdminPermissions,
 	}
 
-	jsonToken.Set(keys.PermissionsKey, permBytes.String())
-	jsonToken.Set(keys.ActiveAccountIDKey, strconv.FormatUint(defaultAccount, 10))
+	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(si.ToBytes()))
 
 	// Encrypt data
 	token, tokenEncryptErr := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, "")
@@ -345,7 +350,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	tokenRes := &types.PASETOResponse{Token: token}
 
-	s.encoderDecoder.EncodeResponse(ctx, res, tokenRes)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.

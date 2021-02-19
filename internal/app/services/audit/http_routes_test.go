@@ -37,11 +37,11 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return(exampleAuditLogEntryList, nil)
+		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return(exampleAuditLogEntryList, nil)
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -68,11 +68,11 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
+		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -99,11 +99,11 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher()), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
+		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -144,11 +144,11 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		}
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher()), exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
+		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntry{}))
+		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntry{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -180,11 +180,11 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		}
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher()), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
+		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -216,11 +216,11 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		}
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher()), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
+		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher()), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

@@ -1,8 +1,13 @@
 package auth
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/gob"
 	"net/http"
+
+	"github.com/o1egl/paseto"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -15,7 +20,8 @@ const (
 	// pasetoCreationInputMiddlewareCtxKey is the context key for login input.
 	pasetoCreationInputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
 
-	signatureHeaderKey = "Signature"
+	signatureHeaderKey     = "Signature"
+	pasetoAuthorizationKey = "Authorization"
 
 	// usernameFormKey is the string we look for in request forms for username information.
 	usernameFormKey = "username"
@@ -80,6 +86,38 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 				next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.SessionInfoFromUser(user))))
 				return
 			}
+		}
+
+		token := req.Header.Get(pasetoAuthorizationKey)
+
+		if token != "" {
+			var targetPayload paseto.JSONToken
+
+			if decryptErr := paseto.NewV2().Decrypt(token, s.config.PASETO.LocalModeKey, &targetPayload, nil); decryptErr != nil {
+				logger.Error(decryptErr, "error decrypting PASETO")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			payload := targetPayload.Get(pasetoDataKey)
+
+			gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(payload)
+			if base64DecodeErr != nil {
+				logger.Error(base64DecodeErr, "error decoding base64 encoded GOB payload")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			var si *types.SessionInfo
+			gobDecodeErr := gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&si)
+			if gobDecodeErr != nil {
+				logger.Error(gobDecodeErr, "error decoding GOB encoded session info payload")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, si)))
+			return
 		}
 
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)

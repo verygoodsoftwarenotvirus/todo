@@ -22,7 +22,7 @@ func init() {
 type (
 	// SessionInfo represents what we encode in our authentication cookies.
 	SessionInfo struct {
-		Username                string
+		Username                string                                    `json:"-"`
 		UserID                  uint64                                    `json:"-"`
 		ActiveAccount           uint64                                    `json:"-"`
 		UserAccountStatus       userReputation                            `json:"-"`

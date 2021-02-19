@@ -84,22 +84,6 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 	authenticatedRouter.WithMiddleware(s.authService.AuthorizationMiddleware).Route("/api/v1", func(v1Router routing.Router) {
 		adminRouter := v1Router.WithMiddleware(s.authService.AdminMiddleware)
 
-		// Users
-		v1Router.Route("/users", func(usersRouter routing.Router) {
-			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
-			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get("/search", s.usersService.UsernameSearchHandler)
-			usersRouter.WithMiddleware(s.usersService.AvatarUploadMiddleware).Post("/avatar/upload", s.usersService.AvatarUploadHandler)
-			usersRouter.Get("/self", s.usersService.SelfHandler)
-
-			singleUserRoute := fmt.Sprintf("/"+numericIDPattern, usersservice.UserIDURIParamKey)
-			usersRouter.Route(singleUserRoute, func(singleUserRouter routing.Router) {
-				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
-				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
-
-				singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
-			})
-		})
-
 		// Account Subscription Plans
 		adminRouter.Route("/account_subscription_plans", func(plansRouter routing.Router) {
 			plansRouter.Get(root, s.plansService.ListHandler)
@@ -126,6 +110,22 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 				auditRouter.Route(entryIDRouteParam, func(singleEntryRouter routing.Router) {
 					singleEntryRouter.Get(root, s.auditService.ReadHandler)
 				})
+			})
+		})
+
+		// Users
+		v1Router.Route("/users", func(usersRouter routing.Router) {
+			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
+			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get("/search", s.usersService.UsernameSearchHandler)
+			usersRouter.WithMiddleware(s.usersService.AvatarUploadMiddleware).Post("/avatar/upload", s.usersService.AvatarUploadHandler)
+			usersRouter.Get("/self", s.usersService.SelfHandler)
+
+			singleUserRoute := fmt.Sprintf("/"+numericIDPattern, usersservice.UserIDURIParamKey)
+			usersRouter.Route(singleUserRoute, func(singleUserRouter routing.Router) {
+				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
+				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
+
+				singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
 			})
 		})
 

@@ -278,7 +278,7 @@ func TestAccountSubscriptionPlans(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			adminClientLock.Lock()
 			defer adminClientLock.Unlock()

@@ -45,7 +45,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -85,7 +85,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Fetch webhook.
 			_, err := testClient.GetWebhook(ctx, nonexistentID)
@@ -98,7 +98,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -123,7 +123,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhooks.
 			var expected []*types.Webhook
@@ -153,8 +153,8 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, clientA := createUserAndClientForTest(ctx, t)
-			_, _, clientB := createUserAndClientForTest(ctx, t)
+			_, _, clientA, _ := createUserAndClientForTest(ctx, t)
+			_, _, clientB, _ := createUserAndClientForTest(ctx, t)
 
 			// create webhook for user A.
 			wciA := fakes.BuildFakeWebhookCreationInput()
@@ -185,7 +185,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhook.ID = nonexistentID
@@ -200,7 +200,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -248,7 +248,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -300,7 +300,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -331,7 +331,7 @@ func TestWebhooks(test *testing.T) {
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
-			_, _, testClient := createUserAndClientForTest(ctx, t)
+			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()

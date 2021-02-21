@@ -70,7 +70,7 @@ func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemCreat
 }
 
 // UpdateItem is a mock function.
-func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, changes []types.FieldChangeSummary, changedByUser uint64) error {
+func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []types.FieldChangeSummary) error {
 	return m.Called(ctx, updated, changes).Error(0)
 }
 

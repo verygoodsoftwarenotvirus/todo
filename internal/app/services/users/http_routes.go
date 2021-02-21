@@ -240,7 +240,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
-	si, err := s.sessionInfoFetcher(req)
+	si, err := s.requestContextFetcher(req)
 	if err != nil {
 		logger.Error(err, "session info missing from request context")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -360,7 +360,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	// also check for the user's ID.
-	si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
+	si, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to TOTP secret refresh request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -430,7 +430,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// check request context for user ID.
-	si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
+	si, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdatePasswordHandler request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -505,7 +505,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 	logger := s.logger.WithRequest(req)
 
 	// check request context for user ID.
-	si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
+	si, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
 	if !ok || si == nil {
 		logger.Debug("no user ID attached to UpdateAvatarHandler request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)

@@ -160,7 +160,7 @@ const (
 	// WebhooksTableTopicsSeparator is what the webhooks table calls the <> column.
 	WebhooksTableTopicsSeparator = commaSeparator
 	// WebhooksTableOwnershipColumn is what the webhooks table calls the <> column.
-	WebhooksTableOwnershipColumn = "belongs_to_user"
+	WebhooksTableOwnershipColumn = accountOwnershipColumn
 
 	//
 	// Items Table.

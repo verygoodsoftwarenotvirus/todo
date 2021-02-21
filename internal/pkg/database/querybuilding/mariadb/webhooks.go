@@ -107,7 +107,7 @@ func (q *MariaDB) BuildUpdateWebhookQuery(input *types.Webhook) (query string, a
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                     input.ID,
 			querybuilding.ArchivedOnColumn:             nil,
-			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToUser,
+			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToAccount,
 		}),
 	)
 }

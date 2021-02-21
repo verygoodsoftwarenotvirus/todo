@@ -42,7 +42,7 @@ func (c *Client) scanWebhook(scan database.Scanner, includeCounts bool) (webhook
 		&webhook.CreatedOn,
 		&webhook.LastUpdatedOn,
 		&webhook.ArchivedOn,
-		&webhook.BelongsToUser,
+		&webhook.BelongsToAccount,
 	}
 
 	if includeCounts {
@@ -208,7 +208,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 }
 
 // CreateWebhook creates a webhook in a database.
-func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
+func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput, createdByUser uint64) (*types.Webhook, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -229,19 +229,19 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 	}
 
 	x := &types.Webhook{
-		ID:            id,
-		Name:          input.Name,
-		ContentType:   input.ContentType,
-		URL:           input.URL,
-		Method:        input.Method,
-		Events:        input.Events,
-		DataTypes:     input.DataTypes,
-		Topics:        input.Topics,
-		BelongsToUser: input.BelongsToUser,
-		CreatedOn:     c.currentTime(),
+		ID:               id,
+		Name:             input.Name,
+		ContentType:      input.ContentType,
+		URL:              input.URL,
+		Method:           input.Method,
+		Events:           input.Events,
+		DataTypes:        input.DataTypes,
+		Topics:           input.Topics,
+		BelongsToAccount: input.BelongsToUser,
+		CreatedOn:        c.currentTime(),
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x, createdByUser))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
@@ -252,12 +252,12 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 // UpdateWebhook updates a particular webhook.
 // NOTE: this function expects the provided input to have a non-zero ID.
-func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, changes []types.FieldChangeSummary) error {
+func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser uint64, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachWebhookIDToSpan(span, updated.ID)
-	tracing.AttachUserIDToSpan(span, updated.BelongsToUser)
+	tracing.AttachUserIDToSpan(span, updated.BelongsToAccount)
 
 	c.logger.WithValue(keys.WebhookIDKey, updated.ID).Debug("UpdateWebhook called")
 
@@ -273,7 +273,7 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 		return fmt.Errorf("error updating webhook: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(changedByUser, updated.BelongsToAccount, updated.ID, changes))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -283,19 +283,20 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 }
 
 // ArchiveWebhook archives a webhook from the database.
-func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error {
+func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, archivedByUserID)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.WebhookIDKey: webhookID,
-		keys.UserIDKey:    userID,
+		keys.AccountIDKey: accountID,
+		keys.UserIDKey:    archivedByUserID,
 	}).Debug("ArchiveWebhook called")
 
-	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, userID)
+	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, accountID)
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
@@ -307,7 +308,7 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, userID uint64) e
 		return fmt.Errorf("error archiving webhook: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(userID, webhookID))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(archivedByUserID, accountID, webhookID))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

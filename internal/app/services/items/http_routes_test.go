@@ -26,8 +26,10 @@ func TestItemsService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -35,7 +37,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItemList := fakes.BuildFakeItemList()
 
@@ -69,7 +71,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, mock.IsType(&types.QueryFilter{})).Return((*types.ItemList)(nil), sql.ErrNoRows)
@@ -101,7 +103,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, mock.IsType(&types.QueryFilter{})).Return((*types.ItemList)(nil), errors.New("blah"))
@@ -133,8 +135,10 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -142,7 +146,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -186,7 +190,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -221,7 +225,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -265,7 +269,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
@@ -309,8 +313,10 @@ func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -318,7 +324,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -364,7 +370,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -392,7 +398,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -430,8 +436,10 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -439,7 +447,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -473,7 +481,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -511,7 +519,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -549,8 +557,10 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -558,7 +568,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -596,7 +606,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -634,7 +644,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -672,8 +682,10 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -681,7 +693,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -728,7 +740,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -756,7 +768,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -798,7 +810,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -840,7 +852,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -883,8 +895,10 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -892,7 +906,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -934,7 +948,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -972,7 +986,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -1010,7 +1024,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID

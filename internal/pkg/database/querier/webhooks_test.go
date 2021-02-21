@@ -43,7 +43,7 @@ func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhook
 			w.CreatedOn,
 			w.LastUpdatedOn,
 			w.ArchivedOn,
-			w.BelongsToUser,
+			w.BelongsToAccount,
 		}
 
 		if includeCounts {
@@ -99,7 +99,7 @@ func TestClient_GetWebhook(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetWebhookQuery", exampleWebhook.ID, exampleWebhook.BelongsToUser).
+			On("BuildGetWebhookQuery", exampleWebhook.ID, exampleWebhook.BelongsToAccount).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -107,7 +107,7 @@ func TestClient_GetWebhook(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhook))
 
-		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
+		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
@@ -492,7 +492,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 			return exampleWebhook.CreatedOn
 		}
 
-		actual, err := c.CreateWebhook(ctx, exampleInput)
+		actual, err := c.CreateWebhook(ctx, exampleInput, 0)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
@@ -525,7 +525,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 			return exampleWebhook.CreatedOn
 		}
 
-		actual, err := c.CreateWebhook(ctx, exampleInput)
+		actual, err := c.CreateWebhook(ctx, exampleInput, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -561,7 +561,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual := c.UpdateWebhook(ctx, exampleWebhook, nil)
+		actual := c.UpdateWebhook(ctx, exampleWebhook, 0, nil)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
@@ -585,7 +585,7 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildArchiveWebhookQuery", exampleWebhook.ID, exampleWebhook.BelongsToUser).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.WebhookSQLQueryBuilder.On("BuildArchiveWebhookQuery", exampleWebhook.ID, exampleWebhook.BelongsToAccount).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -597,7 +597,7 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual := c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToUser)
+		actual := c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount, 0)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 

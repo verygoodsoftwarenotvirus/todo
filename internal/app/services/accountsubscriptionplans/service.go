@@ -24,13 +24,13 @@ var _ types.AccountSubscriptionPlanDataService = (*service)(nil)
 type (
 	// service handles to-do list account subscription plans.
 	service struct {
-		logger             logging.Logger
-		planDataManager    types.AccountSubscriptionPlanDataManager
-		planIDFetcher      func(*http.Request) uint64
-		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
-		planCounter        metrics.UnitCounter
-		encoderDecoder     encoding.HTTPResponseEncoder
-		tracer             tracing.Tracer
+		logger                logging.Logger
+		planDataManager       types.AccountSubscriptionPlanDataManager
+		planIDFetcher         func(*http.Request) uint64
+		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
+		planCounter           metrics.UnitCounter
+		encoderDecoder        encoding.HTTPResponseEncoder
+		tracer                tracing.Tracer
 	}
 )
 
@@ -48,13 +48,13 @@ func ProvideService(
 	}
 
 	svc := &service{
-		logger:             logging.EnsureLogger(logger).WithName(serviceName),
-		planIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, AccountSubscriptionPlanIDURIParamKey, "account subscription plan"),
-		sessionInfoFetcher: routeParamManager.FetchContextFromRequest,
-		planDataManager:    planDataManager,
-		encoderDecoder:     encoder,
-		planCounter:        planCounter,
-		tracer:             tracing.NewTracer(serviceName),
+		logger:                logging.EnsureLogger(logger).WithName(serviceName),
+		planIDFetcher:         routeParamManager.BuildRouteParamIDFetcher(logger, AccountSubscriptionPlanIDURIParamKey, "account subscription plan"),
+		requestContextFetcher: routeParamManager.FetchContextFromRequest,
+		planDataManager:       planDataManager,
+		encoderDecoder:        encoder,
+		planCounter:           planCounter,
+		tracer:                tracing.NewTracer(serviceName),
 	}
 
 	return svc, nil

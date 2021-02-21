@@ -17,7 +17,7 @@ import (
 
 const (
 	serviceName        = "auth_service"
-	sessionInfoKey     = string(types.SessionInfoKey)
+	sessionInfoKey     = string(types.RequestContextKey)
 	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
 	cookieSecretSize   = 64
 )
@@ -41,7 +41,7 @@ type (
 		encoderDecoder           encoding.HTTPResponseEncoder
 		cookieManager            cookieEncoderDecoder
 		sessionManager           *scs.SessionManager
-		sessionInfoFetcher       func(*http.Request) (*types.RequestContext, error)
+		requestContextFetcher    func(*http.Request) (*types.RequestContext, error)
 		tracer                   tracing.Tracer
 	}
 )
@@ -69,7 +69,7 @@ func ProvideService(
 		accountMembershipManager: accountMembershipManager,
 		authenticator:            authenticator,
 		sessionManager:           sessionManager,
-		sessionInfoFetcher:       routeParamManager.FetchContextFromRequest,
+		requestContextFetcher:    routeParamManager.FetchContextFromRequest,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.Cookies.SigningKey),

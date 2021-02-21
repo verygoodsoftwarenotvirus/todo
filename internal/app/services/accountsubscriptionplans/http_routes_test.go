@@ -24,8 +24,10 @@ func TestPlansService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -33,7 +35,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlanList := fakes.BuildFakePlanList()
 
@@ -67,7 +69,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AccountSubscriptionPlanList)(nil), sql.ErrNoRows)
@@ -99,7 +101,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AccountSubscriptionPlanList)(nil), errors.New("blah"))
@@ -131,8 +133,10 @@ func TestPlansService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -140,7 +144,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
@@ -181,7 +185,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -209,7 +213,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(examplePlan)
@@ -246,8 +250,10 @@ func TestPlansService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -255,7 +261,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -292,7 +298,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -329,7 +335,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -366,8 +372,10 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -375,7 +383,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
@@ -417,7 +425,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -445,7 +453,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
@@ -486,7 +494,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
@@ -527,7 +535,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(examplePlan)
@@ -569,8 +577,10 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -578,7 +588,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -615,7 +625,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {
@@ -652,7 +662,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		examplePlan := fakes.BuildFakeAccountSubscriptionPlan()
 		s.planIDFetcher = func(req *http.Request) uint64 {

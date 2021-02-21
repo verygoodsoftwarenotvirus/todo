@@ -11,18 +11,18 @@ import (
 // BuildFakeWebhook builds a faked Webhook.
 func BuildFakeWebhook() *types.Webhook {
 	return &types.Webhook{
-		ID:            uint64(fake.Uint32()),
-		ExternalID:    fake.UUID(),
-		Name:          fake.Word(),
-		ContentType:   "application/json",
-		URL:           fake.URL(),
-		Method:        http.MethodPost,
-		Events:        []string{fake.Word()},
-		DataTypes:     []string{fake.Word()},
-		Topics:        []string{fake.Word()},
-		CreatedOn:     uint64(uint32(fake.Date().Unix())),
-		ArchivedOn:    nil,
-		BelongsToUser: fake.Uint64(),
+		ID:               uint64(fake.Uint32()),
+		ExternalID:       fake.UUID(),
+		Name:             fake.Word(),
+		ContentType:      "application/json",
+		URL:              fake.URL(),
+		Method:           http.MethodPost,
+		Events:           []string{fake.Word()},
+		DataTypes:        []string{fake.Word()},
+		Topics:           []string{fake.Word()},
+		CreatedOn:        uint64(uint32(fake.Date().Unix())),
+		ArchivedOn:       nil,
+		BelongsToAccount: fake.Uint64(),
 	}
 }
 
@@ -54,7 +54,7 @@ func BuildFakeWebhookUpdateInputFromWebhook(webhook *types.Webhook) *types.Webho
 		Events:        webhook.Events,
 		DataTypes:     webhook.DataTypes,
 		Topics:        webhook.Topics,
-		BelongsToUser: webhook.BelongsToUser,
+		BelongsToUser: webhook.BelongsToAccount,
 	}
 }
 
@@ -74,6 +74,6 @@ func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.Web
 		Events:        webhook.Events,
 		DataTypes:     webhook.DataTypes,
 		Topics:        webhook.Topics,
-		BelongsToUser: webhook.BelongsToUser,
+		BelongsToUser: webhook.BelongsToAccount,
 	}
 }

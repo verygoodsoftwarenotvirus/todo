@@ -23,8 +23,10 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -32,7 +34,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
@@ -65,7 +67,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
@@ -96,7 +98,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
@@ -127,8 +129,10 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -136,7 +140,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
@@ -172,7 +176,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
@@ -208,7 +212,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {

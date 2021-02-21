@@ -28,14 +28,14 @@ type (
 
 	// service handles to-do list items.
 	service struct {
-		logger             logging.Logger
-		itemDataManager    types.ItemDataManager
-		itemIDFetcher      func(*http.Request) uint64
-		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
-		itemCounter        metrics.UnitCounter
-		encoderDecoder     encoding.HTTPResponseEncoder
-		tracer             tracing.Tracer
-		search             SearchIndex
+		logger                logging.Logger
+		itemDataManager       types.ItemDataManager
+		itemIDFetcher         func(*http.Request) uint64
+		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
+		itemCounter           metrics.UnitCounter
+		encoderDecoder        encoding.HTTPResponseEncoder
+		tracer                tracing.Tracer
+		search                SearchIndex
 	}
 )
 
@@ -63,14 +63,14 @@ func ProvideService(
 	}
 
 	svc := &service{
-		logger:             logging.EnsureLogger(logger).WithName(serviceName),
-		itemIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
-		sessionInfoFetcher: routeParamManager.FetchContextFromRequest,
-		itemDataManager:    itemDataManager,
-		encoderDecoder:     encoder,
-		itemCounter:        itemCounter,
-		search:             searchIndexManager,
-		tracer:             tracing.NewTracer(serviceName),
+		logger:                logging.EnsureLogger(logger).WithName(serviceName),
+		itemIDFetcher:         routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
+		requestContextFetcher: routeParamManager.FetchContextFromRequest,
+		itemDataManager:       itemDataManager,
+		encoderDecoder:        encoder,
+		itemCounter:           itemCounter,
+		search:                searchIndexManager,
+		tracer:                tracing.NewTracer(serviceName),
 	}
 
 	return svc, nil

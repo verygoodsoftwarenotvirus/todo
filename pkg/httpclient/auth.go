@@ -131,7 +131,7 @@ func (c *Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Co
 		return nil, ErrNilInputProvided
 	}
 
-	uri := c.buildVersionlessURL(nil, usersBasePath, "authentication", "new")
+	uri := c.buildVersionlessURL(nil, usersBasePath, "password", "new")
 
 	req, err := c.buildDataRequest(ctx, http.MethodPut, uri, input)
 	if err != nil {

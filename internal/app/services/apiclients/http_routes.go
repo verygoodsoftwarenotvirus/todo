@@ -25,7 +25,7 @@ const (
 
 // fetchUserID grabs a userID out of the request context.
 func (s *service) fetchUserID(req *http.Request) uint64 {
-	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.RequestContext); ok && si != nil {
+	if si, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && si != nil {
 		return si.User.ID
 	}
 	return 0
@@ -157,13 +157,13 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine API client ID.
@@ -194,13 +194,13 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine API client ID.

@@ -37,13 +37,13 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := types.ExtractQueryFilter(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine if it's an admin request
@@ -91,13 +91,13 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 	input.BelongsToUser = si.User.ID
 
@@ -126,13 +126,13 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine account ID.
@@ -171,13 +171,13 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 	input.BelongsToUser = si.User.ID
 
@@ -219,13 +219,13 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine account ID.
@@ -260,13 +260,13 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine account ID.

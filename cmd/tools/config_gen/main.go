@@ -47,7 +47,7 @@ const (
 	mariadb  = "mariadb"
 
 	// test user stuff.
-	defaultPassword = "authentication"
+	defaultPassword = "password"
 
 	// search index paths.
 	defaultItemsSearchIndexPath = "items.bleve"

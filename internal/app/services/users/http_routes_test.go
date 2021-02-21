@@ -53,7 +53,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "authentication"
+		examplePassword := "password"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
@@ -92,7 +92,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "authentication"
+		examplePassword := "password"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), sql.ErrNoRows)
@@ -119,7 +119,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "authentication"
+		examplePassword := "password"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
@@ -146,7 +146,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "authentication"
+		examplePassword := "password"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
@@ -185,7 +185,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleTOTPToken := "123456"
-		examplePassword := "authentication"
+		examplePassword := "password"
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
@@ -666,8 +666,12 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -756,8 +760,12 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -800,8 +808,12 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -852,8 +864,12 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1102,8 +1118,12 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1191,8 +1211,12 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1235,8 +1259,12 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1284,8 +1312,12 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 				exampleInput,
 			),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1331,8 +1363,11 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1381,8 +1416,11 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1407,8 +1445,11 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1438,8 +1479,11 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1474,8 +1518,11 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 
 		mockDB := database.BuildMockDatabase()

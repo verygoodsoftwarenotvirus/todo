@@ -1067,7 +1067,7 @@ func TestClient_UpdateItem(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		err := c.UpdateItem(ctx, exampleItem, nil, exampleAccount.ID)
+		err := c.UpdateItem(ctx, exampleItem, exampleAccount.ID, nil)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)

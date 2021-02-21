@@ -21,12 +21,12 @@ func TestMariaDB_BuildGetWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.id = ?"
+		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_account FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_account = ? AND webhooks.id = ?"
 		expectedArgs := []interface{}{
-			exampleWebhook.BelongsToUser,
+			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+		actualQuery, actualArgs := q.BuildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -58,7 +58,7 @@ func TestMariaDB_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user FROM webhooks WHERE webhooks.id > ? AND webhooks.id < ?"
+		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_account FROM webhooks WHERE webhooks.id > ? AND webhooks.id < ?"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -81,7 +81,7 @@ func TestMariaDB_BuildGetWebhooksQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_user, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ?) as total_count, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ?) as filtered_count FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_user = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ? GROUP BY webhooks.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT webhooks.id, webhooks.external_id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_account, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_account = ?) as total_count, (SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_account = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ?) as filtered_count FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_account = ? AND webhooks.created_on > ? AND webhooks.created_on < ? AND webhooks.last_updated_on > ? AND webhooks.last_updated_on < ? GROUP BY webhooks.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -117,7 +117,7 @@ func TestMariaDB_BuildCreateWebhookQuery(T *testing.T) {
 		exIDGen.On("NewExternalID").Return(exampleWebhook.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO webhooks (external_id,name,content_type,url,method,events,data_types,topics,belongs_to_user) VALUES (?,?,?,?,?,?,?,?,?)"
+		expectedQuery := "INSERT INTO webhooks (external_id,name,content_type,url,method,events,data_types,topics,belongs_to_account) VALUES (?,?,?,?,?,?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleWebhook.ExternalID,
 			exampleWebhook.Name,
@@ -127,7 +127,7 @@ func TestMariaDB_BuildCreateWebhookQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Events, querybuilding.WebhooksTableEventsSeparator),
 			strings.Join(exampleWebhook.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
 			strings.Join(exampleWebhook.Topics, querybuilding.WebhooksTableTopicsSeparator),
-			exampleWebhook.BelongsToUser,
+			exampleWebhook.BelongsToAccount,
 		}
 		actualQuery, actualArgs := q.BuildCreateWebhookQuery(exampleInput)
 
@@ -148,7 +148,7 @@ func TestMariaDB_BuildUpdateWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
-		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE webhooks SET name = ?, content_type = ?, url = ?, method = ?, events = ?, data_types = ?, topics = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleWebhook.Name,
 			exampleWebhook.ContentType,
@@ -157,7 +157,7 @@ func TestMariaDB_BuildUpdateWebhookQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Events, querybuilding.WebhooksTableEventsSeparator),
 			strings.Join(exampleWebhook.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
 			strings.Join(exampleWebhook.Topics, querybuilding.WebhooksTableTopicsSeparator),
-			exampleWebhook.BelongsToUser,
+			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
 		actualQuery, actualArgs := q.BuildUpdateWebhookQuery(exampleWebhook)
@@ -177,12 +177,12 @@ func TestMariaDB_BuildArchiveWebhookQuery(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
-		expectedQuery := "UPDATE webhooks SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE webhooks SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?"
 		expectedArgs := []interface{}{
-			exampleWebhook.BelongsToUser,
+			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToUser)
+		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

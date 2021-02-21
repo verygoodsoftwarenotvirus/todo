@@ -30,7 +30,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	logger = logger.WithValue("new_status", input.NewReputation)
 
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)

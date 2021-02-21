@@ -29,7 +29,7 @@ func TestBcrypt_HashPassword(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		actual, err := x.HashPassword(ctx, "authentication")
+		actual, err := x.HashPassword(ctx, "password")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, actual)
 	})
@@ -52,7 +52,7 @@ func TestBcrypt_PasswordMatches(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		actual := x.PasswordMatches(ctx, hashedExamplePassword, "authentication", nil)
+		actual := x.PasswordMatches(ctx, hashedExamplePassword, "password", nil)
 		assert.False(t, actual)
 	})
 }

@@ -36,16 +36,16 @@ var _ types.APIClientDataService = (*service)(nil)
 type (
 	// service manages our API clients via HTTP.
 	service struct {
-		logger               logging.Logger
-		apiClientDataManager types.APIClientDataManager
-		userDataManager      types.UserDataManager
-		authenticator        authentication.Authenticator
-		encoderDecoder       encoding.HTTPResponseEncoder
-		urlClientIDExtractor func(req *http.Request) uint64
-		sessionInfoFetcher   func(*http.Request) (*types.RequestContext, error)
-		apiClientCounter     metrics.UnitCounter
-		secretGenerator      secretGenerator
-		tracer               tracing.Tracer
+		logger                logging.Logger
+		apiClientDataManager  types.APIClientDataManager
+		userDataManager       types.UserDataManager
+		authenticator         authentication.Authenticator
+		encoderDecoder        encoding.HTTPResponseEncoder
+		urlClientIDExtractor  func(req *http.Request) uint64
+		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
+		apiClientCounter      metrics.UnitCounter
+		secretGenerator       secretGenerator
+		tracer                tracing.Tracer
 	}
 )
 
@@ -60,15 +60,15 @@ func ProvideAPIClientsService(
 	routeParamManager routing.RouteParamManager,
 ) (types.APIClientDataService, error) {
 	svc := &service{
-		apiClientDataManager: clientDataManager,
-		userDataManager:      userDataManager,
-		logger:               logging.EnsureLogger(logger).WithName(serviceName),
-		encoderDecoder:       encoderDecoder,
-		authenticator:        authenticator,
-		secretGenerator:      &standardSecretGenerator{},
-		sessionInfoFetcher:   routeParamManager.FetchContextFromRequest,
-		urlClientIDExtractor: routeParamManager.BuildRouteParamIDFetcher(logger, APIClientIDURIParamKey, "api client"),
-		tracer:               tracing.NewTracer(serviceName),
+		apiClientDataManager:  clientDataManager,
+		userDataManager:       userDataManager,
+		logger:                logging.EnsureLogger(logger).WithName(serviceName),
+		encoderDecoder:        encoderDecoder,
+		authenticator:         authenticator,
+		secretGenerator:       &standardSecretGenerator{},
+		requestContextFetcher: routeParamManager.FetchContextFromRequest,
+		urlClientIDExtractor:  routeParamManager.BuildRouteParamIDFetcher(logger, APIClientIDURIParamKey, "api client"),
+		tracer:                tracing.NewTracer(serviceName),
 	}
 
 	var err error

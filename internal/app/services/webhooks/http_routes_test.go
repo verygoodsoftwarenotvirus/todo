@@ -25,8 +25,10 @@ func TestWebhooksService_List(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -34,7 +36,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 
@@ -72,7 +74,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
@@ -108,7 +110,7 @@ func TestWebhooksService_List(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
@@ -149,7 +151,7 @@ func TestValidateWebhook(T *testing.T) {
 		t.Parallel()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		assert.NoError(t, validateWebhook(exampleInput))
@@ -159,7 +161,7 @@ func TestValidateWebhook(T *testing.T) {
 		t.Parallel()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.Method = " MEATLOAF "
 
@@ -170,7 +172,7 @@ func TestValidateWebhook(T *testing.T) {
 		t.Parallel()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 		exampleInput.URL = "%zzzzz"
 
@@ -182,8 +184,10 @@ func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -191,10 +195,10 @@ func TestWebhooksService_Create(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		mc := &mockmetrics.UnitCounter{}
@@ -206,6 +210,7 @@ func TestWebhooksService_Create(T *testing.T) {
 			"CreateWebhook",
 			mock.Anything,
 			mock.IsType(&types.WebhookCreationInput{}),
+			exampleUser.ID,
 		).Return(exampleWebhook, nil)
 		s.webhookDataManager = wd
 
@@ -236,10 +241,10 @@ func TestWebhooksService_Create(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleWebhook.URL = "%zzzzz"
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
@@ -274,7 +279,7 @@ func TestWebhooksService_Create(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -301,10 +306,10 @@ func TestWebhooksService_Create(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		wd := &mocktypes.WebhookDataManager{}
@@ -312,6 +317,7 @@ func TestWebhooksService_Create(T *testing.T) {
 			"CreateWebhook",
 			mock.Anything,
 			mock.IsType(&types.WebhookCreationInput{}),
+			exampleUser.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
@@ -342,8 +348,10 @@ func TestWebhooksService_Read(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -351,10 +359,10 @@ func TestWebhooksService_Read(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -394,10 +402,10 @@ func TestWebhooksService_Read(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -437,10 +445,10 @@ func TestWebhooksService_Read(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -480,8 +488,10 @@ func TestWebhooksService_Update(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -489,10 +499,10 @@ func TestWebhooksService_Update(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -504,13 +514,15 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			exampleUser.ID,
+			exampleAccount.ID,
 		).Return(exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
 			mock.Anything,
 			mock.IsType(&types.Webhook{}),
+			exampleUser.ID,
+			mock.IsType([]types.FieldChangeSummary{}),
 		).Return(nil)
 		s.webhookDataManager = wd
 
@@ -541,7 +553,7 @@ func TestWebhooksService_Update(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -568,10 +580,10 @@ func TestWebhooksService_Update(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -583,7 +595,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			exampleUser.ID,
+			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
 		s.webhookDataManager = wd
 
@@ -614,10 +626,10 @@ func TestWebhooksService_Update(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -629,7 +641,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			exampleUser.ID,
+			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 
@@ -660,10 +672,10 @@ func TestWebhooksService_Update(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
@@ -675,13 +687,15 @@ func TestWebhooksService_Update(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			exampleUser.ID,
+			exampleAccount.ID,
 		).Return(exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
 			mock.Anything,
 			mock.IsType(&types.Webhook{}),
+			exampleUser.ID,
+			mock.IsType([]types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
 		s.webhookDataManager = wd
 
@@ -712,8 +726,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 	T.Parallel()
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(T, err)
+		return reqCtx, nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -721,10 +737,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
@@ -739,6 +755,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 			"ArchiveWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
+			exampleAccount.ID,
 			exampleUser.ID,
 		).Return(nil)
 		s.webhookDataManager = wd
@@ -764,10 +781,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -778,6 +795,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 			"ArchiveWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
+			exampleAccount.ID,
 			exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		s.webhookDataManager = wd
@@ -807,10 +825,10 @@ func TestWebhooksService_Archive(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+		s.requestContextFetcher = requestContextFetcher
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToUser = exampleUser.ID
+		exampleWebhook.BelongsToAccount = exampleUser.ID
 
 		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
@@ -821,6 +839,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 			"ArchiveWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
+			exampleAccount.ID,
 			exampleUser.ID,
 		).Return(errors.New("blah"))
 		s.webhookDataManager = wd

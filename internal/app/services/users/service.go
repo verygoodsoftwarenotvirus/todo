@@ -38,19 +38,19 @@ type (
 
 	// service handles our users.
 	service struct {
-		userDataManager      types.UserDataManager
-		accountDataManager   types.AccountDataManager
-		authSettings         *authservice.Config
-		authenticator        authentication.Authenticator
-		logger               logging.Logger
-		encoderDecoder       encoding.HTTPResponseEncoder
-		userIDFetcher        func(*http.Request) uint64
-		sessionInfoFetcher   func(*http.Request) (*types.RequestContext, error)
-		userCounter          metrics.UnitCounter
-		secretGenerator      secretGenerator
-		imageUploadProcessor images.ImageUploadProcessor
-		uploadManager        uploads.UploadManager
-		tracer               tracing.Tracer
+		userDataManager       types.UserDataManager
+		accountDataManager    types.AccountDataManager
+		authSettings          *authservice.Config
+		authenticator         authentication.Authenticator
+		logger                logging.Logger
+		encoderDecoder        encoding.HTTPResponseEncoder
+		userIDFetcher         func(*http.Request) uint64
+		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
+		userCounter           metrics.UnitCounter
+		secretGenerator       secretGenerator
+		imageUploadProcessor  images.ImageUploadProcessor
+		uploadManager         uploads.UploadManager
+		tracer                tracing.Tracer
 	}
 )
 
@@ -73,19 +73,19 @@ func ProvideUsersService(
 	}
 
 	svc := &service{
-		logger:               logging.EnsureLogger(logger).WithName(serviceName),
-		userDataManager:      userDataManager,
-		accountDataManager:   accountDataManager,
-		authenticator:        authenticator,
-		userIDFetcher:        routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
-		sessionInfoFetcher:   routeParamManager.FetchContextFromRequest,
-		encoderDecoder:       encoder,
-		authSettings:         authSettings,
-		userCounter:          counter,
-		secretGenerator:      &standardSecretGenerator{},
-		tracer:               tracing.NewTracer(serviceName),
-		imageUploadProcessor: imageUploadProcessor,
-		uploadManager:        uploadManager,
+		logger:                logging.EnsureLogger(logger).WithName(serviceName),
+		userDataManager:       userDataManager,
+		accountDataManager:    accountDataManager,
+		authenticator:         authenticator,
+		userIDFetcher:         routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		requestContextFetcher: routeParamManager.FetchContextFromRequest,
+		encoderDecoder:        encoder,
+		authSettings:          authSettings,
+		userCounter:           counter,
+		secretGenerator:       &standardSecretGenerator{},
+		tracer:                tracing.NewTracer(serviceName),
+		imageUploadProcessor:  imageUploadProcessor,
+		uploadManager:         uploadManager,
 	}
 
 	return svc, nil

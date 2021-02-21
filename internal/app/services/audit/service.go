@@ -25,7 +25,7 @@ type (
 		logger                 logging.Logger
 		auditLog               types.AuditLogEntryDataManager
 		auditLogEntryIDFetcher func(*http.Request) uint64
-		sessionInfoFetcher     func(*http.Request) (*types.RequestContext, error)
+		requestContextFetcher  func(*http.Request) (*types.RequestContext, error)
 		encoderDecoder         encoding.HTTPResponseEncoder
 		tracer                 tracing.Tracer
 	}
@@ -42,7 +42,7 @@ func ProvideService(
 		logger:                 logging.EnsureLogger(logger).WithName(serviceName),
 		auditLog:               auditLog,
 		auditLogEntryIDFetcher: routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
-		sessionInfoFetcher:     routeParamManager.FetchContextFromRequest,
+		requestContextFetcher:  routeParamManager.FetchContextFromRequest,
 		encoderDecoder:         encoder,
 		tracer:                 tracing.NewTracer(serviceName),
 	}

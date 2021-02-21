@@ -31,8 +31,10 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleAccountList := fakes.BuildFakeAccountList()
@@ -68,8 +70,10 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -103,8 +107,10 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -146,8 +152,10 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -187,8 +195,10 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -222,8 +232,10 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -269,8 +281,10 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -308,8 +322,10 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -347,8 +363,10 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -393,8 +411,10 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -431,8 +451,10 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -468,8 +490,10 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -511,8 +535,10 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -556,8 +582,10 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -604,8 +632,10 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -643,8 +673,10 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -682,8 +714,10 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -721,8 +755,10 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 			return exampleAccount.ID
 		}
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
@@ -11,8 +12,8 @@ import (
 )
 
 const (
-	// SessionInfoKey is the non-string type we use for referencing RequestContext structs.
-	SessionInfoKey ContextKey = "session_info"
+	// RequestContextKey is the non-string type we use for referencing RequestContext structs.
+	RequestContextKey ContextKey = "session_info"
 )
 
 func init() {
@@ -95,8 +96,20 @@ func (x *RequestContext) ToBytes() []byte {
 }
 
 // RequestContextFromUser produces a RequestContext object from a User's data.
-func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]bitmask.ServiceUserPermissions) *RequestContext {
-	return &RequestContext{
+func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]bitmask.ServiceUserPermissions) (*RequestContext, error) {
+	if user == nil {
+		return nil, errors.New("non-nil user required for request context")
+	}
+
+	if activeAccountID == 0 {
+		return nil, errors.New("active account ID required for request context")
+	}
+
+	if accountPermissionsMap == nil {
+		return nil, errors.New("non-nil permissions map required for request context")
+	}
+
+	reqCtx := &RequestContext{
 		User: UserRequestContext{
 			ID:                      user.ID,
 			Username:                user.Username,
@@ -106,4 +119,6 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 			AccountPermissionsMap:   accountPermissionsMap,
 		},
 	}
+
+	return reqCtx, nil
 }

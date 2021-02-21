@@ -28,13 +28,13 @@ type (
 
 	// service handles to-do list accounts.
 	service struct {
-		logger             logging.Logger
-		accountDataManager types.AccountDataManager
-		accountIDFetcher   func(*http.Request) uint64
-		sessionInfoFetcher func(*http.Request) (*types.RequestContext, error)
-		accountCounter     metrics.UnitCounter
-		encoderDecoder     encoding.HTTPResponseEncoder
-		tracer             tracing.Tracer
+		logger                logging.Logger
+		accountDataManager    types.AccountDataManager
+		accountIDFetcher      func(*http.Request) uint64
+		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
+		accountCounter        metrics.UnitCounter
+		encoderDecoder        encoding.HTTPResponseEncoder
+		tracer                tracing.Tracer
 	}
 )
 
@@ -52,13 +52,13 @@ func ProvideService(
 	}
 
 	svc := &service{
-		logger:             logging.EnsureLogger(logger).WithName(serviceName),
-		accountIDFetcher:   routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
-		sessionInfoFetcher: routeParamManager.FetchContextFromRequest,
-		accountDataManager: accountDataManager,
-		encoderDecoder:     encoder,
-		accountCounter:     accountCounter,
-		tracer:             tracing.NewTracer(serviceName),
+		logger:                logging.EnsureLogger(logger).WithName(serviceName),
+		accountIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
+		requestContextFetcher: routeParamManager.FetchContextFromRequest,
+		accountDataManager:    accountDataManager,
+		encoderDecoder:        encoder,
+		accountCounter:        accountCounter,
+		tracer:                tracing.NewTracer(serviceName),
 	}
 
 	return svc, nil

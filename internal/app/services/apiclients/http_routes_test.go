@@ -48,8 +48,12 @@ func Test_fetchUserID(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		// for the service.fetchUserID() call
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		s := buildTestService(t)
 
@@ -97,8 +101,12 @@ func TestService_ListHandler(T *testing.T) {
 
 		req := buildRequest(t)
 		// for the service.fetchUserID() call
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -128,8 +136,12 @@ func TestService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -159,8 +171,12 @@ func TestService_ListHandler(T *testing.T) {
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -230,8 +246,12 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -285,8 +305,12 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -339,8 +363,12 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -393,8 +421,12 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -453,8 +485,12 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -514,8 +550,12 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 
@@ -575,8 +615,12 @@ func TestService_CreateHandler(T *testing.T) {
 		req = req.WithContext(
 			context.WithValue(req.Context(), creationMiddlewareCtxKey, exampleInput),
 		)
+
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
+			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
 		)
 		res := httptest.NewRecorder()
 

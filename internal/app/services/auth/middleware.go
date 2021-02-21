@@ -5,14 +5,15 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/gob"
+	"errors"
 	"net/http"
 	"time"
-
-	"github.com/o1egl/paseto"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+
+	"github.com/o1egl/paseto"
 )
 
 const (
@@ -27,7 +28,7 @@ const (
 	// usernameFormKey is the string we look for in request forms for username information.
 	usernameFormKey = "username"
 	// passwordFormKey is the string we look for in request forms for authentication information.
-	passwordFormKey = "authentication"
+	passwordFormKey = "password"
 	// totpTokenFormKey is the string we look for in request forms for TOTP token information.
 	totpTokenFormKey = "totpToken"
 )
@@ -56,12 +57,15 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 				return
 			}
 
+			reqCtx, requestContextErr := types.RequestContextFromUser(user, defaultAccount, permissions)
+			if requestContextErr != nil {
+				logger.Error(membershipRetrievalErr, "forming request context")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
 			req = req.WithContext(
-				context.WithValue(
-					ctx,
-					types.SessionInfoKey,
-					types.RequestContextFromUser(user, defaultAccount, permissions),
-				),
+				context.WithValue(ctx, types.RequestContextKey, reqCtx),
 			)
 			next.ServeHTTP(res, req)
 			return
@@ -81,69 +85,66 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		// check for a cookie first if we can.
-		if requestContext, err := s.DecodeCookieFromRequest(ctx, req); err == nil && requestContext != nil {
-			user, userRetrievalErr := s.userDB.GetUser(ctx, requestContext.User.ID)
-			if userRetrievalErr != nil {
-				logger.Error(userRetrievalErr, "error authenticating request")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
-			}
-
-			defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
-			if membershipRetrievalErr != nil {
-				logger.Error(membershipRetrievalErr, "retrieving permissions for API client")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
-			}
-
-			logger.WithValue("user_found", user != nil).Debug("serving request")
-
-			if user != nil {
-				tracing.AttachUserIDToSpan(span, user.ID)
-				next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(user, defaultAccount, permissions))))
-				return
-			}
+		if requestContext, err := s.getRequestContextFromCookie(ctx, req); err == nil && requestContext != nil {
+			tracing.AttachUserIDToSpan(span, requestContext.User.ID)
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, requestContext)))
+			return
 		}
 
-		rawToken := req.Header.Get(pasetoAuthorizationKey)
+		tokenRequestContext, tokenErr := s.checkRequestForToken(ctx, req)
+		if tokenErr != nil {
+			logger.Error(tokenErr, "error extracting token from request")
+			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+			return
+		}
 
-		if rawToken != "" {
-			var token paseto.JSONToken
-
-			if decryptErr := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); decryptErr != nil {
-				logger.Error(decryptErr, "error decrypting PASETO")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
-			}
-
-			if time.Now().UTC().After(token.Expiration) {
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
-			}
-
-			payload := token.Get(pasetoDataKey)
-
-			gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(payload)
-			if base64DecodeErr != nil {
-				logger.Error(base64DecodeErr, "error decoding base64 encoded GOB payload")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
-			}
-
-			var si *types.RequestContext
-			gobDecodeErr := gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&si)
-			if gobDecodeErr != nil {
-				logger.Error(gobDecodeErr, "error decoding GOB encoded session info payload")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
-			}
-
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, si)))
+		if tokenRequestContext != nil {
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, tokenRequestContext)))
 			return
 		}
 
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 	})
+}
+
+func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	if rawToken := req.Header.Get(pasetoAuthorizationKey); rawToken != "" {
+		var token paseto.JSONToken
+
+		if decryptErr := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); decryptErr != nil {
+			logger.Error(decryptErr, "error decrypting PASETO")
+			return nil, decryptErr
+		}
+
+		if time.Now().UTC().After(token.Expiration) {
+			return nil, errors.New("token expired")
+		}
+
+		payload := token.Get(pasetoDataKey)
+
+		gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(payload)
+		if base64DecodeErr != nil {
+			logger.Error(base64DecodeErr, "error decoding base64 encoded GOB payload")
+			return nil, base64DecodeErr
+		}
+
+		var reqContext *types.RequestContext
+
+		gobDecodeErr := gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&reqContext)
+		if gobDecodeErr != nil {
+			logger.Error(gobDecodeErr, "error decoding GOB encoded session info payload")
+			return nil, gobDecodeErr
+		}
+
+		return reqContext, nil
+	}
+
+	return nil, errors.New("no token data found")
 }
 
 // AuthorizationMiddleware checks to see if a user is associated with the request, and then determines whether said request can proceed.
@@ -155,9 +156,9 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		// UserAttributionMiddleware should be called before this middleware.
-		if si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext); ok {
+		if reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext); ok {
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if si.User.UserAccountStatus == types.BannedAccountStatus {
+			if reqCtx.User.UserAccountStatus == types.BannedAccountStatus {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return
@@ -181,7 +182,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		reqCtx, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
+		reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
 
 		if !ok || reqCtx == nil {
 			logger.Debug("AdminMiddleware called without user attached to context")

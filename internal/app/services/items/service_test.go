@@ -23,14 +23,14 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:             logging.NewNonOperationalLogger(),
-		itemCounter:        &mockmetrics.UnitCounter{},
-		itemDataManager:    &mocktypes.ItemDataManager{},
-		itemIDFetcher:      func(req *http.Request) uint64 { return 0 },
-		sessionInfoFetcher: func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
-		encoderDecoder:     mockencoding.NewMockEncoderDecoder(),
-		search:             &mocksearch.IndexManager{},
-		tracer:             tracing.NewTracer("test"),
+		logger:                logging.NewNonOperationalLogger(),
+		itemCounter:           &mockmetrics.UnitCounter{},
+		itemDataManager:       &mocktypes.ItemDataManager{},
+		itemIDFetcher:         func(req *http.Request) uint64 { return 0 },
+		requestContextFetcher: func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
+		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
+		search:                &mocksearch.IndexManager{},
+		tracer:                tracing.NewTracer("test"),
 	}
 }
 

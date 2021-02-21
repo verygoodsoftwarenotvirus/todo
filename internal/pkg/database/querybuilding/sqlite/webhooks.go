@@ -108,7 +108,7 @@ func (q *Sqlite) BuildUpdateWebhookQuery(input *types.Webhook) (query string, ar
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                     input.ID,
-			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToUser,
+			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToAccount,
 			querybuilding.ArchivedOnColumn:             nil,
 		}),
 	)

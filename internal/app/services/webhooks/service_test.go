@@ -21,13 +21,13 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:             logging.NewNonOperationalLogger(),
-		webhookCounter:     &mockmetrics.UnitCounter{},
-		webhookDataManager: &mocktypes.WebhookDataManager{},
-		sessionInfoFetcher: func(req *http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
-		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
-		encoderDecoder:     mockencoding.NewMockEncoderDecoder(),
-		tracer:             tracing.NewTracer("test"),
+		logger:                logging.NewNonOperationalLogger(),
+		webhookCounter:        &mockmetrics.UnitCounter{},
+		webhookDataManager:    &mocktypes.WebhookDataManager{},
+		requestContextFetcher: func(req *http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
+		webhookIDFetcher:      func(req *http.Request) uint64 { return 0 },
+		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
+		tracer:                tracing.NewTracer("test"),
 	}
 }
 

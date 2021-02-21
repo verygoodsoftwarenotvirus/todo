@@ -107,7 +107,7 @@ func main() {
 
 			userLogger := logger.
 				WithValue("username", createdUser.Username).
-				WithValue("authentication", createdUser.HashedPassword).
+				WithValue("password", createdUser.HashedPassword).
 				WithValue("totp_secret", createdUser.TwoFactorSecret).
 				WithValue("user_id", createdUser.ID).
 				WithValue("user_number", x)

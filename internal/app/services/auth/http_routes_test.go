@@ -49,7 +49,10 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	require.NoError(t, s.sessionManager.RenewToken(ctx))
 
 	// Then make the privilege-level change.
-	s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(user, exampleAccount.ID, examplePerms))
+	reqCtx, err := types.RequestContextFromUser(user, exampleAccount.ID, examplePerms)
+	require.NoError(t, err)
+
+	s.sessionManager.Put(ctx, sessionInfoKey, reqCtx)
 
 	token, _, err := s.sessionManager.Commit(ctx)
 	assert.NotEmpty(t, token)
@@ -72,8 +75,10 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -82,7 +87,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 		ctx, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		cookie, err := s.DecodeCookieFromRequest(ctx, req)
+		cookie, err := s.getRequestContextFromCookie(ctx, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, cookie)
 	})
@@ -109,7 +114,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		// end building bad cookie.
 		req.AddCookie(c)
 
-		cookie, err := s.DecodeCookieFromRequest(req.Context(), req)
+		cookie, err := s.getRequestContextFromCookie(req.Context(), req)
 		assert.Error(t, err)
 		assert.Nil(t, cookie)
 	})
@@ -124,7 +129,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		cookie, err := s.DecodeCookieFromRequest(req.Context(), req)
+		cookie, err := s.getRequestContextFromCookie(req.Context(), req)
 		assert.Error(t, err)
 		assert.Equal(t, err, http.ErrNoCookie)
 		assert.Nil(t, cookie)
@@ -141,8 +146,10 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -188,8 +195,10 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -224,8 +233,10 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -304,8 +315,10 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -341,8 +354,8 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleUser.AccountStatusExplanation = "bad behavior"
 		exampleAccount := fakes.BuildFakeAccount()
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			reqCtx := types.RequestContextFromUser(
+		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
+			reqCtx, _ := types.RequestContextFromUser(
 				exampleUser,
 				exampleAccount.ID,
 				map[uint64]bitmask.ServiceUserPermissions{},
@@ -386,8 +399,10 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -437,8 +452,10 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -484,8 +501,10 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -548,8 +567,10 @@ func TestService_LoginHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -615,8 +636,10 @@ func TestService_LogoutHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -646,16 +669,21 @@ func TestService_LogoutHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		ctx, sessionErr := s.sessionManager.Load(ctx, "")
 		require.NoError(t, sessionErr)
 		require.NoError(t, s.sessionManager.RenewToken(ctx))
 
+		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		require.NoError(t, err)
+
 		// Then make the privilege-level change.
-		s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms))
+		s.sessionManager.Put(ctx, sessionInfoKey, reqCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
@@ -674,8 +702,10 @@ func TestService_LogoutHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -706,8 +736,10 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -737,8 +769,10 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -784,8 +818,10 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -823,8 +859,10 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -870,8 +908,10 @@ func TestService_validateLogin(T *testing.T) {
 		expectedErr := errors.New("arbitrary")
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -901,8 +941,10 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -936,8 +978,10 @@ func TestService_StatusHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		res := httptest.NewRecorder()
@@ -968,8 +1012,10 @@ func TestService_StatusHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1005,8 +1051,10 @@ func TestService_CycleSecretHandler(T *testing.T) {
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1039,7 +1087,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
+		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
 			return nil, errors.New("blah")
 		}
 
@@ -1067,8 +1115,10 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1129,8 +1179,10 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{
@@ -1232,8 +1284,10 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{
@@ -1605,8 +1659,10 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{
@@ -1670,8 +1726,10 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+			require.NoError(t, err)
+			return reqCtx, nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{

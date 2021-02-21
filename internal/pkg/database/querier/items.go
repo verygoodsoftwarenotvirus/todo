@@ -325,7 +325,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput,
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the
 // provided input to have a valid ID.
-func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []types.FieldChangeSummary, changedByUser uint64) error {
+func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

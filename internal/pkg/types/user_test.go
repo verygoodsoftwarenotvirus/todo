@@ -78,7 +78,7 @@ func TestUser_ToSessionInfo(T *testing.T) {
 			},
 		}
 
-		actual := RequestContextFromUser(exampleUser, exampleAccount.ID, examplePermissions)
+		actual, _ := RequestContextFromUser(exampleUser, exampleAccount.ID, examplePermissions)
 
 		assert.Equal(t, expected, actual)
 	})

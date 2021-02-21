@@ -27,13 +27,13 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := types.ExtractQueryFilter(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	var (
@@ -65,13 +65,13 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("ReadHandler invoked")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
+	tracing.AttachRequestContextToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
 	// determine audit log entry ID.

@@ -52,14 +52,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// try to pluck the parsed input from the request context.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.WebhookCreationInput)
@@ -70,7 +70,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	input.BelongsToUser = si.User.ID
+	input.BelongsToUser = reqCtx.User.ID
 
 	// ensure everything's on the up-and-up
 	if err := validateWebhook(input); err != nil {
@@ -81,7 +81,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// create the webhook.
-	wh, err := s.webhookDataManager.CreateWebhook(ctx, input)
+	wh, err := s.webhookDataManager.CreateWebhook(ctx, input, reqCtx.User.ID)
 	if err != nil {
 		logger.Error(err, "error creating webhook")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -108,17 +108,17 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := types.ExtractQueryFilter(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// find the webhooks.
-	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, si.User.ID, filter)
+	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.User.ID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		webhooks = &types.WebhookList{
 			Webhooks: []*types.Webhook{},
@@ -142,14 +142,14 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -157,7 +157,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// fetch the webhook from the database.
-	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.User.ID)
+	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("No rows found in webhook database")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -182,14 +182,17 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	userID := reqCtx.User.ID
+	accountID := reqCtx.User.ActiveAccountID
+	logger = logger.WithValue(keys.UserIDKey, userID)
+
+	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -206,7 +209,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch the webhook in question.
-	wh, err := s.webhookDataManager.GetWebhook(ctx, webhookID, si.User.ID)
+	webhook, err := s.webhookDataManager.GetWebhook(ctx, webhookID, accountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -220,10 +223,10 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update it.
-	changes := wh.Update(input)
+	changes := webhook.Update(input)
 
 	// save the update in the database.
-	if err = s.webhookDataManager.UpdateWebhook(ctx, wh, changes); err != nil {
+	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, userID, changes); err != nil {
 		logger.Error(err, "error encountered updating webhook")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
@@ -231,7 +234,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// let everybody know we're good.
-	s.encoderDecoder.EncodeResponse(ctx, res, wh)
+	s.encoderDecoder.EncodeResponse(ctx, res, webhook)
 }
 
 // ArchiveHandler returns a handler that archives an webhook.
@@ -242,14 +245,14 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine relevant user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -257,7 +260,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// do the deed.
-	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, si.User.ID)
+	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, reqCtx.User.ActiveAccountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -286,14 +289,14 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)

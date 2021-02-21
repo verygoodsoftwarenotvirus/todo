@@ -40,11 +40,11 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 		r := &chirouteParamManager{}
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		expected := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, expected),
+			context.WithValue(req.Context(), types.RequestContextKey, expected),
 		)
 
 		actual := r.UserIDFetcherFromRequestContext(req)
@@ -63,7 +63,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 	})
 }
 
-func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
+func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -72,11 +72,11 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 		r := &chirouteParamManager{}
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		expected := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, expected),
+			context.WithValue(req.Context(), types.RequestContextKey, expected),
 		)
 
 		actual, err := r.FetchContextFromRequest(req)

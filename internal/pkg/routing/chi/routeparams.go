@@ -22,16 +22,16 @@ func NewRouteParamManager() routing.RouteParamManager {
 
 // UserIDFetcherFromRequestContext fetches a user ID from a request.
 func (r chirouteParamManager) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
-	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.RequestContext); ok && si != nil {
+	if si, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && si != nil {
 		return si.User.ID
 	}
 
 	return 0
 }
 
-// SessionInfoFetcherFromRequestContext fetches a RequestContext from a request.
+// requestContextFetcherFromRequestContext fetches a RequestContext from a request.
 func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
-	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.RequestContext); ok && si != nil {
+	if si, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && si != nil {
 		return si, nil
 	}
 

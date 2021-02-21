@@ -12,19 +12,19 @@ import (
 type (
 	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event.
 	Webhook struct {
-		ID            uint64   `json:"id"`
-		ExternalID    string   `json:"externalID"`
-		Name          string   `json:"name"`
-		ContentType   string   `json:"contentType"`
-		URL           string   `json:"url"`
-		Method        string   `json:"method"`
-		Events        []string `json:"events"`
-		DataTypes     []string `json:"dataTypes"`
-		Topics        []string `json:"topics"`
-		CreatedOn     uint64   `json:"createdOn"`
-		LastUpdatedOn *uint64  `json:"lastUpdatedOn"`
-		ArchivedOn    *uint64  `json:"archivedOn"`
-		BelongsToUser uint64   `json:"belongsToUser"`
+		ID               uint64   `json:"id"`
+		ExternalID       string   `json:"externalID"`
+		Name             string   `json:"name"`
+		ContentType      string   `json:"contentType"`
+		URL              string   `json:"url"`
+		Method           string   `json:"method"`
+		Events           []string `json:"events"`
+		DataTypes        []string `json:"dataTypes"`
+		Topics           []string `json:"topics"`
+		CreatedOn        uint64   `json:"createdOn"`
+		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
+		ArchivedOn       *uint64  `json:"archivedOn"`
+		BelongsToAccount uint64   `json:"belongsToAccount"`
 	}
 
 	// WebhookCreationInput represents what a User could set as input for creating a webhook.
@@ -59,25 +59,25 @@ type (
 
 	// WebhookSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	WebhookSQLQueryBuilder interface {
-		BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{})
+		BuildGetWebhookQuery(webhookID, accountID uint64) (query string, args []interface{})
 		BuildGetAllWebhooksCountQuery() string
 		BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{})
-		BuildGetWebhooksQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
+		BuildGetWebhooksQuery(accountID uint64, filter *QueryFilter) (query string, args []interface{})
 		BuildCreateWebhookQuery(x *WebhookCreationInput) (query string, args []interface{})
 		BuildUpdateWebhookQuery(input *Webhook) (query string, args []interface{})
-		BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{})
+		BuildArchiveWebhookQuery(webhookID, accountID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{})
 	}
 
 	// WebhookDataManager describes a structure capable of storing webhooks.
 	WebhookDataManager interface {
-		GetWebhook(ctx context.Context, webhookID, userID uint64) (*Webhook, error)
+		GetWebhook(ctx context.Context, webhookID, accountID uint64) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
-		GetWebhooks(ctx context.Context, userID uint64, filter *QueryFilter) (*WebhookList, error)
 		GetAllWebhooks(ctx context.Context, resultChannel chan []*Webhook, bucketSize uint16) error
-		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
-		UpdateWebhook(ctx context.Context, updated *Webhook, changes []FieldChangeSummary) error
-		ArchiveWebhook(ctx context.Context, webhookID, userID uint64) error
+		GetWebhooks(ctx context.Context, accountID uint64, filter *QueryFilter) (*WebhookList, error)
+		CreateWebhook(ctx context.Context, input *WebhookCreationInput, createdByUser uint64) (*Webhook, error)
+		UpdateWebhook(ctx context.Context, updated *Webhook, changedByUser uint64, changes []FieldChangeSummary) error
+		ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID uint64) error
 		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*AuditLogEntry, error)
 	}
 

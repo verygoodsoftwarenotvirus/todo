@@ -31,8 +31,8 @@ var (
 	errTokenLoading  = errors.New("error loading token")
 )
 
-// DecodeCookieFromRequest takes a request object and fetches the cookie data if it is present.
-func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request) (ca *types.RequestContext, err error) {
+// getRequestContextFromCookie takes a request object and fetches the cookie data if it is present.
+func (s *service) getRequestContextFromCookie(ctx context.Context, req *http.Request) (ca *types.RequestContext, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -49,12 +49,12 @@ func (s *service) DecodeCookieFromRequest(ctx context.Context, req *http.Request
 			return nil, errTokenLoading
 		}
 
-		si, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*types.RequestContext)
+		reqCtx, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*types.RequestContext)
 		if !ok {
 			return nil, errNoSessionInfo
 		}
 
-		return si, nil
+		return reqCtx, nil
 	}
 
 	return nil, http.ErrNoCookie
@@ -68,19 +68,19 @@ func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 	logger := s.logger.WithRequest(req).WithValue("cookie_count", len(req.Cookies()))
 	logger.Debug("fetchUserFromCookie called")
 
-	ca, decodeErr := s.DecodeCookieFromRequest(ctx, req)
+	reqCtx, decodeErr := s.getRequestContextFromCookie(ctx, req)
 	if decodeErr != nil {
 		s.logger.WithError(decodeErr).Debug("unable to fetch cookie data from request")
 		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
 	}
 
-	user, userFetchErr := s.userDB.GetUser(req.Context(), ca.User.ID)
+	user, userFetchErr := s.userDB.GetUser(req.Context(), reqCtx.User.ID)
 	if userFetchErr != nil {
 		s.logger.Debug("unable to determine user from request")
 		return nil, fmt.Errorf("determining user from request: %w", userFetchErr)
 	}
 
-	tracing.AttachUserIDToSpan(span, ca.User.ID)
+	tracing.AttachUserIDToSpan(span, reqCtx.User.ID)
 
 	return user, nil
 }
@@ -206,7 +206,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
@@ -380,7 +380,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 	logger.Info("cycling cookie secret!")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)

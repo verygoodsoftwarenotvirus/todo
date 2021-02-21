@@ -108,7 +108,7 @@ func (q *Postgres) BuildUpdateWebhookQuery(input *types.Webhook) (query string, 
 		Where(squirrel.Eq{
 			querybuilding.ArchivedOnColumn:             nil,
 			querybuilding.IDColumn:                     input.ID,
-			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToUser,
+			querybuilding.WebhooksTableOwnershipColumn: input.BelongsToAccount,
 		}),
 	)
 }

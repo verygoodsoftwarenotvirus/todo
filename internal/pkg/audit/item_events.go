@@ -21,10 +21,10 @@ func BuildItemCreationEventEntry(item *types.Item, createdByUser uint64) *types.
 	return &types.AuditLogEntryCreationInput{
 		EventType: ItemCreationEvent,
 		Context: map[string]interface{}{
+			ActorAssignmentKey:    createdByUser,
 			ItemAssignmentKey:     item.ID,
 			CreationAssignmentKey: item,
 			AccountAssignmentKey:  item.BelongsToAccount,
-			ActorAssignmentKey:    createdByUser,
 		},
 	}
 }

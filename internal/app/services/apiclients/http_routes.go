@@ -125,11 +125,11 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	input.BelongsToUser = s.fetchUserID(req)
+	input.BelongsToAccount = s.fetchUserID(req)
 	input.ServiceAdminPermissions = user.ServiceAdminPermissions
 
 	// create the client.
-	client, err := s.apiClientDataManager.CreateAPIClient(ctx, input)
+	client, err := s.apiClientDataManager.CreateAPIClient(ctx, input, user.ID)
 	if err != nil {
 		logger.Error(err, "creating API client")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -209,7 +209,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, apiClientID)
 
 	// archive the API client in the database.
-	err := s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, si.User.ID)
+	err := s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, si.User.ActiveAccountID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

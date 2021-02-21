@@ -297,7 +297,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, userRetrievalErr := s.userDB.GetUser(ctx, client.BelongsToUser)
+	user, userRetrievalErr := s.userDB.GetUser(ctx, client.BelongsToAccount)
 	if userRetrievalErr != nil {
 		logger.Error(userRetrievalErr, "retrieving user")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -306,7 +306,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
-	defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToUser)
+	defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToAccount)
 	if membershipRetrievalErr != nil {
 		logger.Error(membershipRetrievalErr, "retrieving permissions for API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -333,10 +333,10 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	lifetime := time.Duration(math.Min(float64(maxPASETOLifetime), float64(s.config.PASETO.Lifetime)))
 
 	jsonToken := paseto.JSONToken{
-		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
+		Audience:   strconv.FormatUint(client.BelongsToAccount, 10),
 		Issuer:     s.config.PASETO.Issuer,
 		Jti:        uuid.New().String(),
-		Subject:    strconv.FormatUint(client.BelongsToUser, 10),
+		Subject:    strconv.FormatUint(client.BelongsToAccount, 10),
 		IssuedAt:   now,
 		NotBefore:  now,
 		Expiration: now.Add(lifetime),

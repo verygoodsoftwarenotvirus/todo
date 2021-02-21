@@ -126,7 +126,7 @@ func (c *Client) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
 	attemptCount := 0
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		"interval":     time.Second,
+		"interval":     time.Second.String(),
 		"max_attempts": maxAttempts,
 	})
 	logger.Debug("IsReady called")

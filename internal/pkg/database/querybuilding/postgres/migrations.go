@@ -123,7 +123,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+				belongs_to_account INTEGER REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 		{
@@ -143,7 +143,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+				belongs_to_account INTEGER REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 		{

@@ -17,15 +17,15 @@ const (
 type (
 	// APIClient represents a User-authorized API client.
 	APIClient struct {
-		ID            uint64  `json:"id"`
-		ExternalID    string  `json:"externalID"`
-		Name          string  `json:"name"`
-		ClientID      string  `json:"clientID"`
-		ClientSecret  []byte  `json:"-"`
-		CreatedOn     uint64  `json:"createdOn"`
-		LastUpdatedOn *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn    *uint64 `json:"archivedOn"`
-		BelongsToUser uint64  `json:"belongsToUser"`
+		ID               uint64  `json:"id"`
+		ExternalID       string  `json:"externalID"`
+		Name             string  `json:"name"`
+		ClientID         string  `json:"clientID"`
+		ClientSecret     []byte  `json:"-"`
+		CreatedOn        uint64  `json:"createdOn"`
+		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
+		ArchivedOn       *uint64 `json:"archivedOn"`
+		BelongsToAccount uint64  `json:"belongsToAccount"`
 	}
 
 	// APIClientList is a response struct containing a list of API clients.
@@ -41,7 +41,7 @@ type (
 		ClientID                string                          `json:"-"`
 		ClientSecret            []byte                          `json:"-"`
 		ServiceAdminPermissions bitmask.ServiceAdminPermissions `json:"-"`
-		BelongsToUser           uint64                          `json:"-"`
+		BelongsToAccount        uint64                          `json:"-"`
 	}
 
 	// APIClientCreationResponse is a struct for informing users of what their API client's secret key is.
@@ -55,24 +55,24 @@ type (
 	APIClientSQLQueryBuilder interface {
 		BuildGetBatchOfAPIClientsQuery(beginID, endID uint64) (query string, args []interface{})
 		BuildGetAPIClientByClientIDQuery(clientID string) (query string, args []interface{})
-		BuildGetAPIClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{})
+		BuildGetAPIClientByDatabaseIDQuery(clientID, accountID uint64) (query string, args []interface{})
 		BuildGetAllAPIClientsCountQuery() string
-		BuildGetAPIClientsQuery(userID uint64, filter *QueryFilter) (query string, args []interface{})
+		BuildGetAPIClientsQuery(accountID uint64, filter *QueryFilter) (query string, args []interface{})
 		BuildCreateAPIClientQuery(input *APICientCreationInput) (query string, args []interface{})
 		BuildUpdateAPIClientQuery(input *APIClient) (query string, args []interface{})
-		BuildArchiveAPIClientQuery(clientID, userID uint64) (query string, args []interface{})
+		BuildArchiveAPIClientQuery(clientID, accountID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForAPIClientQuery(clientID uint64) (query string, args []interface{})
 	}
 
 	// APIClientDataManager handles API clients.
 	APIClientDataManager interface {
 		GetAPIClientByClientID(ctx context.Context, clientID string) (*APIClient, error)
-		GetAPIClientByDatabaseID(ctx context.Context, clientID, userID uint64) (*APIClient, error)
+		GetAPIClientByDatabaseID(ctx context.Context, clientID, accountID uint64) (*APIClient, error)
 		GetAllAPIClients(ctx context.Context, resultChannel chan []*APIClient, bucketSize uint16) error
 		GetTotalAPIClientCount(ctx context.Context) (uint64, error)
-		GetAPIClients(ctx context.Context, userID uint64, filter *QueryFilter) (*APIClientList, error)
-		CreateAPIClient(ctx context.Context, input *APICientCreationInput) (*APIClient, error)
-		ArchiveAPIClient(ctx context.Context, clientID, userID uint64) error
+		GetAPIClients(ctx context.Context, accountID uint64, filter *QueryFilter) (*APIClientList, error)
+		CreateAPIClient(ctx context.Context, input *APICientCreationInput, createdByUser uint64) (*APIClient, error)
+		ArchiveAPIClient(ctx context.Context, clientID, accountID, archivedByUser uint64) error
 		GetAuditLogEntriesForAPIClient(ctx context.Context, clientID uint64) ([]*AuditLogEntry, error)
 	}
 

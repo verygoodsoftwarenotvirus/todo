@@ -27,24 +27,13 @@ func BuildAPIClientCreationEventEntry(client *types.APIClient) *types.AuditLogEn
 	}
 }
 
-// BuildAPIClientUpdateEventEntry builds an entry creation input for when an item is updated.
-func BuildAPIClientUpdateEventEntry(userID, clientID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
-	return &types.AuditLogEntryCreationInput{
-		EventType: APIClientUpdateEvent,
-		Context: map[string]interface{}{
-			ActorAssignmentKey:     userID,
-			APIClientAssignmentKey: clientID,
-			ChangesAssignmentKey:   changes,
-		},
-	}
-}
-
 // BuildAPIClientArchiveEventEntry builds an entry creation input for when an oauth2 client is archived.
-func BuildAPIClientArchiveEventEntry(userID, clientID uint64) *types.AuditLogEntryCreationInput {
+func BuildAPIClientArchiveEventEntry(accountID, clientID, archivedBy uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: APIClientArchiveEvent,
 		Context: map[string]interface{}{
-			ActorAssignmentKey:     userID,
+			ActorAssignmentKey:     archivedBy,
+			AccountAssignmentKey:   accountID,
 			APIClientAssignmentKey: clientID,
 		},
 	}

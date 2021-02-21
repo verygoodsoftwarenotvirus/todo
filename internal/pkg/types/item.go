@@ -49,15 +49,15 @@ type (
 
 	// ItemSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	ItemSQLQueryBuilder interface {
-		BuildItemExistsQuery(itemID, userID uint64) (query string, args []interface{})
-		BuildGetItemQuery(itemID, userID uint64) (query string, args []interface{})
+		BuildItemExistsQuery(itemID, accountID uint64) (query string, args []interface{})
+		BuildGetItemQuery(itemID, accountID uint64) (query string, args []interface{})
 		BuildGetAllItemsCountQuery() string
 		BuildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{})
-		BuildGetItemsQuery(userID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
-		BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{})
+		BuildGetItemsQuery(accountID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
+		BuildGetItemsWithIDsQuery(accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{})
 		BuildCreateItemQuery(input *ItemCreationInput) (query string, args []interface{})
 		BuildUpdateItemQuery(input *Item) (query string, args []interface{})
-		BuildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{})
+		BuildArchiveItemQuery(itemID, accountID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{})
 	}
 

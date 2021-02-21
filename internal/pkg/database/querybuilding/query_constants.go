@@ -131,7 +131,7 @@ const (
 	// APIClientsTableSecretKeyColumn is what the API clients table calls the <> column.
 	APIClientsTableSecretKeyColumn = "secret_key"
 	// APIClientsTableOwnershipColumn is what the API clients table calls the <> column.
-	APIClientsTableOwnershipColumn = userOwnershipColumn
+	APIClientsTableOwnershipColumn = accountOwnershipColumn
 
 	//
 	// Webhooks Table.

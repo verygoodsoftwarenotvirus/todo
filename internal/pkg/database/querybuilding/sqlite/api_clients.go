@@ -54,24 +54,24 @@ func (q *Sqlite) BuildGetAllAPIClientsCountQuery() string {
 
 // BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // returns the given filter's criteria (if relevant) and belong to a given account.
-func (q *Sqlite) BuildGetAPIClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetAPIClientsQuery(accountID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		querybuilding.APIClientsTableName,
 		querybuilding.APIClientsTableOwnershipColumn,
 		querybuilding.APIClientsTableColumns,
-		userID,
+		accountID,
 		false,
 		filter,
 	)
 }
 
 // BuildGetAPIClientByDatabaseIDQuery returns a SQL query which requests a given API client by its database ID.
-func (q *Sqlite) BuildGetAPIClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildGetAPIClientByDatabaseIDQuery(clientID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.APIClientsTableColumns...).
 		From(querybuilding.APIClientsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.APIClientsTableOwnershipColumn): userID,
+			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.APIClientsTableOwnershipColumn): accountID,
 			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.IDColumn):                       clientID,
 			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.ArchivedOnColumn):               nil,
 		}),
@@ -94,7 +94,7 @@ func (q *Sqlite) BuildCreateAPIClientQuery(input *types.APICientCreationInput) (
 			input.Name,
 			input.ClientID,
 			input.ClientSecret,
-			input.BelongsToUser,
+			input.BelongsToAccount,
 		),
 	)
 }
@@ -107,14 +107,14 @@ func (q *Sqlite) BuildUpdateAPIClientQuery(input *types.APIClient) (query string
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                       input.ID,
-			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToUser,
+			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToAccount,
 			querybuilding.ArchivedOnColumn:               nil,
 		}),
 	)
 }
 
 // BuildArchiveAPIClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
-func (q *Sqlite) BuildArchiveAPIClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+func (q *Sqlite) BuildArchiveAPIClientQuery(clientID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.APIClientsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
@@ -122,7 +122,7 @@ func (q *Sqlite) BuildArchiveAPIClientQuery(clientID, userID uint64) (query stri
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                       clientID,
 			querybuilding.ArchivedOnColumn:               nil,
-			querybuilding.APIClientsTableOwnershipColumn: userID,
+			querybuilding.APIClientsTableOwnershipColumn: accountID,
 		}),
 	)
 }

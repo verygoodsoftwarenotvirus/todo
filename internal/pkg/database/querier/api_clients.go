@@ -30,7 +30,7 @@ func (c *Client) scanAPIClient(scan database.Scanner, includeCounts bool) (clien
 		&client.CreatedOn,
 		&client.LastUpdatedOn,
 		&client.ArchivedOn,
-		&client.BelongsToUser,
+		&client.BelongsToAccount,
 	}
 
 	if includeCounts {
@@ -220,13 +220,13 @@ func (c *Client) GetAPIClients(ctx context.Context, userID uint64, filter *types
 }
 
 // CreateAPIClient creates an API client.
-func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreationInput) (*types.APIClient, error) {
+func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreationInput, createdByUser uint64) (*types.APIClient, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.APIClientClientIDKey: input.ClientID,
-		keys.UserIDKey:            input.BelongsToUser,
+		keys.UserIDKey:            input.BelongsToAccount,
 	}).Debug("CreateAPIClient called")
 
 	query, args := c.sqlQueryBuilder.BuildCreateAPIClientQuery(input)
@@ -243,12 +243,12 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 	}
 
 	x := &types.APIClient{
-		ID:            id,
-		Name:          input.Name,
-		ClientID:      input.ClientID,
-		ClientSecret:  input.ClientSecret,
-		BelongsToUser: input.BelongsToUser,
-		CreatedOn:     c.currentTime(),
+		ID:               id,
+		Name:             input.Name,
+		ClientID:         input.ClientID,
+		ClientSecret:     input.ClientSecret,
+		BelongsToAccount: input.BelongsToAccount,
+		CreatedOn:        c.currentTime(),
 	}
 
 	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x))
@@ -261,19 +261,21 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 }
 
 // ArchiveAPIClient archives an API client.
-func (c *Client) ArchiveAPIClient(ctx context.Context, clientID, userID uint64) error {
+func (c *Client) ArchiveAPIClient(ctx context.Context, clientID, accountID, archivedByUser uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, archivedByUser)
+	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.APIClientDatabaseIDKey: clientID,
-		keys.UserIDKey:              userID,
+		keys.AccountIDKey:           accountID,
+		keys.UserIDKey:              archivedByUser,
 	}).Debug("ArchiveAPIClient called")
 
-	query, args := c.sqlQueryBuilder.BuildArchiveAPIClientQuery(clientID, userID)
+	query, args := c.sqlQueryBuilder.BuildArchiveAPIClientQuery(clientID, accountID)
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
@@ -285,7 +287,7 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, clientID, userID uint64) 
 		return fmt.Errorf("error updating API client: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(userID, clientID))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(accountID, clientID, archivedByUser))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

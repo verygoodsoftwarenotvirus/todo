@@ -72,37 +72,37 @@ func (c *Client) scanItems(rows database.ResultIterator, includeCounts bool) (it
 }
 
 // ItemExists fetches whether or not an item exists from the database.
-func (c *Client) ItemExists(ctx context.Context, itemID, userID uint64) (exists bool, err error) {
+func (c *Client) ItemExists(ctx context.Context, itemID, accountID uint64) (exists bool, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, itemID)
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.ItemIDKey: itemID,
-		keys.UserIDKey: userID,
+		keys.UserIDKey: accountID,
 	}).Debug("ItemExists called")
 
-	query, args := c.sqlQueryBuilder.BuildItemExistsQuery(itemID, userID)
+	query, args := c.sqlQueryBuilder.BuildItemExistsQuery(itemID, accountID)
 
 	return c.performBooleanQuery(ctx, c.db, query, args)
 }
 
 // GetItem fetches an item from the database.
-func (c *Client) GetItem(ctx context.Context, itemID, userID uint64) (*types.Item, error) {
+func (c *Client) GetItem(ctx context.Context, itemID, accountID uint64) (*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, itemID)
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.ItemIDKey: itemID,
-		keys.UserIDKey: userID,
+		keys.UserIDKey: accountID,
 	}).Debug("GetItem called")
 
-	query, args := c.sqlQueryBuilder.BuildGetItemQuery(itemID, userID)
+	query, args := c.sqlQueryBuilder.BuildGetItemQuery(itemID, accountID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	item, _, _, err := c.scanItem(row, false)
@@ -167,21 +167,21 @@ func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item, ba
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter.
-func (c *Client) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.ItemList, err error) {
+func (c *Client) GetItems(ctx context.Context, accountID uint64, filter *types.QueryFilter) (x *types.ItemList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	x = &types.ItemList{}
 
-	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetItems called")
+	tracing.AttachAccountIDToSpan(span, accountID)
+	c.logger.WithValue(keys.UserIDKey, accountID).Debug("GetItems called")
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := c.sqlQueryBuilder.BuildGetItemsQuery(userID, false, filter)
+	query, args := c.sqlQueryBuilder.BuildGetItemsQuery(accountID, false, filter)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -224,23 +224,23 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 }
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
-func (c *Client) GetItemsWithIDs(ctx context.Context, userID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
+func (c *Client) GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
 
 	c.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey: userID,
+		keys.UserIDKey: accountID,
 		"limit":        limit,
 		"id_count":     len(ids),
 	}).Debug("GetItemsWithIDs called")
 
-	query, args := c.sqlQueryBuilder.BuildGetItemsWithIDsQuery(userID, limit, ids, false)
+	query, args := c.sqlQueryBuilder.BuildGetItemsWithIDsQuery(accountID, limit, ids, false)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -330,6 +330,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changedByU
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, updated.ID)
+	tracing.AttachUserIDToSpan(span, changedByUser)
 	c.logger.WithValue(keys.ItemIDKey, updated.ID).Debug("UpdateItem called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
@@ -358,12 +359,14 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, belongsToAccount)
+	tracing.AttachAccountIDToSpan(span, belongsToAccount)
+	tracing.AttachUserIDToSpan(span, archivedBy)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	c.logger.WithValues(map[string]interface{}{
-		keys.ItemIDKey: itemID,
-		keys.UserIDKey: belongsToAccount,
+		keys.ItemIDKey:    itemID,
+		keys.UserIDKey:    archivedBy,
+		keys.AccountIDKey: belongsToAccount,
 	}).Debug("ArchiveItem called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, belongsToAccount)

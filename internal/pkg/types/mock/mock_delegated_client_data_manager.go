@@ -45,14 +45,14 @@ func (m *APIClientDataManager) GetAPIClients(ctx context.Context, userID uint64,
 }
 
 // CreateAPIClient is a mock function.
-func (m *APIClientDataManager) CreateAPIClient(ctx context.Context, input *types.APICientCreationInput) (*types.APIClient, error) {
-	args := m.Called(ctx, input)
+func (m *APIClientDataManager) CreateAPIClient(ctx context.Context, input *types.APICientCreationInput, createdByUser uint64) (*types.APIClient, error) {
+	args := m.Called(ctx, input, createdByUser)
 	return args.Get(0).(*types.APIClient), args.Error(1)
 }
 
 // ArchiveAPIClient is a mock function.
-func (m *APIClientDataManager) ArchiveAPIClient(ctx context.Context, clientID, userID uint64) error {
-	return m.Called(ctx, clientID, userID).Error(0)
+func (m *APIClientDataManager) ArchiveAPIClient(ctx context.Context, clientID, accountID, archivedByUser uint64) error {
+	return m.Called(ctx, clientID, accountID, archivedByUser).Error(0)
 }
 
 // GetAuditLogEntriesForAPIClient is a mock function.

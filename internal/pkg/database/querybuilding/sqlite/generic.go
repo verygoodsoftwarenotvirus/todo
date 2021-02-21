@@ -77,7 +77,7 @@ func (q *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, user
 
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	var includeArchived bool
 	if filter != nil {
 		includeArchived = filter.IncludeArchived
@@ -86,7 +86,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 	filteredCountQuery, filteredCountQueryArgs := q.buildFilteredCountQuery(
 		tableName,
 		ownershipColumn,
-		userID,
+		ownerID,
 		forAdmin,
 		includeArchived,
 		filter,
@@ -95,7 +95,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(
 		tableName,
 		ownershipColumn,
-		userID,
+		ownerID,
 		forAdmin,
 		includeArchived,
 	)
@@ -111,7 +111,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 	if !forAdmin {
 		builder = builder.Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn): nil,
-			fmt.Sprintf("%s.%s", tableName, ownershipColumn):                userID,
+			fmt.Sprintf("%s.%s", tableName, ownershipColumn):                ownerID,
 		})
 	}
 

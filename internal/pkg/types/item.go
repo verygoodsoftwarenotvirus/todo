@@ -24,8 +24,7 @@ type (
 		CreatedOn        uint64  `json:"createdOn"`
 		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn       *uint64 `json:"archivedOn"`
-		BelongsToUser    uint64  `json:"belongsToUser"`
-		BelongsToAccount *uint64 `json:"belongsToAccount"`
+		BelongsToAccount uint64  `json:"belongsToAccount"`
 	}
 
 	// ItemList represents a list of items.
@@ -38,7 +37,6 @@ type (
 	ItemCreationInput struct {
 		Name             string `json:"name"`
 		Details          string `json:"details"`
-		BelongsToUser    uint64 `json:"-"`
 		BelongsToAccount uint64 `json:"-"`
 	}
 
@@ -46,7 +44,6 @@ type (
 	ItemUpdateInput struct {
 		Name             string `json:"name"`
 		Details          string `json:"details"`
-		BelongsToUser    uint64 `json:"-"`
 		BelongsToAccount uint64 `json:"-"`
 	}
 
@@ -74,8 +71,8 @@ type (
 		GetItemsForAdmin(ctx context.Context, filter *QueryFilter) (*ItemList, error)
 		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*Item, error)
 		GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*Item, error)
-		CreateItem(ctx context.Context, input *ItemCreationInput) (*Item, error)
-		UpdateItem(ctx context.Context, updated *Item, changes []FieldChangeSummary) error
+		CreateItem(ctx context.Context, input *ItemCreationInput, createdByUser uint64) (*Item, error)
+		UpdateItem(ctx context.Context, updated *Item, changes []FieldChangeSummary, changedByUser uint64) error
 		ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedBy uint64) error
 		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
 	}

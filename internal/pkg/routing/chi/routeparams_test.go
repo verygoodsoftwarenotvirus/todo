@@ -39,7 +39,8 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		expected := types.RequestContextFromUser(fakes.BuildFakeUser())
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		expected := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
 
 		req := buildRequest(t)
 		req = req.WithContext(
@@ -70,14 +71,15 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		expected := types.RequestContextFromUser(fakes.BuildFakeUser())
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		expected := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
 
 		req := buildRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), types.SessionInfoKey, expected),
 		)
 
-		actual, err := r.SessionInfoFetcherFromRequestContext(req)
+		actual, err := r.FetchContextFromRequest(req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
@@ -89,7 +91,7 @@ func Test_SessionInfoFetcherFromRequestContext(T *testing.T) {
 		r := &chirouteParamManager{}
 
 		req := buildRequest(t)
-		actual, err := r.SessionInfoFetcherFromRequestContext(req)
+		actual, err := r.FetchContextFromRequest(req)
 
 		assert.Error(t, err)
 		assert.Zero(t, actual)

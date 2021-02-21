@@ -7,8 +7,8 @@ import (
 	"github.com/heptiolabs/healthcheck"
 
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
+	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	delegatedclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/delegatedclients"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
@@ -129,16 +129,16 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			})
 		})
 
-		// Delegated Clients
-		v1Router.Route("/delegated_clients", func(clientRouter routing.Router) {
-			clientRouter.Get(root, s.delegatedClientsService.ListHandler)
-			clientRouter.WithMiddleware(s.delegatedClientsService.CreationInputMiddleware).Post(root, s.delegatedClientsService.CreateHandler)
+		// API Clients
+		v1Router.Route("/api_clients", func(clientRouter routing.Router) {
+			clientRouter.Get(root, s.apiClientsService.ListHandler)
+			clientRouter.WithMiddleware(s.apiClientsService.CreationInputMiddleware).Post(root, s.apiClientsService.CreateHandler)
 
-			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, delegatedclientsservice.DelegatedClientIDURIParamKey)
+			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, apiclientsservice.APIClientIDURIParamKey)
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
-				singleClientRouter.Get(root, s.delegatedClientsService.ReadHandler)
-				singleClientRouter.Delete(root, s.delegatedClientsService.ArchiveHandler)
-				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.delegatedClientsService.AuditEntryHandler)
+				singleClientRouter.Get(root, s.apiClientsService.ReadHandler)
+				singleClientRouter.Delete(root, s.apiClientsService.ArchiveHandler)
+				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.apiClientsService.AuditEntryHandler)
 			})
 		})
 

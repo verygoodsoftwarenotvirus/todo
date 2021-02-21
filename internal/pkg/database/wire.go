@@ -18,7 +18,7 @@ var (
 		ProvideAdminUserDataManager,
 		ProvideAccountDataManager,
 		ProvideAccountUserMembershipDataManager,
-		ProvideDelegatedClientDataManager,
+		ProvideAPIClientDataManager,
 		ProvideWebhookDataManager,
 	)
 )
@@ -68,8 +68,8 @@ func ProvideAdminUserDataManager(db DataManager) types.AdminUserDataManager {
 	return db
 }
 
-// ProvideDelegatedClientDataManager is an arbitrary function for dependency injection's sake.
-func ProvideDelegatedClientDataManager(db DataManager) types.DelegatedClientDataManager {
+// ProvideAPIClientDataManager is an arbitrary function for dependency injection's sake.
+func ProvideAPIClientDataManager(db DataManager) types.APIClientDataManager {
 	return db
 }
 

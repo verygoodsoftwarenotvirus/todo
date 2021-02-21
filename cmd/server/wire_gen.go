@@ -12,9 +12,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/delegatedclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
@@ -46,7 +46,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	authConfig := &cfg.Auth
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
-	delegatedClientDataManager := database.ProvideDelegatedClientDataManager(dbm)
+	apiClientDataManager := database.ProvideAPIClientDataManager(dbm)
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
 	cookieConfig := authConfig.Cookies
 	configConfig := cfg.Database
@@ -54,20 +54,20 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	encoderDecoder := encoding.ProvideHTTPResponseEncoder(logger)
+	httpResponseEncoder := encoding.ProvideHTTPResponseEncoder(logger)
 	routeParamManager := chi.NewRouteParamManager()
-	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, delegatedClientDataManager, accountUserMembershipDataManager, sessionManager, encoderDecoder, routeParamManager)
+	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, httpResponseEncoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	frontendService := frontend.ProvideService(logger, frontendConfig)
 	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
-	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, encoderDecoder, routeParamManager)
+	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, httpResponseEncoder, routeParamManager)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	searchConfig := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemDataService, err := items.ProvideService(logger, itemDataManager, encoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
+	itemDataService, err := items.ProvideService(logger, itemDataManager, httpResponseEncoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -80,32 +80,32 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	uploadManager := uploads.ProvideUploadManager(uploader)
-	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, encoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
+	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, httpResponseEncoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
-	accountSubscriptionPlanDataService, err := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, encoderDecoder, unitCounterProvider, routeParamManager)
+	accountSubscriptionPlanDataService, err := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
-	delegatedClientDataService, err := delegatedclients.ProvideDelegatedClientsService(logger, delegatedClientDataManager, userDataManager, authenticator, encoderDecoder, unitCounterProvider, routeParamManager)
+	apiClientDataService, err := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, httpResponseEncoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
-	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, encoderDecoder, unitCounterProvider, routeParamManager)
+	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
-	adminService, err := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, encoderDecoder, routeParamManager)
+	adminService, err := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, httpResponseEncoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, delegatedClientDataService, webhookDataService, adminService, dbm, logger, encoderDecoder, router)
+	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, apiClientDataService, webhookDataService, adminService, dbm, logger, httpResponseEncoder, router)
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,10 @@ func init() {
 	}
 }
 
+const (
+	maxPASETOLifetime = 10 * time.Minute
+)
+
 // BuildViperConfig is a constructor function that initializes a viper config.
 func BuildViperConfig() *viper.Viper {
 	cfg := viper.New()
@@ -97,7 +101,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)
 
 	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Issuer)
-	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, time.Duration(math.Min(float64(input.Auth.PASETO.Lifetime), float64(10*time.Minute))))
+	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, time.Duration(math.Min(float64(input.Auth.PASETO.Lifetime), float64(maxPASETOLifetime))))
 	cfg.Set(ConfigKeyAuthPASETOLocalModeKey, input.Auth.PASETO.LocalModeKey)
 
 	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)

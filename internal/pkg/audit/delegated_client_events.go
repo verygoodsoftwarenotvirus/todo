@@ -5,47 +5,47 @@ import (
 )
 
 const (
-	// DelegatedClientAssignmentKey is the key we use to indicate that an audit log entry is associated with an oauth2 client.
-	DelegatedClientAssignmentKey = "delegated_client_id"
+	// APIClientAssignmentKey is the key we use to indicate that an audit log entry is associated with an oauth2 client.
+	APIClientAssignmentKey = "api_client_id"
 
-	// DelegatedClientCreationEvent events indicate a user created a delegated client.
-	DelegatedClientCreationEvent = "delegated_client_created"
-	// DelegatedClientUpdateEvent events indicate a user updated a delegated client.
-	DelegatedClientUpdateEvent = "delegated_client_created"
-	// DelegatedClientArchiveEvent events indicate a user deleted a delegated client.
-	DelegatedClientArchiveEvent = "delegated_client_archived"
+	// APIClientCreationEvent events indicate a user created a API client.
+	APIClientCreationEvent = "api_client_created"
+	// APIClientUpdateEvent events indicate a user updated a API client.
+	APIClientUpdateEvent = "api_client_created"
+	// APIClientArchiveEvent events indicate a user deleted a API client.
+	APIClientArchiveEvent = "api_client_archived"
 )
 
-// BuildDelegatedClientCreationEventEntry builds an entry creation input for when an oauth2 client is created.
-func BuildDelegatedClientCreationEventEntry(client *types.DelegatedClient) *types.AuditLogEntryCreationInput {
+// BuildAPIClientCreationEventEntry builds an entry creation input for when an oauth2 client is created.
+func BuildAPIClientCreationEventEntry(client *types.APIClient) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
-		EventType: DelegatedClientCreationEvent,
+		EventType: APIClientCreationEvent,
 		Context: map[string]interface{}{
-			DelegatedClientAssignmentKey: client.ID,
-			CreationAssignmentKey:        client,
+			APIClientAssignmentKey: client.ID,
+			CreationAssignmentKey:  client,
 		},
 	}
 }
 
-// BuildDelegatedClientUpdateEventEntry builds an entry creation input for when an item is updated.
-func BuildDelegatedClientUpdateEventEntry(userID, clientID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+// BuildAPIClientUpdateEventEntry builds an entry creation input for when an item is updated.
+func BuildAPIClientUpdateEventEntry(userID, clientID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
-		EventType: DelegatedClientUpdateEvent,
+		EventType: APIClientUpdateEvent,
 		Context: map[string]interface{}{
-			ActorAssignmentKey:           userID,
-			DelegatedClientAssignmentKey: clientID,
-			ChangesAssignmentKey:         changes,
+			ActorAssignmentKey:     userID,
+			APIClientAssignmentKey: clientID,
+			ChangesAssignmentKey:   changes,
 		},
 	}
 }
 
-// BuildDelegatedClientArchiveEventEntry builds an entry creation input for when an oauth2 client is archived.
-func BuildDelegatedClientArchiveEventEntry(userID, clientID uint64) *types.AuditLogEntryCreationInput {
+// BuildAPIClientArchiveEventEntry builds an entry creation input for when an oauth2 client is archived.
+func BuildAPIClientArchiveEventEntry(userID, clientID uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
-		EventType: DelegatedClientArchiveEvent,
+		EventType: APIClientArchiveEvent,
 		Context: map[string]interface{}{
-			ActorAssignmentKey:           userID,
-			DelegatedClientAssignmentKey: clientID,
+			ActorAssignmentKey:     userID,
+			APIClientAssignmentKey: clientID,
 		},
 	}
 }

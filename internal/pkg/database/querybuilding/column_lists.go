@@ -92,20 +92,20 @@ var (
 	}
 
 	//
-	// Delegated Clients Table.
+	// API Clients Table.
 	//
 
-	// DelegatedClientsTableColumns are the columns for the oauth2 clients table.
-	DelegatedClientsTableColumns = []string{
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, IDColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ExternalIDColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableNameColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableClientIDColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableSecretKeyColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", DelegatedClientsTableName, DelegatedClientsTableOwnershipColumn),
+	// APIClientsTableColumns are the columns for the oauth2 clients table.
+	APIClientsTableColumns = []string{
+		fmt.Sprintf("%s.%s", APIClientsTableName, IDColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, ExternalIDColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableNameColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableClientIDColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableSecretKeyColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, CreatedOnColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, LastUpdatedOnColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, ArchivedOnColumn),
+		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableOwnershipColumn),
 	}
 
 	//
@@ -142,7 +142,6 @@ var (
 		fmt.Sprintf("%s.%s", ItemsTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, ArchivedOnColumn),
-		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableUserOwnershipColumn),
 		fmt.Sprintf("%s.%s", ItemsTableName, ItemsTableAccountOwnershipColumn),
 	}
 )

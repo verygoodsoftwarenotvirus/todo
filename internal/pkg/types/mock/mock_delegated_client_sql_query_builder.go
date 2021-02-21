@@ -6,71 +6,71 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.DelegatedClientSQLQueryBuilder = (*DelegatedClientSQLQueryBuilder)(nil)
+var _ types.APIClientSQLQueryBuilder = (*APIClientSQLQueryBuilder)(nil)
 
-// DelegatedClientSQLQueryBuilder is a mocked types.DelegatedClientSQLQueryBuilder for testing.
-type DelegatedClientSQLQueryBuilder struct {
+// APIClientSQLQueryBuilder is a mocked types.APIClientSQLQueryBuilder for testing.
+type APIClientSQLQueryBuilder struct {
 	mock.Mock
 }
 
-// BuildGetBatchOfDelegatedClientsQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildGetBatchOfDelegatedClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
+// BuildGetBatchOfAPIClientsQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildGetBatchOfAPIClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(beginID, endID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetDelegatedClientQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildGetDelegatedClientQuery(clientID string) (query string, args []interface{}) {
+// BuildGetAPIClientByClientIDQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildGetAPIClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	returnArgs := m.Called(clientID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetDelegatedClientByDatabaseIDQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildGetDelegatedClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{}) {
+// BuildGetAPIClientByDatabaseIDQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildGetAPIClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(clientID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAllDelegatedClientsCountQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildGetAllDelegatedClientsCountQuery() string {
+// BuildGetAllAPIClientsCountQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildGetAllAPIClientsCountQuery() string {
 	returnArgs := m.Called()
 
 	return returnArgs.String(0)
 }
 
-// BuildGetDelegatedClientsQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildGetDelegatedClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+// BuildGetAPIClientsQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildGetAPIClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	returnArgs := m.Called(userID, filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildCreateDelegatedClientQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildCreateDelegatedClientQuery(input *types.DelegatedClientCreationInput) (query string, args []interface{}) {
+// BuildCreateAPIClientQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildCreateAPIClientQuery(input *types.APICientCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildUpdateDelegatedClientQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildUpdateDelegatedClientQuery(input *types.DelegatedClient) (query string, args []interface{}) {
+// BuildUpdateAPIClientQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildUpdateAPIClientQuery(input *types.APIClient) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildArchiveDelegatedClientQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildArchiveDelegatedClientQuery(clientID, userID uint64) (query string, args []interface{}) {
+// BuildArchiveAPIClientQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildArchiveAPIClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(clientID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAuditLogEntriesForDelegatedClientQuery implements our interface.
-func (m *DelegatedClientSQLQueryBuilder) BuildGetAuditLogEntriesForDelegatedClientQuery(clientID uint64) (query string, args []interface{}) {
+// BuildGetAuditLogEntriesForAPIClientQuery implements our interface.
+func (m *APIClientSQLQueryBuilder) BuildGetAuditLogEntriesForAPIClientQuery(clientID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(clientID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

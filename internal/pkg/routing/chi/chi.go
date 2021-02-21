@@ -277,7 +277,7 @@ func (r *router) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
 }
 
 // SessionInfoFetcherFromRequestContext fetches a RequestContext from a request.
-func (r *router) SessionInfoFetcherFromRequestContext(req *http.Request) (*types.RequestContext, error) {
+func (r *router) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
 	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.RequestContext); ok && si != nil {
 		return si, nil
 	}

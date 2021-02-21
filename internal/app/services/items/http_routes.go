@@ -25,6 +25,122 @@ func parseBool(str string) bool {
 	}
 }
 
+// CreateHandler is our item creation route.
+func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// check request context for parsed input struct.
+	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.ItemCreationInput)
+	if !ok {
+		logger.Info("valid input not attached to request")
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		return
+	}
+
+	// determine user ID.
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachSessionInfoToSpan(span, si)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
+	input.BelongsToAccount = si.User.ActiveAccountID
+
+	// create item in database.
+	x, err := s.itemDataManager.CreateItem(ctx, input, si.User.ID)
+	if err != nil {
+		logger.Error(err, "error creating item")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	tracing.AttachItemIDToSpan(span, x.ID)
+	logger = logger.WithValue(keys.ItemIDKey, x.ID)
+
+	// notify relevant parties.
+	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
+		logger.Error(searchIndexErr, "adding item to search index")
+	}
+
+	s.itemCounter.Increment(ctx)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
+}
+
+// ReadHandler returns a GET handler that returns an item.
+func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// determine user ID.
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachSessionInfoToSpan(span, si)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
+
+	// determine item ID.
+	itemID := s.itemIDFetcher(req)
+	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+
+	// fetch item from database.
+	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ActiveAccountID)
+	if errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+		return
+	} else if err != nil {
+		logger.Error(err, "error fetching item from database")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	// encode our response and peace.
+	s.encoderDecoder.EncodeResponse(ctx, res, x)
+}
+
+// ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
+func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// determine user ID.
+	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
+	if sessionInfoRetrievalErr != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachSessionInfoToSpan(span, si)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
+
+	// determine item ID.
+	itemID := s.itemIDFetcher(req)
+	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+
+	// fetch item from database.
+	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.User.ActiveAccountID)
+	if errors.Is(err, sql.ErrNoRows) {
+		logger.Error(err, "error checking item existence in database")
+	}
+
+	if !exists || errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+	}
+}
+
 // ListHandler is our list route.
 func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -59,7 +175,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	if si.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
 	} else {
-		items, err = s.itemDataManager.GetItems(ctx, si.User.ID, filter)
+		items, err = s.itemDataManager.GetItems(ctx, si.User.ActiveAccountID, filter)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -114,7 +230,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		relevantIDs, searchErr = s.search.SearchForAdmin(ctx, query)
 	} else {
-		relevantIDs, searchErr = s.search.Search(ctx, query, si.User.ID)
+		relevantIDs, searchErr = s.search.Search(ctx, query, si.User.ActiveAccountID)
 	}
 
 	if searchErr != nil {
@@ -127,7 +243,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		items, dbErr = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
 	} else {
-		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.User.ID, filter.Limit, relevantIDs)
+		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.User.ActiveAccountID, filter.Limit, relevantIDs)
 	}
 
 	if errors.Is(dbErr, sql.ErrNoRows) {
@@ -141,122 +257,6 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode our response and peace.
 	s.encoderDecoder.EncodeResponse(ctx, res, items)
-}
-
-// CreateHandler is our item creation route.
-func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// check request context for parsed input struct.
-	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.ItemCreationInput)
-	if !ok {
-		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
-
-	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
-	input.BelongsToUser = si.User.ID
-
-	// create item in database.
-	x, err := s.itemDataManager.CreateItem(ctx, input)
-	if err != nil {
-		logger.Error(err, "error creating item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	tracing.AttachItemIDToSpan(span, x.ID)
-	logger = logger.WithValue(keys.ItemIDKey, x.ID)
-
-	// notify relevant parties.
-	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
-		logger.Error(searchIndexErr, "adding item to search index")
-	}
-
-	s.itemCounter.Increment(ctx)
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
-}
-
-// ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
-func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
-
-	// determine item ID.
-	itemID := s.itemIDFetcher(req)
-	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-
-	// fetch item from database.
-	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.User.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		logger.Error(err, "error checking item existence in database")
-	}
-
-	if !exists || errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-	}
-}
-
-// ReadHandler returns a GET handler that returns an item.
-func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	// determine user ID.
-	si, sessionInfoRetrievalErr := s.sessionInfoFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
-
-	// determine item ID.
-	itemID := s.itemIDFetcher(req)
-	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-
-	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		logger.Error(err, "error fetching item from database")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
 // UpdateHandler returns a handler that updates an item.
@@ -282,8 +282,8 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
-	input.BelongsToUser = si.User.ID
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
+	input.BelongsToAccount = si.User.ActiveAccountID
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -291,7 +291,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -305,7 +305,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, x, changeReport); err != nil {
+	if err = s.itemDataManager.UpdateItem(ctx, x, changeReport, si.User.ID); err != nil {
 		logger.Error(err, "error encountered updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -335,7 +335,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionInfoToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -343,7 +343,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.User.ID, si.User.ID)
+	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.User.ActiveAccountID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

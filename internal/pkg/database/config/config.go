@@ -52,8 +52,8 @@ type Config struct {
 }
 
 // Validate validates an DatabaseSettings struct.
-func (cfg Config) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, &cfg,
+func (cfg *Config) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.CreateTestUser),
 		validation.Field(&cfg.Provider, validation.In(PostgresProviderKey, MariaDBProviderKey, SqliteProviderKey)),
 		validation.Field(&cfg.ConnectionDetails, validation.Required),

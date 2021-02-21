@@ -18,8 +18,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildMockRowsFromDelegatedClients(includeCounts bool, filteredCount uint64, clients ...*types.DelegatedClient) *sqlmock.Rows {
-	columns := querybuilding.DelegatedClientsTableColumns
+func buildMockRowsFromAPIClients(includeCounts bool, filteredCount uint64, clients ...*types.APIClient) *sqlmock.Rows {
+	columns := querybuilding.APIClientsTableColumns
 
 	if includeCounts {
 		columns = append(columns, "filtered_count", "total_count")
@@ -50,7 +50,7 @@ func buildMockRowsFromDelegatedClients(includeCounts bool, filteredCount uint64,
 	return exampleRows
 }
 
-func TestClient_ScanDelegatedClients(T *testing.T) {
+func TestClient_ScanAPIClients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestClient_ScanDelegatedClients(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, _, err := q.scanDelegatedClients(mockRows, false)
+		_, _, _, err := q.scanAPIClients(mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -76,34 +76,34 @@ func TestClient_ScanDelegatedClients(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, _, err := q.scanDelegatedClients(mockRows, false)
+		_, _, _, err := q.scanAPIClients(mockRows, false)
 		assert.Error(t, err)
 	})
 }
 
-func TestClient_GetDelegatedClient(T *testing.T) {
+func TestClient_GetAPIClientByClientID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ClientID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientByClientIDQuery", exampleAPIClient.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnRows(buildMockRowsFromDelegatedClients(false, 0, exampleDelegatedClient))
+			WillReturnRows(buildMockRowsFromAPIClients(false, 0, exampleAPIClient))
 
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ClientID)
+		actual, err := c.GetAPIClientByClientID(ctx, exampleAPIClient.ClientID)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleDelegatedClient, actual)
+		assert.Equal(t, exampleAPIClient, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -111,21 +111,21 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 	T.Run("respects sql.ErrNoRows", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ClientID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientByClientIDQuery", exampleAPIClient.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ClientID)
+		actual, err := c.GetAPIClientByClientID(ctx, exampleAPIClient.ClientID)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
 		assert.Nil(t, actual)
@@ -136,21 +136,21 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientQuery", exampleDelegatedClient.ClientID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientByClientIDQuery", exampleAPIClient.ClientID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ClientID)
+		actual, err := c.GetAPIClientByClientID(ctx, exampleAPIClient.ClientID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -158,7 +158,7 @@ func TestClient_GetDelegatedClient(T *testing.T) {
 	})
 }
 
-func TestClient_GetTotalDelegatedClientCount(T *testing.T) {
+func TestClient_GetTotalAPIClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -171,14 +171,14 @@ func TestClient_GetTotalDelegatedClientCount(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetAllDelegatedClientsCountQuery").Return(fakeQuery)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAllAPIClientsCountQuery").Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(exampleCount))
 
-		actual, err := c.GetTotalDelegatedClientCount(ctx)
+		actual, err := c.GetTotalAPIClientCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
 
@@ -193,14 +193,14 @@ func TestClient_GetTotalDelegatedClientCount(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetAllDelegatedClientsCountQuery").Return(fakeQuery)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAllAPIClientsCountQuery").Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetTotalDelegatedClientCount(ctx)
+		actual, err := c.GetTotalAPIClientCount(ctx)
 		assert.Error(t, err)
 		assert.Zero(t, actual)
 
@@ -208,25 +208,25 @@ func TestClient_GetTotalDelegatedClientCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllDelegatedClients(T *testing.T) {
+func TestClient_GetAllAPIClients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []*types.DelegatedClient)
+		results := make(chan []*types.APIClient)
 		expectedCount := uint64(20)
 		doneChan := make(chan bool, 1)
 		exampleBatchSize := uint16(1000)
-		exampleDelegatedClientList := fakes.BuildFakeDelegatedClientList()
+		exampleAPIClientList := fakes.BuildFakeAPIClientList()
 
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAllDelegatedClientsCountQuery").
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAllAPIClientsCountQuery").
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -234,16 +234,16 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetBatchOfDelegatedClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetBatchOfAPIClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(secondFakeQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
-			WillReturnRows(buildMockRowsFromDelegatedClients(false, 0, exampleDelegatedClientList.Clients...))
+			WillReturnRows(buildMockRowsFromAPIClients(false, 0, exampleAPIClientList.Clients...))
 
-		err := c.GetAllDelegatedClients(ctx, results, exampleBatchSize)
+		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
 		assert.NoError(t, err)
 
 		var stillQuerying = true
@@ -266,7 +266,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []*types.DelegatedClient)
+		results := make(chan []*types.APIClient)
 		expectedCount := uint64(20)
 		exampleBatchSize := uint16(1000)
 
@@ -274,8 +274,8 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAllDelegatedClientsCountQuery").
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAllAPIClientsCountQuery").
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -283,8 +283,8 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetBatchOfDelegatedClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetBatchOfAPIClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -292,7 +292,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		err := c.GetAllDelegatedClients(ctx, results, exampleBatchSize)
+		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -304,15 +304,15 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []*types.DelegatedClient)
+		results := make(chan []*types.APIClient)
 		exampleBatchSize := uint16(1000)
 
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAllDelegatedClientsCountQuery").
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAllAPIClientsCountQuery").
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -321,7 +321,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		err := c.GetAllDelegatedClients(ctx, results, exampleBatchSize)
+		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
 		assert.Error(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
@@ -331,7 +331,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []*types.DelegatedClient)
+		results := make(chan []*types.APIClient)
 		expectedCount := uint64(20)
 		exampleBatchSize := uint16(1000)
 
@@ -339,8 +339,8 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAllDelegatedClientsCountQuery").
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAllAPIClientsCountQuery").
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -348,8 +348,8 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetBatchOfDelegatedClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetBatchOfAPIClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -357,7 +357,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := c.GetAllDelegatedClients(ctx, results, exampleBatchSize)
+		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -369,7 +369,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		results := make(chan []*types.DelegatedClient)
+		results := make(chan []*types.APIClient)
 		expectedCount := uint64(20)
 		exampleBatchSize := uint16(1000)
 
@@ -377,8 +377,8 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAllDelegatedClientsCountQuery").
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAllAPIClientsCountQuery").
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -386,8 +386,8 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetBatchOfDelegatedClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetBatchOfAPIClientsQuery", uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -395,7 +395,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		err := c.GetAllDelegatedClients(ctx, results, exampleBatchSize)
+		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
 		assert.NoError(t, err)
 
 		time.Sleep(time.Second)
@@ -404,7 +404,7 @@ func TestClient_GetAllDelegatedClients(T *testing.T) {
 	})
 }
 
-func TestClient_GetDelegatedClients(T *testing.T) {
+func TestClient_GetAPIClients(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
@@ -412,7 +412,7 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClientList := fakes.BuildFakeDelegatedClientList()
+		exampleAPIClientList := fakes.BuildFakeAPIClientList()
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
@@ -420,16 +420,16 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnRows(buildMockRowsFromDelegatedClients(true, exampleDelegatedClientList.FilteredCount, exampleDelegatedClientList.Clients...))
+			WillReturnRows(buildMockRowsFromAPIClients(true, exampleAPIClientList.FilteredCount, exampleAPIClientList.Clients...))
 
-		actual, err := c.GetDelegatedClients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetAPIClients(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleDelegatedClientList, actual)
+		assert.Equal(t, exampleAPIClientList, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -437,8 +437,8 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 	T.Run("with nil filter", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClientList := fakes.BuildFakeDelegatedClientList()
-		exampleDelegatedClientList.Limit, exampleDelegatedClientList.Page = 0, 0
+		exampleAPIClientList := fakes.BuildFakeAPIClientList()
+		exampleAPIClientList.Limit, exampleAPIClientList.Page = 0, 0
 		filter := (*types.QueryFilter)(nil)
 
 		ctx := context.Background()
@@ -446,16 +446,16 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnRows(buildMockRowsFromDelegatedClients(true, exampleDelegatedClientList.FilteredCount, exampleDelegatedClientList.Clients...))
+			WillReturnRows(buildMockRowsFromAPIClients(true, exampleAPIClientList.FilteredCount, exampleAPIClientList.Clients...))
 
-		actual, err := c.GetDelegatedClients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetAPIClients(ctx, exampleUser.ID, filter)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleDelegatedClientList, actual)
+		assert.Equal(t, exampleAPIClientList, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -470,14 +470,14 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := c.GetDelegatedClients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetAPIClients(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
 		assert.Nil(t, actual)
@@ -495,14 +495,14 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetDelegatedClients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetAPIClients(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -519,14 +519,14 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildGetDelegatedClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetDelegatedClients(ctx, exampleUser.ID, filter)
+		actual, err := c.GetAPIClients(ctx, exampleUser.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -534,16 +534,16 @@ func TestClient_GetDelegatedClients(T *testing.T) {
 	})
 }
 
-func TestClient_CreateDelegatedClient(T *testing.T) {
+func TestClient_CreateAPIClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.ExternalID = ""
-		exampleDelegatedClient.ClientSecret = nil
-		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ExternalID = ""
+		exampleAPIClient.ClientSecret = nil
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -552,24 +552,24 @@ func TestClient_CreateDelegatedClient(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildCreateDelegatedClientQuery", exampleInput).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildCreateAPIClientQuery", exampleInput).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleDelegatedClient.ID))
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
 
 		db.ExpectCommit()
 
 		c.timeFunc = func() uint64 {
-			return exampleDelegatedClient.CreatedOn
+			return exampleAPIClient.CreatedOn
 		}
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual, err := c.CreateDelegatedClient(ctx, exampleInput)
+		actual, err := c.CreateAPIClient(ctx, exampleInput)
 		assert.NoError(t, err)
-		assert.Equal(t, exampleDelegatedClient, actual)
+		assert.Equal(t, exampleAPIClient, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -577,8 +577,8 @@ func TestClient_CreateDelegatedClient(T *testing.T) {
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -587,7 +587,7 @@ func TestClient_CreateDelegatedClient(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildCreateDelegatedClientQuery", exampleInput).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildCreateAPIClientQuery", exampleInput).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -596,11 +596,11 @@ func TestClient_CreateDelegatedClient(T *testing.T) {
 		db.ExpectRollback()
 
 		c.timeFunc = func() uint64 {
-			return exampleDelegatedClient.CreatedOn
+			return exampleAPIClient.CreatedOn
 		}
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual, err := c.CreateDelegatedClient(ctx, exampleInput)
+		actual, err := c.CreateAPIClient(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -608,13 +608,13 @@ func TestClient_CreateDelegatedClient(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateDelegatedClient(T *testing.T) {
+func TestClient_ArchiveAPIClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		var expected error
 		ctx := context.Background()
@@ -624,11 +624,11 @@ func TestClient_UpdateDelegatedClient(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildUpdateDelegatedClientQuery", exampleDelegatedClient).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildArchiveAPIClientQuery", exampleAPIClient.ID, exampleAPIClient.BelongsToUser).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleDelegatedClient.ID))
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
 
@@ -636,7 +636,7 @@ func TestClient_UpdateDelegatedClient(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual := c.UpdateDelegatedClient(ctx, exampleDelegatedClient, nil)
+		actual := c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 
@@ -644,49 +644,13 @@ func TestClient_UpdateDelegatedClient(T *testing.T) {
 	})
 }
 
-func TestClient_ArchiveDelegatedClient(T *testing.T) {
+func TestClient_GetAuditLogEntriesForAPIClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-
-		var expected error
-		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		c, db := buildTestClient(t)
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.On("BuildArchiveDelegatedClientQuery", exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser).Return(fakeQuery, fakeArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleDelegatedClient.ID))
-
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
-
-		db.ExpectCommit()
-
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		actual := c.ArchiveDelegatedClient(ctx, exampleDelegatedClient.ID, exampleDelegatedClient.BelongsToUser)
-		assert.NoError(t, actual)
-		assert.Equal(t, expected, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestClient_GetAuditLogEntriesForDelegatedClient(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAuditLogEntriesList := fakes.BuildFakeAuditLogEntryList()
 
 		ctx := context.Background()
@@ -694,8 +658,8 @@ func TestClient_GetAuditLogEntriesForDelegatedClient(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForDelegatedClientQuery", exampleDelegatedClient.ID).
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAuditLogEntriesForAPIClientQuery", exampleAPIClient.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -706,7 +670,7 @@ func TestClient_GetAuditLogEntriesForDelegatedClient(T *testing.T) {
 				exampleAuditLogEntriesList.Entries...,
 			))
 
-		actual, err := c.GetAuditLogEntriesForDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAuditLogEntriesForAPIClient(ctx, exampleAPIClient.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntriesList.Entries, actual)
 
@@ -716,15 +680,15 @@ func TestClient_GetAuditLogEntriesForDelegatedClient(T *testing.T) {
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForDelegatedClientQuery", exampleDelegatedClient.ID).
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAuditLogEntriesForAPIClientQuery", exampleAPIClient.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -732,7 +696,7 @@ func TestClient_GetAuditLogEntriesForDelegatedClient(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetAuditLogEntriesForDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAuditLogEntriesForAPIClient(ctx, exampleAPIClient.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -742,15 +706,15 @@ func TestClient_GetAuditLogEntriesForDelegatedClient(T *testing.T) {
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		t.Parallel()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.DelegatedClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForDelegatedClientQuery", exampleDelegatedClient.ID).
+		mockQueryBuilder.APIClientSQLQueryBuilder.
+			On("BuildGetAuditLogEntriesForAPIClientQuery", exampleAPIClient.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -758,7 +722,7 @@ func TestClient_GetAuditLogEntriesForDelegatedClient(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetAuditLogEntriesForDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAuditLogEntriesForAPIClient(ctx, exampleAPIClient.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 

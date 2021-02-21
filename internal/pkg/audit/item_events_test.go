@@ -21,25 +21,28 @@ func TestItemEventBuilders(T *testing.T) {
 				audit.ActorAssignmentKey,
 				audit.ItemAssignmentKey,
 				audit.CreationAssignmentKey,
+				audit.AccountAssignmentKey,
 			},
-			actual: audit.BuildItemCreationEventEntry(&types.Item{}),
+			actual: audit.BuildItemCreationEventEntry(&types.Item{}, exampleAccountID),
 		},
 		"BuildItemUpdateEventEntry": {
 			expectedEventType: audit.ItemUpdateEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
 				audit.ItemAssignmentKey,
+				audit.AccountAssignmentKey,
 				audit.ChangesAssignmentKey,
 			},
-			actual: audit.BuildItemUpdateEventEntry(exampleUserID, exampleItemID, nil),
+			actual: audit.BuildItemUpdateEventEntry(exampleUserID, exampleItemID, exampleAccountID, nil),
 		},
 		"BuildItemArchiveEventEntry": {
 			expectedEventType: audit.ItemArchiveEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
+				audit.AccountAssignmentKey,
 				audit.ItemAssignmentKey,
 			},
-			actual: audit.BuildItemArchiveEventEntry(exampleUserID, exampleItemID),
+			actual: audit.BuildItemArchiveEventEntry(exampleUserID, exampleItemID, exampleAccountID),
 		},
 	}
 

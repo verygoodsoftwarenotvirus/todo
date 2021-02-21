@@ -19,16 +19,16 @@ func TestMariaDB_BuildItemExistsQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 
-		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.id = ? )"
+		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id = ? )"
 		expectedArgs := []interface{}{
-			exampleItem.BelongsToUser,
+			exampleItem.BelongsToAccount,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildItemExistsQuery(exampleItem.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildItemExistsQuery(exampleItem.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -43,16 +43,16 @@ func TestMariaDB_BuildGetItemQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.id = ?"
+		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id = ?"
 		expectedArgs := []interface{}{
-			exampleItem.BelongsToUser,
+			exampleItem.BelongsToAccount,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetItemQuery(exampleItem.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildGetItemQuery(exampleItem.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -84,7 +84,7 @@ func TestMariaDB_BuildGetBatchOfItemsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, items.belongs_to_account FROM items WHERE items.id > ? AND items.id < ?"
+		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.id > ? AND items.id < ?"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -107,7 +107,7 @@ func TestMariaDB_BuildGetItemsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, items.belongs_to_account, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ?) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? GROUP BY items.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ?) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? GROUP BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -143,7 +143,7 @@ func TestMariaDB_BuildGetItemsWithIDsQuery(T *testing.T) {
 			456,
 		}
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_user, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_user = ? AND items.id IN (?,?,?) ORDER BY CASE items.id WHEN 789 THEN 0 WHEN 123 THEN 1 WHEN 456 THEN 2 END LIMIT 20"
+		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id IN (?,?,?) ORDER BY CASE items.id WHEN 789 THEN 0 WHEN 123 THEN 1 WHEN 456 THEN 2 END LIMIT 20"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleIDs[0],
@@ -165,21 +165,21 @@ func TestMariaDB_BuildCreateItemQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
 		exIDGen.On("NewExternalID").Return(exampleItem.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO items (external_id,name,details,belongs_to_user) VALUES (?,?,?,?)"
+		expectedQuery := "INSERT INTO items (external_id,name,details,belongs_to_account) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleItem.ExternalID,
 			exampleItem.Name,
 			exampleItem.Details,
-			exampleItem.BelongsToUser,
+			exampleItem.BelongsToAccount,
 		}
 		actualQuery, actualArgs := q.BuildCreateItemQuery(exampleInput)
 
@@ -198,15 +198,15 @@ func TestMariaDB_BuildUpdateItemQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 
-		expectedQuery := "UPDATE items SET name = ?, details = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE items SET name = ?, details = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?"
 		expectedArgs := []interface{}{
 			exampleItem.Name,
 			exampleItem.Details,
-			exampleItem.BelongsToUser,
+			exampleItem.BelongsToAccount,
 			exampleItem.ID,
 		}
 		actualQuery, actualArgs := q.BuildUpdateItemQuery(exampleItem)
@@ -224,16 +224,16 @@ func TestMariaDB_BuildArchiveItemQuery(T *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 
-		expectedQuery := "UPDATE items SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
+		expectedQuery := "UPDATE items SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?"
 		expectedArgs := []interface{}{
-			exampleUser.ID,
+			exampleAccount.ID,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveItemQuery(exampleItem.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildArchiveItemQuery(exampleItem.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

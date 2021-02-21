@@ -29,7 +29,6 @@ func (c *Client) scanItem(scan database.Scanner, includeCounts bool) (x *types.I
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
-		&x.BelongsToUser,
 		&x.BelongsToAccount,
 	}
 
@@ -287,7 +286,7 @@ func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids [
 }
 
 // CreateItem creates an item in the database.
-func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (*types.Item, error) {
+func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput, createdByUser uint64) (*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -308,14 +307,14 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	}
 
 	x := &types.Item{
-		ID:            id,
-		Name:          input.Name,
-		Details:       input.Details,
-		BelongsToUser: input.BelongsToUser,
-		CreatedOn:     c.currentTime(),
+		ID:               id,
+		Name:             input.Name,
+		Details:          input.Details,
+		BelongsToAccount: input.BelongsToAccount,
+		CreatedOn:        c.currentTime(),
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x, createdByUser))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
@@ -326,7 +325,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the
 // provided input to have a valid ID.
-func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []types.FieldChangeSummary) error {
+func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []types.FieldChangeSummary, changedByUser uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -345,7 +344,7 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changes []
 		return fmt.Errorf("error updating item: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(changedByUser, updated.ID, updated.BelongsToAccount, changes))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -379,7 +378,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 		return fmt.Errorf("error updating item: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, itemID))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, belongsToAccount, itemID))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

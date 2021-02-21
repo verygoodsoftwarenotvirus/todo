@@ -238,7 +238,7 @@ func TestService_ListHandler(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
@@ -291,7 +291,7 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 
 		s.UsernameSearchHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
@@ -589,7 +589,7 @@ func TestService_ReadHandler(T *testing.T) {
 		res, req := httptest.NewRecorder(), buildRequest(t)
 		s.ReadHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ed)
 	})
@@ -655,7 +655,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -667,7 +667,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -745,7 +745,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -757,7 +757,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -789,7 +789,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -801,7 +801,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -841,7 +841,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -853,7 +853,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1092,7 +1092,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		req = req.WithContext(
@@ -1103,7 +1103,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1180,7 +1180,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -1192,7 +1192,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1224,7 +1224,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -1236,7 +1236,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1273,7 +1273,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -1285,7 +1285,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			),
 		)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1329,10 +1329,10 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1352,7 +1352,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		s.AvatarUploadHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockDB, ip, um)
 	})
@@ -1378,12 +1378,11 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1406,10 +1405,10 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1437,10 +1436,10 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()
@@ -1473,10 +1472,10 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser)),
+			context.WithValue(req.Context(), types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)),
 		)
 
 		mockDB := database.BuildMockDatabase()

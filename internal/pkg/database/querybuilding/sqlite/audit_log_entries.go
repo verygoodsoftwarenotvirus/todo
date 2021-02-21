@@ -47,7 +47,7 @@ func (q *Sqlite) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (que
 	)
 }
 
-// BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Sqlite) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.

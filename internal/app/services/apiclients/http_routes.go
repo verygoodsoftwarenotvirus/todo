@@ -1,4 +1,4 @@
-package delegatedclients
+package apiclients
 
 import (
 	"database/sql"
@@ -11,11 +11,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.DelegatedClientDataService = (*service)(nil)
+var _ types.APIClientDataService = (*service)(nil)
 
 const (
-	// DelegatedClientIDURIParamKey is used for referring to Delegated client IDs in router params.
-	DelegatedClientIDURIParamKey = "delegatedClientID"
+	// APIClientIDURIParamKey is used for referring to API client IDs in router params.
+	APIClientIDURIParamKey = "apiClientID"
 
 	clientIDKey types.ContextKey = "client_id"
 
@@ -31,7 +31,7 @@ func (s *service) fetchUserID(req *http.Request) uint64 {
 	return 0
 }
 
-// ListHandler is a handler that returns a list of Delegated clients.
+// ListHandler is a handler that returns a list of API clients.
 func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -46,24 +46,24 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachUserIDToSpan(span, userID)
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
-	// fetch delegated clients.
-	delegatedClients, err := s.delegatedClientDataManager.GetDelegatedClients(ctx, userID, filter)
+	// fetch API clients.
+	apiClients, err := s.apiClientDataManager.GetAPIClients(ctx, userID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		// just return an empty list if there are no results.
-		delegatedClients = &types.DelegatedClientList{
-			Clients: []*types.DelegatedClient{},
+		apiClients = &types.APIClientList{
+			Clients: []*types.APIClient{},
 		}
 	} else if err != nil {
-		logger.Error(err, "encountered error getting list of delegated clients from delegatedClientDataManager")
+		logger.Error(err, "encountered error getting list of API clients from apiClientDataManager")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, delegatedClients)
+	s.encoderDecoder.EncodeResponse(ctx, res, apiClients)
 }
 
-// CreateHandler is our Delegated client creation route.
+// CreateHandler is our API client creation route.
 func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -71,7 +71,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// fetch creation input from request context.
-	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.DelegatedClientCreationInput)
+	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.APICientCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
@@ -129,27 +129,22 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.ServiceAdminPermissions = user.ServiceAdminPermissions
 
 	// create the client.
-	client, err := s.delegatedClientDataManager.CreateDelegatedClient(ctx, input)
+	client, err := s.apiClientDataManager.CreateAPIClient(ctx, input)
 	if err != nil {
-		logger.Error(err, "creating delegatedClient in the delegatedClientDataManager")
+		logger.Error(err, "creating API client")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// notify interested parties.
-	tracing.AttachDelegatedClientDatabaseIDToSpan(span, client.ID)
-	s.delegatedClientCounter.Increment(ctx)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, client.ID)
+	s.apiClientCounter.Increment(ctx)
 
-	resObj := &types.DelegatedClientCreationResponse{
+	resObj := &types.APIClientCreationResponse{
 		ID:           client.ID,
 		ClientID:     client.ClientID,
 		ClientSecret: base64.RawURLEncoding.EncodeToString(input.ClientSecret),
 	}
-
-	logger.WithValues(map[string]interface{}{
-		"created_client_id":     resObj.ClientID,
-		"created_client_secret": resObj.ClientSecret,
-	}).Info("created delegated client!!!")
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, resObj, http.StatusCreated)
 }
@@ -171,13 +166,13 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
-	// determine item ID.
-	delegatedClientID := s.urlClientIDExtractor(req)
-	tracing.AttachItemIDToSpan(span, delegatedClientID)
-	logger = logger.WithValue(keys.DelegatedClientDatabaseIDKey, delegatedClientID)
+	// determine API client ID.
+	apiClientID := s.urlClientIDExtractor(req)
+	tracing.AttachItemIDToSpan(span, apiClientID)
+	logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
 
 	// fetch item from database.
-	x, err := s.delegatedClientDataManager.GetDelegatedClientByDatabaseID(ctx, delegatedClientID, si.User.ID)
+	x, err := s.apiClientDataManager.GetAPIClientByDatabaseID(ctx, apiClientID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -191,7 +186,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.EncodeResponse(ctx, res, x)
 }
 
-// ArchiveHandler returns a handler that archives a delegated client.
+// ArchiveHandler returns a handler that archives an API client.
 func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -208,30 +203,30 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionInfoToSpan(span, si)
 	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
 
-	// determine delegated client ID.
-	delegatedClientID := s.urlClientIDExtractor(req)
-	logger = logger.WithValue(keys.DelegatedClientDatabaseIDKey, delegatedClientID)
-	tracing.AttachItemIDToSpan(span, delegatedClientID)
+	// determine API client ID.
+	apiClientID := s.urlClientIDExtractor(req)
+	logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
+	tracing.AttachItemIDToSpan(span, apiClientID)
 
-	// archive the delegated client in the database.
-	err := s.delegatedClientDataManager.ArchiveDelegatedClient(ctx, delegatedClientID, si.User.ID)
+	// archive the API client in the database.
+	err := s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, si.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered deleting delegated client")
+		logger.Error(err, "error encountered deleting API client")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// notify relevant parties.
-	s.delegatedClientCounter.Decrement(ctx)
+	s.apiClientCounter.Decrement(ctx)
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
 }
 
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to a delegated client.
+// AuditEntryHandler returns a GET handler that returns all audit log entries related to an API client.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -243,17 +238,17 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachUserIDToSpan(span, userID)
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
-	// determine relevant delegated client ID.
-	delegatedClientID := s.urlClientIDExtractor(req)
-	tracing.AttachDelegatedClientDatabaseIDToSpan(span, delegatedClientID)
-	logger = logger.WithValue(keys.DelegatedClientIDKey, delegatedClientID)
+	// determine relevant API client ID.
+	apiClientID := s.urlClientIDExtractor(req)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, apiClientID)
+	logger = logger.WithValue(keys.APIClientClientIDKey, apiClientID)
 
-	x, err := s.delegatedClientDataManager.GetAuditLogEntriesForDelegatedClient(ctx, delegatedClientID)
+	x, err := s.apiClientDataManager.GetAuditLogEntriesForAPIClient(ctx, apiClientID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching delegated clients")
+		logger.Error(err, "error encountered fetching API clients")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

@@ -16,8 +16,8 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 		t.Parallel()
 		exampleUserID := fakes.BuildFakeUser().ID
 
-		exampleQuery := fmt.Sprintf("things +belongsToUser:%d", exampleUserID)
-		expectation := fmt.Sprintf("things +belongsToUser:%d", exampleUserID)
+		exampleQuery := fmt.Sprintf("things +belongsToAccount:%d", exampleUserID)
+		expectation := fmt.Sprintf("things +belongsToAccount:%d", exampleUserID)
 
 		actual := ensureQueryIsRestrictedToUser(exampleQuery, exampleUserID)
 		assert.Equal(t, expectation, actual, "expected %q to equal %q", expectation, actual)
@@ -28,7 +28,7 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 		exampleUserID := fakes.BuildFakeUser().ID
 
 		exampleQuery := "things"
-		expectation := fmt.Sprintf("things +belongsToUser:%d", exampleUserID)
+		expectation := fmt.Sprintf("things +belongsToAccount:%d", exampleUserID)
 
 		actual := ensureQueryIsRestrictedToUser(exampleQuery, exampleUserID)
 		assert.Equal(t, expectation, actual, "expected %q to equal %q", expectation, actual)
@@ -38,8 +38,8 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 		t.Parallel()
 		exampleUserID := fakes.BuildFakeUser().ID
 
-		exampleQuery := fmt.Sprintf("stuff belongsToUser:%d", exampleUserID)
-		expectation := fmt.Sprintf("stuff +belongsToUser:%d", exampleUserID)
+		exampleQuery := fmt.Sprintf("stuff belongsToAccount:%d", exampleUserID)
+		expectation := fmt.Sprintf("stuff +belongsToAccount:%d", exampleUserID)
 
 		actual := ensureQueryIsRestrictedToUser(exampleQuery, exampleUserID)
 		assert.Equal(t, expectation, actual, "expected %q to equal %q", expectation, actual)

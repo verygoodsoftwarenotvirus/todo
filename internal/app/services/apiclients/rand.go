@@ -1,4 +1,4 @@
-package delegatedclients
+package apiclients
 
 import (
 	"crypto/rand"

@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/require"
@@ -32,17 +32,17 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 
 	var err error
 
-	user, err = testutil.CreateServiceUser(ctx, urlToUse, "", debug)
+	user, err = utils.CreateServiceUser(ctx, urlToUse, "")
 	require.NoError(t, err)
 
 	t.Logf("created user: %q", user.Username)
 
-	cookie, err = testutil.GetLoginCookie(ctx, urlToUse, user)
+	cookie, err = utils.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
 	cookieClient = initializeCookiePoweredClient(cookie)
 
-	delegatedClient, err := cookieClient.CreateDelegatedClient(ctx, cookie, &types.DelegatedClientCreationInput{
+	apiClient, err := cookieClient.CreateAPIClient(ctx, cookie, &types.APICientCreationInput{
 		Name: t.Name(),
 		UserLoginInput: types.UserLoginInput{
 			Username:  user.Username,
@@ -52,10 +52,10 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 	})
 	require.NoError(t, err)
 
-	secretKey, err := base64.RawURLEncoding.DecodeString(delegatedClient.ClientSecret)
+	secretKey, err := base64.RawURLEncoding.DecodeString(apiClient.ClientSecret)
 	require.NoError(t, err)
 
-	return user, cookie, cookieClient, initializePASETOPoweredClient(delegatedClient.ClientID, secretKey)
+	return user, cookie, cookieClient, initializePASETOPoweredClient(apiClient.ClientID, secretKey)
 }
 
 func generateTOTPTokenForUser(t *testing.T, u *types.User) string {

@@ -46,7 +46,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		actual := s.AccountStatusUpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mh)
 	})

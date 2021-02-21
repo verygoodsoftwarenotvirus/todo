@@ -52,7 +52,7 @@ func TestService_StaticDir(T *testing.T) {
 		req.URL.Path = "/http_routes_test.go"
 		hf(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 	})
 
 	T.Run("with frontend routing path", func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestService_StaticDir(T *testing.T) {
 		req.URL.Path = "/auth/login"
 		hf(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 	})
 }
 

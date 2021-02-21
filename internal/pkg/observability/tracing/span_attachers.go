@@ -89,14 +89,14 @@ func AttachSessionInfoToSpan(span trace.Span, sessionInfo *types.RequestContext)
 	}
 }
 
-// AttachDelegatedClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span.
-func AttachDelegatedClientDatabaseIDToSpan(span trace.Span, clientID uint64) {
-	attachToSpan(span, keys.DelegatedClientDatabaseIDKey, clientID)
+// AttachAPIClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span.
+func AttachAPIClientDatabaseIDToSpan(span trace.Span, clientID uint64) {
+	attachToSpan(span, keys.APIClientDatabaseIDKey, clientID)
 }
 
-// AttachDelegatedClientIDToSpan is a consistent way to attach an oauth2 client's ID to a span.
-func AttachDelegatedClientIDToSpan(span trace.Span, clientID string) {
-	attachToSpan(span, keys.DelegatedClientIDKey, clientID)
+// AttachAPIClientClientIDToSpan is a consistent way to attach an oauth2 client's ID to a span.
+func AttachAPIClientClientIDToSpan(span trace.Span, clientID string) {
+	attachToSpan(span, keys.APIClientClientIDKey, clientID)
 }
 
 // AttachUsernameToSpan provides a consistent way to attach a user's username to a span.

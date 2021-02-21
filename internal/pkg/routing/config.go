@@ -24,8 +24,8 @@ type Config struct {
 }
 
 // Validate validates a router config struct.
-func (cfg Config) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, &cfg,
+func (cfg *Config) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Provider, validation.In(validProviders)),
 	)
 }

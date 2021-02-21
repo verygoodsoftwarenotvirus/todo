@@ -57,18 +57,28 @@ func TestUser_ToSessionInfo(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		exampleInput := &User{
+		exampleUser := &User{
 			ID:                      12345,
 			ServiceAdminPermissions: bitmask.NewServiceAdminPermissions(1),
 		}
 
+		exampleAccount := &Account{
+			ID:            54321,
+			BelongsToUser: exampleUser.ID,
+		}
+
+		examplePermissions := map[uint64]bitmask.ServiceUserPermissions{}
+
 		expected := &RequestContext{
 			User: UserRequestContext{
-				ID:                      exampleInput.ID,
-				ServiceAdminPermissions: exampleInput.ServiceAdminPermissions,
+				ID:                      exampleUser.ID,
+				ActiveAccountID:         exampleAccount.ID,
+				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
+				AccountPermissionsMap:   examplePermissions,
 			},
 		}
-		actual := RequestContextFromUser(exampleInput)
+
+		actual := RequestContextFromUser(exampleUser, exampleAccount.ID, examplePermissions)
 
 		assert.Equal(t, expected, actual)
 	})

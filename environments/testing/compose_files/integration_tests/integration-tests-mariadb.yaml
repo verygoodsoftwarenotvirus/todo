@@ -15,8 +15,8 @@ services:
     todo-server:
         links:
             - database
-        logging:
-            driver: none
+        environment:
+            USE_NOOP_LOGGER: 'nope'
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-mariadb.toml'
               target: '/etc/config.toml'

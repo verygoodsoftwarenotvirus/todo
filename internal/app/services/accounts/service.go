@@ -54,7 +54,7 @@ func ProvideService(
 	svc := &service{
 		logger:             logging.EnsureLogger(logger).WithName(serviceName),
 		accountIDFetcher:   routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
-		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
+		sessionInfoFetcher: routeParamManager.FetchContextFromRequest,
 		accountDataManager: accountDataManager,
 		encoderDecoder:     encoder,
 		accountCounter:     accountCounter,

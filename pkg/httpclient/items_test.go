@@ -356,9 +356,9 @@ func TestV1Client_BuildCreateItemRequest(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		ts := httptest.NewTLSServer(nil)
@@ -395,7 +395,7 @@ func TestV1Client_CreateItem(T *testing.T) {
 					var x *types.ItemCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 
-					exampleInput.BelongsToUser = 0
+					exampleInput.BelongsToAccount = 0
 					assert.Equal(t, exampleInput, x)
 
 					require.NoError(t, json.NewEncoder(res).Encode(exampleItem))

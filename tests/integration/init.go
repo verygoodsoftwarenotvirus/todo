@@ -16,6 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
@@ -51,7 +52,7 @@ func init() {
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	adminCookie, err := testutil.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
+	adminCookie, err := utils.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -63,7 +64,7 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	delegatedClient, err := adminCookieClient.CreateDelegatedClient(ctx, adminCookie, &types.DelegatedClientCreationInput{
+	apiClient, err := adminCookieClient.CreateAPIClient(ctx, adminCookie, &types.APICientCreationInput{
 		Name: "admin_paseto_client",
 		UserLoginInput: types.UserLoginInput{
 			Username:  premadeAdminUser.Username,
@@ -75,12 +76,12 @@ func init() {
 		logger.Fatal(err)
 	}
 
-	secretKey, err := base64.RawURLEncoding.DecodeString(delegatedClient.ClientSecret)
+	secretKey, err := base64.RawURLEncoding.DecodeString(apiClient.ClientSecret)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	adminPASETOClient = initializePASETOPoweredClient(delegatedClient.ClientID, secretKey)
+	adminPASETOClient = initializePASETOPoweredClient(apiClient.ClientID, secretKey)
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

@@ -24,8 +24,8 @@ func (m *RouteParamManager) UserIDFetcherFromRequestContext(req *http.Request) u
 	return m.Called(req).Get(0).(uint64)
 }
 
-// SessionInfoFetcherFromRequestContext satisfies our interface contract.
-func (m *RouteParamManager) SessionInfoFetcherFromRequestContext(req *http.Request) (*types.RequestContext, error) {
+// FetchContextFromRequest satisfies our interface contract.
+func (m *RouteParamManager) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
 	args := m.Called(req)
 
 	return args.Get(0).(*types.RequestContext), args.Error(1)

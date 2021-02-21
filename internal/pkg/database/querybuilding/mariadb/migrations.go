@@ -169,9 +169,9 @@ var (
 		},
 		{
 			Version:     0.13,
-			Description: "create delegated_clients table",
+			Description: "create API clients table",
 			Script: strings.Join([]string{
-				"CREATE TABLE IF NOT EXISTS delegated_clients (",
+				"CREATE TABLE IF NOT EXISTS api_clients (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` VARCHAR(128) DEFAULT '',",
@@ -188,8 +188,8 @@ var (
 		},
 		{
 			Version:     0.14,
-			Description: "create delegated_clients table creation trigger",
-			Script:      buildCreationTriggerScript(querybuilding.DelegatedClientsTableName),
+			Description: "create api_clients table creation trigger",
+			Script:      buildCreationTriggerScript(querybuilding.APIClientsTableName),
 		},
 		{
 			Version:     0.15,
@@ -231,10 +231,8 @@ var (
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    `belongs_to_user` BIGINT UNSIGNED NOT NULL,",
 				"    `belongs_to_account` BIGINT UNSIGNED,",
 				"    PRIMARY KEY (`id`),",
-				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE,",
 				"    FOREIGN KEY (`belongs_to_account`) REFERENCES accounts(`id`) ON DELETE CASCADE",
 				");",
 			}, "\n"),

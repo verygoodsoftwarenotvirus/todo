@@ -66,7 +66,7 @@ func (q *Postgres) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreat
 	)
 }
 
-// BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *Postgres) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQuery, countQueryArgs := q.buildQuery(q.sqlBuilder.

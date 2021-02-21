@@ -52,9 +52,5 @@ type (
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
 	AccountUserMembershipDataManager interface {
 		GetMembershipsForUser(ctx context.Context, userID uint64) (uint64, map[uint64]bitmask.ServiceUserPermissions, error)
-		// MarkAccountAsUserDefault(ctx context.Context, userID, accountID, performedBy uint64) error
-		// UserIsMemberOfAccount(ctx context.Context, userID, accountID, performedBy uint64) error
-		// AddUserToAccount(ctx context.Context, userID, accountID, performedBy uint64) error
-		// RemoveUserFromAccount(ctx context.Context, userID, accountID, performedBy uint64) error
 	}
 )

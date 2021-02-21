@@ -1,4 +1,4 @@
-package delegatedclients
+package apiclients
 
 import (
 	"bytes"
@@ -48,13 +48,13 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		req := buildRequest(t)
 		res := httptest.NewRecorder()
 
-		expected := fakes.BuildFakeDelegatedClientCreationInput()
+		expected := fakes.BuildFakeAPIClientCreationInput()
 		bs, err := json.Marshal(expected)
 		require.NoError(t, err)
 		req.Body = ioutil.NopCloser(bytes.NewReader(bs))
 
 		h.ServeHTTP(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, ed, mh)
 	})
@@ -90,7 +90,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 	})
 }
 
-func TestService_fetchDelegatedClientFromRequest(T *testing.T) {
+func TestService_fetchAPIClientFromRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -99,18 +99,18 @@ func TestService_fetchDelegatedClientFromRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(
 				ctx,
-				types.DelegatedClientKey,
-				exampleDelegatedClient,
+				types.APIClientKey,
+				exampleAPIClient,
 			),
 		)
 
-		actual := s.fetchDelegatedClientFromRequest(req)
-		assert.Equal(t, exampleDelegatedClient, actual)
+		actual := s.fetchAPIClientFromRequest(req)
+		assert.Equal(t, exampleAPIClient, actual)
 	})
 
 	T.Run("without value present", func(t *testing.T) {
@@ -118,11 +118,11 @@ func TestService_fetchDelegatedClientFromRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		assert.Nil(t, s.fetchDelegatedClientFromRequest(buildRequest(t)))
+		assert.Nil(t, s.fetchAPIClientFromRequest(buildRequest(t)))
 	})
 }
 
-func TestService_fetchDelegatedClientIDFromRequest(T *testing.T) {
+func TestService_fetchAPIClientIDFromRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -130,18 +130,18 @@ func TestService_fetchDelegatedClientIDFromRequest(T *testing.T) {
 		ctx := context.Background()
 
 		s := buildTestService(t)
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		req := buildRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				clientIDKey,
-				exampleDelegatedClient.ClientID,
+				exampleAPIClient.ClientID,
 			),
 		)
 
-		actual := s.fetchDelegatedClientIDFromRequest(req)
-		assert.Equal(t, exampleDelegatedClient.ClientID, actual)
+		actual := s.fetchAPIClientIDFromRequest(req)
+		assert.Equal(t, exampleAPIClient.ClientID, actual)
 	})
 
 	T.Run("without value present", func(t *testing.T) {
@@ -149,6 +149,6 @@ func TestService_fetchDelegatedClientIDFromRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		assert.Empty(t, s.fetchDelegatedClientIDFromRequest(buildRequest(t)))
+		assert.Empty(t, s.fetchAPIClientIDFromRequest(buildRequest(t)))
 	})
 }

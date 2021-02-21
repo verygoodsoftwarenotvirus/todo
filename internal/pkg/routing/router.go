@@ -44,7 +44,7 @@ type (
 	RouteParamManager interface {
 		// Route params
 		UserIDFetcherFromRequestContext(req *http.Request) uint64
-		SessionInfoFetcherFromRequestContext(req *http.Request) (*types.RequestContext, error)
+		FetchContextFromRequest(req *http.Request) (*types.RequestContext, error)
 		BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string) func(req *http.Request) uint64
 		BuildRouteParamStringIDFetcher(key string) func(req *http.Request) string
 	}

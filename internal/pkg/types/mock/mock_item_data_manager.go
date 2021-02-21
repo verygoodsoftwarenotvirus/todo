@@ -64,13 +64,13 @@ func (m *ItemDataManager) GetItemsWithIDsForAdmin(ctx context.Context, limit uin
 }
 
 // CreateItem is a mock function.
-func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemCreationInput) (*types.Item, error) {
+func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemCreationInput, createdByUser uint64) (*types.Item, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*types.Item), args.Error(1)
 }
 
 // UpdateItem is a mock function.
-func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, changes []types.FieldChangeSummary) error {
+func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, changes []types.FieldChangeSummary, changedByUser uint64) error {
 	return m.Called(ctx, updated, changes).Error(0)
 }
 

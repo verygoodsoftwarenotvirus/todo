@@ -17,22 +17,25 @@ const (
 )
 
 // BuildItemCreationEventEntry builds an entry creation input for when an item is created.
-func BuildItemCreationEventEntry(item *types.Item) *types.AuditLogEntryCreationInput {
+func BuildItemCreationEventEntry(item *types.Item, createdByUser uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: ItemCreationEvent,
 		Context: map[string]interface{}{
 			ItemAssignmentKey:     item.ID,
 			CreationAssignmentKey: item,
+			AccountAssignmentKey:  item.BelongsToAccount,
+			ActorAssignmentKey:    createdByUser,
 		},
 	}
 }
 
 // BuildItemUpdateEventEntry builds an entry creation input for when an item is updated.
-func BuildItemUpdateEventEntry(userID, itemID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildItemUpdateEventEntry(changedByUser, itemID, accountID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: ItemUpdateEvent,
 		Context: map[string]interface{}{
-			ActorAssignmentKey:   userID,
+			ActorAssignmentKey:   changedByUser,
+			AccountAssignmentKey: accountID,
 			ItemAssignmentKey:    itemID,
 			ChangesAssignmentKey: changes,
 		},
@@ -40,12 +43,13 @@ func BuildItemUpdateEventEntry(userID, itemID uint64, changes []types.FieldChang
 }
 
 // BuildItemArchiveEventEntry builds an entry creation input for when an item is archived.
-func BuildItemArchiveEventEntry(userID, itemID uint64) *types.AuditLogEntryCreationInput {
+func BuildItemArchiveEventEntry(archivedByUser, accountID, itemID uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: ItemArchiveEvent,
 		Context: map[string]interface{}{
-			ActorAssignmentKey: userID,
-			ItemAssignmentKey:  itemID,
+			ActorAssignmentKey:   archivedByUser,
+			AccountAssignmentKey: accountID,
+			ItemAssignmentKey:    itemID,
 		},
 	}
 }

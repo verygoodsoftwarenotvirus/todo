@@ -29,10 +29,10 @@ const (
 	FilterLimitKey = "filter_limit"
 	// FilterIsNilKey is the standard key for referring to a types.QueryFilter's null status in a log.
 	FilterIsNilKey = "filter_is_nil"
-	// DelegatedClientIDKey is the standard key for referring to a delegated client's database ID in a log.
-	DelegatedClientIDKey = "delegated_client_id"
-	// DelegatedClientDatabaseIDKey is the standard key for referring to a delegated client's database ID in a log.
-	DelegatedClientDatabaseIDKey = "delegated_client_row_id"
+	// APIClientClientIDKey is the standard key for referring to an API client's database ID in a log.
+	APIClientClientIDKey = "api_client_id"
+	// APIClientDatabaseIDKey is the standard key for referring to an API client's database ID in a log.
+	APIClientDatabaseIDKey = "api_client_row_id"
 	// WebhookIDKey is the standard key for referring to a webhook's ID in a log.
 	WebhookIDKey = "webhook_id"
 	// URLKey is the standard key for referring to a url in a log.

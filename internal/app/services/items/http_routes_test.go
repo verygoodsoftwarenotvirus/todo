@@ -25,9 +25,9 @@ import (
 func TestItemsService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		exampleItemList := fakes.BuildFakeItemList()
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleItemList, nil)
+		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, mock.IsType(&types.QueryFilter{})).Return(exampleItemList, nil)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -59,7 +59,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
@@ -72,7 +72,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.ItemList)(nil), sql.ErrNoRows)
+		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, mock.IsType(&types.QueryFilter{})).Return((*types.ItemList)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -91,7 +91,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
@@ -104,7 +104,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.ItemList)(nil), errors.New("blah"))
+		itemDataManager.On("GetItems", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, mock.IsType(&types.QueryFilter{})).Return((*types.ItemList)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -132,9 +132,9 @@ func TestItemsService_ListHandler(T *testing.T) {
 func TestItemsService_SearchHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -153,11 +153,11 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		}
 
 		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
+		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleLimit, exampleItemIDs).Return(exampleItemList, nil)
+		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleLimit, exampleItemIDs).Return(exampleItemList, nil)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -176,7 +176,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		s.SearchHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
 	})
@@ -192,7 +192,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		exampleLimit := uint8(123)
 
 		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleUser.ID).Return([]uint64{}, errors.New("blah"))
+		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return([]uint64{}, errors.New("blah"))
 		s.search = si
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -232,11 +232,11 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		}
 
 		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
+		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleLimit, exampleItemIDs).Return([]*types.Item{}, sql.ErrNoRows)
+		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleLimit, exampleItemIDs).Return([]*types.Item{}, sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -255,7 +255,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		s.SearchHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
 	})
@@ -276,11 +276,11 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		}
 
 		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleUser.ID).Return(exampleItemIDs, nil)
+		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
 		s.search = si
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleLimit, exampleItemIDs).Return([]*types.Item{}, errors.New("blah"))
+		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleLimit, exampleItemIDs).Return([]*types.Item{}, errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -308,9 +308,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
@@ -395,7 +395,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
@@ -429,9 +429,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -442,13 +442,13 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("ItemExists", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(true, nil)
+		itemDataManager.On("ItemExists", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(true, nil)
 		s.itemDataManager = itemDataManager
 
 		res := httptest.NewRecorder()
@@ -463,7 +463,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 
 		s.ExistenceHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
 	})
@@ -476,13 +476,13 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("ItemExists", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(false, sql.ErrNoRows)
+		itemDataManager.On("ItemExists", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(false, sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -514,13 +514,13 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("ItemExists", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(false, errors.New("blah"))
+		itemDataManager.On("ItemExists", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(false, errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -548,9 +548,9 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -561,13 +561,13 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
+		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(exampleItem, nil)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -586,7 +586,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 
 		s.ReadHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, ed)
 	})
@@ -599,13 +599,13 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), sql.ErrNoRows)
+		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return((*types.Item)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -637,13 +637,13 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), errors.New("blah"))
+		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return((*types.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -671,9 +671,9 @@ func TestItemsService_ReadHandler(T *testing.T) {
 func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -684,7 +684,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
@@ -692,7 +692,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
+		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(exampleItem, nil)
 		itemDataManager.On("UpdateItem", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Item{}), mock.IsType([]types.FieldChangeSummary{})).Return(nil)
 		s.itemDataManager = itemDataManager
 
@@ -718,7 +718,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		s.UpdateHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, si, ed)
 	})
@@ -759,7 +759,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
@@ -767,7 +767,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), sql.ErrNoRows)
+		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return((*types.Item)(nil), sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -801,7 +801,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
@@ -809,7 +809,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return((*types.Item)(nil), errors.New("blah"))
+		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return((*types.Item)(nil), errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -843,7 +843,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		s.itemIDFetcher = func(req *http.Request) uint64 {
@@ -851,7 +851,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(exampleItem, nil)
+		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(exampleItem, nil)
 		itemDataManager.On("UpdateItem", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Item{}), mock.IsType([]types.FieldChangeSummary{})).Return(errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
@@ -882,9 +882,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -895,13 +895,13 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(nil)
+		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
 		si := &mocksearch.IndexManager{}
@@ -937,13 +937,13 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(sql.ErrNoRows)
+		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(sql.ErrNoRows)
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -975,13 +975,13 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(errors.New("blah"))
+		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -1013,13 +1013,13 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToUser = exampleUser.ID
+		exampleItem.BelongsToAccount = exampleAccount.ID
 		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
 		}
 
 		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleUser.ID).Return(nil)
+		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
 		si := &mocksearch.IndexManager{}

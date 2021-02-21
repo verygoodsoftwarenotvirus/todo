@@ -9,12 +9,12 @@ import (
 // BuildFakeItem builds a faked item.
 func BuildFakeItem() *types.Item {
 	return &types.Item{
-		ID:            uint64(fake.Uint32()),
-		ExternalID:    fake.UUID(),
-		Name:          fake.Word(),
-		Details:       fake.Word(),
-		CreatedOn:     uint64(uint32(fake.Date().Unix())),
-		BelongsToUser: fake.Uint64(),
+		ID:               uint64(fake.Uint32()),
+		ExternalID:       fake.UUID(),
+		Name:             fake.Word(),
+		Details:          fake.Word(),
+		CreatedOn:        uint64(uint32(fake.Date().Unix())),
+		BelongsToAccount: fake.Uint64(),
 	}
 }
 
@@ -39,9 +39,9 @@ func BuildFakeItemList() *types.ItemList {
 // BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateInput from an item.
 func BuildFakeItemUpdateInputFromItem(item *types.Item) *types.ItemUpdateInput {
 	return &types.ItemUpdateInput{
-		Name:          item.Name,
-		Details:       item.Details,
-		BelongsToUser: item.BelongsToUser,
+		Name:             item.Name,
+		Details:          item.Details,
+		BelongsToAccount: item.BelongsToAccount,
 	}
 }
 
@@ -54,8 +54,8 @@ func BuildFakeItemCreationInput() *types.ItemCreationInput {
 // BuildFakeItemCreationInputFromItem builds a faked ItemCreationInput from an item.
 func BuildFakeItemCreationInputFromItem(item *types.Item) *types.ItemCreationInput {
 	return &types.ItemCreationInput{
-		Name:          item.Name,
-		Details:       item.Details,
-		BelongsToUser: item.BelongsToUser,
+		Name:             item.Name,
+		Details:          item.Details,
+		BelongsToAccount: item.BelongsToAccount,
 	}
 }

@@ -47,10 +47,12 @@ func (q *Sqlite) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) 
 		Columns(
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+			querybuilding.AccountsUserMembershipTablePrimaryUserAccountColumn,
 		).
 		Values(
 			userID,
 			accountID,
+			true,
 		),
 	)
 }

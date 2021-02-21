@@ -274,7 +274,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger = logger.WithValue(keys.DelegatedClientIDKey, pasetoRequest.ClientID)
+	logger = logger.WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID)
 
 	reqTime := time.Unix(0, pasetoRequest.RequestTime)
 	if time.Until(reqTime) > requestTimeThreshold || time.Since(reqTime) > requestTimeThreshold {
@@ -290,9 +290,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	client, clientRetrievalErr := s.delegatedClientManager.GetDelegatedClient(ctx, pasetoRequest.ClientID)
+	client, clientRetrievalErr := s.apiClientManager.GetAPIClientByClientID(ctx, pasetoRequest.ClientID)
 	if clientRetrievalErr != nil {
-		logger.Error(clientRetrievalErr, "retrieving delegated client")
+		logger.Error(clientRetrievalErr, "retrieving API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -308,10 +308,12 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToUser)
 	if membershipRetrievalErr != nil {
-		logger.Error(membershipRetrievalErr, "retrieving permissions for delegated client")
+		logger.Error(membershipRetrievalErr, "retrieving permissions for API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
+
+	logger = logger.WithValue(keys.AccountIDKey, defaultAccount).WithValue(keys.PermissionsKey, permissions)
 
 	mac := hmac.New(sha256.New, client.ClientSecret)
 	if _, macWriteErr := mac.Write(s.encoderDecoder.MustJSON(pasetoRequest)); macWriteErr != nil {

@@ -107,9 +107,9 @@ var (
 		},
 		{
 			Version:     0.07,
-			Description: "create delegated_clients table",
+			Description: "create API clients table",
 			Script: `
-			CREATE TABLE IF NOT EXISTS delegated_clients (
+			CREATE TABLE IF NOT EXISTS api_clients (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				external_id TEXT NOT NULL,
 				name TEXT DEFAULT '',
@@ -153,7 +153,6 @@ var (
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
-				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				belongs_to_account INTEGER REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},

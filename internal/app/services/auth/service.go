@@ -36,7 +36,7 @@ type (
 		authenticator            authentication.Authenticator
 		userDB                   types.UserDataManager
 		auditLog                 types.AuthAuditManager
-		delegatedClientManager   types.DelegatedClientDataManager
+		apiClientManager         types.APIClientDataManager
 		accountMembershipManager types.AccountUserMembershipDataManager
 		encoderDecoder           encoding.HTTPResponseEncoder
 		cookieManager            cookieEncoderDecoder
@@ -53,7 +53,7 @@ func ProvideService(
 	authenticator authentication.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
-	delegatedClientsService types.DelegatedClientDataManager,
+	apiClientsService types.APIClientDataManager,
 	accountMembershipManager types.AccountUserMembershipDataManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.HTTPResponseEncoder,
@@ -65,11 +65,11 @@ func ProvideService(
 		config:                   cfg,
 		userDB:                   userDataManager,
 		auditLog:                 auditLog,
-		delegatedClientManager:   delegatedClientsService,
+		apiClientManager:         apiClientsService,
 		accountMembershipManager: accountMembershipManager,
 		authenticator:            authenticator,
 		sessionManager:           sessionManager,
-		sessionInfoFetcher:       routeParamManager.SessionInfoFetcherFromRequestContext,
+		sessionInfoFetcher:       routeParamManager.FetchContextFromRequest,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.Cookies.SigningKey),

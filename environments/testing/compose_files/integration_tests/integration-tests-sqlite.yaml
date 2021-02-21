@@ -1,6 +1,8 @@
 version: '3.3'
 services:
     todo-server:
+        environment:
+            USE_NOOP_LOGGER: 'nope'
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-sqlite.toml'
               target: '/etc/config.toml'

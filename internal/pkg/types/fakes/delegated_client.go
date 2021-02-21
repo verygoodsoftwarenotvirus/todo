@@ -8,9 +8,9 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeDelegatedClient builds a faked DelegatedClient.
-func BuildFakeDelegatedClient() *types.DelegatedClient {
-	return &types.DelegatedClient{
+// BuildFakeAPIClient builds a faked APIClient.
+func BuildFakeAPIClient() *types.APIClient {
+	return &types.APIClient{
 		ID:            uint64(fake.Uint32()),
 		ExternalID:    fake.UUID(),
 		Name:          fake.Word(),
@@ -21,23 +21,23 @@ func BuildFakeDelegatedClient() *types.DelegatedClient {
 	}
 }
 
-// BuildFakeDelegatedClientCreationResponseFromClient builds a faked DelegatedClientCreationResponse.
-func BuildFakeDelegatedClientCreationResponseFromClient(client *types.DelegatedClient) *types.DelegatedClientCreationResponse {
-	return &types.DelegatedClientCreationResponse{
+// BuildFakeAPIClientCreationResponseFromClient builds a faked APIClientCreationResponse.
+func BuildFakeAPIClientCreationResponseFromClient(client *types.APIClient) *types.APIClientCreationResponse {
+	return &types.APIClientCreationResponse{
 		ID:           client.ID,
 		ClientID:     client.ClientID,
 		ClientSecret: string(client.ClientSecret),
 	}
 }
 
-// BuildFakeDelegatedClientList builds a faked DelegatedClientList.
-func BuildFakeDelegatedClientList() *types.DelegatedClientList {
-	var examples []*types.DelegatedClient
+// BuildFakeAPIClientList builds a faked APIClientList.
+func BuildFakeAPIClientList() *types.APIClientList {
+	var examples []*types.APIClient
 	for i := 0; i < exampleQuantity; i++ {
-		examples = append(examples, BuildFakeDelegatedClient())
+		examples = append(examples, BuildFakeAPIClient())
 	}
 
-	return &types.DelegatedClientList{
+	return &types.APIClientList{
 		Pagination: types.Pagination{
 			Page:          1,
 			Limit:         20,
@@ -48,11 +48,11 @@ func BuildFakeDelegatedClientList() *types.DelegatedClientList {
 	}
 }
 
-// BuildFakeDelegatedClientCreationInput builds a faked DelegatedClientCreationInput.
-func BuildFakeDelegatedClientCreationInput() *types.DelegatedClientCreationInput {
-	client := BuildFakeDelegatedClient()
+// BuildFakeAPIClientCreationInput builds a faked APICientCreationInput.
+func BuildFakeAPIClientCreationInput() *types.APICientCreationInput {
+	client := BuildFakeAPIClient()
 
-	return &types.DelegatedClientCreationInput{
+	return &types.APICientCreationInput{
 		UserLoginInput: types.UserLoginInput{
 			Username:  fake.Username(),
 			Password:  fake.Password(true, true, true, true, true, 32),
@@ -64,9 +64,9 @@ func BuildFakeDelegatedClientCreationInput() *types.DelegatedClientCreationInput
 	}
 }
 
-// BuildFakeDelegatedClientCreationInputFromClient builds a faked DelegatedClientCreationInput.
-func BuildFakeDelegatedClientCreationInputFromClient(client *types.DelegatedClient) *types.DelegatedClientCreationInput {
-	return &types.DelegatedClientCreationInput{
+// BuildFakeAPIClientCreationInputFromClient builds a faked APICientCreationInput.
+func BuildFakeAPIClientCreationInputFromClient(client *types.APIClient) *types.APICientCreationInput {
+	return &types.APICientCreationInput{
 		UserLoginInput: types.UserLoginInput{
 			Username:  fake.Username(),
 			Password:  fake.Password(true, true, true, true, true, 32),

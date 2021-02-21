@@ -36,7 +36,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		actual := s.UserCreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mh)
 	})
@@ -88,7 +88,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		actual := s.PasswordUpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mh)
 	})
@@ -144,7 +144,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		actual := s.TOTPSecretVerificationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mh)
 	})
@@ -196,7 +196,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		actual := s.TOTPSecretRefreshInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mh)
 	})

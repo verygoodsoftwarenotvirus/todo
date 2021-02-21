@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestV1Client_BuildGetDelegatedClientRequest(T *testing.T) {
+func TestV1Client_BuildGetAPIClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/delegated_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -24,66 +24,66 @@ func TestV1Client_BuildGetDelegatedClientRequest(T *testing.T) {
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleDelegatedClient.ID)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAPIClient.ID)
 
-		actual, err := c.BuildGetDelegatedClientRequest(ctx, exampleDelegatedClient.ID)
+		actual, err := c.BuildGetAPIClientRequest(ctx, exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_GetDelegatedClient(T *testing.T) {
+func TestV1Client_GetAPIClient(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/delegated_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.ClientSecret = nil
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleDelegatedClient.ID)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ClientSecret = nil
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAPIClient.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleDelegatedClient))
+					require.NoError(t, json.NewEncoder(res).Encode(exampleAPIClient))
 				},
 			),
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAPIClient(ctx, exampleAPIClient.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleDelegatedClient, actual)
+		assert.Equal(t, exampleAPIClient, actual)
 	})
 
 	T.Run("with invalid client url", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.ClientSecret = nil
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ClientSecret = nil
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAPIClient(ctx, exampleAPIClient.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildGetDelegatedClientsRequest(T *testing.T) {
+func TestV1Client_BuildGetAPIClientsRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/delegated_clients"
+	const expectedPath = "/api/v1/api_clients"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -93,17 +93,17 @@ func TestV1Client_BuildGetDelegatedClientsRequest(T *testing.T) {
 		c := buildTestClient(t, ts)
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := c.BuildGetDelegatedClientsRequest(ctx, nil)
+		actual, err := c.BuildGetAPIClientsRequest(ctx, nil)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_GetDelegatedClients(T *testing.T) {
+func TestV1Client_GetAPIClients(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/delegated_clients"
+	const expectedPath = "/api/v1/api_clients"
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
@@ -111,9 +111,9 @@ func TestV1Client_GetDelegatedClients(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClientList := fakes.BuildFakeDelegatedClientList()
-		for i := 0; i < len(exampleDelegatedClientList.Clients); i++ {
-			exampleDelegatedClientList.Clients[i].ClientSecret = nil
+		exampleAPIClientList := fakes.BuildFakeAPIClientList()
+		for i := 0; i < len(exampleAPIClientList.Clients); i++ {
+			exampleAPIClientList.Clients[i].ClientSecret = nil
 		}
 
 		ts := httptest.NewTLSServer(
@@ -121,17 +121,17 @@ func TestV1Client_GetDelegatedClients(T *testing.T) {
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleDelegatedClientList))
+					require.NoError(t, json.NewEncoder(res).Encode(exampleAPIClientList))
 				},
 			),
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetDelegatedClients(ctx, nil)
+		actual, err := c.GetAPIClients(ctx, nil)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleDelegatedClientList, actual)
+		assert.Equal(t, exampleAPIClientList, actual)
 	})
 
 	T.Run("with invalid client url", func(t *testing.T) {
@@ -139,17 +139,17 @@ func TestV1Client_GetDelegatedClients(T *testing.T) {
 		ctx := context.Background()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetDelegatedClients(ctx, nil)
+		actual, err := c.GetAPIClients(ctx, nil)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildCreateDelegatedClientRequest(T *testing.T) {
+func TestV1Client_BuildCreateAPIClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/delegated_clients"
+	const expectedPath = "/api/v1/api_clients"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -158,21 +158,21 @@ func TestV1Client_BuildCreateDelegatedClientRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		req, err := c.BuildCreateDelegatedClientRequest(ctx, &http.Cookie{}, exampleInput)
+		req, err := c.BuildCreateAPIClientRequest(ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, req, spec)
 	})
 }
 
-func TestV1Client_CreateDelegatedClient(T *testing.T) {
+func TestV1Client_CreateAPIClient(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/delegated_clients"
+	const expectedPath = "/api/v1/api_clients"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
@@ -180,10 +180,10 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.ClientSecret = nil
-		exampleResponse := fakes.BuildFakeDelegatedClientCreationResponseFromClient(exampleDelegatedClient)
-		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ClientSecret = nil
+		exampleResponse := fakes.BuildFakeAPIClientCreationResponseFromClient(exampleAPIClient)
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -196,7 +196,7 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		actual, err := c.CreateDelegatedClient(ctx, &http.Cookie{}, exampleInput)
+		actual, err := c.CreateAPIClient(ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleResponse, actual)
 	})
@@ -205,12 +205,12 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		c := buildTestClientWithInvalidURL(t)
 
-		actual, err := c.CreateDelegatedClient(ctx, &http.Cookie{}, exampleInput)
+		actual, err := c.CreateAPIClient(ctx, &http.Cookie{}, exampleInput)
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
@@ -219,8 +219,8 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -234,7 +234,7 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 		)
 		c := buildTestClient(t, ts)
 
-		actual, err := c.CreateDelegatedClient(ctx, &http.Cookie{}, exampleInput)
+		actual, err := c.CreateAPIClient(ctx, &http.Cookie{}, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -246,15 +246,15 @@ func TestV1Client_CreateDelegatedClient(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		_, err := c.CreateDelegatedClient(ctx, nil, nil)
+		_, err := c.CreateAPIClient(ctx, nil, nil)
 		assert.Error(t, err)
 	})
 }
 
-func TestV1Client_BuildArchiveDelegatedClientRequest(T *testing.T) {
+func TestV1Client_BuildArchiveAPIClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/delegated_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
@@ -262,28 +262,28 @@ func TestV1Client_BuildArchiveDelegatedClientRequest(T *testing.T) {
 		ctx := context.Background()
 		ts := httptest.NewTLSServer(nil)
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleDelegatedClient.ID)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAPIClient.ID)
 		c := buildTestClient(t, ts)
 
-		actual, err := c.BuildArchiveDelegatedClientRequest(ctx, exampleDelegatedClient.ID)
+		actual, err := c.BuildArchiveAPIClientRequest(ctx, exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_ArchiveDelegatedClient(T *testing.T) {
+func TestV1Client_ArchiveAPIClient(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/delegated_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%d"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleDelegatedClient.ID)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAPIClient.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -295,7 +295,7 @@ func TestV1Client_ArchiveDelegatedClient(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).ArchiveDelegatedClient(ctx, exampleDelegatedClient.ID)
+		err := buildTestClient(t, ts).ArchiveAPIClient(ctx, exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
@@ -303,40 +303,40 @@ func TestV1Client_ArchiveDelegatedClient(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		err := buildTestClientWithInvalidURL(t).ArchiveDelegatedClient(ctx, exampleDelegatedClient.ID)
+		err := buildTestClientWithInvalidURL(t).ArchiveAPIClient(ctx, exampleAPIClient.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_BuildGetAuditLogForDelegatedClientRequest(T *testing.T) {
+func TestV1Client_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/delegated_clients/%d/audit"
+	const expectedPath = "/api/v1/api_clients/%d/audit"
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		actual, err := c.BuildGetAuditLogForDelegatedClientRequest(ctx, exampleDelegatedClient.ID)
+		actual, err := c.BuildGetAuditLogForAPIClientRequest(ctx, exampleAPIClient.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleDelegatedClient.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAPIClient.ID)
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_GetAuditLogForDelegatedClient(T *testing.T) {
+func TestV1Client_GetAuditLogForAPIClient(T *testing.T) {
 	T.Parallel()
 
 	const (
-		expectedPath   = "/api/v1/delegated_clients/%d/audit"
+		expectedPath   = "/api/v1/api_clients/%d/audit"
 		expectedMethod = http.MethodGet
 	)
 
@@ -344,8 +344,8 @@ func TestV1Client_GetAuditLogForDelegatedClient(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleDelegatedClient.ID)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleAPIClient.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
 		ts := httptest.NewTLSServer(
@@ -359,7 +359,7 @@ func TestV1Client_GetAuditLogForDelegatedClient(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAuditLogForAPIClient(ctx, exampleAPIClient.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
@@ -370,10 +370,10 @@ func TestV1Client_GetAuditLogForDelegatedClient(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAuditLogForAPIClient(ctx, exampleAPIClient.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
@@ -383,8 +383,8 @@ func TestV1Client_GetAuditLogForDelegatedClient(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleDelegatedClient.ID)
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleAPIClient.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -397,7 +397,7 @@ func TestV1Client_GetAuditLogForDelegatedClient(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForDelegatedClient(ctx, exampleDelegatedClient.ID)
+		actual, err := c.GetAuditLogForAPIClient(ctx, exampleAPIClient.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

@@ -7,11 +7,25 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/pquerna/otp/totp"
 )
+
+// BuildUserTestPrerequisites builds the prerequisite values we need for most unit tests.
+func BuildUserTestPrerequisites() (*types.User, *types.Account, map[uint64]bitmask.ServiceUserPermissions) {
+	exampleUser := BuildFakeUser()
+	exampleUser.ServiceAdminPermissions = testutil.BuildNoAdminPerms()
+	exampleAccount := BuildFakeAccount()
+	exampleAccount.BelongsToUser = exampleUser.ID
+	examplePerms := map[uint64]bitmask.ServiceUserPermissions{
+		exampleAccount.ID: testutil.BuildMaxUserPerms(),
+	}
+
+	return exampleUser, exampleAccount, examplePerms
+}
 
 // BuildFakeUser builds a faked User.
 func BuildFakeUser() *types.User {

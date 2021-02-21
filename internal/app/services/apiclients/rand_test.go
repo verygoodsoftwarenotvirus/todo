@@ -1,4 +1,4 @@
-package delegatedclients
+package apiclients
 
 import (
 	mock "github.com/stretchr/testify/mock"

@@ -66,7 +66,7 @@ func (q *MariaDB) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query str
 	)
 }
 
-// BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given user,
+// BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *MariaDB) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(

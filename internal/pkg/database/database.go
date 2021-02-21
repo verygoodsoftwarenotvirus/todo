@@ -57,7 +57,7 @@ type (
 		types.AccountSubscriptionPlanDataManager
 		types.UserDataManager
 		types.AuditLogEntryDataManager
-		types.DelegatedClientDataManager
+		types.APIClientDataManager
 		types.WebhookDataManager
 		types.ItemDataManager
 
@@ -75,7 +75,7 @@ type (
 		types.AccountSubscriptionPlanSQLQueryBuilder
 		types.UserSQLQueryBuilder
 		types.AuditLogEntrySQLQueryBuilder
-		types.DelegatedClientSQLQueryBuilder
+		types.APIClientSQLQueryBuilder
 		types.WebhookSQLQueryBuilder
 		types.ItemSQLQueryBuilder
 	}

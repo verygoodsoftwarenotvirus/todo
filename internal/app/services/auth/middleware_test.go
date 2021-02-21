@@ -13,6 +13,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -31,11 +32,16 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
-		exampleUser := fakes.BuildFakeUser()
+
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		md := &mocktypes.UserDataManager{}
 		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleUser, nil)
 		s.userDB = md
+
+		audm := &mocktypes.AccountUserMembershipDataManager{}
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, examplePerms, nil)
+		s.accountMembershipManager = audm
 
 		ms := &MockHTTPHandler{}
 		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -50,7 +56,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		h := s.CookieAuthenticationMiddleware(ms)
 		h.ServeHTTP(res, req)
 
-		mock.AssertExpectationsForObjects(t, md, ms)
+		mock.AssertExpectationsForObjects(t, md, audm, ms)
 	})
 
 	T.Run("with nil user", func(t *testing.T) {
@@ -58,6 +64,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
+
 		exampleUser := fakes.BuildFakeUser()
 
 		md := &mocktypes.UserDataManager{}
@@ -72,8 +79,8 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		ms := &MockHTTPHandler{}
-		h := s.CookieAuthenticationMiddleware(ms)
-		h.ServeHTTP(res, req)
+
+		s.CookieAuthenticationMiddleware(ms).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 
@@ -108,11 +115,15 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
 		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
 		s.userDB = mockDB
+
+		audm := &mocktypes.AccountUserMembershipDataManager{}
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, examplePerms, nil)
+		s.accountMembershipManager = audm
 
 		h := &MockHTTPHandler{}
 		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -126,10 +137,12 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 
 		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
-		mock.AssertExpectationsForObjects(t, mockDB, h)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, audm, h)
 	})
 
-	T.Run("with cookie and error fetching user", func(t *testing.T) {
+	T.Run("error reading user with cookie", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -141,11 +154,68 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher), mock.Anything)
-		s.encoderDecoder = ed
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
+
+		s.UserAttributionMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+
+	T.Run("error fetching relationships with cookie", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser, exampleAccount, _ := fakes.BuildUserTestPrerequisites()
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
+		s.userDB = mockDB
+
+		audm := &mocktypes.AccountUserMembershipDataManager{}
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, map[uint64]bitmask.ServiceUserPermissions(nil), errors.New("blah"))
+		s.accountMembershipManager = audm
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
+
+		s.UserAttributionMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, audm)
+	})
+
+	T.Run("happy path with PASETO", func(t *testing.T) {
+		t.SkipNow()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
+		s.userDB = mockDB
+
+		audm := &mocktypes.AccountUserMembershipDataManager{}
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, examplePerms, nil)
+		s.accountMembershipManager = audm
 
 		h := &MockHTTPHandler{}
+		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -156,11 +226,13 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 
 		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, audm, h)
 	})
 
-	T.Run("with cookie and somehow nil user", func(t *testing.T) {
-		t.Parallel()
+	T.Run("error reading user with PASETO", func(t *testing.T) {
+		t.SkipNow()
 
 		ctx := context.Background()
 		s := buildTestService(t)
@@ -168,14 +240,8 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), nil)
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), errors.New("blah"))
 		s.userDB = mockDB
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher), mock.Anything)
-		s.encoderDecoder = ed
-
-		h := &MockHTTPHandler{}
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -184,9 +250,41 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
+		s.UserAttributionMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
 
-		mock.AssertExpectationsForObjects(t, mockDB, h)
+		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+
+	T.Run("error fetching relationships with PASETO", func(t *testing.T) {
+		t.SkipNow()
+
+		ctx := context.Background()
+		s := buildTestService(t)
+
+		exampleUser, exampleAccount, _ := fakes.BuildUserTestPrerequisites()
+
+		mockDB := database.BuildMockDatabase().UserDataManager
+		mockDB.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
+		s.userDB = mockDB
+
+		audm := &mocktypes.AccountUserMembershipDataManager{}
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, map[uint64]bitmask.ServiceUserPermissions(nil), errors.New("blah"))
+		s.accountMembershipManager = audm
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
+
+		s.UserAttributionMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, audm)
 	})
 }
 
@@ -199,7 +297,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		h := &MockHTTPHandler{}
 		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -209,11 +307,11 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(exampleUser)))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)))
 
 		s.AuthorizationMiddleware(h).ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, h)
 	})
@@ -224,7 +322,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleUser.AccountStatus = types.BannedAccountStatus
 
 		res := httptest.NewRecorder()
@@ -232,7 +330,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(exampleUser)))
+		req = req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)))
 
 		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
 
@@ -404,7 +502,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
 
 		res := httptest.NewRecorder()
@@ -412,7 +510,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 			context.WithValue(
 				req.Context(),
 				types.SessionInfoKey,
-				types.RequestContextFromUser(exampleUser),
+				types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms),
 			),
 		)
 
@@ -423,7 +521,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		h := s.AdminMiddleware(ms)
 		h.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, ms)
 	})
@@ -456,15 +554,14 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleUser.ServiceAdminPermissions = testutil.BuildNoAdminPerms()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		res := httptest.NewRecorder()
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
 				types.SessionInfoKey,
-				types.RequestContextFromUser(exampleUser),
+				types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms),
 			),
 		)
 

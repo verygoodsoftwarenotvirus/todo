@@ -22,7 +22,7 @@ func BuildMockDatabase() *MockDatabase {
 		ItemDataManager:                    &mocktypes.ItemDataManager{},
 		UserDataManager:                    &mocktypes.UserDataManager{},
 		AdminUserDataManager:               &mocktypes.AdminUserDataManager{},
-		DelegatedClientDataManager:         &mocktypes.DelegatedClientDataManager{},
+		APIClientDataManager:               &mocktypes.APIClientDataManager{},
 		WebhookDataManager:                 &mocktypes.WebhookDataManager{},
 	}
 }
@@ -37,7 +37,7 @@ type MockDatabase struct {
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
 	*mocktypes.AdminUserDataManager
-	*mocktypes.DelegatedClientDataManager
+	*mocktypes.APIClientDataManager
 	*mocktypes.WebhookDataManager
 	*mocktypes.AccountDataManager
 }
@@ -68,7 +68,7 @@ func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 		AccountSubscriptionPlanSQLQueryBuilder: &mocktypes.AccountSubscriptionPlanSQLQueryBuilder{},
 		AuditLogEntrySQLQueryBuilder:           &mocktypes.AuditLogEntrySQLQueryBuilder{},
 		ItemSQLQueryBuilder:                    &mocktypes.ItemSQLQueryBuilder{},
-		DelegatedClientSQLQueryBuilder:         &mocktypes.DelegatedClientSQLQueryBuilder{},
+		APIClientSQLQueryBuilder:               &mocktypes.APIClientSQLQueryBuilder{},
 		UserSQLQueryBuilder:                    &mocktypes.UserSQLQueryBuilder{},
 		WebhookSQLQueryBuilder:                 &mocktypes.WebhookSQLQueryBuilder{},
 	}
@@ -84,7 +84,7 @@ type MockSQLQueryBuilder struct {
 	*mocktypes.AuditLogEntrySQLQueryBuilder
 	*mocktypes.ItemSQLQueryBuilder
 	*mocktypes.UserSQLQueryBuilder
-	*mocktypes.DelegatedClientSQLQueryBuilder
+	*mocktypes.APIClientSQLQueryBuilder
 	*mocktypes.WebhookSQLQueryBuilder
 }
 

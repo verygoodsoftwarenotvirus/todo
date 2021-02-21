@@ -23,8 +23,8 @@ type (
 )
 
 // Validate validates a Config struct.
-func (cfg Config) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, &cfg,
+func (cfg *Config) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Metrics, validation.Required),
 		validation.Field(&cfg.Tracing, validation.Required),
 		validation.Field(&cfg.RuntimeMetricsCollectionInterval, validation.Required),

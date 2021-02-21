@@ -23,17 +23,17 @@ import (
 func TestAccountsService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
-	}
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		}
 
 		exampleAccountList := fakes.BuildFakeAccountList()
 
@@ -57,7 +57,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 	})
@@ -67,7 +67,10 @@ func TestAccountsService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
@@ -89,7 +92,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 	})
@@ -99,7 +102,10 @@ func TestAccountsService_ListHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
@@ -130,21 +136,19 @@ func TestAccountsService_ListHandler(T *testing.T) {
 func TestAccountsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
-	}
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{})).Return(exampleAccount, nil)
@@ -182,7 +186,10 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		}
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -210,11 +217,14 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{})).Return((*types.Account)(nil), errors.New("blah"))
@@ -247,22 +257,20 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 func TestAccountsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
-	}
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -285,7 +293,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 
 		s.ReadHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 	})
@@ -295,12 +303,13 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -333,12 +342,13 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -370,24 +380,21 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 func TestAccountsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
-	}
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
-
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(exampleAccount)
 
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -413,7 +420,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		s.UpdateHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, accountDataManager, s.accountDataManager, ed)
 	})
@@ -423,7 +430,10 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
+		}
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -451,14 +461,15 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(exampleAccount)
 
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -493,14 +504,15 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(exampleAccount)
 
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -535,7 +547,6 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
@@ -543,6 +554,10 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -577,22 +592,20 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 func TestAccountsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
-	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
-	}
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -625,12 +638,13 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -663,12 +677,13 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
@@ -701,12 +716,13 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.sessionInfoFetcher = sessionInfoFetcher
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
 		s.accountIDFetcher = func(req *http.Request) uint64 {
 			return exampleAccount.ID
+		}
+
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}

@@ -31,7 +31,7 @@ func TestProvideServer(T *testing.T) {
 			&mocktypes.ItemDataServer{},
 			&mocktypes.UserDataServer{},
 			&mocktypes.PlanDataServer{},
-			&mocktypes.DelegatedClientDataServer{},
+			&mocktypes.APIClientDataServer{},
 			&mocktypes.WebhookDataServer{},
 			&mocktypes.AdminServer{},
 			database.BuildMockDatabase(),

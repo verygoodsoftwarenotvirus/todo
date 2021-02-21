@@ -24,9 +24,9 @@ import (
 func TestWebhooksService_List(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestWebhooksService_List(T *testing.T) {
 		require.NoError(t, err)
 
 		s.ListHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -98,7 +98,7 @@ func TestWebhooksService_List(T *testing.T) {
 		require.NoError(t, err)
 
 		s.ListHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -181,9 +181,9 @@ func TestValidateWebhook(T *testing.T) {
 func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -341,9 +341,9 @@ func TestWebhooksService_Create(T *testing.T) {
 func TestWebhooksService_Read(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -384,7 +384,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		require.NoError(t, err)
 
 		s.ReadHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -479,9 +479,9 @@ func TestWebhooksService_Read(T *testing.T) {
 func TestWebhooksService_Update(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -531,7 +531,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
 
 		s.UpdateHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -711,9 +711,9 @@ func TestWebhooksService_Update(T *testing.T) {
 func TestWebhooksService_Archive(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

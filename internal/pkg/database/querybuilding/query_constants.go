@@ -119,21 +119,19 @@ const (
 	AuditLogEntriesTableContextColumn = "context"
 
 	//
-	// Delegated Clients.
+	// API Clients.
 	//
 
-	// DelegatedClientsTableScopeSeparator is what the delegated clients table calls the <> column.
-	DelegatedClientsTableScopeSeparator = commaSeparator
-	// DelegatedClientsTableName is what the delegated clients table calls the <> column.
-	DelegatedClientsTableName = "delegated_clients"
-	// DelegatedClientsTableNameColumn is what the delegated clients table calls the <> column.
-	DelegatedClientsTableNameColumn = "name"
-	// DelegatedClientsTableClientIDColumn is what the delegated clients table calls the <> column.
-	DelegatedClientsTableClientIDColumn = "client_id"
-	// DelegatedClientsTableSecretKeyColumn is what the delegated clients table calls the <> column.
-	DelegatedClientsTableSecretKeyColumn = "secret_key"
-	// DelegatedClientsTableOwnershipColumn is what the delegated clients table calls the <> column.
-	DelegatedClientsTableOwnershipColumn = userOwnershipColumn
+	// APIClientsTableName is what the API clients table calls the <> column.
+	APIClientsTableName = "api_clients"
+	// APIClientsTableNameColumn is what the API clients table calls the <> column.
+	APIClientsTableNameColumn = "name"
+	// APIClientsTableClientIDColumn is what the API clients table calls the <> column.
+	APIClientsTableClientIDColumn = "client_id"
+	// APIClientsTableSecretKeyColumn is what the API clients table calls the <> column.
+	APIClientsTableSecretKeyColumn = "secret_key"
+	// APIClientsTableOwnershipColumn is what the API clients table calls the <> column.
+	APIClientsTableOwnershipColumn = userOwnershipColumn
 
 	//
 	// Webhooks Table.
@@ -174,8 +172,6 @@ const (
 	ItemsTableNameColumn = "name"
 	// ItemsTableDetailsColumn is what the items table calls the details column.
 	ItemsTableDetailsColumn = "details"
-	// ItemsTableUserOwnershipColumn is what the items table calls the user ownership column.
-	ItemsTableUserOwnershipColumn = userOwnershipColumn
 	// ItemsTableAccountOwnershipColumn is what the items table calls the user ownership column.
 	ItemsTableAccountOwnershipColumn = accountOwnershipColumn
 )

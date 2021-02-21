@@ -23,9 +23,9 @@ import (
 func TestPlansService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, planDataManager, ed)
 	})
@@ -89,7 +89,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, planDataManager, ed)
 	})
@@ -130,9 +130,9 @@ func TestPlansService_ListHandler(T *testing.T) {
 func TestPlansService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -245,9 +245,9 @@ func TestPlansService_CreateHandler(T *testing.T) {
 func TestPlansService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -282,7 +282,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 
 		s.ReadHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, planDataManager, ed)
 	})
@@ -365,9 +365,9 @@ func TestPlansService_ReadHandler(T *testing.T) {
 func TestPlansService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -407,7 +407,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 
 		s.UpdateHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, planDataManager, ed)
 	})
@@ -568,9 +568,9 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 func TestPlansService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {

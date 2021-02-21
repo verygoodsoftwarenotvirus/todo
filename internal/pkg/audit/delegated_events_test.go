@@ -8,28 +8,28 @@ import (
 )
 
 const (
-	exampleDelegatedClientID uint64 = 123
+	exampleAPIClientDatabaseID uint64 = 123
 )
 
-func TestDelegatedEventBuilders(T *testing.T) {
+func TestAPIClientEventBuilders(T *testing.T) {
 	T.Parallel()
 
 	tests := map[string]*eventBuilderTest{
-		"BuildDelegatedClientCreationEventEntry": {
-			expectedEventType: audit.DelegatedClientCreationEvent,
+		"BuildAPIClientCreationEventEntry": {
+			expectedEventType: audit.APIClientCreationEvent,
 			expectedContextKeys: []string{
-				audit.DelegatedClientAssignmentKey,
+				audit.APIClientAssignmentKey,
 				audit.CreationAssignmentKey,
 			},
-			actual: audit.BuildDelegatedClientCreationEventEntry(&types.DelegatedClient{}),
+			actual: audit.BuildAPIClientCreationEventEntry(&types.APIClient{}),
 		},
-		"BuildDelegatedClientArchiveEventEntry": {
-			expectedEventType: audit.DelegatedClientArchiveEvent,
+		"BuildAPIClientArchiveEventEntry": {
+			expectedEventType: audit.APIClientArchiveEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
-				audit.DelegatedClientAssignmentKey,
+				audit.APIClientAssignmentKey,
 			},
-			actual: audit.BuildDelegatedClientArchiveEventEntry(exampleUserID, exampleDelegatedClientID),
+			actual: audit.BuildAPIClientArchiveEventEntry(exampleUserID, exampleAPIClientDatabaseID),
 		},
 	}
 

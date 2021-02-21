@@ -30,7 +30,7 @@ func (r chirouteParamManager) UserIDFetcherFromRequestContext(req *http.Request)
 }
 
 // SessionInfoFetcherFromRequestContext fetches a RequestContext from a request.
-func (r chirouteParamManager) SessionInfoFetcherFromRequestContext(req *http.Request) (*types.RequestContext, error) {
+func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
 	if si, ok := req.Context().Value(types.SessionInfoKey).(*types.RequestContext); ok && si != nil {
 		return si, nil
 	}

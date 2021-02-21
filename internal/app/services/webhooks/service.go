@@ -59,7 +59,7 @@ func ProvideWebhooksService(
 		webhookDataManager: webhookDataManager,
 		encoderDecoder:     encoder,
 		webhookCounter:     webhookCounter,
-		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
+		sessionInfoFetcher: routeParamManager.FetchContextFromRequest,
 		webhookIDFetcher:   routeParamManager.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
 		tracer:             tracing.NewTracer(serviceName),
 	}

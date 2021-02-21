@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
+func TestClient_buildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -30,7 +30,7 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 			RequestTime: 1234567890,
 		}
 
-		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
+		req, err := c.BuildAPIClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
 
 		assert.NoError(t, err)
 		require.NotNil(t, req)
@@ -54,7 +54,7 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
+		req, err := c.BuildAPIClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Nil(t, req)
@@ -69,14 +69,14 @@ func TestClient_buildDelegatedClientAuthTokenRequest(T *testing.T) {
 
 		exampleInput := &types.PASETOCreationInput{}
 
-		req, err := c.BuildDelegatedClientAuthTokenRequest(ctx, exampleInput, nil)
+		req, err := c.BuildAPIClientAuthTokenRequest(ctx, exampleInput, nil)
 
 		assert.Error(t, err)
 		assert.Nil(t, req)
 	})
 }
 
-func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
+func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -102,7 +102,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.NoError(t, err)
 		assert.Equal(t, anticipatedResult, token)
@@ -117,7 +117,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -143,7 +143,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -168,7 +168,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -194,7 +194,7 @@ func TestClient_fetchDelegatedClientAuthToken(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchDelegatedClientAuthToken(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)

@@ -62,40 +62,36 @@ func TestItems(test *testing.T) {
 	test.Run("Listing", func(subtest *testing.T) {
 		subtest.Parallel()
 
-		subtest.Run("should be able to be read in a list", func(t *testing.T) {
-			t.Parallel()
+		runTestForAllAuthMethods(subtest, "should be able to be read in a list", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+			return func(t *testing.T) {
+				// Create items.
+				var expected []*types.Item
+				for i := 0; i < 5; i++ {
+					// Create item.
+					exampleItem := fakes.BuildFakeItem()
+					exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+					createdItem, itemCreationErr := testClient.CreateItem(ctx, exampleItemInput)
+					checkValueAndError(t, createdItem, itemCreationErr)
 
-			runTestForAllAuthMethods(subtest, "should be able to be read in a list", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-				return func(t *testing.T) {
-					// Create items.
-					var expected []*types.Item
-					for i := 0; i < 5; i++ {
-						// Create item.
-						exampleItem := fakes.BuildFakeItem()
-						exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-						createdItem, itemCreationErr := testClient.CreateItem(ctx, exampleItemInput)
-						checkValueAndError(t, createdItem, itemCreationErr)
-
-						expected = append(expected, createdItem)
-					}
-
-					// Assert item list equality.
-					actual, err := testClient.GetItems(ctx, nil)
-					checkValueAndError(t, actual, err)
-					assert.True(
-						t,
-						len(expected) <= len(actual.Items),
-						"expected %d to be <= %d",
-						len(expected),
-						len(actual.Items),
-					)
-
-					// Clean up.
-					for _, createdItem := range actual.Items {
-						assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
-					}
+					expected = append(expected, createdItem)
 				}
-			})
+
+				// Assert item list equality.
+				actual, err := testClient.GetItems(ctx, nil)
+				checkValueAndError(t, actual, err)
+				assert.True(
+					t,
+					len(expected) <= len(actual.Items),
+					"expected %d to be <= %d",
+					len(expected),
+					len(actual.Items),
+				)
+
+				// Clean up.
+				for _, createdItem := range actual.Items {
+					assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+				}
+			}
 		})
 	})
 

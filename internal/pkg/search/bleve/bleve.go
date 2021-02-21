@@ -92,14 +92,14 @@ func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interfa
 }
 
 // Search implements our IndexManager interface.
-func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID uint64) (ids []uint64, err error) {
+func (sm *bleveIndexManager) Search(ctx context.Context, query string, accountID uint64) (ids []uint64, err error) {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
 	sm.logger.WithValues(map[string]interface{}{
-		"search_query": query,
-		"user_id":      userID,
+		keys.SearchQueryKey: query,
+		keys.AccountIDKey:   accountID,
 	}).Debug("performing search")
 
 	q := bleve.NewFuzzyQuery(query)
@@ -112,10 +112,10 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, userID ui
 	}
 
 	for _, result := range searchResults.Hits {
-		x, err := strconv.ParseUint(result.ID, base, bitSize)
-		if err != nil {
+		x, parseErr := strconv.ParseUint(result.ID, base, bitSize)
+		if parseErr != nil {
 			// this should literally never happen
-			return nil, fmt.Errorf("*gasp* impossible: %w", err)
+			return nil, fmt.Errorf("*gasp* impossible error occurred for resultID %s: %w", result.ID, parseErr)
 		}
 
 		ids = append(ids, x)
@@ -143,10 +143,10 @@ func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (
 	}
 
 	for _, result := range searchResults.Hits {
-		x, err := strconv.ParseUint(result.ID, base, bitSize)
-		if err != nil {
+		x, parseErr := strconv.ParseUint(result.ID, base, bitSize)
+		if parseErr != nil {
 			// this should literally never happen
-			return nil, fmt.Errorf("*gasp* impossible: %w", err)
+			return nil, fmt.Errorf("*gasp* impossible error occurred for resultID %s: %w", result.ID, parseErr)
 		}
 
 		ids = append(ids, x)

@@ -10,7 +10,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,12 +39,17 @@ const (
 func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request) {
 	t.Helper()
 
+	exampleAccount := fakes.BuildFakeAccount()
+	examplePerms := map[uint64]bitmask.ServiceUserPermissions{
+		exampleAccount.ID: testutil.BuildMaxUserPerms(),
+	}
+
 	ctx, sessionErr := s.sessionManager.Load(req.Context(), "")
 	require.NoError(t, sessionErr)
 	require.NoError(t, s.sessionManager.RenewToken(ctx))
 
 	// Then make the privilege-level change.
-	s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(user))
+	s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(user, exampleAccount.ID, examplePerms))
 
 	token, _, err := s.sessionManager.Commit(ctx)
 	assert.NotEmpty(t, token)
@@ -67,9 +71,9 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -136,9 +140,9 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -183,9 +187,9 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -218,15 +222,10 @@ func TestService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
 
-		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
-			exampleAccount.ID: testutil.BuildMaxUserPerms(),
-		}
-
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -257,7 +256,7 @@ func TestService_LoginHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -303,10 +302,10 @@ func TestService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		exampleUser := fakes.BuildFakeUser()
 
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -340,9 +339,16 @@ func TestService_LoginHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.AccountStatus = types.BannedAccountStatus
 		exampleUser.AccountStatusExplanation = "bad behavior"
+		exampleAccount := fakes.BuildFakeAccount()
 
 		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+			reqCtx := types.RequestContextFromUser(
+				exampleUser,
+				exampleAccount.ID,
+				map[uint64]bitmask.ServiceUserPermissions{},
+			)
+
+			return reqCtx, nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -379,9 +385,9 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -430,9 +436,9 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -477,15 +483,9 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-
-		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
-			exampleAccount.ID: testutil.BuildMaxUserPerms(),
-		}
-
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -525,7 +525,7 @@ func TestService_LoginHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.Anything,
 			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -547,15 +547,9 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-
-		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
-			exampleAccount.ID: testutil.BuildMaxUserPerms(),
-		}
-
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
@@ -594,7 +588,7 @@ func TestService_LoginHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.Anything,
 			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -620,9 +614,9 @@ func TestService_LogoutHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -651,9 +645,9 @@ func TestService_LogoutHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		ctx, sessionErr := s.sessionManager.Load(ctx, "")
@@ -661,7 +655,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		require.NoError(t, s.sessionManager.RenewToken(ctx))
 
 		// Then make the privilege-level change.
-		s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(exampleUser))
+		s.sessionManager.Put(ctx, sessionInfoKey, types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms))
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
@@ -670,7 +664,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		res := httptest.NewRecorder()
 		s.LogoutHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 	})
 
 	T.Run("with error building cookie", func(t *testing.T) {
@@ -679,9 +673,9 @@ func TestService_LogoutHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -711,9 +705,9 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -742,9 +736,9 @@ func TestService_validateLogin(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -789,9 +783,9 @@ func TestService_validateLogin(T *testing.T) {
 
 		expectedErr := errors.New("arbitrary")
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -827,9 +821,10 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		expectedErr := errors.New("arbitrary")
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -873,9 +868,10 @@ func TestService_validateLogin(T *testing.T) {
 		s := buildTestService(t)
 
 		expectedErr := errors.New("arbitrary")
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -904,9 +900,9 @@ func TestService_validateLogin(T *testing.T) {
 
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 		exampleLoginData := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
@@ -939,9 +935,9 @@ func TestService_StatusHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -960,7 +956,7 @@ func TestService_StatusHandler(T *testing.T) {
 		s.userDB = udb
 
 		s.StatusHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb)
 	})
@@ -971,9 +967,9 @@ func TestService_StatusHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -992,7 +988,7 @@ func TestService_StatusHandler(T *testing.T) {
 		s.userDB = udb
 
 		s.StatusHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, udb)
 	})
@@ -1007,10 +1003,10 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleUser.ServiceAdminPermissions = bitmask.NewServiceAdminPermissions(math.MaxUint32)
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1070,9 +1066,9 @@ func TestService_CycleSecretHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
-		s.sessionInfoFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return types.RequestContextFromUser(exampleUser), nil
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		res := httptest.NewRecorder()
@@ -1126,21 +1122,19 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 		s.config.PASETO.Lifetime = time.Minute
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
-			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
@@ -1150,20 +1144,20 @@ func TestService_PASETOHandler(T *testing.T) {
 				ID:                      exampleUser.ID,
 				ActiveAccountID:         exampleAccount.ID,
 				UserAccountStatus:       exampleUser.AccountStatus,
-				AccountPermissionsMap:   examplePermissionMap,
+				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
 
-		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm := &mocktypes.APIClientDataManager{}
 		dcm.On(
-			"GetDelegatedClient",
+			"GetAPIClientByClientID",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleDelegatedClient.ClientID,
-		).Return(exampleDelegatedClient, nil)
-		s.delegatedClientManager = dcm
+			exampleAPIClient.ClientID,
+		).Return(exampleAPIClient, nil)
+		s.apiClientManager = dcm
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
@@ -1178,7 +1172,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
 
 		res := httptest.NewRecorder()
@@ -1191,7 +1185,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, marshalErr)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write(bodyBytes.Bytes())
 		require.NoError(t, macWriteErr)
 
@@ -1231,21 +1225,19 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 		s.config.PASETO.Lifetime = 24 * time.Hour * 365 // one year
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
-			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
@@ -1255,20 +1247,20 @@ func TestService_PASETOHandler(T *testing.T) {
 				ID:                      exampleUser.ID,
 				ActiveAccountID:         exampleAccount.ID,
 				UserAccountStatus:       exampleUser.AccountStatus,
-				AccountPermissionsMap:   examplePermissionMap,
+				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
 
-		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm := &mocktypes.APIClientDataManager{}
 		dcm.On(
-			"GetDelegatedClient",
+			"GetAPIClientByClientID",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleDelegatedClient.ClientID,
-		).Return(exampleDelegatedClient, nil)
-		s.delegatedClientManager = dcm
+			exampleAPIClient.ClientID,
+		).Return(exampleAPIClient, nil)
+		s.apiClientManager = dcm
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
@@ -1283,7 +1275,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
 
 		res := httptest.NewRecorder()
@@ -1296,7 +1288,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, marshalErr)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write(bodyBytes.Bytes())
 		require.NoError(t, macWriteErr)
 
@@ -1336,13 +1328,13 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		ctx := context.Background()
 
@@ -1360,16 +1352,16 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: 1,
 		}
 
@@ -1389,16 +1381,16 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
@@ -1414,7 +1406,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, marshalErr)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write(bodyBytes.Bytes())
 		require.NoError(t, macWriteErr)
 
@@ -1426,32 +1418,32 @@ func TestService_PASETOHandler(T *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 
-	T.Run("error fetching delegated client", func(t *testing.T) {
+	T.Run("error fetching API client", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
 
-		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm := &mocktypes.APIClientDataManager{}
 		dcm.On(
-			"GetDelegatedClient",
+			"GetAPIClientByClientID",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleDelegatedClient.ClientID,
-		).Return((*types.DelegatedClient)(nil), errors.New("blah"))
-		s.delegatedClientManager = dcm
+			exampleAPIClient.ClientID,
+		).Return((*types.APIClient)(nil), errors.New("blah"))
+		s.apiClientManager = dcm
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
@@ -1463,7 +1455,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, marshalErr)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write(bodyBytes.Bytes())
 		require.NoError(t, macWriteErr)
 
@@ -1481,28 +1473,28 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
 
-		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm := &mocktypes.APIClientDataManager{}
 		dcm.On(
-			"GetDelegatedClient",
+			"GetAPIClientByClientID",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleDelegatedClient.ClientID,
-		).Return(exampleDelegatedClient, nil)
-		s.delegatedClientManager = dcm
+			exampleAPIClient.ClientID,
+		).Return(exampleAPIClient, nil)
+		s.apiClientManager = dcm
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
@@ -1522,7 +1514,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, marshalErr)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write(bodyBytes.Bytes())
 		require.NoError(t, macWriteErr)
 
@@ -1540,28 +1532,28 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
 
-		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm := &mocktypes.APIClientDataManager{}
 		dcm.On(
-			"GetDelegatedClient",
+			"GetAPIClientByClientID",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleDelegatedClient.ClientID,
-		).Return(exampleDelegatedClient, nil)
-		s.delegatedClientManager = dcm
+			exampleAPIClient.ClientID,
+		).Return(exampleAPIClient, nil)
+		s.apiClientManager = dcm
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
@@ -1589,7 +1581,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, marshalErr)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write(bodyBytes.Bytes())
 		require.NoError(t, macWriteErr)
 
@@ -1607,32 +1599,30 @@ func TestService_PASETOHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.config.PASETO.LocalModeKey = fakes.BuildFakeDelegatedClient().ClientSecret
+		s.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
-			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
 
-		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm := &mocktypes.APIClientDataManager{}
 		dcm.On(
-			"GetDelegatedClient",
+			"GetAPIClientByClientID",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleDelegatedClient.ClientID,
-		).Return(exampleDelegatedClient, nil)
-		s.delegatedClientManager = dcm
+			exampleAPIClient.ClientID,
+		).Return(exampleAPIClient, nil)
+		s.apiClientManager = dcm
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
@@ -1647,7 +1637,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
 
 		res := httptest.NewRecorder()
@@ -1656,7 +1646,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write([]byte("lol"))
 		require.NoError(t, macWriteErr)
 
@@ -1676,30 +1666,28 @@ func TestService_PASETOHandler(T *testing.T) {
 		s := buildTestService(t)
 		s.config.PASETO.LocalModeKey = nil
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClient.BelongsToUser = exampleUser.ID
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
-		examplePermissionMap := map[uint64]bitmask.ServiceUserPermissions{
-			exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		s.sessionInfoFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+			return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 		}
 
 		exampleInput := &types.PASETOCreationInput{
-			ClientID:    exampleDelegatedClient.ClientID,
+			ClientID:    exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
 
-		dcm := &mocktypes.DelegatedClientDataManager{}
+		dcm := &mocktypes.APIClientDataManager{}
 		dcm.On(
-			"GetDelegatedClient",
+			"GetAPIClientByClientID",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleDelegatedClient.ClientID,
-		).Return(exampleDelegatedClient, nil)
-		s.delegatedClientManager = dcm
+			exampleAPIClient.ClientID,
+		).Return(exampleAPIClient, nil)
+		s.apiClientManager = dcm
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
@@ -1714,7 +1702,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePermissionMap, nil)
+		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
 
 		res := httptest.NewRecorder()
@@ -1727,7 +1715,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		require.NoError(t, marshalErr)
 
 		// set HMAC signature
-		mac := hmac.New(sha256.New, exampleDelegatedClient.ClientSecret)
+		mac := hmac.New(sha256.New, exampleAPIClient.ClientSecret)
 		_, macWriteErr := mac.Write(bodyBytes.Bytes())
 		require.NoError(t, macWriteErr)
 

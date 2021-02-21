@@ -38,6 +38,8 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
 		// fetch the user from the request.
 		user, err := s.fetchUserFromCookie(ctx, req)
 		if err != nil {
@@ -47,11 +49,18 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		}
 
 		if user != nil {
+			defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+			if membershipRetrievalErr != nil {
+				logger.Error(membershipRetrievalErr, "retrieving permissions for cookie authentication")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
 			req = req.WithContext(
 				context.WithValue(
 					ctx,
 					types.SessionInfoKey,
-					types.RequestContextFromUser(user),
+					types.RequestContextFromUser(user, defaultAccount, permissions),
 				),
 			)
 			next.ServeHTTP(res, req)
@@ -80,11 +89,18 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
+			defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+			if membershipRetrievalErr != nil {
+				logger.Error(membershipRetrievalErr, "retrieving permissions for API client")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
 			logger.WithValue("user_found", user != nil).Debug("serving request")
 
 			if user != nil {
 				tracing.AttachUserIDToSpan(span, user.ID)
-				next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(user))))
+				next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionInfoKey, types.RequestContextFromUser(user, defaultAccount, permissions))))
 				return
 			}
 		}
@@ -165,17 +181,17 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		si, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
+		reqCtx, ok := ctx.Value(types.SessionInfoKey).(*types.RequestContext)
 
-		if !ok || si == nil {
+		if !ok || reqCtx == nil {
 			logger.Debug("AdminMiddleware called without user attached to context")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
 		}
 
-		logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+		logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
-		if !si.User.ServiceAdminPermissions.IsServiceAdmin() {
+		if !reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return

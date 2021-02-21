@@ -1,4 +1,4 @@
-package delegatedclients
+package apiclients
 
 import (
 	"context"
@@ -7,12 +7,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-// CreationInputMiddleware is a middleware for attaching Delegated client info to a request.
+// CreationInputMiddleware is a middleware for attaching API client info to a request.
 func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
-		x := new(types.DelegatedClientCreationInput)
+		x := new(types.APICientCreationInput)
 
 		// decode value from request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
@@ -26,14 +26,14 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *service) fetchDelegatedClientFromRequest(req *http.Request) *types.DelegatedClient {
-	if client, ok := req.Context().Value(types.DelegatedClientKey).(*types.DelegatedClient); ok {
+func (s *service) fetchAPIClientFromRequest(req *http.Request) *types.APIClient {
+	if client, ok := req.Context().Value(types.APIClientKey).(*types.APIClient); ok {
 		return client
 	}
 	return nil
 }
 
-func (s *service) fetchDelegatedClientIDFromRequest(req *http.Request) string {
+func (s *service) fetchAPIClientIDFromRequest(req *http.Request) string {
 	if clientID, ok := req.Context().Value(clientIDKey).(string); ok {
 		return clientID
 	}

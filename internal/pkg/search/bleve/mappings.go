@@ -15,7 +15,7 @@ func buildItemMapping() *mapping.IndexMappingImpl {
 	itemMapping := bleve.NewDocumentMapping()
 	itemMapping.AddFieldMappingsAt("name", englishTextFieldMapping)
 	itemMapping.AddFieldMappingsAt("details", englishTextFieldMapping)
-	itemMapping.AddFieldMappingsAt("belongsToUser", bleve.NewNumericFieldMapping())
+	itemMapping.AddFieldMappingsAt("belongsToAccount", bleve.NewNumericFieldMapping())
 	m.AddDocumentMapping("item", itemMapping)
 
 	return m

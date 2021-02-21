@@ -2,6 +2,7 @@ package querier
 
 import (
 	"context"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -67,13 +68,13 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 
 	rows, getMembershipsErr := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
 	if getMembershipsErr != nil {
-		logger.WithValue("query", getAccountMembershipsQuery).Info("FUCK")
+		logger.Error(getMembershipsErr, "fetching memberships from database")
 		return 0, nil, getMembershipsErr
 	}
 
 	memberships, scanErr := c.scanAccountUserMemberships(rows)
 	if scanErr != nil {
-		logger.WithValue("query", getAccountMembershipsQuery).Info("FUCK")
+		logger.Error(scanErr, "scanning memberships from database")
 		return 0, nil, scanErr
 	}
 
@@ -85,6 +86,10 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 		if membership.DefaultAccount && defaultAccount == 0 {
 			defaultAccount = membership.ID
 		}
+	}
+
+	if defaultAccount == 0 {
+		return 0, nil, fmt.Errorf("default account not found for user %d", userID)
 	}
 
 	return defaultAccount, permissionsMap, nil

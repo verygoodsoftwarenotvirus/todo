@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/pquerna/otp/totp"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	flag "github.com/spf13/pflag"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
@@ -94,7 +96,7 @@ func main() {
 		wg.Add(1)
 		go func(x int, wg *sync.WaitGroup) {
 			// create user.
-			createdUser, userCreationErr := testutil.CreateServiceUser(ctx, uri, "", debug)
+			createdUser, userCreationErr := utils.CreateServiceUser(ctx, uri, "")
 			if userCreationErr != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("creating user #%d: %w", x, userCreationErr))
 			}
@@ -112,7 +114,7 @@ func main() {
 
 			userLogger.Debug("created user")
 
-			cookie, cookieErr := testutil.GetLoginCookie(ctx, uri, createdUser)
+			cookie, cookieErr := utils.GetLoginCookie(ctx, uri, createdUser)
 			if cookieErr != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("getting cookie: %v", cookieErr))
 			}

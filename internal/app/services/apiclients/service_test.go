@@ -1,4 +1,4 @@
-package delegatedclients
+package apiclients
 
 import (
 	"errors"
@@ -23,30 +23,30 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	return &service{
-		delegatedClientDataManager: database.BuildMockDatabase(),
-		logger:                     logging.NewNonOperationalLogger(),
-		encoderDecoder:             mockencoding.NewMockEncoderDecoder(),
-		authenticator:              &mockauth.Authenticator{},
-		urlClientIDExtractor:       func(req *http.Request) uint64 { return 0 },
-		delegatedClientCounter:     &mockmetrics.UnitCounter{},
-		secretGenerator:            &mockSecretGenerator{},
-		tracer:                     tracing.NewTracer(serviceName),
+		apiClientDataManager: database.BuildMockDatabase(),
+		logger:               logging.NewNonOperationalLogger(),
+		encoderDecoder:       mockencoding.NewMockEncoderDecoder(),
+		authenticator:        &mockauth.Authenticator{},
+		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
+		apiClientCounter:     &mockmetrics.UnitCounter{},
+		secretGenerator:      &mockSecretGenerator{},
+		tracer:               tracing.NewTracer(serviceName),
 	}
 }
 
-func TestProvideDelegatedClientsService(T *testing.T) {
+func TestProvideAPIClientsService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		mockDelegatedClientDataManager := &mocktypes.DelegatedClientDataManager{}
+		mockAPIClientDataManager := &mocktypes.APIClientDataManager{}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, DelegatedClientIDURIParamKey, "delegated client").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
 
-		s, err := ProvideDelegatedClientsService(
+		s, err := ProvideAPIClientsService(
 			logging.NewNonOperationalLogger(),
-			mockDelegatedClientDataManager,
+			mockAPIClientDataManager,
 			&mocktypes.UserDataManager{},
 			&mockauth.Authenticator{},
 			mockencoding.NewMockEncoderDecoder(),
@@ -58,19 +58,19 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
 
-		mock.AssertExpectationsForObjects(t, mockDelegatedClientDataManager, rpm)
+		mock.AssertExpectationsForObjects(t, mockAPIClientDataManager, rpm)
 	})
 
 	T.Run("with error providing counter", func(t *testing.T) {
 		t.Parallel()
-		mockDelegatedClientDataManager := &mocktypes.DelegatedClientDataManager{}
+		mockAPIClientDataManager := &mocktypes.APIClientDataManager{}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, DelegatedClientIDURIParamKey, "delegated client").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
 
-		s, err := ProvideDelegatedClientsService(
+		s, err := ProvideAPIClientsService(
 			logging.NewNonOperationalLogger(),
-			mockDelegatedClientDataManager,
+			mockAPIClientDataManager,
 			&mocktypes.UserDataManager{},
 			&mockauth.Authenticator{},
 			mockencoding.NewMockEncoderDecoder(),
@@ -83,6 +83,6 @@ func TestProvideDelegatedClientsService(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, s)
 
-		mock.AssertExpectationsForObjects(t, mockDelegatedClientDataManager, rpm)
+		mock.AssertExpectationsForObjects(t, mockAPIClientDataManager, rpm)
 	})
 }

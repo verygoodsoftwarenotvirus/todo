@@ -53,7 +53,7 @@ func ProvideService(
 		auditLog:           auditLog,
 		authenticator:      authenticator,
 		sessionManager:     sessionManager,
-		sessionInfoFetcher: routeParamManager.SessionInfoFetcherFromRequestContext,
+		sessionInfoFetcher: routeParamManager.FetchContextFromRequest,
 		userIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
 		tracer:             tracing.NewTracer(serviceName),
 	}

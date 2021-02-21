@@ -22,9 +22,9 @@ import (
 func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 
@@ -87,7 +87,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 		s.ListHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 
@@ -126,9 +126,9 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
+	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 	sessionInfoFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(exampleUser), nil
+		return types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms), nil
 	}
 
 	T.Run("happy path", func(t *testing.T) {
@@ -163,7 +163,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 		s.ReadHandler(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 	})
 

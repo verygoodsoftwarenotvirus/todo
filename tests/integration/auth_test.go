@@ -87,27 +87,27 @@ func TestAuth(test *testing.T) {
 
 		user, cookie, testClient, _ := createUserAndClientForTest(ctx, t)
 
-		// Create delegated client.
-		exampleDelegatedClient := fakes.BuildFakeDelegatedClient()
-		exampleDelegatedClientInput := fakes.BuildFakeDelegatedClientCreationInputFromClient(exampleDelegatedClient)
-		exampleDelegatedClientInput.UserLoginInput = types.UserLoginInput{
+		// Create API client.
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+		exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
 			Username:  user.Username,
 			Password:  user.HashedPassword,
 			TOTPToken: generateTOTPTokenForUser(t, user),
 		}
 
-		createdDelegatedClient, delegatedClientCreationErr := testClient.CreateDelegatedClient(ctx, cookie, exampleDelegatedClientInput)
-		checkValueAndError(t, createdDelegatedClient, delegatedClientCreationErr)
+		createdAPIClient, apiClientCreationErr := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
+		checkValueAndError(t, createdAPIClient, apiClientCreationErr)
 
-		actualKey, keyDecodeErr := base64.RawURLEncoding.DecodeString(createdDelegatedClient.ClientSecret)
+		actualKey, keyDecodeErr := base64.RawURLEncoding.DecodeString(createdAPIClient.ClientSecret)
 		require.NoError(t, keyDecodeErr)
 
 		input := &types.PASETOCreationInput{
-			ClientID:    createdDelegatedClient.ClientID,
+			ClientID:    createdAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		req, err := testClient.BuildDelegatedClientAuthTokenRequest(ctx, input, actualKey)
+		req, err := testClient.BuildAPIClientAuthTokenRequest(ctx, input, actualKey)
 		require.NoError(t, err)
 
 		res, err := http.DefaultClient.Do(req)

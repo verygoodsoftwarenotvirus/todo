@@ -13,29 +13,29 @@ import (
 var _ types.ItemSQLQueryBuilder = (*MariaDB)(nil)
 
 // BuildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
-func (q *MariaDB) BuildItemExistsQuery(itemID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildItemExistsQuery(itemID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn)).
 		Prefix(querybuilding.ExistencePrefix).
 		From(querybuilding.ItemsTableName).
 		Suffix(querybuilding.ExistenceSuffix).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                      itemID,
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableUserOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):              nil,
+			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
+			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
+			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
 		}),
 	)
 }
 
 // BuildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
-func (q *MariaDB) BuildGetItemQuery(itemID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetItemQuery(itemID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.ItemsTableColumns...).
 		From(querybuilding.ItemsTableName).
 		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                      itemID,
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableUserOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):              nil,
+			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
+			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
+			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
 		}),
 	)
 }
@@ -66,14 +66,14 @@ func (q *MariaDB) BuildGetBatchOfItemsQuery(beginID, endID uint64) (query string
 	)
 }
 
-// BuildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given user,
+// BuildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *MariaDB) BuildGetItemsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetItemsQuery(accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		querybuilding.ItemsTableName,
-		querybuilding.ItemsTableUserOwnershipColumn,
+		querybuilding.ItemsTableAccountOwnershipColumn,
 		querybuilding.ItemsTableColumns,
-		userID,
+		accountID,
 		forAdmin,
 		filter,
 	)
@@ -95,14 +95,14 @@ func buildWhenThenStatement(ids []uint64) string {
 	return statement
 }
 
-// BuildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given user,
+// BuildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given account,
 // and have IDs that exist within a given set of IDs. Returns both the query and the relevant
 // args to pass to the query executor. This function is primarily intended for use with a search
 // index, which would provide a slice of string IDs to query against. This function accepts a
 // slice of uint64s instead of a slice of strings in order to ensure all the provided strings
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (q *MariaDB) BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
+func (q *MariaDB) BuildGetItemsWithIDsQuery(accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
 	whenThenStatement := buildWhenThenStatement(ids)
 
 	where := squirrel.Eq{
@@ -111,7 +111,7 @@ func (q *MariaDB) BuildGetItemsWithIDsQuery(userID uint64, limit uint8, ids []ui
 	}
 
 	if !forAdmin {
-		where[fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableUserOwnershipColumn)] = userID
+		where[fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn)] = accountID
 	}
 
 	return q.buildQuery(q.sqlBuilder.
@@ -131,13 +131,13 @@ func (q *MariaDB) BuildCreateItemQuery(input *types.ItemCreationInput) (query st
 			querybuilding.ExternalIDColumn,
 			querybuilding.ItemsTableNameColumn,
 			querybuilding.ItemsTableDetailsColumn,
-			querybuilding.ItemsTableUserOwnershipColumn,
+			querybuilding.ItemsTableAccountOwnershipColumn,
 		).
 		Values(
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.Details,
-			input.BelongsToUser,
+			input.BelongsToAccount,
 		),
 	)
 }
@@ -150,23 +150,23 @@ func (q *MariaDB) BuildUpdateItemQuery(input *types.Item) (query string, args []
 		Set(querybuilding.ItemsTableDetailsColumn, input.Details).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
-			querybuilding.IDColumn:                      input.ID,
-			querybuilding.ArchivedOnColumn:              nil,
-			querybuilding.ItemsTableUserOwnershipColumn: input.BelongsToUser,
+			querybuilding.IDColumn:                         input.ID,
+			querybuilding.ArchivedOnColumn:                 nil,
+			querybuilding.ItemsTableAccountOwnershipColumn: input.BelongsToAccount,
 		}),
 	)
 }
 
 // BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
-func (q *MariaDB) BuildArchiveItemQuery(itemID, userID uint64) (query string, args []interface{}) {
+func (q *MariaDB) BuildArchiveItemQuery(itemID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.ItemsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
-			querybuilding.IDColumn:                      itemID,
-			querybuilding.ArchivedOnColumn:              nil,
-			querybuilding.ItemsTableUserOwnershipColumn: userID,
+			querybuilding.IDColumn:                         itemID,
+			querybuilding.ArchivedOnColumn:                 nil,
+			querybuilding.ItemsTableAccountOwnershipColumn: accountID,
 		}),
 	)
 }

@@ -95,13 +95,15 @@ func (x *RequestContext) ToBytes() []byte {
 }
 
 // RequestContextFromUser produces a RequestContext object from a User's data.
-func RequestContextFromUser(user *User) *RequestContext {
+func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]bitmask.ServiceUserPermissions) *RequestContext {
 	return &RequestContext{
 		User: UserRequestContext{
 			ID:                      user.ID,
 			Username:                user.Username,
 			UserAccountStatus:       user.AccountStatus,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
+			ActiveAccountID:         activeAccountID,
+			AccountPermissionsMap:   accountPermissionsMap,
 		},
 	}
 }

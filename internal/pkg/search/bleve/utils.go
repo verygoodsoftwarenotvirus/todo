@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	belongsToUserWithMandatedRestrictionRegexp    = regexp.MustCompile(`\+belongsToUser:\d+`)
-	belongsToUserWithoutMandatedRestrictionRegexp = regexp.MustCompile(`belongsToUser:\d+`)
+	belongsToUserWithMandatedRestrictionRegexp    = regexp.MustCompile(`\+belongsToAccount:\d+`)
+	belongsToUserWithoutMandatedRestrictionRegexp = regexp.MustCompile(`belongsToAccount:\d+`)
 )
 
 // ensureQueryIsRestrictedToUser takes a query and userID and ensures that query
@@ -17,9 +17,9 @@ func ensureQueryIsRestrictedToUser(query string, userID uint64) string {
 	case belongsToUserWithMandatedRestrictionRegexp.MatchString(query):
 		return query
 	case belongsToUserWithoutMandatedRestrictionRegexp.MatchString(query):
-		query = belongsToUserWithoutMandatedRestrictionRegexp.ReplaceAllString(query, fmt.Sprintf("+belongsToUser:%d", userID))
+		query = belongsToUserWithoutMandatedRestrictionRegexp.ReplaceAllString(query, fmt.Sprintf("+belongsToAccount:%d", userID))
 	case !belongsToUserWithMandatedRestrictionRegexp.MatchString(query):
-		query = fmt.Sprintf("%s +belongsToUser:%d", query, userID)
+		query = fmt.Sprintf("%s +belongsToAccount:%d", query, userID)
 	}
 
 	return query

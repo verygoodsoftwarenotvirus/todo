@@ -42,7 +42,7 @@ func ProvideService(
 		logger:                 logging.EnsureLogger(logger).WithName(serviceName),
 		auditLog:               auditLog,
 		auditLogEntryIDFetcher: routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
-		sessionInfoFetcher:     routeParamManager.SessionInfoFetcherFromRequestContext,
+		sessionInfoFetcher:     routeParamManager.FetchContextFromRequest,
 		encoderDecoder:         encoder,
 		tracer:                 tracing.NewTracer(serviceName),
 	}

@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -164,7 +165,7 @@ func TestUsers(test *testing.T) {
 			// create users
 			createdUserIDs := []uint64{}
 			for i := 0; i < 5; i++ {
-				user, err := testutil.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i), debug)
+				user, err := utils.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i))
 				require.NoError(t, err)
 				createdUserIDs = append(createdUserIDs, user.ID)
 			}

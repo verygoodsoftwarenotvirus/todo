@@ -9,12 +9,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 var (
-	debug    bool
 	urlToUse string
 	cookie   *http.Cookie
 )
@@ -27,12 +27,12 @@ func init() {
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	u, err := testutil.CreateServiceUser(ctx, urlToUse, "", debug)
+	u, err := utils.CreateServiceUser(ctx, urlToUse, "")
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	cookie, err = testutil.GetLoginCookie(ctx, urlToUse, u)
+	cookie, err = utils.GetLoginCookie(ctx, urlToUse, u)
 	if err != nil {
 		logger.Fatal(err)
 	}

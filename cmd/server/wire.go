@@ -10,9 +10,9 @@ import (
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
+	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	delegatedclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/delegatedclients"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
@@ -65,7 +65,7 @@ func BuildServer(
 		chi.Providers,
 		frontendservice.Providers,
 		webhooksservice.Providers,
-		delegatedclientsservice.Providers,
+		apiclientsservice.Providers,
 	)
 	return nil, nil
 }

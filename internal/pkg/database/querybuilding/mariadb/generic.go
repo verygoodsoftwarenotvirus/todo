@@ -75,7 +75,7 @@ func (q *MariaDB) buildFilteredCountQuery(tableName, ownershipColumn string, use
 	return q.buildQuery(filteredCountQueryBuilder)
 }
 
-// BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given user,
+// BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *MariaDB) buildListQuery(tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	var includeArchived bool

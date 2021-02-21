@@ -56,7 +56,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		actual := s.CreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mh)
 	})
@@ -140,7 +140,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		actual := s.UpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
-		assert.Equal(t, http.StatusOK, res.Code)
+		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mh)
 	})

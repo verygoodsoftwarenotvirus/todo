@@ -210,7 +210,7 @@ func (c *Client) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFil
 }
 
 // CreateAccount creates an account in the database.
-func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (*types.Account, error) {
+func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreationInput, createdByUser uint64) (*types.Account, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -248,7 +248,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 // UpdateAccount updates a particular account. Note that UpdateAccount expects the
 // provided input to have a valid ID.
-func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, changes []types.FieldChangeSummary) error {
+func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser uint64, changes []types.FieldChangeSummary) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

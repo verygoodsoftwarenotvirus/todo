@@ -52,13 +52,13 @@ func (m *AccountDataManager) GetAccountsForAdmin(ctx context.Context, filter *ty
 }
 
 // CreateAccount is a mock function.
-func (m *AccountDataManager) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (*types.Account, error) {
+func (m *AccountDataManager) CreateAccount(ctx context.Context, input *types.AccountCreationInput, createdByUser uint64) (*types.Account, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*types.Account), args.Error(1)
 }
 
 // UpdateAccount is a mock function.
-func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account, changes []types.FieldChangeSummary) error {
+func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser uint64, changes []types.FieldChangeSummary) error {
 	return m.Called(ctx, updated).Error(0)
 }
 

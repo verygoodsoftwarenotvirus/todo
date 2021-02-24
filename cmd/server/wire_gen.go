@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accounts"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
@@ -60,18 +61,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	frontendService := frontend.ProvideService(logger, frontendConfig)
 	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, httpResponseEncoder, routeParamManager)
-	itemDataManager := database.ProvideItemDataManager(dbm)
-	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	searchConfig := cfg.Search
-	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemDataService, err := items.ProvideService(logger, itemDataManager, httpResponseEncoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
 	accountDataManager := database.ProvideAccountDataManager(dbm)
+	unitCounterProvider := metrics.ProvideUnitCounterProvider()
 	imageUploadProcessor := images.NewImageUploadProcessor()
 	uploadsConfig := &cfg.Uploads
 	storageConfig := &uploadsConfig.Storage
@@ -84,12 +77,23 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
+	accountDataService, err := accounts.ProvideService(logger, accountDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
+	if err != nil {
+		return nil, err
+	}
 	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
 	accountSubscriptionPlanDataService, err := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
 	apiClientDataService, err := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, httpResponseEncoder, unitCounterProvider, routeParamManager)
+	if err != nil {
+		return nil, err
+	}
+	itemDataManager := database.ProvideItemDataManager(dbm)
+	searchConfig := cfg.Search
+	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
+	itemDataService, err := items.ProvideService(logger, itemDataManager, httpResponseEncoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +108,9 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
+	frontendService := frontend.ProvideService(logger, frontendConfig)
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, frontendService, auditLogEntryDataService, itemDataService, userDataService, accountSubscriptionPlanDataService, apiClientDataService, webhookDataService, adminService, dbm, logger, httpResponseEncoder, router)
+	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, frontendService, dbm, logger, httpResponseEncoder, router)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/heptiolabs/healthcheck"
 
+	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accounts"
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
@@ -126,6 +127,20 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
 
 				singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
+			})
+		})
+
+		// Accounts
+		v1Router.Route("/accounts", func(accountsRouter routing.Router) {
+			accountsRouter.WithMiddleware(s.accountsService.CreationInputMiddleware).Post(root, s.accountsService.CreateHandler)
+			accountsRouter.Get(root, s.accountsService.ListHandler)
+
+			singleWebhookRoute := fmt.Sprintf("/"+numericIDPattern, accountsservice.AccountIDURIParamKey)
+			accountsRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
+				singleWebhookRouter.Get(root, s.accountsService.ReadHandler)
+				singleWebhookRouter.Delete(root, s.accountsService.ArchiveHandler)
+				singleWebhookRouter.WithMiddleware(s.accountsService.UpdateInputMiddleware).Put(root, s.accountsService.UpdateHandler)
+				singleWebhookRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.accountsService.AuditEntryHandler)
 			})
 		})
 

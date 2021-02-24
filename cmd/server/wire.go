@@ -8,6 +8,7 @@ import (
 
 	server "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
 	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accounts"
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
@@ -56,16 +57,17 @@ func BuildServer(
 		uploads.Providers,
 		observability.Providers,
 		storage.Providers,
-		adminservice.Providers,
-		auditservice.Providers,
-		authservice.Providers,
-		plansservice.Providers,
-		usersservice.Providers,
-		itemsservice.Providers,
 		chi.Providers,
-		frontendservice.Providers,
-		webhooksservice.Providers,
+		authservice.Providers,
+		usersservice.Providers,
+		accountsservice.Providers,
+		plansservice.Providers,
 		apiclientsservice.Providers,
+		webhooksservice.Providers,
+		auditservice.Providers,
+		adminservice.Providers,
+		frontendservice.Providers,
+		itemsservice.Providers,
 	)
 	return nil, nil
 }

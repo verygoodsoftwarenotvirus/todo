@@ -625,7 +625,7 @@ func TestClient_CreateAccount(T *testing.T) {
 		}
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual, err := c.CreateAccount(ctx, exampleInput)
+		actual, err := c.CreateAccount(ctx, exampleInput, 0)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAccount, actual)
 
@@ -662,7 +662,7 @@ func TestClient_CreateAccount(T *testing.T) {
 			return exampleAccount.CreatedOn
 		}
 
-		actual, err := c.CreateAccount(ctx, exampleInput)
+		actual, err := c.CreateAccount(ctx, exampleInput, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -700,7 +700,7 @@ func TestClient_UpdateAccount(T *testing.T) {
 
 		db.ExpectCommit()
 
-		err := c.UpdateAccount(ctx, exampleAccount, nil)
+		err := c.UpdateAccount(ctx, exampleAccount, 0, nil)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)

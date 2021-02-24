@@ -58,21 +58,23 @@ type (
 		GetAllAccounts(ctx context.Context, resultChannel chan []*Account, bucketSize uint16) error
 		GetAccounts(ctx context.Context, userID uint64, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
-		CreateAccount(ctx context.Context, input *AccountCreationInput) (*Account, error)
-		UpdateAccount(ctx context.Context, updated *Account, changes []FieldChangeSummary) error
-		ArchiveAccount(ctx context.Context, accountID, userID uint64) error
+		CreateAccount(ctx context.Context, input *AccountCreationInput, createdByUser uint64) (*Account, error)
+		UpdateAccount(ctx context.Context, updated *Account, changedByUser uint64, changes []FieldChangeSummary) error
+		ArchiveAccount(ctx context.Context, accountID, archivedByUser uint64) error
 		GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*AuditLogEntry, error)
 	}
 
 	// AccountDataService describes a structure capable of serving traffic related to accounts.
 	AccountDataService interface {
+		CreationInputMiddleware(next http.Handler) http.Handler
 		UpdateInputMiddleware(next http.Handler) http.Handler
 
 		ListHandler(res http.ResponseWriter, req *http.Request)
-		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
+		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 		UpdateHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
 

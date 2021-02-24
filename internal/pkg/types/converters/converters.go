@@ -12,6 +12,14 @@ func ConvertAuditLogEntryCreationInputToEntry(e *types.AuditLogEntryCreationInpu
 	}
 }
 
+// ConvertAccountToAccountUpdateInput creates an AccountUpdateInput struct from an item.
+func ConvertAccountToAccountUpdateInput(x *types.Account) *types.AccountUpdateInput {
+	return &types.AccountUpdateInput{
+		Name:          x.Name,
+		BelongsToUser: x.BelongsToUser,
+	}
+}
+
 // ConvertItemToItemUpdateInput creates an ItemUpdateInput struct from an item.
 func ConvertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
 	return &types.ItemUpdateInput{

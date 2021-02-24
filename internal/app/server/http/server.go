@@ -30,6 +30,7 @@ type (
 	Server struct {
 		// Services.
 		authService       types.AuthService
+		accountsService   types.AccountDataService
 		frontendService   types.FrontendService
 		auditService      types.AuditLogEntryDataService
 		usersService      types.UserDataService
@@ -58,14 +59,15 @@ func ProvideServer(
 	metricsSettings metrics.Config,
 	metricsHandler metrics.InstrumentationHandler,
 	authService types.AuthService,
-	frontendService types.FrontendService,
 	auditService types.AuditLogEntryDataService,
-	itemsService types.ItemDataService,
 	usersService types.UserDataService,
+	accountsService types.AccountDataService,
 	plansService types.AccountSubscriptionPlanDataService,
 	apiClientsService types.APIClientDataService,
+	itemsService types.ItemDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,
+	frontendService types.FrontendService,
 	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.HTTPResponseEncoder,
@@ -86,6 +88,7 @@ func ProvideServer(
 		webhooksService:   webhooksService,
 		frontendService:   frontendService,
 		usersService:      usersService,
+		accountsService:   accountsService,
 		authService:       authService,
 		itemsService:      itemsService,
 		apiClientsService: apiClientsService,

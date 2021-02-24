@@ -42,12 +42,12 @@ configs:
 
 ensure-wire:
 ifndef $(shell command -v wire 2> /dev/null)
-	$(shell GO111MODULE=off go install -u github.com/google/wire/cmd/wire)
+	$(shell GO111MODULE=off go install github.com/google/wire/cmd/wire)
 endif
 
 ensure-scc:
 ifndef $(shell command -v scc 2> /dev/null)
-	$(shell GO111MODULE=off go install -u github.com/boyter/scc)
+	$(shell GO111MODULE=off go install github.com/boyter/scc)
 endif
 
 ensure-pnpm:

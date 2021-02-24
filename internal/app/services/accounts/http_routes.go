@@ -102,7 +102,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToUser = si.User.ID
 
 	// create account in database.
-	x, err := s.accountDataManager.CreateAccount(ctx, input)
+	x, err := s.accountDataManager.CreateAccount(ctx, input, 0)
 	if err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -201,7 +201,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update account in database.
-	if err = s.accountDataManager.UpdateAccount(ctx, x, changeReport); err != nil {
+	if err = s.accountDataManager.UpdateAccount(ctx, x, 0, changeReport); err != nil {
 		logger.Error(err, "error encountered updating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

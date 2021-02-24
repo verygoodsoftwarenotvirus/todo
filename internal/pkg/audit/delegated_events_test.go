@@ -27,9 +27,10 @@ func TestAPIClientEventBuilders(T *testing.T) {
 			expectedEventType: audit.APIClientArchiveEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
+				audit.AccountAssignmentKey,
 				audit.APIClientAssignmentKey,
 			},
-			actual: audit.BuildAPIClientArchiveEventEntry(exampleUserID, exampleAPIClientDatabaseID),
+			actual: audit.BuildAPIClientArchiveEventEntry(exampleAccountID, exampleAPIClientDatabaseID, exampleUserID),
 		},
 	}
 

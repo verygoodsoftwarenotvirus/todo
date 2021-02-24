@@ -229,6 +229,7 @@ func TestService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			mock.Anything,
 			exampleInput,
+			exampleUser.ID,
 		).Return(exampleAPIClient, nil)
 
 		s.apiClientDataManager = mockDB
@@ -339,6 +340,7 @@ func TestService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			mock.Anything,
 			exampleInput,
+			exampleUser.ID,
 		).Return(exampleAPIClient, nil)
 		s.apiClientDataManager = mockDB
 		s.userDataManager = mockDB
@@ -397,6 +399,7 @@ func TestService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			mock.Anything,
 			exampleInput,
+			exampleUser.ID,
 		).Return(exampleAPIClient, nil)
 		s.apiClientDataManager = mockDB
 		s.userDataManager = mockDB
@@ -472,6 +475,7 @@ func TestService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			mock.Anything,
 			exampleInput,
+			exampleUser.ID,
 		).Return(exampleAPIClient, nil)
 
 		s.apiClientDataManager = mockDB
@@ -537,6 +541,7 @@ func TestService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			mock.Anything,
 			exampleInput,
+			exampleUser.ID,
 		).Return(exampleAPIClient, nil)
 
 		s.apiClientDataManager = mockDB
@@ -602,6 +607,7 @@ func TestService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			mock.Anything,
 			exampleInput,
+			exampleUser.ID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
 
 		s.apiClientDataManager = mockDB

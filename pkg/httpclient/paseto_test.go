@@ -25,7 +25,7 @@ func TestClient_buildAPIClientAuthTokenRequest(T *testing.T) {
 		c := buildTestClient(t, ts)
 
 		exampleSecret := make([]byte, validClientSecretSize)
-		exampleInput := &types.PASETOCreat"; ionInput{
+		exampleInput := &types.PASETOCreationInput{
 			ClientID:    "example_client_id",
 			RequestTime: 1234567890,
 		}

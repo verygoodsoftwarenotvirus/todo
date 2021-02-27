@@ -25,7 +25,7 @@ func TestClient_buildAPIClientAuthTokenRequest(T *testing.T) {
 		c := buildTestClient(t, ts)
 
 		exampleSecret := make([]byte, validClientSecretSize)
-		exampleInput := &types.PASETOCreationInput{
+		exampleInput := &types.PASETOCreat"; ionInput{
 			ClientID:    "example_client_id",
 			RequestTime: 1234567890,
 		}
@@ -36,7 +36,7 @@ func TestClient_buildAPIClientAuthTokenRequest(T *testing.T) {
 		require.NotNil(t, req)
 		assert.Equal(t, http.MethodPost, req.Method)
 
-		expectedSignature := `CHHTy1DUKxXxPokkUh0VbWV8wP9s-ejYIeGogq-FG0o`
+		expectedSignature := `odydXoVF97U2Q3rqE10NsrYoy-FSwOpZVJKRwadMsOE`
 		actualSignature := req.Header.Get(signatureHeaderKey)
 
 		assert.Equal(t, expectedSignature, actualSignature, "expected and actual signature header do not match")

@@ -1,7 +1,6 @@
 package accountsubscriptionplans
 
 import (
-	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -39,23 +38,16 @@ func ProvideService(
 	logger logging.Logger,
 	planDataManager types.AccountSubscriptionPlanDataManager,
 	encoder encoding.HTTPResponseEncoder,
-	planCounterProvider metrics.UnitCounterProvider,
+	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
-) (types.AccountSubscriptionPlanDataService, error) {
-	planCounter, err := planCounterProvider(counterName, counterDescription)
-	if err != nil {
-		return nil, fmt.Errorf("initializing counter: %w", err)
-	}
-
-	svc := &service{
+) types.AccountSubscriptionPlanDataService {
+	return &service{
 		logger:                logging.EnsureLogger(logger).WithName(serviceName),
 		planIDFetcher:         routeParamManager.BuildRouteParamIDFetcher(logger, AccountSubscriptionPlanIDURIParamKey, "account subscription plan"),
 		requestContextFetcher: routeParamManager.FetchContextFromRequest,
 		planDataManager:       planDataManager,
 		encoderDecoder:        encoder,
-		planCounter:           planCounter,
+		planCounter:           metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		tracer:                tracing.NewTracer(serviceName),
 	}
-
-	return svc, nil
 }

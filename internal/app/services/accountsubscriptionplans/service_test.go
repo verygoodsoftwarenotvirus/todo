@@ -1,7 +1,6 @@
 package accountsubscriptionplans
 
 import (
-	"errors"
 	"net/http"
 	"testing"
 
@@ -43,7 +42,7 @@ func TestProvidePlansService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountSubscriptionPlanIDURIParamKey, "account subscription plan").Return(func(*http.Request) uint64 { return 0 })
 
-		s, err := ProvideService(
+		s := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AccountSubscriptionPlanDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
@@ -52,29 +51,6 @@ func TestProvidePlansService(T *testing.T) {
 		)
 
 		assert.NotNil(t, s)
-		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, rpm)
-	})
-
-	T.Run("with error providing unit counter", func(t *testing.T) {
-		t.Parallel()
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return nil, errors.New("blah")
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-
-		s, err := ProvideService(
-			logging.NewNonOperationalLogger(),
-			&mocktypes.AccountSubscriptionPlanDataManager{},
-			mockencoding.NewMockEncoderDecoder(),
-			ucp,
-			rpm,
-		)
-
-		assert.Nil(t, s)
-		assert.Error(t, err)
 
 		mock.AssertExpectationsForObjects(t, rpm)
 	})

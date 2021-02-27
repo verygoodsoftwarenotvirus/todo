@@ -52,7 +52,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	reqCtx, err := types.RequestContextFromUser(user, exampleAccount.ID, examplePerms)
 	require.NoError(t, err)
 
-	s.sessionManager.Put(ctx, sessionInfoKey, reqCtx)
+	s.sessionManager.Put(ctx, requestContextKey, reqCtx)
 
 	token, _, err := s.sessionManager.Commit(ctx)
 	assert.NotEmpty(t, token)
@@ -683,7 +683,7 @@ func TestService_LogoutHandler(T *testing.T) {
 		require.NoError(t, err)
 
 		// Then make the privilege-level change.
-		s.sessionManager.Put(ctx, sessionInfoKey, reqCtx)
+		s.sessionManager.Put(ctx, requestContextKey, reqCtx)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
@@ -1680,22 +1680,6 @@ func TestService_PASETOHandler(T *testing.T) {
 		).Return(exampleAPIClient, nil)
 		s.apiClientManager = dcm
 
-		udb := &mocktypes.UserDataManager{}
-		udb.On(
-			"GetUser",
-			mock.MatchedBy(testutil.ContextMatcher),
-			exampleUser.ID,
-		).Return(exampleUser, nil)
-		s.userDB = udb
-
-		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
-		membershipDB.On(
-			"GetMembershipsForUser",
-			mock.MatchedBy(testutil.ContextMatcher),
-			exampleUser.ID,
-		).Return(exampleAccount.ID, examplePerms, nil)
-		s.accountMembershipManager = membershipDB
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
 		require.NotNil(t, req)
@@ -1713,7 +1697,7 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 
-		mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
+		mock.AssertExpectationsForObjects(t, dcm)
 	})
 
 	T.Run("token encryption error", func(t *testing.T) {

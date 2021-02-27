@@ -1,7 +1,6 @@
 package items
 
 import (
-	"errors"
 	"net/http"
 	"testing"
 
@@ -60,32 +59,6 @@ func TestProvideItemsService(T *testing.T) {
 
 		assert.NotNil(t, s)
 		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, rpm)
-	})
-
-	T.Run("with error providing unit counter", func(t *testing.T) {
-		t.Parallel()
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return nil, errors.New("blah")
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-
-		s, err := ProvideService(
-			logging.NewNonOperationalLogger(),
-			&mocktypes.ItemDataManager{},
-			mockencoding.NewMockEncoderDecoder(),
-			ucp,
-			search.Config{ItemsIndexPath: "example/path"},
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
-				return &mocksearch.IndexManager{}, nil
-			},
-			rpm,
-		)
-
-		assert.Nil(t, s)
-		assert.Error(t, err)
 
 		mock.AssertExpectationsForObjects(t, rpm)
 	})

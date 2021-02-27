@@ -17,7 +17,7 @@ import (
 
 const (
 	serviceName        = "auth_service"
-	sessionInfoKey     = string(types.RequestContextKey)
+	requestContextKey  = string(types.RequestContextKey)
 	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
 	cookieSecretSize   = 64
 )

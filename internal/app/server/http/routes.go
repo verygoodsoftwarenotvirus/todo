@@ -135,12 +135,19 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			accountsRouter.WithMiddleware(s.accountsService.CreationInputMiddleware).Post(root, s.accountsService.CreateHandler)
 			accountsRouter.Get(root, s.accountsService.ListHandler)
 
-			singleWebhookRoute := fmt.Sprintf("/"+numericIDPattern, accountsservice.AccountIDURIParamKey)
-			accountsRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
-				singleWebhookRouter.Get(root, s.accountsService.ReadHandler)
-				singleWebhookRouter.Delete(root, s.accountsService.ArchiveHandler)
-				singleWebhookRouter.WithMiddleware(s.accountsService.UpdateInputMiddleware).Put(root, s.accountsService.UpdateHandler)
-				singleWebhookRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.accountsService.AuditEntryHandler)
+			singleUserRoute := fmt.Sprintf("/"+numericIDPattern, accountsservice.UserIDURIParamKey)
+			singleAccountRoute := fmt.Sprintf("/"+numericIDPattern, accountsservice.AccountIDURIParamKey)
+			accountsRouter.Route(singleAccountRoute, func(singleAccountRouter routing.Router) {
+				singleAccountRouter.Get(root, s.accountsService.ReadHandler)
+				singleAccountRouter.Delete(root, s.accountsService.ArchiveHandler)
+				singleAccountRouter.WithMiddleware(s.accountsService.UpdateInputMiddleware).Put(root, s.accountsService.UpdateHandler)
+
+				singleAccountRouter.Post("/member", s.accountsService.AddUserHandler)
+				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveUserHandler)
+				singleAccountRouter.Put("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
+				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.MarkAsDefaultHandler)
+
+				singleAccountRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.accountsService.AuditEntryHandler)
 			})
 		})
 

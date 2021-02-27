@@ -2,7 +2,6 @@ package apiclients
 
 import (
 	"crypto/rand"
-	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
@@ -58,8 +57,8 @@ func ProvideAPIClientsService(
 	encoderDecoder encoding.HTTPResponseEncoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
-) (types.APIClientDataService, error) {
-	svc := &service{
+) types.APIClientDataService {
+	return &service{
 		apiClientDataManager:  clientDataManager,
 		userDataManager:       userDataManager,
 		logger:                logging.EnsureLogger(logger).WithName(serviceName),
@@ -69,12 +68,6 @@ func ProvideAPIClientsService(
 		requestContextFetcher: routeParamManager.FetchContextFromRequest,
 		urlClientIDExtractor:  routeParamManager.BuildRouteParamIDFetcher(logger, APIClientIDURIParamKey, "api client"),
 		tracer:                tracing.NewTracer(serviceName),
+		apiClientCounter:      metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 	}
-
-	var err error
-	if svc.apiClientCounter, err = counterProvider(counterName, counterDescription); err != nil {
-		return nil, fmt.Errorf("initializing counter: %w", err)
-	}
-
-	return svc, nil
 }

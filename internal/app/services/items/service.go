@@ -1,7 +1,6 @@
 package items
 
 import (
-	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -44,16 +43,11 @@ func ProvideService(
 	logger logging.Logger,
 	itemDataManager types.ItemDataManager,
 	encoder encoding.HTTPResponseEncoder,
-	itemCounterProvider metrics.UnitCounterProvider,
+	counterProvider metrics.UnitCounterProvider,
 	searchSettings search.Config,
 	indexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
 ) (types.ItemDataService, error) {
-	itemCounter, err := itemCounterProvider(counterName, counterDescription)
-	if err != nil {
-		return nil, fmt.Errorf("initializing counter: %w", err)
-	}
-
 	logger.WithValue("index_path", searchSettings.ItemsIndexPath).Debug("setting up items search index")
 
 	searchIndexManager, indexInitErr := indexProvider(searchSettings.ItemsIndexPath, types.ItemsSearchIndexName, logger)
@@ -68,7 +62,7 @@ func ProvideService(
 		requestContextFetcher: routeParamManager.FetchContextFromRequest,
 		itemDataManager:       itemDataManager,
 		encoderDecoder:        encoder,
-		itemCounter:           itemCounter,
+		itemCounter:           metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		search:                searchIndexManager,
 		tracer:                tracing.NewTracer(serviceName),
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/squirrel"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -13,7 +14,40 @@ var _ types.AccountUserMembershipSQLQueryBuilder = (*MariaDB)(nil)
 
 // BuildMarkAccountAsUserDefaultQuery does .
 func (q *MariaDB) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
-	panic("implement me")
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Where(squirrel.Eq{
+			"FILL ME OUT PLEASE": true,
+			"oldOwnerID":         userID,
+			"accountID":          accountID,
+		}),
+	)
+}
+
+// BuildTransferAccountOwnershipQuery does .
+func (q *MariaDB) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Where(squirrel.Eq{
+			"FILL ME OUT PLEASE": true,
+			"oldOwnerID":         oldOwnerID,
+			"newOwnerID":         newOwnerID,
+			"accountID":          accountID,
+		}),
+	)
+}
+
+// BuildModifyUserPermissionsQuery builds.
+func (q *MariaDB) BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions bitmask.ServiceUserPermissions) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Where(squirrel.Eq{
+			"FILL ME OUT PLEASE": true,
+			"userID":             userID,
+			"permissions":        permissions,
+			"accountID":          accountID,
+		}),
+	)
 }
 
 // BuildArchiveAccountMembershipsForUserQuery does .

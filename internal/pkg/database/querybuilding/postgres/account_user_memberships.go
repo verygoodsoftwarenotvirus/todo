@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/squirrel"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -63,6 +64,32 @@ func (q *Postgres) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) 
 		Where(squirrel.Eq{
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
 			querybuilding.ArchivedOnColumn:                               nil,
+		}),
+	)
+}
+
+// BuildModifyUserPermissionsQuery builds.
+func (q *Postgres) BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions bitmask.ServiceUserPermissions) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Where(squirrel.Eq{
+			"FILL ME OUT PLEASE": true,
+			"userID":             userID,
+			"permissions":        permissions,
+			"accountID":          accountID,
+		}),
+	)
+}
+
+// BuildTransferAccountOwnershipQuery builds.
+func (q *Postgres) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Where(squirrel.Eq{
+			"FILL ME OUT PLEASE": true,
+			"oldOwnerID":         oldOwnerID,
+			"newOwnerID":         newOwnerID,
+			"accountID":          accountID,
 		}),
 	)
 }

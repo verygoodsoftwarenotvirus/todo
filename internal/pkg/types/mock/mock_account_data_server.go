@@ -62,7 +62,42 @@ func (m *AccountDataServer) ArchiveHandler(res http.ResponseWriter, req *http.Re
 	m.Called(res, req)
 }
 
+// AddUserHandler implements the interface.
+func (m *AccountDataServer) AddUserHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
+// ModifyMemberPermissionsHandler implements the interface.
+func (m *AccountDataServer) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
+// MarkAsDefaultHandler implements the interface.
+func (m *AccountDataServer) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
+// RemoveUserHandler implements the interface.
+func (m *AccountDataServer) RemoveUserHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
 // AuditEntryHandler implements our interface requirements.
 func (m *AccountDataServer) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
+}
+
+// AddMemberInputMiddleware implements the interface.
+func (m *AccountDataServer) AddMemberInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
+}
+
+// ModifyMemberPermissionsInputMiddleware implements the interface.
+func (m *AccountDataServer) ModifyMemberPermissionsInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
+}
+
+// AccountTransferInputMiddleware implements the interface.
+func (m *AccountDataServer) AccountTransferInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
 }

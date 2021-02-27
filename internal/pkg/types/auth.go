@@ -44,9 +44,15 @@ type (
 		ServiceAdminPermissions  *permissions.ServiceAdminPermissionsSummary `json:"permissions,omitempty"`
 	}
 
+	// AccountSwapInput represents what a User could set as input for switching accounts.
+	AccountSwapInput struct {
+		AccountID uint64 `json:"accountID"`
+	}
+
 	// PASETOCreationInput is used to create a PASETO.
 	PASETOCreationInput struct {
 		ClientID          string `json:"clientID"`
+		AccountID         uint64 `json:"accountID"`
 		RequestTime       int64  `json:"requestTime"`
 		RequestedLifetime uint64 `json:"requestedLifetime,omitempty"`
 	}

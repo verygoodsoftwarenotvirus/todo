@@ -3,6 +3,7 @@ package mock
 import (
 	"github.com/stretchr/testify/mock"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -65,6 +66,20 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildAddUserToAccountQuery(userID
 // BuildRemoveUserFromAccountQuery implements our interface.
 func (m *AccountUserMembershipSQLQueryBuilder) BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(userID, accountID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
+// BuildTransferAccountOwnershipQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(oldOwnerID, newOwnerID, accountID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
+// BuildModifyUserPermissionsQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions bitmask.ServiceUserPermissions) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, accountID, permissions)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

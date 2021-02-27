@@ -49,7 +49,7 @@ func (s *service) getRequestContextFromCookie(ctx context.Context, req *http.Req
 			return nil, errTokenLoading
 		}
 
-		reqCtx, ok := s.sessionManager.Get(ctx, sessionInfoKey).(*types.RequestContext)
+		reqCtx, ok := s.sessionManager.Get(ctx, requestContextKey).(*types.RequestContext)
 		if !ok {
 			return nil, errNoSessionInfo
 		}
@@ -154,12 +154,77 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if renewTokenErr := s.sessionManager.RenewToken(ctx); renewTokenErr != nil {
-		logger.Error(err, "error encountered renewing token")
+		logger.Error(renewTokenErr, "error encountered renewing token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
-	s.sessionManager.Put(ctx, sessionInfoKey, buildSessionInfoForUserLogin(user, defaultAccount, memberships))
+	s.sessionManager.Put(ctx, requestContextKey, buildRequestContextForUserLogin(user, defaultAccount, memberships))
+
+	token, expiry, err := s.sessionManager.Commit(ctx)
+	if err != nil {
+		logger.Error(err, "error encountered writing to session store")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return
+	}
+
+	cookie, cookieErr := s.buildCookie(token, expiry)
+	if cookieErr != nil {
+		logger.Error(cookieErr, "error encountered building cookie")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return
+	}
+
+	logger.Debug("login successful")
+	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
+	http.SetCookie(res, cookie)
+
+	statusResponse := user.ToStatusResponse()
+	statusResponse.UserIsAuthenticated = true
+
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
+}
+
+// ChangeActiveAccountHandler is our login route.
+func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+	logger.Debug("ChangeActiveAccountHandler called")
+
+	requestedAccountID := uint64(1)
+
+	// determine user ID.
+	reqCtx, reqCtxRetrievalErr := s.requestContextFetcher(req)
+	if reqCtxRetrievalErr != nil {
+		logger.Error(reqCtxRetrievalErr, "error fetching request context")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	if _, ok := reqCtx.User.AccountPermissionsMap[requestedAccountID]; !ok {
+		logger.Debug("invalid account ID requested for activation")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	reqCtx.User.ActiveAccountID = requestedAccountID
+
+	ctx, sessionErr := s.sessionManager.Load(ctx, "")
+	if sessionErr != nil {
+		logger.Error(sessionErr, "error loading token")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return
+	}
+
+	if renewTokenErr := s.sessionManager.RenewToken(ctx); renewTokenErr != nil {
+		logger.Error(renewTokenErr, "error encountered renewing token")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return
+	}
+
+	s.sessionManager.Put(ctx, requestContextKey, reqCtx)
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
@@ -175,17 +240,13 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Debug("login successful")
-	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
+	logger.Debug("successfully changed user's default account")
 	http.SetCookie(res, cookie)
 
-	statusResponse := user.ToStatusResponse()
-	statusResponse.UserIsAuthenticated = true
-
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
+	res.WriteHeader(http.StatusAccepted)
 }
 
-func buildSessionInfoForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]bitmask.ServiceUserPermissions) *types.RequestContext {
+func buildRequestContextForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]bitmask.ServiceUserPermissions) *types.RequestContext {
 	return &types.RequestContext{
 		User: types.UserRequestContext{
 			Username:                user.Username,
@@ -297,27 +358,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, userRetrievalErr := s.userDB.GetUser(ctx, client.BelongsToAccount)
-	if userRetrievalErr != nil {
-		logger.Error(userRetrievalErr, "retrieving user")
-		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-		return
-	}
-
-	logger = logger.WithValue(keys.UserIDKey, user.ID)
-
-	defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToAccount)
-	if membershipRetrievalErr != nil {
-		logger.Error(membershipRetrievalErr, "retrieving permissions for API client")
-		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-		return
-	}
-
-	logger = logger.WithValue(keys.AccountIDKey, defaultAccount).WithValue(keys.PermissionsKey, permissions)
-
 	mac := hmac.New(sha256.New, client.ClientSecret)
 	if _, macWriteErr := mac.Write(s.encoderDecoder.MustJSON(pasetoRequest)); macWriteErr != nil {
-		logger.Error(membershipRetrievalErr, "writing HMAC message for comparison")
+		logger.Error(macWriteErr, "writing HMAC message for comparison")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -328,10 +371,37 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	user, userRetrievalErr := s.userDB.GetUser(ctx, client.BelongsToAccount)
+	if userRetrievalErr != nil {
+		logger.Error(userRetrievalErr, "retrieving user")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		return
+	}
+
+	logger = logger.WithValue(keys.UserIDKey, user.ID)
+
+	requestedAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToAccount)
+	if membershipRetrievalErr != nil {
+		logger.Error(membershipRetrievalErr, "retrieving permissions for API client")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		return
+	}
+
+	if pasetoRequest.AccountID != 0 {
+		if _, isMember := permissions[pasetoRequest.AccountID]; !isMember {
+			logger.Debug("invalid account ID requested for token")
+			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+			return
+		}
+
+		logger.WithValue("requested_account", pasetoRequest.AccountID).Debug("setting token account ID to requested account")
+		requestedAccount = pasetoRequest.AccountID
+	}
+
+	logger = logger.WithValue(keys.AccountIDKey, requestedAccount).WithValue(keys.PermissionsKey, permissions)
+
 	now := time.Now().UTC()
-
 	lifetime := time.Duration(math.Min(float64(maxPASETOLifetime), float64(s.config.PASETO.Lifetime)))
-
 	jsonToken := paseto.JSONToken{
 		Audience:   strconv.FormatUint(client.BelongsToAccount, 10),
 		Issuer:     s.config.PASETO.Issuer,
@@ -342,18 +412,18 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		Expiration: now.Add(lifetime),
 	}
 
-	si := &types.RequestContext{
+	reqCtx := &types.RequestContext{
 		User: types.UserRequestContext{
 			Username:                user.Username,
 			ID:                      user.ID,
-			ActiveAccountID:         defaultAccount,
+			ActiveAccountID:         requestedAccount,
 			UserAccountStatus:       user.AccountStatus,
 			AccountPermissionsMap:   permissions,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
 	}
 
-	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(si.ToBytes()))
+	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(reqCtx.ToBytes()))
 
 	// Encrypt data
 	token, tokenEncryptErr := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, "")

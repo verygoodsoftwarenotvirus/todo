@@ -9,12 +9,8 @@ const (
 	AccountSubscriptionPlanIDKey = "account_subscription_plan_id"
 	// PermissionsKey is the standard key for referring to an account user membership ID in a log.
 	PermissionsKey = "permissions"
-	// SessionInfoKey is the standard key for referring to a session info struct.
-	SessionInfoKey = "session_info"
-	// ActiveAccountIDKey is the standard key for referring to an account user membership ID in a log.
-	ActiveAccountIDKey = "active_account_id"
-	// PerformedByKey is the standard key for referring to a requesting user's ID in a log.
-	PerformedByKey = "performed_by"
+	// RequesterKey is the standard key for referring to a requesting user's ID in a log.
+	RequesterKey = "requested_by"
 	// AccountIDKey is the standard key for referring to an account ID in a log.
 	AccountIDKey = "account_id"
 	// UserIDKey is the standard key for referring to a user ID in a log.
@@ -41,6 +37,8 @@ const (
 	RequestURIKey = "request_uri"
 	// ResponseStatusKey is the standard key for referring to an http.Request's URI in a log.
 	ResponseStatusKey = "response_status"
+	// ReasonKey is the standard key for referring to a reason in a log.
+	ReasonKey = "reason"
 	// QueryKey is the standard key for referring to a query in a log.
 	QueryKey = "query"
 	// ConnectionDetailsKey is the standard key for referring to a database's URI in a log.

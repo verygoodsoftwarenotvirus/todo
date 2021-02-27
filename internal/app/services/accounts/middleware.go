@@ -8,6 +8,10 @@ import (
 )
 
 const (
+	// addUserToAccountMiddlewareCtxKey is a string alias we can use for referring to account input data in contexts.
+	addUserToAccountMiddlewareCtxKey types.ContextKey = "add_user_to_account"
+	// removeUserFromAccountMiddlewareCtxKey is a string alias we can use for referring to account input data in contexts.
+	removeUserFromAccountMiddlewareCtxKey types.ContextKey = "remove_user_from_account"
 	// createMiddlewareCtxKey is a string alias we can use for referring to account input data in contexts.
 	createMiddlewareCtxKey types.ContextKey = "account_create_input"
 	// updateMiddlewareCtxKey is a string alias we can use for referring to account update data in contexts.
@@ -64,6 +68,27 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(ctx, updateMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
+	})
+}
+
+// AddMemberInputMiddleware does .
+func (s *service) AddMemberInputMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+
+	})
+}
+
+// ModifyMemberPermissionsInputMiddleware does .
+func (s *service) ModifyMemberPermissionsInputMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+
+	})
+}
+
+// AccountTransferInputMiddleware does .
+func (s *service) AccountTransferInputMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+
 	})
 }
 

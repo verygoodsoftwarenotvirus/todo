@@ -1,7 +1,6 @@
 package users
 
 import (
-	"fmt"
 	"net/http"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
@@ -66,13 +65,8 @@ func ProvideUsersService(
 	imageUploadProcessor images.ImageUploadProcessor,
 	uploadManager uploads.UploadManager,
 	routeParamManager routing.RouteParamManager,
-) (types.UserDataService, error) {
-	counter, err := counterProvider(counterName, counterDescription)
-	if err != nil {
-		return nil, fmt.Errorf("initializing counter: %w", err)
-	}
-
-	svc := &service{
+) types.UserDataService {
+	return &service{
 		logger:                logging.EnsureLogger(logger).WithName(serviceName),
 		userDataManager:       userDataManager,
 		accountDataManager:    accountDataManager,
@@ -81,12 +75,10 @@ func ProvideUsersService(
 		requestContextFetcher: routeParamManager.FetchContextFromRequest,
 		encoderDecoder:        encoder,
 		authSettings:          authSettings,
-		userCounter:           counter,
+		userCounter:           metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		secretGenerator:       &standardSecretGenerator{},
 		tracer:                tracing.NewTracer(serviceName),
 		imageUploadProcessor:  imageUploadProcessor,
 		uploadManager:         uploadManager,
 	}
-
-	return svc, nil
 }

@@ -38,7 +38,7 @@ func TestAccountUserMembershipEventBuilders(T *testing.T) {
 				audit.UserAssignmentKey,
 				audit.ReasonKey,
 			},
-			actual: audit.BuildUserMarkedAccountAsDefaultEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID, "blah blah"),
+			actual: audit.BuildUserMarkedAccountAsDefaultEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID),
 		},
 	}
 

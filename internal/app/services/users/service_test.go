@@ -1,7 +1,6 @@
 package users
 
 import (
-	"errors"
 	"net/http"
 	"testing"
 
@@ -20,7 +19,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -35,7 +33,7 @@ func buildTestService(t *testing.T) *service {
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
-	s, err := ProvideUsersService(
+	s := ProvideUsersService(
 		&authservice.Config{},
 		logging.NewNonOperationalLogger(),
 		&mocktypes.UserDataManager{},
@@ -49,7 +47,6 @@ func buildTestService(t *testing.T) *service {
 		&mockuploads.UploadManager{},
 		rpm,
 	)
-	require.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, mockDB, uc, rpm)
 
@@ -65,7 +62,7 @@ func TestProvideUsersService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
-		s, err := ProvideUsersService(
+		s := ProvideUsersService(
 			&authservice.Config{},
 			logging.NewNonOperationalLogger(),
 			&mocktypes.UserDataManager{},
@@ -80,36 +77,7 @@ func TestProvideUsersService(T *testing.T) {
 			rpm,
 		)
 
-		assert.NoError(t, err)
 		assert.NotNil(t, s)
-
-		mock.AssertExpectationsForObjects(t, rpm)
-	})
-
-	T.Run("with error initializing counter", func(t *testing.T) {
-		t.Parallel()
-
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return &mockmetrics.UnitCounter{}, errors.New("blah")
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-
-		s, err := ProvideUsersService(
-			&authservice.Config{},
-			logging.NewNonOperationalLogger(),
-			&mocktypes.UserDataManager{},
-			&mocktypes.AccountDataManager{},
-			&mockauth.Authenticator{},
-			mockencoding.NewMockEncoderDecoder(),
-			ucp,
-			&images.MockImageUploadProcessor{},
-			&mockuploads.UploadManager{},
-			rpm,
-		)
-
-		assert.Error(t, err)
-		assert.Nil(t, s)
 
 		mock.AssertExpectationsForObjects(t, rpm)
 	})

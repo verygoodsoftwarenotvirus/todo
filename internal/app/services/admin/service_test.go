@@ -15,7 +15,6 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -27,7 +26,7 @@ func buildTestService(t *testing.T) *service {
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
-	s, err := ProvideService(
+	s := ProvideService(
 		logger,
 		&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
 		&mockauth.Authenticator{},
@@ -37,7 +36,6 @@ func buildTestService(t *testing.T) *service {
 		ed,
 		rpm,
 	)
-	require.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, rpm)
 
@@ -55,7 +53,7 @@ func TestProvideAdminService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
-		s, err := ProvideService(
+		s := ProvideService(
 			logger,
 			&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
 			&mockauth.Authenticator{},
@@ -67,7 +65,6 @@ func TestProvideAdminService(T *testing.T) {
 		)
 
 		assert.NotNil(t, s)
-		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, rpm)
 	})

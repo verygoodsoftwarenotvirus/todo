@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -28,13 +27,15 @@ type (
 
 	// service handles to-do list accounts.
 	service struct {
-		logger                logging.Logger
-		accountDataManager    types.AccountDataManager
-		accountIDFetcher      func(*http.Request) uint64
-		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
-		accountCounter        metrics.UnitCounter
-		encoderDecoder        encoding.HTTPResponseEncoder
-		tracer                tracing.Tracer
+		logger                       logging.Logger
+		accountDataManager           types.AccountDataManager
+		accountMembershipDataManager types.AccountUserMembershipDataManager
+		accountIDFetcher             func(*http.Request) uint64
+		userIDFetcher                func(*http.Request) uint64
+		requestContextFetcher        func(*http.Request) (*types.RequestContext, error)
+		accountCounter               metrics.UnitCounter
+		encoderDecoder               encoding.HTTPResponseEncoder
+		tracer                       tracing.Tracer
 	}
 )
 
@@ -42,24 +43,20 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	accountDataManager types.AccountDataManager,
+	accountMembershipDataManager types.AccountUserMembershipDataManager,
 	encoder encoding.HTTPResponseEncoder,
-	accountCounterProvider metrics.UnitCounterProvider,
+	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
-) (types.AccountDataService, error) {
-	accountCounter, err := accountCounterProvider(counterName, counterDescription)
-	if err != nil {
-		return nil, fmt.Errorf("initializing counter: %w", err)
+) types.AccountDataService {
+	return &service{
+		logger:                       logging.EnsureLogger(logger).WithName(serviceName),
+		accountIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
+		userIDFetcher:                routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		requestContextFetcher:        routeParamManager.FetchContextFromRequest,
+		accountDataManager:           accountDataManager,
+		accountMembershipDataManager: accountMembershipDataManager,
+		encoderDecoder:               encoder,
+		accountCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
+		tracer:                       tracing.NewTracer(serviceName),
 	}
-
-	svc := &service{
-		logger:                logging.EnsureLogger(logger).WithName(serviceName),
-		accountIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
-		requestContextFetcher: routeParamManager.FetchContextFromRequest,
-		accountDataManager:    accountDataManager,
-		encoderDecoder:        encoder,
-		accountCounter:        accountCounter,
-		tracer:                tracing.NewTracer(serviceName),
-	}
-
-	return svc, nil
 }

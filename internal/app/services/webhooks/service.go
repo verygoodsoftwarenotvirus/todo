@@ -1,7 +1,6 @@
 package webhooks
 
 import (
-	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -46,23 +45,16 @@ func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager types.WebhookDataManager,
 	encoder encoding.HTTPResponseEncoder,
-	webhookCounterProvider metrics.UnitCounterProvider,
+	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
-) (types.WebhookDataService, error) {
-	webhookCounter, err := webhookCounterProvider(counterName, counterDescription)
-	if err != nil {
-		return nil, fmt.Errorf("initializing counter: %w", err)
-	}
-
-	svc := &service{
+) types.WebhookDataService {
+	return &service{
 		logger:                logging.EnsureLogger(logger).WithName(serviceName),
 		webhookDataManager:    webhookDataManager,
 		encoderDecoder:        encoder,
-		webhookCounter:        webhookCounter,
+		webhookCounter:        metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		requestContextFetcher: routeParamManager.FetchContextFromRequest,
 		webhookIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
 		tracer:                tracing.NewTracer(serviceName),
 	}
-
-	return svc, nil
 }

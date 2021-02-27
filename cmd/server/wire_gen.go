@@ -73,23 +73,11 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	uploadManager := uploads.ProvideUploadManager(uploader)
-	userDataService, err := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, httpResponseEncoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
-	accountDataService, err := accounts.ProvideService(logger, accountDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
+	userDataService := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, httpResponseEncoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
+	accountDataService := accounts.ProvideService(logger, accountDataManager, accountUserMembershipDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
 	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
-	accountSubscriptionPlanDataService, err := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
-	apiClientDataService, err := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, httpResponseEncoder, unitCounterProvider, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
+	accountSubscriptionPlanDataService := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
+	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, httpResponseEncoder, unitCounterProvider, routeParamManager)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	searchConfig := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
@@ -98,16 +86,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 		return nil, err
 	}
 	webhookDataManager := database.ProvideWebhookDataManager(dbm)
-	webhookDataService, err := webhooks.ProvideWebhooksService(logger, webhookDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
+	webhookDataService := webhooks.ProvideWebhooksService(logger, webhookDataManager, httpResponseEncoder, unitCounterProvider, routeParamManager)
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
-	adminService, err := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, httpResponseEncoder, routeParamManager)
-	if err != nil {
-		return nil, err
-	}
+	adminService := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, httpResponseEncoder, routeParamManager)
 	frontendService := frontend.ProvideService(logger, frontendConfig)
 	router := chi.NewRouter(logger)
 	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, frontendService, dbm, logger, httpResponseEncoder, router)

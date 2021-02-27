@@ -1,7 +1,6 @@
 package accounts
 
 import (
-	"errors"
 	"net/http"
 	"testing"
 
@@ -21,13 +20,14 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:                logging.NewNonOperationalLogger(),
-		accountCounter:        &mockmetrics.UnitCounter{},
-		accountDataManager:    &mocktypes.AccountDataManager{},
-		accountIDFetcher:      func(req *http.Request) uint64 { return 0 },
-		requestContextFetcher: func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
-		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
-		tracer:                tracing.NewTracer("test"),
+		logger:                       logging.NewNonOperationalLogger(),
+		accountCounter:               &mockmetrics.UnitCounter{},
+		accountDataManager:           &mocktypes.AccountDataManager{},
+		accountMembershipDataManager: &mocktypes.AccountUserMembershipDataManager{},
+		accountIDFetcher:             func(req *http.Request) uint64 { return 0 },
+		requestContextFetcher:        func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
+		encoderDecoder:               mockencoding.NewMockEncoderDecoder(),
+		tracer:                       tracing.NewTracer("test"),
 	}
 }
 
@@ -42,39 +42,18 @@ func TestProvideAccountsService(T *testing.T) {
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
-		s, err := ProvideService(
+		s := ProvideService(
 			logging.NewNonOperationalLogger(),
 			&mocktypes.AccountDataManager{},
+			&mocktypes.AccountUserMembershipDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
 			rpm,
 		)
 
 		assert.NotNil(t, s)
-		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, rpm)
-	})
-
-	T.Run("with error providing unit counter", func(t *testing.T) {
-		t.Parallel()
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return nil, errors.New("blah")
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-
-		s, err := ProvideService(
-			logging.NewNonOperationalLogger(),
-			&mocktypes.AccountDataManager{},
-			mockencoding.NewMockEncoderDecoder(),
-			ucp,
-			rpm,
-		)
-
-		assert.Nil(t, s)
-		assert.Error(t, err)
 
 		mock.AssertExpectationsForObjects(t, rpm)
 	})

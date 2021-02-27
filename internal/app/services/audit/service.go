@@ -38,7 +38,7 @@ func ProvideService(
 	encoder encoding.HTTPResponseEncoder,
 	routeParamManager routing.RouteParamManager,
 ) types.AuditLogEntryDataService {
-	svc := &service{
+	return &service{
 		logger:                 logging.EnsureLogger(logger).WithName(serviceName),
 		auditLog:               auditLog,
 		auditLogEntryIDFetcher: routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
@@ -46,6 +46,4 @@ func ProvideService(
 		encoderDecoder:         encoder,
 		tracer:                 tracing.NewTracer(serviceName),
 	}
-
-	return svc
 }

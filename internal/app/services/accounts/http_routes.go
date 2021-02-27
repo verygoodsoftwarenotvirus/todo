@@ -13,6 +13,8 @@ import (
 const (
 	// AccountIDURIParamKey is a standard string that we'll use to refer to account IDs with.
 	AccountIDURIParamKey = "accountID"
+	// UserIDURIParamKey is a standard string that we'll use to refer to user IDs with.
+	UserIDURIParamKey = "userID"
 )
 
 // parseBool differs from strconv.ParseBool in that it returns false by default.
@@ -91,15 +93,15 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
+	if requestContextRetrievalError != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
-	input.BelongsToUser = si.User.ID
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	input.BelongsToUser = reqCtx.User.ID
 
 	// create account in database.
 	x, err := s.accountDataManager.CreateAccount(ctx, input, 0)
@@ -171,15 +173,15 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
+	if requestContextRetrievalError != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
-	input.BelongsToUser = si.User.ID
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	input.BelongsToUser = reqCtx.User.ID
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -187,7 +189,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// fetch account from database.
-	x, err := s.accountDataManager.GetAccount(ctx, accountID, si.User.ID)
+	x, err := s.accountDataManager.GetAccount(ctx, accountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -249,6 +251,194 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
+}
+
+// AddUserHandler is our account creation route.
+func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// check request context for parsed input struct.
+	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.AddUserToAccountInput)
+	if !ok {
+		logger.Info("valid input not attached to request")
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		return
+	}
+
+	accountID := s.accountIDFetcher(req)
+	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+
+	// determine user ID.
+	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
+	if requestContextRetrievalError != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+
+	// create account in database.
+	if err := s.accountMembershipDataManager.AddUserToAccount(ctx, input.UserID, accountID, reqCtx.User.ID, input.Reason); err != nil {
+		logger.Error(err, "error creating account")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	res.WriteHeader(http.StatusAccepted)
+}
+
+// ModifyMemberPermissionsHandler is our account creation route.
+func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// check request context for parsed input struct.
+	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.ModifyUserPermissionsInput)
+	if !ok {
+		logger.Info("valid input not attached to request")
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		return
+	}
+
+	accountID := s.accountIDFetcher(req)
+	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+
+	// determine user ID.
+	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
+	if requestContextRetrievalError != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+
+	// create account in database.
+	if err := s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, reqCtx.User.ID, input); err != nil {
+		logger.Error(err, "error creating account")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	res.WriteHeader(http.StatusAccepted)
+}
+
+// TransferAccountOwnershipHandler is our account creation route.
+func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// check request context for parsed input struct.
+	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.TransferAccountOwnershipInput)
+	if !ok {
+		logger.Info("valid input not attached to request")
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		return
+	}
+
+	accountID := s.accountIDFetcher(req)
+	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+
+	// determine user ID.
+	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
+	if requestContextRetrievalError != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+
+	// create account in database.
+	if err := s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, reqCtx.User.ID, input); err != nil {
+		logger.Error(err, "error creating account")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	res.WriteHeader(http.StatusAccepted)
+}
+
+// RemoveUserHandler is our account creation route.
+func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	// check request context for parsed input struct.
+	input, ok := ctx.Value(removeUserFromAccountMiddlewareCtxKey).(*types.RemoveUserFromAccountInput)
+	if !ok {
+		logger.Info("valid input not attached to request")
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		return
+	}
+
+	accountID := s.accountIDFetcher(req)
+	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+
+	// determine user ID.
+	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
+	if requestContextRetrievalError != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+
+	// create account in database.
+	if err := s.accountMembershipDataManager.RemoveUserFromAccount(ctx, input.UserID, accountID, reqCtx.User.ID, input.Reason); err != nil {
+		logger.Error(err, "error creating account")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	res.WriteHeader(http.StatusAccepted)
+}
+
+// MarkAsDefaultHandler is our account creation route.
+func (s *service) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	accountID := s.accountIDFetcher(req)
+	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+
+	// determine user ID.
+	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
+	if requestContextRetrievalError != nil {
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+
+	// create account in database.
+	err := s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, reqCtx.User.ID, accountID, reqCtx.User.ID)
+	if err != nil {
+		logger.Error(err, "error marking account as default")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	res.WriteHeader(http.StatusAccepted)
 }
 
 // AuditEntryHandler returns a GET handler that returns all audit log entries related to an account.

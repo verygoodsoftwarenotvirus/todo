@@ -1,7 +1,6 @@
 package apiclients
 
 import (
-	"errors"
 	"net/http"
 	"testing"
 
@@ -44,7 +43,7 @@ func TestProvideAPIClientsService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On("BuildRouteParamIDFetcher", mock.Anything, APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
 
-		s, err := ProvideAPIClientsService(
+		s := ProvideAPIClientsService(
 			logging.NewNonOperationalLogger(),
 			mockAPIClientDataManager,
 			&mocktypes.UserDataManager{},
@@ -55,33 +54,7 @@ func TestProvideAPIClientsService(T *testing.T) {
 			},
 			rpm,
 		)
-		assert.NoError(t, err)
 		assert.NotNil(t, s)
-
-		mock.AssertExpectationsForObjects(t, mockAPIClientDataManager, rpm)
-	})
-
-	T.Run("with error providing counter", func(t *testing.T) {
-		t.Parallel()
-		mockAPIClientDataManager := &mocktypes.APIClientDataManager{}
-
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
-
-		s, err := ProvideAPIClientsService(
-			logging.NewNonOperationalLogger(),
-			mockAPIClientDataManager,
-			&mocktypes.UserDataManager{},
-			&mockauth.Authenticator{},
-			mockencoding.NewMockEncoderDecoder(),
-			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-				return nil, errors.New("blah")
-			},
-			rpm,
-		)
-
-		assert.Error(t, err)
-		assert.Nil(t, s)
 
 		mock.AssertExpectationsForObjects(t, mockAPIClientDataManager, rpm)
 	})

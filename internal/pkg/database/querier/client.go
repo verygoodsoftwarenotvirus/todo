@@ -91,7 +91,7 @@ func ProvideDatabaseClient(
 
 // Migrate is a simple wrapper around the core querier Migrate call.
 func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
-	_, span := c.tracer.StartSpan(ctx)
+	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	c.logger.Info("migrating db")

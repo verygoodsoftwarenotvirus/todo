@@ -44,7 +44,7 @@ func ProvideService(
 	sessionManager *scs.SessionManager,
 	encoder encoding.HTTPResponseEncoder,
 	routeParamManager routing.RouteParamManager,
-) (types.AdminService, error) {
+) types.AdminService {
 	svc := &service{
 		logger:                logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:        encoder,
@@ -59,5 +59,5 @@ func ProvideService(
 	}
 	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime
 
-	return svc, nil
+	return svc
 }

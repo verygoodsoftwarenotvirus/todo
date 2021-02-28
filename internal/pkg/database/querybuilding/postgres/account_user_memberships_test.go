@@ -3,6 +3,7 @@ package postgres
 import (
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -135,6 +136,79 @@ func TestPostgres_BuildRemoveUserFromAccountQuery(T *testing.T) {
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := q.BuildRemoveUserFromAccountQuery(exampleUser.ID, exampleAccount.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestPostgres_BuildCreateMembershipForNewUserQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account) VALUES ($1,$2,$3)"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+			exampleAccount.ID,
+			true,
+		}
+		actualQuery, actualArgs := q.BuildCreateMembershipForNewUserQuery(exampleUser.ID, exampleAccount.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestPostgres_BuildModifyUserPermissionsQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		examplePermissions := testutil.BuildMaxUserPerms()
+
+		expectedQuery := "UPDATE account_user_memberships SET user_account_permissions = $1 WHERE belongs_to_account = $2 AND belongs_to_user = $3"
+		expectedArgs := []interface{}{
+			examplePermissions,
+			exampleAccount.ID,
+			exampleUser.ID,
+		}
+		actualQuery, actualArgs := q.BuildModifyUserPermissionsQuery(exampleUser.ID, exampleAccount.ID, examplePermissions)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestPostgres_BuildTransferAccountOwnershipQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+
+		expectedQuery := "UPDATE account_user_memberships SET belongs_to_user = $1 WHERE archived_on IS NULL AND belongs_to_account = $2 AND belongs_to_user = $3"
+		expectedArgs := []interface{}{
+			exampleAccount.BelongsToUser,
+			exampleAccount.ID,
+			exampleUser.ID,
+		}
+		actualQuery, actualArgs := q.BuildTransferAccountOwnershipQuery(exampleUser.ID, exampleAccount.BelongsToUser, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

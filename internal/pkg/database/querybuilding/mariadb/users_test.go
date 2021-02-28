@@ -140,6 +140,35 @@ func TestMariaDB_BuildGetAllUsersCountQuery(T *testing.T) {
 	})
 }
 
+func TestMariaDB_BuildTestUserCreationQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := &types.TestUserCreationConfig{
+			Username:       exampleUser.Username,
+			Password:       exampleUser.HashedPassword,
+			HashedPassword: exampleUser.HashedPassword,
+			IsServiceAdmin: true,
+		}
+
+		exIDGen := &querybuilding.MockExternalIDGenerator{}
+		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
+		q.externalIDGenerator = exIDGen
+
+		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,salt,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES (?,?,?,?,?,?,?,UNIX_TIMESTAMP())"
+		actualQuery, actualArgs := q.BuildTestUserCreationQuery(exampleInput)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+
+		mock.AssertExpectationsForObjects(t, exIDGen)
+	})
+}
+
 func TestMariaDB_BuildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
@@ -171,6 +200,30 @@ func TestMariaDB_BuildCreateUserQuery(T *testing.T) {
 		assert.Equal(t, expectedArgs, actualArgs)
 
 		mock.AssertExpectationsForObjects(t, exIDGen)
+	})
+}
+
+func TestMariaDB_BuildSetUserStatusQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserReputationUpdateInputFromUser(exampleUser)
+
+		expectedQuery := "UPDATE users SET reputation = ?, reputation_explanation = ? WHERE archived_on IS NULL AND id = ?"
+		expectedArgs := []interface{}{
+			exampleInput.NewReputation,
+			exampleInput.Reason,
+			exampleUser.ID,
+		}
+		actualQuery, actualArgs := q.BuildSetUserStatusQuery(exampleUser.ID, exampleInput)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
 
@@ -282,6 +335,25 @@ func TestMariaDB_BuildArchiveUserQuery(T *testing.T) {
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := q.BuildArchiveUserQuery(exampleUser.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestMariaDB_BuildGetAuditLogEntriesForUserQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE (JSON_CONTAINS(audit_log.context, '%d', '$.performed_by') OR JSON_CONTAINS(audit_log.context, '%d', '$.user_id')) ORDER BY audit_log.created_on", exampleUser.ID, exampleUser.ID)
+		expectedArgs := []interface{}(nil)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForUserQuery(exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

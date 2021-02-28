@@ -1,6 +1,7 @@
 package mariadb
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -183,6 +184,25 @@ func TestMariaDB_BuildArchiveWebhookQuery(T *testing.T) {
 			exampleWebhook.ID,
 		}
 		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToAccount)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestMariaDB_BuildGetAuditLogEntriesForWebhookQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.webhook_id') ORDER BY audit_log.created_on", exampleWebhook.ID)
+		expectedArgs := []interface{}(nil)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForWebhookQuery(exampleWebhook.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

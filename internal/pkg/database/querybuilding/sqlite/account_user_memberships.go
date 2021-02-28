@@ -38,23 +38,40 @@ func (q *Sqlite) BuildGetAccountMembershipsForUserQuery(userID uint64) (query st
 
 // BuildMarkAccountAsUserDefaultQuery does .
 func (q *Sqlite) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
-	panic("implement me")
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.AccountsUserMembershipTablePrimaryUserAccountColumn, squirrel.And{
+			squirrel.Eq{querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID},
+			squirrel.Eq{querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID},
+		}).
+		Where(squirrel.Eq{
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                               nil,
+		}),
+	)
 }
 
 // BuildTransferAccountOwnershipQuery does .
 func (q *Sqlite) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
-	return "", nil
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.AccountsUserMembershipTableUserOwnershipColumn, newOwnerID).
+		Where(squirrel.Eq{
+			querybuilding.ArchivedOnColumn:                                  nil,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    oldOwnerID,
+			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
+		}),
+	)
 }
 
 // BuildModifyUserPermissionsQuery builds.
 func (q *Sqlite) BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions bitmask.ServiceUserPermissions) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, permissions).
 		Where(squirrel.Eq{
-			"FILL ME OUT PLEASE": true,
-			"userID":             userID,
-			"permissions":        permissions,
-			"accountID":          accountID,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
+			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
 		}),
 	)
 }
@@ -74,11 +91,6 @@ func (q *Sqlite) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) 
 			true,
 		),
 	)
-}
-
-// BuildGetAuditLogEntriesForAccountUserMembershipQuery does .
-func (q *Sqlite) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
-	panic("implement me")
 }
 
 // BuildMarkAccountAsUserPrimaryQuery builds a query that marks a user's account as their primary.

@@ -61,12 +61,7 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 		)
 	})
 
-	db, err := sql.Open("mysql", string(connectionDetails))
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+	return sql.Open("mysql", string(connectionDetails))
 }
 
 // ProvideMariaDB provides a maria DB controller.

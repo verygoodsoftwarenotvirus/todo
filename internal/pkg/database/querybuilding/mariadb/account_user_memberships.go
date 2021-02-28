@@ -16,10 +16,13 @@ var _ types.AccountUserMembershipSQLQueryBuilder = (*MariaDB)(nil)
 func (q *MariaDB) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.AccountsUserMembershipTablePrimaryUserAccountColumn, squirrel.And{
+			squirrel.Eq{querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID},
+			squirrel.Eq{querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID},
+		}).
 		Where(squirrel.Eq{
-			"FILL ME OUT PLEASE": true,
-			"oldOwnerID":         userID,
-			"accountID":          accountID,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+			querybuilding.ArchivedOnColumn:                               nil,
 		}),
 	)
 }
@@ -28,11 +31,11 @@ func (q *MariaDB) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (
 func (q *MariaDB) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.AccountsUserMembershipTableUserOwnershipColumn, newOwnerID).
 		Where(squirrel.Eq{
-			"FILL ME OUT PLEASE": true,
-			"oldOwnerID":         oldOwnerID,
-			"newOwnerID":         newOwnerID,
-			"accountID":          accountID,
+			querybuilding.ArchivedOnColumn:                                  nil,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    oldOwnerID,
+			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
 		}),
 	)
 }
@@ -41,11 +44,10 @@ func (q *MariaDB) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, acc
 func (q *MariaDB) BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions bitmask.ServiceUserPermissions) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
+		Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, permissions).
 		Where(squirrel.Eq{
-			"FILL ME OUT PLEASE": true,
-			"userID":             userID,
-			"permissions":        permissions,
-			"accountID":          accountID,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
+			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
 		}),
 	)
 }
@@ -89,16 +91,6 @@ func (q *MariaDB) BuildCreateMembershipForNewUserQuery(userID, accountID uint64)
 			true,
 		),
 	)
-}
-
-// BuildGetAccountUserMembershipQuery does .
-func (q *MariaDB) BuildGetAccountUserMembershipQuery(accountUserMembershipID, userID uint64) (query string, args []interface{}) {
-	panic("implement me")
-}
-
-// BuildGetAuditLogEntriesForAccountUserMembershipQuery does .
-func (q *MariaDB) BuildGetAuditLogEntriesForAccountUserMembershipQuery(accountUserMembershipID uint64) (query string, args []interface{}) {
-	panic("implement me")
 }
 
 // BuildMarkAccountAsUserPrimaryQuery builds a query that marks a user's account as their primary.

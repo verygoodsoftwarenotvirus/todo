@@ -1,6 +1,7 @@
 package mariadb
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -47,6 +48,28 @@ func TestMariaDB_BuildGetAPIClientQuery(T *testing.T) {
 			exampleAPIClient.ClientID,
 		}
 		actualQuery, actualArgs := q.BuildGetAPIClientByClientIDQuery(exampleAPIClient.ClientID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestMariaDB_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_account FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_account = ? AND api_clients.id = ?"
+		expectedArgs := []interface{}{
+			exampleAPIClient.BelongsToAccount,
+			exampleAPIClient.ID,
+		}
+		actualQuery, actualArgs := q.BuildGetAPIClientByDatabaseIDQuery(exampleAPIClient.ID, exampleAPIClient.BelongsToAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -171,6 +194,25 @@ func TestMariaDB_BuildArchiveAPIClientQuery(T *testing.T) {
 			exampleAPIClient.ID,
 		}
 		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(exampleAPIClient.ID, exampleAPIClient.BelongsToAccount)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestMariaDB_BuildGetAuditLogEntriesForAPIClientQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.api_client_id') ORDER BY audit_log.created_on", exampleAPIClient.ID)
+		expectedArgs := []interface{}(nil)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAPIClientQuery(exampleAPIClient.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

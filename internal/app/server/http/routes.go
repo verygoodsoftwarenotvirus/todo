@@ -149,9 +149,9 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 
 				singleAccountRouter.WithMiddleware(s.accountsService.AddMemberInputMiddleware).
 					Post("/member", s.accountsService.AddUserHandler)
-				singleAccountRouter.Post("/members"+singleUserRoute, s.accountsService.MarkAsDefaultHandler)
+				singleAccountRouter.Post("/default", s.accountsService.MarkAsDefaultHandler)
 				singleAccountRouter.WithMiddleware(s.accountsService.ModifyMemberPermissionsInputMiddleware).
-					Put("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
+					Patch("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
 				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveUserHandler)
 				singleAccountRouter.WithMiddleware(s.accountsService.AccountTransferInputMiddleware).
 					Post("/transfer", s.accountsService.TransferAccountOwnershipHandler)

@@ -87,6 +87,7 @@ func (m *AccountDataServer) AuditEntryHandler(res http.ResponseWriter, req *http
 	m.Called(res, req)
 }
 
+// TransferAccountOwnershipHandler implements our interface requirements.
 func (m *AccountDataServer) TransferAccountOwnershipHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }

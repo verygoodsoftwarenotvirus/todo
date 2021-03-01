@@ -2,11 +2,11 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -90,136 +90,6 @@ func TestAccounts(test *testing.T) {
 				for _, createdAccount := range actual.Accounts {
 					assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
 				}
-			}
-		})
-	})
-
-	test.Run("Searching", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "should be able to be search for accounts", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create accounts.
-				exampleAccount := fakes.BuildFakeAccount()
-				var expected []*types.Account
-				for i := 0; i < 5; i++ {
-					// Create account.
-					exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-					exampleAccountInput.Name = fmt.Sprintf("%s %d", exampleAccountInput.Name, i)
-					createdAccount, accountCreationErr := testClient.CreateAccount(ctx, exampleAccountInput)
-					checkValueAndError(t, createdAccount, accountCreationErr)
-
-					expected = append(expected, createdAccount)
-				}
-
-				exampleLimit := uint8(20)
-
-				// Assert account list equality.
-				actual, err := testClient.SearchAccounts(ctx, exampleAccount.Name, exampleLimit)
-				checkValueAndError(t, actual, err)
-				assert.True(
-					t,
-					len(expected) <= len(actual),
-					"expected results length %d to be <= %d",
-					len(expected),
-					len(actual),
-				)
-
-				// Clean up.
-				for _, createdAccount := range expected {
-					assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
-				}
-			}
-		})
-
-		runTestForAllAuthMethods(subtest, "should only receive your own accounts", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				exampleLimit := uint8(20)
-				_, _, clientA, _ := createUserAndClientForTest(ctx, t)
-				_, _, clientB, _ := createUserAndClientForTest(ctx, t)
-
-				// Create accounts for user A.
-				exampleAccountA := fakes.BuildFakeAccount()
-				var createdForA []*types.Account
-				for i := 0; i < 5; i++ {
-					// Create account.
-					exampleAccountInputA := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccountA)
-					exampleAccountInputA.Name = fmt.Sprintf("%s %d", exampleAccountInputA.Name, i)
-
-					createdAccount, accountCreationErr := clientA.CreateAccount(ctx, exampleAccountInputA)
-					checkValueAndError(t, createdAccount, accountCreationErr)
-
-					createdForA = append(createdForA, createdAccount)
-				}
-				query := exampleAccountA.Name
-
-				// Create accounts for user B.
-				exampleAccountB := fakes.BuildFakeAccount()
-				exampleAccountB.Name = reverse(exampleAccountA.Name)
-				var createdForB []*types.Account
-				for i := 0; i < 5; i++ {
-					// Create account.
-					exampleAccountInputB := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccountB)
-					exampleAccountInputB.Name = fmt.Sprintf("%s %d", exampleAccountInputB.Name, i)
-
-					createdAccount, accountCreationErr := clientB.CreateAccount(ctx, exampleAccountInputB)
-					checkValueAndError(t, createdAccount, accountCreationErr)
-
-					createdForB = append(createdForB, createdAccount)
-				}
-
-				expected := createdForA
-
-				// Assert account list equality.
-				actual, err := clientA.SearchAccounts(ctx, query, exampleLimit)
-				checkValueAndError(t, actual, err)
-				assert.True(
-					t,
-					len(expected) <= len(actual),
-					"expected results length %d to be <= %d",
-					len(expected),
-					len(actual),
-				)
-
-				// Clean up.
-				for _, createdAccount := range createdForA {
-					assert.NoError(t, clientA.ArchiveAccount(ctx, createdAccount.ID))
-				}
-
-				for _, createdAccount := range createdForB {
-					assert.NoError(t, clientB.ArchiveAccount(ctx, createdAccount.ID))
-				}
-			}
-		})
-	})
-
-	test.Run("ExistenceChecking", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "should be able to be search for accounts", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Attempt to fetch nonexistent account.
-				actual, err := testClient.AccountExists(ctx, nonexistentID)
-				assert.NoError(t, err)
-				assert.False(t, actual)
-			}
-		})
-
-		runTestForAllAuthMethods(subtest, "it should return true with no error when the relevant account exists", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create account.
-				exampleAccount := fakes.BuildFakeAccount()
-				exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-				createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
-				checkValueAndError(t, createdAccount, err)
-
-				// Fetch account.
-				actual, err := testClient.AccountExists(ctx, createdAccount.ID)
-				assert.NoError(t, err)
-				assert.True(t, actual)
-
-				// Clean up account.
-				assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
 			}
 		})
 	})
@@ -337,6 +207,159 @@ func TestAccounts(test *testing.T) {
 					{EventType: audit.AccountArchiveEvent},
 				}
 				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
+			}
+		})
+	})
+
+	test.Run("Memberships", func(subtest *testing.T) {
+		subtest.Parallel()
+
+		runTestForAllAuthMethods(subtest, "should be creatable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+			return func(t *testing.T) {
+				// fetch account data
+				accounts, err := testClient.GetAccounts(ctx, nil)
+				require.NoError(t, err)
+				require.NotNil(t, accounts)
+				require.True(t, len(accounts.Accounts) == 1)
+
+				account := accounts.Accounts[0]
+
+				// create a webhook
+				exampleWebhook := fakes.BuildFakeWebhook()
+				exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+				createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+				checkValueAndError(t, createdWebhook, err)
+
+				// create dummy users
+				userA, _, _, clientA := createUserAndClientForTest(ctx, t)
+				userB, _, _, clientB := createUserAndClientForTest(ctx, t)
+				userC, _, _, clientC := createUserAndClientForTest(ctx, t)
+
+				// check that each user cannot see the webhooks
+				webhook, err := clientA.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				// add them to the account
+				assert.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userA.ID, Reason: t.Name()}))
+				assert.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userB.ID, Reason: t.Name()}))
+				assert.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userC.ID, Reason: t.Name()}))
+
+				// check that each user can see the webhooks
+				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
+				assert.NotNil(t, webhook)
+				assert.NoError(t, err)
+
+				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
+				assert.NotNil(t, webhook)
+				assert.NoError(t, err)
+
+				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
+				assert.NotNil(t, webhook)
+				assert.NoError(t, err)
+
+				// reduce all permissions to nothing
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+					UserID:          userA.ID,
+					UserPermissions: 0,
+					Reason:          t.Name(),
+				}))
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+					UserID:          userB.ID,
+					UserPermissions: 0,
+					Reason:          t.Name(),
+				}))
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+					UserID:          userC.ID,
+					UserPermissions: 0,
+					Reason:          t.Name(),
+				}))
+
+				// check that each user cannot see the webhooks
+				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				// return all permissions
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+					UserID:          userA.ID,
+					UserPermissions: testutil.BuildMaxUserPerms(),
+					Reason:          t.Name(),
+				}))
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+					UserID:          userB.ID,
+					UserPermissions: testutil.BuildMaxUserPerms(),
+					Reason:          t.Name(),
+				}))
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+					UserID:          userC.ID,
+					UserPermissions: testutil.BuildMaxUserPerms(),
+					Reason:          t.Name(),
+				}))
+
+				// check that each user can see the webhooks
+				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
+				assert.NotNil(t, webhook)
+				assert.NoError(t, err)
+
+				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
+				assert.NotNil(t, webhook)
+				assert.NoError(t, err)
+
+				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
+				assert.NotNil(t, webhook)
+				assert.NoError(t, err)
+
+				// remove users from account
+				require.NoError(t, testClient.RemoveUser(ctx, account.ID, userA.ID))
+				require.NoError(t, testClient.RemoveUser(ctx, account.ID, userB.ID))
+				require.NoError(t, testClient.RemoveUser(ctx, account.ID, userC.ID))
+
+				// check that each user cannot see the webhooks
+				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
+				assert.Nil(t, webhook)
+				assert.Error(t, err)
+
+				// check audit entries
+				adminClientLock.Lock()
+				defer adminClientLock.Unlock()
+
+				auditLogEntries, err := adminCookieClient.GetAuditLogForAccount(ctx, account.ID)
+				require.NoError(t, err)
+
+				expectedAuditLogEntries := []*types.AuditLogEntry{
+					{EventType: audit.AccountCreationEvent},
+				}
+				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
+
+				// Clean up.
+				assert.NoError(t, testClient.ArchiveUser(ctx, userA.ID))
+				assert.NoError(t, testClient.ArchiveUser(ctx, userB.ID))
+				assert.NoError(t, testClient.ArchiveUser(ctx, userC.ID))
 			}
 		})
 	})

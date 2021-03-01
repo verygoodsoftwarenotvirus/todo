@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -14,34 +13,6 @@ import (
 const (
 	accountsBasePath = "accounts"
 )
-
-// BuildAccountExistsRequest builds an HTTP request for checking the existence of an account.
-func (c *Client) BuildAccountExistsRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodHead, uri, nil)
-}
-
-// AccountExists retrieves whether or not an account exists.
-func (c *Client) AccountExists(ctx context.Context, accountID uint64) (exists bool, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	req, err := c.BuildAccountExistsRequest(ctx, accountID)
-	if err != nil {
-		return false, fmt.Errorf("building request: %w", err)
-	}
-
-	return c.checkExistence(ctx, req)
-}
 
 // BuildGetAccountRequest builds an HTTP request for fetching an account.
 func (c *Client) BuildGetAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
@@ -73,42 +44,6 @@ func (c *Client) GetAccount(ctx context.Context, accountID uint64) (account *typ
 	}
 
 	return account, nil
-}
-
-// BuildSearchAccountsRequest builds an HTTP request for querying accounts.
-func (c *Client) BuildSearchAccountsRequest(ctx context.Context, query string, limit uint8) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	params := url.Values{}
-	params.Set(types.SearchQueryKey, query)
-	params.Set(types.LimitQueryKey, strconv.FormatUint(uint64(limit), 10))
-
-	uri := c.BuildURL(
-		params,
-		accountsBasePath,
-		"search",
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-}
-
-// SearchAccounts searches for a list of accounts.
-func (c *Client) SearchAccounts(ctx context.Context, query string, limit uint8) (accounts []*types.Account, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	req, err := c.BuildSearchAccountsRequest(ctx, query, limit)
-	if err != nil {
-		return nil, fmt.Errorf("building request: %w", err)
-	}
-
-	if retrieveErr := c.retrieve(ctx, req, &accounts); retrieveErr != nil {
-		return nil, retrieveErr
-	}
-
-	return accounts, nil
 }
 
 // BuildGetAccountsRequest builds an HTTP request for fetching accounts.
@@ -240,71 +175,15 @@ func (c *Client) BuildAddUserRequest(ctx context.Context, accountID uint64, inpu
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return nil, nil
+	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// AddUser adds a user from an account.
-func (c *Client) AddUser(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) error {
+// AddUserToAccount adds a user from an account.
+func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	req, err := c.BuildAddUserRequest(ctx, accountID, input)
-	if err != nil {
-		return fmt.Errorf("building request: %w", err)
-	}
-
-	return c.executeRequest(ctx, req, nil)
-}
-
-// BuildRemoveUserRequest builds a request that removes a user from an account.
-func (c *Client) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return nil, nil
-}
-
-// RemoveUser removes a user from an account.
-func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64) error {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	req, err := c.BuildRemoveUserRequest(ctx, accountID, userID)
-	if err != nil {
-		return fmt.Errorf("building request: %w", err)
-	}
-
-	return c.executeRequest(ctx, req, nil)
-}
-
-// BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
-func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID, userID uint64, newPermissions *types.ModifyUserPermissionsInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return nil, nil
-}
-
-// ModifyMemberPermissions modifies a given user's permissions for a given account.
-func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID uint64, newPermissions *types.ModifyUserPermissionsInput) error {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	req, err := c.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, newPermissions)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -321,10 +200,11 @@ func (c *Client) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint64
 		nil,
 		accountsBasePath,
 		strconv.FormatUint(accountID, 10),
+		"default",
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return nil, nil
+	return http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
 }
 
 // MarkAsDefault marks a given account as the default for a given user.
@@ -340,8 +220,8 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 	return c.executeRequest(ctx, req, nil)
 }
 
-// BuildTransferAccountOwnershipRequest builds a request that transfers ownership of an account to a given user.
-func (c *Client) BuildTransferAccountOwnershipRequest(ctx context.Context, oldOwner, newOwner, accountID uint64) (*http.Request, error) {
+// BuildRemoveUserRequest builds a request that removes a user from an account.
+func (c *Client) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -349,18 +229,80 @@ func (c *Client) BuildTransferAccountOwnershipRequest(ctx context.Context, oldOw
 		nil,
 		accountsBasePath,
 		strconv.FormatUint(accountID, 10),
+		"members",
+		strconv.FormatUint(userID, 10),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return nil, nil
+	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
 
-// TransferAccountOwnership transfers ownership of an account to a given user.
-func (c *Client) TransferAccountOwnership(ctx context.Context, oldOwner, newOwner, accountID uint64) error {
+// RemoveUser removes a user from an account.
+func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildTransferAccountOwnershipRequest(ctx, oldOwner, newOwner, accountID)
+	req, err := c.BuildRemoveUserRequest(ctx, accountID, userID)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
+// BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
+func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID uint64, input *types.ModifyUserPermissionsInput) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+		"members",
+		strconv.FormatUint(input.UserID, 10),
+		"permissions",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return c.buildDataRequest(ctx, http.MethodPatch, uri, input)
+}
+
+// ModifyMemberPermissions modifies a given user's permissions for a given account.
+func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID uint64, input *types.ModifyUserPermissionsInput) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildModifyMemberPermissionsRequest(ctx, accountID, input)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
+// BuildTransferAccountOwnershipRequest builds a request that transfers ownership of an account to a given user.
+func (c *Client) BuildTransferAccountOwnershipRequest(ctx context.Context, accountID uint64, input *types.TransferAccountOwnershipInput) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+		"transfer",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
+}
+
+// TransferAccountOwnership transfers ownership of an account to a given user.
+func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64, input *types.TransferAccountOwnershipInput) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildTransferAccountOwnershipRequest(ctx, accountID, input)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}

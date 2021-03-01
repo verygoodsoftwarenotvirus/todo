@@ -25,6 +25,10 @@ const (
 	numericIDPattern = "{%s:[0-9]+}"
 )
 
+func buildNumericIDURLChunk(key string) string {
+	return fmt.Sprintf("/"+numericIDPattern, key)
+}
+
 func buildTokenRestrictionMiddleware(logger logging.Logger, token string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -90,7 +94,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			plansRouter.Get(root, s.plansService.ListHandler)
 			plansRouter.WithMiddleware(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)
 
-			singlePlanRoute := fmt.Sprintf("/"+numericIDPattern, plansservice.AccountSubscriptionPlanIDURIParamKey)
+			singlePlanRoute := buildNumericIDURLChunk(plansservice.AccountSubscriptionPlanIDURIParamKey)
 			plansRouter.Route(singlePlanRoute, func(singlePlanRouter routing.Router) {
 				singlePlanRouter.Get(root, s.plansService.ReadHandler)
 				singlePlanRouter.Get(auditRoute, s.plansService.AuditEntryHandler)
@@ -106,7 +110,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 				Post("/users/status", s.adminService.UserAccountStatusChangeHandler)
 
 			adminRouter.Route("/audit_log", func(auditRouter routing.Router) {
-				entryIDRouteParam := fmt.Sprintf("/"+numericIDPattern, auditservice.LogEntryURIParamKey)
+				entryIDRouteParam := buildNumericIDURLChunk(auditservice.LogEntryURIParamKey)
 				auditRouter.Get(root, s.auditService.ListHandler)
 				auditRouter.Route(entryIDRouteParam, func(singleEntryRouter routing.Router) {
 					singleEntryRouter.Get(root, s.auditService.ReadHandler)
@@ -121,7 +125,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			usersRouter.WithMiddleware(s.usersService.AvatarUploadMiddleware).Post("/avatar/upload", s.usersService.AvatarUploadHandler)
 			usersRouter.Get("/self", s.usersService.SelfHandler)
 
-			singleUserRoute := fmt.Sprintf("/"+numericIDPattern, usersservice.UserIDURIParamKey)
+			singleUserRoute := buildNumericIDURLChunk(usersservice.UserIDURIParamKey)
 			usersRouter.Route(singleUserRoute, func(singleUserRouter routing.Router) {
 				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ReadHandler)
 				singleUserRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.usersService.AuditEntryHandler)
@@ -135,19 +139,22 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			accountsRouter.WithMiddleware(s.accountsService.CreationInputMiddleware).Post(root, s.accountsService.CreateHandler)
 			accountsRouter.Get(root, s.accountsService.ListHandler)
 
-			singleUserRoute := fmt.Sprintf("/"+numericIDPattern, accountsservice.UserIDURIParamKey)
-			singleAccountRoute := fmt.Sprintf("/"+numericIDPattern, accountsservice.AccountIDURIParamKey)
+			singleUserRoute := buildNumericIDURLChunk(accountsservice.UserIDURIParamKey)
+			singleAccountRoute := buildNumericIDURLChunk(accountsservice.AccountIDURIParamKey)
 			accountsRouter.Route(singleAccountRoute, func(singleAccountRouter routing.Router) {
 				singleAccountRouter.Get(root, s.accountsService.ReadHandler)
-				singleAccountRouter.Delete(root, s.accountsService.ArchiveHandler)
 				singleAccountRouter.WithMiddleware(s.accountsService.UpdateInputMiddleware).Put(root, s.accountsService.UpdateHandler)
-
-				singleAccountRouter.Post("/member", s.accountsService.AddUserHandler)
-				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveUserHandler)
-				singleAccountRouter.Put("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
-				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.MarkAsDefaultHandler)
-
+				singleAccountRouter.Delete(root, s.accountsService.ArchiveHandler)
 				singleAccountRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.accountsService.AuditEntryHandler)
+
+				singleAccountRouter.WithMiddleware(s.accountsService.AddMemberInputMiddleware).
+					Post("/member", s.accountsService.AddUserHandler)
+				singleAccountRouter.Post("/members"+singleUserRoute, s.accountsService.MarkAsDefaultHandler)
+				singleAccountRouter.WithMiddleware(s.accountsService.ModifyMemberPermissionsInputMiddleware).
+					Put("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
+				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveUserHandler)
+				singleAccountRouter.WithMiddleware(s.accountsService.AccountTransferInputMiddleware).
+					Post("/transfer", s.accountsService.TransferAccountOwnershipHandler)
 			})
 		})
 
@@ -156,7 +163,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			clientRouter.Get(root, s.apiClientsService.ListHandler)
 			clientRouter.WithMiddleware(s.apiClientsService.CreationInputMiddleware).Post(root, s.apiClientsService.CreateHandler)
 
-			singleClientRoute := fmt.Sprintf("/"+numericIDPattern, apiclientsservice.APIClientIDURIParamKey)
+			singleClientRoute := buildNumericIDURLChunk(apiclientsservice.APIClientIDURIParamKey)
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
 				singleClientRouter.Get(root, s.apiClientsService.ReadHandler)
 				singleClientRouter.Delete(root, s.apiClientsService.ArchiveHandler)
@@ -169,7 +176,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			webhookRouter.WithMiddleware(s.webhooksService.CreationInputMiddleware).Post(root, s.webhooksService.CreateHandler)
 			webhookRouter.Get(root, s.webhooksService.ListHandler)
 
-			singleWebhookRoute := fmt.Sprintf("/"+numericIDPattern, webhooksservice.WebhookIDURIParamKey)
+			singleWebhookRoute := buildNumericIDURLChunk(webhooksservice.WebhookIDURIParamKey)
 			webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
 				singleWebhookRouter.Get(root, s.webhooksService.ReadHandler)
 				singleWebhookRouter.Delete(root, s.webhooksService.ArchiveHandler)
@@ -181,7 +188,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 		// Items
 		itemPath := "items"
 		itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
-		itemIDRouteParam := fmt.Sprintf("/"+numericIDPattern, itemsservice.ItemIDURIParamKey)
+		itemIDRouteParam := buildNumericIDURLChunk(itemsservice.ItemIDURIParamKey)
 		v1Router.Route(itemsRouteWithPrefix, func(itemsRouter routing.Router) {
 			itemsRouter.WithMiddleware(s.itemsService.CreationInputMiddleware).Post(root, s.itemsService.CreateHandler)
 			itemsRouter.Get(root, s.itemsService.ListHandler)

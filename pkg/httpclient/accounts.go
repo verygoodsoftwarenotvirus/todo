@@ -227,6 +227,147 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
 	return c.executeRequest(ctx, req, nil)
 }
 
+// BuildAddUserRequest builds a request that adds a user from an account.
+func (c *Client) BuildAddUserRequest(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+		"member",
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return nil, nil
+}
+
+// AddUser adds a user from an account.
+func (c *Client) AddUser(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildAddUserRequest(ctx, accountID, input)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
+// BuildRemoveUserRequest builds a request that removes a user from an account.
+func (c *Client) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return nil, nil
+}
+
+// RemoveUser removes a user from an account.
+func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildRemoveUserRequest(ctx, accountID, userID)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
+// BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
+func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID, userID uint64, newPermissions *types.ModifyUserPermissionsInput) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return nil, nil
+}
+
+// ModifyMemberPermissions modifies a given user's permissions for a given account.
+func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID uint64, newPermissions *types.ModifyUserPermissionsInput) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, newPermissions)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
+// BuildMarkAsDefaultRequest builds a request that marks a given account as the default for a given user.
+func (c *Client) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return nil, nil
+}
+
+// MarkAsDefault marks a given account as the default for a given user.
+func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildMarkAsDefaultRequest(ctx, accountID)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
+// BuildTransferAccountOwnershipRequest builds a request that transfers ownership of an account to a given user.
+func (c *Client) BuildTransferAccountOwnershipRequest(ctx context.Context, oldOwner, newOwner, accountID uint64) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	uri := c.BuildURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+	)
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return nil, nil
+}
+
+// TransferAccountOwnership transfers ownership of an account to a given user.
+func (c *Client) TransferAccountOwnership(ctx context.Context, oldOwner, newOwner, accountID uint64) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildTransferAccountOwnershipRequest(ctx, oldOwner, newOwner, accountID)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
 // BuildGetAuditLogForAccountRequest builds an HTTP request for fetching a list of audit log entries pertaining to an account.
 func (c *Client) BuildGetAuditLogForAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)

@@ -8,7 +8,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path"
-	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -126,7 +125,7 @@ func (c *Client) buildRawURL(queryParams url.Values, parts ...string) *url.URL {
 
 	parts = append([]string{"api", "v1"}, parts...)
 
-	u, err := url.Parse(strings.Join(parts, "/"))
+	u, err := url.Parse(path.Join(parts...))
 	if err != nil {
 		c.logger.Error(err, "building url")
 		return nil

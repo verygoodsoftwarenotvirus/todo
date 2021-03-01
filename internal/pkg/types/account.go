@@ -78,9 +78,10 @@ type (
 		UpdateHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 		AddUserHandler(res http.ResponseWriter, req *http.Request)
-		ModifyMemberPermissionsHandler(res http.ResponseWriter, req *http.Request)
 		RemoveUserHandler(res http.ResponseWriter, req *http.Request)
 		MarkAsDefaultHandler(res http.ResponseWriter, req *http.Request)
+		ModifyMemberPermissionsHandler(res http.ResponseWriter, req *http.Request)
+		TransferAccountOwnershipHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 	}
 )

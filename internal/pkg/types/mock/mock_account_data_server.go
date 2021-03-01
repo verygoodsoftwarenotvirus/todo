@@ -87,6 +87,10 @@ func (m *AccountDataServer) AuditEntryHandler(res http.ResponseWriter, req *http
 	m.Called(res, req)
 }
 
+func (m *AccountDataServer) TransferAccountOwnershipHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
 // AddMemberInputMiddleware implements the interface.
 func (m *AccountDataServer) AddMemberInputMiddleware(next http.Handler) http.Handler {
 	return m.Called(next).Get(0).(http.Handler)

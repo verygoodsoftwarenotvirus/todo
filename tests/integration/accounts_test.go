@@ -267,21 +267,18 @@ func TestAccounts(test *testing.T) {
 				assert.NoError(t, err)
 
 				// reduce all permissions to nothing
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+				input := &types.ModifyUserPermissionsInput{
 					UserID:          userA.ID,
 					UserPermissions: 0,
 					Reason:          t.Name(),
-				}))
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
-					UserID:          userB.ID,
-					UserPermissions: 0,
-					Reason:          t.Name(),
-				}))
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
-					UserID:          userC.ID,
-					UserPermissions: 0,
-					Reason:          t.Name(),
-				}))
+				}
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
+
+				input.UserID = userB.ID
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
+
+				input.UserID = userC.ID
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
 
 				// check that each user cannot see the webhooks
 				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
@@ -297,21 +294,18 @@ func TestAccounts(test *testing.T) {
 				assert.Error(t, err)
 
 				// return all permissions
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
+				input = &types.ModifyUserPermissionsInput{
 					UserID:          userA.ID,
 					UserPermissions: testutil.BuildMaxUserPerms(),
 					Reason:          t.Name(),
-				}))
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
-					UserID:          userB.ID,
-					UserPermissions: testutil.BuildMaxUserPerms(),
-					Reason:          t.Name(),
-				}))
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, &types.ModifyUserPermissionsInput{
-					UserID:          userC.ID,
-					UserPermissions: testutil.BuildMaxUserPerms(),
-					Reason:          t.Name(),
-				}))
+				}
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
+
+				input.UserID = userB.ID
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
+
+				input.UserID = userC.ID
+				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
 
 				// check that each user can see the webhooks
 				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)

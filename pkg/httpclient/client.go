@@ -49,6 +49,7 @@ type Client struct {
 	authedClient *http.Client
 
 	authMethod     *authMethod
+	accountID      uint64
 	encoderDecoder encoding.HTTPResponseEncoder
 	contentType    string
 

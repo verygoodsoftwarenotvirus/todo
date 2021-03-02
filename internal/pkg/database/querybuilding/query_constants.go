@@ -43,8 +43,6 @@ const (
 	AccountsTableNameColumn = "name"
 	// AccountsTablePlanIDColumn is what the accounts table calls the <> column.
 	AccountsTablePlanIDColumn = "plan_id"
-	// AccountsTablePersonalAccountColumn is what the accounts table calls the user account permissions column.
-	AccountsTablePersonalAccountColumn = "is_personal_account"
 	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
 	AccountsTableUserOwnershipColumn = userOwnershipColumn
 

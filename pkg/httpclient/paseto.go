@@ -72,6 +72,10 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
+	if c.accountID != 0 {
+		input.AccountID = c.accountID
+	}
+
 	req, err := c.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
 	if err != nil {
 		return "", err

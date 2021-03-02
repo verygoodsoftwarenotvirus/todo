@@ -46,6 +46,13 @@ func UsingURL(u *url.URL) func(*Client) {
 	}
 }
 
+// UsingAccount sets the url on the client.
+func UsingAccount(accountID uint64) func(*Client) {
+	return func(c *Client) {
+		c.accountID = accountID
+	}
+}
+
 // UsingLogger sets the logger on the client.
 func UsingLogger(logger logging.Logger) func(*Client) {
 	return func(c *Client) {

@@ -294,10 +294,9 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	}
 
 	account := &types.Account{
-		Name:            input.Username,
-		PlanID:          nil,
-		PersonalAccount: true,
-		CreatedOn:       c.currentTime(),
+		Name:      input.Username,
+		PlanID:    nil,
+		CreatedOn: c.currentTime(),
 	}
 
 	if err := c.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {

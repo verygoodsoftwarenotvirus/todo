@@ -49,7 +49,7 @@ var (
 				price INTEGER NOT NULL,
 				period TEXT NOT NULL DEFAULT '0m0s',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				last_updated_on INTEGER,
+				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
 				CONSTRAINT plan_name_unique UNIQUE (name, archived_on)
 			);`,
@@ -65,7 +65,7 @@ var (
 				avatar_src TEXT,
 				hashed_password TEXT NOT NULL,
 				salt TINYBLOB NOT NULL,
-				password_last_changed_on INTEGER,
+				password_last_changed_on INTEGER DEFAULT NULL,
 				requires_password_change BOOLEAN NOT NULL DEFAULT 'false',
 				two_factor_secret TEXT NOT NULL,
 				two_factor_secret_verified_on INTEGER DEFAULT NULL,
@@ -73,7 +73,7 @@ var (
 				reputation TEXT NOT NULL DEFAULT 'unverified',
 				reputation_explanation TEXT NOT NULL DEFAULT '',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				last_updated_on INTEGER,
+				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
 				CONSTRAINT username_unique UNIQUE (username, archived_on)
 			);`,
@@ -88,7 +88,9 @@ var (
 				name CHARACTER VARYING NOT NULL,
 				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
 				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+				last_updated_on INTEGER DEFAULT NULL,
+				archived_on INTEGER DEFAULT NULL
 			);`,
 		},
 		{
@@ -116,7 +118,7 @@ var (
 				client_id TEXT NOT NULL,
 				secret_key TEXT NOT NULL,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				last_updated_on INTEGER,
+				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
 				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
@@ -136,7 +138,7 @@ var (
 				data_types TEXT NOT NULL,
 				topics TEXT NOT NULL,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				last_updated_on INTEGER,
+				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
 				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,

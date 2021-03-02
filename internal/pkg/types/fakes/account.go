@@ -20,12 +20,11 @@ func BuildFakeAccount() *types.Account {
 // BuildFakeAccountForUser builds a faked account.
 func BuildFakeAccountForUser(u *types.User) *types.Account {
 	return &types.Account{
-		ID:              uint64(fake.Uint32()),
-		ExternalID:      fake.UUID(),
-		Name:            u.Username,
-		PersonalAccount: true,
-		CreatedOn:       uint64(uint32(fake.Date().Unix())),
-		BelongsToUser:   u.ID,
+		ID:            uint64(fake.Uint32()),
+		ExternalID:    fake.UUID(),
+		Name:          u.Username,
+		CreatedOn:     uint64(uint32(fake.Date().Unix())),
+		BelongsToUser: u.ID,
 	}
 }
 

@@ -26,7 +26,6 @@ func (c *Client) scanAccount(scan database.Scanner, includeCounts bool) (account
 		&account.ExternalID,
 		&account.Name,
 		&account.PlanID,
-		&account.PersonalAccount,
 		&account.CreatedOn,
 		&account.LastUpdatedOn,
 		&account.ArchivedOn,

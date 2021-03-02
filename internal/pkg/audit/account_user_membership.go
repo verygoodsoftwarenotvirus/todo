@@ -8,8 +8,8 @@ import (
 const (
 	// UserAddedToAccountEvent events indicate a user created a membership.
 	UserAddedToAccountEvent = "user_added_to_account"
-	// AccountUserMembershipArchiveEvent events indicate a user deleted a membership.
-	AccountUserMembershipArchiveEvent = "user_removed_from_account"
+	// UserRemovedFromAccountEvent events indicate a user deleted a membership.
+	UserRemovedFromAccountEvent = "user_removed_from_account"
 	// AccountMarkedAsDefaultEvent events indicate a user deleted a membership.
 	AccountMarkedAsDefaultEvent = "account_marked_as_default"
 )
@@ -45,7 +45,7 @@ func BuildUserRemovedFromAccountEventEntry(removedBy, removed, accountID uint64,
 	}
 
 	return &types.AuditLogEntryCreationInput{
-		EventType: AccountUserMembershipArchiveEvent,
+		EventType: UserRemovedFromAccountEvent,
 		Context:   contextMap,
 	}
 }

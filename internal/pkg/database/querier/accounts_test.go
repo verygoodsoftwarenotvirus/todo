@@ -33,7 +33,6 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 			x.ExternalID,
 			x.Name,
 			x.PlanID,
-			x.PersonalAccount,
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,

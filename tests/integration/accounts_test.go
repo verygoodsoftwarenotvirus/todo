@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
@@ -27,189 +27,194 @@ func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
 func TestAccounts(test *testing.T) {
 	test.Parallel()
 
-	test.Run("Creating", func(subtest *testing.T) {
-		subtest.Parallel()
+	/*
 
-		runTestForAllAuthMethods(subtest, "should be creatable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create account.
-				exampleAccount := fakes.BuildFakeAccount()
-				exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-				createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
-				checkValueAndError(t, createdAccount, err)
+		test.Run("Creating", func(subtest *testing.T) {
+			subtest.Parallel()
 
-				// Assert account equality.
-				checkAccountEquality(t, exampleAccount, createdAccount)
-
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-
-				auditLogEntries, err := adminCookieClient.GetAuditLogForAccount(ctx, createdAccount.ID)
-				require.NoError(t, err)
-
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.AccountCreationEvent},
-				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
-
-				// Clean up.
-				assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
-			}
-		})
-	})
-
-	test.Run("Listing", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "should be able to be read in a list", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create accounts.
-				var expected []*types.Account
-				for i := 0; i < 5; i++ {
+			runTestForAllAuthMethods(subtest, "should be creatable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
 					// Create account.
 					exampleAccount := fakes.BuildFakeAccount()
 					exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-					createdAccount, accountCreationErr := testClient.CreateAccount(ctx, exampleAccountInput)
-					checkValueAndError(t, createdAccount, accountCreationErr)
+					createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
+					checkValueAndError(t, createdAccount, err)
 
-					expected = append(expected, createdAccount)
-				}
+					// Assert account equality.
+					checkAccountEquality(t, exampleAccount, createdAccount)
 
-				// Assert account list equality.
-				actual, err := testClient.GetAccounts(ctx, nil)
-				checkValueAndError(t, actual, err)
-				assert.True(
-					t,
-					len(expected) <= len(actual.Accounts),
-					"expected %d to be <= %d",
-					len(expected),
-					len(actual.Accounts),
-				)
+					adminClientLock.Lock()
+					defer adminClientLock.Unlock()
 
-				// Clean up.
-				for _, createdAccount := range actual.Accounts {
+					auditLogEntries, err := adminCookieClient.GetAuditLogForAccount(ctx, createdAccount.ID)
+					require.NoError(t, err)
+
+					expectedAuditLogEntries := []*types.AuditLogEntry{
+						{EventType: audit.AccountCreationEvent},
+					}
+					validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
+
+					// Clean up.
 					assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
 				}
-			}
-		})
-	})
-
-	test.Run("Reading", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to read something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Attempt to fetch nonexistent account.
-				_, err := testClient.GetAccount(ctx, nonexistentID)
-				assert.Error(t, err)
-			}
+			})
 		})
 
-		runTestForAllAuthMethods(subtest, "it should be readable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create account.
-				exampleAccount := fakes.BuildFakeAccount()
-				exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-				createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
-				checkValueAndError(t, createdAccount, err)
+		test.Run("Listing", func(subtest *testing.T) {
+			subtest.Parallel()
 
-				// Fetch account.
-				actual, err := testClient.GetAccount(ctx, createdAccount.ID)
-				checkValueAndError(t, actual, err)
+			runTestForAllAuthMethods(subtest, "should be able to be read in a list", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					// Create accounts.
+					var expected []*types.Account
+					for i := 0; i < 5; i++ {
+						// Create account.
+						exampleAccount := fakes.BuildFakeAccount()
+						exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+						createdAccount, accountCreationErr := testClient.CreateAccount(ctx, exampleAccountInput)
+						checkValueAndError(t, createdAccount, accountCreationErr)
 
-				// Assert account equality.
-				checkAccountEquality(t, exampleAccount, actual)
+						expected = append(expected, createdAccount)
+					}
 
-				// Clean up account.
-				assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
-			}
-		})
-	})
+					// Assert account list equality.
+					actual, err := testClient.GetAccounts(ctx, nil)
+					checkValueAndError(t, actual, err)
+					assert.True(
+						t,
+						len(expected) <= len(actual.Accounts),
+						"expected %d to be <= %d",
+						len(expected),
+						len(actual.Accounts),
+					)
 
-	test.Run("Updating", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to update something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				exampleAccount := fakes.BuildFakeAccount()
-				exampleAccount.ID = nonexistentID
-
-				assert.Error(t, testClient.UpdateAccount(ctx, exampleAccount))
-			}
-		})
-
-		runTestForAllAuthMethods(subtest, "it should be updateable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create account.
-				exampleAccount := fakes.BuildFakeAccount()
-				exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-				createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
-				checkValueAndError(t, createdAccount, err)
-
-				// Change account.
-				createdAccount.Update(converters.ConvertAccountToAccountUpdateInput(exampleAccount))
-				assert.NoError(t, testClient.UpdateAccount(ctx, createdAccount))
-
-				// Fetch account.
-				actual, err := testClient.GetAccount(ctx, createdAccount.ID)
-				checkValueAndError(t, actual, err)
-
-				// Assert account equality.
-				checkAccountEquality(t, exampleAccount, actual)
-				assert.NotNil(t, actual.LastUpdatedOn)
-
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-
-				auditLogEntries, err := adminCookieClient.GetAuditLogForAccount(ctx, createdAccount.ID)
-				require.NoError(t, err)
-
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.AccountCreationEvent},
-					{EventType: audit.AccountUpdateEvent},
+					// Clean up.
+					for _, createdAccount := range actual.Accounts {
+						assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
+					}
 				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
-
-				// Clean up account.
-				assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
-			}
-		})
-	})
-
-	test.Run("Deleting", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to delete something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				assert.Error(t, testClient.ArchiveAccount(ctx, nonexistentID))
-			}
+			})
 		})
 
-		runTestForAllAuthMethods(subtest, "it should be deletable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create account.
-				exampleAccount := fakes.BuildFakeAccount()
-				exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-				createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
-				checkValueAndError(t, createdAccount, err)
+		test.Run("Reading", func(subtest *testing.T) {
+			subtest.Parallel()
 
-				// Clean up account.
-				assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
-
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-
-				auditLogEntries, err := adminCookieClient.GetAuditLogForAccount(ctx, createdAccount.ID)
-				require.NoError(t, err)
-
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.AccountCreationEvent},
-					{EventType: audit.AccountArchiveEvent},
+			runTestForAllAuthMethods(subtest, "it should return an error when trying to read something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					// Attempt to fetch nonexistent account.
+					_, err := testClient.GetAccount(ctx, nonexistentID)
+					assert.Error(t, err)
 				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
-			}
+			})
+
+			runTestForAllAuthMethods(subtest, "it should be readable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					// Create account.
+					exampleAccount := fakes.BuildFakeAccount()
+					exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+					createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
+					checkValueAndError(t, createdAccount, err)
+
+					// Fetch account.
+					actual, err := testClient.GetAccount(ctx, createdAccount.ID)
+					checkValueAndError(t, actual, err)
+
+					// Assert account equality.
+					checkAccountEquality(t, exampleAccount, actual)
+
+					// Clean up account.
+					assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
+				}
+			})
 		})
-	})
+
+		test.Run("Updating", func(subtest *testing.T) {
+			subtest.Parallel()
+
+			runTestForAllAuthMethods(subtest, "it should return an error when trying to update something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					exampleAccount := fakes.BuildFakeAccount()
+					exampleAccount.ID = nonexistentID
+
+					assert.Error(t, testClient.UpdateAccount(ctx, exampleAccount))
+				}
+			})
+
+			runTestForAllAuthMethods(subtest, "it should be updateable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					// Create account.
+					exampleAccount := fakes.BuildFakeAccount()
+					exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+					createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
+					checkValueAndError(t, createdAccount, err)
+
+					// Change account.
+					createdAccount.Update(converters.ConvertAccountToAccountUpdateInput(exampleAccount))
+					assert.NoError(t, testClient.UpdateAccount(ctx, createdAccount))
+
+					// Fetch account.
+					actual, err := testClient.GetAccount(ctx, createdAccount.ID)
+					checkValueAndError(t, actual, err)
+
+					// Assert account equality.
+					checkAccountEquality(t, exampleAccount, actual)
+					assert.NotNil(t, actual.LastUpdatedOn)
+
+					adminClientLock.Lock()
+					defer adminClientLock.Unlock()
+
+					auditLogEntries, err := adminCookieClient.GetAuditLogForAccount(ctx, createdAccount.ID)
+					require.NoError(t, err)
+
+					expectedAuditLogEntries := []*types.AuditLogEntry{
+						{EventType: audit.AccountCreationEvent},
+						{EventType: audit.AccountUpdateEvent},
+					}
+					validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
+
+					// Clean up account.
+					assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
+				}
+			})
+		})
+
+		test.Run("Deleting", func(subtest *testing.T) {
+			subtest.Parallel()
+
+			runTestForAllAuthMethods(subtest, "it should return an error when trying to delete something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					assert.Error(t, testClient.ArchiveAccount(ctx, nonexistentID))
+				}
+			})
+
+			runTestForAllAuthMethods(subtest, "it should be deletable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					// Create account.
+					exampleAccount := fakes.BuildFakeAccount()
+					exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+					createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
+					checkValueAndError(t, createdAccount, err)
+
+					// Clean up account.
+					assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
+
+					adminClientLock.Lock()
+					defer adminClientLock.Unlock()
+
+					auditLogEntries, err := adminCookieClient.GetAuditLogForAccount(ctx, createdAccount.ID)
+					require.NoError(t, err)
+
+					expectedAuditLogEntries := []*types.AuditLogEntry{
+						{EventType: audit.AccountCreationEvent},
+						{EventType: audit.AccountArchiveEvent},
+					}
+					validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
+				}
+			})
+		})
+
+
+	*/
 
 	test.Run("Memberships", func(subtest *testing.T) {
 		subtest.Parallel()
@@ -237,34 +242,37 @@ func TestAccounts(test *testing.T) {
 
 				// check that each user cannot see the webhooks
 				webhook, err := clientA.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				// add them to the account
-				assert.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userA.ID, Reason: t.Name()}))
-				assert.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userB.ID, Reason: t.Name()}))
-				assert.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userC.ID, Reason: t.Name()}))
+				require.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userA.ID, Reason: t.Name()}))
+				clientA.SetOption(httpclient.UsingAccount(account.ID))
+				require.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userB.ID, Reason: t.Name()}))
+				clientB.SetOption(httpclient.UsingAccount(account.ID))
+				require.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userC.ID, Reason: t.Name()}))
+				clientC.SetOption(httpclient.UsingAccount(account.ID))
 
 				// check that each user can see the webhooks
 				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				assert.NotNil(t, webhook)
-				assert.NoError(t, err)
+				require.NoError(t, err)
+				require.NotNil(t, webhook) // fails here
 
 				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				assert.NotNil(t, webhook)
-				assert.NoError(t, err)
+				require.NoError(t, err)
+				require.NotNil(t, webhook)
 
 				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				assert.NotNil(t, webhook)
-				assert.NoError(t, err)
+				require.NoError(t, err)
+				require.NotNil(t, webhook)
 
 				// reduce all permissions to nothing
 				input := &types.ModifyUserPermissionsInput{
@@ -282,16 +290,16 @@ func TestAccounts(test *testing.T) {
 
 				// check that each user cannot see the webhooks
 				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				// return all permissions
 				input = &types.ModifyUserPermissionsInput{
@@ -309,16 +317,16 @@ func TestAccounts(test *testing.T) {
 
 				// check that each user can see the webhooks
 				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				assert.NotNil(t, webhook)
-				assert.NoError(t, err)
+				require.NotNil(t, webhook)
+				require.NoError(t, err)
 
 				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				assert.NotNil(t, webhook)
-				assert.NoError(t, err)
+				require.NotNil(t, webhook)
+				require.NoError(t, err)
 
 				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				assert.NotNil(t, webhook)
-				assert.NoError(t, err)
+				require.NotNil(t, webhook)
+				require.NoError(t, err)
 
 				// remove users from account
 				require.NoError(t, testClient.RemoveUser(ctx, account.ID, userA.ID))
@@ -327,16 +335,16 @@ func TestAccounts(test *testing.T) {
 
 				// check that each user cannot see the webhooks
 				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				assert.Nil(t, webhook)
-				assert.Error(t, err)
+				require.Nil(t, webhook)
+				require.Error(t, err)
 
 				// check audit entries
 				adminClientLock.Lock()
@@ -347,47 +355,54 @@ func TestAccounts(test *testing.T) {
 
 				expectedAuditLogEntries := []*types.AuditLogEntry{
 					{EventType: audit.AccountCreationEvent},
+					{EventType: audit.UserAddedToAccountEvent},
+					{EventType: audit.WebhookCreationEvent},
+					{EventType: audit.WebhookCreationEvent},
 				}
 				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
 
 				// Clean up.
-				assert.NoError(t, testClient.ArchiveUser(ctx, userA.ID))
-				assert.NoError(t, testClient.ArchiveUser(ctx, userB.ID))
-				assert.NoError(t, testClient.ArchiveUser(ctx, userC.ID))
+				require.NoError(t, testClient.ArchiveUser(ctx, userA.ID))
+				require.NoError(t, testClient.ArchiveUser(ctx, userB.ID))
+				require.NoError(t, testClient.ArchiveUser(ctx, userC.ID))
 			}
 		})
 	})
 
-	test.Run("Auditing", func(subtest *testing.T) {
-		subtest.Parallel()
+	/*
 
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to audit something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-				x, err := adminCookieClient.GetAuditLogForAccount(ctx, nonexistentID)
+		test.Run("Auditing", func(subtest *testing.T) {
+			subtest.Parallel()
 
-				assert.NoError(t, err)
-				assert.Empty(t, x)
-			}
+			runTestForAllAuthMethods(subtest, "it should return an error when trying to audit something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					adminClientLock.Lock()
+					defer adminClientLock.Unlock()
+					x, err := adminCookieClient.GetAuditLogForAccount(ctx, nonexistentID)
+
+					assert.NoError(t, err)
+					assert.Empty(t, x)
+				}
+			})
+
+			runTestForAllAuthMethods(subtest, "it should not be auditable by a non-admin", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
+				return func(t *testing.T) {
+					// Create account.
+					exampleAccount := fakes.BuildFakeAccount()
+					exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+					createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
+					checkValueAndError(t, createdAccount, err)
+
+					// fetch audit log entries
+					actual, err := testClient.GetAuditLogForAccount(ctx, createdAccount.ID)
+					assert.Error(t, err)
+					assert.Nil(t, actual)
+
+					// Clean up account.
+					assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
+				}
+			})
 		})
 
-		runTestForAllAuthMethods(subtest, "it should not be auditable by a non-admin", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create account.
-				exampleAccount := fakes.BuildFakeAccount()
-				exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-				createdAccount, err := testClient.CreateAccount(ctx, exampleAccountInput)
-				checkValueAndError(t, createdAccount, err)
-
-				// fetch audit log entries
-				actual, err := testClient.GetAuditLogForAccount(ctx, createdAccount.ID)
-				assert.Error(t, err)
-				assert.Nil(t, actual)
-
-				// Clean up account.
-				assert.NoError(t, testClient.ArchiveAccount(ctx, createdAccount.ID))
-			}
-		})
-	})
+	*/
 }

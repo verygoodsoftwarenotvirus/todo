@@ -389,7 +389,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	if pasetoRequest.AccountID != 0 {
 		if _, isMember := permissions[pasetoRequest.AccountID]; !isMember {
-			logger.Debug("invalid account ID requested for token")
+			logger.WithValue("requested_account_id", pasetoRequest.AccountID).Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
 		}

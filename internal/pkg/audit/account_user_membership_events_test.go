@@ -21,7 +21,7 @@ func TestAccountUserMembershipEventBuilders(T *testing.T) {
 			actual: audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID, "blah blah"),
 		},
 		"BuildItemUpdateEventEntry": {
-			expectedEventType: audit.AccountUserMembershipArchiveEvent,
+			expectedEventType: audit.UserRemovedFromAccountEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
 				audit.AccountAssignmentKey,

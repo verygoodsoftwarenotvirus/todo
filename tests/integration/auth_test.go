@@ -167,7 +167,7 @@ func TestAuth(test *testing.T) {
 		assert.Error(t, err)
 	})
 
-	test.Run("should not be able to login as someone that doesn't exist", func(t *testing.T) {
+	test.Run("should not be able to login as someone that does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		ctx, span := tracing.StartSpan(context.Background())
@@ -234,7 +234,7 @@ func TestAuth(test *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 	})
 
-	test.Run("should be able to change authentication", func(t *testing.T) {
+	test.Run("should be able to change password", func(t *testing.T) {
 		t.Parallel()
 
 		ctx, span := tracing.StartSpan(context.Background())

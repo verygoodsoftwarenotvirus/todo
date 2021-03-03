@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/stretchr/testify/mock"
@@ -17,10 +17,10 @@ type AccountUserMembershipDataManager struct {
 }
 
 // GetMembershipsForUser satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]bitmask.ServiceUserPermissions, err error) {
+func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
 	args := m.Called(ctx, userID)
 
-	return args.Get(0).(uint64), args.Get(1).(map[uint64]bitmask.ServiceUserPermissions), args.Error(2)
+	return args.Get(0).(uint64), args.Get(1).(map[uint64]permissions.ServiceUserPermissions), args.Error(2)
 }
 
 // MarkAccountAsUserDefault implements the interface.
@@ -36,8 +36,8 @@ func (m *AccountUserMembershipDataManager) UserIsMemberOfAccount(ctx context.Con
 }
 
 // AddUserToAccount implements the interface.
-func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, userID, accountID, addedByUser uint64, reason string) error {
-	return m.Called(ctx, userID, accountID, addedByUser, reason).Error(0)
+func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser uint64) error {
+	return m.Called(ctx, input, addedByUser).Error(0)
 }
 
 // RemoveUserFromAccount implements the interface.

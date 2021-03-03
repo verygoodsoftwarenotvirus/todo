@@ -25,8 +25,8 @@ const (
 
 // fetchUserID grabs a userID out of the request context.
 func (s *service) fetchUserID(req *http.Request) uint64 {
-	if si, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && si != nil {
-		return si.User.ID
+	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
+		return reqCtx.User.ID
 	}
 	return 0
 }
@@ -103,7 +103,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	)
 
 	if !valid {
-		logger.Debug("invalid credentials provided")
+		logger.Debug("invalid credentials provided to API client creation route")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	} else if err != nil {
@@ -157,14 +157,15 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -172,7 +173,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
 
 	// fetch item from database.
-	x, err := s.apiClientDataManager.GetAPIClientByDatabaseID(ctx, apiClientID, si.User.ID)
+	x, err := s.apiClientDataManager.GetAPIClientByDatabaseID(ctx, apiClientID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -194,14 +195,15 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -209,7 +211,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, apiClientID)
 
 	// archive the API client in the database.
-	err := s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, si.User.ActiveAccountID, si.User.ID)
+	err := s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, reqCtx.User.ActiveAccountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

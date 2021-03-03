@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -51,7 +52,7 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 		return nil, 0, 0, scanErr
 	}
 
-	user.ServiceAdminPermissions = bitmask.NewServiceAdminPermissions(perms)
+	user.ServiceAdminPermissions = permissions.NewServiceAdminPermissions(perms)
 
 	return user, filteredCount, totalCount, nil
 }
@@ -248,6 +249,7 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 
 	// create the account.
 	accountCreationInput := types.NewAccountCreationInputForUser(user)
+	accountCreationInput.DefaultUserPermissions = account.DefaultUserPermissions
 	accountCreationQuery, accountCreationArgs := c.sqlQueryBuilder.BuildCreateAccountQuery(accountCreationInput)
 
 	accountID, accountCreateErr := c.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
@@ -258,7 +260,7 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 
 	account.ID = accountID
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID))
 
 	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(userID, accountID)
 	if accountMembershipErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); accountMembershipErr != nil {
@@ -266,7 +268,12 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 		return accountMembershipErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, userID, accountID, "user creation"))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, &types.AddUserToAccountInput{
+		UserID:                 user.ID,
+		AccountID:              account.ID,
+		UserAccountPermissions: account.DefaultUserPermissions,
+		Reason:                 "account creation",
+	}))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -294,9 +301,10 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	}
 
 	account := &types.Account{
-		Name:      input.Username,
-		PlanID:    nil,
-		CreatedOn: c.currentTime(),
+		Name:                   input.Username,
+		PlanID:                 nil,
+		CreatedOn:              c.currentTime(),
+		DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
 	}
 
 	if err := c.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {

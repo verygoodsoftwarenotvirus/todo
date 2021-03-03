@@ -41,18 +41,19 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
-	input.BelongsToAccount = si.User.ActiveAccountID
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
+	input.BelongsToAccount = reqCtx.User.ActiveAccountID
 
 	// create item in database.
-	x, err := s.itemDataManager.CreateItem(ctx, input, si.User.ID)
+	x, err := s.itemDataManager.CreateItem(ctx, input, reqCtx.User.ID)
 	if err != nil {
 		logger.Error(err, "error creating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -79,14 +80,15 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -94,7 +96,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ActiveAccountID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, reqCtx.User.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -116,14 +118,15 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -131,7 +134,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
-	exists, err := s.itemDataManager.ItemExists(ctx, itemID, si.User.ActiveAccountID)
+	exists, err := s.itemDataManager.ItemExists(ctx, itemID, reqCtx.User.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Error(err, "error checking item existence in database")
 	}
@@ -153,29 +156,30 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := types.ExtractQueryFilter(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := si.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		items *types.ItemList
 		err   error
 	)
 
-	if si.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
+	if reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
 	} else {
-		items, err = s.itemDataManager.GetItems(ctx, si.User.ActiveAccountID, filter)
+		items, err = s.itemDataManager.GetItems(ctx, reqCtx.User.ActiveAccountID, filter)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -205,19 +209,20 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.SearchQueryKey, query)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := si.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		relevantIDs []uint64
@@ -230,7 +235,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		relevantIDs, searchErr = s.search.SearchForAdmin(ctx, query)
 	} else {
-		relevantIDs, searchErr = s.search.Search(ctx, query, si.User.ActiveAccountID)
+		relevantIDs, searchErr = s.search.Search(ctx, query, reqCtx.User.ActiveAccountID)
 	}
 
 	if searchErr != nil {
@@ -243,7 +248,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		items, dbErr = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
 	} else {
-		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, si.User.ActiveAccountID, filter.Limit, relevantIDs)
+		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, reqCtx.User.ActiveAccountID, filter.Limit, relevantIDs)
 	}
 
 	if errors.Is(dbErr, sql.ErrNoRows) {
@@ -275,15 +280,16 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
-	input.BelongsToAccount = si.User.ActiveAccountID
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
+	input.BelongsToAccount = reqCtx.User.ActiveAccountID
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -291,7 +297,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, si.User.ActiveAccountID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, reqCtx.User.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -305,7 +311,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, x, si.User.ID, changeReport); err != nil {
+	if err = s.itemDataManager.UpdateItem(ctx, x, reqCtx.User.ID, changeReport); err != nil {
 		logger.Error(err, "error encountered updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -328,14 +334,15 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID).WithValue(keys.AccountIDKey, si.User.ActiveAccountID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -343,7 +350,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err := s.itemDataManager.ArchiveItem(ctx, itemID, si.User.ActiveAccountID, si.User.ID)
+	err := s.itemDataManager.ArchiveItem(ctx, itemID, reqCtx.User.ActiveAccountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -373,14 +380,15 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)

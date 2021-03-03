@@ -1,4 +1,4 @@
-package bitmask
+package permissions
 
 import (
 	"testing"

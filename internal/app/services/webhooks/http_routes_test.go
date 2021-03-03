@@ -44,7 +44,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
-			exampleUser.ID,
+			exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleWebhookList, nil)
 		s.webhookDataManager = wd
@@ -80,7 +80,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
-			exampleUser.ID,
+			exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), sql.ErrNoRows)
 		s.webhookDataManager = wd
@@ -116,7 +116,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd.On(
 			"GetWebhooks",
 			mock.Anything,
-			exampleUser.ID,
+			exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
@@ -373,7 +373,7 @@ func TestWebhooksService_Read(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			exampleUser.ID,
+			exampleAccount.ID,
 		).Return(exampleWebhook, nil)
 		s.webhookDataManager = wd
 
@@ -416,7 +416,7 @@ func TestWebhooksService_Read(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			exampleUser.ID,
+			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
 		s.webhookDataManager = wd
 
@@ -459,7 +459,7 @@ func TestWebhooksService_Read(T *testing.T) {
 			"GetWebhook",
 			mock.Anything,
 			exampleWebhook.ID,
-			exampleUser.ID,
+			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
 		s.webhookDataManager = wd
 

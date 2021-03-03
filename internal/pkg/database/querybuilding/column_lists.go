@@ -32,7 +32,7 @@ var (
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, userOwnershipColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, accountOwnershipColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableUserPermissionsColumn),
-		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTablePrimaryUserAccountColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableDefaultUserAccountColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, ArchivedOnColumn),
 	}
@@ -47,6 +47,7 @@ var (
 		fmt.Sprintf("%s.%s", AccountsTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableNameColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePlanIDColumn),
+		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableDefaultUserPermissionsColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, ArchivedOnColumn),

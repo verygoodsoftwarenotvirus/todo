@@ -3,7 +3,7 @@ package mock
 import (
 	"github.com/stretchr/testify/mock"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -57,8 +57,8 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildUserIsMemberOfAccountQuery(u
 }
 
 // BuildAddUserToAccountQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildAddUserToAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
-	returnArgs := m.Called(userID, accountID)
+func (m *AccountUserMembershipSQLQueryBuilder) BuildAddUserToAccountQuery(input *types.AddUserToAccountInput) (query string, args []interface{}) {
+	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
@@ -78,8 +78,8 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildTransferAccountOwnershipQuer
 }
 
 // BuildModifyUserPermissionsQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions bitmask.ServiceUserPermissions) (query string, args []interface{}) {
-	returnArgs := m.Called(userID, accountID, permissions)
+func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(userID, accountID uint64, perms permissions.ServiceUserPermissions) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, accountID, perms)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

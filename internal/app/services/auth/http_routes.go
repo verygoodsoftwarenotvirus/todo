@@ -19,7 +19,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
@@ -139,9 +139,9 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defaultAccount, memberships, membershipsCheckErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+	defaultAccountID, permissionsMap, membershipsCheckErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
 	if membershipsCheckErr != nil {
-		logger.Error(membershipsCheckErr, "error encountered checking for user memberships")
+		logger.Error(membershipsCheckErr, "error encountered checking for user permissionsMap")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
@@ -159,7 +159,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.sessionManager.Put(ctx, requestContextKey, buildRequestContextForUserLogin(user, defaultAccount, memberships))
+	s.sessionManager.Put(ctx, requestContextKey, buildRequestContextForUserLogin(user, defaultAccountID, permissionsMap))
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
@@ -246,7 +246,7 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	res.WriteHeader(http.StatusAccepted)
 }
 
-func buildRequestContextForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]bitmask.ServiceUserPermissions) *types.RequestContext {
+func buildRequestContextForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]permissions.ServiceUserPermissions) *types.RequestContext {
 	return &types.RequestContext{
 		User: types.UserRequestContext{
 			Username:                user.Username,
@@ -267,9 +267,9 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -291,7 +291,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
-			s.auditLog.LogLogoutEvent(ctx, si.User.ID)
+			s.auditLog.LogLogoutEvent(ctx, reqCtx.User.ID)
 		} else {
 			logger.Error(cookieBuildingErr, "error encountered building cookie")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
@@ -380,33 +380,36 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
-	requestedAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToAccount)
+	var requestedAccountID uint64
+	defaultAccountID, perms, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToAccount)
 	if membershipRetrievalErr != nil {
-		logger.Error(membershipRetrievalErr, "retrieving permissions for API client")
+		logger.Error(membershipRetrievalErr, "retrieving perms for API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	if pasetoRequest.AccountID != 0 {
-		if _, isMember := permissions[pasetoRequest.AccountID]; !isMember {
-			logger.WithValue("requested_account_id", pasetoRequest.AccountID).Debug("invalid account ID requested for token")
+		if _, isMember := perms[pasetoRequest.AccountID]; !isMember {
+			logger.Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
 		}
 
 		logger.WithValue("requested_account", pasetoRequest.AccountID).Debug("setting token account ID to requested account")
-		requestedAccount = pasetoRequest.AccountID
+		requestedAccountID = pasetoRequest.AccountID
+	} else {
+		requestedAccountID = defaultAccountID
 	}
 
-	logger = logger.WithValue(keys.AccountIDKey, requestedAccount).WithValue(keys.PermissionsKey, permissions)
+	logger = logger.WithValue(keys.AccountIDKey, requestedAccountID).WithValue(keys.PermissionsKey, perms)
 
 	now := time.Now().UTC()
 	lifetime := time.Duration(math.Min(float64(maxPASETOLifetime), float64(s.config.PASETO.Lifetime)))
 	jsonToken := paseto.JSONToken{
 		Audience:   strconv.FormatUint(client.BelongsToAccount, 10),
-		Issuer:     s.config.PASETO.Issuer,
-		Jti:        uuid.New().String(),
 		Subject:    strconv.FormatUint(client.BelongsToAccount, 10),
+		Jti:        uuid.New().String(),
+		Issuer:     s.config.PASETO.Issuer,
 		IssuedAt:   now,
 		NotBefore:  now,
 		Expiration: now.Add(lifetime),
@@ -416,9 +419,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		User: types.UserRequestContext{
 			Username:                user.Username,
 			ID:                      user.ID,
-			ActiveAccountID:         requestedAccount,
+			ActiveAccountID:         requestedAccountID,
 			UserAccountStatus:       user.AccountStatus,
-			AccountPermissionsMap:   permissions,
+			AccountPermissionsMap:   perms,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
 	}
@@ -438,6 +441,8 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		ExpiresAt: jsonToken.Expiration.String(),
 	}
 
+	logger.Debug("Issuing PASETO")
+
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
 }
 
@@ -450,15 +455,15 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 	logger.Info("cycling cookie secret!")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	if !si.User.ServiceAdminPermissions.CanCycleCookieSecrets() {
-		logger.WithValue("admin_permissions", si.User.ServiceAdminPermissions).Debug("invalid permissions")
+	if !reqCtx.User.ServiceAdminPermissions.CanCycleCookieSecrets() {
+		logger.WithValue("admin_permissions", reqCtx.User.ServiceAdminPermissions).Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}
@@ -468,7 +473,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		[]byte(s.config.Cookies.SigningKey),
 	)
 
-	s.auditLog.LogCycleCookieSecretEvent(ctx, si.User.ID)
+	s.auditLog.LogCycleCookieSecretEvent(ctx, reqCtx.User.ID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

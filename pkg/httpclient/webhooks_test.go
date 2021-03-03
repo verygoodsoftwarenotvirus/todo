@@ -179,7 +179,7 @@ func TestV1Client_CreateWebhook(T *testing.T) {
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-		exampleInput.BelongsToUser = 0
+		exampleInput.BelongsToAccount = 0
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(

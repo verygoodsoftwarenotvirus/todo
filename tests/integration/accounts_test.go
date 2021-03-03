@@ -2,12 +2,14 @@ package integration
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -28,7 +30,6 @@ func TestAccounts(test *testing.T) {
 	test.Parallel()
 
 	/*
-
 		test.Run("Creating", func(subtest *testing.T) {
 			subtest.Parallel()
 
@@ -229,6 +230,8 @@ func TestAccounts(test *testing.T) {
 
 				account := accounts.Accounts[0]
 
+				assert.Equal(t, account.DefaultUserPermissions, permissions.ServiceUserPermissions(math.MaxUint32), "expected and actual permissions do not match")
+
 				// create a webhook
 				exampleWebhook := fakes.BuildFakeWebhook()
 				exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
@@ -263,8 +266,8 @@ func TestAccounts(test *testing.T) {
 
 				// check that each user can see the webhooks
 				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				require.NoError(t, err)
-				require.NotNil(t, webhook) // fails here
+				require.NoError(t, err) // fails here
+				require.NotNil(t, webhook)
 
 				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
 				require.NoError(t, err)
@@ -274,11 +277,13 @@ func TestAccounts(test *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, webhook)
 
+				// After implementing permission restrictions:
+
 				// reduce all permissions to nothing
 				input := &types.ModifyUserPermissionsInput{
-					UserID:          userA.ID,
-					UserPermissions: 0,
-					Reason:          t.Name(),
+					UserID:                 userA.ID,
+					UserAccountPermissions: 0,
+					Reason:                 t.Name(),
 				}
 				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
 
@@ -303,9 +308,9 @@ func TestAccounts(test *testing.T) {
 
 				// return all permissions
 				input = &types.ModifyUserPermissionsInput{
-					UserID:          userA.ID,
-					UserPermissions: testutil.BuildMaxUserPerms(),
-					Reason:          t.Name(),
+					UserID:                 userA.ID,
+					UserAccountPermissions: testutil.BuildMaxUserPerms(),
+					Reason:                 t.Name(),
 				}
 				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
 
@@ -370,7 +375,6 @@ func TestAccounts(test *testing.T) {
 	})
 
 	/*
-
 		test.Run("Auditing", func(subtest *testing.T) {
 			subtest.Parallel()
 
@@ -403,6 +407,5 @@ func TestAccounts(test *testing.T) {
 				}
 			})
 		})
-
 	*/
 }

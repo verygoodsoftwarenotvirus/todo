@@ -88,6 +88,7 @@ var (
 				name CHARACTER VARYING NOT NULL,
 				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
 				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				default_user_permissions INTEGER NOT NULL DEFAULT 0,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL

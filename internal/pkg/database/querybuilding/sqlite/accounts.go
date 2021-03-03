@@ -74,11 +74,13 @@ func (q *Sqlite) BuildCreateAccountQuery(input *types.AccountCreationInput) (que
 			querybuilding.ExternalIDColumn,
 			querybuilding.AccountsTableNameColumn,
 			querybuilding.AccountsTableUserOwnershipColumn,
+			querybuilding.AccountsTableDefaultUserPermissionsColumn,
 		).
 		Values(
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.BelongsToUser,
+			input.DefaultUserPermissions,
 		),
 	)
 }

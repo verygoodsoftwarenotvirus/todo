@@ -80,7 +80,7 @@ func (l *Logger) Info(input string) {
 
 // Debug satisfies our contract for the logging.Logger Debug method.
 func (l *Logger) Debug(input string) {
-	l.logger.Debug().Msg(input)
+	l.logger.Debug().Caller().Msg(input)
 }
 
 // Error satisfies our contract for the logging.Logger Error method.

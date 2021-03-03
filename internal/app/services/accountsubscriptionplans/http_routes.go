@@ -27,14 +27,15 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := types.ExtractQueryFilter(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	plans, err := s.planDataManager.GetAccountSubscriptionPlans(ctx, filter)
 
@@ -68,14 +69,15 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// create plan in database.
 	x, err := s.planDataManager.CreateAccountSubscriptionPlan(ctx, input)
@@ -109,14 +111,15 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
@@ -154,14 +157,15 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
@@ -183,7 +187,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	changeReport := x.Update(input)
 
 	// update plan in database.
-	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x, si.User.ID, changeReport); err != nil {
+	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x, reqCtx.User.ID, changeReport); err != nil {
 		logger.Error(err, "error encountered updating plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -201,14 +205,15 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
@@ -216,7 +221,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
-	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, si.User.ID)
+	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -242,14 +247,15 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)

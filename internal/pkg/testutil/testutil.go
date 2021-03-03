@@ -25,7 +25,7 @@ import (
 	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 
 const (
@@ -37,23 +37,23 @@ func init() {
 }
 
 // BuildMaxServiceAdminPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildMaxServiceAdminPerms() bitmask.ServiceAdminPermissions {
-	return bitmask.NewServiceAdminPermissions(math.MaxUint32)
+func BuildMaxServiceAdminPerms() permissions.ServiceAdminPermissions {
+	return permissions.NewServiceAdminPermissions(math.MaxUint32)
 }
 
 // BuildMaxUserPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildMaxUserPerms() bitmask.ServiceUserPermissions {
-	return bitmask.NewAccountUserPermissions(math.MaxUint32)
+func BuildMaxUserPerms() permissions.ServiceUserPermissions {
+	return permissions.NewServiceUserPermissions(math.MaxUint32)
 }
 
 // BuildNoAdminPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildNoAdminPerms() bitmask.ServiceAdminPermissions {
-	return bitmask.NewServiceAdminPermissions(0)
+func BuildNoAdminPerms() permissions.ServiceAdminPermissions {
+	return permissions.NewServiceAdminPermissions(0)
 }
 
 // BuildNoUserPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildNoUserPerms() bitmask.ServiceUserPermissions {
-	return bitmask.NewAccountUserPermissions(0)
+func BuildNoUserPerms() permissions.ServiceUserPermissions {
+	return permissions.NewServiceUserPermissions(0)
 }
 
 // DetermineServiceURL returns the url, if properly configured.

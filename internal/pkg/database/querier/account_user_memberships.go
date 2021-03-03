@@ -7,7 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -21,9 +21,9 @@ func (c *Client) scanAccountUserMembership(scan database.Scanner) (x *types.Acco
 
 	targetVars := []interface{}{
 		&x.ID,
-		&x.BelongsToAccount,
 		&x.BelongsToUser,
-		&x.UserPermissions,
+		&x.BelongsToAccount,
+		&x.UserAccountPermissions,
 		&x.DefaultAccount,
 		&x.CreatedOn,
 		&x.ArchivedOn,
@@ -55,7 +55,7 @@ func (c *Client) scanAccountUserMemberships(rows database.ResultIterator) (membe
 }
 
 // GetMembershipsForUser does a thing.
-func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]bitmask.ServiceUserPermissions, err error) {
+func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -67,31 +67,34 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 
 	getAccountMembershipsQuery, getAccountMembershipsArgs := c.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(userID)
 
-	rows, getMembershipsErr := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
+	membershipRows, getMembershipsErr := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
 	if getMembershipsErr != nil {
 		logger.Error(getMembershipsErr, "fetching memberships from database")
 		return 0, nil, getMembershipsErr
 	}
 
-	memberships, scanErr := c.scanAccountUserMemberships(rows)
+	memberships, scanErr := c.scanAccountUserMemberships(membershipRows)
 	if scanErr != nil {
 		logger.Error(scanErr, "scanning memberships from database")
 		return 0, nil, scanErr
 	}
 
-	permissionsMap = map[uint64]bitmask.ServiceUserPermissions{}
+	permissionsMap = map[uint64]permissions.ServiceUserPermissions{}
 
 	for _, membership := range memberships {
-		permissionsMap[membership.ID] = membership.UserPermissions
+		permissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
+		logger.WithValue("belongs_to_account", membership.BelongsToAccount).WithValue("account_permissions", membership.UserAccountPermissions).Info("set membership permission value")
 
 		if membership.DefaultAccount && defaultAccount == 0 {
-			defaultAccount = membership.ID
+			defaultAccount = membership.BelongsToAccount
 		}
 	}
 
 	if defaultAccount == 0 {
 		return 0, nil, fmt.Errorf("default account not found for user %d", userID)
 	}
+
+	logger.WithValue("permissions_map", permissionsMap).Info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
 	return defaultAccount, permissionsMap, nil
 }
@@ -161,7 +164,7 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, changedBy
 
 	logger.Debug("ModifyUserPermissions called")
 
-	query, args := c.sqlQueryBuilder.BuildModifyUserPermissionsQuery(accountID, input.UserID, input.UserPermissions)
+	query, args := c.sqlQueryBuilder.BuildModifyUserPermissionsQuery(accountID, input.UserID, input.UserAccountPermissions)
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -174,7 +177,7 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, changedBy
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(input.UserID, accountID, changedByUser, input.UserPermissions, input.Reason))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(input.UserID, accountID, changedByUser, input.UserAccountPermissions, input.Reason))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
@@ -218,20 +221,21 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID, transf
 }
 
 // AddUserToAccount does a thing.
-func (c *Client) AddUserToAccount(ctx context.Context, userID, accountID, addedByUser uint64, reason string) error {
+func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey:    userID,
-		keys.AccountIDKey: accountID,
-		keys.RequesterKey: addedByUser,
-		keys.ReasonKey:    reason,
+		keys.UserIDKey:      input.UserID,
+		keys.AccountIDKey:   input,
+		keys.RequesterKey:   addedByUser,
+		keys.ReasonKey:      input.Reason,
+		keys.PermissionsKey: input.UserAccountPermissions,
 	})
 
 	logger.Debug("AddUserToAccount called")
 
-	query, args := c.sqlQueryBuilder.BuildAddUserToAccountQuery(userID, accountID)
+	query, args := c.sqlQueryBuilder.BuildAddUserToAccountQuery(input)
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -244,7 +248,7 @@ func (c *Client) AddUserToAccount(ctx context.Context, userID, accountID, addedB
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, accountID, addedByUser, reason))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, input))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)

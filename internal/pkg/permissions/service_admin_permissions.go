@@ -1,11 +1,9 @@
-package bitmask
+package permissions
 
 import (
 	"database/sql/driver"
 	"encoding/gob"
 	"encoding/json"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 
 const (
@@ -57,12 +55,12 @@ func NewServiceAdminPermissions(x uint32) ServiceAdminPermissions {
 }
 
 // ServiceAdminPermissionsSummary produces a ServiceAdminPermissionsSummary.
-func (p ServiceAdminPermissions) ServiceAdminPermissionsSummary() *permissions.ServiceAdminPermissionsSummary {
+func (p ServiceAdminPermissions) ServiceAdminPermissionsSummary() *ServiceAdminPermissionsSummary {
 	if p == 0 {
 		return nil
 	}
 
-	return &permissions.ServiceAdminPermissionsSummary{
+	return &ServiceAdminPermissionsSummary{
 		CanCycleCookieSecrets: p.CanCycleCookieSecrets(),
 		CanBanUsers:           p.CanBanUsers(),
 	}

@@ -1,7 +1,7 @@
 package audit
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -15,15 +15,16 @@ const (
 )
 
 // BuildUserAddedToAccountEventEntry builds an entry creation input for when a membership is created.
-func BuildUserAddedToAccountEventEntry(addedBy, added, accountID uint64, reason string) *types.AuditLogEntryCreationInput {
+func BuildUserAddedToAccountEventEntry(addedBy uint64, input *types.AddUserToAccountInput) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   addedBy,
-		AccountAssignmentKey: accountID,
-		UserAssignmentKey:    added,
+		AccountAssignmentKey: input.AccountID,
+		UserAssignmentKey:    input.UserID,
+		PermissionsKey:       input.UserAccountPermissions,
 	}
 
-	if reason != "" {
-		contextMap[ReasonKey] = reason
+	if input.Reason != "" {
+		contextMap[ReasonKey] = input.Reason
 	}
 
 	return &types.AuditLogEntryCreationInput{
@@ -65,7 +66,7 @@ func BuildUserMarkedAccountAsDefaultEventEntry(performedBy, userID, accountID ui
 }
 
 // BuildModifyUserPermissionsEventEntry builds an entry creation input for when a membership is created.
-func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, newPermissions bitmask.ServiceUserPermissions, reason string) *types.AuditLogEntryCreationInput {
+func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, newPermissions permissions.ServiceUserPermissions, reason string) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   modifiedBy,
 		AccountAssignmentKey: accountID,

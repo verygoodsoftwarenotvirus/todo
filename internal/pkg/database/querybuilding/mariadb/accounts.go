@@ -12,21 +12,6 @@ import (
 
 var _ types.AccountSQLQueryBuilder = (*MariaDB)(nil)
 
-// BuildAccountExistsQuery constructs a SQL query for checking if an account with a given ID belong to a user with a given ID exists.
-func (q *MariaDB) BuildAccountExistsQuery(accountID, userID uint64) (query string, args []interface{}) {
-	return q.buildQuery(q.sqlBuilder.
-		Select(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn)).
-		Prefix(querybuilding.ExistencePrefix).
-		From(querybuilding.AccountsTableName).
-		Suffix(querybuilding.ExistenceSuffix).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn):                         accountID,
-			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn): userID,
-			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn):                 nil,
-		}),
-	)
-}
-
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (q *MariaDB) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
@@ -87,11 +72,13 @@ func (q *MariaDB) BuildCreateAccountQuery(input *types.AccountCreationInput) (qu
 			querybuilding.ExternalIDColumn,
 			querybuilding.AccountsTableNameColumn,
 			querybuilding.AccountsTableUserOwnershipColumn,
+			querybuilding.AccountsTableDefaultUserPermissionsColumn,
 		).
 		Values(
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.BelongsToUser,
+			input.DefaultUserPermissions,
 		),
 	)
 }

@@ -87,6 +87,7 @@ var (
 				external_id TEXT NOT NULL,
 				name CHARACTER VARYING NOT NULL,
 				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
+				default_user_permissions BIGINT NOT NULL DEFAULT 0,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,

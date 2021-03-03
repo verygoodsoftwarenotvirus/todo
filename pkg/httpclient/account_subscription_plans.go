@@ -82,6 +82,10 @@ func (c *Client) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context, 
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
 	uri := c.BuildURL(
 		nil,
 		plansBasePath,
@@ -95,6 +99,10 @@ func (c *Client) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context, 
 func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (plan *types.AccountSubscriptionPlan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
 
 	req, err := c.BuildCreateAccountSubscriptionPlanRequest(ctx, input)
 	if err != nil {
@@ -111,6 +119,10 @@ func (c *Client) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context, 
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if plan == nil {
+		return nil, ErrNilInputProvided
+	}
+
 	uri := c.BuildURL(
 		nil,
 		plansBasePath,
@@ -125,6 +137,10 @@ func (c *Client) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context, 
 func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, plan *types.AccountSubscriptionPlan) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if plan == nil {
+		return ErrNilInputProvided
+	}
 
 	req, err := c.BuildUpdateAccountSubscriptionPlanRequest(ctx, plan)
 	if err != nil {

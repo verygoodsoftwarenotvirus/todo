@@ -3,6 +3,7 @@ package mock
 import (
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/stretchr/testify/mock"
@@ -38,6 +39,11 @@ func (m *AuthService) CycleCookieSecretHandler(res http.ResponseWriter, req *htt
 // PASETOHandler implements our AuthService interface.
 func (m *AuthService) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
+}
+
+// PermissionRestrictionMiddleware implements our AuthService interface.
+func (m *AuthService) PermissionRestrictionMiddleware(p ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler {
+	return m.Called(p).Get(0).(func(next http.Handler) http.Handler)
 }
 
 // CookieAuthenticationMiddleware implements our AuthService interface.

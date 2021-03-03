@@ -39,29 +39,29 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := types.ExtractQueryFilter(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := si.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		accounts *types.AccountList
 		err      error
 	)
 
-	if si.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
+	if reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
 	} else {
-		accounts, err = s.accountDataManager.GetAccounts(ctx, si.User.ID, filter)
+		accounts, err = s.accountDataManager.GetAccounts(ctx, reqCtx.User.ID, filter)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -104,7 +104,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToUser = reqCtx.User.ID
 
 	// create account in database.
-	x, err := s.accountDataManager.CreateAccount(ctx, input, 0)
+	x, err := s.accountDataManager.CreateAccount(ctx, input, reqCtx.User.ID)
 	if err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -128,14 +128,14 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
+	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -143,7 +143,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// fetch account from database.
-	x, err := s.accountDataManager.GetAccount(ctx, accountID, si.User.ID)
+	x, err := s.accountDataManager.GetAccount(ctx, accountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -221,14 +221,15 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -236,7 +237,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// archive the account in the database.
-	err := s.accountDataManager.ArchiveAccount(ctx, accountID, si.User.ID)
+	err := s.accountDataManager.ArchiveAccount(ctx, accountID, reqCtx.User.ID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -283,7 +284,7 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// create account in database.
-	if err := s.accountMembershipDataManager.AddUserToAccount(ctx, input.UserID, accountID, reqCtx.User.ID, input.Reason); err != nil {
+	if err := s.accountMembershipDataManager.AddUserToAccount(ctx, input, reqCtx.User.ID); err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -450,14 +451,15 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, si)
-	logger = logger.WithValue(keys.UserIDKey, si.User.ID)
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)

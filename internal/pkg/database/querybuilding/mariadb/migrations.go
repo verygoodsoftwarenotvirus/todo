@@ -129,6 +129,7 @@ var (
 				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` LONGTEXT NOT NULL,",
 				"    `plan_id` BIGINT UNSIGNED,",
+				"    `default_user_permissions` INTEGER NOT NULL DEFAULT 0,",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",

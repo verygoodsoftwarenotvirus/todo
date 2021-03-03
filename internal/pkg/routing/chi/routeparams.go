@@ -22,8 +22,8 @@ func NewRouteParamManager() routing.RouteParamManager {
 
 // UserIDFetcherFromRequestContext fetches a user ID from a request.
 func (r chirouteParamManager) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
-	if si, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && si != nil {
-		return si.User.ID
+	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
+		return reqCtx.User.ID
 	}
 
 	return 0
@@ -31,8 +31,8 @@ func (r chirouteParamManager) UserIDFetcherFromRequestContext(req *http.Request)
 
 // requestContextFetcherFromRequestContext fetches a RequestContext from a request.
 func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
-	if si, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && si != nil {
-		return si, nil
+	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
+		return reqCtx, nil
 	}
 
 	return nil, errors.New("no session info attached to request")

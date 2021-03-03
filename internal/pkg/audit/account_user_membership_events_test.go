@@ -4,23 +4,25 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 func TestAccountUserMembershipEventBuilders(T *testing.T) {
 	T.Parallel()
 
 	tests := map[string]*eventBuilderTest{
-		"BuildItemCreationEventEntry": {
+		"BuildUserAddedToAccountEventEntry": {
 			expectedEventType: audit.UserAddedToAccountEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
 				audit.AccountAssignmentKey,
 				audit.UserAssignmentKey,
+				audit.PermissionsKey,
 				audit.ReasonKey,
 			},
-			actual: audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID, "blah blah"),
+			actual: audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, &types.AddUserToAccountInput{}),
 		},
-		"BuildItemUpdateEventEntry": {
+		"BuildUserRemovedFromAccountEventEntry": {
 			expectedEventType: audit.UserRemovedFromAccountEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
@@ -30,7 +32,7 @@ func TestAccountUserMembershipEventBuilders(T *testing.T) {
 			},
 			actual: audit.BuildUserRemovedFromAccountEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID, "blah blah"),
 		},
-		"BuildItemArchiveEventEntry": {
+		"BuildUserMarkedAccountAsDefaultEventEntry": {
 			expectedEventType: audit.AccountMarkedAsDefaultEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,

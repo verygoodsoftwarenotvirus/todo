@@ -23,9 +23,8 @@ func runEventBuilderTests(T *testing.T, tests map[string]*eventBuilderTest) {
 
 		T.Run(tName, func(t *testing.T) {
 			t.Parallel()
-			t.Helper()
 
-			assert.Equal(t, tTest.expectedEventType, tTest.actual.EventType, "expected event type to be %v, was %v", tTest.expectedEventType, tTest.actual.EventType)
+			assert.Equal(t, tTest.expectedEventType, tTest.actual.EventType, "expected event type to be %v, was %v in test %q", tTest.expectedEventType, tTest.actual.EventType, tName)
 			for k := range tTest.actual.Context {
 				assert.Contains(t, tTest.expectedContextKeys, k, "expected %q to be present in request context in test %q", k, tName)
 			}

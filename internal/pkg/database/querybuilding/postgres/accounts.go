@@ -79,11 +79,13 @@ func (q *Postgres) BuildCreateAccountQuery(input *types.AccountCreationInput) (q
 			querybuilding.ExternalIDColumn,
 			querybuilding.AccountsTableNameColumn,
 			querybuilding.AccountsTableUserOwnershipColumn,
+			querybuilding.AccountsTableDefaultUserPermissionsColumn,
 		).
 		Values(
 			q.externalIDGenerator.NewExternalID(),
 			input.Name,
 			input.BelongsToUser,
+			input.DefaultUserPermissions,
 		).
 		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
 	)

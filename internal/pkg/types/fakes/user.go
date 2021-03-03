@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -15,12 +15,12 @@ import (
 )
 
 // BuildUserTestPrerequisites builds the prerequisite values we need for most unit tests.
-func BuildUserTestPrerequisites() (*types.User, *types.Account, map[uint64]bitmask.ServiceUserPermissions) {
+func BuildUserTestPrerequisites() (*types.User, *types.Account, map[uint64]permissions.ServiceUserPermissions) {
 	exampleUser := BuildFakeUser()
 	exampleUser.ServiceAdminPermissions = testutil.BuildNoAdminPerms()
 	exampleAccount := BuildFakeAccount()
 	exampleAccount.BelongsToUser = exampleUser.ID
-	examplePerms := map[uint64]bitmask.ServiceUserPermissions{
+	examplePerms := map[uint64]permissions.ServiceUserPermissions{
 		exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	}
 
@@ -37,7 +37,7 @@ func BuildFakeUser() *types.User {
 		// Salt:           []byte(fakes.Word()),
 		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),
 		TwoFactorSecretVerifiedOn: func(i uint64) *uint64 { return &i }(uint64(uint32(fake.Date().Unix()))),
-		ServiceAdminPermissions:   bitmask.NewServiceAdminPermissions(0),
+		ServiceAdminPermissions:   permissions.NewServiceAdminPermissions(0),
 		CreatedOn:                 uint64(uint32(fake.Date().Unix())),
 	}
 }

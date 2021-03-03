@@ -74,30 +74,77 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 // AddMemberInputMiddleware does .
 func (s *service) AddMemberInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(types.AddUserToAccountInput)
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
+			logger.Error(err, "error encountered decoding request body")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(ctx); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
+		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
 // ModifyMemberPermissionsInputMiddleware does .
 func (s *service) ModifyMemberPermissionsInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(types.ModifyUserPermissionsInput)
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
+			logger.Error(err, "error encountered decoding request body")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(ctx); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
+		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
 // AccountTransferInputMiddleware does .
 func (s *service) AccountTransferInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-
-	})
-}
-
-// AccountRestrictionMiddleware is a middleware for ensuring a given request only applies to a member of a given route.
-func (s *service) AccountRestrictionMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(types.TransferAccountOwnershipInput)
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
+		logger := s.logger.WithRequest(req)
+
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
+			logger.Error(err, "error encountered decoding request body")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(ctx); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

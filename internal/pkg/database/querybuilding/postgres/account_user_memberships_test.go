@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -106,13 +107,18 @@ func TestPostgres_BuildAddUserToAccountQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account) VALUES ($1,$2)"
-		expectedArgs := []interface{}{
-			exampleUser.ID,
-			exampleAccount.ID,
+		exampleInput := &types.AddUserToAccountInput{
+			UserID:    exampleUser.ID,
+			AccountID: exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(exampleUser.ID, exampleAccount.ID)
+
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,user_account_permissions) VALUES ($1,$2,$3)"
+		expectedArgs := []interface{}{
+			exampleInput.UserID,
+			exampleInput.AccountID,
+			exampleInput.UserAccountPermissions,
+		}
+		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

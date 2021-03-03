@@ -2,11 +2,12 @@ package postgres
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/Masterminds/squirrel"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -43,12 +44,14 @@ func (q *Postgres) BuildCreateMembershipForNewUserQuery(userID, accountID uint64
 		Columns(
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-			querybuilding.AccountsUserMembershipTablePrimaryUserAccountColumn,
+			querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
+			querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
 		).
 		Values(
 			userID,
 			accountID,
 			true,
+			math.MaxUint32,
 		),
 	)
 }
@@ -57,10 +60,13 @@ func (q *Postgres) BuildCreateMembershipForNewUserQuery(userID, accountID uint64
 func (q *Postgres) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
-		Set(querybuilding.AccountsUserMembershipTablePrimaryUserAccountColumn, squirrel.And{
-			squirrel.Eq{querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID},
-			squirrel.Eq{querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID},
-		}).
+		Set(
+			querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
+			squirrel.And{
+				squirrel.Eq{querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID},
+				squirrel.Eq{querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID},
+			},
+		).
 		Where(squirrel.Eq{
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
 			querybuilding.ArchivedOnColumn:                               nil,
@@ -69,10 +75,10 @@ func (q *Postgres) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) 
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (q *Postgres) BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions bitmask.ServiceUserPermissions) (query string, args []interface{}) {
+func (q *Postgres) BuildModifyUserPermissionsQuery(userID, accountID uint64, perms permissions.ServiceUserPermissions) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
-		Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, permissions).
+		Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, perms).
 		Where(squirrel.Eq{
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
 			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
@@ -109,16 +115,18 @@ func (q *Postgres) BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (qu
 }
 
 // BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (q *Postgres) BuildAddUserToAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *Postgres) BuildAddUserToAccountQuery(input *types.AddUserToAccountInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsUserMembershipTableName).
 		Columns(
 			querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+			querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
 		).
 		Values(
-			userID,
-			accountID,
+			input.UserID,
+			input.AccountID,
+			input.UserAccountPermissions,
 		),
 	)
 }

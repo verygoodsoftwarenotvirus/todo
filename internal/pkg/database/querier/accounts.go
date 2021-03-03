@@ -26,6 +26,7 @@ func (c *Client) scanAccount(scan database.Scanner, includeCounts bool) (account
 		&account.ExternalID,
 		&account.Name,
 		&account.PlanID,
+		&account.DefaultUserPermissions,
 		&account.CreatedOn,
 		&account.LastUpdatedOn,
 		&account.ArchivedOn,
@@ -236,7 +237,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 		CreatedOn:     c.currentTime(),
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(x))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(x, createdByUser))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
@@ -266,7 +267,7 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, chan
 		return fmt.Errorf("error updating account: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountUpdateEventEntry(updated.BelongsToUser, updated.ID, changes))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountUpdateEventEntry(updated.BelongsToUser, updated.ID, changedByUser, changes))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -276,7 +277,7 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, chan
 }
 
 // ArchiveAccount archives an account from the database by its ID.
-func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) error {
+func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -300,7 +301,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID uint64) e
 		return fmt.Errorf("error updating account: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountArchiveEventEntry(userID, accountID))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountArchiveEventEntry(userID, accountID, archivedByUser))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

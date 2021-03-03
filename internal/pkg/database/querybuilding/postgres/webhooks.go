@@ -87,7 +87,7 @@ func (q *Postgres) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query
 			strings.Join(x.Events, querybuilding.WebhooksTableEventsSeparator),
 			strings.Join(x.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
 			strings.Join(x.Topics, querybuilding.WebhooksTableTopicsSeparator),
-			x.BelongsToUser,
+			x.BelongsToAccount,
 		).
 		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
 	)

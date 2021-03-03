@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -107,7 +109,15 @@ func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig 
 
 		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
 
-		if userCreationErr := c.createUser(ctx, &types.User{Username: testUserConfig.Username}, &types.Account{}, query, args); userCreationErr != nil {
+		// these structs will be fleshed out by createUser
+		user := &types.User{
+			Username: testUserConfig.Username,
+		}
+		account := &types.Account{
+			DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
+		}
+
+		if userCreationErr := c.createUser(ctx, user, account, query, args); userCreationErr != nil {
 			c.logger.Error(userCreationErr, "creating test user")
 			return fmt.Errorf("creating test user: %w", userCreationErr)
 		}

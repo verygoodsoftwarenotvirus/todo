@@ -29,26 +29,26 @@ type (
 
 	// WebhookCreationInput represents what a User could set as input for creating a webhook.
 	WebhookCreationInput struct {
-		Name          string   `json:"name"`
-		ContentType   string   `json:"contentType"`
-		URL           string   `json:"url"`
-		Method        string   `json:"method"`
-		Events        []string `json:"events"`
-		DataTypes     []string `json:"dataTypes"`
-		Topics        []string `json:"topics"`
-		BelongsToUser uint64   `json:"-"`
+		Name             string   `json:"name"`
+		ContentType      string   `json:"contentType"`
+		URL              string   `json:"url"`
+		Method           string   `json:"method"`
+		Events           []string `json:"events"`
+		DataTypes        []string `json:"dataTypes"`
+		Topics           []string `json:"topics"`
+		BelongsToAccount uint64   `json:"-"`
 	}
 
 	// WebhookUpdateInput represents what a User could set as input for updating a webhook.
 	WebhookUpdateInput struct {
-		Name          string   `json:"name"`
-		ContentType   string   `json:"contentType"`
-		URL           string   `json:"url"`
-		Method        string   `json:"method"`
-		Events        []string `json:"events"`
-		DataTypes     []string `json:"dataTypes"`
-		Topics        []string `json:"topics"`
-		BelongsToUser uint64   `json:"-"`
+		Name             string   `json:"name"`
+		ContentType      string   `json:"contentType"`
+		URL              string   `json:"url"`
+		Method           string   `json:"method"`
+		Events           []string `json:"events"`
+		DataTypes        []string `json:"dataTypes"`
+		Topics           []string `json:"topics"`
+		BelongsToAccount uint64   `json:"-"`
 	}
 
 	// WebhookList represents a list of webhooks.

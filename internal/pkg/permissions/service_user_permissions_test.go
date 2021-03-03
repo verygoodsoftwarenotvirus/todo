@@ -1,4 +1,4 @@
-package bitmask
+package permissions
 
 import (
 	"testing"
@@ -12,10 +12,10 @@ func TestAccountUserPermissions_CanCreateItems(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		x := NewAccountUserPermissions(0)
+		x := NewServiceUserPermissions(0)
 		assert.False(t, x.CanCreateItems())
 
-		y := NewAccountUserPermissions(0 | uint32(cycleCookieSecretPermission))
+		y := NewServiceUserPermissions(0 | uint32(CanCreateItems))
 		assert.True(t, y.CanCreateItems())
 	})
 }
@@ -29,7 +29,7 @@ func TestAccountUserPermissions_CanUpdateItems(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.CanUpdateItems())
 
-		y := ServiceUserPermissions(0 | uint32(banUserPermission))
+		y := ServiceUserPermissions(0 | uint32(CanUpdateItems))
 		assert.True(t, y.CanUpdateItems())
 	})
 }
@@ -43,134 +43,8 @@ func TestAccountUserPermissions_CanArchiveItems(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.CanArchiveItems())
 
-		y := ServiceUserPermissions(0 | uint32(canTerminateAccountsPermission))
+		y := ServiceUserPermissions(0 | uint32(CanArchiveItems))
 		assert.True(t, y.CanArchiveItems())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission4(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission4())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission4))
-		assert.True(t, y.hasReservedUnusedPermission4())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission5(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission5())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission5))
-		assert.True(t, y.hasReservedUnusedPermission5())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission6(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission6())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission6))
-		assert.True(t, y.hasReservedUnusedPermission6())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission7(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission7())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission7))
-		assert.True(t, y.hasReservedUnusedPermission7())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission8(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission8())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission8))
-		assert.True(t, y.hasReservedUnusedPermission8())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission9(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission9())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission9))
-		assert.True(t, y.hasReservedUnusedPermission9())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission10(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission10())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission10))
-		assert.True(t, y.hasReservedUnusedPermission10())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission11(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission11())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission11))
-		assert.True(t, y.hasReservedUnusedPermission11())
-	})
-}
-
-func TestAccountUserPermissions_hasReservedUnusedPermission12(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		x := ServiceUserPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission12())
-
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission12))
-		assert.True(t, y.hasReservedUnusedPermission12())
 	})
 }
 

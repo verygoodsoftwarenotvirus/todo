@@ -102,19 +102,19 @@ func (c *Client) scanWebhooks(rows database.ResultIterator, includeCounts bool) 
 }
 
 // GetWebhook fetches a webhook from the database.
-func (c *Client) GetWebhook(ctx context.Context, webhookID, userID uint64) (*types.Webhook, error) {
+func (c *Client) GetWebhook(ctx context.Context, webhookID, accountID uint64) (*types.Webhook, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, accountID)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.WebhookIDKey: webhookID,
-		keys.UserIDKey:    userID,
+		keys.AccountIDKey: accountID,
 	}).Debug("GetWebhook called")
 
-	query, args := c.sqlQueryBuilder.BuildGetWebhookQuery(webhookID, userID)
+	query, args := c.sqlQueryBuilder.BuildGetWebhookQuery(webhookID, accountID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
 	webhook, _, _, err := c.scanWebhook(row, false)
@@ -133,14 +133,14 @@ func (c *Client) GetAllWebhooksCount(ctx context.Context) (count uint64, err err
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.WebhookList, err error) {
+func (c *Client) GetWebhooks(ctx context.Context, accountID uint64, filter *types.QueryFilter) (x *types.WebhookList, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	x = &types.WebhookList{}
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
 
-	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, accountID)
 	logger.Debug("GetWebhookCount called")
 
 	if filter != nil {
@@ -148,7 +148,7 @@ func (c *Client) GetWebhooks(ctx context.Context, userID uint64, filter *types.Q
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := c.sqlQueryBuilder.BuildGetWebhooksQuery(userID, filter)
+	query, args := c.sqlQueryBuilder.BuildGetWebhooksQuery(accountID, filter)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -212,8 +212,9 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
-	c.logger.WithValue(keys.UserIDKey, input.BelongsToUser).Debug("CreateWebhook called")
+	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
+	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
+	c.logger.WithValue(keys.AccountIDKey, input.BelongsToAccount).Debug("CreateWebhook called")
 
 	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
 
@@ -237,7 +238,7 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 		Events:           input.Events,
 		DataTypes:        input.DataTypes,
 		Topics:           input.Topics,
-		BelongsToAccount: input.BelongsToUser,
+		BelongsToAccount: input.BelongsToAccount,
 		CreatedOn:        c.currentTime(),
 	}
 
@@ -256,8 +257,9 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 	tracing.AttachWebhookIDToSpan(span, updated.ID)
-	tracing.AttachUserIDToSpan(span, updated.BelongsToAccount)
+	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
 
 	c.logger.WithValue(keys.WebhookIDKey, updated.ID).Debug("UpdateWebhook called")
 
@@ -287,13 +289,14 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, accountID, archi
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachUserIDToSpan(span, archivedByUserID)
+	tracing.AttachRequestingUserIDToSpan(span, archivedByUserID)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.WebhookIDKey: webhookID,
 		keys.AccountIDKey: accountID,
-		keys.UserIDKey:    archivedByUserID,
+		keys.RequesterKey: archivedByUserID,
 	}).Debug("ArchiveWebhook called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, accountID)

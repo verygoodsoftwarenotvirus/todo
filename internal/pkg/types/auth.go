@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
 )
 
 const (
@@ -23,12 +22,12 @@ func init() {
 type (
 	// UserRequestContext contains data relevant to the user making a request.
 	UserRequestContext struct {
-		Username                string                                    `json:"-"`
-		ID                      uint64                                    `json:"-"`
-		ActiveAccountID         uint64                                    `json:"-"`
-		UserAccountStatus       userReputation                            `json:"-"`
-		AccountPermissionsMap   map[uint64]bitmask.ServiceUserPermissions `json:"-"`
-		ServiceAdminPermissions permissions.ServiceAdminPermissionChecker `json:"-"`
+		Username                string                                        `json:"-"`
+		ID                      uint64                                        `json:"-"`
+		ActiveAccountID         uint64                                        `json:"-"`
+		UserAccountStatus       userReputation                                `json:"-"`
+		AccountPermissionsMap   map[uint64]permissions.ServiceUserPermissions `json:"-"`
+		ServiceAdminPermissions permissions.ServiceAdminPermissionChecker     `json:"-"`
 	}
 
 	// RequestContext represents what we encode in our authentication cookies.
@@ -71,6 +70,7 @@ type (
 		CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request)
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
 
+		PermissionRestrictionMiddleware(p ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler
 		CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
@@ -102,7 +102,7 @@ func (x *RequestContext) ToBytes() []byte {
 }
 
 // RequestContextFromUser produces a RequestContext object from a User's data.
-func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]bitmask.ServiceUserPermissions) (*RequestContext, error) {
+func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]permissions.ServiceUserPermissions) (*RequestContext, error) {
 	if user == nil {
 		return nil, errors.New("non-nil user required for request context")
 	}

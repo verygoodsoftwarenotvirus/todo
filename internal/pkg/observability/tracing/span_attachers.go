@@ -66,14 +66,14 @@ func AttachAccountIDToSpan(span trace.Span, accountID uint64) {
 	attachToSpan(span, keys.AccountIDKey, accountID)
 }
 
-// AttachAccountUserMembershipIDToSpan provides a consistent way to attach an account's ID to a span.
-func AttachAccountUserMembershipIDToSpan(span trace.Span, accountUserMembershipID uint64) {
-	attachToSpan(span, keys.AccountIDKey, accountUserMembershipID)
-}
-
 // AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachUserIDToSpan(span trace.Span, userID uint64) {
 	attachToSpan(span, keys.UserIDKey, userID)
+}
+
+// AttachRequestingUserIDToSpan provides a consistent way to attach a user's ID to a span.
+func AttachRequestingUserIDToSpan(span trace.Span, userID uint64) {
+	attachToSpan(span, keys.RequesterKey, userID)
 }
 
 // AttachPlanIDToSpan provides a consistent way to attach a plan's ID to a span.

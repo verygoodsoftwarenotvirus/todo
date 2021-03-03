@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/o1egl/paseto"
@@ -50,24 +51,21 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		}
 
 		if user != nil {
-			defaultAccount, permissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+			defaultAccount, userPermissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
 			if membershipRetrievalErr != nil {
-				logger.Error(membershipRetrievalErr, "retrieving permissions for cookie authentication")
+				logger.Error(membershipRetrievalErr, "retrieving userPermissions for cookie authentication")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			reqCtx, requestContextErr := types.RequestContextFromUser(user, defaultAccount, permissions)
+			reqCtx, requestContextErr := types.RequestContextFromUser(user, defaultAccount, userPermissions)
 			if requestContextErr != nil {
 				logger.Error(membershipRetrievalErr, "forming request context")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			req = req.WithContext(
-				context.WithValue(ctx, types.RequestContextKey, reqCtx),
-			)
-			next.ServeHTTP(res, req)
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, reqCtx)))
 			return
 		}
 
@@ -105,6 +103,47 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 	})
+}
+
+// PermissionRestrictionMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
+func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			ctx, span := s.tracer.StartSpan(req.Context())
+			defer span.End()
+
+			logger := s.logger.WithRequest(req)
+
+			// check for a cookie first if we can.
+			requestContext, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
+			if !ok {
+				logger.Debug("no request context attached!")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			accountPermissions, allowed := requestContext.User.AccountPermissionsMap[requestContext.User.ActiveAccountID]
+			if !allowed {
+				logger.Debug("not authorized for account!")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			logger = logger.WithValue(keys.RequesterKey, requestContext.User.ID).
+				WithValue(keys.AccountIDKey, requestContext.User.ActiveAccountID).
+				WithValue(keys.PermissionsKey, requestContext.User.AccountPermissionsMap)
+
+			for _, p := range perms {
+				if !accountPermissions.HasPermission(p) {
+					logger.WithValue("requested_permission", p).Debug("inadequate permissions")
+					s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+					return
+				}
+			}
+
+			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		})
+	}
 }
 
 func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (*types.RequestContext, error) {

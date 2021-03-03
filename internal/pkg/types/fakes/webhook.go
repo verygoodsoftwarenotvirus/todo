@@ -47,14 +47,14 @@ func BuildFakeWebhookList() *types.WebhookList {
 // BuildFakeWebhookUpdateInputFromWebhook builds a faked WebhookUpdateInput.
 func BuildFakeWebhookUpdateInputFromWebhook(webhook *types.Webhook) *types.WebhookUpdateInput {
 	return &types.WebhookUpdateInput{
-		Name:          webhook.Name,
-		ContentType:   webhook.ContentType,
-		URL:           webhook.URL,
-		Method:        webhook.Method,
-		Events:        webhook.Events,
-		DataTypes:     webhook.DataTypes,
-		Topics:        webhook.Topics,
-		BelongsToUser: webhook.BelongsToAccount,
+		Name:             webhook.Name,
+		ContentType:      webhook.ContentType,
+		URL:              webhook.URL,
+		Method:           webhook.Method,
+		Events:           webhook.Events,
+		DataTypes:        webhook.DataTypes,
+		Topics:           webhook.Topics,
+		BelongsToAccount: webhook.BelongsToAccount,
 	}
 }
 
@@ -67,13 +67,13 @@ func BuildFakeWebhookCreationInput() *types.WebhookCreationInput {
 // BuildFakeWebhookCreationInputFromWebhook builds a faked WebhookCreationInput.
 func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookCreationInput {
 	return &types.WebhookCreationInput{
-		Name:          webhook.Name,
-		ContentType:   webhook.ContentType,
-		URL:           webhook.URL,
-		Method:        webhook.Method,
-		Events:        webhook.Events,
-		DataTypes:     webhook.DataTypes,
-		Topics:        webhook.Topics,
-		BelongsToUser: webhook.BelongsToAccount,
+		Name:             webhook.Name,
+		ContentType:      webhook.ContentType,
+		URL:              webhook.URL,
+		Method:           webhook.Method,
+		Events:           webhook.Events,
+		DataTypes:        webhook.DataTypes,
+		Topics:           webhook.Topics,
+		BelongsToAccount: webhook.BelongsToAccount,
 	}
 }

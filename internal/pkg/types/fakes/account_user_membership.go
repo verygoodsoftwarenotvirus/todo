@@ -9,12 +9,12 @@ import (
 // BuildFakeAccountUserMembership builds a faked item.
 func BuildFakeAccountUserMembership() *types.AccountUserMembership {
 	return &types.AccountUserMembership{
-		ID:               uint64(fake.Uint32()),
-		BelongsToUser:    fake.Uint64(),
-		BelongsToAccount: fake.Uint64(),
-		UserPermissions:  0,
-		CreatedOn:        0,
-		ArchivedOn:       nil,
+		ID:                     uint64(fake.Uint32()),
+		BelongsToUser:          fake.Uint64(),
+		BelongsToAccount:       fake.Uint64(),
+		UserAccountPermissions: 0,
+		CreatedOn:              0,
+		ArchivedOn:             nil,
 	}
 }
 
@@ -39,9 +39,9 @@ func BuildFakeAccountUserMembershipList() *types.AccountUserMembershipList {
 // BuildFakeAccountUserMembershipUpdateInputFromAccountUserMembership builds a faked AccountUserMembershipUpdateInput from an item.
 func BuildFakeAccountUserMembershipUpdateInputFromAccountUserMembership(accountUserMembership *types.AccountUserMembership) *types.AccountUserMembershipUpdateInput {
 	return &types.AccountUserMembershipUpdateInput{
-		BelongsToUser:    accountUserMembership.BelongsToUser,
-		BelongsToAccount: accountUserMembership.BelongsToAccount,
-		UserPermissions:  accountUserMembership.UserPermissions,
+		BelongsToUser:          accountUserMembership.BelongsToUser,
+		BelongsToAccount:       accountUserMembership.BelongsToAccount,
+		UserAccountPermissions: accountUserMembership.UserAccountPermissions,
 	}
 }
 
@@ -53,8 +53,8 @@ func BuildFakeAccountUserMembershipCreationInput() *types.AccountUserMembershipC
 // BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership builds a faked AccountUserMembershipCreationInput from an item.
 func BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership(accountUserMembership *types.AccountUserMembership) *types.AccountUserMembershipCreationInput {
 	return &types.AccountUserMembershipCreationInput{
-		BelongsToUser:    accountUserMembership.BelongsToUser,
-		BelongsToAccount: accountUserMembership.BelongsToAccount,
-		UserPermissions:  accountUserMembership.UserPermissions,
+		BelongsToUser:          accountUserMembership.BelongsToUser,
+		BelongsToAccount:       accountUserMembership.BelongsToAccount,
+		UserAccountPermissions: accountUserMembership.UserAccountPermissions,
 	}
 }

@@ -744,45 +744,4 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 	})
-
-	T.Run("with error removing from search index", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(nil)
-		s.accountDataManager = accountDataManager
-
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
-		s.accountCounter = mc
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ArchiveHandler(res, req)
-
-		assert.Equal(t, http.StatusNoContent, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, mc)
-	})
 }

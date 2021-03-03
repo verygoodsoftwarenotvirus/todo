@@ -63,7 +63,7 @@ func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.A
 }
 
 // ArchiveAccount is a mock function.
-func (m *AccountDataManager) ArchiveAccount(ctx context.Context, accountID, userID uint64) error {
+func (m *AccountDataManager) ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser uint64) error {
 	return m.Called(ctx, accountID, userID).Error(0)
 }
 

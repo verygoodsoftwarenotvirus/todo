@@ -30,27 +30,27 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	logger = logger.WithValue("new_status", input.NewReputation)
 
-	si, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
-		logger.Error(sessionInfoRetrievalErr, "error fetching sessionInfo")
+	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
+	if requestContextRetrievalErr != nil {
+		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	if !si.User.ServiceAdminPermissions.IsServiceAdmin() {
+	if !reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() {
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
-	logger = logger.WithValue("ban_giver", si.User.ID)
+	logger = logger.WithValue("ban_giver", reqCtx.User.ID)
 
 	var allowed bool
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		allowed = si.User.ServiceAdminPermissions.CanBanUsers()
+		allowed = reqCtx.User.ServiceAdminPermissions.CanBanUsers()
 	case types.TerminatedAccountStatus:
-		allowed = si.User.ServiceAdminPermissions.CanTerminateAccounts()
+		allowed = reqCtx.User.ServiceAdminPermissions.CanTerminateAccounts()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 
@@ -76,9 +76,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		s.auditLog.LogUserBanEvent(ctx, si.User.ID, input.TargetAccountID, input.Reason)
+		s.auditLog.LogUserBanEvent(ctx, reqCtx.User.ID, input.TargetAccountID, input.Reason)
 	case types.TerminatedAccountStatus:
-		s.auditLog.LogAccountTerminationEvent(ctx, si.User.ID, input.TargetAccountID, input.Reason)
+		s.auditLog.LogAccountTerminationEvent(ctx, reqCtx.User.ID, input.TargetAccountID, input.Reason)
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 

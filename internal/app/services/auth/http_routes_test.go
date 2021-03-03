@@ -20,7 +20,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -40,7 +40,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	t.Helper()
 
 	exampleAccount := fakes.BuildFakeAccount()
-	examplePerms := map[uint64]bitmask.ServiceUserPermissions{
+	examplePerms := map[uint64]permissions.ServiceUserPermissions{
 		exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	}
 
@@ -358,7 +358,7 @@ func TestService_LoginHandler(T *testing.T) {
 			reqCtx, _ := types.RequestContextFromUser(
 				exampleUser,
 				exampleAccount.ID,
-				map[uint64]bitmask.ServiceUserPermissions{},
+				map[uint64]permissions.ServiceUserPermissions{},
 			)
 
 			return reqCtx, nil
@@ -1622,7 +1622,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			"GetMembershipsForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
-		).Return(uint64(0), map[uint64]bitmask.ServiceUserPermissions(nil), errors.New("blah"))
+		).Return(uint64(0), map[uint64]permissions.ServiceUserPermissions(nil), errors.New("blah"))
 		s.accountMembershipManager = membershipDB
 
 		res := httptest.NewRecorder()

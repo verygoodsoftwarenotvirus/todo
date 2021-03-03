@@ -6,7 +6,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions/bitmask"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 
 const (
@@ -37,11 +37,11 @@ type (
 	// APICientCreationInput is a struct for use when creating API clients.
 	APICientCreationInput struct {
 		UserLoginInput
-		Name                    string                          `json:"name"`
-		ClientID                string                          `json:"-"`
-		ClientSecret            []byte                          `json:"-"`
-		ServiceAdminPermissions bitmask.ServiceAdminPermissions `json:"-"`
-		BelongsToAccount        uint64                          `json:"-"`
+		Name                    string                              `json:"name"`
+		ClientID                string                              `json:"-"`
+		ClientSecret            []byte                              `json:"-"`
+		ServiceAdminPermissions permissions.ServiceAdminPermissions `json:"-"`
+		BelongsToAccount        uint64                              `json:"-"`
 	}
 
 	// APIClientCreationResponse is a struct for informing users of what their API client's secret key is.

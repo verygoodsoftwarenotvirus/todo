@@ -70,7 +70,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	input.BelongsToUser = reqCtx.User.ID
+	input.BelongsToAccount = reqCtx.User.ActiveAccountID
 
 	// ensure everything's on the up-and-up
 	if err := validateWebhook(input); err != nil {
@@ -118,7 +118,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// find the webhooks.
-	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.User.ID, filter)
+	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.User.ActiveAccountID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		webhooks = &types.WebhookList{
 			Webhooks: []*types.Webhook{},
@@ -157,7 +157,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// fetch the webhook from the database.
-	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, reqCtx.User.ID)
+	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, reqCtx.User.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("No rows found in webhook database")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)

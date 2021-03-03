@@ -89,7 +89,7 @@ func (q *Sqlite) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query s
 			strings.Join(x.Events, querybuilding.WebhooksTableEventsSeparator),
 			strings.Join(x.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
 			strings.Join(x.Topics, querybuilding.WebhooksTableTopicsSeparator),
-			x.BelongsToUser,
+			x.BelongsToAccount,
 		),
 	)
 }

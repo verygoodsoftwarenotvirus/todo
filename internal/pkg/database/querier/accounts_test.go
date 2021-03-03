@@ -736,7 +736,7 @@ func TestClient_ArchiveAccount(T *testing.T) {
 
 		db.ExpectCommit()
 
-		err := c.ArchiveAccount(ctx, exampleAccount.ID, exampleAccount.BelongsToUser)
+		err := c.ArchiveAccount(ctx, exampleAccount.ID, exampleAccount.BelongsToUser, exampleAccount.BelongsToUser)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)

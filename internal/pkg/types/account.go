@@ -5,19 +5,22 @@ import (
 	"net/http"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 
 type (
 	// Account represents an account.
 	Account struct {
-		ID            uint64  `json:"id"`
-		ExternalID    string  `json:"externalID"`
-		Name          string  `json:"name"`
-		CreatedOn     uint64  `json:"createdOn"`
-		LastUpdatedOn *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn    *uint64 `json:"archivedOn"`
-		PlanID        *uint64 `json:"planID"`
-		BelongsToUser uint64  `json:"belongsToUser"`
+		ID                     uint64                             `json:"id"`
+		ExternalID             string                             `json:"externalID"`
+		Name                   string                             `json:"name"`
+		DefaultUserPermissions permissions.ServiceUserPermissions `json:"defaultUserPermissions"`
+		CreatedOn              uint64                             `json:"createdOn"`
+		LastUpdatedOn          *uint64                            `json:"lastUpdatedOn"`
+		ArchivedOn             *uint64                            `json:"archivedOn"`
+		PlanID                 *uint64                            `json:"planID"`
+		BelongsToUser          uint64                             `json:"belongsToUser"`
 	}
 
 	// AccountList represents a list of accounts.
@@ -28,14 +31,16 @@ type (
 
 	// AccountCreationInput represents what a User could set as input for creating accounts.
 	AccountCreationInput struct {
-		Name          string `json:"name"`
-		BelongsToUser uint64 `json:"-"`
+		Name                   string                             `json:"name"`
+		DefaultUserPermissions permissions.ServiceUserPermissions `json:"defaultUserPermissions"`
+		BelongsToUser          uint64                             `json:"-"`
 	}
 
 	// AccountUpdateInput represents what a User could set as input for updating accounts.
 	AccountUpdateInput struct {
-		Name          string `json:"name"`
-		BelongsToUser uint64 `json:"-"`
+		Name                   string                             `json:"name"`
+		DefaultUserPermissions permissions.ServiceUserPermissions `json:"defaultUserPermissions"`
+		BelongsToUser          uint64                             `json:"-"`
 	}
 
 	// AccountSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
@@ -59,7 +64,7 @@ type (
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
 		CreateAccount(ctx context.Context, input *AccountCreationInput, createdByUser uint64) (*Account, error)
 		UpdateAccount(ctx context.Context, updated *Account, changedByUser uint64, changes []FieldChangeSummary) error
-		ArchiveAccount(ctx context.Context, accountID, archivedByUser uint64) error
+		ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser uint64) error
 		GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*AuditLogEntry, error)
 	}
 

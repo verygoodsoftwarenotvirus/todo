@@ -156,9 +156,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
 		}
 
-		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
+		s.search = indexManager
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleLimit, exampleItemIDs).Return(exampleItemList, nil)
@@ -182,7 +182,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
+		mock.AssertExpectationsForObjects(t, indexManager, itemDataManager, ed)
 	})
 
 	T.Run("with error conducting search", func(t *testing.T) {
@@ -195,9 +195,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		exampleQuery := "whatever"
 		exampleLimit := uint8(123)
 
-		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return([]uint64{}, errors.New("blah"))
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return([]uint64{}, errors.New("blah"))
+		s.search = indexManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
@@ -217,7 +217,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, si, ed)
+		mock.AssertExpectationsForObjects(t, indexManager, ed)
 	})
 
 	T.Run("with now rows returned", func(t *testing.T) {
@@ -235,9 +235,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
 		}
 
-		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
+		s.search = indexManager
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleLimit, exampleItemIDs).Return([]*types.Item{}, sql.ErrNoRows)
@@ -261,7 +261,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
+		mock.AssertExpectationsForObjects(t, indexManager, itemDataManager, ed)
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
@@ -279,9 +279,9 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			exampleItemIDs = append(exampleItemIDs, x.ID)
 		}
 
-		si := &mocksearch.IndexManager{}
-		si.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Search", mock.MatchedBy(testutil.ContextMatcher), exampleQuery, exampleAccount.ID).Return(exampleItemIDs, nil)
+		s.search = indexManager
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItemsWithIDs", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleLimit, exampleItemIDs).Return([]*types.Item{}, errors.New("blah"))
@@ -305,7 +305,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, si, itemDataManager, ed)
+		mock.AssertExpectationsForObjects(t, indexManager, itemDataManager, ed)
 	})
 }
 
@@ -338,9 +338,9 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher))
 		s.itemCounter = mc
 
-		si := &mocksearch.IndexManager{}
-		si.On("Index", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleItem).Return(nil)
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Index", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleItem).Return(nil)
+		s.search = indexManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Item{}), http.StatusCreated)
@@ -362,7 +362,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, mc, si, ed)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mc, indexManager, ed)
 	})
 
 	T.Run("without input attached", func(t *testing.T) {
@@ -708,9 +708,9 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On("UpdateItem", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Item{}), mock.IsType([]types.FieldChangeSummary{})).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		si := &mocksearch.IndexManager{}
-		si.On("Index", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleItem).Return(nil)
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Index", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleItem).Return(nil)
+		s.search = indexManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Item{}))
@@ -732,7 +732,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, si, ed)
+		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager, ed)
 	})
 
 	T.Run("without update input", func(t *testing.T) {
@@ -918,9 +918,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		si := &mocksearch.IndexManager{}
-		si.On("Delete", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID).Return(nil)
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Delete", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID).Return(nil)
+		s.search = indexManager
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
@@ -940,7 +940,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, si, mc)
+		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager, mc)
 	})
 
 	T.Run("with no item in database", func(t *testing.T) {
@@ -1036,9 +1036,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On("ArchiveItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(nil)
 		s.itemDataManager = itemDataManager
 
-		si := &mocksearch.IndexManager{}
-		si.On("Delete", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID).Return(errors.New("blah"))
-		s.search = si
+		indexManager := &mocksearch.IndexManager{}
+		indexManager.On("Delete", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID).Return(errors.New("blah"))
+		s.search = indexManager
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
@@ -1058,6 +1058,6 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, si, mc)
+		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager, mc)
 	})
 }

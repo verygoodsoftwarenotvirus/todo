@@ -19,27 +19,30 @@ func TestAccountEventBuilders(T *testing.T) {
 			expectedEventType: audit.AccountCreationEvent,
 			expectedContextKeys: []string{
 				audit.UserAssignmentKey,
+				audit.ActorAssignmentKey,
 				audit.AccountAssignmentKey,
 				audit.CreationAssignmentKey,
 			},
-			actual: audit.BuildAccountCreationEventEntry(&types.Account{}),
+			actual: audit.BuildAccountCreationEventEntry(&types.Account{}, exampleUserID),
 		},
 		"BuildAccountUpdateEventEntry": {
 			expectedEventType: audit.AccountUpdateEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
+				audit.UserAssignmentKey,
 				audit.AccountAssignmentKey,
 				audit.ChangesAssignmentKey,
 			},
-			actual: audit.BuildAccountUpdateEventEntry(exampleUserID, exampleAccountID, nil),
+			actual: audit.BuildAccountUpdateEventEntry(exampleUserID, exampleAccountID, exampleUserID, nil),
 		},
 		"BuildAccountArchiveEventEntry": {
 			expectedEventType: audit.AccountArchiveEvent,
 			expectedContextKeys: []string{
 				audit.ActorAssignmentKey,
+				audit.UserAssignmentKey,
 				audit.AccountAssignmentKey,
 			},
-			actual: audit.BuildAccountArchiveEventEntry(exampleUserID, exampleAccountID),
+			actual: audit.BuildAccountArchiveEventEntry(exampleUserID, exampleAccountID, exampleUserID),
 		},
 	}
 

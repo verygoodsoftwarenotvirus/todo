@@ -137,7 +137,7 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		c.SetOption(UsingTimeout(time.Nanosecond))
+		require.NoError(t, c.SetOption(UsingTimeout(time.Nanosecond)))
 
 		exampleClientID := "example_client_id"
 		exampleSecret := make([]byte, validClientSecretSize)

@@ -20,6 +20,20 @@ func ConvertAccountToAccountUpdateInput(x *types.Account) *types.AccountUpdateIn
 	}
 }
 
+// ConvertWebhookToWebhookUpdateInput creates an WebhookUpdateInput struct from a webhook.
+func ConvertWebhookToWebhookUpdateInput(x *types.Webhook) *types.WebhookUpdateInput {
+	return &types.WebhookUpdateInput{
+		Name:             x.Name,
+		ContentType:      x.ContentType,
+		URL:              x.URL,
+		Method:           x.Method,
+		Events:           x.Events,
+		DataTypes:        x.DataTypes,
+		Topics:           x.Topics,
+		BelongsToAccount: x.BelongsToAccount,
+	}
+}
+
 // ConvertItemToItemUpdateInput creates an ItemUpdateInput struct from an item.
 func ConvertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
 	return &types.ItemUpdateInput{

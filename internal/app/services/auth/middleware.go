@@ -22,6 +22,8 @@ const (
 	userLoginInputMiddlewareCtxKey types.ContextKey = "user_login_input"
 	// pasetoCreationInputMiddlewareCtxKey is the context key for login input.
 	pasetoCreationInputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
+	// changeActiveAccountMiddlewareCtxKey is the context key for login input.
+	changeActiveAccountMiddlewareCtxKey types.ContextKey = "change_active_account"
 
 	signatureHeaderKey     = "Signature"
 	pasetoAuthorizationKey = "Authorization"
@@ -122,6 +124,12 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 				return
 			}
 
+			if requestContext.User.ServiceAdminPermissions != 0 {
+				logger.Debug("allowing admin user!")
+				next.ServeHTTP(res, req)
+				return
+			}
+
 			accountPermissions, allowed := requestContext.User.AccountPermissionsMap[requestContext.User.ActiveAccountID]
 			if !allowed {
 				logger.Debug("not authorized for account!")
@@ -141,7 +149,7 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 				}
 			}
 
-			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+			next.ServeHTTP(res, req)
 		})
 	}
 }
@@ -256,6 +264,32 @@ func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
 	}
 
 	return nil
+}
+
+// ChangeActiveAccountInputMiddleware fetches user login input from requests.
+func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		x := new(types.ChangeActiveAccountInput)
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
+			logger.Error(err, "error encountered decoding request body")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+			return
+		}
+
+		if err := x.Validate(ctx); err != nil {
+			logger.Error(err, "provided input was invalid")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, changeActiveAccountMiddlewareCtxKey, x)
+		next.ServeHTTP(res, req.WithContext(ctx))
+	})
 }
 
 // UserLoginInputMiddleware fetches user login input from requests.

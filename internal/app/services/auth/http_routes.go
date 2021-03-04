@@ -191,9 +191,15 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("ChangeActiveAccountHandler called")
 
-	requestedAccountID := uint64(1)
+	input, ok := ctx.Value(changeActiveAccountMiddlewareCtxKey).(*types.ChangeActiveAccountInput)
+	if !ok {
+		logger.Info("no input attached to request")
+		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+		return
+	}
+
+	logger = logger.WithValue("requested_id", input.AccountID)
 
 	// determine user ID.
 	reqCtx, reqCtxRetrievalErr := s.requestContextFetcher(req)
@@ -203,13 +209,18 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	if _, ok := reqCtx.User.AccountPermissionsMap[requestedAccountID]; !ok {
+	logger = logger.WithValue("user_id", reqCtx.User.ID)
+
+	_, perms, err := s.accountMembershipManager.GetMembershipsForUser(ctx, reqCtx.User.ID)
+
+	if _, authorizedForAccount := perms[input.AccountID]; !authorizedForAccount {
 		logger.Debug("invalid account ID requested for activation")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	reqCtx.User.ActiveAccountID = requestedAccountID
+	reqCtx.User.ActiveAccountID = input.AccountID
+	reqCtx.User.AccountPermissionsMap = perms
 
 	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
@@ -335,7 +346,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger = logger.WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID)
+	logger = logger.WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID).WithValue("requested_account", pasetoRequest.AccountID)
 
 	reqTime := time.Unix(0, pasetoRequest.RequestTime)
 	if time.Until(reqTime) > requestTimeThreshold || time.Since(reqTime) > requestTimeThreshold {
@@ -390,7 +401,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	if pasetoRequest.AccountID != 0 {
 		if _, isMember := perms[pasetoRequest.AccountID]; !isMember {
-			logger.Debug("invalid account ID requested for token")
+			logger.WithValue("perms", perms).Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
 		}

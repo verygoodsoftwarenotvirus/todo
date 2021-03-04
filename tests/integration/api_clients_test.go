@@ -43,8 +43,6 @@ func TestAPIClients(test *testing.T) {
 					TOTPToken: generateTOTPTokenForUser(t, user),
 				}
 
-				testClient.SetOption(httpclient.WithDebug())
-
 				createdAPIClient, err := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
 				checkValueAndError(t, createdAPIClient, err)
 

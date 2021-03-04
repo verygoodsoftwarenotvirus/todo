@@ -22,11 +22,12 @@ func TestV1Client_SetOption(T *testing.T) {
 		c := buildTestClient(t, nil)
 		assert.NotEqual(t, expectedURL, c.URL(), "expected and actual URLs match somehow")
 
-		exampleOption := func(client *Client) {
+		exampleOption := func(client *Client) error {
 			client.url = expectedURL
+			return nil
 		}
 
-		c.SetOption(exampleOption)
+		require.NoError(t, c.SetOption(exampleOption))
 
 		assert.Equal(t, expectedURL, c.URL(), "expected and actual URLs do not match")
 	})

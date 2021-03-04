@@ -310,8 +310,6 @@ func (c *Client) GetAuditLogEntriesForAPIClient(ctx context.Context, clientID ui
 		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
 	}
 
-	c.logger.WithValue("query", query).Info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-
 	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
 	if err != nil {
 		return nil, fmt.Errorf("scanning response from database: %w", err)

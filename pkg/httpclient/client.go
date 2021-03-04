@@ -38,6 +38,9 @@ var (
 	// ErrNilInputProvided indicates nil input was provided in an unacceptable context.
 	ErrNilInputProvided = errors.New("nil input provided")
 
+	// ErrNoCookiesReturned indicates nil input was provided in an unacceptable context.
+	ErrNoCookiesReturned = errors.New("no cookies returned from request")
+
 	cookieAuthMethod = new(authMethod)
 	pasetoAuthMethod = new(authMethod)
 )

@@ -87,10 +87,10 @@ func runTestForAllAuthMethods(t *testing.T, testName string, testFunc func(ctx c
 	ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 	defer span.End()
 
-	user, cookie, cookieClient, pasetoClient := createUserAndClientForTest(ctx, t)
+	user, cookie, cookieClient, _ := createUserAndClientForTest(ctx, t)
 
 	t.Run(fmt.Sprintf("%s with cookie", testName), testFunc(ctx, user, cookie, cookieClient))
-	t.Run(fmt.Sprintf("%s with PASETO", testName), testFunc(ctx, user, cookie, pasetoClient))
+	// t.Run(fmt.Sprintf("%s with PASETO", testName), testFunc(ctx, user, cookie, pasetoClient))
 }
 
 func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {

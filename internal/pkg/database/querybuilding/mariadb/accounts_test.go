@@ -12,30 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMariaDB_BuildAccountExistsQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		expectedQuery := "SELECT EXISTS ( SELECT accounts.id FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.id = ? )"
-		expectedArgs := []interface{}{
-			exampleAccount.BelongsToUser,
-			exampleAccount.ID,
-		}
-		actualQuery, actualArgs := q.BuildAccountExistsQuery(exampleAccount.ID, exampleUser.ID)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
 func TestMariaDB_BuildGetAccountQuery(T *testing.T) {
 	T.Parallel()
 
@@ -145,11 +121,12 @@ func TestMariaDB_BuildCreateAccountQuery(T *testing.T) {
 		exIDGen.On("NewExternalID").Return(exampleAccount.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO accounts (external_id,name,belongs_to_user) VALUES (?,?,?)"
+		expectedQuery := "INSERT INTO accounts (external_id,name,belongs_to_user,default_user_permissions) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleAccount.ExternalID,
 			exampleAccount.Name,
 			exampleAccount.BelongsToUser,
+			exampleAccount.DefaultUserPermissions,
 		}
 		actualQuery, actualArgs := q.BuildCreateAccountQuery(exampleInput)
 

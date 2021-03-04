@@ -7,30 +7,27 @@ import (
 )
 
 const (
-	// CanReadWebhooks represents a service user's ability to read webhooks.
-	CanReadWebhooks ServiceUserPermissions = 1 << iota
 	// CanCreateWebhooks represents a service user's ability to create webhooks.
-	CanCreateWebhooks
+	CanCreateWebhooks ServiceUserPermissions = 1 << iota
 	// CanUpdateWebhooks represents a service user's ability to update webhooks.
 	CanUpdateWebhooks
 	// CanArchiveWebhooks represents a service user's ability to delete webhooks.
 	CanArchiveWebhooks
-	// CanReadAPIClients represents a service user's ability to read API clients.
-	CanReadAPIClients
 	// CanCreateAPIClients represents a service user's ability to create API clients.
 	CanCreateAPIClients
 	// CanUpdateAPIClients represents a service user's ability to update API clients.
 	CanUpdateAPIClients
 	// CanArchiveAPIClients represents a service user's ability to delete API clients.
 	CanArchiveAPIClients
-	// CanReadItems represents a service user's ability to read items.
-	CanReadItems
 	// CanCreateItems represents a service user's ability to create items.
 	CanCreateItems
 	// CanUpdateItems represents a service user's ability to update items.
 	CanUpdateItems
 	// CanArchiveItems represents a service user's ability to delete items.
 	CanArchiveItems
+	unusedAccountUserPermission10
+	unusedAccountUserPermission11
+	unusedAccountUserPermission12
 	unusedAccountUserPermission13
 	unusedAccountUserPermission14
 	unusedAccountUserPermission15
@@ -113,11 +110,6 @@ func (p ServiceUserPermissions) HasPermission(perm ServiceUserPermissions) bool 
 	return p&perm != 0
 }
 
-// CanReadWebhooks determines whether or not a user can view items.
-func (p ServiceUserPermissions) CanReadWebhooks() bool {
-	return p.HasPermission(CanReadWebhooks)
-}
-
 // CanCreateWebhooks determines whether or not a user can create items.
 func (p ServiceUserPermissions) CanCreateWebhooks() bool {
 	return p.HasPermission(CanCreateWebhooks)
@@ -131,11 +123,6 @@ func (p ServiceUserPermissions) CanUpdateWebhooks() bool {
 // CanArchiveWebhooks determines whether or not a user can archive items.
 func (p ServiceUserPermissions) CanArchiveWebhooks() bool {
 	return p.HasPermission(CanArchiveWebhooks)
-}
-
-// CanReadAPIClients determines whether or not a user can view items.
-func (p ServiceUserPermissions) CanReadAPIClients() bool {
-	return p.HasPermission(CanReadAPIClients)
 }
 
 // CanCreateAPIClients determines whether or not a user can create items.
@@ -153,11 +140,6 @@ func (p ServiceUserPermissions) CanArchiveAPIClients() bool {
 	return p.HasPermission(CanArchiveAPIClients)
 }
 
-// CanReadItems determines whether or not a user can view items.
-func (p ServiceUserPermissions) CanReadItems() bool {
-	return p.HasPermission(CanReadItems)
-}
-
 // CanCreateItems determines whether or not a user can create items.
 func (p ServiceUserPermissions) CanCreateItems() bool {
 	return p.HasPermission(CanCreateItems)
@@ -171,6 +153,18 @@ func (p ServiceUserPermissions) CanUpdateItems() bool {
 // CanArchiveItems determines whether or not a user can archive items.
 func (p ServiceUserPermissions) CanArchiveItems() bool {
 	return p.HasPermission(CanArchiveItems)
+}
+
+func (p ServiceUserPermissions) hasReservedUnusedPermission10() bool {
+	return p.HasPermission(unusedAccountUserPermission10)
+}
+
+func (p ServiceUserPermissions) hasReservedUnusedPermission11() bool {
+	return p.HasPermission(unusedAccountUserPermission11)
+}
+
+func (p ServiceUserPermissions) hasReservedUnusedPermission12() bool {
+	return p.HasPermission(unusedAccountUserPermission12)
 }
 
 func (p ServiceUserPermissions) hasReservedUnusedPermission13() bool {

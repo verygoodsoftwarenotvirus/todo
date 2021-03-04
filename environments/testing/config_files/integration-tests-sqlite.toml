@@ -21,7 +21,7 @@
     local_mode_key = [36,244,208,188,9,56,71,244,146,246,221,84,72,56,167,53,134,202,54,238,244,113,119,245,20,15,212,34,92,155,38,71]
 
 [database]
-  connection_details = "/tmp/db"
+  connection_details = ":memory:"
   debug = false
   max_ping_attempts = 50
   metrics_collection_interval = "2s"

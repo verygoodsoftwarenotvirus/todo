@@ -213,8 +213,6 @@ func TestAccounts(test *testing.T) {
 				}
 			})
 		})
-
-
 	*/
 
 	test.Run("Memberships", func(subtest *testing.T) {
@@ -223,133 +221,99 @@ func TestAccounts(test *testing.T) {
 		runTestForAllAuthMethods(subtest, "should be creatable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
 			return func(t *testing.T) {
 				// fetch account data
-				accounts, err := testClient.GetAccounts(ctx, nil)
-				require.NoError(t, err)
-				require.NotNil(t, accounts)
-				require.True(t, len(accounts.Accounts) == 1)
+				accountCreationInput := &types.AccountCreationInput{
+					Name:                   fakes.BuildFakeAccount().Name,
+					DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
+				}
+				account, accountCreationErr := testClient.CreateAccount(ctx, accountCreationInput)
+				require.NoError(t, accountCreationErr)
+				require.NotNil(t, account)
 
-				account := accounts.Accounts[0]
+				userCount := 1
 
-				assert.Equal(t, account.DefaultUserPermissions, permissions.ServiceUserPermissions(math.MaxUint32), "expected and actual permissions do not match")
+				require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultUserPermissions, "expected and actual permissions do not match")
+
+				require.NoError(t, testClient.SetOption(httpclient.UsingAccount(account.ID)))
+
+				t.Logf("created account #%d", account.ID)
 
 				// create a webhook
 				exampleWebhook := fakes.BuildFakeWebhook()
 				exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-				createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
-				checkValueAndError(t, createdWebhook, err)
+				createdWebhook, creationErr := testClient.CreateWebhook(ctx, exampleWebhookInput)
+				checkValueAndError(t, createdWebhook, creationErr)
 
 				// create dummy users
-				userA, _, _, clientA := createUserAndClientForTest(ctx, t)
-				userB, _, _, clientB := createUserAndClientForTest(ctx, t)
-				userC, _, _, clientC := createUserAndClientForTest(ctx, t)
+				users := []*types.User{}
+				clients := []*httpclient.Client{}
 
-				// check that each user cannot see the webhooks
-				webhook, err := clientA.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
+				for i := 0; i < userCount; i++ {
+					u, _, _, c := createUserAndClientForTest(ctx, t)
+					users = append(users, u)
+					clients = append(clients, c)
+				}
 
-				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
-
-				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
+				// check that each user cannot see the webhook
+				for i := 0; i < userCount; i++ {
+					webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+					require.Nil(t, webhook)
+					require.Error(t, err)
+				}
 
 				// add them to the account
-				require.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userA.ID, Reason: t.Name()}))
-				clientA.SetOption(httpclient.UsingAccount(account.ID))
-				require.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userB.ID, Reason: t.Name()}))
-				clientB.SetOption(httpclient.UsingAccount(account.ID))
-				require.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: userC.ID, Reason: t.Name()}))
-				clientC.SetOption(httpclient.UsingAccount(account.ID))
+				for i := 0; i < userCount; i++ {
+					require.NoError(t, testClient.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{UserID: users[i].ID, Reason: t.Name()}))
+					require.NoError(t, clients[i].SetOption(httpclient.UsingAccount(account.ID)))
+				}
 
-				// check that each user can see the webhooks
-				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				require.NoError(t, err) // fails here
-				require.NotNil(t, webhook)
-
-				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				require.NoError(t, err)
-				require.NotNil(t, webhook)
-
-				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				require.NoError(t, err)
-				require.NotNil(t, webhook)
-
-				// After implementing permission restrictions:
+				// check that each user can see the webhook
+				for i := 0; i < userCount; i++ {
+					webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+					require.Nil(t, webhook)
+					require.Error(t, err)
+				}
 
 				// reduce all permissions to nothing
-				input := &types.ModifyUserPermissionsInput{
-					UserID:                 userA.ID,
-					UserAccountPermissions: 0,
-					Reason:                 t.Name(),
+				for i := 0; i < userCount; i++ {
+					input := &types.ModifyUserPermissionsInput{
+						UserID:                 users[i].ID,
+						UserAccountPermissions: 0,
+						Reason:                 t.Name(),
+					}
+					require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
 				}
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
 
-				input.UserID = userB.ID
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
-
-				input.UserID = userC.ID
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
-
-				// check that each user cannot see the webhooks
-				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
-
-				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
-
-				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
-
-				// return all permissions
-				input = &types.ModifyUserPermissionsInput{
-					UserID:                 userA.ID,
-					UserAccountPermissions: testutil.BuildMaxUserPerms(),
-					Reason:                 t.Name(),
+				// check that each user cannot update the webhook
+				for i := 0; i < userCount; i++ {
+					require.Error(t, clients[i].UpdateWebhook(ctx, createdWebhook))
 				}
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
 
-				input.UserID = userB.ID
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
+				// restore all permissions
+				for i := 0; i < userCount; i++ {
+					input := &types.ModifyUserPermissionsInput{
+						UserID:                 users[i].ID,
+						UserAccountPermissions: testutil.BuildMaxUserPerms(),
+						Reason:                 t.Name(),
+					}
+					require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
+				}
 
-				input.UserID = userC.ID
-				require.NoError(t, testClient.ModifyMemberPermissions(ctx, account.ID, input))
-
-				// check that each user can see the webhooks
-				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				require.NotNil(t, webhook)
-				require.NoError(t, err)
-
-				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				require.NotNil(t, webhook)
-				require.NoError(t, err)
-
-				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				require.NotNil(t, webhook)
-				require.NoError(t, err)
+				// check that each user can update the webhooks
+				for i := 0; i < userCount; i++ {
+					require.NoError(t, clients[i].UpdateWebhook(ctx, createdWebhook))
+				}
 
 				// remove users from account
-				require.NoError(t, testClient.RemoveUser(ctx, account.ID, userA.ID))
-				require.NoError(t, testClient.RemoveUser(ctx, account.ID, userB.ID))
-				require.NoError(t, testClient.RemoveUser(ctx, account.ID, userC.ID))
+				for i := 0; i < userCount; i++ {
+					require.NoError(t, testClient.RemoveUser(ctx, account.ID, users[i].ID))
+				}
 
 				// check that each user cannot see the webhooks
-				webhook, err = clientA.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
-
-				webhook, err = clientB.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
-
-				webhook, err = clientC.GetWebhook(ctx, createdWebhook.ID)
-				require.Nil(t, webhook)
-				require.Error(t, err)
+				for i := 0; i < userCount; i++ {
+					webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+					require.Nil(t, webhook)
+					require.Error(t, err)
+				}
 
 				// check audit entries
 				adminClientLock.Lock()
@@ -367,9 +331,9 @@ func TestAccounts(test *testing.T) {
 				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
 
 				// Clean up.
-				require.NoError(t, testClient.ArchiveUser(ctx, userA.ID))
-				require.NoError(t, testClient.ArchiveUser(ctx, userB.ID))
-				require.NoError(t, testClient.ArchiveUser(ctx, userC.ID))
+				for i := 0; i < userCount; i++ {
+					require.NoError(t, testClient.ArchiveUser(ctx, users[i].ID))
+				}
 			}
 		})
 	})

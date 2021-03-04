@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -89,7 +88,7 @@ func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.
 		return cookies[0], nil
 	}
 
-	return nil, errors.New("no cookies returned from request")
+	return nil, ErrNoCookiesReturned
 }
 
 // BuildLogoutRequest builds a de-authorizing HTTP request.

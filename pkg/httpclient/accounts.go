@@ -14,6 +14,49 @@ const (
 	accountsBasePath = "accounts"
 )
 
+// BuildSwitchActiveAccountRequest builds an HTTP request for fetching an account.
+func (c *Client) BuildSwitchActiveAccountRequest(ctx context.Context, input *types.ChangeActiveAccountInput) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	uri := c.buildVersionlessURL(nil, usersBasePath, "account", "select")
+
+	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
+}
+
+// SwitchActiveAccount will, when provided the correct credentials, fetch a login cookie.
+func (c *Client) SwitchActiveAccount(ctx context.Context, input *types.ChangeActiveAccountInput) (*http.Cookie, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	req, err := c.BuildSwitchActiveAccountRequest(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("building login request: %w", err)
+	}
+
+	res, err := c.authedClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("encountered error executing login request: %w", err)
+	}
+
+	c.closeResponseBody(res)
+
+	cookies := res.Cookies()
+	if len(cookies) > 0 {
+		return cookies[0], nil
+	}
+
+	return nil, ErrNoCookiesReturned
+}
+
 // BuildGetAccountRequest builds an HTTP request for fetching an account.
 func (c *Client) BuildGetAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)

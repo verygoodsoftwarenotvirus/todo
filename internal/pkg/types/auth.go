@@ -7,6 +7,8 @@ import (
 	"errors"
 	"net/http"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 )
 
@@ -27,7 +29,7 @@ type (
 		ActiveAccountID         uint64                                        `json:"-"`
 		UserAccountStatus       userReputation                                `json:"-"`
 		AccountPermissionsMap   map[uint64]permissions.ServiceUserPermissions `json:"-"`
-		ServiceAdminPermissions permissions.ServiceAdminPermissionChecker     `json:"-"`
+		ServiceAdminPermissions permissions.ServiceAdminPermissions           `json:"-"`
 	}
 
 	// RequestContext represents what we encode in our authentication cookies.
@@ -43,8 +45,8 @@ type (
 		ServiceAdminPermissions  *permissions.ServiceAdminPermissionsSummary `json:"permissions,omitempty"`
 	}
 
-	// AccountSwapInput represents what a User could set as input for switching accounts.
-	AccountSwapInput struct {
+	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
+	ChangeActiveAccountInput struct {
 		AccountID uint64 `json:"accountID"`
 	}
 
@@ -69,6 +71,7 @@ type (
 		LogoutHandler(res http.ResponseWriter, req *http.Request)
 		CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request)
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
+		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
 		PermissionRestrictionMiddleware(p ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler
 		CookieAuthenticationMiddleware(next http.Handler) http.Handler
@@ -77,6 +80,7 @@ type (
 		AdminMiddleware(next http.Handler) http.Handler
 		UserLoginInputMiddleware(next http.Handler) http.Handler
 		PASETOCreationInputMiddleware(next http.Handler) http.Handler
+		ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler
 	}
 
 	// AuthAuditManager describes a structure capable of auditing auth events.
@@ -89,6 +93,13 @@ type (
 		LogLogoutEvent(ctx context.Context, userID uint64)
 	}
 )
+
+// Validate validates a ChangeActiveAccountInput.
+func (x *ChangeActiveAccountInput) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, x,
+		validation.Field(&x.AccountID, validation.Required),
+	)
+}
 
 // ToBytes returns the gob encoded session info.
 func (x *RequestContext) ToBytes() []byte {

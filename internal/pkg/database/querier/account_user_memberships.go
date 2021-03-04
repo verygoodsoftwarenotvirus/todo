@@ -19,11 +19,13 @@ var (
 func (c *Client) scanAccountUserMembership(scan database.Scanner) (x *types.AccountUserMembership, err error) {
 	x = &types.AccountUserMembership{}
 
+	var rawPerms int64
+
 	targetVars := []interface{}{
 		&x.ID,
 		&x.BelongsToUser,
 		&x.BelongsToAccount,
-		&x.UserAccountPermissions,
+		&rawPerms,
 		&x.DefaultAccount,
 		&x.CreatedOn,
 		&x.ArchivedOn,
@@ -32,6 +34,9 @@ func (c *Client) scanAccountUserMembership(scan database.Scanner) (x *types.Acco
 	if scanErr := scan.Scan(targetVars...); scanErr != nil {
 		return nil, scanErr
 	}
+
+	newPerms := permissions.NewServiceUserPermissions(uint32(rawPerms))
+	x.UserAccountPermissions = newPerms
 
 	return x, nil
 }
@@ -82,11 +87,13 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 	permissionsMap = map[uint64]permissions.ServiceUserPermissions{}
 
 	for _, membership := range memberships {
-		permissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
-		logger.WithValue("belongs_to_account", membership.BelongsToAccount).WithValue("account_permissions", membership.UserAccountPermissions).Info("set membership permission value")
+		if membership.BelongsToAccount != 0 {
+			permissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
+			logger.WithValue("belongs_to_account", membership.BelongsToAccount).WithValue("account_permissions", membership.UserAccountPermissions).Info("set membership permission value")
 
-		if membership.DefaultAccount && defaultAccount == 0 {
-			defaultAccount = membership.BelongsToAccount
+			if membership.DefaultAccount && defaultAccount == 0 {
+				defaultAccount = membership.BelongsToAccount
+			}
 		}
 	}
 
@@ -94,7 +101,7 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 		return 0, nil, fmt.Errorf("default account not found for user %d", userID)
 	}
 
-	logger.WithValue("permissions_map", permissionsMap).Info("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+	logger.WithValue("permissions_map", permissionsMap).Info("returning permission map")
 
 	return defaultAccount, permissionsMap, nil
 }
@@ -119,7 +126,7 @@ func (c *Client) MarkAccountAsUserDefault(ctx context.Context, userID, accountID
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	// create the item.
+	// create the account.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user default account assignment", query, args); writeErr != nil {
 		c.rollbackTransaction(tx)
 		return writeErr
@@ -162,16 +169,16 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, changedBy
 		"input":           input,
 	})
 
-	logger.Debug("ModifyUserPermissions called")
+	query, args := c.sqlQueryBuilder.BuildModifyUserPermissionsQuery(input.UserID, accountID, input.UserAccountPermissions)
 
-	query, args := c.sqlQueryBuilder.BuildModifyUserPermissionsQuery(accountID, input.UserID, input.UserAccountPermissions)
+	logger.Debug("ModifyUserPermissions called")
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	// create the item.
+	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); writeErr != nil {
 		c.rollbackTransaction(tx)
 		return writeErr
@@ -205,7 +212,7 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID, transf
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	// create the item.
+	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); writeErr != nil {
 		c.rollbackTransaction(tx)
 		return writeErr
@@ -233,8 +240,6 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 		keys.PermissionsKey: input.UserAccountPermissions,
 	})
 
-	logger.Debug("AddUserToAccount called")
-
 	query, args := c.sqlQueryBuilder.BuildAddUserToAccountQuery(input)
 
 	tx, err := c.db.BeginTx(ctx, nil)
@@ -242,7 +247,7 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	// create the item.
+	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user account membership creation", query, args); writeErr != nil {
 		c.rollbackTransaction(tx)
 		return writeErr
@@ -253,6 +258,8 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
 	}
+
+	logger.Debug("user added to account")
 
 	return nil
 }
@@ -278,7 +285,7 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, userID, accountID, r
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	// create the item.
+	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); writeErr != nil {
 		c.rollbackTransaction(tx)
 		return writeErr

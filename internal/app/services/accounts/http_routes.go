@@ -361,7 +361,7 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
-	// create account in database.
+	// transfer ownership of account in database.
 	if err := s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, reqCtx.User.ID, input); err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -400,7 +400,7 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
-	// create account in database.
+	// remove user from account in database.
 	if err := s.accountMembershipDataManager.RemoveUserFromAccount(ctx, input.UserID, accountID, reqCtx.User.ID, input.Reason); err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -431,7 +431,7 @@ func (s *service) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Reques
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
-	// create account in database.
+	// mark account as default in database.
 	err := s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, reqCtx.User.ID, accountID, reqCtx.User.ID)
 	if err != nil {
 		logger.Error(err, "error marking account as default")

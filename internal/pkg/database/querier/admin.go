@@ -30,7 +30,6 @@ func (c *Client) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uin
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, banRecipient)
-	c.logger.WithValue("ban_recipient", banRecipient).WithValue("ban_giver", banGiver).Debug("LogUserBanEvent called")
 
 	c.createAuditLogEntry(ctx, c.db, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
 }
@@ -41,7 +40,6 @@ func (c *Client) LogAccountTerminationEvent(ctx context.Context, terminator, ter
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, terminee)
-	c.logger.WithValue("termination_recipient", terminee).WithValue("terminator", terminator).Debug("LogAccountTerminationEvent called")
 
 	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountTerminationEventEntry(terminator, terminee, reason))
 }
@@ -51,8 +49,6 @@ func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogCycleCookieSecretEvent called")
-
 	c.createAuditLogEntry(ctx, c.db, audit.BuildCycleCookieSecretEvent(userID))
 }
 
@@ -60,8 +56,6 @@ func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
 func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogSuccessfulLoginEvent called")
 
 	c.createAuditLogEntry(ctx, c.db, audit.BuildSuccessfulLoginEventEntry(userID))
 }
@@ -71,8 +65,6 @@ func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogBannedUserLoginAttemptEvent called")
-
 	c.createAuditLogEntry(ctx, c.db, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
@@ -80,8 +72,6 @@ func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint
 func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUnsuccessfulLoginBadPasswordEvent called")
 
 	c.createAuditLogEntry(ctx, c.db, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
@@ -91,8 +81,6 @@ func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userI
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogUnsuccessfulLoginBad2FATokenEvent called")
-
 	c.createAuditLogEntry(ctx, c.db, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
@@ -100,8 +88,6 @@ func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userI
 func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
-
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("LogLogoutEvent called")
 
 	c.createAuditLogEntry(ctx, c.db, audit.BuildLogoutEventEntry(userID))
 }

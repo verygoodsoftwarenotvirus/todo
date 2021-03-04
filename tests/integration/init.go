@@ -103,7 +103,9 @@ func initializeCookiePoweredClient(cookie *http.Cookie) *httpclient.Client {
 	)
 
 	if debug {
-		c.SetOption(httpclient.WithDebug())
+		if err := c.SetOption(httpclient.WithDebug()); err != nil {
+			panic(err)
+		}
 	}
 
 	return c
@@ -117,7 +119,9 @@ func initializePASETOPoweredClient(clientID string, secretKey []byte) *httpclien
 	)
 
 	if debug {
-		c.SetOption(httpclient.WithDebug())
+		if err := c.SetOption(httpclient.WithDebug()); err != nil {
+			panic(err)
+		}
 	}
 
 	return c

@@ -16,6 +16,10 @@ type AuthService struct {
 	mock.Mock
 }
 
+func (m *AuthService) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
 // StatusHandler implements our AuthService interface.
 func (m *AuthService) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
@@ -39,6 +43,10 @@ func (m *AuthService) CycleCookieSecretHandler(res http.ResponseWriter, req *htt
 // PASETOHandler implements our AuthService interface.
 func (m *AuthService) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
+}
+
+func (m *AuthService) ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
 }
 
 // PermissionRestrictionMiddleware implements our AuthService interface.

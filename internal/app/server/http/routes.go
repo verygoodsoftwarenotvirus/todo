@@ -83,6 +83,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 
 		// need credentials beyond this point
 		authedRouter := userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.AuthorizationMiddleware)
+		authedRouter.WithMiddleware(s.authService.ChangeActiveAccountInputMiddleware).Post("/account/select", s.authService.ChangeActiveAccountHandler)
 		authedRouter.WithMiddleware(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
 		authedRouter.WithMiddleware(s.usersService.PasswordUpdateInputMiddleware).Put("/password/new", s.usersService.UpdatePasswordHandler)
 	})
@@ -166,7 +167,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 
 			singleClientRoute := buildNumericIDURLChunk(apiclientsservice.APIClientIDURIParamKey)
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
-				singleClientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanReadAPIClients)).Get(root, s.apiClientsService.ReadHandler)
+				singleClientRouter.Get(root, s.apiClientsService.ReadHandler)
 				singleClientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanArchiveAPIClients)).Delete(root, s.apiClientsService.ArchiveHandler)
 				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.apiClientsService.AuditEntryHandler)
 			})
@@ -182,8 +183,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 
 			singleWebhookRoute := buildNumericIDURLChunk(webhooksservice.WebhookIDURIParamKey)
 			webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
-				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanReadWebhooks)).
-					Get(root, s.webhooksService.ReadHandler)
+				singleWebhookRouter.Get(root, s.webhooksService.ReadHandler)
 				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanArchiveWebhooks)).
 					Delete(root, s.webhooksService.ArchiveHandler)
 				singleWebhookRouter.WithMiddleware(
@@ -206,10 +206,8 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
 
 			itemsRouter.Route(itemIDRouteParam, func(singleItemRouter routing.Router) {
-				singleItemRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanReadItems)).
-					Get(root, s.itemsService.ReadHandler)
-				singleItemRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanReadItems)).
-					Head(root, s.itemsService.ExistenceHandler)
+				singleItemRouter.Get(root, s.itemsService.ReadHandler)
+				singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
 				singleItemRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanArchiveItems)).
 					Delete(root, s.itemsService.ArchiveHandler)
 				singleItemRouter.WithMiddleware(

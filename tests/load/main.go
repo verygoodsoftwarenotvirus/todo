@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
 	"github.com/emicklei/hazana"
@@ -91,7 +92,15 @@ func (a *ServiceAttacker) Clone() hazana.Attack {
 
 func main() {
 	runTime := 10 * time.Minute
-	todoClient := initializeClient()
+
+	todoClient, err := httpclient.NewClient(
+		httpclient.UsingURI(urlToUse),
+		httpclient.UsingLogger(zerolog.NewLogger()),
+		httpclient.UsingCookie(cookie),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
 		_rt, err := time.ParseDuration(rt)

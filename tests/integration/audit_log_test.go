@@ -1,53 +1,48 @@
 package integration
 
 import (
-	"context"
-	"testing"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuditLogEntries(test *testing.T) {
-	test.Parallel()
+func (s *TestSuite) TestAuditLogEntryListing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be read in a list by an admin via %s", authType), func() {
+			t := s.T()
 
-	test.Run("Listing", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("should be able to be read in a list by an admin", func(t *testing.T) {
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			actual, err := adminCookieClient.GetAuditLogEntries(ctx, nil)
+			actual, err := testClients.admin.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 
 			assert.NotEmpty(t, actual.Entries)
 		})
-	})
+	}
+}
 
-	test.Run("Reading", func(t *testing.T) {
-		t.Parallel()
+func (s *TestSuite) TestAuditLogEntryReading() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be read as an individual by an admin via %s", authType), func() {
+			t := s.T()
 
-		t.Run("should be able to be read as an individual by an admin", func(t *testing.T) {
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			actual, err := adminCookieClient.GetAuditLogEntries(ctx, nil)
+			actual, err := testClients.admin.GetAuditLogEntries(ctx, nil)
 			checkValueAndError(t, actual, err)
 
 			for _, x := range actual.Entries {
-				y, entryFetchErr := adminCookieClient.GetAuditLogEntry(ctx, x.ID)
+				y, entryFetchErr := testClients.admin.GetAuditLogEntry(ctx, x.ID)
 				checkValueAndError(t, y, entryFetchErr)
 			}
 
 			assert.NotEmpty(t, actual.Entries)
 		})
-	})
+	}
 }

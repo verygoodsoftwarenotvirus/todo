@@ -1,3 +1,5 @@
+# https://github.com/golangci/golangci-lint/blob/507703b444d95d8c89961bebeedfb22f61cde67c/pkg/config/config.go
+
 # options for analysis running
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m

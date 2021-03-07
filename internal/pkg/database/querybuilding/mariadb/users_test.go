@@ -13,6 +13,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMariaDB_BuildUserIsBannedQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleUser := fakes.BuildFakeUser()
+
+		expectedQuery := "SELECT EXISTS ( SELECT users.id FROM users WHERE users.archived_on IS NULL AND users.id = ? AND (users.reputation = ? OR users.reputation = ?) )"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+			types.BannedAccountStatus,
+			types.TerminatedAccountStatus,
+		}
+		actualQuery, actualArgs := q.BuildUserIsBannedQuery(exampleUser.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestMariaDB_BuildGetUserQuery(T *testing.T) {
 	T.Parallel()
 

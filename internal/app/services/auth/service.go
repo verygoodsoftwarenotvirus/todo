@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -16,10 +17,11 @@ import (
 )
 
 const (
-	serviceName        = "auth_service"
-	requestContextKey  = string(types.RequestContextKey)
-	cookieErrorLogName = "_COOKIE_CONSTRUCTION_ERROR_"
-	cookieSecretSize   = 64
+	serviceName         = "auth_service"
+	userIDContextKey    = string(types.UserIDContextKey)
+	accountIDContextKey = string(types.AccountIDContextKey)
+	cookieErrorLogName  = "_COOKIE_CONSTRUCTION_ERROR_"
+	cookieSecretSize    = 64
 )
 
 type (
@@ -77,6 +79,18 @@ func ProvideService(
 		tracer: tracing.NewTracer(serviceName),
 	}
 	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime
+
+	c, err := svc.buildCookie("", time.Now())
+	if err != nil {
+		return nil, fmt.Errorf("building example cookie: %w", err)
+	}
+
+	svc.sessionManager.Cookie.Name = c.Name
+	svc.sessionManager.Cookie.Domain = c.Domain
+	svc.sessionManager.Cookie.HttpOnly = c.HttpOnly
+	svc.sessionManager.Cookie.Path = c.Path
+	svc.sessionManager.Cookie.SameSite = c.SameSite
+	svc.sessionManager.Cookie.Secure = c.Secure
 
 	if _, err := svc.cookieManager.Encode(cfg.Cookies.Name, "blah"); err != nil {
 		logger.WithValue("cookie_signing_key_length", len(cfg.Cookies.SigningKey)).Error(err, "building test cookie")

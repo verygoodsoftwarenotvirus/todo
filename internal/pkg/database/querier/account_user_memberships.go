@@ -59,6 +59,64 @@ func (c *Client) scanAccountUserMemberships(rows database.ResultIterator) (membe
 	return memberships, nil
 }
 
+// GetRequestContextForUser does a thing.
+func (c *Client) GetRequestContextForUser(ctx context.Context, userID uint64) (reqCtx *types.RequestContext, err error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
+
+	logger.Debug("GetRequestContextForUser called")
+
+	user, fetchUserErr := c.GetUser(ctx, userID)
+	if fetchUserErr != nil {
+		return nil, fetchUserErr
+	}
+
+	reqCtx = &types.RequestContext{
+		User: types.UserRequestContext{
+			Username:                user.Username,
+			ID:                      user.ID,
+			Status:                  user.Reputation,
+			ServiceAdminPermissions: user.ServiceAdminPermissions,
+		},
+	}
+
+	getAccountMembershipsQuery, getAccountMembershipsArgs := c.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(userID)
+
+	membershipRows, getMembershipsErr := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
+	if getMembershipsErr != nil {
+		logger.Error(getMembershipsErr, "fetching memberships from database")
+		return nil, getMembershipsErr
+	}
+
+	memberships, scanErr := c.scanAccountUserMemberships(membershipRows)
+	if scanErr != nil {
+		logger.Error(scanErr, "scanning memberships from database")
+		return nil, scanErr
+	}
+
+	reqCtx.User.AccountPermissionsMap = map[uint64]permissions.ServiceUserPermissions{}
+
+	for _, membership := range memberships {
+		if membership.BelongsToAccount != 0 {
+			reqCtx.User.AccountPermissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
+
+			if membership.DefaultAccount && reqCtx.User.ActiveAccountID == 0 {
+				reqCtx.User.ActiveAccountID = membership.BelongsToAccount
+			}
+		} else {
+			logger.WithValue("membership", membership).Info("WTF WTF WTF WTF WTF")
+		}
+	}
+
+	if reqCtx.User.ActiveAccountID == 0 {
+		return nil, fmt.Errorf("default account not found for user %d", userID)
+	}
+
+	return reqCtx, nil
+}
+
 // GetMembershipsForUser does a thing.
 func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
@@ -89,11 +147,12 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 	for _, membership := range memberships {
 		if membership.BelongsToAccount != 0 {
 			permissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
-			logger.WithValue("belongs_to_account", membership.BelongsToAccount).WithValue("account_permissions", membership.UserAccountPermissions).Info("set membership permission value")
 
 			if membership.DefaultAccount && defaultAccount == 0 {
 				defaultAccount = membership.BelongsToAccount
 			}
+		} else {
+			logger.WithValue("membership", membership).Info("WTF WTF WTF WTF WTF")
 		}
 	}
 
@@ -159,19 +218,20 @@ func (c *Client) UserIsMemberOfAccount(ctx context.Context, userID, accountID ui
 }
 
 // ModifyUserPermissions does a thing.
-func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, changedByUser uint64, input *types.ModifyUserPermissionsInput) error {
+func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser uint64, input *types.ModifyUserPermissionsInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithValues(map[string]interface{}{
 		keys.AccountIDKey: accountID,
+		keys.UserIDKey:    userID,
 		keys.RequesterKey: changedByUser,
 		"input":           input,
 	})
 
-	query, args := c.sqlQueryBuilder.BuildModifyUserPermissionsQuery(input.UserID, accountID, input.UserAccountPermissions)
+	query, args := c.sqlQueryBuilder.BuildModifyUserPermissionsQuery(userID, accountID, input.UserAccountPermissions)
 
-	logger.Debug("ModifyUserPermissions called")
+	logger = logger.WithValue("query", query).WithValue("args", args)
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -179,16 +239,18 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, changedBy
 	}
 
 	// create the membership.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); writeErr != nil {
+	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user account permissions modification", query, args); writeErr != nil {
 		c.rollbackTransaction(tx)
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(input.UserID, accountID, changedByUser, input.UserAccountPermissions, input.Reason))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.UserAccountPermissions, input.Reason))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
 	}
+
+	logger.Debug("user permissions modified")
 
 	return nil
 }
@@ -228,19 +290,18 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID, transf
 }
 
 // AddUserToAccount does a thing.
-func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser uint64) error {
+func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, accountID, addedByUser uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey:      input.UserID,
-		keys.AccountIDKey:   input,
 		keys.RequesterKey:   addedByUser,
-		keys.ReasonKey:      input.Reason,
+		keys.UserIDKey:      input.UserID,
+		keys.AccountIDKey:   accountID,
 		keys.PermissionsKey: input.UserAccountPermissions,
 	})
 
-	query, args := c.sqlQueryBuilder.BuildAddUserToAccountQuery(input)
+	query, args := c.sqlQueryBuilder.BuildAddUserToAccountQuery(accountID, input)
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -253,7 +314,7 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, input))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, accountID, input))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)

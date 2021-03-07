@@ -36,6 +36,63 @@ const (
 	totpTokenFormKey = "totpToken"
 )
 
+// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
+func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
+	if err := req.ParseForm(); err == nil {
+		input := &types.UserLoginInput{
+			Username:  req.FormValue(usernameFormKey),
+			Password:  req.FormValue(passwordFormKey),
+			TOTPToken: req.FormValue(totpTokenFormKey),
+		}
+
+		if input.Username != "" && input.Password != "" && input.TOTPToken != "" {
+			return input
+		}
+	}
+
+	return nil
+}
+
+func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	if rawToken := req.Header.Get(pasetoAuthorizationKey); rawToken != "" {
+		var token paseto.JSONToken
+
+		if decryptErr := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); decryptErr != nil {
+			logger.Error(decryptErr, "error decrypting PASETO")
+			return nil, decryptErr
+		}
+
+		if time.Now().UTC().After(token.Expiration) {
+			return nil, errors.New("token expired")
+		}
+
+		payload := token.Get(pasetoDataKey)
+
+		gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(payload)
+		if base64DecodeErr != nil {
+			logger.Error(base64DecodeErr, "error decoding base64 encoded GOB payload")
+			return nil, base64DecodeErr
+		}
+
+		var reqContext *types.RequestContext
+
+		gobDecodeErr := gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&reqContext)
+		if gobDecodeErr != nil {
+			logger.Error(gobDecodeErr, "error decoding GOB encoded session info payload")
+			return nil, gobDecodeErr
+		}
+
+		return reqContext, nil
+	}
+
+	return nil, errors.New("no token data found")
+}
+
 // CookieAuthenticationMiddleware checks every request for a user cookie.
 func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -67,7 +124,7 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 				return
 			}
 
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, reqCtx)))
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.UserIDContextKey, reqCtx)))
 			return
 		}
 
@@ -76,7 +133,7 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 	})
 }
 
-// UserAttributionMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
+// UserAttributionMiddleware is concerned with figuring out who a user is, but not worried about kicking out users who are not known.
 func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
@@ -84,10 +141,27 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 		logger := s.logger.WithRequest(req)
 
-		// check for a cookie first if we can.
-		if requestContext, err := s.getRequestContextFromCookie(ctx, req); err == nil && requestContext != nil {
-			tracing.AttachUserIDToSpan(span, requestContext.User.ID)
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, requestContext)))
+		// handle cookies if relevant.
+		if cookieContext, userID, err := s.getUserIDFromCookie(ctx, req); err == nil && userID != 0 {
+			tracing.AttachUserIDToSpan(span, userID)
+			ctx = cookieContext
+
+			logger = logger.WithValue(keys.RequesterKey, userID)
+
+			reqCtx, userIsBannedErr := s.accountMembershipManager.GetRequestContextForUser(ctx, userID)
+			if userIsBannedErr != nil {
+				logger.Error(userIsBannedErr, "fetching user info for cookie")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			if activeAccount, ok := s.sessionManager.Get(ctx, string(types.AccountIDContextKey)).(uint64); ok {
+				reqCtx.User.ActiveAccountID = activeAccount
+			}
+
+			ctx = context.WithValue(ctx, types.RequestContextKey, reqCtx)
+
+			next.ServeHTTP(res, req.WithContext(ctx))
 			return
 		}
 
@@ -99,11 +173,44 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 		}
 
 		if tokenRequestContext != nil {
+			// no need to fetch info since tokens are so short-lived.
 			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, tokenRequestContext)))
 			return
 		}
 
-		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		next.ServeHTTP(res, req)
+	})
+}
+
+// AuthorizationMiddleware checks to see if a user is associated with the request, and then determines whether said request can proceed.
+func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		// UserAttributionMiddleware should be called before this middleware.
+		if reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext); ok {
+			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
+			if reqCtx.User.Status == types.BannedAccountStatus {
+				logger.Debug("banned user attempted to make request")
+				http.Redirect(res, req, "/", http.StatusForbidden)
+				return
+			}
+
+			if _, authorizedForAccount := reqCtx.User.AccountPermissionsMap[reqCtx.User.ActiveAccountID]; !authorizedForAccount {
+				logger.Debug("user trying to access account they are not authorized for")
+				http.Redirect(res, req, "/", http.StatusUnauthorized)
+				return
+			}
+
+			next.ServeHTTP(res, req)
+			return
+		}
+
+		logger.Debug("no user attached to request")
+		http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
 	})
 }
 
@@ -154,72 +261,6 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 	}
 }
 
-func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
-	_, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	if rawToken := req.Header.Get(pasetoAuthorizationKey); rawToken != "" {
-		var token paseto.JSONToken
-
-		if decryptErr := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); decryptErr != nil {
-			logger.Error(decryptErr, "error decrypting PASETO")
-			return nil, decryptErr
-		}
-
-		if time.Now().UTC().After(token.Expiration) {
-			return nil, errors.New("token expired")
-		}
-
-		payload := token.Get(pasetoDataKey)
-
-		gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(payload)
-		if base64DecodeErr != nil {
-			logger.Error(base64DecodeErr, "error decoding base64 encoded GOB payload")
-			return nil, base64DecodeErr
-		}
-
-		var reqContext *types.RequestContext
-
-		gobDecodeErr := gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&reqContext)
-		if gobDecodeErr != nil {
-			logger.Error(gobDecodeErr, "error decoding GOB encoded session info payload")
-			return nil, gobDecodeErr
-		}
-
-		return reqContext, nil
-	}
-
-	return nil, errors.New("no token data found")
-}
-
-// AuthorizationMiddleware checks to see if a user is associated with the request, and then determines whether said request can proceed.
-func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := s.tracer.StartSpan(req.Context())
-		defer span.End()
-
-		logger := s.logger.WithRequest(req)
-
-		// UserAttributionMiddleware should be called before this middleware.
-		if reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext); ok {
-			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if reqCtx.User.UserAccountStatus == types.BannedAccountStatus {
-				logger.Debug("banned user attempted to make request")
-				http.Redirect(res, req, "/", http.StatusForbidden)
-				return
-			}
-
-			next.ServeHTTP(res, req)
-			return
-		}
-
-		logger.Debug("no user attached to request request")
-		http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
-	})
-}
-
 // AdminMiddleware restricts requests to admin users only.
 func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
@@ -247,23 +288,6 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(res, req)
 	})
-}
-
-// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
-func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
-	if err := req.ParseForm(); err == nil {
-		uli := &types.UserLoginInput{
-			Username:  req.FormValue(usernameFormKey),
-			Password:  req.FormValue(passwordFormKey),
-			TOTPToken: req.FormValue(totpTokenFormKey),
-		}
-
-		if uli.Username != "" && uli.Password != "" && uli.TOTPToken != "" {
-			return uli
-		}
-	}
-
-	return nil
 }
 
 // ChangeActiveAccountInputMiddleware fetches user login input from requests.

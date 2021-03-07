@@ -312,6 +312,8 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 		return
 	}
 
+	logger = logger.WithValue(keys.UserIDKey, input.UserID)
+
 	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
 	if err != nil {
 		logger.Error(err, "fetching user")
@@ -556,7 +558,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// do the deed.
-	if err := s.userDataManager.ArchiveUser(ctx, userID); err != nil {
+	err := s.userDataManager.ArchiveUser(ctx, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+		return
+	} else if err != nil {
 		logger.Error(err, "deleting user from database")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

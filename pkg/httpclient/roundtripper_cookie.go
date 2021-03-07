@@ -53,5 +53,14 @@ func (t *cookieRoundtripper) RoundTrip(req *http.Request) (*http.Response, error
 	// req.Body is assumed to be closed by the base RoundTripper.
 	reqBodyClosed = true
 
-	return t.base.RoundTrip(req)
+	res, err := t.base.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if responseCookies := res.Cookies(); len(responseCookies) == 1 {
+		t.cookie = responseCookies[0]
+	}
+
+	return res, nil
 }

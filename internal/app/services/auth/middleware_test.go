@@ -245,7 +245,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 
 		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
 		require.NoError(t, err)
-		req = req.WithContext(context.WithValue(ctx, types.RequestContextKey, reqCtx))
+		req = req.WithContext(context.WithValue(ctx, types.UserIDContextKey, reqCtx))
 
 		s.AuthorizationMiddleware(h).ServeHTTP(res, req)
 
@@ -261,7 +261,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		exampleUser.AccountStatus = types.BannedAccountStatus
+		exampleUser.Reputation = types.BannedAccountStatus
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -270,7 +270,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 
 		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
 		require.NoError(t, err)
-		req = req.WithContext(context.WithValue(ctx, types.RequestContextKey, reqCtx))
+		req = req.WithContext(context.WithValue(ctx, types.UserIDContextKey, reqCtx))
 
 		s.AuthorizationMiddleware(&MockHTTPHandler{}).ServeHTTP(res, req)
 
@@ -449,7 +449,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		res := httptest.NewRecorder()
-		req = req.WithContext(context.WithValue(req.Context(), types.RequestContextKey, reqCtx))
+		req = req.WithContext(context.WithValue(req.Context(), types.UserIDContextKey, reqCtx))
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}
@@ -497,7 +497,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		res := httptest.NewRecorder()
-		req = req.WithContext(context.WithValue(req.Context(), types.RequestContextKey, reqCtx))
+		req = req.WithContext(context.WithValue(req.Context(), types.UserIDContextKey, reqCtx))
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}

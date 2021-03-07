@@ -1,19 +1,17 @@
 package integration
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"testing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 func checkItemEquality(t *testing.T, expected, actual *types.Item) {
@@ -25,353 +23,380 @@ func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func TestItems(test *testing.T) {
-	test.Parallel()
+func (s *TestSuite) TestItemsCreating() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
+			t := s.T()
 
-	test.Run("Creating", func(subtest *testing.T) {
-		subtest.Parallel()
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-		runTestForAllAuthMethods(subtest, "should be creatable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
+
+			// Assert item equality.
+			checkItemEquality(t, exampleItem, createdItem)
+
+			auditLogEntries, err := testClients.admin.GetAuditLogForItem(ctx, createdItem.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.ItemCreationEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
+
+			// Clean up.
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
+		})
+	}
+}
+
+func (s *TestSuite) TestItemsListing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be readable in paginated form via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Create items.
+			var expected []*types.Item
+			for i := 0; i < 5; i++ {
 				// Create item.
 				exampleItem := fakes.BuildFakeItem()
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-				createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, err)
+				createdItem, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
+				checkValueAndError(t, createdItem, itemCreationErr)
 
-				// Assert item equality.
-				checkItemEquality(t, exampleItem, createdItem)
+				expected = append(expected, createdItem)
+			}
 
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
+			// Assert item list equality.
+			actual, err := testClients.main.GetItems(ctx, nil)
+			checkValueAndError(t, actual, err)
+			assert.True(
+				t,
+				len(expected) <= len(actual.Items),
+				"expected %d to be <= %d",
+				len(expected),
+				len(actual.Items),
+			)
 
-				auditLogEntries, err := adminCookieClient.GetAuditLogForItem(ctx, createdItem.ID)
-				require.NoError(t, err)
-
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.ItemCreationEvent},
-				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
-
-				// Clean up.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+			// Clean up.
+			for _, createdItem := range actual.Items {
+				assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 			}
 		})
-	})
+	}
+}
 
-	test.Run("Listing", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestItemsSearching() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be search for items via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "should be able to be read in a list", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create items.
-				var expected []*types.Item
-				for i := 0; i < 5; i++ {
-					// Create item.
-					exampleItem := fakes.BuildFakeItem()
-					exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-					createdItem, itemCreationErr := testClient.CreateItem(ctx, exampleItemInput)
-					checkValueAndError(t, createdItem, itemCreationErr)
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-					expected = append(expected, createdItem)
-				}
-
-				// Assert item list equality.
-				actual, err := testClient.GetItems(ctx, nil)
-				checkValueAndError(t, actual, err)
-				assert.True(
-					t,
-					len(expected) <= len(actual.Items),
-					"expected %d to be <= %d",
-					len(expected),
-					len(actual.Items),
-				)
-
-				// Clean up.
-				for _, createdItem := range actual.Items {
-					assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
-				}
-			}
-		})
-	})
-
-	test.Run("Searching", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "should be able to be search for items", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create items.
-				exampleItem := fakes.BuildFakeItem()
-				var expected []*types.Item
-				for i := 0; i < 5; i++ {
-					// Create item.
-					exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-					exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
-					createdItem, itemCreationErr := testClient.CreateItem(ctx, exampleItemInput)
-					checkValueAndError(t, createdItem, itemCreationErr)
-
-					expected = append(expected, createdItem)
-				}
-
-				exampleLimit := uint8(20)
-
-				// Assert item list equality.
-				actual, err := testClient.SearchItems(ctx, exampleItem.Name, exampleLimit)
-				checkValueAndError(t, actual, err)
-				assert.True(
-					t,
-					len(expected) <= len(actual),
-					"expected results length %d to be <= %d",
-					len(expected),
-					len(actual),
-				)
-
-				// Clean up.
-				for _, createdItem := range expected {
-					assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
-				}
-			}
-		})
-
-		runTestForAllAuthMethods(subtest, "should only receive your own items", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				exampleLimit := uint8(20)
-				_, _, clientA, _ := createUserAndClientForTest(ctx, t)
-				_, _, clientB, _ := createUserAndClientForTest(ctx, t)
-
-				// Create items for user A.
-				exampleItemA := fakes.BuildFakeItem()
-				var createdForA []*types.Item
-				for i := 0; i < 5; i++ {
-					// Create item.
-					exampleItemInputA := fakes.BuildFakeItemCreationInputFromItem(exampleItemA)
-					exampleItemInputA.Name = fmt.Sprintf("%s %d", exampleItemInputA.Name, i)
-
-					createdItem, itemCreationErr := clientA.CreateItem(ctx, exampleItemInputA)
-					checkValueAndError(t, createdItem, itemCreationErr)
-
-					createdForA = append(createdForA, createdItem)
-				}
-				query := exampleItemA.Name
-
-				// Create items for user B.
-				exampleItemB := fakes.BuildFakeItem()
-				exampleItemB.Name = reverse(exampleItemA.Name)
-				var createdForB []*types.Item
-				for i := 0; i < 5; i++ {
-					// Create item.
-					exampleItemInputB := fakes.BuildFakeItemCreationInputFromItem(exampleItemB)
-					exampleItemInputB.Name = fmt.Sprintf("%s %d", exampleItemInputB.Name, i)
-
-					createdItem, itemCreationErr := clientB.CreateItem(ctx, exampleItemInputB)
-					checkValueAndError(t, createdItem, itemCreationErr)
-
-					createdForB = append(createdForB, createdItem)
-				}
-
-				expected := createdForA
-
-				// Assert item list equality.
-				actual, err := clientA.SearchItems(ctx, query, exampleLimit)
-				checkValueAndError(t, actual, err)
-				assert.True(
-					t,
-					len(expected) <= len(actual),
-					"expected results length %d to be <= %d",
-					len(expected),
-					len(actual),
-				)
-
-				// Clean up.
-				for _, createdItem := range createdForA {
-					assert.NoError(t, clientA.ArchiveItem(ctx, createdItem.ID))
-				}
-
-				for _, createdItem := range createdForB {
-					assert.NoError(t, clientB.ArchiveItem(ctx, createdItem.ID))
-				}
-			}
-		})
-	})
-
-	test.Run("ExistenceChecking", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		runTestForAllAuthMethods(subtest, "should be able to be search for items", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Attempt to fetch nonexistent item.
-				actual, err := testClient.ItemExists(ctx, nonexistentID)
-				assert.NoError(t, err)
-				assert.False(t, actual)
-			}
-		})
-
-		runTestForAllAuthMethods(subtest, "it should return true with no error when the relevant item exists", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
+			// Create items.
+			exampleItem := fakes.BuildFakeItem()
+			var expected []*types.Item
+			for i := 0; i < 5; i++ {
 				// Create item.
-				exampleItem := fakes.BuildFakeItem()
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-				createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, err)
+				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
+				createdItem, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
+				checkValueAndError(t, createdItem, itemCreationErr)
 
-				// Fetch item.
-				actual, err := testClient.ItemExists(ctx, createdItem.ID)
-				assert.NoError(t, err)
-				assert.True(t, actual)
+				expected = append(expected, createdItem)
+			}
 
-				// Clean up item.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+			exampleLimit := uint8(20)
+
+			// Assert item list equality.
+			actual, err := testClients.main.SearchItems(ctx, exampleItem.Name, exampleLimit)
+			checkValueAndError(t, actual, err)
+			assert.True(
+				t,
+				len(expected) <= len(actual),
+				"expected results length %d to be <= %d",
+				len(expected),
+				len(actual),
+			)
+
+			// Clean up.
+			for _, createdItem := range expected {
+				assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 			}
 		})
-	})
+	}
 
-	test.Run("Reading", func(subtest *testing.T) {
-		subtest.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should only receive your own items via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to read something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Attempt to fetch nonexistent item.
-				_, err := testClient.GetItem(ctx, nonexistentID)
-				assert.Error(t, err)
-			}
-		})
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-		runTestForAllAuthMethods(subtest, "it should be readable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
+			// Create items.
+			exampleItem := fakes.BuildFakeItem()
+			var expected []*types.Item
+			for i := 0; i < 5; i++ {
 				// Create item.
-				exampleItem := fakes.BuildFakeItem()
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-				createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, err)
+				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
+				createdItem, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
+				checkValueAndError(t, createdItem, itemCreationErr)
 
-				// Fetch item.
-				actual, err := testClient.GetItem(ctx, createdItem.ID)
-				checkValueAndError(t, actual, err)
+				expected = append(expected, createdItem)
+			}
 
-				// Assert item equality.
-				checkItemEquality(t, exampleItem, actual)
+			exampleLimit := uint8(20)
 
-				// Clean up item.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+			// Assert item list equality.
+			actual, err := testClients.main.SearchItems(ctx, exampleItem.Name, exampleLimit)
+			checkValueAndError(t, actual, err)
+			assert.True(
+				t,
+				len(expected) <= len(actual),
+				"expected results length %d to be <= %d",
+				len(expected),
+				len(actual),
+			)
+
+			// Clean up.
+			for _, createdItem := range expected {
+				assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 			}
 		})
-	})
+	}
+}
 
-	test.Run("Updating", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestItemsExistenceChecking() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should not return an error for nonexistent item via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to update something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				exampleItem := fakes.BuildFakeItem()
-				exampleItem.ID = nonexistentID
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-				assert.Error(t, testClient.UpdateItem(ctx, exampleItem))
-			}
+			// Attempt to fetch nonexistent item.
+			actual, err := testClients.main.ItemExists(ctx, nonexistentID)
+			assert.NoError(t, err)
+			assert.False(t, actual)
 		})
+	}
 
-		runTestForAllAuthMethods(subtest, "it should be updateable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create item.
-				exampleItem := fakes.BuildFakeItem()
-				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-				createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, err)
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should not return an error for existent item via %s", authType), func() {
+			t := s.T()
 
-				// Change item.
-				createdItem.Update(converters.ConvertItemToItemUpdateInput(exampleItem))
-				assert.NoError(t, testClient.UpdateItem(ctx, createdItem))
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-				// Fetch item.
-				actual, err := testClient.GetItem(ctx, createdItem.ID)
-				checkValueAndError(t, actual, err)
+			// Create item.
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
 
-				// Assert item equality.
-				checkItemEquality(t, exampleItem, actual)
-				assert.NotNil(t, actual.LastUpdatedOn)
+			// Fetch item.
+			actual, err := testClients.main.ItemExists(ctx, createdItem.ID)
+			assert.NoError(t, err)
+			assert.True(t, actual)
 
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-
-				auditLogEntries, err := adminCookieClient.GetAuditLogForItem(ctx, createdItem.ID)
-				require.NoError(t, err)
-
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.ItemCreationEvent},
-					{EventType: audit.ItemUpdateEvent},
-				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
-
-				// Clean up item.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
-			}
+			// Clean up item.
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Deleting", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestItemsReading() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should return an error when trying to read an item that does not exist via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to delete something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				assert.Error(t, testClient.ArchiveItem(ctx, nonexistentID))
-			}
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Attempt to fetch nonexistent item.
+			_, err := testClients.main.GetItem(ctx, nonexistentID)
+			assert.Error(t, err)
 		})
+	}
 
-		runTestForAllAuthMethods(subtest, "it should be deletable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create item.
-				exampleItem := fakes.BuildFakeItem()
-				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-				createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, err)
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should be readable via %s", authType), func() {
+			t := s.T()
 
-				// Clean up item.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
+			// Create item.
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
 
-				auditLogEntries, err := adminCookieClient.GetAuditLogForItem(ctx, createdItem.ID)
-				require.NoError(t, err)
+			// Fetch item.
+			actual, err := testClients.main.GetItem(ctx, createdItem.ID)
+			checkValueAndError(t, actual, err)
 
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.ItemCreationEvent},
-					{EventType: audit.ItemArchiveEvent},
-				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
-			}
+			// Assert item equality.
+			checkItemEquality(t, exampleItem, actual)
+
+			// Clean up item.
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Auditing", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestItemsUpdating() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should return an error when trying to update something that does not exist via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to audit something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-				x, err := adminCookieClient.GetAuditLogForItem(ctx, nonexistentID)
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-				assert.NoError(t, err)
-				assert.Empty(t, x)
-			}
+			exampleItem := fakes.BuildFakeItem()
+			exampleItem.ID = nonexistentID
+
+			assert.Error(t, testClients.main.UpdateItem(ctx, exampleItem))
 		})
+	}
 
-		runTestForAllAuthMethods(subtest, "it should not be auditable by a non-admin", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create item.
-				exampleItem := fakes.BuildFakeItem()
-				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-				createdItem, err := testClient.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, err)
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should be possible to update an item via %s", authType), func() {
+			t := s.T()
 
-				// fetch audit log entries
-				actual, err := testClient.GetAuditLogForItem(ctx, createdItem.ID)
-				assert.Error(t, err)
-				assert.Nil(t, actual)
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-				// Clean up item.
-				assert.NoError(t, testClient.ArchiveItem(ctx, createdItem.ID))
+			// Create item.
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
+
+			// Change item.
+			createdItem.Update(converters.ConvertItemToItemUpdateInput(exampleItem))
+			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
+
+			// Fetch item.
+			actual, err := testClients.main.GetItem(ctx, createdItem.ID)
+			checkValueAndError(t, actual, err)
+
+			// Assert item equality.
+			checkItemEquality(t, exampleItem, actual)
+			assert.NotNil(t, actual.LastUpdatedOn)
+
+			auditLogEntries, err := testClients.admin.GetAuditLogForItem(ctx, createdItem.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.ItemCreationEvent},
+				{EventType: audit.ItemUpdateEvent},
 			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
+
+			// Clean up item.
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 		})
-	})
+	}
+}
+
+func (s *TestSuite) TestItemsArchiving() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should return an error when trying to delete something that does not exist via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			assert.Error(t, testClients.main.ArchiveItem(ctx, nonexistentID))
+		})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should be possible to delete an item via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Create item.
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
+
+			// Clean up item.
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
+
+			auditLogEntries, err := testClients.admin.GetAuditLogForItem(ctx, createdItem.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.ItemCreationEvent},
+				{EventType: audit.ItemArchiveEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
+		})
+	}
+}
+
+func (s *TestSuite) TestItemsAuditing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should return an error when trying to audit something that does not exist via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			x, err := testClients.admin.GetAuditLogForItem(ctx, nonexistentID)
+
+			assert.NoError(t, err)
+			assert.Empty(t, x)
+		})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should not be auditable by a non-admin via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Create item.
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			checkValueAndError(t, createdItem, err)
+
+			// fetch audit log entries
+			actual, err := testClients.main.GetAuditLogForItem(ctx, createdItem.ID)
+			assert.Error(t, err)
+			assert.Nil(t, actual)
+
+			// Clean up item.
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
+		})
+	}
 }

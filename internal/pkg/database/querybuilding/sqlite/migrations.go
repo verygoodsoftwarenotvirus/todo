@@ -105,7 +105,8 @@ var (
 				user_account_permissions INTEGER NOT NULL DEFAULT 0,
 				default_account BOOLEAN NOT NULL DEFAULT 'false',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				archived_on INTEGER DEFAULT NULL
+				archived_on INTEGER DEFAULT NULL,
+				CONSTRAINT plan_name_unique UNIQUE (belongs_to_account, belongs_to_user)
 			);`,
 		},
 		{

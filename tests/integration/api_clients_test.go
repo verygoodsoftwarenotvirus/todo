@@ -1,17 +1,16 @@
 package integration
 
 import (
-	"context"
-	"net/http"
+	"fmt"
 	"testing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 func checkAPIClientEquality(t *testing.T, expected, actual *types.APIClient) {
@@ -26,53 +25,53 @@ func checkAPIClientEquality(t *testing.T, expected, actual *types.APIClient) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func TestAPIClients(test *testing.T) {
-	test.Parallel()
+func (s *TestSuite) TestAPIClientsCreating() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be possible to create API clients via %s", authType), func() {
+			t := s.T()
 
-	test.Run("Creating", func(subtest *testing.T) {
-		subtest.Parallel()
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-		runTestForAllAuthMethods(subtest, "should be creatable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create API client.
-				exampleAPIClient := fakes.BuildFakeAPIClient()
-				exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-				exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
-					Username:  user.Username,
-					Password:  user.HashedPassword,
-					TOTPToken: generateTOTPTokenForUser(t, user),
-				}
-
-				createdAPIClient, err := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
-				checkValueAndError(t, createdAPIClient, err)
-
-				// Assert API client equality.
-				assert.NotEmpty(t, createdAPIClient.ClientID, "expected ClientID for API client #%d to not be empty, but it was", createdAPIClient.ID)
-				assert.NotEmpty(t, createdAPIClient.ClientSecret, "expected ClientSecret for API client #%d to not be empty, but it was", createdAPIClient.ID)
-
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-
-				auditLogEntries, err := adminCookieClient.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
-				require.NoError(t, err)
-
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.APIClientCreationEvent},
-				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAPIClient.ID, audit.APIClientAssignmentKey)
-
-				// Clean up.
-				assert.NoError(t, testClient.ArchiveAPIClient(ctx, createdAPIClient.ID))
+			// Create API client.
+			exampleAPIClient := fakes.BuildFakeAPIClient()
+			exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+			exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
+				Username:  s.user.Username,
+				Password:  s.user.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, s.user),
 			}
+
+			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
+			checkValueAndError(t, createdAPIClient, err)
+
+			// Assert API client equality.
+			assert.NotEmpty(t, createdAPIClient.ClientID, "expected ClientID for API client #%d to not be empty, but it was", createdAPIClient.ID)
+			assert.NotEmpty(t, createdAPIClient.ClientSecret, "expected ClientSecret for API client #%d to not be empty, but it was", createdAPIClient.ID)
+
+			auditLogEntries, err := testClients.admin.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.APIClientCreationEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAPIClient.ID, audit.APIClientAssignmentKey)
+
+			// Clean up.
+			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Listing", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestAPIClientsListing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be possible to read API clients in a list via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("should be able to be read in a list", func(t *testing.T) {
-			ctx := context.Background()
-			user, cookie, testClient, _ := createUserAndClientForTest(ctx, t)
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
 			// Create API clients.
 			var expected []uint64
@@ -81,18 +80,18 @@ func TestAPIClients(test *testing.T) {
 				exampleAPIClient := fakes.BuildFakeAPIClient()
 				exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 				exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
-					Username:  user.Username,
-					Password:  user.HashedPassword,
-					TOTPToken: generateTOTPTokenForUser(t, user),
+					Username:  s.user.Username,
+					Password:  s.user.HashedPassword,
+					TOTPToken: generateTOTPTokenForUser(t, s.user),
 				}
-				createdAPIClient, apiClientCreationErr := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
+				createdAPIClient, apiClientCreationErr := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
 				checkValueAndError(t, createdAPIClient, apiClientCreationErr)
 
 				expected = append(expected, createdAPIClient.ID)
 			}
 
 			// Assert API client list equality.
-			actual, err := testClient.GetAPIClients(ctx, nil)
+			actual, err := testClients.main.GetAPIClients(ctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(
 				t,
@@ -104,115 +103,136 @@ func TestAPIClients(test *testing.T) {
 
 			// Clean up.
 			for _, createdAPIClient := range actual.Clients {
-				assert.NoError(t, testClient.ArchiveAPIClient(ctx, createdAPIClient.ID))
+				assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
 			}
 		})
-	})
+	}
+}
 
-	test.Run("Reading", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestAPIClientsReading() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should not be possible to read non-existent API clients via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to read something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Attempt to fetch nonexistent API client.
-				_, err := testClient.GetAPIClient(ctx, nonexistentID)
-				assert.Error(t, err)
-			}
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Attempt to fetch nonexistent API client.
+			_, err := testClients.main.GetAPIClient(ctx, nonexistentID)
+			assert.Error(t, err)
 		})
+	}
 
-		runTestForAllAuthMethods(subtest, "it should be readable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create API client.
-				exampleAPIClient := fakes.BuildFakeAPIClient()
-				exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-				exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
-					Username:  user.Username,
-					Password:  user.HashedPassword,
-					TOTPToken: generateTOTPTokenForUser(t, user),
-				}
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be possible to read API clients via %s", authType), func() {
+			t := s.T()
 
-				createdAPIClient, err := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
-				checkValueAndError(t, createdAPIClient, err)
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-				// Fetch API client.
-				actual, err := testClient.GetAPIClient(ctx, createdAPIClient.ID)
-				checkValueAndError(t, actual, err)
-
-				// Assert API client equality.
-				checkAPIClientEquality(t, exampleAPIClient, actual)
-
-				// Clean up API client.
-				assert.NoError(t, testClient.ArchiveAPIClient(ctx, createdAPIClient.ID))
+			// Create API client.
+			exampleAPIClient := fakes.BuildFakeAPIClient()
+			exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+			exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
+				Username:  s.user.Username,
+				Password:  s.user.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, s.user),
 			}
+
+			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
+			checkValueAndError(t, createdAPIClient, err)
+
+			// Fetch API client.
+			actual, err := testClients.main.GetAPIClient(ctx, createdAPIClient.ID)
+			checkValueAndError(t, actual, err)
+
+			// Assert API client equality.
+			checkAPIClientEquality(t, exampleAPIClient, actual)
+
+			// Clean up API client.
+			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Deleting", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestAPIClientsArchiving() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should not be possible to archive non-existent API clients via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "it should return an error when trying to delete something that does not exist", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				assert.Error(t, testClient.ArchiveAPIClient(ctx, nonexistentID))
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			assert.Error(t, testClients.main.ArchiveAPIClient(ctx, nonexistentID))
+		})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be possible to archive API clients via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Create API client.
+			exampleAPIClient := fakes.BuildFakeAPIClient()
+			exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+			exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
+				Username:  s.user.Username,
+				Password:  s.user.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, s.user),
 			}
-		})
 
-		runTestForAllAuthMethods(subtest, "it should be deletable", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create API client.
-				exampleAPIClient := fakes.BuildFakeAPIClient()
-				exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-				exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
-					Username:  user.Username,
-					Password:  user.HashedPassword,
-					TOTPToken: generateTOTPTokenForUser(t, user),
-				}
+			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
+			checkValueAndError(t, createdAPIClient, err)
 
-				createdAPIClient, err := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
-				checkValueAndError(t, createdAPIClient, err)
+			// Clean up API client.
+			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
 
-				// Clean up API client.
-				assert.NoError(t, testClient.ArchiveAPIClient(ctx, createdAPIClient.ID))
+			auditLogEntries, err := testClients.admin.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
+			require.NoError(t, err)
 
-				adminClientLock.Lock()
-				defer adminClientLock.Unlock()
-
-				auditLogEntries, err := adminCookieClient.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
-				require.NoError(t, err)
-
-				expectedAuditLogEntries := []*types.AuditLogEntry{
-					{EventType: audit.APIClientCreationEvent},
-					{EventType: audit.APIClientArchiveEvent},
-				}
-				validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAPIClient.ID, audit.APIClientAssignmentKey)
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.APIClientCreationEvent},
+				{EventType: audit.APIClientArchiveEvent},
 			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAPIClient.ID, audit.APIClientAssignmentKey)
 		})
-	})
+	}
+}
 
-	test.Run("Auditing", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestAPIClientsAuditing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be possible to audit API clients via %s", authType), func() {
+			t := s.T()
 
-		runTestForAllAuthMethods(subtest, "it should not be auditable by a non-admin", func(ctx context.Context, user *types.User, cookie *http.Cookie, testClient *httpclient.Client) func(*testing.T) {
-			return func(t *testing.T) {
-				// Create API client.
-				exampleAPIClient := fakes.BuildFakeAPIClient()
-				exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-				exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
-					Username:  user.Username,
-					Password:  user.HashedPassword,
-					TOTPToken: generateTOTPTokenForUser(t, user),
-				}
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
-				createdAPIClient, err := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
-				checkValueAndError(t, createdAPIClient, err)
-
-				// fetch audit log entries
-				actual, err := testClient.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
-				assert.Error(t, err)
-				assert.Nil(t, actual)
-
-				// Clean up API client.
-				assert.NoError(t, testClient.ArchiveAPIClient(ctx, createdAPIClient.ID))
+			// Create API client.
+			exampleAPIClient := fakes.BuildFakeAPIClient()
+			exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+			exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
+				Username:  s.user.Username,
+				Password:  s.user.HashedPassword,
+				TOTPToken: generateTOTPTokenForUser(t, s.user),
 			}
+
+			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
+			checkValueAndError(t, createdAPIClient, err)
+
+			// fetch audit log entries
+			actual, err := testClients.admin.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
+			assert.Error(t, err)
+			assert.Nil(t, actual)
+
+			// Clean up API client.
+			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
 		})
-	})
+	}
 }

@@ -1,46 +1,59 @@
 package integration
 
 import (
-	"context"
-	"testing"
+	"fmt"
+	"log"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestAdmin(test *testing.T) {
-	test.Parallel()
+func (s *TestSuite) TestAdminUserManagement() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should not be possible to ban a user that does not exist via %s", authType), func() {
+			t := s.T()
 
-	test.Run("User Management", func(t *testing.T) {
-		t.Parallel()
-
-		t.Run("it should return an error when trying to ban a user that does not exist", func(t *testing.T) {
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
 			input.TargetAccountID = nonexistentID
 
 			// Ban user.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-			assert.Error(t, adminCookieClient.UpdateAccountStatus(ctx, input))
+			assert.Error(t, testClients.admin.UpdateAccountStatus(ctx, input))
 		})
+	}
 
-		t.Run("users should be bannable", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be possible to ban users via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			user, _, testClient, _ := createUserAndClientForTest(ctx, t)
+			var (
+				user       *types.User
+				userClient *httpclient.Client
+			)
+
+			switch authType {
+			case cookieAuthType:
+				user, _, userClient, _ = createUserAndClientForTest(ctx, t)
+			case pasetoAuthType:
+				user, _, _, userClient = createUserAndClientForTest(ctx, t)
+			default:
+				log.Panicf("invalid auth type: %q", authType)
+			}
 
 			// Assert that user can access service
-			_, initialCheckErr := testClient.GetItems(ctx, nil)
+			_, initialCheckErr := userClient.GetAPIClients(ctx, nil)
 			require.NoError(t, initialCheckErr)
 
 			input := &types.UserReputationUpdateInput{
@@ -49,16 +62,14 @@ func TestAdmin(test *testing.T) {
 				Reason:          "testing",
 			}
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-			assert.NoError(t, adminCookieClient.UpdateAccountStatus(ctx, input))
+			assert.NoError(t, testClients.admin.UpdateAccountStatus(ctx, input))
 
 			// Assert user can no longer access service
-			_, subsequentCheckErr := testClient.GetItems(ctx, nil)
+			_, subsequentCheckErr := userClient.GetAPIClients(ctx, nil)
 			assert.Error(t, subsequentCheckErr)
 
 			// Clean up.
-			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, user.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, user.ID))
 		})
-	})
+	}
 }

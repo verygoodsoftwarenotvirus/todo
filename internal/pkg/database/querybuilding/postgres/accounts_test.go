@@ -22,7 +22,7 @@ func TestPostgres_BuildGetAccountQuery(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1 AND accounts.id = $2"
+		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.default_user_permissions, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1 AND accounts.id = $2"
 		expectedArgs := []interface{}{
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
@@ -59,7 +59,7 @@ func TestPostgres_BuildGetBatchOfAccountsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.id > $1 AND accounts.id < $2"
+		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.default_user_permissions, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.id > $1 AND accounts.id < $2"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -82,7 +82,7 @@ func TestPostgres_BuildGetAccountsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1) as total_count, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $2 AND accounts.created_on > $3 AND accounts.created_on < $4 AND accounts.last_updated_on > $5 AND accounts.last_updated_on < $6) as filtered_count FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $7 AND accounts.created_on > $8 AND accounts.created_on < $9 AND accounts.last_updated_on > $10 AND accounts.last_updated_on < $11 GROUP BY accounts.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.default_user_permissions, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $1) as total_count, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $2 AND accounts.created_on > $3 AND accounts.created_on < $4 AND accounts.last_updated_on > $5 AND accounts.last_updated_on < $6) as filtered_count FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = $7 AND accounts.created_on > $8 AND accounts.created_on < $9 AND accounts.last_updated_on > $10 AND accounts.last_updated_on < $11 GROUP BY accounts.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -120,11 +120,12 @@ func TestPostgres_BuildCreateAccountQuery(T *testing.T) {
 		exIDGen.On("NewExternalID").Return(exampleAccount.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO accounts (external_id,name,belongs_to_user) VALUES ($1,$2,$3) RETURNING id"
+		expectedQuery := "INSERT INTO accounts (external_id,name,belongs_to_user,default_user_permissions) VALUES ($1,$2,$3,$4) RETURNING id"
 		expectedArgs := []interface{}{
 			exampleAccount.ExternalID,
 			exampleAccount.Name,
 			exampleAccount.BelongsToUser,
+			exampleAccount.DefaultUserPermissions,
 		}
 		actualQuery, actualArgs := q.BuildCreateAccountQuery(exampleInput)
 

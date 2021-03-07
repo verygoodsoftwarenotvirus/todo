@@ -34,8 +34,12 @@ func errorFromResponse(res *http.Response) error {
 	switch res.StatusCode {
 	case http.StatusNotFound:
 		return ErrNotFound
+	case http.StatusBadRequest:
+		return ErrInvalidRequestInput
 	case http.StatusUnauthorized:
 		return ErrUnauthorized
+	case http.StatusForbidden:
+		return ErrBanned
 	default:
 		return nil
 	}

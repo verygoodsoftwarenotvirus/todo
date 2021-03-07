@@ -1,24 +1,24 @@
 package httpclient
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type option func(*Client) error
 
-// SetOption sets a new option on the client.
-func (c *Client) SetOption(opt option) error {
-	if err := opt(c); err != nil {
-		return err
+// SetOptions sets a new option on the client.
+func (c *Client) SetOptions(opts ...option) error {
+	for _, opt := range opts {
+		if err := opt(c); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -45,7 +45,11 @@ func UsingXML() func(*Client) error {
 // UsingURI sets the url on the client.
 func UsingURI(raw string) func(*Client) error {
 	return func(c *Client) error {
+		logger := c.logger.WithValue("old_url", c.url.String())
+
 		c.url = mustParseURL(raw)
+
+		logger.WithValue("new_url", raw).Debug("new URI set on client")
 
 		return nil
 	}
@@ -55,24 +59,6 @@ func UsingURI(raw string) func(*Client) error {
 func UsingURL(u *url.URL) func(*Client) error {
 	return func(c *Client) error {
 		c.url = u
-
-		return nil
-	}
-}
-
-// UsingAccount sets the url on the client.
-func UsingAccount(accountID uint64) func(*Client) error {
-	return func(c *Client) error {
-		c.accountID = accountID
-
-		if c.authMethod == cookieAuthMethod {
-			cookie, err := c.SwitchActiveAccount(context.Background(), &types.ChangeActiveAccountInput{AccountID: accountID})
-			if err != nil {
-				c.logger.Error(err, "fetching cookie for new account")
-				return err
-			}
-			return c.SetOption(UsingCookie(cookie))
-		}
 
 		return nil
 	}
@@ -140,7 +126,7 @@ func UsingTimeout(timeout time.Duration) func(*Client) error {
 func UsingCookie(cookie *http.Cookie) func(*Client) error {
 	return func(c *Client) error {
 		if cookie == nil {
-			return nil
+			return ErrNilInputProvided
 		}
 
 		c.authMethod = cookieAuthMethod

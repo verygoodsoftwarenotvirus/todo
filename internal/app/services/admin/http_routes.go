@@ -63,7 +63,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	logger = logger.WithValue("ban_recipient", input.TargetAccountID)
 
 	if err := s.userDB.UpdateUserAccountStatus(ctx, input.TargetAccountID, *input); err != nil {
-		logger.Error(err, "error banning user")
+		logger.Error(err, "changing user status")
 
 		if errors.Is(err, sql.ErrNoRows) {
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)

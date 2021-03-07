@@ -16,6 +16,13 @@ type AccountUserMembershipDataManager struct {
 	mock.Mock
 }
 
+// GetRequestContextForUser satisfies our interface contract.
+func (m *AccountUserMembershipDataManager) GetRequestContextForUser(ctx context.Context, userID uint64) (reqCtx *types.RequestContext, err error) {
+	args := m.Called(ctx, userID)
+
+	return args.Get(0).(*types.RequestContext), args.Error(1)
+}
+
 // GetMembershipsForUser satisfies our interface contract.
 func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
 	args := m.Called(ctx, userID)
@@ -36,8 +43,8 @@ func (m *AccountUserMembershipDataManager) UserIsMemberOfAccount(ctx context.Con
 }
 
 // AddUserToAccount implements the interface.
-func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser uint64) error {
-	return m.Called(ctx, input, addedByUser).Error(0)
+func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, accountID, addedByUser uint64) error {
+	return m.Called(ctx, input, accountID, addedByUser).Error(0)
 }
 
 // RemoveUserFromAccount implements the interface.
@@ -46,7 +53,7 @@ func (m *AccountUserMembershipDataManager) RemoveUserFromAccount(ctx context.Con
 }
 
 // ModifyUserPermissions implements the interface.
-func (m *AccountUserMembershipDataManager) ModifyUserPermissions(ctx context.Context, accountID, changedByUser uint64, input *types.ModifyUserPermissionsInput) error {
+func (m *AccountUserMembershipDataManager) ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser uint64, input *types.ModifyUserPermissionsInput) error {
 	return m.Called(ctx, accountID, changedByUser, input).Error(0)
 }
 

@@ -13,6 +13,24 @@ import (
 
 var _ types.UserSQLQueryBuilder = (*Postgres)(nil)
 
+// BuildUserIsBannedQuery returns a SQL query (and argument) for retrieving a user by their database ID.
+func (q *Postgres) BuildUserIsBannedQuery(userID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Select(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.IDColumn)).
+		Prefix(querybuilding.ExistencePrefix).
+		From(querybuilding.UsersTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.IDColumn):         userID,
+			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
+		}).
+		Where(squirrel.Or{
+			squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableReputationColumn): types.BannedAccountStatus},
+			squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableReputationColumn): types.TerminatedAccountStatus},
+		}).
+		Suffix(querybuilding.ExistenceSuffix),
+	)
+}
+
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (q *Postgres) BuildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.

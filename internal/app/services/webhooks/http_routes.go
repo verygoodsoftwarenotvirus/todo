@@ -156,6 +156,9 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
+	tracing.AttachAccountIDToSpan(span, reqCtx.User.ActiveAccountID)
+	logger = logger.WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
+
 	// fetch the webhook from the database.
 	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, reqCtx.User.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -188,11 +191,13 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+
 	userID := reqCtx.User.ID
-	accountID := reqCtx.User.ActiveAccountID
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	accountID := reqCtx.User.ActiveAccountID
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -251,8 +256,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	userID := reqCtx.User.ID
+	logger = logger.WithValue(keys.UserIDKey, userID)
+
+	accountID := reqCtx.User.ActiveAccountID
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)

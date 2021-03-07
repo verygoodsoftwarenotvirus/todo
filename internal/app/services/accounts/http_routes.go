@@ -284,7 +284,7 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// create account in database.
-	if err := s.accountMembershipDataManager.AddUserToAccount(ctx, input, reqCtx.User.ID); err != nil {
+	if err := s.accountMembershipDataManager.AddUserToAccount(ctx, input, accountID, reqCtx.User.ID); err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -312,6 +312,10 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
+	userID := s.userIDFetcher(req)
+	tracing.AttachAccountIDToSpan(span, userID)
+	logger = logger.WithValue(keys.UserIDKey, userID)
+
 	// determine user ID.
 	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
 	if requestContextRetrievalError != nil {
@@ -322,8 +326,10 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
+	// check if requesting user is authorized to make the change
+
 	// create account in database.
-	if err := s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, reqCtx.User.ID, input); err != nil {
+	if err := s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, reqCtx.User.ID, input); err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -379,16 +385,15 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	logger := s.logger.WithRequest(req)
 
 	// check request context for parsed input struct.
-	input, ok := ctx.Value(removeUserFromAccountMiddlewareCtxKey).(*types.RemoveUserFromAccountInput)
-	if !ok {
-		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
+	reason := req.URL.Query().Get("reason")
 
 	accountID := s.accountIDFetcher(req)
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
+
+	userID := s.userIDFetcher(req)
+	tracing.AttachUserIDToSpan(span, userID)
+	logger = logger.WithValue(keys.AccountIDKey, userID)
 
 	// determine user ID.
 	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
@@ -401,7 +406,7 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// remove user from account in database.
-	if err := s.accountMembershipDataManager.RemoveUserFromAccount(ctx, input.UserID, accountID, reqCtx.User.ID, input.Reason); err != nil {
+	if err := s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, reqCtx.User.ID, reason); err != nil {
 		logger.Error(err, "error creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

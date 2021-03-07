@@ -26,9 +26,12 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		username = gofakeit.Password(true, true, true, false, false, 32)
 	}
 
-	c := httpclient.NewClient(
+	c, err := httpclient.NewClient(
 		httpclient.UsingURI(address),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("initializing client: %w", err)
+	}
 
 	in := &types.NewUserCreationInput{
 		Username: username,
@@ -39,12 +42,12 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 	if userCreationErr != nil {
 		return nil, userCreationErr
 	} else if ucr == nil {
-		return nil, errors.New("something happened")
+		return nil, errors.New("something strange happened")
 	}
 
 	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing TOTP QR code: %w", err)
 	}
 
 	token, tokenErr := totp.GenerateCode(twoFactorSecret, time.Now().UTC())

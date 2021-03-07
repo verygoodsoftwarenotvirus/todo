@@ -119,11 +119,15 @@ func main() {
 				quitter.ComplainAndQuit(fmt.Errorf("getting cookie: %v", cookieErr))
 			}
 
-			userClient := httpclient.NewClient(
+			userClient, err := httpclient.NewClient(
 				httpclient.UsingURL(parsedURI),
 				httpclient.UsingLogger(userLogger),
 				httpclient.UsingCookie(cookie),
 			)
+			if err != nil {
+				quitter.ComplainAndQuit(fmt.Errorf("error initializing client: %w", err))
+			}
+
 			userLogger.Debug("assigned user API client")
 
 			wg.Add(1)

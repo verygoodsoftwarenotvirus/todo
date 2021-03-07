@@ -12,7 +12,7 @@ services:
             - 2345:5432
     todo-server:
         environment:
-            USE_NOOP_LOGGER: 'nope'
+            USE_NOOP_LOGGER: 'true'
         links:
             - database
         volumes:

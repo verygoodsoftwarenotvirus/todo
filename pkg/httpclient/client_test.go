@@ -161,7 +161,7 @@ func TestNewClient(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		c := NewClient(
+		c, _ := NewClient(
 			UsingURL(mustParseURL(exampleURI)),
 			UsingLogger(logging.NewNonOperationalLogger()),
 			UsingHTTPClient(httptest.NewTLSServer(nil).Client()),
@@ -185,7 +185,7 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 			StatusCode: http.StatusOK,
 		}
 
-		c := NewClient(UsingURL(mustParseURL(exampleURI)))
+		c, _ := NewClient(UsingURL(mustParseURL(exampleURI)))
 		assert.NotNil(t, c)
 
 		c.closeResponseBody(res)
@@ -200,7 +200,7 @@ func TestBuildURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		c := NewClient(
+		c, _ := NewClient(
 			UsingURL(mustParseURL(exampleURI)),
 		)
 
@@ -247,7 +247,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		c := NewClient(
+		c, _ := NewClient(
 			UsingURL(mustParseURL(exampleURI)),
 		)
 
@@ -294,7 +294,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		c := NewClient(
+		c, _ := NewClient(
 			UsingURL(mustParseURL(exampleURI)),
 		)
 

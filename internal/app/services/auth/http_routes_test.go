@@ -40,19 +40,13 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	t.Helper()
 
 	exampleAccount := fakes.BuildFakeAccount()
-	examplePerms := map[uint64]permissions.ServiceUserPermissions{
-		exampleAccount.ID: testutil.BuildMaxUserPerms(),
-	}
 
 	ctx, sessionErr := s.sessionManager.Load(req.Context(), "")
 	require.NoError(t, sessionErr)
 	require.NoError(t, s.sessionManager.RenewToken(ctx))
 
-	// Then make the privilege-level change.
-	reqCtx, err := types.RequestContextFromUser(user, exampleAccount.ID, examplePerms)
-	require.NoError(t, err)
-
-	s.sessionManager.Put(ctx, requestContextKey, reqCtx)
+	s.sessionManager.Put(ctx, userIDContextKey, user.ID)
+	s.sessionManager.Put(ctx, accountIDContextKey, exampleAccount.ID)
 
 	token, _, err := s.sessionManager.Commit(ctx)
 	assert.NotEmpty(t, token)
@@ -87,7 +81,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 		ctx, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		cookie, err := s.getRequestContextFromCookie(ctx, req)
+		_, cookie, err := s.getUserIDFromCookie(ctx, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, cookie)
 	})
@@ -114,7 +108,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		// end building bad cookie.
 		req.AddCookie(c)
 
-		cookie, err := s.getRequestContextFromCookie(req.Context(), req)
+		_, cookie, err := s.getUserIDFromCookie(req.Context(), req)
 		assert.Error(t, err)
 		assert.Nil(t, cookie)
 	})
@@ -129,7 +123,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		cookie, err := s.getRequestContextFromCookie(req.Context(), req)
+		_, cookie, err := s.getUserIDFromCookie(req.Context(), req)
 		assert.Error(t, err)
 		assert.Equal(t, err, http.ErrNoCookie)
 		assert.Nil(t, cookie)
@@ -350,8 +344,8 @@ func TestService_LoginHandler(T *testing.T) {
 
 		s := buildTestService(t)
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.AccountStatus = types.BannedAccountStatus
-		exampleUser.AccountStatusExplanation = "bad behavior"
+		exampleUser.Reputation = types.BannedAccountStatus
+		exampleUser.ReputationExplanation = "bad behavior"
 		exampleAccount := fakes.BuildFakeAccount()
 
 		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
@@ -679,11 +673,9 @@ func TestService_LogoutHandler(T *testing.T) {
 		require.NoError(t, sessionErr)
 		require.NoError(t, s.sessionManager.RenewToken(ctx))
 
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(t, err)
-
 		// Then make the privilege-level change.
-		s.sessionManager.Put(ctx, requestContextKey, reqCtx)
+		s.sessionManager.Put(ctx, userIDContextKey, exampleUser.ID)
+		s.sessionManager.Put(ctx, accountIDContextKey, exampleAccount.ID)
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
 		require.NotNil(t, req)
@@ -1195,7 +1187,7 @@ func TestService_PASETOHandler(T *testing.T) {
 				Username:                exampleUser.Username,
 				ID:                      exampleUser.ID,
 				ActiveAccountID:         exampleAccount.ID,
-				UserAccountStatus:       exampleUser.AccountStatus,
+				Status:                  exampleUser.Reputation,
 				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},
@@ -1300,7 +1292,7 @@ func TestService_PASETOHandler(T *testing.T) {
 				Username:                exampleUser.Username,
 				ID:                      exampleUser.ID,
 				ActiveAccountID:         exampleAccount.ID,
-				UserAccountStatus:       exampleUser.AccountStatus,
+				Status:                  exampleUser.Reputation,
 				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},

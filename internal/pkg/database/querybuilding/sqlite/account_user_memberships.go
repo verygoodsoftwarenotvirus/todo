@@ -127,7 +127,7 @@ func (q *Sqlite) BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (quer
 }
 
 // BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (q *Sqlite) BuildAddUserToAccountQuery(input *types.AddUserToAccountInput) (query string, args []interface{}) {
+func (q *Sqlite) BuildAddUserToAccountQuery(accountID uint64, input *types.AddUserToAccountInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsUserMembershipTableName).
 		Columns(
@@ -137,7 +137,7 @@ func (q *Sqlite) BuildAddUserToAccountQuery(input *types.AddUserToAccountInput) 
 		).
 		Values(
 			input.UserID,
-			input.AccountID,
+			accountID,
 			input.UserAccountPermissions,
 		),
 	)

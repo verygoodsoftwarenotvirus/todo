@@ -149,12 +149,12 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 				singleAccountRouter.Delete(root, s.accountsService.ArchiveHandler)
 				singleAccountRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.accountsService.AuditEntryHandler)
 
+				singleAccountRouter.Post("/default", s.accountsService.MarkAsDefaultHandler)
+				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveUserHandler)
 				singleAccountRouter.WithMiddleware(s.accountsService.AddMemberInputMiddleware).
 					Post("/member", s.accountsService.AddUserHandler)
-				singleAccountRouter.Post("/default", s.accountsService.MarkAsDefaultHandler)
 				singleAccountRouter.WithMiddleware(s.accountsService.ModifyMemberPermissionsInputMiddleware).
 					Patch("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
-				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveUserHandler)
 				singleAccountRouter.WithMiddleware(s.accountsService.AccountTransferInputMiddleware).
 					Post("/transfer", s.accountsService.TransferAccountOwnershipHandler)
 			})
@@ -163,12 +163,12 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 		// API Clients
 		v1Router.Route("/api_clients", func(clientRouter routing.Router) {
 			clientRouter.Get(root, s.apiClientsService.ListHandler)
-			clientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanCreateAPIClients), s.apiClientsService.CreationInputMiddleware).Post(root, s.apiClientsService.CreateHandler)
+			clientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageAPIClients), s.apiClientsService.CreationInputMiddleware).Post(root, s.apiClientsService.CreateHandler)
 
 			singleClientRoute := buildNumericIDURLChunk(apiclientsservice.APIClientIDURIParamKey)
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
 				singleClientRouter.Get(root, s.apiClientsService.ReadHandler)
-				singleClientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanArchiveAPIClients)).Delete(root, s.apiClientsService.ArchiveHandler)
+				singleClientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageAPIClients)).Delete(root, s.apiClientsService.ArchiveHandler)
 				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.apiClientsService.AuditEntryHandler)
 			})
 		})
@@ -176,7 +176,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 		// Webhooks
 		v1Router.Route("/webhooks", func(webhookRouter routing.Router) {
 			webhookRouter.WithMiddleware(
-				s.authService.PermissionRestrictionMiddleware(permissions.CanCreateWebhooks),
+				s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks),
 				s.webhooksService.CreationInputMiddleware,
 			).Post(root, s.webhooksService.CreateHandler)
 			webhookRouter.Get(root, s.webhooksService.ListHandler)
@@ -184,10 +184,10 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			singleWebhookRoute := buildNumericIDURLChunk(webhooksservice.WebhookIDURIParamKey)
 			webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
 				singleWebhookRouter.Get(root, s.webhooksService.ReadHandler)
-				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanArchiveWebhooks)).
+				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks)).
 					Delete(root, s.webhooksService.ArchiveHandler)
 				singleWebhookRouter.WithMiddleware(
-					s.authService.PermissionRestrictionMiddleware(permissions.CanUpdateWebhooks),
+					s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks),
 					s.webhooksService.UpdateInputMiddleware,
 				).Put(root, s.webhooksService.UpdateHandler)
 				singleWebhookRouter.WithMiddleware(s.authService.AdminMiddleware).
@@ -208,14 +208,9 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 			itemsRouter.Route(itemIDRouteParam, func(singleItemRouter routing.Router) {
 				singleItemRouter.Get(root, s.itemsService.ReadHandler)
 				singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
-				singleItemRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanArchiveItems)).
-					Delete(root, s.itemsService.ArchiveHandler)
-				singleItemRouter.WithMiddleware(
-					s.authService.PermissionRestrictionMiddleware(permissions.CanUpdateItems),
-					s.itemsService.UpdateInputMiddleware,
-				).Put(root, s.itemsService.UpdateHandler)
-				singleItemRouter.WithMiddleware(s.authService.AdminMiddleware).
-					Get(auditRoute, s.itemsService.AuditEntryHandler)
+				singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
+				singleItemRouter.WithMiddleware(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
+				singleItemRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.itemsService.AuditEntryHandler)
 			})
 		})
 	})

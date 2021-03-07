@@ -1,6 +1,7 @@
 package mariadb
 
 import (
+	"math"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
@@ -66,17 +67,16 @@ func TestMariaDB_BuildAddUserToAccountQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleInput := &types.AddUserToAccountInput{
-			UserID:    exampleUser.ID,
-			AccountID: exampleAccount.ID,
+			UserID: exampleUser.ID,
 		}
 
 		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,user_account_permissions) VALUES (?,?,?)"
 		expectedArgs := []interface{}{
 			exampleInput.UserID,
-			exampleInput.AccountID,
+			exampleAccount.ID,
 			exampleInput.UserAccountPermissions,
 		}
-		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(exampleAccount.ID, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -138,11 +138,12 @@ func TestMariaDB_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account) VALUES (?,?,?)"
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account,user_account_permissions) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,
 			true,
+			math.MaxUint32,
 		}
 		actualQuery, actualArgs := q.BuildCreateMembershipForNewUserQuery(exampleUser.ID, exampleAccount.ID)
 

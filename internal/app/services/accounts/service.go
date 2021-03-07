@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 const (

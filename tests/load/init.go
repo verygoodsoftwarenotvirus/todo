@@ -8,7 +8,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
@@ -39,14 +38,4 @@ func init() {
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
-}
-
-func initializeClient() *httpclient.Client {
-	c := httpclient.NewClient(
-		httpclient.UsingURI(urlToUse),
-		httpclient.UsingLogger(zerolog.NewLogger()),
-		httpclient.UsingCookie(cookie),
-	)
-
-	return c
 }

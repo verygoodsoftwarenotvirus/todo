@@ -37,8 +37,8 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 		&user.TwoFactorSecret,
 		&user.TwoFactorSecretVerifiedOn,
 		&perms,
-		&user.AccountStatus,
-		&user.AccountStatusExplanation,
+		&user.Reputation,
+		&user.ReputationExplanation,
 		&user.CreatedOn,
 		&user.LastUpdatedOn,
 		&user.ArchivedOn,
@@ -115,6 +115,22 @@ func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSec
 	}
 
 	return u, nil
+}
+
+// UserIsBanned fetches whether or not an item exists from the database.
+func (c *Client) UserIsBanned(ctx context.Context, userID uint64) (banned bool, err error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+
+	c.logger.WithValues(map[string]interface{}{
+		keys.UserIDKey: userID,
+	}).Debug("UserIsBanned called")
+
+	query, args := c.sqlQueryBuilder.BuildUserIsBannedQuery(userID)
+
+	return c.performBooleanQuery(ctx, c.db, query, args)
 }
 
 // GetUser fetches a user.
@@ -268,9 +284,8 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 		return accountMembershipErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, &types.AddUserToAccountInput{
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, &types.AddUserToAccountInput{
 		UserID:                 user.ID,
-		AccountID:              account.ID,
 		UserAccountPermissions: account.DefaultUserPermissions,
 		Reason:                 "account creation",
 	}))

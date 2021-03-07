@@ -57,7 +57,7 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildUserIsMemberOfAccountQuery(u
 }
 
 // BuildAddUserToAccountQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildAddUserToAccountQuery(input *types.AddUserToAccountInput) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildAddUserToAccountQuery(accountID uint64, input *types.AddUserToAccountInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

@@ -243,26 +243,23 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	addInput := &types.AddUserToAccountInput{
 		UserID:                 input.BelongsToUser,
-		AccountID:              x.ID,
 		UserAccountPermissions: x.DefaultUserPermissions,
 		Reason:                 "account creation",
 	}
-	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildAddUserToAccountQuery(addInput)
+
+	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildAddUserToAccountQuery(x.ID, addInput)
 	if accountMembershipErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); accountMembershipErr != nil {
 		c.rollbackTransaction(tx)
 		return nil, accountMembershipErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(createdByUser, addInput))
+	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(createdByUser, x.ID, addInput))
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
-	logger = logger.WithValue("addUserToAccountQuery", addUserToAccountQuery).
-		WithValue("addUserToAccountArgs", addUserToAccountArgs)
-
-	logger.Debug("account and membership created")
+	logger.WithValue("addUserToAccountArgs", addUserToAccountArgs).Debug("account and membership created")
 
 	return x, nil
 }

@@ -1,16 +1,16 @@
 package integration
 
 import (
-	"context"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
@@ -24,46 +24,29 @@ func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func reverse(s string) string {
-	runes := []rune(s)
-	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-		runes[i], runes[j] = runes[j], runes[i]
-	}
+func (s *TestSuite) TestWebhooksCreating() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be createable via %s", authType), func() {
+			t := s.T()
 
-	return string(runes)
-}
-
-func TestWebhooks(test *testing.T) {
-	test.Parallel()
-
-	test.Run("Creating", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		subtest.Run("should be creatable", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, createdWebhook, err)
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, createdWebhook)
 
-			actual, err := testClient.GetWebhook(ctx, createdWebhook.ID)
+			actual, err := testClients.main.GetWebhook(ctx, createdWebhook.ID)
 			checkValueAndError(t, actual, err)
 			checkWebhookEquality(t, exampleWebhook, actual)
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			auditLogEntries, err := adminCookieClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForWebhook(ctx, createdWebhook.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -72,160 +55,132 @@ func TestWebhooks(test *testing.T) {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
 
 			// Clean up.
-			assert.NoError(t, testClient.ArchiveWebhook(ctx, createdWebhook.ID))
+			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Reading", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestWebhooksReading() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should fail to read non-existent webhook via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Fetch webhook.
-			_, err := testClient.GetWebhook(ctx, nonexistentID)
+			_, err := testClients.main.GetWebhook(ctx, nonexistentID)
 			assert.Error(t, err)
 		})
+	}
 
-		subtest.Run("it should be readable", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
 			// Fetch webhook.
-			actual, err := testClient.GetWebhook(ctx, premade.ID)
+			actual, err := testClients.main.GetWebhook(ctx, premade.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
 
 			// Clean up.
-			assert.NoError(t, testClient.ArchiveWebhook(ctx, actual.ID))
+			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, actual.ID))
 		})
+	}
+}
 
-		subtest.Run("should be able to be read in a list", func(t *testing.T) {
-			t.Parallel()
+func (s *TestSuite) TestWebhooksListing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be read in a list via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhooks.
 			var expected []*types.Webhook
 			for i := 0; i < 5; i++ {
 				exampleWebhook := fakes.BuildFakeWebhook()
 				exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-				createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+				createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
 				checkValueAndError(t, createdWebhook, err)
 
 				expected = append(expected, createdWebhook)
 			}
 
 			// Assert webhook list equality.
-			actual, err := testClient.GetWebhooks(ctx, nil)
+			actual, err := testClients.main.GetWebhooks(ctx, nil)
 			checkValueAndError(t, actual, err)
 			assert.True(t, len(expected) <= len(actual.Webhooks))
 
 			// Clean up.
 			for _, webhook := range actual.Webhooks {
-				assert.NoError(t, testClient.ArchiveWebhook(ctx, webhook.ID))
+				assert.NoError(t, testClients.main.ArchiveWebhook(ctx, webhook.ID))
 			}
 		})
+	}
+}
 
-		subtest.Run("should only allow users to see their own webhooks", func(t *testing.T) {
-			t.Parallel()
+func (s *TestSuite) TestWebhooksUpdating() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should fail to update a non-existent webhook via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			_, _, clientA, _ := createUserAndClientForTest(ctx, t)
-			_, _, clientB, _ := createUserAndClientForTest(ctx, t)
-
-			// create webhook for user A.
-			wciA := fakes.BuildFakeWebhookCreationInput()
-			webhookA, err := clientA.CreateWebhook(ctx, wciA)
-			checkValueAndError(t, webhookA, err)
-
-			// create webhook for user B.
-			wciB := fakes.BuildFakeWebhookCreationInput()
-			webhookB, err := clientB.CreateWebhook(ctx, wciB)
-			checkValueAndError(t, webhookB, err)
-
-			i, err := clientB.GetWebhook(ctx, webhookA.ID)
-			assert.Nil(t, i)
-			assert.Error(t, err, "should experience error trying to fetch entry they're not authorized for")
-
-			// Clean up.
-			assert.NoError(t, clientA.ArchiveWebhook(ctx, webhookA.ID))
-			assert.NoError(t, clientB.ArchiveWebhook(ctx, webhookB.ID))
-		})
-	})
-
-	test.Run("Updating", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		subtest.Run("it should return an error when trying to update something that does not exist", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
-			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhook.ID = nonexistentID
 
-			err := testClient.UpdateWebhook(ctx, exampleWebhook)
+			err := testClients.main.UpdateWebhook(ctx, exampleWebhook)
 			assert.Error(t, err)
 		})
+	}
 
-		subtest.Run("it should be updatable", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be updateable via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, createdWebhook, err)
 
 			// Change webhook.
-			createdWebhook.Name = reverse(createdWebhook.Name)
+			createdWebhook.Name = reverseString(createdWebhook.Name)
 			exampleWebhook.Name = createdWebhook.Name
 
-			assert.NoError(t, testClient.UpdateWebhook(ctx, createdWebhook))
+			assert.NoError(t, testClients.main.UpdateWebhook(ctx, createdWebhook))
 
 			// Fetch webhook.
-			actual, err := testClient.GetWebhook(ctx, createdWebhook.ID)
+			actual, err := testClients.main.GetWebhook(ctx, createdWebhook.ID)
 			checkValueAndError(t, actual, err)
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			auditLogEntries, err := adminCookieClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForWebhook(ctx, createdWebhook.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -235,34 +190,42 @@ func TestWebhooks(test *testing.T) {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
 
 			// Clean up.
-			assert.NoError(t, testClient.ArchiveWebhook(ctx, actual.ID))
+			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, actual.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Deleting", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestWebhooksArchiving() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should fail to archive a non-existent webhook via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("should be able to be deleted", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
+			assert.Error(t, testClients.main.ArchiveWebhook(ctx, nonexistentID))
+		})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be archived via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, createdWebhook, err)
 
 			// Clean up.
-			assert.NoError(t, testClient.ArchiveWebhook(ctx, createdWebhook.ID))
+			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			auditLogEntries, err := adminCookieClient.GetAuditLogForWebhook(ctx, createdWebhook.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForWebhook(ctx, createdWebhook.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -271,86 +234,83 @@ func TestWebhooks(test *testing.T) {
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
 		})
-	})
+	}
+}
 
-	test.Run("Auditing", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestWebhooksAuditing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should return an error when auditing a non-existent webhook via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhook.ID = nonexistentID
 
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
 			// fetch audit log entries
-			x, err := adminCookieClient.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
+			x, err := testClients.admin.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
+	}
 
-		subtest.Run("it should be auditable", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should only be auditable to admins via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
+			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
 			checkValueAndError(t, premade, err)
 
 			// Change webhook.
-			premade.Name = reverse(premade.Name)
+			premade.Name = reverseString(premade.Name)
 			exampleWebhook.Name = premade.Name
-			assert.NoError(t, testClient.UpdateWebhook(ctx, premade))
-
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
+			assert.NoError(t, testClients.main.UpdateWebhook(ctx, premade))
 
 			// fetch audit log entries
-			actual, err := adminCookieClient.GetAuditLogForWebhook(ctx, premade.ID)
-			assert.NoError(t, err)
-			assert.Len(t, actual, 2)
-
-			// Clean up item.
-			assert.NoError(t, testClient.ArchiveWebhook(ctx, premade.ID))
-		})
-
-		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
-			defer span.End()
-
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
-
-			// Create webhook.
-			exampleWebhook := fakes.BuildFakeWebhook()
-			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClient.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, premade, err)
-
-			// Change webhook.
-			premade.Name = reverse(premade.Name)
-			exampleWebhook.Name = premade.Name
-			assert.NoError(t, testClient.UpdateWebhook(ctx, premade))
-
-			// fetch audit log entries
-			actual, err := testClient.GetAuditLogForWebhook(ctx, premade.ID)
+			actual, err := testClients.main.GetAuditLogForWebhook(ctx, premade.ID)
 			assert.Error(t, err)
 			assert.Nil(t, actual)
 
 			// Clean up item.
-			assert.NoError(t, testClient.ArchiveWebhook(ctx, premade.ID))
+			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
 		})
-	})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be auditable via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Create webhook.
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			checkValueAndError(t, premade, err)
+
+			// Change webhook.
+			premade.Name = reverseString(premade.Name)
+			exampleWebhook.Name = premade.Name
+			assert.NoError(t, testClients.main.UpdateWebhook(ctx, premade))
+
+			// fetch audit log entries
+			actual, err := testClients.admin.GetAuditLogForWebhook(ctx, premade.ID)
+			assert.NoError(t, err)
+			assert.Len(t, actual, 2)
+
+			// Clean up item.
+			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
+		})
+	}
 }

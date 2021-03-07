@@ -30,8 +30,8 @@ type (
 
 	// APIClientList is a response struct containing a list of API clients.
 	APIClientList struct {
-		Pagination
 		Clients []*APIClient `json:"clients"`
+		Pagination
 	}
 
 	// APICientCreationInput is a struct for use when creating API clients.

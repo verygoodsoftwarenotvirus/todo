@@ -49,8 +49,8 @@ type (
 		Username                  string                              `json:"username"`
 		HashedPassword            string                              `json:"-"`
 		TwoFactorSecret           string                              `json:"-"`
-		AccountStatus             userReputation                      `json:"accountStatus"`
-		AccountStatusExplanation  string                              `json:"accountStatusExplanation"`
+		Reputation                userReputation                      `json:"reputation"`
+		ReputationExplanation     string                              `json:"reputationExplanation"`
 		ID                        uint64                              `json:"id"`
 		ExternalID                string                              `json:"externalID"`
 		PasswordLastChangedOn     *uint64                             `json:"passwordLastChangedOn"`
@@ -139,6 +139,7 @@ type (
 
 	// UserSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	UserSQLQueryBuilder interface {
+		BuildUserIsBannedQuery(userID uint64) (query string, args []interface{})
 		BuildGetUserQuery(userID uint64) (query string, args []interface{})
 		BuildGetUsersQuery(filter *QueryFilter) (query string, args []interface{})
 		BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
@@ -163,6 +164,7 @@ type (
 
 	// UserDataManager describes a structure which can manage users in permanent storage.
 	UserDataManager interface {
+		UserIsBanned(ctx context.Context, userID uint64) (bool, error)
 		GetUser(ctx context.Context, userID uint64) (*User, error)
 		GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*User, error)
 		VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error
@@ -217,8 +219,8 @@ func (u *User) Update(input *User) {
 // ToStatusResponse produces a UserStatusResponse object from a User's data.
 func (u *User) ToStatusResponse() *UserStatusResponse {
 	return &UserStatusResponse{
-		UserAccountStatus:        u.AccountStatus,
-		AccountStatusExplanation: u.AccountStatusExplanation,
+		UserAccountStatus:        u.Reputation,
+		AccountStatusExplanation: u.ReputationExplanation,
 		ServiceAdminPermissions:  u.ServiceAdminPermissions.ServiceAdminPermissionsSummary(),
 	}
 }
@@ -233,7 +235,7 @@ func (cfg *TestUserCreationConfig) ToUserDataStoreCreationInput() UserDataStoreC
 
 // IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
-	return u.AccountStatus == BannedAccountStatus
+	return u.Reputation == BannedAccountStatus
 }
 
 // Validate ensures our provided NewUserCreationInput meets expectations.

@@ -15,6 +15,12 @@ type UserDataManager struct {
 	mock.Mock
 }
 
+// UserIsBanned is a mock function.
+func (m *UserDataManager) UserIsBanned(ctx context.Context, userID uint64) (bool, error) {
+	args := m.Called(ctx, userID)
+	return args.Bool(0), args.Error(1)
+}
+
 // GetUser is a mock function.
 func (m *UserDataManager) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
 	args := m.Called(ctx, userID)

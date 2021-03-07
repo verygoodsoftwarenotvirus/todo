@@ -8,17 +8,21 @@ import (
 const (
 	// UserAddedToAccountEvent events indicate a user created a membership.
 	UserAddedToAccountEvent = "user_added_to_account"
+	// UserAccountPermissionsModifiedEvent events indicate a user created a membership.
+	UserAccountPermissionsModifiedEvent = "user_account_permissions_modified"
 	// UserRemovedFromAccountEvent events indicate a user deleted a membership.
 	UserRemovedFromAccountEvent = "user_removed_from_account"
 	// AccountMarkedAsDefaultEvent events indicate a user deleted a membership.
 	AccountMarkedAsDefaultEvent = "account_marked_as_default"
+	// AccountTransferredEvent events indicate a user deleted a membership.
+	AccountTransferredEvent = "account_transferred"
 )
 
 // BuildUserAddedToAccountEventEntry builds an entry creation input for when a membership is created.
-func BuildUserAddedToAccountEventEntry(addedBy uint64, input *types.AddUserToAccountInput) *types.AuditLogEntryCreationInput {
+func BuildUserAddedToAccountEventEntry(addedBy, accountID uint64, input *types.AddUserToAccountInput) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   addedBy,
-		AccountAssignmentKey: input.AccountID,
+		AccountAssignmentKey: accountID,
 		UserAssignmentKey:    input.UserID,
 		PermissionsKey:       input.UserAccountPermissions,
 	}
@@ -72,7 +76,6 @@ func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, 
 		AccountAssignmentKey: accountID,
 		UserAssignmentKey:    userID,
 		PermissionsKey:       newPermissions,
-		ReasonKey:            reason,
 	}
 
 	if reason != "" {
@@ -80,7 +83,7 @@ func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, 
 	}
 
 	return &types.AuditLogEntryCreationInput{
-		EventType: UserAddedToAccountEvent,
+		EventType: UserAccountPermissionsModifiedEvent,
 		Context:   contextMap,
 	}
 }
@@ -88,6 +91,9 @@ func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, 
 // BuildTransferAccountOwnershipEventEntry builds an entry creation input for when a membership is created.
 func BuildTransferAccountOwnershipEventEntry(oldOwner, newOwner, changedBy, accountID uint64, reason string) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
+		ActorAssignmentKey:   changedBy,
+		"old_owner":          oldOwner,
+		"new_owner":          newOwner,
 		AccountAssignmentKey: accountID,
 	}
 
@@ -96,7 +102,7 @@ func BuildTransferAccountOwnershipEventEntry(oldOwner, newOwner, changedBy, acco
 	}
 
 	return &types.AuditLogEntryCreationInput{
-		EventType: UserAddedToAccountEvent,
+		EventType: AccountTransferredEvent,
 		Context:   contextMap,
 	}
 }

@@ -16,7 +16,7 @@ services:
         links:
             - database
         environment:
-            USE_NOOP_LOGGER: 'nope'
+            USE_NOOP_LOGGER: 'true'
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-mariadb.toml'
               target: '/etc/config.toml'

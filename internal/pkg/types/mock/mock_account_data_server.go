@@ -15,16 +15,19 @@ type AccountDataServer struct {
 	mock.Mock
 }
 
+// RemoveUserFromAccountInputMiddleware implements our interface requirements.
+func (m *AccountDataServer) RemoveUserFromAccountInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
+}
+
 // CreationInputMiddleware implements our interface requirements.
 func (m *AccountDataServer) CreationInputMiddleware(next http.Handler) http.Handler {
-	args := m.Called(next)
-	return args.Get(0).(http.Handler)
+	return m.Called(next).Get(0).(http.Handler)
 }
 
 // UpdateInputMiddleware implements our interface requirements.
 func (m *AccountDataServer) UpdateInputMiddleware(next http.Handler) http.Handler {
-	args := m.Called(next)
-	return args.Get(0).(http.Handler)
+	return m.Called(next).Get(0).(http.Handler)
 }
 
 // SearchHandler implements our interface requirements.

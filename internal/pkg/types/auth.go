@@ -14,7 +14,11 @@ import (
 
 const (
 	// RequestContextKey is the non-string type we use for referencing RequestContext structs.
-	RequestContextKey ContextKey = "session_info"
+	RequestContextKey ContextKey = "request_context"
+	// UserIDContextKey is the non-string type we use for referencing RequestContext structs.
+	UserIDContextKey ContextKey = "userID"
+	// AccountIDContextKey is the non-string type we use for referencing RequestContext structs.
+	AccountIDContextKey ContextKey = "accountID"
 )
 
 func init() {
@@ -27,7 +31,7 @@ type (
 		Username                string                                        `json:"-"`
 		ID                      uint64                                        `json:"-"`
 		ActiveAccountID         uint64                                        `json:"-"`
-		UserAccountStatus       userReputation                                `json:"-"`
+		Status                  userReputation                                `json:"-"`
 		AccountPermissionsMap   map[uint64]permissions.ServiceUserPermissions `json:"-"`
 		ServiceAdminPermissions permissions.ServiceAdminPermissions           `json:"-"`
 	}
@@ -130,7 +134,7 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 		User: UserRequestContext{
 			ID:                      user.ID,
 			Username:                user.Username,
-			UserAccountStatus:       user.AccountStatus,
+			Status:                  user.Reputation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 			ActiveAccountID:         activeAccountID,
 			AccountPermissionsMap:   accountPermissionsMap,

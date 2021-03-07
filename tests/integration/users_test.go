@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -39,33 +38,25 @@ func checkUserEquality(t *testing.T, expected, actual *types.User) {
 	assert.Nil(t, actual.ArchivedOn)
 }
 
-func TestUsers(test *testing.T) {
-	test.Parallel()
+func (s *TestSuite) TestUsersCreating() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
+			t := s.T()
 
-	test.Run("Creating", func(subtest *testing.T) {
-		subtest.Parallel()
-
-		subtest.Run("should be creatable", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			testClient := buildSimpleClient()
 
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
-			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
+			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, createdUser, err)
 
 			// Assert user equality.
 			checkUserCreationEquality(t, exampleUserInput, createdUser)
 
 			// Clean up.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			auditLogEntries, err := adminCookieClient.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -75,89 +66,87 @@ func TestUsers(test *testing.T) {
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
 
-			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Reading", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestUsersReading() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should return an error when trying to read a user that does not exist via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("it should return an error when trying to read something that does not exist", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			// Fetch user.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			actual, err := adminCookieClient.GetUser(ctx, nonexistentID)
+			actual, err := testClients.admin.GetUser(ctx, nonexistentID)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
+	}
 
-		subtest.Run("it should be readable", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			createdUser, _, _, _ := createUserAndClientForTest(ctx, t)
+			user, _, _, _ := createUserAndClientForTest(ctx, t)
 
-			// Fetch user.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-
-			actual, err := adminCookieClient.GetUser(ctx, createdUser.ID)
+			actual, err := testClients.admin.GetUser(ctx, user.ID)
 			if err != nil {
-				t.Logf("error encountered trying to fetch user %q: %v\n", createdUser.Username, err)
+				t.Logf("error encountered trying to fetch user %q: %v\n", user.Username, err)
 			}
 			checkValueAndError(t, actual, err)
 
 			// Assert user equality.
-			checkUserEquality(t, createdUser, actual)
+			checkUserEquality(t, user, actual)
 
 			// Clean up.
-			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, actual.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, actual.ID))
 		})
-	})
+	}
+}
 
-	test.Run("Searching", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestUsersSearching() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should return empty slice when searching for a username that does not exist via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("it should return empty slice when searching for a username that doesn'subtest exist", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			// Search For user.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-			actual, err := adminCookieClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
+			actual, err := testClients.admin.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
 			assert.Nil(t, actual)
 			assert.NoError(t, err)
 		})
+	}
 
-		subtest.Run("it should only be accessible to admins", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should only be accessible to admins via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			_, _, testClient, _ := createUserAndClientForTest(ctx, t)
-
 			// Search For user.
-			actual, err := testClient.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
+			actual, err := testClients.main.SearchForUsersByUsername(ctx, s.user.Username)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
 		})
+	}
 
-		subtest.Run("it should be searchable", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should return be searchable via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			exampleUsername := fakes.BuildFakeUser().Username
@@ -171,9 +160,7 @@ func TestUsers(test *testing.T) {
 			}
 
 			// execute search
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-			actual, err := adminCookieClient.SearchForUsersByUsername(ctx, exampleUsername)
+			actual, err := testClients.admin.SearchForUsersByUsername(ctx, exampleUsername)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, actual)
 
@@ -184,25 +171,36 @@ func TestUsers(test *testing.T) {
 
 			// clean up
 			for _, id := range createdUserIDs {
-				require.NoError(t, adminCookieClient.ArchiveUser(ctx, id))
+				require.NoError(t, testClients.admin.ArchiveUser(ctx, id))
 			}
 		})
-	})
+	}
+}
 
-	test.Run("Deleting", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestUsersArchiving() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should fail to archive a non-existent user via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("should be able to be deleted", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			testClient := buildSimpleClient()
+			assert.Error(t, testClients.admin.ArchiveUser(ctx, nonexistentID))
+		})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be archived via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
 
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
-			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
+			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
 			assert.NoError(t, err)
 			assert.NotNil(t, createdUser)
 
@@ -212,12 +210,9 @@ func TestUsers(test *testing.T) {
 			}
 
 			// Execute.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
 
-			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
-
-			auditLogEntries, err := adminCookieClient.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.ID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -228,15 +223,16 @@ func TestUsers(test *testing.T) {
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
 		})
-	})
+	}
+}
 
-	test.Run("Auditing", func(subtest *testing.T) {
-		subtest.Parallel()
+func (s *TestSuite) TestUsersAuditing() {
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should return an error when trying to audit something that does not exist via %s", authType), func() {
+			t := s.T()
 
-		subtest.Run("it should return an error when trying to audit something that does not exist", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
@@ -244,34 +240,54 @@ func TestUsers(test *testing.T) {
 			input.TargetAccountID = nonexistentID
 
 			// Ban user.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-			assert.Error(t, adminCookieClient.UpdateAccountStatus(ctx, input))
+			assert.Error(t, testClients.admin.UpdateAccountStatus(ctx, input))
 
-			x, err := adminCookieClient.GetAuditLogForUser(ctx, nonexistentID)
+			x, err := testClients.admin.GetAuditLogForUser(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
 		})
+	}
 
-		subtest.Run("it should be auditable", func(t *testing.T) {
-			t.Parallel()
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("it should not be auditable by a non-admin via %s", authType), func() {
+			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
-
-			testClient := buildSimpleClient()
 
 			// Create user.
 			exampleUser := fakes.BuildFakeUser()
 			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
+			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
 			checkValueAndError(t, createdUser, err)
 
 			// fetch audit log entries
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
+			actual, err := testClients.main.GetAuditLogForUser(ctx, createdUser.ID)
+			assert.Error(t, err)
+			assert.Nil(t, actual)
 
-			auditLogEntries, err := adminCookieClient.GetAuditLogForUser(ctx, createdUser.ID)
+			// Clean up item.
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
+		})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to be audited via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// Create user.
+			exampleUser := fakes.BuildFakeUser()
+			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
+			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
+			checkValueAndError(t, createdUser, err)
+
+			// fetch audit log entries
+			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.ID)
 			assert.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -282,32 +298,7 @@ func TestUsers(test *testing.T) {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, 0, "")
 
 			// Clean up item.
-			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
 		})
-
-		subtest.Run("it should not be auditable by a non-admin", func(t *testing.T) {
-			t.Parallel()
-
-			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
-			defer span.End()
-
-			testClient := buildSimpleClient()
-
-			// Create user.
-			exampleUser := fakes.BuildFakeUser()
-			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-			createdUser, err := testClient.CreateUser(ctx, exampleUserInput)
-			checkValueAndError(t, createdUser, err)
-
-			// fetch audit log entries
-			actual, err := testClient.GetAuditLogForUser(ctx, createdUser.ID)
-			assert.Error(t, err)
-			assert.Nil(t, actual)
-
-			// Clean up item.
-			adminClientLock.Lock()
-			defer adminClientLock.Unlock()
-			assert.NoError(t, adminCookieClient.ArchiveUser(ctx, createdUser.ID))
-		})
-	})
+	}
 }

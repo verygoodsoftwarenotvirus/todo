@@ -20,7 +20,7 @@ func TestAccountUserMembershipEventBuilders(T *testing.T) {
 				audit.PermissionsKey,
 				audit.ReasonKey,
 			},
-			actual: audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, &types.AddUserToAccountInput{}),
+			actual: audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, exampleAccountID, &types.AddUserToAccountInput{}),
 		},
 		"BuildUserRemovedFromAccountEventEntry": {
 			expectedEventType: audit.UserRemovedFromAccountEvent,

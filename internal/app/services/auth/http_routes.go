@@ -19,7 +19,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
@@ -31,33 +30,35 @@ var (
 	errTokenLoading  = errors.New("error loading token")
 )
 
-// getRequestContextFromCookie takes a request object and fetches the cookie data if it is present.
-func (s *service) getRequestContextFromCookie(ctx context.Context, req *http.Request) (ca *types.RequestContext, err error) {
+// getUserIDFromCookie takes a request object and fetches the cookie data if it is present.
+func (s *service) getUserIDFromCookie(ctx context.Context, req *http.Request) (context.Context, uint64, error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	cookie, err := req.Cookie(s.config.Cookies.Name)
-	if !errors.Is(err, http.ErrNoCookie) && cookie != nil {
-		var token string
+	if cookie, cookieErr := req.Cookie(s.config.Cookies.Name); !errors.Is(cookieErr, http.ErrNoCookie) && cookie != nil {
+		var (
+			token   string
+			loadErr error
+		)
 
-		decodeErr := s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token)
-		if decodeErr != nil {
-			return nil, fmt.Errorf("decoding request cookie: %w", decodeErr)
+		if decodeErr := s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token); decodeErr != nil {
+			return nil, 0, fmt.Errorf("decoding request cookie: %w", decodeErr)
 		}
 
-		if ctx, err = s.sessionManager.Load(ctx, token); err != nil {
-			return nil, errTokenLoading
+		ctx, loadErr = s.sessionManager.Load(ctx, token)
+		if loadErr != nil {
+			return nil, 0, errTokenLoading
 		}
 
-		reqCtx, ok := s.sessionManager.Get(ctx, requestContextKey).(*types.RequestContext)
+		reqCtx, ok := s.sessionManager.Get(ctx, userIDContextKey).(uint64)
 		if !ok {
-			return nil, errNoSessionInfo
+			return nil, 0, errNoSessionInfo
 		}
 
-		return reqCtx, nil
+		return ctx, reqCtx, nil
 	}
 
-	return nil, http.ErrNoCookie
+	return nil, 0, http.ErrNoCookie
 }
 
 // fetchUserFromCookie takes a request object and fetches the cookie, and then the user for that cookie.
@@ -68,21 +69,101 @@ func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 	logger := s.logger.WithRequest(req).WithValue("cookie_count", len(req.Cookies()))
 	logger.Debug("fetchUserFromCookie called")
 
-	reqCtx, decodeErr := s.getRequestContextFromCookie(ctx, req)
+	var (
+		userID    uint64
+		decodeErr error
+	)
+
+	ctx, userID, decodeErr = s.getUserIDFromCookie(ctx, req)
 	if decodeErr != nil {
 		s.logger.WithError(decodeErr).Debug("unable to fetch cookie data from request")
 		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
 	}
 
-	user, userFetchErr := s.userDB.GetUser(req.Context(), reqCtx.User.ID)
+	user, userFetchErr := s.userDB.GetUser(ctx, userID)
 	if userFetchErr != nil {
 		s.logger.Debug("unable to determine user from request")
 		return nil, fmt.Errorf("determining user from request: %w", userFetchErr)
 	}
 
-	tracing.AttachUserIDToSpan(span, reqCtx.User.ID)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return user, nil
+}
+
+// validateLogin takes login information and returns whether or not the login is valid.
+// In the event that there's an error, this function will return false and the error.
+func (s *service) validateLogin(ctx context.Context, user *types.User, loginInput *types.UserLoginInput) (bool, error) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	// alias the relevant data.
+	logger := s.logger.WithValue(keys.UsernameKey, user.Username)
+
+	// check for login validity.
+	loginValid, err := s.authenticator.ValidateLogin(
+		ctx,
+		user.HashedPassword,
+		loginInput.Password,
+		user.TwoFactorSecret,
+		loginInput.TOTPToken,
+		user.Salt,
+	)
+
+	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, authentication.ErrPasswordHashTooWeak) {
+		// if the login is otherwise valid, but the password is too weak, try to rehash it.
+		logger.Debug("hashed password was deemed to weak, updating its hash")
+
+		// re-hash the authentication
+		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
+		if hashErr != nil {
+			return false, fmt.Errorf("updating password hash: %w", hashErr)
+		}
+
+		// update stored hashed password in the database.
+		user.HashedPassword = updated
+		if updateErr := s.userDB.UpdateUser(ctx, user, nil); updateErr != nil {
+			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
+		}
+
+		return loginValid, nil
+	}
+
+	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
+		return false, err
+	}
+
+	if err != nil {
+		logger.Error(err, "issue validating login")
+		return false, err
+	}
+
+	return loginValid, nil
+}
+
+// buildCookie provides a consistent way of constructing an HTTP cookie.
+func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
+	encoded, err := s.cookieManager.Encode(s.config.Cookies.Name, value)
+	if err != nil {
+		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
+		s.logger.WithName(cookieErrorLogName).Error(err, "error encoding cookie")
+		return nil, err
+	}
+
+	// https://www.calhoun.io/securing-cookies-in-go/
+	cookie := &http.Cookie{
+		Name:     s.config.Cookies.Name,
+		Value:    encoded,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   s.config.Cookies.SecureOnly,
+		Domain:   s.config.Cookies.Domain,
+		Expires:  expiry,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   int(time.Until(expiry).Seconds()),
+	}
+
+	return cookie, nil
 }
 
 // LoginHandler is our login route.
@@ -104,7 +185,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
 	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {
-		logger.WithValue("user_is_nil", user == nil).Error(err, "error fetching user")
+		logger.WithValue("user_is_nil", user == nil).Error(err, "fetching user")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
 		return
 	}
@@ -114,7 +195,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	if user.IsBanned() {
 		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, user.AccountStatusExplanation, http.StatusForbidden)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, user.ReputationExplanation, http.StatusForbidden)
 		return
 	}
 
@@ -139,7 +220,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defaultAccountID, permissionsMap, membershipsCheckErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+	defaultAccountID, _, membershipsCheckErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
 	if membershipsCheckErr != nil {
 		logger.Error(membershipsCheckErr, "error encountered checking for user permissionsMap")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
@@ -159,7 +240,8 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	s.sessionManager.Put(ctx, requestContextKey, buildRequestContextForUserLogin(user, defaultAccountID, permissionsMap))
+	s.sessionManager.Put(ctx, userIDContextKey, user.ID)
+	s.sessionManager.Put(ctx, accountIDContextKey, defaultAccountID)
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
@@ -211,7 +293,12 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 
 	logger = logger.WithValue("user_id", reqCtx.User.ID)
 
-	_, perms, err := s.accountMembershipManager.GetMembershipsForUser(ctx, reqCtx.User.ID)
+	_, perms, permissionsErr := s.accountMembershipManager.GetMembershipsForUser(ctx, reqCtx.User.ID)
+	if permissionsErr != nil {
+		logger.Error(permissionsErr, "checking permissions")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return
+	}
 
 	if _, authorizedForAccount := perms[input.AccountID]; !authorizedForAccount {
 		logger.Debug("invalid account ID requested for activation")
@@ -219,12 +306,9 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	reqCtx.User.ActiveAccountID = input.AccountID
-	reqCtx.User.AccountPermissionsMap = perms
-
 	ctx, sessionErr := s.sessionManager.Load(ctx, "")
 	if sessionErr != nil {
-		logger.Error(sessionErr, "error loading token")
+		logger.Error(sessionErr, "loading token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
@@ -235,7 +319,7 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	s.sessionManager.Put(ctx, requestContextKey, reqCtx)
+	s.sessionManager.Put(ctx, accountIDContextKey, input.AccountID)
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
@@ -251,23 +335,10 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	logger.Debug("successfully changed user's default account")
+	logger.Debug("successfully changed user's cookie account")
 	http.SetCookie(res, cookie)
 
 	res.WriteHeader(http.StatusAccepted)
-}
-
-func buildRequestContextForUserLogin(user *types.User, defaultAccount uint64, permsMap map[uint64]permissions.ServiceUserPermissions) *types.RequestContext {
-	return &types.RequestContext{
-		User: types.UserRequestContext{
-			Username:                user.Username,
-			ID:                      user.ID,
-			ActiveAccountID:         defaultAccount,
-			UserAccountStatus:       user.AccountStatus,
-			AccountPermissionsMap:   permsMap,
-			ServiceAdminPermissions: user.ServiceAdminPermissions,
-		},
-	}
 }
 
 // LogoutHandler is our logout route.
@@ -292,8 +363,8 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if sessionClearErr := s.sessionManager.Clear(ctx); sessionClearErr != nil {
-		logger.Error(sessionClearErr, "clearing user session")
+	if destroyErr := s.sessionManager.Destroy(ctx); destroyErr != nil {
+		logger.Error(destroyErr, "destroying user session")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
@@ -392,6 +463,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
 	var requestedAccountID uint64
+
 	defaultAccountID, perms, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToAccount)
 	if membershipRetrievalErr != nil {
 		logger.Error(membershipRetrievalErr, "retrieving perms for API client")
@@ -431,7 +503,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 			Username:                user.Username,
 			ID:                      user.ID,
 			ActiveAccountID:         requestedAccountID,
-			UserAccountStatus:       user.AccountStatus,
+			Status:                  user.Reputation,
 			AccountPermissionsMap:   perms,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
@@ -487,79 +559,4 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 	s.auditLog.LogCycleCookieSecretEvent(ctx, reqCtx.User.ID)
 
 	res.WriteHeader(http.StatusAccepted)
-}
-
-// validateLogin takes login information and returns whether or not the login is valid.
-// In the event that there's an error, this function will return false and the error.
-func (s *service) validateLogin(ctx context.Context, user *types.User, loginInput *types.UserLoginInput) (bool, error) {
-	ctx, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	// alias the relevant data.
-	logger := s.logger.WithValue(keys.UsernameKey, user.Username)
-
-	// check for login validity.
-	loginValid, err := s.authenticator.ValidateLogin(
-		ctx,
-		user.HashedPassword,
-		loginInput.Password,
-		user.TwoFactorSecret,
-		loginInput.TOTPToken,
-		user.Salt,
-	)
-
-	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, authentication.ErrPasswordHashTooWeak) {
-		// if the login is otherwise valid, but the password is too weak, try to rehash it.
-		logger.Debug("hashed password was deemed to weak, updating its hash")
-
-		// re-hash the authentication
-		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
-		if hashErr != nil {
-			return false, fmt.Errorf("updating password hash: %w", hashErr)
-		}
-
-		// update stored hashed password in the database.
-		user.HashedPassword = updated
-		if updateErr := s.userDB.UpdateUser(ctx, user, nil); updateErr != nil {
-			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
-		}
-
-		return loginValid, nil
-	}
-
-	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
-		return false, err
-	}
-
-	if err != nil {
-		logger.Error(err, "issue validating login")
-		return false, err
-	}
-
-	return loginValid, nil
-}
-
-// buildCookie provides a consistent way of constructing an HTTP cookie.
-func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
-	encoded, err := s.cookieManager.Encode(s.config.Cookies.Name, value)
-	if err != nil {
-		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
-		s.logger.WithName(cookieErrorLogName).Error(err, "error encoding cookie")
-		return nil, err
-	}
-
-	// https://www.calhoun.io/securing-cookies-in-go/
-	cookie := &http.Cookie{
-		Name:     s.config.Cookies.Name,
-		Value:    encoded,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   s.config.Cookies.SecureOnly,
-		Domain:   s.config.Cookies.Domain,
-		Expires:  expiry,
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   int(time.Until(expiry).Seconds()),
-	}
-
-	return cookie, nil
 }

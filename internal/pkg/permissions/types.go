@@ -18,17 +18,8 @@ type ServiceAdminPermissionsSummary struct {
 // ServiceUserPermissionChecker returns whether or not a given permission applies to a user.
 type ServiceUserPermissionChecker interface {
 	// API Clients
-	CanCreateAPIClients() bool
-	CanUpdateAPIClients() bool
-	CanArchiveAPIClients() bool
+	CanManageAPIClients() bool
 
 	// Webhooks
-	CanCreateWebhooks() bool
-	CanUpdateWebhooks() bool
-	CanArchiveWebhooks() bool
-
-	// Items
-	CanCreateItems() bool
-	CanUpdateItems() bool
-	CanArchiveItems() bool
+	CanManageWebhooks() bool
 }

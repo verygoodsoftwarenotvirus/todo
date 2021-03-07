@@ -16,6 +16,17 @@ type AuthService struct {
 	mock.Mock
 }
 
+// ModifyMemberPermissionsInputMiddleware implements our AuthService interface.
+func (m *AuthService) ModifyMemberPermissionsInputMiddleware(next http.Handler) http.Handler {
+	return m.Called(next).Get(0).(http.Handler)
+}
+
+// ModifyMemberPermissionsHandler implements our AuthService interface.
+func (m *AuthService) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *http.Request) {
+	m.Called(res, req)
+}
+
+// ChangeActiveAccountHandler implements our AuthService interface.
 func (m *AuthService) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
@@ -45,6 +56,7 @@ func (m *AuthService) PASETOHandler(res http.ResponseWriter, req *http.Request) 
 	m.Called(res, req)
 }
 
+// ChangeActiveAccountInputMiddleware implements our AuthService interface.
 func (m *AuthService) ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler {
 	return m.Called(next).Get(0).(http.Handler)
 }

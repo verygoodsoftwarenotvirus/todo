@@ -127,7 +127,7 @@ func (q *MariaDB) BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (que
 }
 
 // BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (q *MariaDB) BuildAddUserToAccountQuery(input *types.AddUserToAccountInput) (query string, args []interface{}) {
+func (q *MariaDB) BuildAddUserToAccountQuery(accountID uint64, input *types.AddUserToAccountInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsUserMembershipTableName).
 		Columns(
@@ -137,7 +137,7 @@ func (q *MariaDB) BuildAddUserToAccountQuery(input *types.AddUserToAccountInput)
 		).
 		Values(
 			input.UserID,
-			input.AccountID,
+			accountID,
 			input.UserAccountPermissions,
 		),
 	)

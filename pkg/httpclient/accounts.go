@@ -15,46 +15,41 @@ const (
 )
 
 // BuildSwitchActiveAccountRequest builds an HTTP request for fetching an account.
-func (c *Client) BuildSwitchActiveAccountRequest(ctx context.Context, input *types.ChangeActiveAccountInput) (*http.Request, error) {
+func (c *Client) BuildSwitchActiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if input == nil {
-		return nil, ErrNilInputProvided
-	}
-
 	uri := c.buildVersionlessURL(nil, usersBasePath, "account", "select")
+
+	input := &types.ChangeActiveAccountInput{
+		AccountID: accountID,
+	}
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // SwitchActiveAccount will, when provided the correct credentials, fetch a login cookie.
-func (c *Client) SwitchActiveAccount(ctx context.Context, input *types.ChangeActiveAccountInput) (*http.Cookie, error) {
+func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if input == nil {
-		return nil, ErrNilInputProvided
+	if c.authMethod == cookieAuthMethod {
+		req, err := c.BuildSwitchActiveAccountRequest(ctx, accountID)
+		if err != nil {
+			return fmt.Errorf("building login request: %w", err)
+		}
+
+		res, err := c.authedClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("encountered error executing login request: %w", err)
+		}
+
+		c.closeResponseBody(res)
 	}
 
-	req, err := c.BuildSwitchActiveAccountRequest(ctx, input)
-	if err != nil {
-		return nil, fmt.Errorf("building login request: %w", err)
-	}
+	c.accountID = accountID
 
-	res, err := c.authedClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("encountered error executing login request: %w", err)
-	}
-
-	c.closeResponseBody(res)
-
-	cookies := res.Cookies()
-	if len(cookies) > 0 {
-		return cookies[0], nil
-	}
-
-	return nil, ErrNoCookiesReturned
+	return nil
 }
 
 // BuildGetAccountRequest builds an HTTP request for fetching an account.
@@ -264,7 +259,43 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 }
 
 // BuildRemoveUserRequest builds a request that removes a user from an account.
-func (c *Client) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64) (*http.Request, error) {
+func (c *Client) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64, reason string) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	u := c.buildRawURL(
+		nil,
+		accountsBasePath,
+		strconv.FormatUint(accountID, 10),
+		"members",
+		strconv.FormatUint(userID, 10),
+	)
+
+	if reason != "" {
+		u.Query().Set("reason", reason)
+	}
+
+	uri := u.String()
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+}
+
+// RemoveUser removes a user from an account.
+func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64, reason string) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildRemoveUserRequest(ctx, accountID, userID, reason)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
+}
+
+// BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
+func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID, userID uint64, input *types.ModifyUserPermissionsInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -274,36 +305,6 @@ func (c *Client) BuildRemoveUserRequest(ctx context.Context, accountID, userID u
 		strconv.FormatUint(accountID, 10),
 		"members",
 		strconv.FormatUint(userID, 10),
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
-}
-
-// RemoveUser removes a user from an account.
-func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64) error {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	req, err := c.BuildRemoveUserRequest(ctx, accountID, userID)
-	if err != nil {
-		return fmt.Errorf("building request: %w", err)
-	}
-
-	return c.executeRequest(ctx, req, nil)
-}
-
-// BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
-func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID uint64, input *types.ModifyUserPermissionsInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-		"members",
-		strconv.FormatUint(input.UserID, 10),
 		"permissions",
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
@@ -312,11 +313,11 @@ func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accoun
 }
 
 // ModifyMemberPermissions modifies a given user's permissions for a given account.
-func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID uint64, input *types.ModifyUserPermissionsInput) error {
+func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID uint64, input *types.ModifyUserPermissionsInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildModifyMemberPermissionsRequest(ctx, accountID, input)
+	req, err := c.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, input)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}

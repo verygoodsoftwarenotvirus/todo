@@ -29,6 +29,12 @@ var (
 	// ErrNotFound is a handy error to return when we receive a 404 response.
 	ErrNotFound = fmt.Errorf("%d: not found", http.StatusNotFound)
 
+	// ErrInvalidRequestInput is a handy error to return when we receive a 400 response.
+	ErrInvalidRequestInput = fmt.Errorf("%d: bad request", http.StatusBadRequest)
+
+	// ErrBanned is a handy error to return when we receive a 401 response.
+	ErrBanned = fmt.Errorf("%d: banned", http.StatusForbidden)
+
 	// ErrUnauthorized is a handy error to return when we receive a 401 response.
 	ErrUnauthorized = fmt.Errorf("%d: not authorized", http.StatusUnauthorized)
 
@@ -78,7 +84,7 @@ func (c *Client) URL() *url.URL {
 }
 
 // NewClient builds a new API client for us.
-func NewClient(options ...option) *Client {
+func NewClient(options ...option) (*Client, error) {
 	l := logging.NewNonOperationalLogger()
 
 	c := &Client{
@@ -93,10 +99,12 @@ func NewClient(options ...option) *Client {
 	}
 
 	for _, opt := range options {
-		opt(c)
+		if err := opt(c); err != nil {
+			return nil, err
+		}
 	}
 
-	return c
+	return c, nil
 }
 
 // closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
@@ -229,14 +237,11 @@ func (c *Client) executeRequest(ctx context.Context, req *http.Request, out inte
 		return fmt.Errorf("executing request: %w", err)
 	}
 
-	switch res.StatusCode {
-	case http.StatusNotFound:
-		return ErrNotFound
-	case http.StatusUnauthorized:
-		return ErrUnauthorized
-	}
-
 	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
+
+	if clientErr := errorFromResponse(res); clientErr != nil {
+		return clientErr
+	}
 
 	if out != nil {
 		if resErr := c.unmarshalBody(ctx, res, out); resErr != nil {

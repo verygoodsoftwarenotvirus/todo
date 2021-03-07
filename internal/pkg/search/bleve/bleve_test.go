@@ -16,9 +16,9 @@ import (
 
 type (
 	exampleType struct {
+		Name          string `json:"name"`
 		ID            uint64 `json:"id"`
 		BelongsToUser uint64 `json:"belongsToUser"`
-		Name          string `json:"name"`
 	}
 
 	exampleTypeWithStringID struct {

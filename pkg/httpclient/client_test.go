@@ -43,12 +43,12 @@ type requestSpec struct {
 	path              string
 	method            string
 	query             string
-	bodyShouldBeEmpty bool
 	pathArgs          []interface{}
+	bodyShouldBeEmpty bool
 }
 
-func newRequestSpec(bodyShouldBeEmpty bool, method, query, path string, pathArgs ...interface{}) requestSpec {
-	return requestSpec{
+func newRequestSpec(bodyShouldBeEmpty bool, method, query, path string, pathArgs ...interface{}) *requestSpec {
+	return &requestSpec{
 		path:              path,
 		pathArgs:          pathArgs,
 		method:            method,
@@ -57,7 +57,7 @@ func newRequestSpec(bodyShouldBeEmpty bool, method, query, path string, pathArgs
 	}
 }
 
-func assertRequestQuality(t *testing.T, req *http.Request, spec requestSpec) {
+func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 	t.Helper()
 
 	expectedPath := fmt.Sprintf(spec.path, spec.pathArgs...)
@@ -206,8 +206,8 @@ func TestBuildURL(T *testing.T) {
 
 		testCases := []struct {
 			inputQuery  valuer
-			inputParts  []string
 			expectation string
+			inputParts  []string
 		}{
 			{
 				expectation: "https://todo.verygoodsoftwarenotvirus.ru/api/v1/things",
@@ -253,8 +253,8 @@ func TestBuildVersionlessURL(T *testing.T) {
 
 		testCases := []struct {
 			inputQuery  valuer
-			inputParts  []string
 			expectation string
+			inputParts  []string
 		}{
 			{
 				expectation: "https://todo.verygoodsoftwarenotvirus.ru/things",

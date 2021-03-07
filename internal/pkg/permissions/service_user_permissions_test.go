@@ -155,7 +155,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission20(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission20())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission10))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission20))
 		assert.True(t, y.hasReservedUnusedPermission20())
 	})
 }
@@ -169,7 +169,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission21(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission21())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission11))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission21))
 		assert.True(t, y.hasReservedUnusedPermission21())
 	})
 }
@@ -183,7 +183,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission22(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission22())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission12))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission22))
 		assert.True(t, y.hasReservedUnusedPermission22())
 	})
 }
@@ -197,7 +197,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission23(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission23())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission13))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission23))
 		assert.True(t, y.hasReservedUnusedPermission23())
 	})
 }
@@ -211,7 +211,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission24(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission24())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission14))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission24))
 		assert.True(t, y.hasReservedUnusedPermission24())
 	})
 }
@@ -225,7 +225,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission25(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission25())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission15))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission25))
 		assert.True(t, y.hasReservedUnusedPermission25())
 	})
 }
@@ -239,7 +239,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission26(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission26())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission16))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission26))
 		assert.True(t, y.hasReservedUnusedPermission26())
 	})
 }
@@ -253,7 +253,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission27(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission27())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission17))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission27))
 		assert.True(t, y.hasReservedUnusedPermission27())
 	})
 }
@@ -267,7 +267,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission28(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission28())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission18))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission28))
 		assert.True(t, y.hasReservedUnusedPermission28())
 	})
 }
@@ -281,7 +281,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission29(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission29())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission19))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission29))
 		assert.True(t, y.hasReservedUnusedPermission29())
 	})
 }
@@ -309,7 +309,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission30(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission30())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission10))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission30))
 		assert.True(t, y.hasReservedUnusedPermission30())
 	})
 }
@@ -323,7 +323,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission31(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission31())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission11))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission31))
 		assert.True(t, y.hasReservedUnusedPermission31())
 	})
 }
@@ -337,7 +337,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission32(T *testing.T) {
 		x := ServiceUserPermissions(0)
 		assert.False(t, x.hasReservedUnusedPermission32())
 
-		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission12))
+		y := ServiceUserPermissions(0 | uint32(unusedAccountUserPermission32))
 		assert.True(t, y.hasReservedUnusedPermission32())
 	})
 }

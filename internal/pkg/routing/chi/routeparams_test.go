@@ -44,7 +44,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.UserIDContextKey, expected),
+			context.WithValue(req.Context(), types.RequestContextKey, expected),
 		)
 
 		actual := r.UserIDFetcherFromRequestContext(req)
@@ -76,7 +76,7 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 
 		req := buildRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.UserIDContextKey, expected),
+			context.WithValue(req.Context(), types.RequestContextKey, expected),
 		)
 
 		actual, err := r.FetchContextFromRequest(req)

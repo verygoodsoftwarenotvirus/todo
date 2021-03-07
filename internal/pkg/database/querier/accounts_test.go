@@ -598,7 +598,12 @@ func TestClient_CreateAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.ExternalID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+		exampleAccountAdditionInput := &types.AddUserToAccountInput{
+			Reason:                 "account creation",
+			UserID:                 exampleUser.ID,
+			UserAccountPermissions: exampleAccount.DefaultUserPermissions,
+		}
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -606,13 +611,24 @@ func TestClient_CreateAccount(T *testing.T) {
 
 		db.ExpectBegin()
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.
-			On("BuildCreateAccountQuery", exampleInput).
-			Return(fakeQuery, fakeArgs)
+			On("BuildCreateAccountQuery", exampleCreationInput).
+			Return(fakeCreationQuery, fakeCreationArgs)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+
+		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
+			On("BuildAddUserToAccountQuery", exampleAccountAdditionInput).
+			Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).
+			WithArgs(interfaceToDriverValue(fakeAccountAdditionArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
@@ -624,7 +640,7 @@ func TestClient_CreateAccount(T *testing.T) {
 		}
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual, err := c.CreateAccount(ctx, exampleInput, 0)
+		actual, err := c.CreateAccount(ctx, exampleCreationInput, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAccount, actual)
 

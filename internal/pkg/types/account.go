@@ -12,21 +12,21 @@ import (
 type (
 	// Account represents an account.
 	Account struct {
-		ID                     uint64                             `json:"id"`
-		ExternalID             string                             `json:"externalID"`
-		Name                   string                             `json:"name"`
-		DefaultUserPermissions permissions.ServiceUserPermissions `json:"defaultUserPermissions"`
-		CreatedOn              uint64                             `json:"createdOn"`
-		LastUpdatedOn          *uint64                            `json:"lastUpdatedOn"`
 		ArchivedOn             *uint64                            `json:"archivedOn"`
 		PlanID                 *uint64                            `json:"planID"`
+		LastUpdatedOn          *uint64                            `json:"lastUpdatedOn"`
+		Name                   string                             `json:"name"`
+		ExternalID             string                             `json:"externalID"`
+		CreatedOn              uint64                             `json:"createdOn"`
+		ID                     uint64                             `json:"id"`
 		BelongsToUser          uint64                             `json:"belongsToUser"`
+		DefaultUserPermissions permissions.ServiceUserPermissions `json:"defaultUserPermissions"`
 	}
 
 	// AccountList represents a list of accounts.
 	AccountList struct {
-		Pagination
 		Accounts []*Account `json:"accounts"`
+		Pagination
 	}
 
 	// AccountCreationInput represents what a User could set as input for creating accounts.

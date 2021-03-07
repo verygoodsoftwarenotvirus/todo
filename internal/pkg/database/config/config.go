@@ -42,9 +42,9 @@ const (
 
 // Config represents our database configuration.
 type Config struct {
+	CreateTestUser            *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
 	Provider                  string                        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 	ConnectionDetails         database.ConnectionDetails    `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
-	CreateTestUser            *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
 	MetricsCollectionInterval time.Duration                 `json:"metrics_collection_interval" mapstructure:"metrics_collection_interval" toml:"metrics_collection_interval,omitempty"`
 	Debug                     bool                          `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 	RunMigrations             bool                          `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`

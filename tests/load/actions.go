@@ -23,8 +23,8 @@ type (
 	// Action is a wrapper struct around some important values.
 	Action struct {
 		Action actionFunc
-		Weight uint
 		Name   string
+		Weight uint
 	}
 )
 

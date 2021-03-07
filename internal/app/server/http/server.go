@@ -28,7 +28,6 @@ const (
 type (
 	// Server is our API httpServer.
 	Server struct {
-		// Services.
 		authService       types.AuthService
 		accountsService   types.AccountDataService
 		frontendService   types.FrontendService
@@ -39,16 +38,15 @@ type (
 		apiClientsService types.APIClientDataService
 		webhooksService   types.WebhookDataService
 		itemsService      types.ItemDataService
-
+		db                database.DataManager
+		encoder           encoding.HTTPResponseEncoder
+		logger            logging.Logger
+		router            routing.Router
+		tracer            tracing.Tracer
+		httpServer        *http.Server
+		frontendSettings  frontendservice.Config
+		serverSettings    Config // Services.
 		// infra things.
-		db               database.DataManager
-		serverSettings   Config
-		frontendSettings frontendservice.Config
-		router           routing.Router
-		httpServer       *http.Server
-		logger           logging.Logger
-		encoder          encoding.HTTPResponseEncoder
-		tracer           tracing.Tracer
 	}
 )
 

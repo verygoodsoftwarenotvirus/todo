@@ -11,9 +11,9 @@ import (
 type (
 	// FieldChangeSummary represents a field that has changed in a given model's update.
 	FieldChangeSummary struct {
-		FieldName string      `json:"fieldName"`
 		OldValue  interface{} `json:"oldValue"`
 		NewValue  interface{} `json:"newValue"`
+		FieldName string      `json:"fieldName"`
 	}
 
 	// AuditLogContext keeps track of what gets modified within audit reports.
@@ -21,23 +21,23 @@ type (
 
 	// AuditLogEntry represents an event we might want to log for audit purposes.
 	AuditLogEntry struct {
-		ID         uint64          `json:"id"`
+		Context    AuditLogContext `json:"context"`
 		ExternalID string          `json:"externalID"`
 		EventType  string          `json:"eventType"`
-		Context    AuditLogContext `json:"context"`
+		ID         uint64          `json:"id"`
 		CreatedOn  uint64          `json:"createdOn"`
 	}
 
 	// AuditLogEntryList represents a list of items.
 	AuditLogEntryList struct {
-		Pagination
 		Entries []*AuditLogEntry `json:"entries"`
+		Pagination
 	}
 
 	// AuditLogEntryCreationInput represents what a User could set as input for creating items.
 	AuditLogEntryCreationInput struct {
-		EventType string          `json:"eventType"`
 		Context   AuditLogContext `json:"context"`
+		EventType string          `json:"eventType"`
 	}
 
 	// AuditLogEntrySQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.

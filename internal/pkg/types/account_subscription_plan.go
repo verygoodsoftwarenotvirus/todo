@@ -11,21 +11,21 @@ import (
 type (
 	// AccountSubscriptionPlan represents a plan.
 	AccountSubscriptionPlan struct {
-		ID            uint64        `json:"id"`
-		ExternalID    string        `json:"externalID"`
-		Name          string        `json:"name"`
-		Description   string        `json:"description"`
-		Price         uint32        `json:"price"`
-		Period        time.Duration `json:"period"`
-		CreatedOn     uint64        `json:"createdOn"`
 		LastUpdatedOn *uint64       `json:"lastUpdatedOn"`
 		ArchivedOn    *uint64       `json:"archivedOn"`
+		Description   string        `json:"description"`
+		ExternalID    string        `json:"externalID"`
+		Name          string        `json:"name"`
+		ID            uint64        `json:"id"`
+		Period        time.Duration `json:"period"`
+		CreatedOn     uint64        `json:"createdOn"`
+		Price         uint32        `json:"price"`
 	}
 
 	// AccountSubscriptionPlanList represents a list of account subscription plans.
 	AccountSubscriptionPlanList struct {
-		Pagination
 		AccountSubscriptionPlans []*AccountSubscriptionPlan `json:"accountSubscriptionPlans"`
+		Pagination
 	}
 
 	// AccountSubscriptionPlanCreationInput represents what a User could set as input for creating account subscription plans.

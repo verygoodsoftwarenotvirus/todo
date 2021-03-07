@@ -15,8 +15,8 @@ type (
 	// service is responsible for serving HTML (and other static resources).
 	service struct {
 		logger logging.Logger
-		config Config
 		tracer tracing.Tracer
+		config Config
 	}
 )
 

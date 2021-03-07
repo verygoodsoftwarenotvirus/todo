@@ -29,17 +29,16 @@ func BuildMockDatabase() *MockDatabase {
 
 // MockDatabase is our mock database structure.
 type MockDatabase struct {
-	mock.Mock
-
+	*mocktypes.AdminUserDataManager
 	*mocktypes.AuditLogEntryDataManager
 	*mocktypes.AccountUserMembershipDataManager
 	*mocktypes.AccountSubscriptionPlanDataManager
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
-	*mocktypes.AdminUserDataManager
 	*mocktypes.APIClientDataManager
 	*mocktypes.WebhookDataManager
 	*mocktypes.AccountDataManager
+	mock.Mock
 }
 
 // Migrate satisfies the DataManager interface.
@@ -76,16 +75,15 @@ func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 
 // MockSQLQueryBuilder is our mock database structure.
 type MockSQLQueryBuilder struct {
-	mock.Mock
-
+	*mocktypes.UserSQLQueryBuilder
 	*mocktypes.AccountSQLQueryBuilder
 	*mocktypes.AccountUserMembershipSQLQueryBuilder
 	*mocktypes.AccountSubscriptionPlanSQLQueryBuilder
 	*mocktypes.AuditLogEntrySQLQueryBuilder
 	*mocktypes.ItemSQLQueryBuilder
-	*mocktypes.UserSQLQueryBuilder
 	*mocktypes.APIClientSQLQueryBuilder
 	*mocktypes.WebhookSQLQueryBuilder
+	mock.Mock
 }
 
 // BuildMigrationFunc implements our interface.

@@ -17,14 +17,14 @@ const (
 type (
 	// APIClient represents a User-authorized API client.
 	APIClient struct {
-		ID               uint64  `json:"id"`
-		ExternalID       string  `json:"externalID"`
-		Name             string  `json:"name"`
-		ClientID         string  `json:"clientID"`
-		ClientSecret     []byte  `json:"-"`
-		CreatedOn        uint64  `json:"createdOn"`
 		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn       *uint64 `json:"archivedOn"`
+		Name             string  `json:"name"`
+		ClientID         string  `json:"clientID"`
+		ExternalID       string  `json:"externalID"`
+		ClientSecret     []byte  `json:"-"`
+		CreatedOn        uint64  `json:"createdOn"`
+		ID               uint64  `json:"id"`
 		BelongsToAccount uint64  `json:"belongsToAccount"`
 	}
 
@@ -46,9 +46,9 @@ type (
 
 	// APIClientCreationResponse is a struct for informing users of what their API client's secret key is.
 	APIClientCreationResponse struct {
-		ID           uint64 `json:"id"`
 		ClientID     string `json:"clientID"`
 		ClientSecret string `json:"clientSecret"`
+		ID           uint64 `json:"id"`
 	}
 
 	// APIClientSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.

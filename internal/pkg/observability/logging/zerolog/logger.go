@@ -15,8 +15,8 @@ func init() {
 
 // Logger is our log wrapper.
 type Logger struct {
-	logger        zerolog.Logger
 	requestIDFunc logging.RequestIDFunc
+	logger        zerolog.Logger
 }
 
 // buildZerologger builds a new zerologger.

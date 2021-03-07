@@ -41,10 +41,10 @@ func (v valuer) ToValues() url.Values {
 
 type requestSpec struct {
 	path              string
-	pathArgs          []interface{}
 	method            string
 	query             string
 	bodyShouldBeEmpty bool
+	pathArgs          []interface{}
 }
 
 func newRequestSpec(bodyShouldBeEmpty bool, method, query, path string, pathArgs ...interface{}) requestSpec {
@@ -205,9 +205,9 @@ func TestBuildURL(T *testing.T) {
 		)
 
 		testCases := []struct {
-			expectation string
-			inputParts  []string
 			inputQuery  valuer
+			inputParts  []string
+			expectation string
 		}{
 			{
 				expectation: "https://todo.verygoodsoftwarenotvirus.ru/api/v1/things",
@@ -252,9 +252,9 @@ func TestBuildVersionlessURL(T *testing.T) {
 		)
 
 		testCases := []struct {
-			expectation string
-			inputParts  []string
 			inputQuery  valuer
+			inputParts  []string
+			expectation string
 		}{
 			{
 				expectation: "https://todo.verygoodsoftwarenotvirus.ru/things",

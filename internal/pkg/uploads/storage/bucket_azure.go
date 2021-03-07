@@ -24,11 +24,11 @@ const (
 type (
 	// AzureRetryConfig configures storage retries.
 	AzureRetryConfig struct {
-		MaxTries                    int32         `json:"max_tries" mapstructure:"max_tries" toml:"max_tries,omitempty"`
+		RetryReadsFromSecondaryHost string        `json:"retry_reads_from_secondary_host" mapstructure:"retry_reads_from_secondary_host" toml:"retry_reads_from_secondary_host,omitempty"`
 		TryTimeout                  time.Duration `json:"try_timeout" mapstructure:"try_timeout" toml:"try_timeout,omitempty"`
 		RetryDelay                  time.Duration `json:"retry_delay" mapstructure:"retry_delay" toml:"retry_delay,omitempty"`
 		MaxRetryDelay               time.Duration `json:"max_retry_delay" mapstructure:"max_retry_delay" toml:"max_retry_delay,omitempty"`
-		RetryReadsFromSecondaryHost string        `json:"retry_reads_from_secondary_host" mapstructure:"retry_reads_from_secondary_host" toml:"retry_reads_from_secondary_host,omitempty"`
+		MaxTries                    int32         `json:"max_tries" mapstructure:"max_tries" toml:"max_tries,omitempty"`
 	}
 
 	// AzureConfig configures an azure instance of an UploadManager.

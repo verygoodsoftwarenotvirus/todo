@@ -28,11 +28,11 @@ func init() {
 type (
 	// UserRequestContext contains data relevant to the user making a request.
 	UserRequestContext struct {
+		AccountPermissionsMap   map[uint64]permissions.ServiceUserPermissions `json:"-"`
 		Username                string                                        `json:"-"`
+		Status                  userReputation                                `json:"-"`
 		ID                      uint64                                        `json:"-"`
 		ActiveAccountID         uint64                                        `json:"-"`
-		Status                  userReputation                                `json:"-"`
-		AccountPermissionsMap   map[uint64]permissions.ServiceUserPermissions `json:"-"`
 		ServiceAdminPermissions permissions.ServiceAdminPermissions           `json:"-"`
 	}
 
@@ -43,10 +43,10 @@ type (
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		UserIsAuthenticated      bool                                        `json:"isAuthenticated"`
+		ServiceAdminPermissions  *permissions.ServiceAdminPermissionsSummary `json:"permissions,omitempty"`
 		UserAccountStatus        userReputation                              `json:"accountStatus,omitempty"`
 		AccountStatusExplanation string                                      `json:"statusExplanation,omitempty"`
-		ServiceAdminPermissions  *permissions.ServiceAdminPermissionsSummary `json:"permissions,omitempty"`
+		UserIsAuthenticated      bool                                        `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.

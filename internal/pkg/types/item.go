@@ -17,20 +17,20 @@ const (
 type (
 	// Item represents an item.
 	Item struct {
-		ID               uint64  `json:"id"`
+		ArchivedOn       *uint64 `json:"archivedOn"`
+		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
 		ExternalID       string  `json:"externalID"`
 		Name             string  `json:"name"`
 		Details          string  `json:"details"`
 		CreatedOn        uint64  `json:"createdOn"`
-		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn       *uint64 `json:"archivedOn"`
+		ID               uint64  `json:"id"`
 		BelongsToAccount uint64  `json:"belongsToAccount"`
 	}
 
 	// ItemList represents a list of items.
 	ItemList struct {
-		Pagination
 		Items []*Item `json:"items"`
+		Pagination
 	}
 
 	// ItemCreationInput represents what a User could set as input for creating items.

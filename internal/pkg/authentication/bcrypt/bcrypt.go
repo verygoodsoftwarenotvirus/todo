@@ -45,9 +45,9 @@ type (
 	// Authenticator is our bcrypt-based authenticator.
 	Authenticator struct {
 		logger              logging.Logger
+		tracer              tracing.Tracer
 		hashCost            uint
 		minimumPasswordSize uint
-		tracer              tracing.Tracer
 	}
 
 	// HashCost is a type alias for dependency injection's sake.

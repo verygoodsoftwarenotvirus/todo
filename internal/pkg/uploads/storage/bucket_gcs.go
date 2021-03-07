@@ -26,10 +26,10 @@ type (
 
 	// GCSConfig configures a gcs based storage provider.
 	GCSConfig struct {
-		ServiceAccountKeyFilepath string        `json:"service_account_key_filepath" mapstructure:"service_account_key_filepath" toml:"service_account_key_filepath,omitempty"`
-		Scopes                    []string      `json:"scopes" mapstructure:"scopes" toml:"scopes,omitempty"`
-		BucketName                string        `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
 		BlobSettings              GCSBlobConfig `json:"blob_settings" mapstructure:"blob_settings" toml:"blob_settings,omitempty"`
+		ServiceAccountKeyFilepath string        `json:"service_account_key_filepath" mapstructure:"service_account_key_filepath" toml:"service_account_key_filepath,omitempty"`
+		BucketName                string        `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
+		Scopes                    []string      `json:"scopes" mapstructure:"scopes" toml:"scopes,omitempty"`
 	}
 )
 

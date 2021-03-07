@@ -11,10 +11,10 @@ import (
 
 // opencensusCounter is a Counter that interfaces with opencensus.
 type opencensusCounter struct {
-	name        string
-	actualCount uint64
 	measure     *stats.Int64Measure
 	v           *view.View
+	name        string
+	actualCount uint64
 }
 
 func (c *opencensusCounter) subtractFromCount(ctx context.Context, value uint64) {

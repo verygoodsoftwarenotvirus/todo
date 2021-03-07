@@ -9,9 +9,9 @@ import (
 )
 
 type eventBuilderTest struct {
+	actual              *types.AuditLogEntryCreationInput
 	expectedEventType   string
 	expectedContextKeys []string
-	actual              *types.AuditLogEntryCreationInput
 }
 
 func runEventBuilderTests(T *testing.T, tests map[string]*eventBuilderTest) {

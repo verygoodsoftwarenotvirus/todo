@@ -11,19 +11,19 @@ import (
 type (
 	// AccountUserMembership defines a relationship between a user and an account.
 	AccountUserMembership struct {
-		ID                     uint64                             `json:"id"`
+		ArchivedOn             *uint64                            `json:"archivedOn"`
 		BelongsToUser          uint64                             `json:"belongsToUser"`
 		BelongsToAccount       uint64                             `json:"belongsToAccount"`
-		DefaultAccount         bool                               `json:"defaultAccount"`
-		UserAccountPermissions permissions.ServiceUserPermissions `json:"userAccountPermissions"`
 		CreatedOn              uint64                             `json:"createdOn"`
-		ArchivedOn             *uint64                            `json:"archivedOn"`
+		ID                     uint64                             `json:"id"`
+		UserAccountPermissions permissions.ServiceUserPermissions `json:"userAccountPermissions"`
+		DefaultAccount         bool                               `json:"defaultAccount"`
 	}
 
 	// AccountUserMembershipList represents a list of account user memberships.
 	AccountUserMembershipList struct {
-		Pagination
 		AccountUserMemberships []*AccountUserMembership `json:"accountUserMemberships"`
+		Pagination
 	}
 
 	// AccountUserMembershipCreationInput represents what a User could set as input for creating account user memberships.
@@ -42,16 +42,16 @@ type (
 
 	// AddUserToAccountInput represents what a User could set as input for updating account user memberships.
 	AddUserToAccountInput struct {
+		Reason                 string                             `json:"reason"`
 		UserID                 uint64                             `json:"userID"`
 		UserAccountPermissions permissions.ServiceUserPermissions `json:"userAccountPermissions"`
-		Reason                 string                             `json:"reason"`
 	}
 
 	// TransferAccountOwnershipInput represents what a User could set as input for updating account user memberships.
 	TransferAccountOwnershipInput struct {
+		Reason       string `json:"reason"`
 		CurrentOwner uint64 `json:"currentOwner"`
 		NewOwner     uint64 `json:"newOwner"`
-		Reason       string `json:"reason"`
 	}
 
 	// ModifyUserPermissionsInput  represents what a User could set as input for updating account user memberships.

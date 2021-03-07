@@ -45,22 +45,22 @@ type (
 
 	// User represents a User.
 	User struct {
-		Salt                      []byte                              `json:"-"`
-		Username                  string                              `json:"username"`
-		HashedPassword            string                              `json:"-"`
-		TwoFactorSecret           string                              `json:"-"`
-		Reputation                userReputation                      `json:"reputation"`
-		ReputationExplanation     string                              `json:"reputationExplanation"`
-		ID                        uint64                              `json:"id"`
-		ExternalID                string                              `json:"externalID"`
 		PasswordLastChangedOn     *uint64                             `json:"passwordLastChangedOn"`
-		TwoFactorSecretVerifiedOn *uint64                             `json:"-"`
-		CreatedOn                 uint64                              `json:"createdOn"`
-		LastUpdatedOn             *uint64                             `json:"lastUpdatedOn"`
 		ArchivedOn                *uint64                             `json:"archivedOn"`
+		LastUpdatedOn             *uint64                             `json:"lastUpdatedOn"`
+		TwoFactorSecretVerifiedOn *uint64                             `json:"-"`
+		AvatarSrc                 *string                             `json:"avatar"`
+		ReputationExplanation     string                              `json:"reputationExplanation"`
+		Username                  string                              `json:"username"`
+		ExternalID                string                              `json:"externalID"`
+		Reputation                userReputation                      `json:"reputation"`
+		TwoFactorSecret           string                              `json:"-"`
+		HashedPassword            string                              `json:"-"`
+		Salt                      []byte                              `json:"-"`
+		CreatedOn                 uint64                              `json:"createdOn"`
+		ID                        uint64                              `json:"id"`
 		ServiceAdminPermissions   permissions.ServiceAdminPermissions `json:"serviceAdminPermissions"`
 		RequiresPasswordChange    bool                                `json:"requiresPasswordChange"`
-		AvatarSrc                 *string                             `json:"avatar"`
 	}
 
 	// TestUserCreationConfig is a helper struct because of cyclical imports.
@@ -77,8 +77,8 @@ type (
 
 	// UserList represents a list of users.
 	UserList struct {
-		Pagination
 		Users []*User `json:"users"`
+		Pagination
 	}
 
 	// NewUserCreationInput represents the input required from users to register an account.
@@ -89,20 +89,20 @@ type (
 
 	// UserDataStoreCreationInput is used by the User creation route to communicate with the data store.
 	UserDataStoreCreationInput struct {
-		Salt            []byte `json:"-"`
 		Username        string `json:"-"`
 		HashedPassword  string `json:"-"`
 		TwoFactorSecret string `json:"-"`
+		Salt            []byte `json:"-"`
 	}
 
 	// UserCreationResponse is a response structure for Users that doesn't contain authentication fields, but does contain the two factor secret.
 	UserCreationResponse struct {
-		ID              uint64         `json:"id"`
 		Username        string         `json:"username"`
-		IsAdmin         bool           `json:"isAdmin"`
-		CreatedOn       uint64         `json:"createdOn"`
 		AccountStatus   userReputation `json:"accountStatus"`
 		TwoFactorQRCode string         `json:"qrCode"`
+		ID              uint64         `json:"id"`
+		CreatedOn       uint64         `json:"createdOn"`
+		IsAdmin         bool           `json:"isAdmin"`
 	}
 
 	// UserLoginInput represents the payload used to log in a User.
@@ -127,8 +127,8 @@ type (
 
 	// TOTPSecretVerificationInput represents input a User would provide when validating their 2FA secret.
 	TOTPSecretVerificationInput struct {
-		UserID    uint64 `json:"userID"`
 		TOTPToken string `json:"totpToken"`
+		UserID    uint64 `json:"userID"`
 	}
 
 	// TOTPSecretRefreshResponse represents the response we provide to a User when updating their 2FA secret.

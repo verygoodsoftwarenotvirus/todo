@@ -12,15 +12,13 @@ import (
 
 // pasetoRoundTripper is a transport that uses a cookie.
 type pasetoRoundTripper struct {
+	logger    logging.Logger
+	tracer    tracing.Tracer
+	base      http.RoundTripper
+	client    *Client
 	clientID  string
-	secretKey []byte
+	secretKey []byte // base is the base RoundTripper used to make HTTP requests. If nil, http.DefaultTransport is used.
 
-	logger logging.Logger
-	tracer tracing.Tracer
-
-	// base is the base RoundTripper used to make HTTP requests. If nil, http.DefaultTransport is used.
-	base   http.RoundTripper
-	client *Client
 }
 
 func newPASETORoundTripper(client *Client, clientID string, secretKey []byte) *pasetoRoundTripper {

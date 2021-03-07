@@ -40,6 +40,9 @@ configs:
 
 ## prerequisites
 
+# not a bad idea to do this either:
+## GO111MODULE=off go install golang.org/x/tools/...
+
 ensure-wire:
 ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go install github.com/google/wire/cmd/wire)

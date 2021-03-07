@@ -53,19 +53,16 @@ var (
 
 // Client is a client for interacting with v1 of our HTTP API.
 type Client struct {
-	url          *url.URL
-	plainClient  *http.Client
-	authedClient *http.Client
-
-	authMethod     *authMethod
-	accountID      uint64
+	logger         logging.Logger
+	tracer         tracing.Tracer
 	encoderDecoder encoding.HTTPResponseEncoder
+	url            *url.URL
+	authMethod     *authMethod
+	plainClient    *http.Client
+	authedClient   *http.Client
 	contentType    string
-
-	logger logging.Logger
-	tracer tracing.Tracer
-
-	debug bool
+	accountID      uint64
+	debug          bool
 }
 
 // AuthenticatedClient returns the authenticated *http.Client that we use to make most requests.

@@ -61,14 +61,14 @@ type (
 	// ServerConfig is our server configuration struct. It is comprised of all the other setting structs
 	// For information on this structs fields, refer to their definitions.
 	ServerConfig struct {
-		Auth          authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
+		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
 		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
-		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
-		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
-		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
+		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
+		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Auth          authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Server        httpserver.Config      `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		Webhooks      webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
 		AuditLog      audit.Config           `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`

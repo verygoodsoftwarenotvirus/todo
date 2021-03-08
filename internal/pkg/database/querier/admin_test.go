@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-func TestClient_UpdateUserAccountStatus(T *testing.T) {
+func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestClient_UpdateUserAccountStatus(T *testing.T) {
 	})
 }
 
-func TestClient_LogUserBanEvent(T *testing.T) {
+func TestQuerier_LogUserBanEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestClient_LogUserBanEvent(T *testing.T) {
 	})
 }
 
-func TestClient_LogAccountTerminationEvent(T *testing.T) {
+func TestQuerier_LogAccountTerminationEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestClient_LogAccountTerminationEvent(T *testing.T) {
 	})
 }
 
-func TestClient_LogCycleCookieSecretEvent(T *testing.T) {
+func TestQuerier_LogCycleCookieSecretEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestClient_LogCycleCookieSecretEvent(T *testing.T) {
 	})
 }
 
-func TestClient_LogSuccessfulLoginEvent(T *testing.T) {
+func TestQuerier_LogSuccessfulLoginEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestClient_LogSuccessfulLoginEvent(T *testing.T) {
 	})
 }
 
-func TestClient_LogBannedUserLoginAttemptEvent(T *testing.T) {
+func TestQuerier_LogBannedUserLoginAttemptEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestClient_LogBannedUserLoginAttemptEvent(T *testing.T) {
 	})
 }
 
-func TestClient_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
+func TestQuerier_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -183,7 +183,7 @@ func TestClient_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 	})
 }
 
-func TestClient_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
+func TestQuerier_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -205,7 +205,7 @@ func TestClient_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 	})
 }
 
-func TestClient_LogLogoutEvent(T *testing.T) {
+func TestQuerier_LogLogoutEvent(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

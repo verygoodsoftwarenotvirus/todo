@@ -16,13 +16,6 @@ type AccountUserMembershipDataManager struct {
 	mock.Mock
 }
 
-// GetRequestContextForUser satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) GetRequestContextForUser(ctx context.Context, userID uint64) (reqCtx *types.RequestContext, err error) {
-	args := m.Called(ctx, userID)
-
-	return args.Get(0).(*types.RequestContext), args.Error(1)
-}
-
 // GetMembershipsForUser satisfies our interface contract.
 func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
 	args := m.Called(ctx, userID)

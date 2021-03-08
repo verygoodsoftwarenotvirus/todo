@@ -177,6 +177,7 @@ type (
 		UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error
 		ArchiveUser(ctx context.Context, userID uint64) error
 		GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*AuditLogEntry, error)
+		GetRequestContextForUser(ctx context.Context, userID uint64) (reqCtx *RequestContext, err error)
 	}
 
 	// UserDataService describes a structure capable of serving traffic related to users.

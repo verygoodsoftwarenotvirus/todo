@@ -49,7 +49,7 @@ func buildMockRowsFromAccountSubscriptionPlans(includeCounts bool, filteredCount
 	return exampleRows
 }
 
-func TestClient_ScanPlans(T *testing.T) {
+func TestQuerier_ScanPlans(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestClient_ScanPlans(T *testing.T) {
 	})
 }
 
-func TestClient_GetPlan(T *testing.T) {
+func TestQuerier_GetPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -174,7 +174,7 @@ func TestClient_GetPlan(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllAccountSubscriptionPlansCount(T *testing.T) {
+func TestQuerier_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -231,7 +231,7 @@ func TestClient_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAccountSubscriptionPlans(T *testing.T) {
+func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -344,7 +344,7 @@ func TestClient_GetAccountSubscriptionPlans(T *testing.T) {
 	})
 }
 
-func TestClient_CreateAccountSubscriptionPlan(T *testing.T) {
+func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -418,7 +418,7 @@ func TestClient_CreateAccountSubscriptionPlan(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateAccountSubscriptionPlan(T *testing.T) {
+func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -486,7 +486,7 @@ func TestClient_UpdateAccountSubscriptionPlan(T *testing.T) {
 	})
 }
 
-func TestClient_ArchiveAccountSubscriptionPlan(T *testing.T) {
+func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -554,7 +554,7 @@ func TestClient_ArchiveAccountSubscriptionPlan(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
+func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

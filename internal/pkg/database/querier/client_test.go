@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -103,19 +104,19 @@ func buildErroneousMockRow() *sqlmock.Rows {
 }
 
 func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
-	fakeAuditLogEntryuery, fakeAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
+	fakeAuditLogEntryQuery, fakeAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
 		On("BuildCreateAuditLogEntryQuery", mock.IsType(&types.AuditLogEntryCreationInput{})).
-		Return(fakeAuditLogEntryuery, fakeAuditLogEntryArgs)
+		Return(fakeAuditLogEntryQuery, fakeAuditLogEntryArgs)
 
-	db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryuery)).
+	db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryQuery)).
 		WithArgs(interfaceToDriverValue(fakeAuditLogEntryArgs)...).
 		WillReturnResult(newSuccessfulDatabaseResult(123))
 }
 
 // end helper funcs
 
-func TestClient_Migrate(T *testing.T) {
+func TestQuerier_Migrate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -131,8 +132,9 @@ func TestClient_Migrate(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.ExternalID = ""
 		exampleAccountCreationInput := &types.AccountCreationInput{
-			Name:          exampleUser.Username,
-			BelongsToUser: exampleUser.ID,
+			Name:                   exampleUser.Username,
+			DefaultUserPermissions: math.MaxUint32,
+			BelongsToUser:          exampleUser.ID,
 		}
 
 		exampleInput := &types.TestUserCreationConfig{
@@ -274,7 +276,7 @@ func TestClient_Migrate(T *testing.T) {
 	})
 }
 
-func TestClient_IsReady(T *testing.T) {
+func TestQuerier_IsReady(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -417,7 +419,7 @@ func TestDefaultTimeFunc(T *testing.T) {
 	})
 }
 
-func TestClient_currentTime(T *testing.T) {
+func TestQuerier_currentTime(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -437,7 +439,7 @@ func TestClient_currentTime(T *testing.T) {
 	})
 }
 
-func TestClient_rollbackTransaction(T *testing.T) {
+func TestQuerier_rollbackTransaction(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -456,7 +458,7 @@ func TestClient_rollbackTransaction(T *testing.T) {
 	})
 }
 
-func TestClient_getIDFromResult(T *testing.T) {
+func TestQuerier_getIDFromResult(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -486,7 +488,7 @@ func TestClient_getIDFromResult(T *testing.T) {
 	})
 }
 
-func TestClient_handleRows(T *testing.T) {
+func TestQuerier_handleRows(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -534,7 +536,7 @@ func TestClient_handleRows(T *testing.T) {
 	})
 }
 
-func TestClient_performCreateQueryIgnoringReturn(T *testing.T) {
+func TestQuerier_performCreateQueryIgnoringReturn(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -555,7 +557,7 @@ func TestClient_performCreateQueryIgnoringReturn(T *testing.T) {
 	})
 }
 
-func TestClient_performCreateQuery(T *testing.T) {
+func TestQuerier_performCreateQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

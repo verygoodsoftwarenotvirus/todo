@@ -148,7 +148,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 			logger = logger.WithValue(keys.RequesterKey, userID)
 
-			reqCtx, userIsBannedErr := s.accountMembershipManager.GetRequestContextForUser(ctx, userID)
+			reqCtx, userIsBannedErr := s.userDataManager.GetRequestContextForUser(ctx, userID)
 			if userIsBannedErr != nil {
 				logger.Error(userIsBannedErr, "fetching user info for cookie")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)

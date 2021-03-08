@@ -50,7 +50,7 @@ func buildMockRowsFromAPIClients(includeCounts bool, filteredCount uint64, clien
 	return exampleRows
 }
 
-func TestClient_ScanAPIClients(T *testing.T) {
+func TestQuerier_ScanAPIClients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestClient_ScanAPIClients(T *testing.T) {
 	})
 }
 
-func TestClient_GetAPIClientByClientID(T *testing.T) {
+func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestClient_GetAPIClientByClientID(T *testing.T) {
 	})
 }
 
-func TestClient_GetTotalAPIClientCount(T *testing.T) {
+func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -208,7 +208,7 @@ func TestClient_GetTotalAPIClientCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllAPIClients(T *testing.T) {
+func TestQuerier_GetAllAPIClients(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -404,7 +404,7 @@ func TestClient_GetAllAPIClients(T *testing.T) {
 	})
 }
 
-func TestClient_GetAPIClients(T *testing.T) {
+func TestQuerier_GetAPIClients(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
@@ -534,7 +534,7 @@ func TestClient_GetAPIClients(T *testing.T) {
 	})
 }
 
-func TestClient_CreateAPIClient(T *testing.T) {
+func TestQuerier_CreateAPIClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -608,7 +608,7 @@ func TestClient_CreateAPIClient(T *testing.T) {
 	})
 }
 
-func TestClient_ArchiveAPIClient(T *testing.T) {
+func TestQuerier_ArchiveAPIClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -644,7 +644,7 @@ func TestClient_ArchiveAPIClient(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntriesForAPIClient(T *testing.T) {
+func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

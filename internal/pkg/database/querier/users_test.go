@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"math"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
@@ -58,7 +59,7 @@ func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*
 	return exampleRows
 }
 
-func TestClient_ScanUsers(T *testing.T) {
+func TestQuerier_ScanUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -94,7 +95,7 @@ func TestClient_ScanUsers(T *testing.T) {
 	})
 }
 
-func TestClient_GetUser(T *testing.T) {
+func TestQuerier_GetUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -148,7 +149,7 @@ func TestClient_GetUser(T *testing.T) {
 	})
 }
 
-func TestClient_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
+func TestQuerier_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -177,7 +178,7 @@ func TestClient_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestClient_GetUserByUsername(T *testing.T) {
+func TestQuerier_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -256,7 +257,7 @@ func TestClient_GetUserByUsername(T *testing.T) {
 	})
 }
 
-func TestClient_SearchForUsersByUsername(T *testing.T) {
+func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 	T.Parallel()
 
 	exampleUsername := fakes.BuildFakeUser().Username
@@ -357,7 +358,7 @@ func TestClient_SearchForUsersByUsername(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllUsersCount(T *testing.T) {
+func TestQuerier_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -409,7 +410,7 @@ func TestClient_GetAllUsersCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetUsers(T *testing.T) {
+func TestQuerier_GetUsers(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -516,7 +517,7 @@ func TestClient_GetUsers(T *testing.T) {
 	})
 }
 
-func TestClient_CreateUser(T *testing.T) {
+func TestQuerier_CreateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -534,6 +535,7 @@ func TestClient_CreateUser(T *testing.T) {
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
 		exampleAccountCreationInput := types.NewAccountCreationInputForUser(exampleUser)
+		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -693,6 +695,7 @@ func TestClient_CreateUser(T *testing.T) {
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
 		exampleAccountCreationInput := types.NewAccountCreationInputForUser(exampleUser)
+		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -756,6 +759,7 @@ func TestClient_CreateUser(T *testing.T) {
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
 		exampleAccountCreationInput := types.NewAccountCreationInputForUser(exampleUser)
+		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -830,7 +834,7 @@ func TestClient_CreateUser(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateUser(T *testing.T) {
+func TestQuerier_UpdateUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -892,7 +896,7 @@ func TestClient_UpdateUser(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateUserPassword(T *testing.T) {
+func TestQuerier_UpdateUserPassword(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -954,7 +958,7 @@ func TestClient_UpdateUserPassword(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateUserTwoFactorSecret(T *testing.T) {
+func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -1016,7 +1020,7 @@ func TestClient_UpdateUserTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestClient_VerifyUserTwoFactorSecret(T *testing.T) {
+func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -1078,7 +1082,7 @@ func TestClient_VerifyUserTwoFactorSecret(T *testing.T) {
 	})
 }
 
-func TestClient_ArchiveUser(T *testing.T) {
+func TestQuerier_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -1148,7 +1152,7 @@ func TestClient_ArchiveUser(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntriesForUser(T *testing.T) {
+func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

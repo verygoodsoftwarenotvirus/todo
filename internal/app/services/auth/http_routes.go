@@ -80,7 +80,7 @@ func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*
 		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
 	}
 
-	user, userFetchErr := s.userDB.GetUser(ctx, userID)
+	user, userFetchErr := s.userDataManager.GetUser(ctx, userID)
 	if userFetchErr != nil {
 		s.logger.Debug("unable to determine user from request")
 		return nil, fmt.Errorf("determining user from request: %w", userFetchErr)
@@ -122,7 +122,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 
 		// update stored hashed password in the database.
 		user.HashedPassword = updated
-		if updateErr := s.userDB.UpdateUser(ctx, user, nil); updateErr != nil {
+		if updateErr := s.userDataManager.UpdateUser(ctx, user, nil); updateErr != nil {
 			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
 		}
 
@@ -183,7 +183,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.UsernameKey, loginData.Username)
 
-	user, err := s.userDB.GetUserByUsername(ctx, loginData.Username)
+	user, err := s.userDataManager.GetUserByUsername(ctx, loginData.Username)
 	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {
 		logger.WithValue("user_is_nil", user == nil).Error(err, "fetching user")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
@@ -453,7 +453,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, userRetrievalErr := s.userDB.GetUser(ctx, client.BelongsToAccount)
+	user, userRetrievalErr := s.userDataManager.GetUser(ctx, client.BelongsToAccount)
 	if userRetrievalErr != nil {
 		logger.Error(userRetrievalErr, "retrieving user")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)

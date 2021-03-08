@@ -59,7 +59,7 @@ func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*typ
 	return exampleRows
 }
 
-func TestClient_ScanAuditLogEntries(T *testing.T) {
+func TestQuerier_ScanAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestClient_ScanAuditLogEntries(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntry(T *testing.T) {
+func TestQuerier_GetAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestClient_GetAuditLogEntry(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllAuditLogEntriesCount(T *testing.T) {
+func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -194,7 +194,7 @@ func TestClient_GetAllAuditLogEntriesCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllAuditLogEntries(T *testing.T) {
+func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -387,7 +387,7 @@ func TestClient_GetAllAuditLogEntries(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntries(T *testing.T) {
+func TestQuerier_GetAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -487,7 +487,7 @@ func TestClient_GetAuditLogEntries(T *testing.T) {
 	})
 }
 
-func TestClient_createAuditLogEntry(T *testing.T) {
+func TestQuerier_createAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

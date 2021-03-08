@@ -50,7 +50,7 @@ func buildMockRowsFromItems(includeCounts bool, filteredCount uint64, items ...*
 	return exampleRows
 }
 
-func TestClient_ScanItems(T *testing.T) {
+func TestQuerier_ScanItems(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestClient_ScanItems(T *testing.T) {
 	})
 }
 
-func TestClient_ItemExists(T *testing.T) {
+func TestQuerier_ItemExists(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -163,7 +163,7 @@ func TestClient_ItemExists(T *testing.T) {
 	})
 }
 
-func TestClient_GetItem(T *testing.T) {
+func TestQuerier_GetItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -223,7 +223,7 @@ func TestClient_GetItem(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllItemsCount(T *testing.T) {
+func TestQuerier_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -253,7 +253,7 @@ func TestClient_GetAllItemsCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllItems(T *testing.T) {
+func TestQuerier_GetAllItems(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -449,7 +449,7 @@ func TestClient_GetAllItems(T *testing.T) {
 	})
 }
 
-func TestClient_GetItems(T *testing.T) {
+func TestQuerier_GetItems(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
@@ -571,7 +571,7 @@ func TestClient_GetItems(T *testing.T) {
 	})
 }
 
-func TestClient_GetItemsForAdmin(T *testing.T) {
+func TestQuerier_GetItemsForAdmin(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -691,7 +691,7 @@ func TestClient_GetItemsForAdmin(T *testing.T) {
 	})
 }
 
-func TestClient_GetItemsWithIDs(T *testing.T) {
+func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -827,7 +827,7 @@ func TestClient_GetItemsWithIDs(T *testing.T) {
 	})
 }
 
-func TestClient_GetItemsWithIDsForAdmin(T *testing.T) {
+func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -959,7 +959,7 @@ func TestClient_GetItemsWithIDsForAdmin(T *testing.T) {
 	})
 }
 
-func TestClient_CreateItem(T *testing.T) {
+func TestQuerier_CreateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -1036,7 +1036,7 @@ func TestClient_CreateItem(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateItem(T *testing.T) {
+func TestQuerier_UpdateItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -1074,7 +1074,7 @@ func TestClient_UpdateItem(T *testing.T) {
 	})
 }
 
-func TestClient_ArchiveItem(T *testing.T) {
+func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -1112,7 +1112,7 @@ func TestClient_ArchiveItem(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntriesForItem(T *testing.T) {
+func TestQuerier_GetAuditLogEntriesForItem(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

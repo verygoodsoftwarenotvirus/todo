@@ -56,7 +56,7 @@ func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhook
 	return exampleRows
 }
 
-func TestClient_ScanWebhooks(T *testing.T) {
+func TestQuerier_ScanWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -85,7 +85,7 @@ func TestClient_ScanWebhooks(T *testing.T) {
 	})
 }
 
-func TestClient_GetWebhook(T *testing.T) {
+func TestQuerier_GetWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestClient_GetWebhook(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllWebhooksCount(T *testing.T) {
+func TestQuerier_GetAllWebhooksCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -146,7 +146,7 @@ func TestClient_GetAllWebhooksCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetWebhooks(T *testing.T) {
+func TestQuerier_GetWebhooks(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
@@ -260,7 +260,7 @@ func TestClient_GetWebhooks(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllWebhooks(T *testing.T) {
+func TestQuerier_GetAllWebhooks(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -460,7 +460,7 @@ func TestClient_GetAllWebhooks(T *testing.T) {
 	})
 }
 
-func TestClient_CreateWebhook(T *testing.T) {
+func TestQuerier_CreateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -533,7 +533,7 @@ func TestClient_CreateWebhook(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateWebhook(T *testing.T) {
+func TestQuerier_UpdateWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -569,7 +569,7 @@ func TestClient_UpdateWebhook(T *testing.T) {
 	})
 }
 
-func TestClient_ArchiveWebhook(T *testing.T) {
+func TestQuerier_ArchiveWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -605,7 +605,7 @@ func TestClient_ArchiveWebhook(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntriesForWebhook(T *testing.T) {
+func TestQuerier_GetAuditLogEntriesForWebhook(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

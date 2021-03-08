@@ -33,6 +33,7 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 			x.ExternalID,
 			x.Name,
 			x.PlanID,
+			x.DefaultUserPermissions,
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,
@@ -49,7 +50,7 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 	return exampleRows
 }
 
-func TestClient_ScanAccounts(T *testing.T) {
+func TestQuerier_ScanAccounts(T *testing.T) {
 	T.Parallel()
 
 	T.Run("surfaces row errors", func(t *testing.T) {
@@ -78,7 +79,7 @@ func TestClient_ScanAccounts(T *testing.T) {
 	})
 }
 
-func TestClient_GetAccount(T *testing.T) {
+func TestQuerier_GetAccount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -138,7 +139,7 @@ func TestClient_GetAccount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllAccountsCount(T *testing.T) {
+func TestQuerier_GetAllAccountsCount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -168,7 +169,7 @@ func TestClient_GetAllAccountsCount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAllAccounts(T *testing.T) {
+func TestQuerier_GetAllAccounts(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -364,7 +365,7 @@ func TestClient_GetAllAccounts(T *testing.T) {
 	})
 }
 
-func TestClient_GetAccounts(T *testing.T) {
+func TestQuerier_GetAccounts(T *testing.T) {
 	T.Parallel()
 
 	exampleUser := fakes.BuildFakeUser()
@@ -477,7 +478,7 @@ func TestClient_GetAccounts(T *testing.T) {
 	})
 }
 
-func TestClient_GetAccountsForAdmin(T *testing.T) {
+func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -588,7 +589,7 @@ func TestClient_GetAccountsForAdmin(T *testing.T) {
 	})
 }
 
-func TestClient_CreateAccount(T *testing.T) {
+func TestQuerier_CreateAccount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -620,7 +621,14 @@ func TestClient_CreateAccount(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
+			On("BuildCreateAuditLogEntryQuery", mock.IsType(&types.AuditLogEntryCreationInput{})).
+			Return(fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs).Once()
+
+		db.ExpectExec(formatQueryForSQLMock(fakeCreationAuditLogEntryQuery)).
+			WithArgs(interfaceToDriverValue(fakeCreationAuditLogEntryArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(123))
 
 		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
@@ -631,7 +639,14 @@ func TestClient_CreateAccount(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeAccountAdditionArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
+			On("BuildCreateAuditLogEntryQuery", mock.IsType(&types.AuditLogEntryCreationInput{})).
+			Return(fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs).Once()
+
+		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionAuditLogEntryQuery)).
+			WithArgs(interfaceToDriverValue(fakeAccountAdditionAuditLogEntryArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(123))
 
 		db.ExpectCommit()
 
@@ -685,7 +700,7 @@ func TestClient_CreateAccount(T *testing.T) {
 	})
 }
 
-func TestClient_UpdateAccount(T *testing.T) {
+func TestQuerier_UpdateAccount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -722,7 +737,7 @@ func TestClient_UpdateAccount(T *testing.T) {
 	})
 }
 
-func TestClient_ArchiveAccount(T *testing.T) {
+func TestQuerier_ArchiveAccount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {
@@ -759,7 +774,7 @@ func TestClient_ArchiveAccount(T *testing.T) {
 	})
 }
 
-func TestClient_GetAuditLogEntriesForAccount(T *testing.T) {
+func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

@@ -221,9 +221,7 @@ linters:
     - gomodguard # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
     - goprintffuncname # Checks that printf-like functions are named with f at the end
     - gosec # Inspects source code for security problems
-    - interfacer # Linter that suggests narrower interface types
     - lll # Reports long lines
-    - maligned # Tool to detect Go structs that would take less memory if their fields were sorted
     - misspell # Finds commonly misspelled English words in comments
     - nakedret # Finds naked returns in functions greater than a specified function length
     - nestif # Reports deeply nested if statements

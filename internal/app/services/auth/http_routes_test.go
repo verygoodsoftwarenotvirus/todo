@@ -81,9 +81,9 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 
 		ctx, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
-		_, cookie, err := s.getUserIDFromCookie(ctx, req)
+		_, userID, err := s.getUserIDFromCookie(ctx, req)
 		assert.NoError(t, err)
-		assert.NotNil(t, cookie)
+		assert.Equal(t, exampleUser.ID, userID)
 	})
 
 	T.Run("with invalid cookie", func(t *testing.T) {
@@ -108,9 +108,9 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		// end building bad cookie.
 		req.AddCookie(c)
 
-		_, cookie, err := s.getUserIDFromCookie(req.Context(), req)
+		_, userID, err := s.getUserIDFromCookie(req.Context(), req)
 		assert.Error(t, err)
-		assert.Nil(t, cookie)
+		assert.Zero(t, userID)
 	})
 
 	T.Run("without cookie", func(t *testing.T) {
@@ -123,10 +123,10 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		_, cookie, err := s.getUserIDFromCookie(req.Context(), req)
+		_, userID, err := s.getUserIDFromCookie(req.Context(), req)
 		assert.Error(t, err)
 		assert.Equal(t, err, http.ErrNoCookie)
-		assert.Nil(t, cookie)
+		assert.Zero(t, userID)
 	})
 }
 
@@ -158,7 +158,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 			mock.Anything,
 			exampleUser.ID,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		actualUser, err := s.fetchUserFromCookie(ctx, req)
 		assert.Equal(t, exampleUser, actualUser)
@@ -208,7 +208,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 			mock.Anything,
 			exampleUser.ID,
 		).Return((*types.User)(nil), expectedError)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		actualUser, err := s.fetchUserFromCookie(req.Context(), req)
 		assert.Nil(t, actualUser)
@@ -242,7 +242,7 @@ func TestService_LoginHandler(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -324,7 +324,7 @@ func TestService_LoginHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.Username,
 		).Return((*types.User)(nil), errors.New("blah"))
-		s.userDB = udb
+		s.userDataManager = udb
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
@@ -367,7 +367,7 @@ func TestService_LoginHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.Username,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On("LogBannedUserLoginAttemptEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID)
@@ -408,7 +408,7 @@ func TestService_LoginHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.Username,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -461,7 +461,7 @@ func TestService_LoginHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.Username,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -519,7 +519,7 @@ func TestService_LoginHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.Username,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -584,7 +584,7 @@ func TestService_LoginHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.Username,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		authr := &mockauth.Authenticator{}
 		authr.On(
@@ -792,7 +792,7 @@ func TestService_validateLogin(T *testing.T) {
 			mock.Anything,
 			mock.IsType(&types.User{}),
 		).Return(nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.True(t, actual)
@@ -882,7 +882,7 @@ func TestService_validateLogin(T *testing.T) {
 			mock.Anything,
 			mock.IsType(&types.User{}),
 		).Return(expectedErr)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		actual, err := s.validateLogin(ctx, exampleUser, exampleLoginData)
 		assert.False(t, actual)
@@ -989,7 +989,7 @@ func TestService_StatusHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.ID,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		s.StatusHandler(res, req)
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
@@ -1023,7 +1023,7 @@ func TestService_StatusHandler(T *testing.T) {
 			mock.Anything,
 			exampleUser.ID,
 		).Return((*types.User)(nil), errors.New("blah"))
-		s.userDB = udb
+		s.userDataManager = udb
 
 		s.StatusHandler(res, req)
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
@@ -1209,7 +1209,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
@@ -1314,7 +1314,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
@@ -1548,7 +1548,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return((*types.User)(nil), errors.New("blah"))
-		s.userDB = udb
+		s.userDataManager = udb
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, testURL, nil)
@@ -1607,7 +1607,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
@@ -1729,7 +1729,7 @@ func TestService_PASETOHandler(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleUser, nil)
-		s.userDB = udb
+		s.userDataManager = udb
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(

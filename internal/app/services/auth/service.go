@@ -36,7 +36,7 @@ type (
 		config                   *Config
 		logger                   logging.Logger
 		authenticator            authentication.Authenticator
-		userDB                   types.UserDataManager
+		userDataManager          types.UserDataManager
 		auditLog                 types.AuthAuditManager
 		apiClientManager         types.APIClientDataManager
 		accountMembershipManager types.AccountUserMembershipDataManager
@@ -65,7 +65,7 @@ func ProvideService(
 		logger:                   logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:           encoder,
 		config:                   cfg,
-		userDB:                   userDataManager,
+		userDataManager:          userDataManager,
 		auditLog:                 auditLog,
 		apiClientManager:         apiClientsService,
 		accountMembershipManager: accountMembershipManager,

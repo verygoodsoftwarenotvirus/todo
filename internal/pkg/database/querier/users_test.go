@@ -11,9 +11,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -566,7 +566,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildCreateAccountQuery", exampleAccountCreationInput).
+		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildAccountCreationQuery", exampleAccountCreationInput).
 			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
@@ -726,7 +726,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 
 		// create account for created TestUser
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildCreateAccountQuery", exampleAccountCreationInput).
+		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildAccountCreationQuery", exampleAccountCreationInput).
 			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
@@ -790,7 +790,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 
 		// create account for created TestUser
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildCreateAccountQuery", exampleAccountCreationInput).
+		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildAccountCreationQuery", exampleAccountCreationInput).
 			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).

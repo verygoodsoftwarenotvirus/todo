@@ -229,37 +229,50 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger.WithValue("query", query).WithValue("args", args).WithValue("description", queryDescription)
+
 	if c.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {
 		var id uint64
 
 		if err := querier.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
+			logger.Error(err, "executing query")
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
+
+		logger.Debug("query executed successfully")
 
 		return id, nil
 	} else if c.idStrategy == ReturningStatementIDRetrievalStrategy {
 		res, err := querier.ExecContext(ctx, query, args...)
 		if err != nil {
+			logger.Error(err, "executing query")
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
 		if count, rowsCountErr := res.RowsAffected(); count == 0 || rowsCountErr != nil {
+			logger.Error(rowsCountErr, "no rows modified by query")
 			return 0, sql.ErrNoRows
 		}
+
+		logger.Debug("query executed successfully")
 
 		return 0, nil
 	}
 
 	res, err := querier.ExecContext(ctx, query, args...)
 	if err != nil {
+		logger.Error(err, "executing query")
 		return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 	}
 
 	if res != nil {
 		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+			logger.Debug("no rows modified by query")
 			return 0, sql.ErrNoRows
 		}
 	}
+
+	logger.Debug("query executed successfully")
 
 	return c.getIDFromResult(res), nil
 }

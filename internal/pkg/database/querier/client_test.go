@@ -15,9 +15,9 @@ import (
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -185,7 +185,7 @@ func TestQuerier_Migrate(T *testing.T) {
 
 		// create account for created TestUser
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildCreateAccountQuery", exampleAccountCreationInput).
+		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildAccountCreationQuery", exampleAccountCreationInput).
 			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).

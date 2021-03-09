@@ -49,9 +49,10 @@ type (
 		BuildGetAllAccountsCountQuery() string
 		BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{})
 		BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
-		BuildCreateAccountQuery(input *AccountCreationInput) (query string, args []interface{})
+		BuildAccountCreationQuery(input *AccountCreationInput) (query string, args []interface{})
 		BuildUpdateAccountQuery(input *Account) (query string, args []interface{})
 		BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{})
+		BuildTransferAccountOwnershipQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{})
 	}
 

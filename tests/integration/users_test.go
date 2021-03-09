@@ -7,9 +7,9 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
@@ -50,7 +50,7 @@ func (s *TestSuite) TestUsersCreating() {
 			// Create user.
 			exampleUserInput := fakes.BuildFakeUserCreationInput()
 			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
-			checkValueAndError(t, createdUser, err)
+			requireNotNilAndNoProblems(t, createdUser, err)
 
 			// Assert user equality.
 			checkUserCreationEquality(t, exampleUserInput, createdUser)
@@ -100,7 +100,7 @@ func (s *TestSuite) TestUsersReading() {
 			if err != nil {
 				t.Logf("error encountered trying to fetch user %q: %v\n", user.Username, err)
 			}
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert user equality.
 			checkUserEquality(t, user, actual)
@@ -260,7 +260,7 @@ func (s *TestSuite) TestUsersAuditing() {
 			exampleUser := fakes.BuildFakeUser()
 			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
-			checkValueAndError(t, createdUser, err)
+			requireNotNilAndNoProblems(t, createdUser, err)
 
 			// fetch audit log entries
 			actual, err := testClients.main.GetAuditLogForUser(ctx, createdUser.ID)
@@ -284,7 +284,7 @@ func (s *TestSuite) TestUsersAuditing() {
 			exampleUser := fakes.BuildFakeUser()
 			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
-			checkValueAndError(t, createdUser, err)
+			requireNotNilAndNoProblems(t, createdUser, err)
 
 			// fetch audit log entries
 			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.ID)

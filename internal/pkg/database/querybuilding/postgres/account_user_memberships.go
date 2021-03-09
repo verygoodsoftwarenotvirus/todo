@@ -89,12 +89,25 @@ func (q *Postgres) BuildModifyUserPermissionsQuery(userID, accountID uint64, per
 // BuildTransferAccountOwnershipQuery builds.
 func (q *Postgres) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsTableName).
+		Set(querybuilding.AccountsTableUserOwnershipColumn, newOwnerID).
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:                         accountID,
+			querybuilding.AccountsTableUserOwnershipColumn: oldOwnerID,
+			querybuilding.ArchivedOnColumn:                 nil,
+		}),
+	)
+}
+
+// BuildTransferAccountMembershipsQuery does .
+func (q *Postgres) BuildTransferAccountMembershipsQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.AccountsUserMembershipTableUserOwnershipColumn, newOwnerID).
 		Where(squirrel.Eq{
-			querybuilding.ArchivedOnColumn:                                  nil,
-			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    oldOwnerID,
 			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    currentOwnerID,
+			querybuilding.ArchivedOnColumn:                                  nil,
 		}),
 	)
 }

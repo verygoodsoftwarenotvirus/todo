@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -44,7 +45,7 @@ func (s *TestSuite) TestAPIClientsCreating() {
 			}
 
 			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
-			checkValueAndError(t, createdAPIClient, err)
+			requireNotNilAndNoProblems(t, createdAPIClient, err)
 
 			// Assert API client equality.
 			assert.NotEmpty(t, createdAPIClient.ClientID, "expected ClientID for API client #%d to not be empty, but it was", createdAPIClient.ID)
@@ -70,12 +71,14 @@ func (s *TestSuite) TestAPIClientsListing() {
 		s.Run(fmt.Sprintf("should be possible to read API clients in a list via %s", authType), func() {
 			t := s.T()
 
+			const clientsToMake = 1
+
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			// Create API clients.
 			var expected []uint64
-			for i := 0; i < 5; i++ {
+			for i := 0; i < clientsToMake; i++ {
 				// Create API client.
 				exampleAPIClient := fakes.BuildFakeAPIClient()
 				exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
@@ -85,14 +88,14 @@ func (s *TestSuite) TestAPIClientsListing() {
 					TOTPToken: generateTOTPTokenForUser(t, s.user),
 				}
 				createdAPIClient, apiClientCreationErr := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
-				checkValueAndError(t, createdAPIClient, apiClientCreationErr)
+				requireNotNilAndNoProblems(t, createdAPIClient, apiClientCreationErr)
 
 				expected = append(expected, createdAPIClient.ID)
 			}
 
 			// Assert API client list equality.
 			actual, err := testClients.main.GetAPIClients(ctx, nil)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			assert.True(
 				t,
 				len(expected) <= len(actual.Clients),
@@ -102,8 +105,8 @@ func (s *TestSuite) TestAPIClientsListing() {
 			)
 
 			// Clean up.
-			for _, createdAPIClient := range actual.Clients {
-				assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
+			for _, createdAPIClientID := range expected {
+				assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClientID))
 			}
 		})
 	}
@@ -142,11 +145,11 @@ func (s *TestSuite) TestAPIClientsReading() {
 			}
 
 			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
-			checkValueAndError(t, createdAPIClient, err)
+			requireNotNilAndNoProblems(t, createdAPIClient, err)
 
 			// Fetch API client.
 			actual, err := testClients.main.GetAPIClient(ctx, createdAPIClient.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert API client equality.
 			checkAPIClientEquality(t, exampleAPIClient, actual)
@@ -163,7 +166,7 @@ func (s *TestSuite) TestAPIClientsArchiving() {
 		s.Run(fmt.Sprintf("should not be possible to archive non-existent API clients via %s", authType), func() {
 			t := s.T()
 
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			assert.Error(t, testClients.main.ArchiveAPIClient(ctx, nonexistentID))
@@ -188,7 +191,7 @@ func (s *TestSuite) TestAPIClientsArchiving() {
 			}
 
 			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
-			checkValueAndError(t, createdAPIClient, err)
+			requireNotNilAndNoProblems(t, createdAPIClient, err)
 
 			// Clean up API client.
 			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
@@ -224,12 +227,12 @@ func (s *TestSuite) TestAPIClientsAuditing() {
 			}
 
 			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
-			checkValueAndError(t, createdAPIClient, err)
+			requireNotNilAndNoProblems(t, createdAPIClient, err)
 
 			// fetch audit log entries
 			actual, err := testClients.admin.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
-			assert.Error(t, err)
-			assert.Nil(t, actual)
+			assert.NoError(t, err)
+			assert.NotNil(t, actual)
 
 			// Clean up API client.
 			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))

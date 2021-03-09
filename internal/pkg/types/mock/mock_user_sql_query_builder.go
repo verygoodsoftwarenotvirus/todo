@@ -13,9 +13,9 @@ type UserSQLQueryBuilder struct {
 	mock.Mock
 }
 
-// BuildUserIsBannedQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildUserIsBannedQuery(userID uint64) (query string, args []interface{}) {
-	returnArgs := m.Called(userID)
+// BuildUserHasStatusQuery implements our interface.
+func (m *UserSQLQueryBuilder) BuildUserHasStatusQuery(userID uint64, statuses ...string) (query string, args []interface{}) {
+	returnArgs := m.Called(userID, statuses)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

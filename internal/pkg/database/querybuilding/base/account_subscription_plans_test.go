@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildGetPlanQuery(T *testing.T) {
+func TestBase_BuildGetPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestSqlite_BuildGetPlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAllPlansCountQuery(T *testing.T) {
+func TestBase_BuildGetAllPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestSqlite_BuildGetAllPlansCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetPlansQuery(T *testing.T) {
+func TestBase_BuildGetPlansQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestSqlite_BuildGetPlansQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
+func TestBase_BuildCreatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -107,7 +107,7 @@ func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
+func TestBase_BuildUpdatePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildArchivePlanQuery(T *testing.T) {
+func TestBase_BuildArchivePlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

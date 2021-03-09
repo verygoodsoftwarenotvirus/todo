@@ -66,8 +66,8 @@ func (q *Sqlite) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *typ
 	)
 }
 
-// BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
-func (q *Sqlite) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
+// BuildAccountCreationQuery takes an account and returns a creation query for that account and the relevant arguments.
+func (q *Sqlite) BuildAccountCreationQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(

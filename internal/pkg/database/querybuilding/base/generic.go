@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 // BuildQueryOnly builds a given query, handles whatever errors and returns just the query and args.
-func (q *BaseQueryBuilder) buildQueryOnly(builder squirrel.Sqlizer) string {
+func (q *QueryBuilder) buildQueryOnly(builder squirrel.Sqlizer) string {
 	query, _, err := builder.ToSql()
 	q.logQueryBuildingError(err)
 
@@ -18,14 +18,14 @@ func (q *BaseQueryBuilder) buildQueryOnly(builder squirrel.Sqlizer) string {
 }
 
 // BuildQuery builds a given query, handles whatever errors and returns just the query and args.
-func (q *BaseQueryBuilder) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
+func (q *QueryBuilder) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
 	query, args, err := builder.ToSql()
 	q.logQueryBuildingError(err)
 
 	return query, args
 }
 
-func (q *BaseQueryBuilder) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
+func (q *QueryBuilder) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
 	where := squirrel.Eq{}
 	totalCountQueryBuilder := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
@@ -48,7 +48,7 @@ func (q *BaseQueryBuilder) buildTotalCountQuery(tableName, ownershipColumn strin
 	return q.buildQuery(totalCountQueryBuilder)
 }
 
-func (q *BaseQueryBuilder) buildFilteredCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) buildFilteredCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	where := squirrel.Eq{}
 	filteredCountQueryBuilder := q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
@@ -77,7 +77,7 @@ func (q *BaseQueryBuilder) buildFilteredCountQuery(tableName, ownershipColumn st
 
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *BaseQueryBuilder) buildListQuery(tableName, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) buildListQuery(tableName, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	var includeArchived bool
 	if filter != nil {
 		includeArchived = filter.IncludeArchived

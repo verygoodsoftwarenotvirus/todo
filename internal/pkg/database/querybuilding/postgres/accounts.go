@@ -71,8 +71,8 @@ func (q *Postgres) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *t
 	)
 }
 
-// BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
-func (q *Postgres) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
+// BuildAccountCreationQuery takes an account and returns a creation query for that account and the relevant arguments.
+func (q *Postgres) BuildAccountCreationQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(

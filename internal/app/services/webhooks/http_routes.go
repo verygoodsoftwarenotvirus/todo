@@ -194,7 +194,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	userID := reqCtx.User.ID
-	logger = logger.WithValue(keys.UserIDKey, userID)
+	logger = logger.WithValue(keys.RequesterKey, userID)
 
 	accountID := reqCtx.User.ActiveAccountID
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -215,14 +215,14 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch the webhook in question.
 	webhook, err := s.webhookDataManager.GetWebhook(ctx, webhookID, accountID)
-	if errors.Is(err, sql.ErrNoRows) {
-		logger.Debug("no rows found for webhook")
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-
-		return
-	} else if err != nil {
-		logger.Error(err, "error encountered getting webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Debug("nonexistent webhook requested for update")
+			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+		} else {
+			logger.Error(err, "error encountered getting webhook")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		}
 
 		return
 	}
@@ -232,8 +232,13 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// save the update in the database.
 	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, userID, changes); err != nil {
-		logger.Error(err, "error encountered updating webhook")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Debug("attempted to update nonexistent webhook")
+			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+		} else {
+			logger.Error(err, "error encountered updating webhook")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		}
 
 		return
 	}

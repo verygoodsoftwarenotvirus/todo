@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	_ types.UserSQLQueryBuilder = (*BaseQueryBuilder)(nil)
+	_ types.UserSQLQueryBuilder = (*QueryBuilder)(nil)
 )
 
-// BuildUserIsBannedQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (q *BaseQueryBuilder) BuildUserIsBannedQuery(userID uint64) (query string, args []interface{}) {
+// BuildUserHasStatusQuery returns a SQL query (and argument) for retrieving a user by their database ID.
+func (q *QueryBuilder) BuildUserHasStatusQuery(userID uint64, statuses ...string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.IDColumn)).
 		Prefix(querybuilding.ExistencePrefix).
@@ -34,7 +34,7 @@ func (q *BaseQueryBuilder) BuildUserIsBannedQuery(userID uint64) (query string, 
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (q *BaseQueryBuilder) BuildGetUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetUserQuery(userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
@@ -50,7 +50,7 @@ func (q *BaseQueryBuilder) BuildGetUserQuery(userID uint64) (query string, args 
 
 // BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
-func (q *BaseQueryBuilder) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
@@ -63,7 +63,7 @@ func (q *BaseQueryBuilder) BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID
 }
 
 // BuildGetUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (q *BaseQueryBuilder) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetUserByUsernameQuery(username string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
@@ -78,7 +78,7 @@ func (q *BaseQueryBuilder) BuildGetUserByUsernameQuery(username string) (query s
 }
 
 // BuildSearchForUserByUsernameQuery returns a SQL query (and argument) for retrieving a user by their username.
-func (q *BaseQueryBuilder) BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
@@ -97,7 +97,7 @@ func (q *BaseQueryBuilder) BuildSearchForUserByUsernameQuery(usernameQuery strin
 
 // BuildGetAllUsersCountQuery returns a SQL query (and arguments) for retrieving the number of users who adhere
 // to a given filter's criteria.
-func (q *BaseQueryBuilder) BuildGetAllUsersCountQuery() (query string) {
+func (q *QueryBuilder) BuildGetAllUsersCountQuery() (query string) {
 	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.UsersTableName)).
 		From(querybuilding.UsersTableName).
@@ -109,7 +109,7 @@ func (q *BaseQueryBuilder) BuildGetAllUsersCountQuery() (query string) {
 
 // BuildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
 // to a given filter's criteria.
-func (q *BaseQueryBuilder) BuildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetUsersQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	builder := q.sqlBuilder.
 		Select(querybuilding.UsersTableColumns...).
 		From(querybuilding.UsersTableName).
@@ -126,7 +126,7 @@ func (q *BaseQueryBuilder) BuildGetUsersQuery(filter *types.QueryFilter) (query 
 }
 
 // BuildTestUserCreationQuery builds a query and arguments that creates a test user.
-func (q *BaseQueryBuilder) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	perms := 0
 	if testUserConfig.IsServiceAdmin {
 		perms = math.MaxUint32
@@ -162,7 +162,7 @@ func (q *BaseQueryBuilder) BuildTestUserCreationQuery(testUserConfig *types.Test
 // admins have DB access and will change that value via SQL query.
 // There should be no way to update a user via this structure
 // such that they would have admin privileges.
-func (q *BaseQueryBuilder) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(
@@ -187,7 +187,7 @@ func (q *BaseQueryBuilder) BuildCreateUserQuery(input types.UserDataStoreCreatio
 }
 
 // BuildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
-func (q *BaseQueryBuilder) BuildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateUserQuery(input *types.User) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableUsernameColumn, input.Username).
@@ -204,7 +204,7 @@ func (q *BaseQueryBuilder) BuildUpdateUserQuery(input *types.User) (query string
 }
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (q *BaseQueryBuilder) BuildSetUserStatusQuery(userID uint64, input types.UserReputationUpdateInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildSetUserStatusQuery(userID uint64, input types.UserReputationUpdateInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
@@ -217,7 +217,7 @@ func (q *BaseQueryBuilder) BuildSetUserStatusQuery(userID uint64, input types.Us
 }
 
 // BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's authentication.
-func (q *BaseQueryBuilder) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableHashedPasswordColumn, newHash).
@@ -232,7 +232,7 @@ func (q *BaseQueryBuilder) BuildUpdateUserPasswordQuery(userID uint64, newHash s
 }
 
 // BuildUpdateUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (q *BaseQueryBuilder) BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, nil).
@@ -245,7 +245,7 @@ func (q *BaseQueryBuilder) BuildUpdateUserTwoFactorSecretQuery(userID uint64, ne
 }
 
 // BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (q *BaseQueryBuilder) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, currentUnixTimeQuery).
@@ -258,7 +258,7 @@ func (q *BaseQueryBuilder) BuildVerifyUserTwoFactorSecretQuery(userID uint64) (q
 }
 
 // BuildArchiveUserQuery builds a SQL query that marks a user as archived.
-func (q *BaseQueryBuilder) BuildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildArchiveUserQuery(userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
@@ -270,7 +270,7 @@ func (q *BaseQueryBuilder) BuildArchiveUserQuery(userID uint64) (query string, a
 }
 
 // BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{}) {
 	userIDKey := fmt.Sprintf(
 		jsonPluckQuery,
 		querybuilding.AuditLogEntriesTableName,

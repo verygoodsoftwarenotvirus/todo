@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"

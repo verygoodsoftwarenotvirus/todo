@@ -191,7 +191,12 @@ func (c *Client) MarkAccountAsUserDefault(ctx context.Context, userID, accountID
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, accountID, changedByUser))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, accountID, changedByUser)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
@@ -226,12 +231,10 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, userID, c
 		keys.AccountIDKey: accountID,
 		keys.UserIDKey:    userID,
 		keys.RequesterKey: changedByUser,
-		"input":           input,
+		"new_permissions": input.UserAccountPermissions,
 	})
 
 	query, args := c.sqlQueryBuilder.BuildModifyUserPermissionsQuery(userID, accountID, input.UserAccountPermissions)
-
-	logger = logger.WithValue("query", query).WithValue("args", args)
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -244,7 +247,12 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, userID, c
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.UserAccountPermissions, input.Reason))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.UserAccountPermissions, input.Reason)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
@@ -263,28 +271,43 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID, transf
 	logger := c.logger.WithValues(map[string]interface{}{
 		keys.AccountIDKey: accountID,
 		keys.RequesterKey: transferredBy,
+		"current_owner":   input.CurrentOwner,
+		"new_owner":       input.NewOwner,
 	})
-
-	logger.Debug("TransferAccountOwnership called")
-
-	query, args := c.sqlQueryBuilder.BuildTransferAccountOwnershipQuery(input.CurrentOwner, input.NewOwner, accountID)
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
+	transferAccountOwnershipQuery, transferAccountOwnershipArgs := c.sqlQueryBuilder.BuildTransferAccountOwnershipQuery(input.CurrentOwner, input.NewOwner, accountID)
+
 	// create the membership.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); writeErr != nil {
+	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user ownership transfer", transferAccountOwnershipQuery, transferAccountOwnershipArgs); writeErr != nil {
 		c.rollbackTransaction(tx)
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildTransferAccountOwnershipEventEntry(input.CurrentOwner, input.NewOwner, transferredBy, accountID, input.Reason))
+	transferAccountMembershipQuery, transferAccountMembershipArgs := c.sqlQueryBuilder.BuildTransferAccountMembershipsQuery(input.CurrentOwner, input.NewOwner, accountID)
+
+	// create the membership.
+	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships transfer", transferAccountMembershipQuery, transferAccountMembershipArgs); writeErr != nil {
+		c.rollbackTransaction(tx)
+		return writeErr
+	}
+
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildTransferAccountOwnershipEventEntry(accountID, transferredBy, input)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
 	}
+
+	logger.Debug("TransferAccountOwnership called")
 
 	return nil
 }
@@ -314,7 +337,12 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, accountID, input))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, accountID, input)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)
@@ -352,7 +380,12 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, userID, accountID, r
 		return writeErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(userID, accountID, removedByUser, reason))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(userID, accountID, removedByUser, reason)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", err)

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 )
 
 func newAvatarUploadRequest(t *testing.T, filename string, avatar io.Reader) *http.Request {

@@ -64,8 +64,8 @@ func (q *MariaDB) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *ty
 	)
 }
 
-// BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
-func (q *MariaDB) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
+// BuildAccountCreationQuery takes an account and returns a creation query for that account and the relevant arguments.
+func (q *MariaDB) BuildAccountCreationQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(

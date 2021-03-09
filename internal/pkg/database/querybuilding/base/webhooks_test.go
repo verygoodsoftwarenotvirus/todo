@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"strings"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildGetWebhookQuery(T *testing.T) {
+func TestBase_BuildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -34,7 +34,7 @@ func TestSqlite_BuildGetWebhookQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAllWebhooksCountQuery(T *testing.T) {
+func TestBase_BuildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -49,7 +49,7 @@ func TestSqlite_BuildGetAllWebhooksCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetBatchOfWebhooksQuery(T *testing.T) {
+func TestBase_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestSqlite_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetWebhooksQuery(T *testing.T) {
+func TestBase_BuildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestSqlite_BuildGetWebhooksQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreateWebhookQuery(T *testing.T) {
+func TestBase_BuildCreateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestSqlite_BuildCreateWebhookQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdateWebhookQuery(T *testing.T) {
+func TestBase_BuildUpdateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -168,7 +168,7 @@ func TestSqlite_BuildUpdateWebhookQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildArchiveWebhookQuery(T *testing.T) {
+func TestBase_BuildArchiveWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

@@ -14,9 +14,9 @@ import (
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 )
 
 func (s *TestSuite) TestLogin() {
@@ -59,11 +59,11 @@ func (s *TestSuite) TestLogin() {
 		u.Path = "/users/login"
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), nil)
-		checkValueAndError(t, req, err)
+		requireNotNilAndNoProblems(t, req, err)
 
 		// execute login request.
 		res, err := testClient.PlainClient().Do(req)
-		checkValueAndError(t, res, err)
+		requireNotNilAndNoProblems(t, res, err)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
 
@@ -124,14 +124,14 @@ func (s *TestSuite) TestLogin() {
 		exampleUser := fakes.BuildFakeUser()
 		exampleUserCreationInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
 		ucr, err := testClient.CreateUser(ctx, exampleUserCreationInput)
-		checkValueAndError(t, ucr, err)
+		requireNotNilAndNoProblems(t, ucr, err)
 
 		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
 		require.NoError(t, err)
 
 		// create login request.
 		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
-		checkValueAndError(t, token, err)
+		requireNotNilAndNoProblems(t, token, err)
 		r := &types.UserLoginInput{
 			Username:  exampleUserCreationInput.Username,
 			Password:  exampleUserCreationInput.Password,
@@ -197,7 +197,7 @@ func (s *TestSuite) TestPASETOGeneration() {
 		}
 
 		createdAPIClient, apiClientCreationErr := testClient.CreateAPIClient(ctx, cookie, exampleAPIClientInput)
-		checkValueAndError(t, createdAPIClient, apiClientCreationErr)
+		requireNotNilAndNoProblems(t, createdAPIClient, apiClientCreationErr)
 
 		actualKey, keyDecodeErr := base64.RawURLEncoding.DecodeString(createdAPIClient.ClientSecret)
 		require.NoError(t, keyDecodeErr)
@@ -291,7 +291,7 @@ func (s *TestSuite) TestTOTPSecretChanging() {
 		assert.NoError(t, err)
 
 		secretVerificationToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
-		checkValueAndError(t, secretVerificationToken, err)
+		requireNotNilAndNoProblems(t, secretVerificationToken, err)
 
 		assert.NoError(t, testClient.VerifyTOTPSecret(ctx, testUser.ID, secretVerificationToken))
 
@@ -300,7 +300,7 @@ func (s *TestSuite) TestTOTPSecretChanging() {
 
 		// create login request.
 		newToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
-		checkValueAndError(t, newToken, err)
+		requireNotNilAndNoProblems(t, newToken, err)
 
 		secondCookie, err := testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
@@ -331,7 +331,7 @@ func (s *TestSuite) TestTOTPTokenValidation() {
 		require.NoError(t, err)
 
 		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
-		checkValueAndError(t, token, err)
+		requireNotNilAndNoProblems(t, token, err)
 
 		assert.NoError(t, testClient.VerifyTOTPSecret(ctx, user.ID, token))
 	})

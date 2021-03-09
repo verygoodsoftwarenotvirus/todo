@@ -11,10 +11,10 @@ import (
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -43,7 +43,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleWebhookList, nil)
@@ -79,7 +79,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), sql.ErrNoRows)
@@ -115,7 +115,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), errors.New("blah"))
@@ -208,7 +208,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.WebhookCreationInput{}),
 			exampleUser.ID,
 		).Return(exampleWebhook, nil)
@@ -315,7 +315,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.WebhookCreationInput{}),
 			exampleUser.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
@@ -371,7 +371,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 		).Return(exampleWebhook, nil)
@@ -414,7 +414,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
@@ -457,7 +457,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
@@ -512,14 +512,14 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 		).Return(exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.Webhook{}),
 			exampleUser.ID,
 			mock.IsType([]types.FieldChangeSummary{}),
@@ -593,7 +593,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
@@ -639,7 +639,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
@@ -685,14 +685,14 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 		).Return(exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.Webhook{}),
 			exampleUser.ID,
 			mock.IsType([]types.FieldChangeSummary{}),
@@ -753,7 +753,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 			exampleUser.ID,
@@ -793,7 +793,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 			exampleUser.ID,
@@ -837,7 +837,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleWebhook.ID,
 			exampleAccount.ID,
 			exampleUser.ID,

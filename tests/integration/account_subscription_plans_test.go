@@ -39,7 +39,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansCreating() {
 			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			createdAccountSubscriptionPlan, err := testClients.admin.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-			checkValueAndError(t, createdAccountSubscriptionPlan, err)
+			requireNotNilAndNoProblems(t, createdAccountSubscriptionPlan, err)
 
 			// Assert plan equality.
 			checkPlanEquality(t, exampleAccountSubscriptionPlan, createdAccountSubscriptionPlan)
@@ -74,14 +74,14 @@ func (s *TestSuite) TestAccountSubscriptionPlansListing() {
 				exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 				exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 				createdPlan, planCreationErr := testClients.admin.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-				checkValueAndError(t, createdPlan, planCreationErr)
+				requireNotNilAndNoProblems(t, createdPlan, planCreationErr)
 
 				created = append(created, createdPlan)
 			}
 
 			// Assert plan list equality.
 			actual, err := testClients.admin.GetAccountSubscriptionPlans(ctx, nil)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			assert.True(
 				t,
 				len(created) <= len(actual.AccountSubscriptionPlans),
@@ -98,7 +98,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansListing() {
 	}
 }
 
-func (s *TestSuite) TestAccountSubscriptionPlansReadingFailsForNonExistentPlan() {
+func (s *TestSuite) TestAccountSubscriptionPlansReading() {
 	for a, c := range s.eachClient() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to read nonexistent plan via %s", authType), func() {
@@ -112,9 +112,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansReadingFailsForNonExistentPlan()
 			assert.Error(t, err)
 		})
 	}
-}
 
-func (s *TestSuite) TestAccountSubscriptionPlansReadingHappyPath() {
 	for a, c := range s.eachClient() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
@@ -128,11 +126,11 @@ func (s *TestSuite) TestAccountSubscriptionPlansReadingHappyPath() {
 			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			createdPlan, err := testClients.admin.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-			checkValueAndError(t, createdPlan, err)
+			requireNotNilAndNoProblems(t, createdPlan, err)
 
 			// Fetch plan.
 			actual, err := testClients.admin.GetAccountSubscriptionPlan(ctx, createdPlan.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert plan equality.
 			checkPlanEquality(t, exampleAccountSubscriptionPlan, actual)
@@ -143,7 +141,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansReadingHappyPath() {
 	}
 }
 
-func (s *TestSuite) TestAccountSubscriptionPlansUpdatingFailsForNonExistentPlan() {
+func (s *TestSuite) TestAccountSubscriptionPlansUpdating() {
 	for a, c := range s.eachClient() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to update a non-existent plan via %s", authType), func() {
@@ -158,9 +156,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansUpdatingFailsForNonExistentPlan(
 			assert.Error(t, testClients.admin.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan))
 		})
 	}
-}
 
-func (s *TestSuite) TestAccountSubscriptionPlansUpdatingHappyPath() {
 	for a, c := range s.eachClient() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be updated via %s", authType), func() {
@@ -174,7 +170,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansUpdatingHappyPath() {
 			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			createdAccountSubscriptionPlan, err := testClients.admin.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-			checkValueAndError(t, createdAccountSubscriptionPlan, err)
+			requireNotNilAndNoProblems(t, createdAccountSubscriptionPlan, err)
 
 			// Change plan.
 			createdAccountSubscriptionPlan.Update(converters.ConvertAccountSubscriptionPlanToPlanUpdateInput(exampleAccountSubscriptionPlan))
@@ -182,7 +178,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansUpdatingHappyPath() {
 
 			// Fetch plan.
 			actual, err := testClients.admin.GetAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert plan equality.
 			checkPlanEquality(t, exampleAccountSubscriptionPlan, actual)
@@ -203,7 +199,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansUpdatingHappyPath() {
 	}
 }
 
-func (s *TestSuite) TestAccountSubscriptionPlansArchivingFailsForNonExistentPlan() {
+func (s *TestSuite) TestAccountSubscriptionPlansArchiving() {
 	for a, c := range s.eachClient() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to archive nonexistent plan via %s", authType), func() {
@@ -215,9 +211,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansArchivingFailsForNonExistentPlan
 			assert.Error(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, nonexistentID))
 		})
 	}
-}
 
-func (s *TestSuite) TestAccountSubscriptionPlansArchivingHappyPath() {
 	for a, c := range s.eachClient() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to archive plan via %s", authType), func() {
@@ -231,7 +225,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansArchivingHappyPath() {
 			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 			createdAccountSubscriptionPlan, err := testClients.admin.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-			checkValueAndError(t, createdAccountSubscriptionPlan, err)
+			requireNotNilAndNoProblems(t, createdAccountSubscriptionPlan, err)
 
 			// Clean up plan.
 			assert.NoError(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
@@ -275,7 +269,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansAuditing() {
 			exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 			exampleAccountSubscriptionPlanInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 			createdPlan, err := testClients.admin.CreateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlanInput)
-			checkValueAndError(t, createdPlan, err)
+			requireNotNilAndNoProblems(t, createdPlan, err)
 
 			// attempt to fetch audit log entries
 			actual, err := testClients.main.GetAuditLogForAccountSubscriptionPlan(ctx, createdPlan.ID)

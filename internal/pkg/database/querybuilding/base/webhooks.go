@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	_ types.WebhookSQLQueryBuilder = (*BaseQueryBuilder)(nil)
+	_ types.WebhookSQLQueryBuilder = (*QueryBuilder)(nil)
 )
 
 // BuildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
-func (q *BaseQueryBuilder) BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.WebhooksTableColumns...).
 		From(querybuilding.WebhooksTableName).
@@ -29,7 +29,7 @@ func (q *BaseQueryBuilder) BuildGetWebhookQuery(webhookID, userID uint64) (query
 }
 
 // BuildGetAllWebhooksCountQuery returns a query which would return the count of webhooks regardless of ownership.
-func (q *BaseQueryBuilder) BuildGetAllWebhooksCountQuery() string {
+func (q *QueryBuilder) BuildGetAllWebhooksCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.WebhooksTableName)).
 		From(querybuilding.WebhooksTableName).
@@ -40,7 +40,7 @@ func (q *BaseQueryBuilder) BuildGetAllWebhooksCountQuery() string {
 }
 
 // BuildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *BaseQueryBuilder) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.WebhooksTableColumns...).
 		From(querybuilding.WebhooksTableName).
@@ -54,7 +54,7 @@ func (q *BaseQueryBuilder) BuildGetBatchOfWebhooksQuery(beginID, endID uint64) (
 }
 
 // BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
-func (q *BaseQueryBuilder) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetWebhooksQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		querybuilding.WebhooksTableName,
 		querybuilding.WebhooksTableOwnershipColumn,
@@ -66,7 +66,7 @@ func (q *BaseQueryBuilder) BuildGetWebhooksQuery(userID uint64, filter *types.Qu
 }
 
 // BuildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
-func (q *BaseQueryBuilder) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildCreateWebhookQuery(x *types.WebhookCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.WebhooksTableName).
 		Columns(
@@ -95,7 +95,7 @@ func (q *BaseQueryBuilder) BuildCreateWebhookQuery(x *types.WebhookCreationInput
 }
 
 // BuildUpdateWebhookQuery takes a given webhook and returns a SQL query to update.
-func (q *BaseQueryBuilder) BuildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateWebhookQuery(input *types.Webhook) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.WebhooksTableName).
 		Set(querybuilding.WebhooksTableNameColumn, input.Name).
@@ -115,7 +115,7 @@ func (q *BaseQueryBuilder) BuildUpdateWebhookQuery(input *types.Webhook) (query 
 }
 
 // BuildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
-func (q *BaseQueryBuilder) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildArchiveWebhookQuery(webhookID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.WebhooksTableName).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
@@ -129,7 +129,7 @@ func (q *BaseQueryBuilder) BuildArchiveWebhookQuery(webhookID, userID uint64) (q
 }
 
 // BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntriesForWebhookQuery(webhookID uint64) (query string, args []interface{}) {
 	webhookIDKey := fmt.Sprintf(
 		jsonPluckQuery,
 		querybuilding.AuditLogEntriesTableName,

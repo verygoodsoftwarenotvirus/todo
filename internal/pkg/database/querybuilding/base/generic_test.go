@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildListQuery(T *testing.T) {
+func TestBase_BuildListQuery(T *testing.T) {
 	T.Parallel()
 
 	const (

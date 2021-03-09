@@ -15,8 +15,8 @@ import (
 	"github.com/brianvoe/gofakeit/v5"
 	"github.com/pquerna/otp/totp"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 )
 
@@ -24,6 +24,10 @@ import (
 func CreateServiceUser(ctx context.Context, address, username string) (*types.User, error) {
 	if username == "" {
 		username = gofakeit.Password(true, true, true, false, false, 32)
+	}
+
+	if address == "" {
+		return nil, errors.New("empty address not allowed")
 	}
 
 	c, err := httpclient.NewClient(

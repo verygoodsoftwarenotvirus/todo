@@ -417,7 +417,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger = logger.WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID).WithValue("requested_account", pasetoRequest.AccountID)
+	logger = logger.
+		WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID).
+		WithValue("requested_account", pasetoRequest.AccountID)
 
 	reqTime := time.Unix(0, pasetoRequest.RequestTime)
 	if time.Until(reqTime) > requestTimeThreshold || time.Since(reqTime) > requestTimeThreshold {
@@ -524,7 +526,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		ExpiresAt: jsonToken.Expiration.String(),
 	}
 
-	logger.Debug("Issuing PASETO")
+	logger.Info("Issuing PASETO")
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
 }

@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	_ types.ItemSQLQueryBuilder = (*BaseQueryBuilder)(nil)
+	_ types.ItemSQLQueryBuilder = (*QueryBuilder)(nil)
 )
 
 // BuildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
-func (q *BaseQueryBuilder) BuildItemExistsQuery(itemID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildItemExistsQuery(itemID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn)).
 		Prefix(querybuilding.ExistencePrefix).
@@ -30,7 +30,7 @@ func (q *BaseQueryBuilder) BuildItemExistsQuery(itemID, accountID uint64) (query
 }
 
 // BuildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetItemQuery(itemID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetItemQuery(itemID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.ItemsTableColumns...).
 		From(querybuilding.ItemsTableName).
@@ -44,7 +44,7 @@ func (q *BaseQueryBuilder) BuildGetItemQuery(itemID, accountID uint64) (query st
 
 // BuildGetAllItemsCountQuery returns a query that fetches the total number of items in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *BaseQueryBuilder) BuildGetAllItemsCountQuery() string {
+func (q *QueryBuilder) BuildGetAllItemsCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
 		From(querybuilding.ItemsTableName).
@@ -55,7 +55,7 @@ func (q *BaseQueryBuilder) BuildGetAllItemsCountQuery() string {
 }
 
 // BuildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *BaseQueryBuilder) BuildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.ItemsTableColumns...).
 		From(querybuilding.ItemsTableName).
@@ -70,7 +70,7 @@ func (q *BaseQueryBuilder) BuildGetBatchOfItemsQuery(beginID, endID uint64) (que
 
 // BuildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *BaseQueryBuilder) BuildGetItemsQuery(accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetItemsQuery(accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		querybuilding.ItemsTableName,
 		querybuilding.ItemsTableAccountOwnershipColumn,
@@ -104,7 +104,7 @@ func buildWhenThenStatement(ids []uint64) string {
 // slice of uint64s instead of a slice of strings in order to ensure all the provided strings
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (q *BaseQueryBuilder) BuildGetItemsWithIDsQuery(accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetItemsWithIDsQuery(accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
 	whenThenStatement := buildWhenThenStatement(ids)
 
 	where := squirrel.Eq{
@@ -126,7 +126,7 @@ func (q *BaseQueryBuilder) BuildGetItemsWithIDsQuery(accountID uint64, limit uin
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
-func (q *BaseQueryBuilder) BuildCreateItemQuery(input *types.ItemCreationInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildCreateItemQuery(input *types.ItemCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.ItemsTableName).
 		Columns(
@@ -145,7 +145,7 @@ func (q *BaseQueryBuilder) BuildCreateItemQuery(input *types.ItemCreationInput) 
 }
 
 // BuildUpdateItemQuery takes an item and returns an update SQL query, with the relevant query parameters.
-func (q *BaseQueryBuilder) BuildUpdateItemQuery(input *types.Item) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateItemQuery(input *types.Item) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.ItemsTableName).
 		Set(querybuilding.ItemsTableNameColumn, input.Name).
@@ -160,7 +160,7 @@ func (q *BaseQueryBuilder) BuildUpdateItemQuery(input *types.Item) (query string
 }
 
 // BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
-func (q *BaseQueryBuilder) BuildArchiveItemQuery(itemID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildArchiveItemQuery(itemID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.ItemsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
@@ -174,7 +174,7 @@ func (q *BaseQueryBuilder) BuildArchiveItemQuery(itemID, accountID uint64) (quer
 }
 
 // BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{}) {
 	itemIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 
 	return q.buildQuery(q.sqlBuilder.

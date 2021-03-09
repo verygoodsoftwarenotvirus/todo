@@ -1,17 +1,17 @@
-package sqlite
+package base
 
 import (
 	"math"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
+func TestBase_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestSqlite_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUserIsMemberOfAccountQuery(T *testing.T) {
+func TestBase_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestSqlite_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
+func TestBase_BuildAddUserToAccountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildRemoveUserFromAccountQuery(T *testing.T) {
+func TestBase_BuildRemoveUserFromAccountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -107,7 +107,7 @@ func TestSqlite_BuildRemoveUserFromAccountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
+func TestBase_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestSqlite_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
+func TestBase_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -153,7 +153,7 @@ func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
+func TestBase_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -174,7 +174,7 @@ func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
+func TestBase_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -198,7 +198,7 @@ func TestSqlite_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildModifyUserPermissionsQuery(T *testing.T) {
+func TestBase_BuildModifyUserPermissionsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -223,23 +223,49 @@ func TestSqlite_BuildModifyUserPermissionsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildTransferAccountOwnershipQuery(T *testing.T) {
+func TestBase_BuildTransferAccountOwnershipQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleOldOwner := fakes.BuildFakeUser()
+		exampleNewOwner := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+
+		expectedQuery := "UPDATE accounts SET belongs_to_user = ? WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
+		expectedArgs := []interface{}{
+			exampleNewOwner.ID,
+			exampleOldOwner.ID,
+			exampleAccount.ID,
+		}
+		actualQuery, actualArgs := q.BuildTransferAccountOwnershipQuery(exampleOldOwner.ID, exampleNewOwner.ID, exampleAccount.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestBase_BuildTransferAccountMembershipsQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+		q, _ := buildTestService(t)
+
+		exampleOldOwner := fakes.BuildFakeUser()
+		exampleNewOwner := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
 		expectedQuery := "UPDATE account_user_memberships SET belongs_to_user = ? WHERE archived_on IS NULL AND belongs_to_account = ? AND belongs_to_user = ?"
 		expectedArgs := []interface{}{
-			exampleAccount.BelongsToUser,
+			exampleNewOwner.ID,
 			exampleAccount.ID,
-			exampleUser.ID,
+			exampleOldOwner.ID,
 		}
-		actualQuery, actualArgs := q.BuildTransferAccountOwnershipQuery(exampleUser.ID, exampleAccount.BelongsToUser, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildTransferAccountMembershipsQuery(exampleOldOwner.ID, exampleNewOwner.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

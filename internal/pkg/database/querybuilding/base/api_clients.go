@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	_ types.APIClientSQLQueryBuilder = (*BaseQueryBuilder)(nil)
+	_ types.APIClientSQLQueryBuilder = (*QueryBuilder)(nil)
 )
 
 // BuildGetBatchOfAPIClientsQuery returns a query that fetches every item in the database within a bucketed range.
-func (q *BaseQueryBuilder) BuildGetBatchOfAPIClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetBatchOfAPIClientsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.APIClientsTableColumns...).
 		From(querybuilding.APIClientsTableName).
@@ -29,7 +29,7 @@ func (q *BaseQueryBuilder) BuildGetBatchOfAPIClientsQuery(beginID, endID uint64)
 }
 
 // BuildGetAPIClientByClientIDQuery returns a SQL query which requests a given OAuth2 client by its database ID.
-func (q *BaseQueryBuilder) BuildGetAPIClientByClientIDQuery(clientID string) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAPIClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.APIClientsTableColumns...).
 		From(querybuilding.APIClientsTableName).
@@ -42,7 +42,7 @@ func (q *BaseQueryBuilder) BuildGetAPIClientByClientIDQuery(clientID string) (qu
 
 // BuildGetAllAPIClientsCountQuery returns a SQL query for the number of OAuth2 clients
 // returns the database, regardless of ownership.
-func (q *BaseQueryBuilder) BuildGetAllAPIClientsCountQuery() string {
+func (q *QueryBuilder) BuildGetAllAPIClientsCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.APIClientsTableName)).
 		From(querybuilding.APIClientsTableName).
@@ -54,7 +54,7 @@ func (q *BaseQueryBuilder) BuildGetAllAPIClientsCountQuery() string {
 
 // BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
 // returns the given filter's criteria (if relevant) and belong to a given account.
-func (q *BaseQueryBuilder) BuildGetAPIClientsQuery(accountID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAPIClientsQuery(accountID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		querybuilding.APIClientsTableName,
 		querybuilding.APIClientsTableOwnershipColumn,
@@ -66,7 +66,7 @@ func (q *BaseQueryBuilder) BuildGetAPIClientsQuery(accountID uint64, filter *typ
 }
 
 // BuildGetAPIClientByDatabaseIDQuery returns a SQL query which requests a given API client by its database ID.
-func (q *BaseQueryBuilder) BuildGetAPIClientByDatabaseIDQuery(clientID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAPIClientByDatabaseIDQuery(clientID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.APIClientsTableColumns...).
 		From(querybuilding.APIClientsTableName).
@@ -79,7 +79,7 @@ func (q *BaseQueryBuilder) BuildGetAPIClientByDatabaseIDQuery(clientID, accountI
 }
 
 // BuildCreateAPIClientQuery returns a SQL query (and args) that will create the given APIClient in the database.
-func (q *BaseQueryBuilder) BuildCreateAPIClientQuery(input *types.APICientCreationInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildCreateAPIClientQuery(input *types.APICientCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.APIClientsTableName).
 		Columns(
@@ -100,7 +100,7 @@ func (q *BaseQueryBuilder) BuildCreateAPIClientQuery(input *types.APICientCreati
 }
 
 // BuildUpdateAPIClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
-func (q *BaseQueryBuilder) BuildUpdateAPIClientQuery(input *types.APIClient) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateAPIClientQuery(input *types.APIClient) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.APIClientsTableName).
 		Set(querybuilding.APIClientsTableClientIDColumn, input.ClientID).
@@ -114,7 +114,7 @@ func (q *BaseQueryBuilder) BuildUpdateAPIClientQuery(input *types.APIClient) (qu
 }
 
 // BuildArchiveAPIClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
-func (q *BaseQueryBuilder) BuildArchiveAPIClientQuery(clientID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildArchiveAPIClientQuery(clientID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.APIClientsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
@@ -128,7 +128,7 @@ func (q *BaseQueryBuilder) BuildArchiveAPIClientQuery(clientID, accountID uint64
 }
 
 // BuildGetAuditLogEntriesForAPIClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntriesForAPIClientQuery(clientID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntriesForAPIClientQuery(clientID uint64) (query string, args []interface{}) {
 	apiClientIDKey := fmt.Sprintf(
 		jsonPluckQuery,
 		querybuilding.AuditLogEntriesTableName,

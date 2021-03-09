@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
+func TestBase_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestSqlite_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAPIClientQuery(T *testing.T) {
+func TestBase_BuildGetAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestSqlite_BuildGetAPIClientQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAllAPIClientsCountQuery(T *testing.T) {
+func TestBase_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestSqlite_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAPIClientsQuery(T *testing.T) {
+func TestBase_BuildGetAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestSqlite_BuildGetAPIClientsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
+func TestBase_BuildCreateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdateAPIClientQuery(T *testing.T) {
+func TestBase_BuildUpdateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -156,7 +156,7 @@ func TestSqlite_BuildUpdateAPIClientQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildArchiveAPIClientQuery(T *testing.T) {
+func TestBase_BuildArchiveAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildGetAuditLogEntryQuery(T *testing.T) {
+func TestBase_BuildGetAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -32,7 +32,7 @@ func TestSqlite_BuildGetAuditLogEntryQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
+func TestBase_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestSqlite_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
+func TestBase_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestSqlite_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAuditLogEntriesQuery(T *testing.T) {
+func TestBase_BuildGetAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestSqlite_BuildGetAuditLogEntriesQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreateAuditLogEntryQuery(T *testing.T) {
+func TestBase_BuildCreateAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

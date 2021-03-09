@@ -54,7 +54,7 @@ frontend-build:
   stage: quality
   image: node:lts-stretch
   before_script:
-    - cd _frontend/
+    - cd frontend/
     - npm install
   script:
     - npm run build

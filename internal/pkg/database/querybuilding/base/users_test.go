@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
+func TestBase_BuildUserIsBannedQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -27,7 +27,7 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 			types.BannedAccountStatus,
 			types.TerminatedAccountStatus,
 		}
-		actualQuery, actualArgs := q.BuildUserIsBannedQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -35,7 +35,7 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetUserQuery(T *testing.T) {
+func TestBase_BuildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestSqlite_BuildGetUserQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
+func TestBase_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -76,7 +76,7 @@ func TestSqlite_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetUsersQuery(T *testing.T) {
+func TestBase_BuildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -100,7 +100,7 @@ func TestSqlite_BuildGetUsersQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
+func TestBase_BuildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAllUsersCountQuery(T *testing.T) {
+func TestBase_BuildGetAllUsersCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -136,7 +136,7 @@ func TestSqlite_BuildGetAllUsersCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreateUserQuery(T *testing.T) {
+func TestBase_BuildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -170,7 +170,7 @@ func TestSqlite_BuildCreateUserQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
+func TestBase_BuildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -196,7 +196,7 @@ func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
+func TestBase_BuildUpdateUserPasswordQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -219,7 +219,7 @@ func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
+func TestBase_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -242,7 +242,7 @@ func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
+func TestBase_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -264,7 +264,7 @@ func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildArchiveUserQuery(T *testing.T) {
+func TestBase_BuildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

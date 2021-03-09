@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"database/sql"
@@ -29,11 +29,11 @@ var (
 	currentUnixTimeQuery = squirrel.Expr(`(strftime('%s','now'))`)
 )
 
-var _ database.SQLQueryBuilder = (*BaseQueryBuilder)(nil)
+var _ database.SQLQueryBuilder = (*QueryBuilder)(nil)
 
 type (
-	// BaseQueryBuilder is our main BaseQueryBuilder interaction db.
-	BaseQueryBuilder struct {
+	// QueryBuilder is our main QueryBuilder interaction db.
+	QueryBuilder struct {
 		logger              logging.Logger
 		sqlBuilder          squirrel.StatementBuilderType
 		externalIDGenerator querybuilding.ExternalIDGenerator
@@ -41,8 +41,8 @@ type (
 )
 
 // ProvideBaseQueryBuilder provides a sqlite db controller.
-func ProvideBaseQueryBuilder(logger logging.Logger, pf squirrel.PlaceholderFormat) *BaseQueryBuilder {
-	return &BaseQueryBuilder{
+func ProvideBaseQueryBuilder(logger logging.Logger, pf squirrel.PlaceholderFormat) *QueryBuilder {
+	return &QueryBuilder{
 		logger:              logging.EnsureLogger(logger).WithName(loggerName),
 		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(pf),
 		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
@@ -51,7 +51,7 @@ func ProvideBaseQueryBuilder(logger logging.Logger, pf squirrel.PlaceholderForma
 
 // BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a sqlite database.
-func (q *BaseQueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
+func (q *QueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		d := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
 		if err := darwin.Migrate(d, []darwin.Migration{}, nil); err != nil {
@@ -65,7 +65,7 @@ func (q *BaseQueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
 // type discrepancies or other misuses of SQL. An alert should be set up for
 // any log entries with the given name, and those alerts should be investigated
 // with the utmost priority.
-func (q *BaseQueryBuilder) logQueryBuildingError(err error) {
+func (q *QueryBuilder) logQueryBuildingError(err error) {
 	if err != nil {
 		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
 	}

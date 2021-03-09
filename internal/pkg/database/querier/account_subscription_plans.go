@@ -117,8 +117,8 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	x = &types.AccountSubscriptionPlanList{}
 
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 	}
 
 	c.logger.Debug("GetAccountSubscriptionPlans called")
@@ -146,16 +146,16 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 
 	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
 
-	tx, err := c.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
+	tx, tramsactionStartErr := c.db.BeginTx(ctx, nil)
+	if tramsactionStartErr != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", tramsactionStartErr)
 	}
 
 	// create the account subscription plan.
-	id, err := c.performWriteQuery(ctx, tx, false, "account subscription plan creation", query, args)
-	if err != nil {
+	id, accountSubscriptionPlanCreationErr := c.performWriteQuery(ctx, tx, false, "account subscription plan creation", query, args)
+	if accountSubscriptionPlanCreationErr != nil {
 		c.rollbackTransaction(tx)
-		return nil, err
+		return nil, accountSubscriptionPlanCreationErr
 	}
 
 	x := &types.AccountSubscriptionPlan{
@@ -167,10 +167,13 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 		CreatedOn:   c.currentTime(),
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanCreationEventEntry(x))
+	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanCreationEventEntry(x)); err != nil {
+		c.rollbackTransaction(tx)
+		return nil, fmt.Errorf("writing account subscription plan creation audit log entry")
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, fmt.Errorf("error committing transaction: %w", commitErr)
 	}
 
 	return x, nil
@@ -196,7 +199,10 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 		return fmt.Errorf("error updating account subscription plan: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(changedBy, updated.ID, changes))
+	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(changedBy, updated.ID, changes)); err != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("writing account subscription plan update audit log entry")
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -229,7 +235,10 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 		return fmt.Errorf("error updating account subscription plan: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(archivedBy, accountSubscriptionPlanID))
+	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(archivedBy, accountSubscriptionPlanID)); err != nil {
+		c.rollbackTransaction(tx)
+		return fmt.Errorf("writing account subscription plan archive audit log entry")
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

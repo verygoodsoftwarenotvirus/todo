@@ -31,12 +31,25 @@ func (q *MariaDB) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (
 // BuildTransferAccountOwnershipQuery does .
 func (q *MariaDB) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsTableName).
+		Set(querybuilding.AccountsTableUserOwnershipColumn, newOwnerID).
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:                         accountID,
+			querybuilding.AccountsTableUserOwnershipColumn: oldOwnerID,
+			querybuilding.ArchivedOnColumn:                 nil,
+		}),
+	)
+}
+
+// BuildTransferAccountMembershipsQuery does .
+func (q *MariaDB) BuildTransferAccountMembershipsQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.AccountsUserMembershipTableUserOwnershipColumn, newOwnerID).
 		Where(squirrel.Eq{
-			querybuilding.ArchivedOnColumn:                                  nil,
-			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    oldOwnerID,
 			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    currentOwnerID,
+			querybuilding.ArchivedOnColumn:                                  nil,
 		}),
 	)
 }

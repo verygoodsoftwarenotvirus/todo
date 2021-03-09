@@ -13,6 +13,13 @@ type AccountSQLQueryBuilder struct {
 	mock.Mock
 }
 
+// BuildTransferAccountOwnershipQuery implements our interface.
+func (m *AccountSQLQueryBuilder) BuildTransferAccountOwnershipQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(currentOwnerID, newOwnerID, accountID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
 // BuildGetAccountQuery implements our interface.
 func (m *AccountSQLQueryBuilder) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(accountID, userID)
@@ -41,8 +48,8 @@ func (m *AccountSQLQueryBuilder) BuildGetAccountsQuery(userID uint64, forAdmin b
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildCreateAccountQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
+// BuildAccountCreationQuery implements our interface.
+func (m *AccountSQLQueryBuilder) BuildAccountCreationQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

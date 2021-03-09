@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,10 +12,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 )
 
@@ -39,7 +40,7 @@ func (s *TestSuite) TestAccountsCreating() {
 			exampleAccount := fakes.BuildFakeAccount()
 			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			checkValueAndError(t, createdAccount, err)
+			requireNotNilAndNoProblems(t, createdAccount, err)
 
 			// Assert account equality.
 			checkAccountEquality(t, exampleAccount, createdAccount)
@@ -75,14 +76,14 @@ func (s *TestSuite) TestAccountsListing() {
 				exampleAccount := fakes.BuildFakeAccount()
 				exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 				createdAccount, accountCreationErr := testClients.main.CreateAccount(ctx, exampleAccountInput)
-				checkValueAndError(t, createdAccount, accountCreationErr)
+				requireNotNilAndNoProblems(t, createdAccount, accountCreationErr)
 
 				expected = append(expected, createdAccount)
 			}
 
 			// Assert account list equality.
 			actual, err := testClients.main.GetAccounts(ctx, nil)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			assert.True(
 				t,
 				len(expected) <= len(actual.Accounts),
@@ -126,11 +127,11 @@ func (s *TestSuite) TestAccountsReading() {
 			exampleAccount := fakes.BuildFakeAccount()
 			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			checkValueAndError(t, createdAccount, err)
+			requireNotNilAndNoProblems(t, createdAccount, err)
 
 			// Fetch account.
 			actual, err := testClients.main.GetAccount(ctx, createdAccount.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert account equality.
 			checkAccountEquality(t, exampleAccount, actual)
@@ -169,7 +170,7 @@ func (s *TestSuite) TestAccountsUpdating() {
 			exampleAccount := fakes.BuildFakeAccount()
 			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			checkValueAndError(t, createdAccount, err)
+			requireNotNilAndNoProblems(t, createdAccount, err)
 
 			// Change account.
 			createdAccount.Update(converters.ConvertAccountToAccountUpdateInput(exampleAccount))
@@ -177,7 +178,7 @@ func (s *TestSuite) TestAccountsUpdating() {
 
 			// Fetch account.
 			actual, err := testClients.main.GetAccount(ctx, createdAccount.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert account equality.
 			checkAccountEquality(t, exampleAccount, actual)
@@ -224,7 +225,7 @@ func (s *TestSuite) TestAccountsArchiving() {
 			exampleAccount := fakes.BuildFakeAccount()
 			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			checkValueAndError(t, createdAccount, err)
+			requireNotNilAndNoProblems(t, createdAccount, err)
 
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
@@ -251,7 +252,7 @@ func (s *TestSuite) TestAccountsMemberships() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			const userCount = 1
+			const userCount = 2
 			// create dummy users
 			users := []*types.User{}
 			clients := []*httpclient.Client{}
@@ -281,10 +282,16 @@ func (s *TestSuite) TestAccountsMemberships() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			createdWebhook, creationErr := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, createdWebhook, creationErr)
+			requireNotNilAndNoProblems(t, createdWebhook, creationErr)
 
 			t.Logf("created webhook #%d belonging to account #%d", createdWebhook.ID, createdWebhook.BelongsToAccount)
 			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.AccountCreationEvent},
+				{EventType: audit.UserAddedToAccountEvent},
+				{EventType: audit.WebhookCreationEvent},
+			}
 
 			// check that each user cannot see the webhook
 			for i := 0; i < userCount; i++ {
@@ -299,13 +306,14 @@ func (s *TestSuite) TestAccountsMemberships() {
 					UserID: users[i].ID,
 					Reason: t.Name(),
 				}))
+				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAddedToAccountEvent})
 				require.NoError(t, clients[i].SwitchActiveAccount(ctx, account.ID))
 			}
 
 			// check that each user can see the webhook
 			for i := 0; i < userCount; i++ {
 				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
-				checkValueAndError(t, webhook, err)
+				requireNotNilAndNoProblems(t, webhook, err)
 			}
 
 			// check that each user cannot update the webhook
@@ -320,11 +328,14 @@ func (s *TestSuite) TestAccountsMemberships() {
 					Reason:                 t.Name(),
 				}
 				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
+				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAccountPermissionsModifiedEvent})
 			}
 
 			// check that each user can update the webhook
 			for i := 0; i < userCount; i++ {
+				createdWebhook.Name = fmt.Sprintf("%s_%d", createdWebhook.Name, time.Now().UnixNano())
 				require.NoError(t, clients[i].UpdateWebhook(ctx, createdWebhook))
+				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.WebhookUpdateEvent})
 			}
 
 			// remove users from account
@@ -343,22 +354,99 @@ func (s *TestSuite) TestAccountsMemberships() {
 			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, account.ID)
 			require.NoError(t, err)
 
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.WebhookCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.UserAccountPermissionsModifiedEvent},
-				{EventType: audit.WebhookUpdateEvent},
-			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
 
 			// Clean up.
 			require.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
 
 			for i := 0; i < userCount; i++ {
-				require.NoError(t, testClients.main.ArchiveUser(ctx, users[i].ID))
+				require.NoError(t, testClients.admin.ArchiveUser(ctx, users[i].ID))
 			}
+		})
+	}
+
+	for a, c := range s.eachClient() {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be possible to transfer ownership of an account via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// create users
+			futureOwner, _, _, futureOwnerClient := createUserAndClientForTest(ctx, t)
+
+			// fetch account data
+			accountCreationInput := &types.AccountCreationInput{
+				Name:                   fakes.BuildFakeAccount().Name,
+				DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
+			}
+			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
+			require.NoError(t, accountCreationErr)
+			require.NotNil(t, account)
+
+			t.Logf("created account #%d", account.ID)
+
+			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultUserPermissions, "expected and actual permissions do not match")
+			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
+
+			t.Logf("switched to active account: %d", account.ID)
+
+			// create a webhook
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			createdWebhook, creationErr := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			requireNotNilAndNoProblems(t, createdWebhook, creationErr)
+
+			t.Logf("created webhook #%d belonging to account #%d", createdWebhook.ID, createdWebhook.BelongsToAccount)
+			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
+
+			// check that user cannot see the webhook
+			webhook, err := futureOwnerClient.GetWebhook(ctx, createdWebhook.ID)
+			require.Nil(t, webhook)
+			require.Error(t, err)
+
+			// add them to the account
+			require.NoError(t, testClients.main.TransferAccountOwnership(ctx, account.ID, &types.TransferAccountOwnershipInput{
+				Reason:       t.Name(),
+				CurrentOwner: account.BelongsToUser,
+				NewOwner:     futureOwner.ID,
+			}))
+
+			t.Logf("transferred account %d from user %d to user %d", account.ID, account.BelongsToUser, futureOwner.ID)
+
+			require.NoError(t, futureOwnerClient.SwitchActiveAccount(ctx, account.ID))
+
+			// check that user can see the webhook
+			webhook, err = futureOwnerClient.GetWebhook(ctx, createdWebhook.ID)
+			requireNotNilAndNoProblems(t, webhook, err)
+
+			// check that old user cannot see the webhook
+			webhook, err = testClients.main.GetWebhook(ctx, createdWebhook.ID)
+			require.Nil(t, webhook)
+			require.Error(t, err)
+
+			// check that new owner can update the webhook
+			require.NoError(t, futureOwnerClient.UpdateWebhook(ctx, createdWebhook))
+
+			// check audit log entries
+			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, account.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.AccountCreationEvent},
+				{EventType: audit.UserAddedToAccountEvent},
+				{EventType: audit.WebhookCreationEvent},
+				{EventType: audit.AccountTransferredEvent},
+				{EventType: audit.WebhookUpdateEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
+
+			// Clean up.
+			require.Error(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
+			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
+
+			require.NoError(t, testClients.admin.ArchiveUser(ctx, futureOwner.ID))
 		})
 	}
 }
@@ -391,7 +479,7 @@ func (s *TestSuite) TestAccountsAuditing() {
 			exampleAccount := fakes.BuildFakeAccount()
 			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			checkValueAndError(t, createdAccount, err)
+			requireNotNilAndNoProblems(t, createdAccount, err)
 
 			// fetch audit log entries
 			actual, err := testClients.main.GetAuditLogForAccount(ctx, createdAccount.ID)
@@ -415,7 +503,7 @@ func (s *TestSuite) TestAccountsAuditing() {
 			exampleAccount := fakes.BuildFakeAccount()
 			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			checkValueAndError(t, createdAccount, err)
+			requireNotNilAndNoProblems(t, createdAccount, err)
 
 			// fetch audit log entries
 			actual, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)

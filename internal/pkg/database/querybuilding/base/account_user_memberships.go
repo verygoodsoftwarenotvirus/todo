@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -11,10 +11,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.AccountUserMembershipSQLQueryBuilder = (*BaseQueryBuilder)(nil)
+var _ types.AccountUserMembershipSQLQueryBuilder = (*QueryBuilder)(nil)
 
 // BuildArchiveAccountMembershipsForUserQuery does .
-func (q *BaseQueryBuilder) BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
@@ -26,7 +26,7 @@ func (q *BaseQueryBuilder) BuildArchiveAccountMembershipsForUserQuery(userID uin
 }
 
 // BuildGetAccountMembershipsForUserQuery does .
-func (q *BaseQueryBuilder) BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AccountsUserMembershipTableColumns...).
 		From(querybuilding.AccountsUserMembershipTableName).
@@ -38,7 +38,7 @@ func (q *BaseQueryBuilder) BuildGetAccountMembershipsForUserQuery(userID uint64)
 }
 
 // BuildMarkAccountAsUserDefaultQuery does .
-func (q *BaseQueryBuilder) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn, squirrel.And{
@@ -53,20 +53,33 @@ func (q *BaseQueryBuilder) BuildMarkAccountAsUserDefaultQuery(userID, accountID 
 }
 
 // BuildTransferAccountOwnershipQuery does .
-func (q *BaseQueryBuilder) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+	return q.buildQuery(q.sqlBuilder.
+		Update(querybuilding.AccountsTableName).
+		Set(querybuilding.AccountsTableUserOwnershipColumn, newOwnerID).
+		Where(squirrel.Eq{
+			querybuilding.IDColumn:                         accountID,
+			querybuilding.AccountsTableUserOwnershipColumn: oldOwnerID,
+			querybuilding.ArchivedOnColumn:                 nil,
+		}),
+	)
+}
+
+// BuildTransferAccountMembershipsQuery builds.
+func (q *QueryBuilder) BuildTransferAccountMembershipsQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.AccountsUserMembershipTableUserOwnershipColumn, newOwnerID).
 		Where(squirrel.Eq{
-			querybuilding.ArchivedOnColumn:                                  nil,
-			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    oldOwnerID,
 			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
+			querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    currentOwnerID,
+			querybuilding.ArchivedOnColumn:                                  nil,
 		}),
 	)
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (q *BaseQueryBuilder) BuildModifyUserPermissionsQuery(userID, accountID uint64, perms permissions.ServiceUserPermissions) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildModifyUserPermissionsQuery(userID, accountID uint64, perms permissions.ServiceUserPermissions) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, perms).
@@ -78,7 +91,7 @@ func (q *BaseQueryBuilder) BuildModifyUserPermissionsQuery(userID, accountID uin
 }
 
 // BuildCreateMembershipForNewUserQuery builds a query that .
-func (q *BaseQueryBuilder) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsUserMembershipTableName).
 		Columns(
@@ -97,7 +110,7 @@ func (q *BaseQueryBuilder) BuildCreateMembershipForNewUserQuery(userID, accountI
 }
 
 // BuildMarkAccountAsUserPrimaryQuery builds a query that marks a user's account as their primary.
-func (q *BaseQueryBuilder) BuildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildMarkAccountAsUserPrimaryQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsUserMembershipTableName).
 		Set(querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn, squirrel.And{
@@ -112,7 +125,7 @@ func (q *BaseQueryBuilder) BuildMarkAccountAsUserPrimaryQuery(userID, accountID 
 }
 
 // BuildUserIsMemberOfAccountQuery builds a query that checks to see if the user is the member of a given account.
-func (q *BaseQueryBuilder) BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.IDColumn)).
 		Prefix(querybuilding.ExistencePrefix).
@@ -127,7 +140,7 @@ func (q *BaseQueryBuilder) BuildUserIsMemberOfAccountQuery(userID, accountID uin
 }
 
 // BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (q *BaseQueryBuilder) BuildAddUserToAccountQuery(accountID uint64, input *types.AddUserToAccountInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildAddUserToAccountQuery(accountID uint64, input *types.AddUserToAccountInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsUserMembershipTableName).
 		Columns(
@@ -144,7 +157,7 @@ func (q *BaseQueryBuilder) BuildAddUserToAccountQuery(accountID uint64, input *t
 }
 
 // BuildRemoveUserFromAccountQuery builds a query that removes a user from an account.
-func (q *BaseQueryBuilder) BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Delete(querybuilding.AccountsUserMembershipTableName).
 		Where(squirrel.Eq{

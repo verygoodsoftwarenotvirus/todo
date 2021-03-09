@@ -194,7 +194,7 @@ func (c *Client) GetAPIClients(ctx context.Context, userID uint64, filter *types
 	x = &types.APIClientList{}
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetAPIClients called")
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
@@ -216,6 +216,8 @@ func (c *Client) GetAPIClients(ctx context.Context, userID uint64, filter *types
 		return nil, fmt.Errorf("scanning response from database: %w", err)
 	}
 
+	logger.WithValue("result_count", len(x.Clients)).Debug("GetAPIClients called")
+
 	return x, nil
 }
 
@@ -224,10 +226,12 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.APIClientClientIDKey: input.ClientID,
 		keys.UserIDKey:            input.BelongsToAccount,
-	}).Debug("CreateAPIClient called")
+	})
+
+	logger.Debug("CreateAPIClient called")
 
 	query, args := c.sqlQueryBuilder.BuildCreateAPIClientQuery(input)
 
@@ -251,7 +255,12 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 		CreatedOn:        c.currentTime(),
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
@@ -269,11 +278,13 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, clientID, accountID, arch
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.APIClientDatabaseIDKey: clientID,
 		keys.AccountIDKey:           accountID,
 		keys.UserIDKey:              archivedByUser,
-	}).Debug("ArchiveAPIClient called")
+	})
+
+	logger.Debug("ArchiveAPIClient called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAPIClientQuery(clientID, accountID)
 
@@ -287,7 +298,12 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, clientID, accountID, arch
 		return fmt.Errorf("error updating API client: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(accountID, clientID, archivedByUser))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(accountID, clientID, archivedByUser)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

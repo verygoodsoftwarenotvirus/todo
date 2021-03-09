@@ -127,7 +127,7 @@ func TestPostgres_BuildCreateAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.DefaultUserPermissions,
 		}
-		actualQuery, actualArgs := q.BuildCreateAccountQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildAccountCreationQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

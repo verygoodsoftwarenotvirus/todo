@@ -290,7 +290,9 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput,
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("CreateItem called")
+	logger := c.logger.WithValue(keys.RequesterKey, createdByUser)
+
+	logger.Debug("CreateItem called")
 
 	query, args := c.sqlQueryBuilder.BuildCreateItemQuery(input)
 
@@ -314,7 +316,12 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput,
 		CreatedOn:        c.currentTime(),
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x, createdByUser))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
@@ -329,9 +336,11 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changedByU
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger.WithValue(keys.ItemIDKey, updated.ID)
+
+	logger.Debug("UpdateItem called")
 	tracing.AttachItemIDToSpan(span, updated.ID)
 	tracing.AttachUserIDToSpan(span, changedByUser)
-	c.logger.WithValue(keys.ItemIDKey, updated.ID).Debug("UpdateItem called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
 
@@ -345,7 +354,12 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changedByU
 		return fmt.Errorf("error updating item: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(changedByUser, updated.ID, updated.BelongsToAccount, changes))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(changedByUser, updated.ID, updated.BelongsToAccount, changes)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -363,11 +377,13 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 	tracing.AttachUserIDToSpan(span, archivedBy)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.ItemIDKey:    itemID,
 		keys.UserIDKey:    archivedBy,
 		keys.AccountIDKey: belongsToAccount,
-	}).Debug("ArchiveItem called")
+	})
+
+	logger.Debug("ArchiveItem called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, belongsToAccount)
 
@@ -381,7 +397,12 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 		return fmt.Errorf("error updating item: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, belongsToAccount, itemID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, belongsToAccount, itemID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

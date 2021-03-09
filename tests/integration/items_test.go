@@ -35,7 +35,7 @@ func (s *TestSuite) TestItemsCreating() {
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
+			requireNotNilAndNoProblems(t, createdItem, err)
 
 			// Assert item equality.
 			checkItemEquality(t, exampleItem, createdItem)
@@ -70,14 +70,14 @@ func (s *TestSuite) TestItemsListing() {
 				exampleItem := fakes.BuildFakeItem()
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 				createdItem, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, itemCreationErr)
+				requireNotNilAndNoProblems(t, createdItem, itemCreationErr)
 
 				expected = append(expected, createdItem)
 			}
 
 			// Assert item list equality.
 			actual, err := testClients.main.GetItems(ctx, nil)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			assert.True(
 				t,
 				len(expected) <= len(actual.Items),
@@ -111,7 +111,7 @@ func (s *TestSuite) TestItemsSearching() {
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
 				createdItem, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, itemCreationErr)
+				requireNotNilAndNoProblems(t, createdItem, itemCreationErr)
 
 				expected = append(expected, createdItem)
 			}
@@ -120,7 +120,7 @@ func (s *TestSuite) TestItemsSearching() {
 
 			// Assert item list equality.
 			actual, err := testClients.main.SearchItems(ctx, exampleItem.Name, exampleLimit)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			assert.True(
 				t,
 				len(expected) <= len(actual),
@@ -152,7 +152,7 @@ func (s *TestSuite) TestItemsSearching() {
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
 				createdItem, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
-				checkValueAndError(t, createdItem, itemCreationErr)
+				requireNotNilAndNoProblems(t, createdItem, itemCreationErr)
 
 				expected = append(expected, createdItem)
 			}
@@ -161,7 +161,7 @@ func (s *TestSuite) TestItemsSearching() {
 
 			// Assert item list equality.
 			actual, err := testClients.main.SearchItems(ctx, exampleItem.Name, exampleLimit)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			assert.True(
 				t,
 				len(expected) <= len(actual),
@@ -206,7 +206,7 @@ func (s *TestSuite) TestItemsExistenceChecking() {
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
+			requireNotNilAndNoProblems(t, createdItem, err)
 
 			// Fetch item.
 			actual, err := testClients.main.ItemExists(ctx, createdItem.ID)
@@ -246,11 +246,11 @@ func (s *TestSuite) TestItemsReading() {
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
+			requireNotNilAndNoProblems(t, createdItem, err)
 
 			// Fetch item.
 			actual, err := testClients.main.GetItem(ctx, createdItem.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert item equality.
 			checkItemEquality(t, exampleItem, actual)
@@ -289,7 +289,7 @@ func (s *TestSuite) TestItemsUpdating() {
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
+			requireNotNilAndNoProblems(t, createdItem, err)
 
 			// Change item.
 			createdItem.Update(converters.ConvertItemToItemUpdateInput(exampleItem))
@@ -297,7 +297,7 @@ func (s *TestSuite) TestItemsUpdating() {
 
 			// Fetch item.
 			actual, err := testClients.main.GetItem(ctx, createdItem.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert item equality.
 			checkItemEquality(t, exampleItem, actual)
@@ -343,7 +343,7 @@ func (s *TestSuite) TestItemsArchiving() {
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
+			requireNotNilAndNoProblems(t, createdItem, err)
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
@@ -388,7 +388,7 @@ func (s *TestSuite) TestItemsAuditing() {
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			checkValueAndError(t, createdItem, err)
+			requireNotNilAndNoProblems(t, createdItem, err)
 
 			// fetch audit log entries
 			actual, err := testClients.main.GetAuditLogForItem(ctx, createdItem.ID)

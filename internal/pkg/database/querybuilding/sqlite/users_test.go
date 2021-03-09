@@ -27,7 +27,7 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 			types.BannedAccountStatus,
 			types.TerminatedAccountStatus,
 		}
-		actualQuery, actualArgs := q.BuildUserIsBannedQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

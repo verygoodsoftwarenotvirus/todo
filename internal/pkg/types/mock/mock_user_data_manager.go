@@ -22,9 +22,10 @@ func (m *UserDataManager) GetRequestContextForUser(ctx context.Context, userID u
 	return args.Get(0).(*types.RequestContext), args.Error(1)
 }
 
-// UserIsBanned is a mock function.
-func (m *UserDataManager) UserIsBanned(ctx context.Context, userID uint64) (bool, error) {
-	args := m.Called(ctx, userID)
+// UserHasStatus is a mock function.
+func (m *UserDataManager) UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (bool, error) {
+	args := m.Called(ctx, userID, statuses)
+
 	return args.Bool(0), args.Error(1)
 }
 

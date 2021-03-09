@@ -89,16 +89,16 @@ func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, 
 }
 
 // BuildTransferAccountOwnershipEventEntry builds an entry creation input for when a membership is created.
-func BuildTransferAccountOwnershipEventEntry(oldOwner, newOwner, changedBy, accountID uint64, reason string) *types.AuditLogEntryCreationInput {
+func BuildTransferAccountOwnershipEventEntry(accountID, changedBy uint64, input *types.TransferAccountOwnershipInput) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   changedBy,
-		"old_owner":          oldOwner,
-		"new_owner":          newOwner,
+		"old_owner":          input.CurrentOwner,
+		"new_owner":          input.NewOwner,
 		AccountAssignmentKey: accountID,
 	}
 
-	if reason != "" {
-		contextMap[ReasonKey] = reason
+	if input.Reason != "" {
+		contextMap[ReasonKey] = input.Reason
 	}
 
 	return &types.AuditLogEntryCreationInput{

@@ -139,7 +139,7 @@ type (
 
 	// UserSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	UserSQLQueryBuilder interface {
-		BuildUserIsBannedQuery(userID uint64) (query string, args []interface{})
+		BuildUserHasStatusQuery(userID uint64, statuses ...string) (query string, args []interface{})
 		BuildGetUserQuery(userID uint64) (query string, args []interface{})
 		BuildGetUsersQuery(filter *QueryFilter) (query string, args []interface{})
 		BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
@@ -164,7 +164,7 @@ type (
 
 	// UserDataManager describes a structure which can manage users in permanent storage.
 	UserDataManager interface {
-		UserIsBanned(ctx context.Context, userID uint64) (bool, error)
+		UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (bool, error)
 		GetUser(ctx context.Context, userID uint64) (*User, error)
 		GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*User, error)
 		VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error

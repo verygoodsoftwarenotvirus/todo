@@ -117,8 +117,8 @@ func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSec
 	return u, nil
 }
 
-// UserIsBanned fetches whether or not an item exists from the database.
-func (c *Client) UserIsBanned(ctx context.Context, userID uint64) (banned bool, err error) {
+// UserHasStatus fetches whether or not an item exists from the database.
+func (c *Client) UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (banned bool, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -128,7 +128,7 @@ func (c *Client) UserIsBanned(ctx context.Context, userID uint64) (banned bool, 
 		keys.UserIDKey: userID,
 	}).Debug("UserIsBanned called")
 
-	query, args := c.sqlQueryBuilder.BuildUserIsBannedQuery(userID)
+	query, args := c.sqlQueryBuilder.BuildUserHasStatusQuery(userID, statuses...)
 
 	return c.performBooleanQuery(ctx, c.db, query, args)
 }
@@ -247,6 +247,8 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger.WithValue("username", user.Username)
+
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
 		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
@@ -261,12 +263,17 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 	user.ID = userID
 	account.BelongsToUser = user.ID
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	// create the account.
 	accountCreationInput := types.NewAccountCreationInputForUser(user)
 	accountCreationInput.DefaultUserPermissions = account.DefaultUserPermissions
-	accountCreationQuery, accountCreationArgs := c.sqlQueryBuilder.BuildCreateAccountQuery(accountCreationInput)
+	accountCreationQuery, accountCreationArgs := c.sqlQueryBuilder.BuildAccountCreationQuery(accountCreationInput)
 
 	accountID, accountCreateErr := c.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
 	if accountCreateErr != nil {
@@ -276,7 +283,12 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 
 	account.ID = accountID
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(userID, accountID)
 	if accountMembershipErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); accountMembershipErr != nil {
@@ -284,11 +296,18 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 		return accountMembershipErr
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, &types.AddUserToAccountInput{
+	addToAccountInput := &types.AddUserToAccountInput{
 		UserID:                 user.ID,
 		UserAccountPermissions: account.DefaultUserPermissions,
 		Reason:                 "account creation",
-	}))
+	}
+
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, addToAccountInput)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -336,7 +355,9 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User, changes []
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, updated.Username)
-	c.logger.WithValue(keys.UsernameKey, updated.Username).Debug("UpdateUser called")
+	logger := c.logger.WithValue(keys.UsernameKey, updated.Username)
+
+	logger.Debug("UpdateUser called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
 
@@ -350,7 +371,12 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User, changes []
 		return fmt.Errorf("error updating user: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateEventEntry(updated.ID, nil))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateEventEntry(updated.ID, nil)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -365,7 +391,9 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserPassword called")
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
+
+	logger.Debug("UpdateUserPassword called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
 
@@ -379,7 +407,12 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 		return fmt.Errorf("error updating user's password: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdatePasswordEventEntry(userID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdatePasswordEventEntry(userID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -394,7 +427,8 @@ func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, n
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserTwoFactorSecret called")
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	logger.Debug("UpdateUserTwoFactorSecret called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(userID, newSecret)
 
@@ -408,7 +442,12 @@ func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, n
 		return fmt.Errorf("error updating user's two factor secret: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -423,7 +462,9 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("VerifyUserTwoFactorSecret called")
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
+
+	logger.Debug("VerifyUserTwoFactorSecret called")
 
 	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
 
@@ -437,7 +478,12 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 		return fmt.Errorf("error writing verified two factor status to database: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)
@@ -452,7 +498,9 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("ArchiveUser called")
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
+
+	logger.Debug("ArchiveUser called")
 
 	archiveUserQuery, archiveUserArgs := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
 
@@ -466,7 +514,12 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 		return fmt.Errorf("error archiving user: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	archiveMembershipsQuery, archiveMembershipsArgs := c.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(userID)
 

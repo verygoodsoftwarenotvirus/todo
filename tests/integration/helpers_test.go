@@ -14,19 +14,14 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/require"
 )
-
-type testClientWrapper struct {
-	main  *httpclient.Client
-	admin *httpclient.Client
-}
 
 func reverseString(s string) string {
 	runes := []rune(s)
@@ -37,7 +32,7 @@ func reverseString(s string) string {
 	return string(runes)
 }
 
-func checkValueAndError(t *testing.T, i interface{}, err error) {
+func requireNotNilAndNoProblems(t *testing.T, i interface{}, err error) {
 	t.Helper()
 
 	require.NoError(t, err)
@@ -87,6 +82,10 @@ func buildHTTPClient() *http.Client {
 }
 
 func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, error) {
+	if urlToUse == "" {
+		panic("url not set!")
+	}
+
 	c, err := httpclient.NewClient(
 		httpclient.UsingURI(urlToUse),
 		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
@@ -144,7 +143,9 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 	return code
 }
 
-func buildAdminCookieAndPASETOClients(ctx context.Context) (cookieClient, pasetoClient *httpclient.Client) {
+func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookieClient, pasetoClient *httpclient.Client) {
+	t.Helper()
+
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
@@ -155,19 +156,13 @@ func buildAdminCookieAndPASETOClients(ctx context.Context) (cookieClient, paseto
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
 	adminCookie, err := utils.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	cClient, err := initializeCookiePoweredClient(adminCookie)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	code, err := totp.GenerateCode(premadeAdminUser.TwoFactorSecret, time.Now().UTC())
-	if err != nil {
-		logger.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	apiClient, err := cClient.CreateAPIClient(ctx, adminCookie, &types.APICientCreationInput{
 		Name: "admin_paseto_client",
@@ -177,19 +172,13 @@ func buildAdminCookieAndPASETOClients(ctx context.Context) (cookieClient, paseto
 			TOTPToken: code,
 		},
 	})
-	if err != nil {
-		logger.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	secretKey, err := base64.RawURLEncoding.DecodeString(apiClient.ClientSecret)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	PASETOClient, err := initializePASETOPoweredClient(apiClient.ClientID, secretKey)
-	if err != nil {
-		logger.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	return cClient, PASETOClient
 }

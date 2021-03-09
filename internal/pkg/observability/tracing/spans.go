@@ -9,11 +9,19 @@ import (
 
 // StartCustomSpan starts an anonymous custom span.
 func StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	return otel.Tracer("_anon_").Start(ctx, name)
 }
 
 // StartSpan starts an anonymous span.
 func StartSpan(ctx context.Context) (context.Context, trace.Span) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	return otel.Tracer("_anon_").Start(ctx, GetCallerName())
 }
 
@@ -37,6 +45,9 @@ func NewTracer(name string) Tracer {
 
 // StartSpan wraps tracer.Start.
 func (t *otSpanManager) StartSpan(ctx context.Context) (context.Context, trace.Span) {
-	callerName := GetCallerName()
-	return t.tracer.Start(ctx, callerName)
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	return t.tracer.Start(ctx, GetCallerName())
 }

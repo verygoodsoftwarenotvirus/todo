@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	_ types.AccountSubscriptionPlanSQLQueryBuilder = (*BaseQueryBuilder)(nil)
+	_ types.AccountSubscriptionPlanSQLQueryBuilder = (*QueryBuilder)(nil)
 )
 
 // BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AccountSubscriptionPlansTableColumns...).
 		From(querybuilding.AccountSubscriptionPlansTableName).
@@ -28,7 +28,7 @@ func (q *BaseQueryBuilder) BuildGetAccountSubscriptionPlanQuery(planID uint64) (
 
 // BuildGetAllAccountSubscriptionPlansCountQuery returns a query that fetches the total number of account subscription plans in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *BaseQueryBuilder) BuildGetAllAccountSubscriptionPlansCountQuery() string {
+func (q *QueryBuilder) BuildGetAllAccountSubscriptionPlansCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountSubscriptionPlansTableName)).
 		From(querybuilding.AccountSubscriptionPlansTableName).
@@ -40,7 +40,7 @@ func (q *BaseQueryBuilder) BuildGetAllAccountSubscriptionPlansCountQuery() strin
 
 // BuildGetAccountSubscriptionPlansQuery builds a SQL query selecting account subscription plans that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *BaseQueryBuilder) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAccountSubscriptionPlansQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		querybuilding.AccountSubscriptionPlansTableName,
 		"",
@@ -52,7 +52,7 @@ func (q *BaseQueryBuilder) BuildGetAccountSubscriptionPlansQuery(filter *types.Q
 }
 
 // BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
-func (q *BaseQueryBuilder) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildCreateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountSubscriptionPlansTableName).
 		Columns(
@@ -73,7 +73,7 @@ func (q *BaseQueryBuilder) BuildCreateAccountSubscriptionPlanQuery(input *types.
 }
 
 // BuildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
-func (q *BaseQueryBuilder) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateAccountSubscriptionPlanQuery(input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountSubscriptionPlansTableName).
 		Set(querybuilding.AccountSubscriptionPlansTableNameColumn, input.Name).
@@ -89,7 +89,7 @@ func (q *BaseQueryBuilder) BuildUpdateAccountSubscriptionPlanQuery(input *types.
 }
 
 // BuildArchiveAccountSubscriptionPlanQuery returns a SQL query which marks a given plan belonging to a given user as archived.
-func (q *BaseQueryBuilder) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountSubscriptionPlansTableName).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
@@ -103,7 +103,7 @@ func (q *BaseQueryBuilder) BuildArchiveAccountSubscriptionPlanQuery(planID uint6
 
 // BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery constructs a SQL query for fetching audit log entries
 // associated with a given plan.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{}) {
 	planIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.AccountSubscriptionPlanAssignmentKey)
 
 	return q.buildQuery(q.sqlBuilder.

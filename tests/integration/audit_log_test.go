@@ -18,7 +18,7 @@ func (s *TestSuite) TestAuditLogEntryListing() {
 			defer span.End()
 
 			actual, err := testClients.admin.GetAuditLogEntries(ctx, nil)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			assert.NotEmpty(t, actual.Entries)
 		})
@@ -35,11 +35,11 @@ func (s *TestSuite) TestAuditLogEntryReading() {
 			defer span.End()
 
 			actual, err := testClients.admin.GetAuditLogEntries(ctx, nil)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			for _, x := range actual.Entries {
 				y, entryFetchErr := testClients.admin.GetAuditLogEntry(ctx, x.ID)
-				checkValueAndError(t, y, entryFetchErr)
+				requireNotNilAndNoProblems(t, y, entryFetchErr)
 			}
 
 			assert.NotEmpty(t, actual.Entries)

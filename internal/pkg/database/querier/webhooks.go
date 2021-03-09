@@ -214,7 +214,9 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
-	c.logger.WithValue(keys.AccountIDKey, input.BelongsToAccount).Debug("CreateWebhook called")
+	logger := c.logger.WithValue(keys.AccountIDKey, input.BelongsToAccount)
+
+	logger.Debug("CreateWebhook called")
 
 	query, args := c.sqlQueryBuilder.BuildCreateWebhookQuery(input)
 
@@ -242,7 +244,12 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 		CreatedOn:        c.currentTime(),
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x, createdByUser))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
@@ -261,25 +268,43 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 	tracing.AttachWebhookIDToSpan(span, updated.ID)
 	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
 
-	c.logger.WithValue(keys.WebhookIDKey, updated.ID).Debug("UpdateWebhook called")
+	logger := c.logger.
+		WithValue(keys.WebhookIDKey, updated.ID).
+		WithValue(keys.RequesterKey, changedByUser).
+		WithValue(keys.AccountIDKey, updated.BelongsToAccount)
+
+	logger.Debug("UpdateWebhook called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(updated)
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		logger.Error(transactionStartErr, "starting webhook update transaction")
+
+		return fmt.Errorf("starting webhook update transaction: %w", transactionStartErr)
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); execErr != nil {
+	if err := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); err != nil {
+		logger.Error(err, "updating webhook")
 		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating webhook: %w", execErr)
+
+		return fmt.Errorf("updating webhook: %w", err)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(changedByUser, updated.BelongsToAccount, updated.ID, changes))
+	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(changedByUser, updated.BelongsToAccount, updated.ID, changes)); err != nil {
+		logger.Error(err, "writing webhook update audit log entry")
+		c.rollbackTransaction(tx)
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", commitErr)
+		return fmt.Errorf("writing webhook update audit log entry: %w", err)
 	}
+
+	if err := tx.Commit(); err != nil {
+		logger.Error(err, "committing transaction")
+
+		return fmt.Errorf("committing transaction: %w", err)
+	}
+
+	logger.Debug("successfully updated webhook")
 
 	return nil
 }
@@ -293,11 +318,13 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, accountID, archi
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.WebhookIDKey: webhookID,
 		keys.AccountIDKey: accountID,
 		keys.RequesterKey: archivedByUserID,
-	}).Debug("ArchiveWebhook called")
+	})
+
+	logger.Debug("ArchiveWebhook called")
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, accountID)
 
@@ -311,7 +338,12 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, accountID, archi
 		return fmt.Errorf("error archiving webhook: %w", execErr)
 	}
 
-	c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(archivedByUserID, accountID, webhookID))
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(archivedByUserID, accountID, webhookID)); auditLogEntryWriteErr != nil {
+		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+		c.rollbackTransaction(tx)
+
+		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
 		return fmt.Errorf("error committing transaction: %w", commitErr)

@@ -614,7 +614,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.
-			On("BuildCreateAccountQuery", exampleCreationInput).
+			On("BuildAccountCreationQuery", exampleCreationInput).
 			Return(fakeCreationQuery, fakeCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
@@ -678,7 +678,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.
-			On("BuildCreateAccountQuery", exampleInput).
+			On("BuildAccountCreationQuery", exampleInput).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 

@@ -13,8 +13,8 @@ import (
 
 var _ types.UserSQLQueryBuilder = (*Postgres)(nil)
 
-// BuildUserIsBannedQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (q *Postgres) BuildUserIsBannedQuery(userID uint64) (query string, args []interface{}) {
+// BuildUserHasStatusQuery returns a SQL query (and argument) for retrieving a user by their database ID.
+func (q *Postgres) BuildUserHasStatusQuery(userID uint64, statuses ...string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.IDColumn)).
 		Prefix(querybuilding.ExistencePrefix).

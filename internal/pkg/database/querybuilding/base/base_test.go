@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ const (
 	defaultLimit = uint8(20)
 )
 
-func buildTestService(t *testing.T) (*BaseQueryBuilder, sqlmock.Sqlmock) {
+func buildTestService(t *testing.T) (*QueryBuilder, sqlmock.Sqlmock) {
 	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
@@ -47,7 +47,7 @@ func TestProvideSqlite(T *testing.T) {
 	})
 }
 
-func TestSqlite_logQueryBuildingError(T *testing.T) {
+func TestBase_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("obligatory", func(t *testing.T) {

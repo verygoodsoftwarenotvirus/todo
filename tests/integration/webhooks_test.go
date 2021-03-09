@@ -37,13 +37,13 @@ func (s *TestSuite) TestWebhooksCreating() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, createdWebhook, err)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, createdWebhook)
 
 			actual, err := testClients.main.GetWebhook(ctx, createdWebhook.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			checkWebhookEquality(t, exampleWebhook, actual)
 
 			auditLogEntries, err := testClients.admin.GetAuditLogForWebhook(ctx, createdWebhook.ID)
@@ -87,11 +87,11 @@ func (s *TestSuite) TestWebhooksReading() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, premade, err)
+			requireNotNilAndNoProblems(t, premade, err)
 
 			// Fetch webhook.
 			actual, err := testClients.main.GetWebhook(ctx, premade.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
@@ -117,14 +117,14 @@ func (s *TestSuite) TestWebhooksListing() {
 				exampleWebhook := fakes.BuildFakeWebhook()
 				exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 				createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-				checkValueAndError(t, createdWebhook, err)
+				requireNotNilAndNoProblems(t, createdWebhook, err)
 
 				expected = append(expected, createdWebhook)
 			}
 
 			// Assert webhook list equality.
 			actual, err := testClients.main.GetWebhooks(ctx, nil)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 			assert.True(t, len(expected) <= len(actual.Webhooks))
 
 			// Clean up.
@@ -164,7 +164,7 @@ func (s *TestSuite) TestWebhooksUpdating() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, createdWebhook, err)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
 
 			// Change webhook.
 			createdWebhook.Name = reverseString(createdWebhook.Name)
@@ -174,7 +174,7 @@ func (s *TestSuite) TestWebhooksUpdating() {
 
 			// Fetch webhook.
 			actual, err := testClients.main.GetWebhook(ctx, createdWebhook.ID)
-			checkValueAndError(t, actual, err)
+			requireNotNilAndNoProblems(t, actual, err)
 
 			// Assert webhook equality.
 			checkWebhookEquality(t, exampleWebhook, actual)
@@ -220,7 +220,7 @@ func (s *TestSuite) TestWebhooksArchiving() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, createdWebhook, err)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
@@ -268,7 +268,7 @@ func (s *TestSuite) TestWebhooksAuditing() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, premade, err)
+			requireNotNilAndNoProblems(t, premade, err)
 
 			// Change webhook.
 			premade.Name = reverseString(premade.Name)
@@ -297,7 +297,7 @@ func (s *TestSuite) TestWebhooksAuditing() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			checkValueAndError(t, premade, err)
+			requireNotNilAndNoProblems(t, premade, err)
 
 			// Change webhook.
 			premade.Name = reverseString(premade.Name)

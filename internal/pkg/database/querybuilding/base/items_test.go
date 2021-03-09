@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildItemExistsQuery(T *testing.T) {
+func TestBase_BuildItemExistsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestSqlite_BuildItemExistsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetItemQuery(T *testing.T) {
+func TestBase_BuildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestSqlite_BuildGetItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAllItemsCountQuery(T *testing.T) {
+func TestBase_BuildGetAllItemsCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestSqlite_BuildGetAllItemsCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetBatchOfItemsQuery(T *testing.T) {
+func TestBase_BuildGetBatchOfItemsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -96,7 +96,7 @@ func TestSqlite_BuildGetBatchOfItemsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetItemsQuery(T *testing.T) {
+func TestBase_BuildGetItemsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestSqlite_BuildGetItemsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetItemsWithIDsQuery(T *testing.T) {
+func TestBase_BuildGetItemsWithIDsQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -157,7 +157,7 @@ func TestSqlite_BuildGetItemsWithIDsQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreateItemQuery(T *testing.T) {
+func TestBase_BuildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -190,7 +190,7 @@ func TestSqlite_BuildCreateItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdateItemQuery(T *testing.T) {
+func TestBase_BuildUpdateItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -216,7 +216,7 @@ func TestSqlite_BuildUpdateItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildArchiveItemQuery(T *testing.T) {
+func TestBase_BuildArchiveItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {
@@ -240,7 +240,7 @@ func TestSqlite_BuildArchiveItemQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
+func TestBase_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("happy path", func(t *testing.T) {

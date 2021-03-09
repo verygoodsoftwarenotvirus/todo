@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	_ types.AccountSQLQueryBuilder = (*BaseQueryBuilder)(nil)
+	_ types.AccountSQLQueryBuilder = (*QueryBuilder)(nil)
 )
 
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AccountsTableColumns...).
 		From(querybuilding.AccountsTableName).
@@ -29,7 +29,7 @@ func (q *BaseQueryBuilder) BuildGetAccountQuery(accountID, userID uint64) (query
 
 // BuildGetAllAccountsCountQuery returns a query that fetches the total number of accounts in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *BaseQueryBuilder) BuildGetAllAccountsCountQuery() string {
+func (q *QueryBuilder) BuildGetAllAccountsCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
 		From(querybuilding.AccountsTableName).
@@ -40,7 +40,7 @@ func (q *BaseQueryBuilder) BuildGetAllAccountsCountQuery() string {
 }
 
 // BuildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
-func (q *BaseQueryBuilder) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AccountsTableColumns...).
 		From(querybuilding.AccountsTableName).
@@ -55,7 +55,7 @@ func (q *BaseQueryBuilder) BuildGetBatchOfAccountsQuery(beginID, endID uint64) (
 
 // BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *BaseQueryBuilder) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
 		querybuilding.AccountsTableName,
 		querybuilding.AccountsTableUserOwnershipColumn,
@@ -66,8 +66,8 @@ func (q *BaseQueryBuilder) BuildGetAccountsQuery(userID uint64, forAdmin bool, f
 	)
 }
 
-// BuildCreateAccountQuery takes an account and returns a creation query for that account and the relevant arguments.
-func (q *BaseQueryBuilder) BuildCreateAccountQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
+// BuildAccountCreationQuery takes an account and returns a creation query for that account and the relevant arguments.
+func (q *QueryBuilder) BuildAccountCreationQuery(input *types.AccountCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AccountsTableName).
 		Columns(
@@ -86,7 +86,7 @@ func (q *BaseQueryBuilder) BuildCreateAccountQuery(input *types.AccountCreationI
 }
 
 // BuildUpdateAccountQuery takes an account and returns an update SQL query, with the relevant query parameters.
-func (q *BaseQueryBuilder) BuildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildUpdateAccountQuery(input *types.Account) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
 		Set(querybuilding.AccountsTableNameColumn, input.Name).
@@ -100,7 +100,7 @@ func (q *BaseQueryBuilder) BuildUpdateAccountQuery(input *types.Account) (query 
 }
 
 // BuildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
-func (q *BaseQueryBuilder) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.AccountsTableName).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
@@ -114,7 +114,7 @@ func (q *BaseQueryBuilder) BuildArchiveAccountQuery(accountID, userID uint64) (q
 }
 
 // BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{}) {
 	accountIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.AccountAssignmentKey)
 
 	return q.buildQuery(q.sqlBuilder.

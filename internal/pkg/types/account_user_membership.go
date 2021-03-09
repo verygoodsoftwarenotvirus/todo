@@ -66,7 +66,7 @@ type (
 		BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{})
 		BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions permissions.ServiceUserPermissions) (query string, args []interface{})
-		BuildTransferAccountOwnershipQuery(oldOwnerID, newOwnerID, accountID uint64) (query string, args []interface{})
+		BuildTransferAccountMembershipsQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{})
 		BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{})
 		BuildAddUserToAccountQuery(accountID uint64, input *AddUserToAccountInput) (query string, args []interface{})

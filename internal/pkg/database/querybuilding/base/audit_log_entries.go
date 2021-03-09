@@ -1,4 +1,4 @@
-package sqlite
+package base
 
 import (
 	"fmt"
@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	_ types.AuditLogEntrySQLQueryBuilder = (*BaseQueryBuilder)(nil)
+	_ types.AuditLogEntrySQLQueryBuilder = (*QueryBuilder)(nil)
 )
 
 // BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntryQuery(entryID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
@@ -26,7 +26,7 @@ func (q *BaseQueryBuilder) BuildGetAuditLogEntryQuery(entryID uint64) (query str
 
 // BuildGetAllAuditLogEntriesCountQuery returns a query that fetches the total number of  in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (q *BaseQueryBuilder) BuildGetAllAuditLogEntriesCountQuery() string {
+func (q *QueryBuilder) BuildGetAllAuditLogEntriesCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AuditLogEntriesTableName)).
 		From(querybuilding.AuditLogEntriesTableName),
@@ -34,7 +34,7 @@ func (q *BaseQueryBuilder) BuildGetAllAuditLogEntriesCountQuery() string {
 }
 
 // BuildGetBatchOfAuditLogEntriesQuery returns a query that fetches every audit log entry in the database within a bucketed range.
-func (q *BaseQueryBuilder) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.AuditLogEntriesTableColumns...).
 		From(querybuilding.AuditLogEntriesTableName).
@@ -49,7 +49,7 @@ func (q *BaseQueryBuilder) BuildGetBatchOfAuditLogEntriesQuery(beginID, endID ui
 
 // BuildGetAuditLogEntriesQuery builds a SQL query selecting  that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *BaseQueryBuilder) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildGetAuditLogEntriesQuery(filter *types.QueryFilter) (query string, args []interface{}) {
 	countQueryBuilder := q.sqlBuilder.
 		Select(allCountQuery).
 		From(querybuilding.AuditLogEntriesTableName)
@@ -73,7 +73,7 @@ func (q *BaseQueryBuilder) BuildGetAuditLogEntriesQuery(filter *types.QueryFilte
 }
 
 // BuildCreateAuditLogEntryQuery takes an audit log entry and returns a creation query for that audit log entry and the relevant arguments.
-func (q *BaseQueryBuilder) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
+func (q *QueryBuilder) BuildCreateAuditLogEntryQuery(input *types.AuditLogEntryCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.AuditLogEntriesTableName).
 		Columns(

@@ -44,7 +44,7 @@ func main() {
 	}
 
 	um := uploads.ProvideUploadManager(x)
-	up := images.NewImageUploadProcessor()
+	up := images.NewImageUploadProcessor(logger)
 
 	http.HandleFunc("/upload", func(res http.ResponseWriter, req *http.Request) {
 		uploadCount++

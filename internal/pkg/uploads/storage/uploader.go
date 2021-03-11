@@ -86,6 +86,12 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config, r
 		return nil, fmt.Errorf("initializing bucket: %w", err)
 	}
 
+	if available, err := u.bucket.IsAccessible(ctx); err != nil {
+		return nil, fmt.Errorf("verifying bucket accessibility: %w", err)
+	} else if !available {
+		return nil, errors.New("bucket is unavailable")
+	}
+
 	return u, nil
 }
 

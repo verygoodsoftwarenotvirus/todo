@@ -514,12 +514,18 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger.Debug("request context data extracted")
+
 	user, userFetchErr := s.userDataManager.GetUser(ctx, reqCtx.User.ID)
 	if userFetchErr != nil {
 		logger.Error(userFetchErr, "fetching associated user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
+
+	logger = logger.WithValue(keys.UserIDKey, user.ID)
+	logger.Debug("retrieved user from database")
 
 	img, imageProcessErr := s.imageUploadProcessor.Process(ctx, req, "avatar")
 	if imageProcessErr != nil || img == nil {

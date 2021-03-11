@@ -302,3 +302,40 @@ func (s *TestSuite) TestUsersAuditing() {
 		})
 	}
 }
+
+func (s *TestSuite) TestUsersAvatarManagement() {
+	for a, c := range s.eachClient(pasetoAuthType) {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("should be able to upload an avatar via %s", authType), func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			avatar := testutil.BuildArbitraryImagePNGBytes(256)
+
+			require.NoError(t, testClients.main.UploadAvatarFromFile(ctx, avatar, "png"))
+
+			// Assert user equality.
+			user, err := testClients.admin.GetUser(ctx, s.user.ID)
+			requireNotNilAndNoProblems(t, user, err)
+
+			assert.NotEmpty(t, user.AvatarSrc)
+
+			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, s.user.ID)
+			require.NoError(t, err)
+
+			expectedAuditLogEntries := []*types.AuditLogEntry{
+				{EventType: audit.UserCreationEvent},
+				{EventType: audit.AccountCreationEvent},
+				{EventType: audit.UserAddedToAccountEvent},
+				{EventType: audit.UserVerifyTwoFactorSecretEvent},
+				{EventType: audit.SuccessfulLoginEvent},
+				{EventType: audit.UserUpdateEvent},
+			}
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, s.user.ID, "")
+
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, s.user.ID))
+		})
+	}
+}

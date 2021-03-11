@@ -28,8 +28,8 @@ const (
 	imageJPEG = "image/jpeg"
 	imageGIF  = "image/gif"
 
-	// ParsedImageContextKey is what we use to attach parsed images to requests.
-	ParsedImageContextKey types.ContextKey = "parsed_image"
+	// parsedImageContextKey is what we use to attach parsed images to requests.
+	parsedImageContextKey types.ContextKey = "parsed_image"
 )
 
 var (
@@ -49,11 +49,12 @@ type (
 	// ImageUploadProcessor process image uploads.
 	ImageUploadProcessor interface {
 		Process(ctx context.Context, req *http.Request, filename string) (*Image, error)
-		BuildAvatarUploadMiddleware(next http.Handler, logger logging.Logger, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler
+		BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler
 	}
 
 	uploadProcessor struct {
 		tracer tracing.Tracer
+		logger logging.Logger
 	}
 )
 
@@ -85,8 +86,9 @@ func (i *Image) Thumbnail(width, height uint, quality int, filename string) (*Im
 }
 
 // NewImageUploadProcessor provides a new ImageUploadProcessor.
-func NewImageUploadProcessor() ImageUploadProcessor {
+func NewImageUploadProcessor(logger logging.Logger) ImageUploadProcessor {
 	return &uploadProcessor{
+		logger: logging.EnsureLogger(logger).WithName("image_upload_processor"),
 		tracer: tracing.NewTracer("image_upload_processor"),
 	}
 }
@@ -120,21 +122,27 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 	_, span := p.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := p.logger.WithRequest(req)
+
 	file, info, err := req.FormFile(filename)
 	if err != nil {
+		logger.Error(err, "parsing file from request")
 		return nil, fmt.Errorf("reading image from request: %w", err)
 	}
 
 	if contentTypeErr := validateContentType(info.Filename); contentTypeErr != nil {
+		logger.Error(contentTypeErr, "validating the content type")
 		return nil, contentTypeErr
 	}
 
 	bs, err := ioutil.ReadAll(file)
 	if err != nil {
+		logger.Error(err, "reading file from request")
 		return nil, fmt.Errorf("reading attached image: %w", err)
 	}
 
 	if _, _, err = image.Decode(bytes.NewReader(bs)); err != nil {
+		logger.Error(err, "decoding the image data")
 		return nil, fmt.Errorf("decoding attached image: %w", err)
 	}
 
@@ -149,27 +157,22 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 }
 
 // BuildAvatarUploadMiddleware ensures that an image is attached to the request.
-func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, logger logging.Logger, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler {
+func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := p.tracer.StartSpan(req.Context())
 		defer span.End()
 
+		logger := p.logger.WithRequest(req)
+		logger.Debug("avatar upload middleware invoked")
+
 		file, info, err := req.FormFile(filename)
 		if err != nil {
+			logger.Error(err, "parsing request form")
 			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 			return
 		}
 
-		contentType := info.Header.Get(headerContentType)
-
-		switch strings.TrimSpace(strings.ToLower(contentType)) {
-		case imagePNG, imageJPEG, imageGIF:
-			// we good
-		default:
-			logger.WithValue("invalid_content_type", contentType).Error(ErrInvalidImageContentType, "")
-			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-			return
-		}
+		logger.Debug("content type check passed")
 
 		bs, err := ioutil.ReadAll(file)
 		if err != nil {
@@ -178,20 +181,26 @@ func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, logger 
 			return
 		}
 
+		logger.Debug("image upload read from request")
+
 		if _, _, err = image.Decode(bytes.NewReader(bs)); err != nil {
 			logger.Error(err, "decoding attached image")
 			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 			return
 		}
 
+		logger.Debug("image decoded successfully")
+
 		i := &Image{
 			Filename:    info.Filename,
-			ContentType: contentType,
+			ContentType: contentTypeFromFilename(info.Filename),
 			Data:        bs,
 			Size:        len(bs),
 		}
 
-		req = req.WithContext(context.WithValue(ctx, ParsedImageContextKey, i))
+		req = req.WithContext(context.WithValue(ctx, parsedImageContextKey, i))
+
+		logger.Debug("attached image to context")
 
 		next.ServeHTTP(res, req)
 	})

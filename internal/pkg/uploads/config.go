@@ -12,8 +12,7 @@ import (
 type Config struct {
 	Storage  storage.Config `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
 	Provider string         `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-	Debug    bool           `json:"debug" mapstructure:"debug" toml:"debug,omitempty"` // Storage configures our storage provider
-	// Debug determines if debug logging or other development conditions are active.
+	Debug    bool           `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 }
 
 // Validate validates an Config struct.

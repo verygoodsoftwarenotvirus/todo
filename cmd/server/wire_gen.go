@@ -65,7 +65,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, httpResponseEncoder, routeParamManager)
 	accountDataManager := database.ProvideAccountDataManager(dbm)
 	unitCounterProvider := metrics.ProvideUnitCounterProvider()
-	imageUploadProcessor := images.NewImageUploadProcessor()
+	imageUploadProcessor := images.NewImageUploadProcessor(logger)
 	uploadsConfig := &cfg.Uploads
 	storageConfig := &uploadsConfig.Storage
 	uploader, err := storage.NewUploadManager(ctx, logger, storageConfig, routeParamManager)

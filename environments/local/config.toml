@@ -18,7 +18,7 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [36,244,208,188,9,56,71,244,146,246,221,84,72,56,167,53,134,202,54,238,244,113,119,245,20,15,212,34,92,155,38,71]
+    local_mode_key = [79,252,128,100,225,250,100,181,236,30,79,149,184,73,218,231,150,243,27,141,123,243,215,118,54,201,110,111,76,44,128,91]
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
@@ -29,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$15kbbRjHJ3A0s.9gUEEQgeCKfAccZLQNX13/IjpYgEZaMKPYBdPnW"
+    hashed_password = "$2a$11$tPCuedQM1tDwVaOVvQ7aNe2nTdwEdogGuP9Wo8SMBJvKxPTGh.o0K"
     is_site_admin = true
     password = "password"
     username = "username"
@@ -68,10 +68,10 @@
     bucket_name = "avatars"
     debug = true
     provider = "filesystem"
-    upload_filename = ""
+    upload_filename = "avatar"
 
     [uploads.storage_config.filesystem]
-      root_directory = "artifacts"
+      root_directory = "avatars"
 
 [webhooks]
   enabled = false

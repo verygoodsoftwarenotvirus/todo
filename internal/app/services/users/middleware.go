@@ -135,5 +135,5 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 
 // AvatarUploadMiddleware fetches 2FA update input from requests.
 func (s *service) AvatarUploadMiddleware(next http.Handler) http.Handler {
-	return s.imageUploadProcessor.BuildAvatarUploadMiddleware(next, s.logger, s.encoderDecoder, "avatar")
+	return s.imageUploadProcessor.BuildAvatarUploadMiddleware(next, s.encoderDecoder, "avatar")
 }

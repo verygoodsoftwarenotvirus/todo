@@ -5,11 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"path/filepath"
 	"strconv"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -184,24 +183,19 @@ func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries
 }
 
 // BuildAvatarUploadRequest builds a new avatar upload request.
-func (c *Client) BuildAvatarUploadRequest(ctx context.Context, filename string) (*http.Request, error) {
+func (c *Client) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, extension string) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
-
-	avatarBytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("reading avatar file: %w", err)
-	}
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	part, err := writer.CreateFormFile("avatar", fmt.Sprintf("avatar.%s", filepath.Ext(filename)))
+	part, err := writer.CreateFormFile("avatar", fmt.Sprintf("avatar.%s", extension))
 	if err != nil {
 		return nil, fmt.Errorf("writing to form file: %w", err)
 	}
 
-	if _, copyErr := io.Copy(part, bytes.NewReader(avatarBytes)); copyErr != nil {
+	if _, copyErr := io.Copy(part, bytes.NewReader(avatar)); copyErr != nil {
 		return nil, fmt.Errorf("copying file contents to request: %w", copyErr)
 	}
 
@@ -221,7 +215,31 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, filename string) 
 		return nil, fmt.Errorf("building HTTP request: %w", err)
 	}
 
+	var ct string
+
+	switch strings.ToLower(strings.TrimSpace(extension)) {
+	case "jpeg":
+		ct = "image/jpeg"
+	case "png":
+		ct = "image/png"
+	case "gif":
+		ct = "image/gif"
+	}
+
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("X-Upload-Content-Type", ct)
 
 	return req, nil
+}
+
+func (c *Client) UploadAvatarFromFile(ctx context.Context, avatar []byte, extension string) error {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	req, err := c.BuildAvatarUploadRequest(ctx, avatar, extension)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+
+	return c.executeRequest(ctx, req, nil)
 }

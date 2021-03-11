@@ -23,12 +23,13 @@ RUN pnpm run build
 # final stage
 FROM debian:stretch
 
-RUN mkdir /home/appuser
-RUN groupadd --gid 999 appuser && \
-    useradd --system --uid 999 --gid appuser appuser
-RUN chown appuser /home/appuser
-WORKDIR /home/appuser
-USER appuser
+#RUN mkdir /home/appuser
+#RUN groupadd --gid 999 appuser && \
+#    useradd --system --uid 999 --gid appuser appuser
+#RUN chown appuser /home/appuser
+
+#WORKDIR /home/appuser
+#USER appuser
 
 COPY --from=build-stage /todo /todo
 COPY --from=frontend-build-stage /app/dist /frontend

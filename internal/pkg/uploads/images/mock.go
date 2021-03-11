@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 var _ ImageUploadProcessor = (*MockImageUploadProcessor)(nil)
@@ -25,8 +24,8 @@ func (m *MockImageUploadProcessor) Process(ctx context.Context, req *http.Reques
 }
 
 // BuildAvatarUploadMiddleware satisfies the ImageUploadProcessor interface.
-func (m *MockImageUploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, logger logging.Logger, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler {
-	args := m.Called(next, logger, encoderDecoder, filename)
+func (m *MockImageUploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler {
+	args := m.Called(next, encoderDecoder, filename)
 
 	return args.Get(0).(http.Handler)
 }

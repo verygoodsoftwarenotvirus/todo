@@ -14,10 +14,6 @@ services:
 #            - prometheus
 #            - loki
 #            - promtail
-        volumes:
-            - source: "../../../../artifacts"
-              target: "/avatars"
-              type: 'bind'
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'

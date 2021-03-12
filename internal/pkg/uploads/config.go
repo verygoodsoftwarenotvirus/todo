@@ -10,15 +10,13 @@ import (
 
 // Config contains settings regarding search indices.
 type Config struct {
-	Storage  storage.Config `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
-	Provider string         `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-	Debug    bool           `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
+	Storage storage.Config `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
+	Debug   bool           `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 }
 
 // Validate validates an Config struct.
 func (cfg *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.Provider),
 		validation.Field(&cfg.Storage),
 	)
 }

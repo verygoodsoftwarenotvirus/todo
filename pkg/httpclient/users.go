@@ -224,6 +224,8 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, ex
 		ct = "image/png"
 	case "gif":
 		ct = "image/gif"
+	default:
+		return nil, fmt.Errorf("invalid extension: %q", extension)
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -232,7 +234,8 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, ex
 	return req, nil
 }
 
-func (c *Client) UploadAvatarFromFile(ctx context.Context, avatar []byte, extension string) error {
+// UploadAvatar uploads a new avatar.
+func (c *Client) UploadAvatar(ctx context.Context, avatar []byte, extension string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

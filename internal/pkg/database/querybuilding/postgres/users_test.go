@@ -242,11 +242,12 @@ func TestPostgres_BuildUpdateUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, salt = $3, two_factor_secret = $4, two_factor_secret_verified_on = $5, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $6"
+		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, salt = $3, avatar_src = $4, two_factor_secret = $5, two_factor_secret_verified_on = $6, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $7"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
 			exampleUser.Salt,
+			exampleUser.AvatarSrc,
 			exampleUser.TwoFactorSecret,
 			exampleUser.TwoFactorSecretVerifiedOn,
 			exampleUser.ID,

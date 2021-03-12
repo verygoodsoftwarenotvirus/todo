@@ -127,7 +127,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeySearchProvider, input.Search.Provider)
 	cfg.Set(ConfigKeyItemsSearchIndexPath, string(input.Search.ItemsIndexPath))
 
-	cfg.Set(ConfigKeyUploaderProvider, input.Uploads.Provider)
+	cfg.Set(ConfigKeyUploaderProvider, input.Uploads.Storage.Provider)
 	cfg.Set(ConfigKeyUploaderDebug, input.Uploads.Debug)
 
 	cfg.Set(ConfigKeyUploaderBucketName, input.Uploads.Storage.BucketName)

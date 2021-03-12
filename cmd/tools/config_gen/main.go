@@ -154,8 +154,7 @@ func localDevelopmentConfig(filePath string) error {
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploads.Config{
-			Debug:    true,
-			Provider: "filesystem",
+			Debug: true,
 			Storage: storage.Config{
 				UploadFilename: "avatar",
 				Provider:       "filesystem",
@@ -248,8 +247,7 @@ func frontendTestsConfig(filePath string) error {
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploads.Config{
-			Debug:    true,
-			Provider: "filesystem",
+			Debug: true,
 			Storage: storage.Config{
 				UploadFilename: "avatar",
 				Provider:       "filesystem",
@@ -348,8 +346,7 @@ func coverageConfig(filePath string) error {
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploads.Config{
-			Debug:    true,
-			Provider: "filesystem",
+			Debug: true,
 			Storage: storage.Config{
 				UploadFilename: "avatar",
 				Provider:       "filesystem",
@@ -455,17 +452,13 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				RuntimeMetricsCollectionInterval: time.Second,
 			},
 			Uploads: uploads.Config{
-				Debug:    false,
-				Provider: "filesystem",
+				Debug: false,
 				Storage: storage.Config{
-					Provider:    "filesystem",
+					Provider:    "memory",
 					BucketName:  "avatars",
 					AzureConfig: nil,
 					GCSConfig:   nil,
 					S3Config:    nil,
-					FilesystemConfig: &storage.FilesystemConfig{
-						RootDirectory: "avatars",
-					},
 				},
 			},
 			Search: search.Config{

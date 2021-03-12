@@ -179,11 +179,12 @@ func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
+		expectedQuery := "UPDATE users SET username = ?, hashed_password = ?, salt = ?, avatar_src = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = (strftime('%s','now')) WHERE archived_on IS NULL AND id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
 			exampleUser.Salt,
+			exampleUser.AvatarSrc,
 			exampleUser.TwoFactorSecret,
 			exampleUser.TwoFactorSecretVerifiedOn,
 			exampleUser.ID,

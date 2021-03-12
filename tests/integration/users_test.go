@@ -314,7 +314,7 @@ func (s *TestSuite) TestUsersAvatarManagement() {
 
 			avatar := testutil.BuildArbitraryImagePNGBytes(256)
 
-			require.NoError(t, testClients.main.UploadAvatarFromFile(ctx, avatar, "png"))
+			require.NoError(t, testClients.main.UploadAvatar(ctx, avatar, "png"))
 
 			// Assert user equality.
 			user, err := testClients.admin.GetUser(ctx, s.user.ID)

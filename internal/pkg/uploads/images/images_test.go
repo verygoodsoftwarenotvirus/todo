@@ -47,7 +47,7 @@ func Test_uploadProcessor_Process(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		p := NewImageUploadProcessor()
+		p := NewImageUploadProcessor(nil)
 		expectedFieldName := "avatar"
 
 		b := new(bytes.Buffer)
@@ -70,7 +70,7 @@ func Test_uploadProcessor_Process(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		p := NewImageUploadProcessor()
+		p := NewImageUploadProcessor(nil)
 		expectedFieldName := "avatar"
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://tests.verygoodsoftwarenotvirus.ru", nil)
@@ -85,7 +85,7 @@ func Test_uploadProcessor_Process(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		p := NewImageUploadProcessor()
+		p := NewImageUploadProcessor(nil)
 		expectedFieldName := "avatar"
 
 		b := new(bytes.Buffer)
@@ -106,7 +106,7 @@ func Test_uploadProcessor_Process(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		p := NewImageUploadProcessor()
+		p := NewImageUploadProcessor(nil)
 		expectedFieldName := "avatar"
 
 		req := newAvatarUploadRequest(t, "avatar.png", bytes.NewBufferString(""))

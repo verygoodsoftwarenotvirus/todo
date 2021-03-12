@@ -210,6 +210,7 @@ func (q *Postgres) BuildUpdateUserQuery(input *types.User) (query string, args [
 		Set(querybuilding.UsersTableUsernameColumn, input.Username).
 		Set(querybuilding.UsersTableHashedPasswordColumn, input.HashedPassword).
 		Set(querybuilding.UsersTableSaltColumn, input.Salt).
+		Set(querybuilding.UsersTableAvatarColumn, input.AvatarSrc).
 		Set(querybuilding.UsersTableTwoFactorSekretColumn, input.TwoFactorSecret).
 		Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).

@@ -18,7 +18,7 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [46,250,181,197,13,233,226,180,126,81,135,31,156,119,21,140,109,22,118,28,43,114,110,7,42,226,120,64,248,30,50,9]
+    local_mode_key = [73,214,56,181,185,31,67,103,20,208,22,205,182,197,20,160,135,104,88,43,137,157,219,246,169,111,85,230,38,108,28,73]
 
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
@@ -29,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$B9gpV/CvgW.0pUUTYXbEk.cIpt2I7U28Qq9lvH7yE5xpImYNUE/nW"
+    hashed_password = "$2a$11$aysVVqJPNoN/TJ0fS3WJ7Oqh1LbVbm/UeWEhfTt/ogj8Pd5LZEnt."
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
@@ -50,8 +50,12 @@
     provider = ""
 
   [observability.tracing]
-    provider = ""
+    provider = "jaeger"
     span_collection_probability = 1.0
+
+    [observability.tracing.jaeger]
+      collector_endpoint = "http://tracing-server:14268/api/traces"
+      service_name = "todo-service"
 
 [search]
   items_index_path = "items.bleve"

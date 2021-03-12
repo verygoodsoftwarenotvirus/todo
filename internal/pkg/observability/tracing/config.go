@@ -1,12 +1,12 @@
 package tracing
 
 import (
-	"fmt"
-	"os"
+	"context"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"go.opencensus.io/trace"
 )
 
@@ -22,29 +22,44 @@ type (
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		// SpanCollectionProbability indicates the probability that a collected span will be reported.
 		SpanCollectionProbability float64 `json:"span_collection_probability" mapstructure:"span_collection_probability" toml:"span_collection_probability,omitempty"`
+		// Jaeger configures the Jaeger tracer.
+		Jaeger *JaegerConfig `json:"jaeger" mapstructure:"jaeger" toml:"jaeger,omitempty"`
+	}
+
+	// Config contains settings related to tracing with Jaeger.
+	JaegerConfig struct {
+		CollectorEndpoint string `json:"collector_endpoint" mapstructure:"collector_endpoint" toml:"collector_endpoint,omitempty"`
+		ServiceName       string `json:"service_name" mapstructure:"service_name" toml:"service_name,omitempty"`
 	}
 )
 
-// Initialize provides an instrumentation handler.
-func (cfg *Config) Initialize(l logging.Logger) error {
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(cfg.SpanCollectionProbability)})
+func (c *Config) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, c,
+		// validation.Field(&c.Provider, validation.In(Jaeger)),
+		validation.Field(&c.Jaeger, validation.When(c.Provider == Jaeger, validation.Required).Else(validation.Nil)),
+	)
+}
 
-	logger := l.WithValue("tracing_provider", cfg.Provider)
+func (c *JaegerConfig) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, c,
+		validation.Field(&c.CollectorEndpoint, validation.Required),
+		validation.Field(&c.ServiceName, validation.Required),
+	)
+}
+
+// Initialize provides an instrumentation handler.
+func (c *Config) Initialize(l logging.Logger) (flushFunc func(), err error) {
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(c.SpanCollectionProbability)})
+
+	logger := l.WithValue("tracing_provider", c.Provider)
 	logger.Info("setting tracing provider")
 
-	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
+	switch strings.TrimSpace(strings.ToLower(c.Provider)) {
 	case Jaeger:
-		agentHost := os.Getenv("JAEGER_AGENT_HOST")
-		agentPort := os.Getenv("JAEGER_AGENT_PORT")
-		serviceName := os.Getenv("JAEGER_SERVICE_NAME")
-
-		if agentHost != "" && agentPort != "" && serviceName != "" {
-			_, err := SetupJaeger(fmt.Sprintf("http://%s:%s", agentHost, agentPort), serviceName)
-			if err != nil {
-				return fmt.Errorf("initializing jaeger tracer: %w", err)
-			}
-		}
+		logger.Debug("setting up jaeger")
+		return c.SetupJaeger()
+	default:
+		logger.Debug("invalid tracing config")
+		return nil, nil
 	}
-
-	return nil
 }

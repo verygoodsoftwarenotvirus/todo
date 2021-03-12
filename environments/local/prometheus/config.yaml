@@ -12,10 +12,10 @@ scrape_configs:
       - targets: ['todo-server:8888']
 
     # How frequently to scrape targets from this job.
-    scrape_interval: 15s
+    scrape_interval: 2s
 
     # Per-scrape timeout when scraping this job.
-    scrape_timeout: 15s
+    scrape_timeout: 5s
 
     # The HTTP resource path on which to fetch metrics from targets.
     metrics_path: '/metrics'
@@ -37,7 +37,7 @@ scrape_configs:
 
     # Sets the `Authorization` header on every scrape request with
     # the configured bearer token. It is mutually exclusive with `bearer_token_file`.
-    # bearer_token: <secret>
+    bearer_token: REPLACEMEWITHAREALSECRETPLZ
 
     # Sets the `Authorization` header on every scrape request with the bearer token
     # read from the configured file. It is mutually exclusive with `bearer_token`.

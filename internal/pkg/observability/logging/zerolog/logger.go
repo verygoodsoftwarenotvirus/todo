@@ -3,6 +3,7 @@ package zerolog
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
@@ -11,6 +12,8 @@ import (
 
 func init() {
 	zerolog.CallerSkipFrameCount++
+	zerolog.TimeFieldFormat = time.RFC3339Nano
+	zerolog.DisableSampling(true)
 }
 
 // Logger is our log wrapper.
@@ -85,7 +88,7 @@ func (l *Logger) Debug(input string) {
 
 // Error satisfies our contract for the logging.Logger Error method.
 func (l *Logger) Error(err error, input string) {
-	l.logger.Error().Caller().Err(err).Msg(input)
+	l.logger.Error().Stack().Caller().Err(err).Msg(input)
 }
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.

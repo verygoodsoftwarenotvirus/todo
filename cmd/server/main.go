@@ -48,8 +48,14 @@ func main() {
 		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("parsing configuration file: %w", err))
 	}
 
-	if initializeTracerErr := cfg.Observability.Tracing.Initialize(logger); initializeTracerErr != nil {
+	flushFunc, initializeTracerErr := cfg.Observability.Tracing.Initialize(logger)
+	if initializeTracerErr != nil {
 		logger.Error(initializeTracerErr, "initializing tracer")
+	}
+
+	// it's possible that tracing is disabled
+	if flushFunc != nil {
+		defer flushFunc()
 	}
 
 	// only allow initialization to take so long.

@@ -51,6 +51,9 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault(ConfigKeyDatabaseMetricsCollectionInterval, metrics.DefaultMetricsCollectionInterval)
 	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, dbconfig.DefaultMetricsCollectionInterval)
 
+	// tracing stuff.
+	cfg.SetDefault(ConfigKeyObservabilityTracingSpanCollectionProbability, 1)
+
 	// audit log stuff.
 	cfg.SetDefault(ConfigKeyAuditLogEnabled, true)
 
@@ -106,8 +109,13 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)
 
-	cfg.Set(ConfigKeyMetricsTracer, input.Observability.Tracing.Provider)
+	cfg.Set(ConfigKeyObservabilityTracingProvider, input.Observability.Tracing.Provider)
 	cfg.Set(ConfigKeyObservabilityTracingSpanCollectionProbability, input.Observability.Tracing.SpanCollectionProbability)
+
+	if input.Observability.Tracing.Jaeger != nil {
+		cfg.Set(ConfigKeyObservabilityTracingJaegerCollectorEndpoint, input.Observability.Tracing.Jaeger.CollectorEndpoint)
+		cfg.Set(ConfigKeyObservabilityTracingJaegerServiceName, input.Observability.Tracing.Jaeger.ServiceName)
+	}
 
 	cfg.Set(ConfigKeyMetricsRuntimeCollectionInterval, input.Observability.RuntimeMetricsCollectionInterval)
 	cfg.Set(ConfigKeyDatabaseDebug, input.Database.Debug)

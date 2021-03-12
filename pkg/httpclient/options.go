@@ -9,6 +9,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 type option func(*Client) error
@@ -89,7 +90,10 @@ func UsingHTTPClient(client *http.Client) func(*Client) error {
 			client.Timeout = defaultTimeout
 		}
 
-		client.Transport = otelhttp.NewTransport(buildDefaultTransport(client.Timeout))
+		client.Transport = otelhttp.NewTransport(
+			buildDefaultTransport(client.Timeout),
+			otelhttp.WithSpanNameFormatter(tracing.FormatSpan),
+		)
 
 		c.plainClient = client
 		c.authedClient = client

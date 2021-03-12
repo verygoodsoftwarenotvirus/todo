@@ -46,7 +46,7 @@ func buildTokenRestrictionMiddleware(logger logging.Logger, token string) func(n
 	}
 }
 
-func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config, metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {
 	router.Route("/_meta_", func(metaRouter routing.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live
@@ -57,7 +57,7 @@ func (s *Server) setupRouter(router routing.Router, metricsConfig metrics.Config
 
 	if metricsHandler != nil {
 		s.logger.Debug("establishing metrics handler")
-		router.WithMiddleware(buildTokenRestrictionMiddleware(s.logger, metricsConfig.RouteToken)).Handle("/metrics", metricsHandler)
+		router.Handle("/metrics", metricsHandler)
 	}
 
 	// Frontend routes.

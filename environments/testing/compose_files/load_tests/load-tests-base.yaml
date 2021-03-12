@@ -18,7 +18,7 @@ services:
         links:
             - database
     tracing-server:
-        image: jaegertracing/all-in-one:latest
+        image: jaegertracing/all-in-one:1.22.0
         logging:
             driver: none
         ports:

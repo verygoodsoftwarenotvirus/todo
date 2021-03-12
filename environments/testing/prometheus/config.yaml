@@ -37,7 +37,7 @@ scrape_configs:
 
     # Sets the `Authorization` header on every scrape request with
     # the configured bearer token. It is mutually exclusive with `bearer_token_file`.
-    # bearer_token: <secret>
+    bearer_token: REPLACEMEWITHAREALSECRETPLZ
 
     # Sets the `Authorization` header on every scrape request with the bearer token
     # read from the configured file. It is mutually exclusive with `bearer_token`.

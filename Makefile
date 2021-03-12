@@ -178,7 +178,7 @@ lintegration-tests: lint clear integration-tests
 integration-tests: integration-tests-sqlite integration-tests-postgres integration-tests-mariadb
 
 .PHONY: integration-tests-
-integration-tests-%: clean artifacts
+integration-tests-%:
 	docker-compose \
 	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-base.yaml \
 	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-$*.yaml up \

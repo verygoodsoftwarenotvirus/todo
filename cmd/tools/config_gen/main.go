@@ -59,6 +59,20 @@ const (
 
 var (
 	examplePASETOKey = generatePASETOKey()
+
+	noopTracingConfig = tracing.Config{
+		Provider:                  "",
+		SpanCollectionProbability: 1,
+	}
+
+	localTracingConfig = tracing.Config{
+		Provider:                  "jaeger",
+		SpanCollectionProbability: 1,
+		Jaeger: &tracing.JaegerConfig{
+			CollectorEndpoint: "http://tracing-server:14268/api/traces",
+			ServiceName:       "todo-service",
+		},
+	}
 )
 
 type configFunc func(filePath string) error
@@ -147,10 +161,7 @@ func localDevelopmentConfig(filePath string) error {
 				Provider:   "prometheus",
 				RouteToken: "",
 			},
-			Tracing: tracing.Config{
-				Provider:                  "jaeger",
-				SpanCollectionProbability: 1,
-			},
+			Tracing:                          localTracingConfig,
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploads.Config{
@@ -240,10 +251,7 @@ func frontendTestsConfig(filePath string) error {
 				Provider:   "prometheus",
 				RouteToken: "",
 			},
-			Tracing: tracing.Config{
-				Provider:                  "jaeger",
-				SpanCollectionProbability: 1,
-			},
+			Tracing:                          noopTracingConfig,
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploads.Config{
@@ -339,10 +347,7 @@ func coverageConfig(filePath string) error {
 				Provider:   "",
 				RouteToken: "",
 			},
-			Tracing: tracing.Config{
-				Provider:                  "",
-				SpanCollectionProbability: 1,
-			},
+			Tracing:                          noopTracingConfig,
 			RuntimeMetricsCollectionInterval: time.Second,
 		},
 		Uploads: uploads.Config{
@@ -445,10 +450,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					Provider:   "",
 					RouteToken: "",
 				},
-				Tracing: tracing.Config{
-					Provider:                  "",
-					SpanCollectionProbability: 1,
-				},
+				Tracing:                          localTracingConfig,
 				RuntimeMetricsCollectionInterval: time.Second,
 			},
 			Uploads: uploads.Config{

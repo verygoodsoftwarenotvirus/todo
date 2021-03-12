@@ -108,7 +108,7 @@ func (s *Server) Serve() {
 	s.httpServer.Handler = otelhttp.NewHandler(
 		s.router.Handler(),
 		serverNamespace,
-		otelhttp.WithSpanNameFormatter(formatSpanNameForRequest),
+		otelhttp.WithSpanNameFormatter(tracing.FormatSpan),
 	)
 
 	s.logger.WithValue("listening_on", s.httpServer.Addr).Debug("Listening for HTTP requests")

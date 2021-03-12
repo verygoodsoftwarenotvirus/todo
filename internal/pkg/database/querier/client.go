@@ -229,7 +229,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("query", query).WithValue("args", args).WithValue("description", queryDescription)
+	logger := c.logger.WithValue("query", query).WithValue("description", queryDescription)
 
 	if c.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {
 		var id uint64

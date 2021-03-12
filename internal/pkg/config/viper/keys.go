@@ -63,12 +63,18 @@ const (
 	tracingKey       = "tracing"
 	// ConfigKeyMetricsProvider is the key viper will use to refer to the MetricsProvider setting.
 	ConfigKeyMetricsProvider = observabilityKey + x + metricsKey + x + "provider"
-	// ConfigKeyMetricsTracer is the key viper will use to refer to the TracingProvider setting.
-	ConfigKeyMetricsTracer = observabilityKey + x + tracingKey + x + "provider"
-	// ConfigKeyObservabilityTracingSpanCollectionProbability is the key viper will use to refer to the SpanCollectionProbability setting.
-	ConfigKeyObservabilityTracingSpanCollectionProbability = observabilityKey + x + tracingKey + x + "span_collection_probability"
 	// ConfigKeyMetricsRuntimeCollectionInterval is the key viper will use to refer to the MetricsSettings.RuntimeCollectionInterval setting.
 	ConfigKeyMetricsRuntimeCollectionInterval = observabilityKey + x + "runtime_metrics_collection_interval"
+	// ConfigKeyObservabilityTracingProvider is the key viper will use to refer to the TracingProvider setting.
+	ConfigKeyObservabilityTracingProvider = observabilityKey + x + tracingKey + x + "provider"
+	// ConfigKeyObservabilityTracingSpanCollectionProbability is the key viper will use to refer to the SpanCollectionProbability setting.
+	ConfigKeyObservabilityTracingSpanCollectionProbability = observabilityKey + x + tracingKey + x + "span_collection_probability"
+	// jaegerKey is the key viper will use to refer to the jaeger config in tracing settings.
+	jaegerKey = observabilityKey + x + tracingKey + x + "jaeger"
+	// ConfigKeyObservabilityTracingJaegerCollectorEndpoint is the key viper will use to refer to the jaeger config in tracing settings.
+	ConfigKeyObservabilityTracingJaegerCollectorEndpoint = jaegerKey + x + "collector_endpoint"
+	// ConfigKeyObservabilityTracingJaegerServiceName is the key viper will use to refer to the jaeger config in tracing settings.
+	ConfigKeyObservabilityTracingJaegerServiceName = jaegerKey + x + "service_name"
 
 	databaseKey = "database"
 	// ConfigKeyDatabaseDebug is the key viper will use to refer to the DatabaseSettings.debug setting.

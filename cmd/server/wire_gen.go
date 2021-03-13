@@ -43,7 +43,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	observabilityConfig := &cfg.Observability
 	metricsConfig := observabilityConfig.Metrics
 	config3 := &observabilityConfig.Metrics
-	instrumentationHandler := metrics.ProvideMetricsInstrumentationHandlerForServer(config3, logger)
+	instrumentationHandler, err := metrics.ProvideMetricsInstrumentationHandlerForServer(config3, logger)
+	if err != nil {
+		return nil, err
+	}
 	authConfig := &cfg.Auth
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
@@ -64,7 +67,10 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, httpResponseEncoder, routeParamManager)
 	accountDataManager := database.ProvideAccountDataManager(dbm)
-	unitCounterProvider := metrics.ProvideUnitCounterProvider()
+	unitCounterProvider, err := metrics.ProvideUnitCounterProvider(config3, logger)
+	if err != nil {
+		return nil, err
+	}
 	imageUploadProcessor := images.NewImageUploadProcessor(logger)
 	uploadsConfig := &cfg.Uploads
 	storageConfig := &uploadsConfig.Storage

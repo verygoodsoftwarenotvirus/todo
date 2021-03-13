@@ -2,6 +2,10 @@ package logging
 
 import (
 	"net/http"
+	"strings"
+	"time"
+
+	chimiddleware "github.com/go-chi/chi/middleware"
 )
 
 const (
@@ -56,4 +60,38 @@ func EnsureLogger(logger Logger) Logger {
 	}
 
 	return NewNonOperationalLogger()
+}
+
+var doNotLog = map[string]struct{}{
+	// "/metrics": {},
+	"/build/":  {},
+	"/assets/": {},
+}
+
+// BuildLoggingMiddleware builds a logging middleware
+func BuildLoggingMiddleware(logger Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			ww := chimiddleware.NewWrapResponseWriter(res, req.ProtoMajor)
+
+			start := time.Now()
+			next.ServeHTTP(ww, req)
+
+			shouldLog := true
+			for route := range doNotLog {
+				if strings.HasPrefix(req.URL.Path, route) || req.URL.Path == route {
+					shouldLog = false
+					break
+				}
+			}
+
+			if shouldLog {
+				logger.WithRequest(req).WithValues(map[string]interface{}{
+					"status":  ww.Status(),
+					"elapsed": time.Since(start).Milliseconds(),
+					"written": ww.BytesWritten(),
+				}).Debug("response served")
+			}
+		})
+	}
 }

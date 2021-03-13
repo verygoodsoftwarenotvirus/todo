@@ -43,13 +43,13 @@ type (
 
 	// Config configures our UploadManager.
 	Config struct {
-		FilesystemConfig *FilesystemConfig `json:"filesystem" mapstructure:"filesystem" toml:"filesystem,omitempty"`
-		AzureConfig      *AzureConfig      `json:"azure" mapstructure:"azure" toml:"azure,omitempty"`
-		GCSConfig        *GCSConfig        `json:"gcs" mapstructure:"gcs" toml:"gcs,omitempty"`
-		S3Config         *S3Config         `json:"s3" mapstructure:"s3" toml:"s3,omitempty"`
-		BucketName       string            `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
-		UploadFilename   string            `json:"upload_filename" mapstructure:"upload_filename" toml:"upload_filename,omitempty"`
-		Provider         string            `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
+		FilesystemConfig  *FilesystemConfig `json:"filesystem" mapstructure:"filesystem" toml:"filesystem,omitempty"`
+		AzureConfig       *AzureConfig      `json:"azure" mapstructure:"azure" toml:"azure,omitempty"`
+		GCSConfig         *GCSConfig        `json:"gcs" mapstructure:"gcs" toml:"gcs,omitempty"`
+		S3Config          *S3Config         `json:"s3" mapstructure:"s3" toml:"s3,omitempty"`
+		BucketName        string            `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
+		UploadFilenameKey string            `json:"upload_filename_key" mapstructure:"upload_filename_key" toml:"upload_filename_key,omitempty"`
+		Provider          string            `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 	}
 )
 
@@ -75,7 +75,7 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config, r
 	u := &Uploader{
 		logger:          logging.EnsureLogger(logger).WithName(serviceName),
 		tracer:          tracing.NewTracer(serviceName),
-		filenameFetcher: routeParamManager.BuildRouteParamStringIDFetcher(cfg.UploadFilename),
+		filenameFetcher: routeParamManager.BuildRouteParamStringIDFetcher(cfg.UploadFilenameKey),
 	}
 
 	if err := cfg.Validate(ctx); err != nil {

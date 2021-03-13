@@ -57,7 +57,7 @@ func (s *Server) setupRouter(router routing.Router, _ metrics.Config, metricsHan
 
 	if metricsHandler != nil {
 		s.logger.Debug("establishing metrics handler")
-		router.Handle("/metrics", metricsHandler)
+		router.HandleFunc("/metrics", metricsHandler.ServeHTTP)
 	}
 
 	// Frontend routes.

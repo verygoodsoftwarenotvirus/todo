@@ -114,7 +114,7 @@ const (
 	// ConfigKeyUploaderBucketName is the key viper will use to refer to the UploadSettings.BucketName value.
 	ConfigKeyUploaderBucketName = uploadsKey + x + storageConfigKey + x + "bucket_name"
 	// ConfigKeyUploaderUploadFilename is the key viper will use to refer to the UploadSettings.BucketName value.
-	ConfigKeyUploaderUploadFilename = uploadsKey + x + storageConfigKey + x + "upload_filename"
+	ConfigKeyUploaderUploadFilename = uploadsKey + x + storageConfigKey + x + "upload_filename_key"
 
 	azureKey = "azure"
 	// ConfigKeyUploaderAzureAuthMethod is the key viper will use to refer to UploadSettings.Azure.AuthMethod.

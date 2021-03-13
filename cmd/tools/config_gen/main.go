@@ -65,6 +65,20 @@ var (
 		SpanCollectionProbability: 1,
 	}
 
+	localServer = httpserver.Config{
+		Debug:           true,
+		HTTPPort:        defaultPort,
+		StartupDeadline: time.Minute,
+	}
+
+	localCookies = authservice.CookieConfig{
+		Name:       defaultCookieName,
+		Domain:     defaultCookieDomain,
+		SigningKey: debugCookieSecret,
+		Lifetime:   authservice.DefaultCookieLifetime,
+		SecureOnly: false,
+	}
+
 	localTracingConfig = tracing.Config{
 		Provider:                  "jaeger",
 		SpanCollectionProbability: 1,
@@ -84,6 +98,15 @@ var files = map[string]configFunc{
 	"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
 	"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
 	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
+}
+
+func buildLocalFrontendServiceConfig() frontendservice.Config {
+	return frontendservice.Config{
+		StaticFilesDirectory: defaultFrontendFilepath,
+		Debug:                false,
+		LogStaticFiles:       false,
+		CacheStaticFiles:     false,
+	}
 }
 
 func mustHashPass(password string) string {
@@ -114,47 +137,33 @@ func localDevelopmentConfig(filePath string) error {
 			Debug:   true,
 			RunMode: developmentEnv,
 		},
-		Server: httpserver.Config{
-			Debug:           true,
-			HTTPPort:        defaultPort,
-			StartupDeadline: time.Minute,
-		},
-		Frontend: frontendservice.Config{
-			StaticFilesDirectory: defaultFrontendFilepath,
-			Debug:                true,
-			LogStaticFiles:       false,
-			CacheStaticFiles:     false,
-		},
+		Server:   localServer,
+		Frontend: buildLocalFrontendServiceConfig(),
 		Auth: authservice.Config{
 			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
 			},
-			Cookies: authservice.CookieConfig{
-				Name:       defaultCookieName,
-				Domain:     defaultCookieDomain,
-				SigningKey: debugCookieSecret,
-				Lifetime:   authservice.DefaultCookieLifetime,
-				SecureOnly: false,
-			},
+			Cookies:               localCookies,
 			Debug:                 true,
 			EnableUserSignup:      true,
 			MinimumUsernameLength: 4,
 			MinimumPasswordLength: 8,
 		},
 		Database: dbconfig.Config{
-			Debug:         true,
-			RunMigrations: true,
+			Debug:                     true,
+			RunMigrations:             true,
+			MaxPingAttempts:           maxAttempts,
+			Provider:                  postgres,
+			ConnectionDetails:         devPostgresDBConnDetails,
+			MetricsCollectionInterval: time.Second,
 			CreateTestUser: &types.TestUserCreationConfig{
 				Username:       "username",
 				Password:       defaultPassword,
 				HashedPassword: mustHashPass(defaultPassword),
 				IsServiceAdmin: true,
 			},
-			Provider:                  postgres,
-			ConnectionDetails:         devPostgresDBConnDetails,
-			MetricsCollectionInterval: time.Second,
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
@@ -167,12 +176,12 @@ func localDevelopmentConfig(filePath string) error {
 		Uploads: uploads.Config{
 			Debug: true,
 			Storage: storage.Config{
-				UploadFilename: "avatar",
-				Provider:       "filesystem",
-				BucketName:     "avatars",
-				AzureConfig:    nil,
-				GCSConfig:      nil,
-				S3Config:       nil,
+				UploadFilenameKey: "avatar",
+				Provider:          "filesystem",
+				BucketName:        "avatars",
+				AzureConfig:       nil,
+				GCSConfig:         nil,
+				S3Config:          nil,
 				FilesystemConfig: &storage.FilesystemConfig{
 					RootDirectory: "avatars",
 				},
@@ -210,30 +219,15 @@ func frontendTestsConfig(filePath string) error {
 			Debug:   false,
 			RunMode: developmentEnv,
 		},
-		Server: httpserver.Config{
-			Debug:           true,
-			HTTPPort:        defaultPort,
-			StartupDeadline: time.Minute,
-		},
-		Frontend: frontendservice.Config{
-			StaticFilesDirectory: defaultFrontendFilepath,
-			Debug:                true,
-			LogStaticFiles:       false,
-			CacheStaticFiles:     false,
-		},
+		Server:   localServer,
+		Frontend: buildLocalFrontendServiceConfig(),
 		Auth: authservice.Config{
 			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
 			},
-			Cookies: authservice.CookieConfig{
-				Name:       defaultCookieName,
-				Domain:     defaultCookieDomain,
-				SigningKey: debugCookieSecret,
-				Lifetime:   authservice.DefaultCookieLifetime,
-				SecureOnly: false,
-			},
+			Cookies:               localCookies,
 			Debug:                 true,
 			EnableUserSignup:      true,
 			MinimumUsernameLength: 4,
@@ -244,6 +238,7 @@ func frontendTestsConfig(filePath string) error {
 			RunMigrations:             true,
 			Provider:                  postgres,
 			ConnectionDetails:         devPostgresDBConnDetails,
+			MaxPingAttempts:           maxAttempts,
 			MetricsCollectionInterval: time.Second,
 		},
 		Observability: observability.Config{
@@ -257,15 +252,9 @@ func frontendTestsConfig(filePath string) error {
 		Uploads: uploads.Config{
 			Debug: true,
 			Storage: storage.Config{
-				UploadFilename: "avatar",
-				Provider:       "filesystem",
-				BucketName:     "avatars",
-				AzureConfig:    nil,
-				GCSConfig:      nil,
-				S3Config:       nil,
-				FilesystemConfig: &storage.FilesystemConfig{
-					RootDirectory: "avatars",
-				},
+				UploadFilenameKey: "avatar",
+				Provider:          "memory",
+				BucketName:        "avatars",
 			},
 		},
 		Search: search.Config{
@@ -300,30 +289,15 @@ func coverageConfig(filePath string) error {
 			Debug:   true,
 			RunMode: testingEnv,
 		},
-		Server: httpserver.Config{
-			Debug:           true,
-			HTTPPort:        defaultPort,
-			StartupDeadline: time.Minute,
-		},
-		Frontend: frontendservice.Config{
-			StaticFilesDirectory: defaultFrontendFilepath,
-			Debug:                true,
-			LogStaticFiles:       false,
-			CacheStaticFiles:     false,
-		},
+		Server:   localServer,
+		Frontend: buildLocalFrontendServiceConfig(),
 		Auth: authservice.Config{
 			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
 			},
-			Cookies: authservice.CookieConfig{
-				Name:       defaultCookieName,
-				Domain:     defaultCookieDomain,
-				SigningKey: debugCookieSecret,
-				Lifetime:   authservice.DefaultCookieLifetime,
-				SecureOnly: false,
-			},
+			Cookies:               localCookies,
 			Debug:                 false,
 			EnableUserSignup:      true,
 			MinimumUsernameLength: 4,
@@ -335,6 +309,7 @@ func coverageConfig(filePath string) error {
 			Provider:                  postgres,
 			ConnectionDetails:         devPostgresDBConnDetails,
 			MetricsCollectionInterval: 2 * time.Second,
+			MaxPingAttempts:           maxAttempts,
 			CreateTestUser: &types.TestUserCreationConfig{
 				Username:       "coverageUser",
 				Password:       defaultPassword,
@@ -353,15 +328,9 @@ func coverageConfig(filePath string) error {
 		Uploads: uploads.Config{
 			Debug: true,
 			Storage: storage.Config{
-				UploadFilename: "avatar",
-				Provider:       "filesystem",
-				BucketName:     "avatars",
-				AzureConfig:    nil,
-				GCSConfig:      nil,
-				S3Config:       nil,
-				FilesystemConfig: &storage.FilesystemConfig{
-					RootDirectory: "avatars",
-				},
+				UploadFilenameKey: "avatar",
+				Provider:          "memory",
+				BucketName:        "avatars",
 			},
 		},
 		Search: search.Config{
@@ -369,11 +338,11 @@ func coverageConfig(filePath string) error {
 			ItemsIndexPath: defaultItemsSearchIndexPath,
 		},
 		Webhooks: webhooksservice.Config{
-			Debug:   true,
-			Enabled: false,
+			Debug:   false,
+			Enabled: true,
 		},
 		AuditLog: audit.Config{
-			Debug:   true,
+			Debug:   false,
 			Enabled: true,
 		},
 	}
@@ -392,27 +361,22 @@ func coverageConfig(filePath string) error {
 
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
 	return func(filePath string) error {
+		startupDeadline := time.Minute
+		if dbVendor == mariadb {
+			startupDeadline = 5 * time.Minute
+		}
+
 		cfg := &config.ServerConfig{
 			Meta: config.MetaSettings{
 				Debug:   false,
 				RunMode: testingEnv,
 			},
 			Server: httpserver.Config{
-				Debug:    false,
-				HTTPPort: defaultPort,
-				StartupDeadline: func() time.Duration {
-					if dbVendor == mariadb {
-						return 5 * time.Minute
-					}
-					return time.Minute
-				}(),
+				Debug:           false,
+				HTTPPort:        defaultPort,
+				StartupDeadline: startupDeadline,
 			},
-			Frontend: frontendservice.Config{
-				StaticFilesDirectory: defaultFrontendFilepath,
-				Debug:                false,
-				LogStaticFiles:       false,
-				CacheStaticFiles:     false,
-			},
+			Frontend: buildLocalFrontendServiceConfig(),
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -436,8 +400,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				RunMigrations:             true,
 				Provider:                  dbVendor,
 				MaxPingAttempts:           maxAttempts,
-				ConnectionDetails:         database.ConnectionDetails(dbDetails),
 				MetricsCollectionInterval: 2 * time.Second,
+				ConnectionDetails:         database.ConnectionDetails(dbDetails),
 				CreateTestUser: &types.TestUserCreationConfig{
 					Username:       "exampleUser",
 					Password:       "integration-tests-are-cool",

@@ -3,11 +3,11 @@ services:
     todo-server:
         environment:
             CONFIGURATION_FILEPATH: '/etc/config.toml'
-            JAEGER_DISABLED: 'false'
+            JAEGER_DISABLED: 'true'
         ports:
             - 80:8888
         links:
-            - tracing-server
+#            - tracing-server
             - prometheus
 #            - loki
 #            - promtail
@@ -23,22 +23,22 @@ services:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
         container_name: 'integration_tests'
-    tracing-server:
-        image: jaegertracing/all-in-one:1.22.0
-        logging:
-            driver: none
-        ports:
-            - "5775:5775/udp"
-            - "6831:6831/udp"
-            - "6832:6832/udp"
-            - "5778:5778"
-            - "16686:16686"
-            - "14268:14268"
-            - "9411:9411"
+#    tracing-server:
+#        image: jaegertracing/all-in-one:1.22.0
+#        logging:
+#            driver: none
+#        ports:
+#            - "5775:5775/udp"
+#            - "6831:6831/udp"
+#            - "6832:6832/udp"
+#            - "5778:5778"
+#            - "16686:16686"
+#            - "14268:14268"
+#            - "9411:9411"
     prometheus:
-        image: quay.io/prometheus/prometheus:v2.0.0
-        logging:
-            driver: none
+        image: quay.io/prometheus/prometheus:v2.25.0
+#        logging:
+#            driver: none
         ports:
             - 9090:9090
         volumes:

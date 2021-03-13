@@ -12,8 +12,11 @@ import (
 
 func init() {
 	zerolog.CallerSkipFrameCount++
-	zerolog.TimeFieldFormat = time.RFC3339Nano
 	zerolog.DisableSampling(true)
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+	zerolog.TimestampFunc = func() time.Time {
+		return time.Now().UTC()
+	}
 }
 
 // Logger is our log wrapper.

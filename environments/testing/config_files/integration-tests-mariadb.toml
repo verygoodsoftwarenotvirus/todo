@@ -18,7 +18,7 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [73,214,56,181,185,31,67,103,20,208,22,205,182,197,20,160,135,104,88,43,137,157,219,246,169,111,85,230,38,108,28,73]
+    local_mode_key = [122,165,98,115,121,48,57,2,134,80,230,186,114,43,215,65,101,109,229,58,173,166,113,56,209,113,97,68,177,147,173,173]
 
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
@@ -29,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$aysVVqJPNoN/TJ0fS3WJ7Oqh1LbVbm/UeWEhfTt/ogj8Pd5LZEnt."
+    hashed_password = "$2a$11$8tf1fMKS5Z11RHTXvfZSjOjVjVBPJQ7r8HALjczIvSyTIQc8pnpR6"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
@@ -72,7 +72,7 @@
     bucket_name = "avatars"
     debug = false
     provider = "memory"
-    upload_filename = ""
+    upload_filename_key = ""
 
 [webhooks]
   enabled = false

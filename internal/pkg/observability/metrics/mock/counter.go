@@ -21,7 +21,7 @@ func (m *UnitCounter) Increment(ctx context.Context) {
 }
 
 // IncrementBy implements our UnitCounter interface.
-func (m *UnitCounter) IncrementBy(ctx context.Context, val uint64) {
+func (m *UnitCounter) IncrementBy(ctx context.Context, val int64) {
 	m.Called(ctx, val)
 }
 

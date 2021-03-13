@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 )
 
@@ -24,16 +23,13 @@ func TestNewRouter(t *testing.T) {
 
 func Test_buildChiMux(t *testing.T) {
 	t.Run("normal operation", func(t *testing.T) {
-		assert.NotNil(t, buildChiMux(
-			logging.NewNonOperationalLogger(),
-			tracing.NewTracer("test"),
-		))
+		assert.NotNil(t, buildChiMux(logging.NewNonOperationalLogger()))
 	})
 }
 
 func Test_buildLoggingMiddleware(t *testing.T) {
 	t.Run("normal operation", func(t *testing.T) {
-		middleware := buildLoggingMiddleware(logging.NewNonOperationalLogger(), tracing.NewTracer("blah"))
+		middleware := buildLoggingMiddleware(logging.NewNonOperationalLogger())
 
 		assert.NotNil(t, middleware)
 

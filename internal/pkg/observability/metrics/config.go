@@ -1,18 +1,23 @@
 package metrics
 
 import (
-	"log"
+	"fmt"
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/unit"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
-	"go.opentelemetry.io/otel/exporters/metric/prometheus"
+	otelprom "go.opentelemetry.io/otel/exporters/metric/prometheus"
+	"go.opentelemetry.io/otel/metric"
 )
 
 const (
-	// DefaultNamespace is the default namespace under which we register metrics.
-	DefaultNamespace = "todo_server"
+	// defaultNamespace is the default namespace under which we register metrics.
+	defaultNamespace = "todo_server"
+
+	instrumentationVersion = "1.0.0"
 
 	// MinimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
 	// this value is used to guard against zero values.
@@ -36,19 +41,52 @@ type (
 )
 
 // ProvideInstrumentationHandler provides an instrumentation handler.
-func (cfg *Config) ProvideInstrumentationHandler(logger logging.Logger) InstrumentationHandler {
+func (cfg *Config) ProvideInstrumentationHandler(logger logging.Logger) (InstrumentationHandler, error) {
 	logger = logger.WithValue("metrics_provider", cfg.Provider)
 	logger.Debug("setting metrics provider")
 
 	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
 	case Prometheus:
-		exporter, err := prometheus.InstallNewPipeline(prometheus.Config{})
+		exporter, err := otelprom.InstallNewPipeline(otelprom.Config{})
 		if err != nil {
-			log.Panicf("failed to initialize prometheus exporter %v", err)
+			return nil, fmt.Errorf("failed to initialize prometheus exporter: %w", err)
 		}
 
-		return exporter
+		return exporter, nil
 	default:
-		return nil
+		// not a crime to not need metrics
+		return nil, nil
+	}
+}
+
+// ProvideUnitCounterProvider provides an instrumentation handler.
+func (cfg *Config) ProvideUnitCounterProvider(logger logging.Logger) (UnitCounterProvider, error) {
+	logger = logger.WithValue("metrics_provider", cfg.Provider)
+	logger.Debug("setting up meter")
+
+	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
+	case Prometheus:
+		exporter, err := otelprom.NewExportPipeline(otelprom.Config{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize prometheus exporter: %w", err)
+		}
+
+		meterProvider := exporter.MeterProvider()
+		meter := metric.Must(meterProvider.Meter(defaultNamespace))
+
+		return func(name, description string) UnitCounter {
+			counter := meter.NewInt64UpDownCounter(
+				name,
+				metric.WithInstrumentationVersion(instrumentationVersion),
+				metric.WithInstrumentationName(name),
+				metric.WithUnit(unit.Dimensionless),
+				metric.WithDescription(description),
+			)
+
+			return &unitCounter{counter: counter}
+		}, nil
+	default:
+		// not a crime to not need metrics
+		return nil, nil
 	}
 }

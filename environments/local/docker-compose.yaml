@@ -13,16 +13,13 @@ services:
     todo-server:
         environment:
             CONFIGURATION_FILEPATH: '/etc/config.toml'
-            # Jaeger-specific env vars
-            JAEGER_ENDPOINT: 'http://tracing-server:14268/api/traces'
-            JAEGER_SERVICE_NAME: 'todo-server'
-            JAEGER_DISABLED: 'false'
-            JAEGER_TAGS: 'local-dev,docker'
+            JAEGER_DISABLED: 'true'
         ports:
-            - 8080:8888
+            - 80:8888
         links:
-            - tracing-server
+#            - tracing-server
             - database
+            - prometheus
         volumes:
             - source: '../../frontend/dist'
               target: '/frontend'
@@ -36,8 +33,6 @@ services:
         build:
             context: '../../'
             dockerfile: 'environments/local/Dockerfile'
-        depends_on:
-            - prometheus
     tracing-server:
         image: jaegertracing/all-in-one:1.22.0
         logging:
@@ -52,15 +47,13 @@ services:
             - "9411:9411"
     prometheus:
         image: quay.io/prometheus/prometheus:v2.25.0
-        logging:
-            driver: none
+        command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus --log.level=info'
         ports:
             - 9090:9090
         volumes:
             - source: "../../environments/local/prometheus/config.yaml"
               target: "/etc/prometheus/config.yaml"
               type: 'bind'
-        command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus'
 #    loki:
 #      image: grafana/loki:1.6.0
 #      ports:
@@ -82,24 +75,24 @@ services:
 #          type: 'bind'
 #      links:
 #        - loki
-#    grafana:
-#      image: grafana/grafana
-#      logging:
-#        driver: none
-#      ports:
-#        - 3000:3000
-#      links:
-#        - prometheus
-#      volumes:
-#        - source: '../../environments/local/grafana/grafana.ini'
-#          target: '/etc/grafana/grafana.ini'
-#          type: 'bind'
-#        - source: '../../environments/local/grafana/datasources.yaml'
-#          target: '/etc/grafana/provisioning/datasources/datasources.yml'
-#          type: 'bind'
-#        - source: '../../environments/local/grafana/dashboards.yaml'
-#          target: '/etc/grafana/provisioning/dashboards/dashboards.yml'
-#          type: 'bind'
-#        - source: '../../environments/local/grafana/dashboards'
-#          target: '/etc/grafana/provisioning/dashboards/dashboards'
-#          type: 'bind'
+    grafana:
+      image: grafana/grafana:7.4.3
+      logging:
+        driver: none
+      ports:
+        - 3000:3000
+      links:
+        - prometheus
+      volumes:
+        - source: '../../environments/local/grafana/grafana.ini'
+          target: '/etc/grafana/grafana.ini'
+          type: 'bind'
+        - source: '../../environments/local/grafana/datasources.yaml'
+          target: '/etc/grafana/provisioning/datasources/datasources.yml'
+          type: 'bind'
+        - source: '../../environments/local/grafana/dashboards.yaml'
+          target: '/etc/grafana/provisioning/dashboards/dashboards.yml'
+          type: 'bind'
+        - source: '../../environments/local/grafana/dashboards'
+          target: '/etc/grafana/provisioning/dashboards/dashboards'
+          type: 'bind'

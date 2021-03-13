@@ -22,12 +22,12 @@ func main() {
 	const viewPath = "/view/"
 
 	storageConfig := &storage.Config{
-		Provider:       "filesystem",
-		BucketName:     "avatars",
-		UploadFilename: "avatar",
-		AzureConfig:    nil,
-		GCSConfig:      nil,
-		S3Config:       nil,
+		Provider:          "filesystem",
+		BucketName:        "avatars",
+		UploadFilenameKey: "avatar",
+		AzureConfig:       nil,
+		GCSConfig:         nil,
+		S3Config:          nil,
 		FilesystemConfig: &storage.FilesystemConfig{
 			RootDirectory: "./artifacts/avatars",
 		},

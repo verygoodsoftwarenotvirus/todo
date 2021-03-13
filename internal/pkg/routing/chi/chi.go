@@ -16,7 +16,6 @@ import (
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
-	useragent "github.com/mssola/user_agent"
 )
 
 const (
@@ -32,44 +31,7 @@ type router struct {
 	logger logging.Logger
 }
 
-var doNotLog = map[string]struct{}{
-	"/metrics": {},
-	"/build/":  {},
-	"/assets/": {},
-}
-
-func buildLoggingMiddleware(logger logging.Logger, tracer tracing.Tracer) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			_, span := tracer.StartSpan(req.Context())
-			defer span.End()
-
-			ww := chimiddleware.NewWrapResponseWriter(res, req.ProtoMajor)
-
-			start := time.Now()
-			next.ServeHTTP(ww, req)
-
-			shouldLog := true
-			for route := range doNotLog {
-				if strings.HasPrefix(req.URL.Path, route) || req.URL.Path == route {
-					shouldLog = false
-					break
-				}
-			}
-
-			tracing.AttachUserAgentDataToSpan(span, useragent.New(req.UserAgent()))
-
-			if shouldLog {
-				logger.WithRequest(req).WithValues(map[string]interface{}{
-					"status":  ww.Status(),
-					"elapsed": time.Since(start),
-				}).Debug("responded to request")
-			}
-		})
-	}
-}
-
-func buildChiMux(logger logging.Logger, tracer tracing.Tracer) chi.Router {
+func buildChiMux(logger logging.Logger) chi.Router {
 	ch := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts,
 		AllowedOrigins: []string{"*"},
@@ -99,7 +61,7 @@ func buildChiMux(logger logging.Logger, tracer tracing.Tracer) chi.Router {
 		chimiddleware.RequestID,
 		chimiddleware.RealIP,
 		chimiddleware.Timeout(maxTimeout),
-		buildLoggingMiddleware(logger.WithName("middleware"), tracer),
+		logging.BuildLoggingMiddleware(logger.WithName("router")),
 		ch.Handler,
 	)
 
@@ -110,16 +72,15 @@ func buildChiMux(logger logging.Logger, tracer tracing.Tracer) chi.Router {
 
 func buildRouter(mux chi.Router, logger logging.Logger) *router {
 	logger = logging.EnsureLogger(logger)
-	tracer := tracing.NewTracer("router")
 
 	if mux == nil {
 		logger.Info("starting with a new mux")
-		mux = buildChiMux(logger, tracer)
+		mux = buildChiMux(logger)
 	}
 
 	r := &router{
 		router: mux,
-		tracer: tracer,
+		tracer: tracing.NewTracer("router"),
 		logger: logger,
 	}
 

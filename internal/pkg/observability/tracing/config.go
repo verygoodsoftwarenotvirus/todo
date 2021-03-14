@@ -7,7 +7,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -49,8 +48,6 @@ func (c *JaegerConfig) Validate(ctx context.Context) error {
 
 // Initialize provides an instrumentation handler.
 func (c *Config) Initialize(l logging.Logger) (flushFunc func(), err error) {
-	trace.ApplyConfig(trace.Config{DefaultSampler: trace.ProbabilitySampler(c.SpanCollectionProbability)})
-
 	logger := l.WithValue("tracing_provider", c.Provider)
 	logger.Info("setting tracing provider")
 

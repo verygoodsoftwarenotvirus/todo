@@ -14,10 +14,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	passwordvalidator "github.com/lane-c-wagner/go-password-validator"
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/pquerna/otp/totp"
+	passwordvalidator "github.com/wagslane/go-password-validator"
 )
 
 const (

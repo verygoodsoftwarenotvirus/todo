@@ -24,19 +24,19 @@ func init() {
 }
 
 // SetupJaeger creates a new trace provider instance and registers it as global trace provider.
-func (cfg *Config) SetupJaeger() (func(), error) {
+func (c *Config) SetupJaeger() (func(), error) {
 
 	// Create and install Jaeger export pipeline.
 	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint(cfg.Jaeger.CollectorEndpoint),
+		jaeger.WithCollectorEndpoint(c.Jaeger.CollectorEndpoint),
 		jaeger.WithProcess(jaeger.Process{
-			ServiceName: cfg.Jaeger.ServiceName,
+			ServiceName: c.Jaeger.ServiceName,
 			Tags: []attribute.KeyValue{
 				attribute.String("exporter", "jaeger"),
 			},
 		}),
 		jaeger.WithBatchMaxCount(10), // set this to 1 to report every span immediately.
-		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.TraceIDRatioBased(cfg.SpanCollectionProbability)}),
+		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.TraceIDRatioBased(c.SpanCollectionProbability)}),
 	)
 
 	if err != nil {

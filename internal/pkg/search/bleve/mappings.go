@@ -1,9 +1,9 @@
 package bleve
 
 import (
-	bleve "github.com/blevesearch/bleve"
-	en "github.com/blevesearch/bleve/analysis/lang/en"
-	mapping "github.com/blevesearch/bleve/mapping"
+	bleve "github.com/blevesearch/bleve/v2"
+	en "github.com/blevesearch/bleve/v2/analysis/lang/en"
+	mapping "github.com/blevesearch/bleve/v2/mapping"
 )
 
 func buildItemMapping() *mapping.IndexMappingImpl {

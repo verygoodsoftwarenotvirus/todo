@@ -43,14 +43,6 @@ func TestNewBleveIndexManager(T *testing.T) {
 		assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
 	})
 
-	T.Run("invalid path", func(t *testing.T) {
-		t.Parallel()
-		exampleIndexPath := search.IndexPath("")
-
-		_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
-		assert.Error(t, err)
-	})
-
 	T.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
 		exampleIndexPath := search.IndexPath("constructor_test_invalid_name.bleve")

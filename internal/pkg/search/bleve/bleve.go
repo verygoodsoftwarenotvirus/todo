@@ -12,8 +12,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	bleve "github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/search/searcher"
+	bleve "github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/search/searcher"
 )
 
 const (

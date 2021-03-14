@@ -14,7 +14,7 @@ require (
 	github.com/alexedwards/scs/sqlite3store v0.0.0-20210131110750-3ca38f9a41cc
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/aws/aws-sdk-go v1.37.30
-	github.com/blevesearch/bleve v1.0.14
+	github.com/blevesearch/bleve/v2 v2.0.2
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/cznic/ql v1.2.0 // indirect
 	github.com/emicklei/hazana v1.9.6

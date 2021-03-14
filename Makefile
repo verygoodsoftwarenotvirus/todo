@@ -142,8 +142,7 @@ docker-lint:
 	$(CONTAINER_RUNNER) run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:v0.21.0 test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
 
 .PHONY: lint
-lint: ensure-fieldalign
-	fieldalignment -fix ./...
+lint:
 	@$(CONTAINER_RUNNER) pull golangci/golangci-lint:latest
 	$(CONTAINER_RUNNER) run \
 		--rm \

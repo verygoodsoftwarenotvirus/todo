@@ -38,8 +38,9 @@ func TestProvideItemsService(T *testing.T) {
 
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
-		var ucp metrics.UnitCounterProvider = func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return &mockmetrics.UnitCounter{}, nil
+
+		var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {
+			return &mockmetrics.UnitCounter{}
 		}
 
 		rpm := mockrouting.NewRouteParamManager()

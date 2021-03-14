@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/heptiolabs/healthcheck"
 
@@ -13,7 +12,6 @@ import (
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
@@ -28,22 +26,6 @@ const (
 
 func buildNumericIDURLChunk(key string) string {
 	return fmt.Sprintf("/"+numericIDPattern, key)
-}
-
-func buildTokenRestrictionMiddleware(logger logging.Logger, token string) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if token != "" {
-				if req.Header.Get("Authorization") != token {
-					logger.Info("rejected unauthorized metrics scrape")
-					res.WriteHeader(http.StatusUnauthorized)
-					return
-				}
-			}
-
-			next.ServeHTTP(res, req)
-		})
-	}
 }
 
 func (s *Server) setupRouter(router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {

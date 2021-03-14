@@ -49,8 +49,8 @@ func TestProvideAPIClientsService(T *testing.T) {
 			&mocktypes.UserDataManager{},
 			&mockauth.Authenticator{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-				return nil, nil
+			func(counterName, description string) metrics.UnitCounter {
+				return nil
 			},
 			rpm,
 		)

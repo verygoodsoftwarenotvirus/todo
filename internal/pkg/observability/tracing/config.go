@@ -17,12 +17,11 @@ const (
 type (
 	// Config contains settings related to tracing.
 	Config struct {
-		// Provider indicates what exporter should handle our traces.
-		Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
+		// Jaeger configures the Jaeger tracer.
+		Jaeger   *JaegerConfig `json:"jaeger" mapstructure:"jaeger" toml:"jaeger,omitempty"`
+		Provider string        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		// SpanCollectionProbability indicates the probability that a collected span will be reported.
 		SpanCollectionProbability float64 `json:"span_collection_probability" mapstructure:"span_collection_probability" toml:"span_collection_probability,omitempty"`
-		// Jaeger configures the Jaeger tracer.
-		Jaeger *JaegerConfig `json:"jaeger" mapstructure:"jaeger" toml:"jaeger,omitempty"`
 	}
 
 	// JaegerConfig contains settings related to tracing with Jaeger.
@@ -32,6 +31,7 @@ type (
 	}
 )
 
+// Validate validates the config struct.
 func (c *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		// validation.Field(&c.Provider, validation.In(Jaeger)),
@@ -39,6 +39,7 @@ func (c *Config) Validate(ctx context.Context) error {
 	)
 }
 
+// Validate validates the config struct.
 func (c *JaegerConfig) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.CollectorEndpoint, validation.Required),

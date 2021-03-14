@@ -45,6 +45,7 @@ type (
 	}
 )
 
+// Validate validates the config struct.
 func (cfg *Config) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.RuntimeMetricsCollectionInterval, validation.Min(minimumRuntimeCollectionInterval)),
@@ -52,9 +53,9 @@ func (cfg *Config) Validate(ctx context.Context) error {
 }
 
 var (
+	// regretful state artifacts.
 	prometheusExporterInitOnce sync.Once
-	// regretful state artifacts
-	prometheusExporter *otelprom.Exporter
+	prometheusExporter         *otelprom.Exporter
 )
 
 func initiatePrometheusExporter() {

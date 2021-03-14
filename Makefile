@@ -48,6 +48,11 @@ ifndef $(shell command -v wire 2> /dev/null)
 	$(shell GO111MODULE=off go install github.com/google/wire/cmd/wire)
 endif
 
+ensure-fieldalign:
+ifndef $(shell command -v wire 2> /dev/null)
+	$(shell GO111MODULE=off go get -u golang.org/x/tools/...)
+endif
+
 ensure-scc:
 ifndef $(shell command -v scc 2> /dev/null)
 	$(shell GO111MODULE=off go install github.com/boyter/scc)
@@ -137,7 +142,8 @@ docker-lint:
 	$(CONTAINER_RUNNER) run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:v0.21.0 test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`
 
 .PHONY: lint
-lint:
+lint: ensure-fieldalign
+	fieldalignment -fix ./...
 	@$(CONTAINER_RUNNER) pull golangci/golangci-lint:latest
 	$(CONTAINER_RUNNER) run \
 		--rm \

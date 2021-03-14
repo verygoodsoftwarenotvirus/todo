@@ -55,10 +55,9 @@ func (t *otSpanManager) StartSpan(ctx context.Context) (context.Context, trace.S
 	return t.tracer.Start(ctx, GetCallerName())
 }
 
-var uriIDReplacementRegex = regexp.MustCompile(`\/\d+`)
+var uriIDReplacementRegex = regexp.MustCompile(`/\d+`)
 
-// FormatSpan formats a span
+// FormatSpan formats a span.
 func FormatSpan(operation string, req *http.Request) string {
-	spanURI := fmt.Sprintf(uriIDReplacementRegex.ReplaceAllString(req.URL.Path, "/<id>"))
-	return fmt.Sprintf("%s %s: %s", req.Method, spanURI, operation)
+	return fmt.Sprintf("%s %s: %s", req.Method, uriIDReplacementRegex.ReplaceAllString(req.URL.Path, "/<id>"), operation)
 }

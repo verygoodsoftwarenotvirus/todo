@@ -15,6 +15,7 @@ import (
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
@@ -75,7 +76,11 @@ func TestParseConfigFile(T *testing.T) {
 				EnableUserSignup:      true,
 			},
 			Observability: observability.Config{
-				RuntimeMetricsCollectionInterval: 2 * time.Second,
+				Metrics: metrics.Config{
+					Provider:                         "",
+					RouteToken:                       "",
+					RuntimeMetricsCollectionInterval: 2 * time.Second,
+				},
 			},
 			Frontend: frontend.Config{
 				StaticFilesDirectory: "/static",

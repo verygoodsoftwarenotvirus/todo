@@ -6,7 +6,7 @@ services:
             JAEGER_DISABLED: 'true'
         ports:
             - 80:8888
-        links:
+#        links:
 #            - tracing-server
 #            - prometheus
 #            - loki

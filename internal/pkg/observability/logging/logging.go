@@ -68,7 +68,7 @@ var doNotLog = map[string]struct{}{
 	"/assets/": {},
 }
 
-// BuildLoggingMiddleware builds a logging middleware
+// BuildLoggingMiddleware builds a logging middleware.
 func BuildLoggingMiddleware(logger Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {

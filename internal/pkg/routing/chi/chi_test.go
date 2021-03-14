@@ -2,7 +2,6 @@ package chi
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,20 +23,6 @@ func TestNewRouter(t *testing.T) {
 func Test_buildChiMux(t *testing.T) {
 	t.Run("normal operation", func(t *testing.T) {
 		assert.NotNil(t, buildChiMux(logging.NewNonOperationalLogger()))
-	})
-}
-
-func Test_buildLoggingMiddleware(t *testing.T) {
-	t.Run("normal operation", func(t *testing.T) {
-		middleware := buildLoggingMiddleware(logging.NewNonOperationalLogger())
-
-		assert.NotNil(t, middleware)
-
-		hf := http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {})
-
-		req, res := httptest.NewRequest(http.MethodPost, "/nil", nil), httptest.NewRecorder()
-
-		middleware(hf).ServeHTTP(res, req)
 	})
 }
 

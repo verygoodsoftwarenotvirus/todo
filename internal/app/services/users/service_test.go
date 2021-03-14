@@ -40,8 +40,8 @@ func buildTestService(t *testing.T) *service {
 		&mocktypes.AccountDataManager{},
 		&mockauth.Authenticator{},
 		mockencoding.NewMockEncoderDecoder(),
-		func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-			return uc, nil
+		func(counterName, description string) metrics.UnitCounter {
+			return uc
 		},
 		&images.MockImageUploadProcessor{},
 		&mockuploads.UploadManager{},
@@ -69,8 +69,8 @@ func TestProvideUsersService(T *testing.T) {
 			&mocktypes.AccountDataManager{},
 			&mockauth.Authenticator{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(counterName metrics.CounterName, description string) (metrics.UnitCounter, error) {
-				return &mockmetrics.UnitCounter{}, nil
+			func(counterName, description string) metrics.UnitCounter {
+				return &mockmetrics.UnitCounter{}
 			},
 			&images.MockImageUploadProcessor{},
 			&mockuploads.UploadManager{},

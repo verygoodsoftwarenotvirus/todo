@@ -64,7 +64,7 @@ const (
 	// ConfigKeyMetricsProvider is the key viper will use to refer to the MetricsProvider setting.
 	ConfigKeyMetricsProvider = observabilityKey + x + metricsKey + x + "provider"
 	// ConfigKeyMetricsRuntimeCollectionInterval is the key viper will use to refer to the MetricsSettings.RuntimeCollectionInterval setting.
-	ConfigKeyMetricsRuntimeCollectionInterval = observabilityKey + x + "runtime_metrics_collection_interval"
+	ConfigKeyMetricsRuntimeCollectionInterval = observabilityKey + x + metricsKey + x + "runtime_metrics_collection_interval"
 	// ConfigKeyObservabilityTracingProvider is the key viper will use to refer to the TracingProvider setting.
 	ConfigKeyObservabilityTracingProvider = observabilityKey + x + tracingKey + x + "provider"
 	// ConfigKeyObservabilityTracingSpanCollectionProbability is the key viper will use to refer to the SpanCollectionProbability setting.

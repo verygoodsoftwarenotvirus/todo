@@ -8,25 +8,25 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
 func attachUint64ToSpan(span trace.Span, attachmentKey string, id uint64) {
 	if span != nil {
-		span.SetAttributes(label.String(attachmentKey, strconv.FormatUint(id, 10)))
+		span.SetAttributes(attribute.String(attachmentKey, strconv.FormatUint(id, 10)))
 	}
 }
 
 func attachStringToSpan(span trace.Span, key, str string) {
 	if span != nil {
-		span.SetAttributes(label.String(key, str))
+		span.SetAttributes(attribute.String(key, str))
 	}
 }
 
 func attachBooleanToSpan(span trace.Span, key string, b bool) {
 	if span != nil {
-		span.SetAttributes(label.Bool(key, b))
+		span.SetAttributes(attribute.Bool(key, b))
 	}
 }
 

@@ -167,11 +167,11 @@ func localDevelopmentConfig(filePath string) error {
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
-				Provider:   "prometheus",
-				RouteToken: "",
+				Provider:                         "prometheus",
+				RouteToken:                       "",
+				RuntimeMetricsCollectionInterval: time.Second,
 			},
-			Tracing:                          localTracingConfig,
-			RuntimeMetricsCollectionInterval: time.Second,
+			Tracing: localTracingConfig,
 		},
 		Uploads: uploads.Config{
 			Debug: true,
@@ -243,11 +243,11 @@ func frontendTestsConfig(filePath string) error {
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
-				Provider:   "prometheus",
-				RouteToken: "",
+				Provider:                         "prometheus",
+				RouteToken:                       "",
+				RuntimeMetricsCollectionInterval: time.Second,
 			},
-			Tracing:                          noopTracingConfig,
-			RuntimeMetricsCollectionInterval: time.Second,
+			Tracing: noopTracingConfig,
 		},
 		Uploads: uploads.Config{
 			Debug: true,
@@ -319,11 +319,11 @@ func coverageConfig(filePath string) error {
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
-				Provider:   "",
-				RouteToken: "",
+				Provider:                         "",
+				RouteToken:                       "",
+				RuntimeMetricsCollectionInterval: time.Second,
 			},
-			Tracing:                          noopTracingConfig,
-			RuntimeMetricsCollectionInterval: time.Second,
+			Tracing: noopTracingConfig,
 		},
 		Uploads: uploads.Config{
 			Debug: true,
@@ -411,11 +411,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			},
 			Observability: observability.Config{
 				Metrics: metrics.Config{
-					Provider:   "",
-					RouteToken: "",
+					Provider:                         "",
+					RouteToken:                       "",
+					RuntimeMetricsCollectionInterval: time.Second,
 				},
-				Tracing:                          localTracingConfig,
-				RuntimeMetricsCollectionInterval: time.Second,
+				Tracing: localTracingConfig,
 			},
 			Uploads: uploads.Config{
 				Debug: false,

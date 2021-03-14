@@ -41,21 +41,24 @@ require (
 	github.com/o1egl/paseto v1.0.0
 	github.com/pquerna/otp v1.2.0
 	github.com/rs/zerolog v1.15.0
-	github.com/sirupsen/logrus v1.4.2
+	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.3
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tebeka/selenium v0.9.9
 	go.opencensus.io v0.22.5
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.15.1
-	go.opentelemetry.io/otel v0.15.0
-	go.opentelemetry.io/otel/exporters/metric/prometheus v0.15.0
-	go.opentelemetry.io/otel/exporters/trace/jaeger v0.15.0
-	go.opentelemetry.io/otel/sdk v0.15.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.18.0
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.18.0
+	go.opentelemetry.io/otel v0.18.0
+	go.opentelemetry.io/otel/exporters/metric/prometheus v0.18.0
+	go.opentelemetry.io/otel/exporters/trace/jaeger v0.18.0
+	go.opentelemetry.io/otel/metric v0.18.0
+	go.opentelemetry.io/otel/sdk v0.18.0
+	go.opentelemetry.io/otel/trace v0.18.0
 	go.uber.org/zap v1.16.0
 	gocloud.dev v0.21.0
 	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c
-	golang.org/x/oauth2 v0.0.0-20201203001011-0b49973bad19
+	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )

@@ -19,7 +19,7 @@ import (
 const (
 	serviceName        = "users_service"
 	counterDescription = "number of users managed by the users service"
-	counterName        = metrics.CounterName(serviceName)
+	counterName        = metrics.CounterName("users")
 )
 
 var _ types.UserDataService = (*service)(nil)

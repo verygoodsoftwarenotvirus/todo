@@ -13,11 +13,11 @@ services:
     todo-server:
         environment:
             CONFIGURATION_FILEPATH: '/etc/config.toml'
-            JAEGER_DISABLED: 'true'
+            JAEGER_DISABLED: 'false'
         ports:
             - 80:8888
         links:
-#            - tracing-server
+            - tracing-server
             - database
             - prometheus
         volumes:
@@ -47,34 +47,13 @@ services:
             - "9411:9411"
     prometheus:
         image: quay.io/prometheus/prometheus:v2.25.0
-        command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus --log.level=info'
+        command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus --log.level=debug'
         ports:
             - 9090:9090
         volumes:
             - source: "../../environments/local/prometheus/config.yaml"
               target: "/etc/prometheus/config.yaml"
               type: 'bind'
-#    loki:
-#      image: grafana/loki:1.6.0
-#      ports:
-#        - "3100:3100"
-#      command: -config.file=/etc/loki/local-config.yaml
-#      volumes:
-#        - source: '../../environments/local/loki/config.yaml'
-#          target: '/etc/loki/local-config.yaml'
-#          type: 'bind'
-#      links:
-#        - grafana
-#    promtail:
-#      image: grafana/promtail:1.6.0
-#      command: -config.file=/etc/promtail/config.yml
-#      volumes:
-#        - /var/log:/var/log
-#        - source: '../../environments/local/promtail/config.yaml'
-#          target: '/etc/promtail/config.yml'
-#          type: 'bind'
-#      links:
-#        - loki
     grafana:
       image: grafana/grafana:7.4.3
       logging:
@@ -96,3 +75,24 @@ services:
         - source: '../../environments/local/grafana/dashboards'
           target: '/etc/grafana/provisioning/dashboards/dashboards'
           type: 'bind'
+#    loki:
+#      image: grafana/loki:1.6.0
+#      ports:
+#        - "3100:3100"
+#      command: -config.file=/etc/loki/local-config.yaml
+#      volumes:
+#        - source: '../../environments/local/loki/config.yaml'
+#          target: '/etc/loki/local-config.yaml'
+#          type: 'bind'
+#      links:
+#        - grafana
+#    promtail:
+#      image: grafana/promtail:1.6.0
+#      command: -config.file=/etc/promtail/config.yml
+#      volumes:
+#        - /var/log:/var/log
+#        - source: '../../environments/local/promtail/config.yaml'
+#          target: '/etc/promtail/config.yml'
+#          type: 'bind'
+#      links:
+#        - loki

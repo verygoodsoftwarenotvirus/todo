@@ -117,7 +117,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyObservabilityTracingJaegerServiceName, input.Observability.Tracing.Jaeger.ServiceName)
 	}
 
-	cfg.Set(ConfigKeyMetricsRuntimeCollectionInterval, input.Observability.RuntimeMetricsCollectionInterval)
+	cfg.Set(ConfigKeyMetricsRuntimeCollectionInterval, input.Observability.Metrics.RuntimeMetricsCollectionInterval)
 	cfg.Set(ConfigKeyDatabaseDebug, input.Database.Debug)
 	cfg.Set(ConfigKeyDatabaseProvider, input.Database.Provider)
 	cfg.Set(ConfigKeyDatabaseMaxPingAttempts, input.Database.MaxPingAttempts)

@@ -6,7 +6,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
 	"github.com/luna-duclos/instrumentedsql"
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -45,7 +45,7 @@ func (w *instrumentedSQLSpanWrapper) NewChild(s string) instrumentedsql.Span {
 }
 
 func (w *instrumentedSQLSpanWrapper) SetLabel(k, v string) {
-	w.span.SetAttributes(label.String(k, v))
+	w.span.SetAttributes(attribute.String(k, v))
 }
 
 func (w *instrumentedSQLSpanWrapper) SetError(err error) {

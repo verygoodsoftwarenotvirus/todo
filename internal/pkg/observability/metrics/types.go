@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type (
@@ -29,9 +31,9 @@ type (
 	// UnitCounter describes a counting interface for things like total user counts.
 	// Meant to handle integers exclusively.
 	UnitCounter interface {
-		Increment(ctx context.Context)
-		IncrementBy(ctx context.Context, val int64)
-		Decrement(ctx context.Context)
+		Increment(ctx context.Context, labels ...attribute.KeyValue)
+		IncrementBy(ctx context.Context, val int64, labels ...attribute.KeyValue)
+		Decrement(ctx context.Context, labels ...attribute.KeyValue)
 	}
 
 	// UnitCounterProvider is a function that provides a UnitCounter and an error.
@@ -42,21 +44,21 @@ var _ UnitCounter = (*noopUnitCounter)(nil)
 
 type noopUnitCounter struct{}
 
-func (c *noopUnitCounter) Increment(_ context.Context)            {}
-func (c *noopUnitCounter) IncrementBy(_ context.Context, _ int64) {}
-func (c *noopUnitCounter) Decrement(_ context.Context)            {}
+func (c *noopUnitCounter) Increment(_ context.Context, _ ...attribute.KeyValue)            {}
+func (c *noopUnitCounter) IncrementBy(_ context.Context, _ int64, _ ...attribute.KeyValue) {}
+func (c *noopUnitCounter) Decrement(_ context.Context, _ ...attribute.KeyValue)            {}
 
 // EnsureUnitCounter always provides a valid UnitCounter.
 func EnsureUnitCounter(ucp UnitCounterProvider, logger logging.Logger, counterName CounterName, description string) UnitCounter {
 	logger = logger.WithValue("counter", counterName)
 
-	logger.Debug("building unit counter")
-
 	if ucp != nil {
+		logger.Debug("building unit counter")
+
 		return ucp(string(counterName), description)
 	}
 
-	logger.Debug("returning noop counter")
+	logger.Info("returning noop counter")
 
 	return &noopUnitCounter{}
 }

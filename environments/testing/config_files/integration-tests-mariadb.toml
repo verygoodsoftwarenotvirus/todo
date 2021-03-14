@@ -18,7 +18,7 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [122,165,98,115,121,48,57,2,134,80,230,186,114,43,215,65,101,109,229,58,173,166,113,56,209,113,97,68,177,147,173,173]
+    local_mode_key = [12,130,99,138,214,26,31,163,45,124,6,13,96,20,169,67,21,229,8,40,150,3,34,239,31,77,59,228,78,64,237,61]
 
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
@@ -29,7 +29,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$2a$11$8tf1fMKS5Z11RHTXvfZSjOjVjVBPJQ7r8HALjczIvSyTIQc8pnpR6"
+    hashed_password = "$2a$11$nHbRG7Z65Xk1i3txbR2VQ.JPN7SLdotlZB5rVIjJd8rGgW72lQho."
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"
@@ -44,10 +44,10 @@
   run_mode = "testing"
 
 [observability]
-  runtime_metrics_collection_interval = "1s"
 
   [observability.metrics]
     provider = ""
+    runtime_metrics_collection_interval = "1s"
 
   [observability.tracing]
     provider = "jaeger"

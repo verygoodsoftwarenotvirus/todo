@@ -8,7 +8,7 @@ services:
             - 80:8888
         links:
 #            - tracing-server
-            - prometheus
+#            - prometheus
 #            - loki
 #            - promtail
         build:
@@ -35,17 +35,38 @@ services:
 #            - "16686:16686"
 #            - "14268:14268"
 #            - "9411:9411"
-    prometheus:
-        image: quay.io/prometheus/prometheus:v2.25.0
+#    prometheus:
+#        image: quay.io/prometheus/prometheus:v2.25.0
 #        logging:
 #            driver: none
-        ports:
-            - 9090:9090
-        volumes:
-            - source: "../../../../environments/testing/prometheus/config.yaml"
-              target: "/etc/prometheus/config.yaml"
-              type: 'bind'
-        command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus'
+#        ports:
+#            - 9090:9090
+#        volumes:
+#            - source: "../../../../environments/testing/prometheus/config.yaml"
+#              target: "/etc/prometheus/config.yaml"
+#              type: 'bind'
+#        command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus'
+#    grafana:
+#        image: grafana/grafana
+#        logging:
+#            driver: none
+#        ports:
+#            - 3000:3000
+#        links:
+#            - prometheus
+#        volumes:
+#            - source: '../../../../environments/testing/grafana/grafana.ini'
+#              target: '/etc/grafana/grafana.ini'
+#              type: 'bind'
+#            - source: '../../../../environments/testing/grafana/datasources.yaml'
+#              target: '/etc/grafana/provisioning/datasources/datasources.yml'
+#              type: 'bind'
+#            - source: '../../../../environments/testing/grafana/dashboards.yaml'
+#              target: '/etc/grafana/provisioning/dashboards/dashboards.yml'
+#              type: 'bind'
+#            - source: '../../../../environments/testing/grafana/dashboards'
+#              target: '/etc/grafana/provisioning/dashboards/dashboards'
+#              type: 'bind'
 #    loki:
 #        image: grafana/loki:1.6.0
 #        ports:
@@ -71,24 +92,3 @@ services:
 #            driver: none
 #        links:
 #            - loki
-#    grafana:
-#        image: grafana/grafana
-#        logging:
-#            driver: none
-#        ports:
-#            - 3000:3000
-#        links:
-#            - prometheus
-#        volumes:
-#            - source: '../../../../environments/testing/grafana/grafana.ini'
-#              target: '/etc/grafana/grafana.ini'
-#              type: 'bind'
-#            - source: '../../../../environments/testing/grafana/datasources.yaml'
-#              target: '/etc/grafana/provisioning/datasources/datasources.yml'
-#              type: 'bind'
-#            - source: '../../../../environments/testing/grafana/dashboards.yaml'
-#              target: '/etc/grafana/provisioning/dashboards/dashboards.yml'
-#              type: 'bind'
-#            - source: '../../../../environments/testing/grafana/dashboards'
-#              target: '/etc/grafana/provisioning/dashboards/dashboards'
-#              type: 'bind'

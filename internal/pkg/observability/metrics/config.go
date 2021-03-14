@@ -1,16 +1,19 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
-
-	"go.opentelemetry.io/otel/unit"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	otelprom "go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/unit"
 )
 
 const (
@@ -19,9 +22,9 @@ const (
 
 	instrumentationVersion = "1.0.0"
 
-	// MinimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
+	// minimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
 	// this value is used to guard against zero values.
-	MinimumRuntimeCollectionInterval = float64(time.Second)
+	minimumRuntimeCollectionInterval = float64(time.Second)
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
@@ -37,22 +40,47 @@ type (
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		// RouteToken indicates how the metrics route should be authenticated.
 		RouteToken string `json:"route_token" mapstructure:"route_token" toml:"route_token,omitempty"`
+		// RuntimeMetricsCollectionInterval  is the interval we collect runtime statistics at.
+		RuntimeMetricsCollectionInterval time.Duration `json:"runtime_metrics_collection_interval" mapstructure:"runtime_metrics_collection_interval" toml:"runtime_metrics_collection_interval,omitempty"`
 	}
 )
+
+func (cfg *Config) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
+		validation.Field(&cfg.RuntimeMetricsCollectionInterval, validation.Min(minimumRuntimeCollectionInterval)),
+	)
+}
+
+var (
+	prometheusExporterInitOnce sync.Once
+	// regretful state artifacts
+	prometheusExporter *otelprom.Exporter
+)
+
+func initiatePrometheusExporter() {
+	prometheusExporterInitOnce.Do(func() {
+		var err error
+		prometheusExporter, err = otelprom.InstallNewPipeline(otelprom.Config{})
+		if err != nil {
+			panic(err)
+		}
+	})
+}
 
 // ProvideInstrumentationHandler provides an instrumentation handler.
 func (cfg *Config) ProvideInstrumentationHandler(logger logging.Logger) (InstrumentationHandler, error) {
 	logger = logger.WithValue("metrics_provider", cfg.Provider)
 	logger.Debug("setting metrics provider")
 
+	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(cfg.RuntimeMetricsCollectionInterval)); err != nil {
+		return nil, fmt.Errorf("failed to start runtime metrics collection: %w", err)
+	}
+
 	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
 	case Prometheus:
-		exporter, err := otelprom.InstallNewPipeline(otelprom.Config{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize prometheus exporter: %w", err)
-		}
+		initiatePrometheusExporter()
 
-		return exporter, nil
+		return prometheusExporter, nil
 	default:
 		// not a crime to not need metrics
 		return nil, nil
@@ -61,31 +89,37 @@ func (cfg *Config) ProvideInstrumentationHandler(logger logging.Logger) (Instrum
 
 // ProvideUnitCounterProvider provides an instrumentation handler.
 func (cfg *Config) ProvideUnitCounterProvider(logger logging.Logger) (UnitCounterProvider, error) {
-	logger = logger.WithValue("metrics_provider", cfg.Provider)
+	p := strings.TrimSpace(strings.ToLower(cfg.Provider))
+
+	logger = logger.WithValue("metrics_provider", p)
 	logger.Debug("setting up meter")
 
-	switch strings.TrimSpace(strings.ToLower(cfg.Provider)) {
+	switch p {
 	case Prometheus:
-		exporter, err := otelprom.NewExportPipeline(otelprom.Config{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize prometheus exporter: %w", err)
-		}
+		initiatePrometheusExporter()
 
-		meterProvider := exporter.MeterProvider()
-		meter := metric.Must(meterProvider.Meter(defaultNamespace))
+		meterProvider := prometheusExporter.MeterProvider()
+		mustMeter := metric.Must(meterProvider.Meter(defaultNamespace, metric.WithInstrumentationVersion(instrumentationVersion)))
+
+		logger.Debug("meter initialized successfully")
 
 		return func(name, description string) UnitCounter {
-			counter := meter.NewInt64UpDownCounter(
-				name,
-				metric.WithInstrumentationVersion(instrumentationVersion),
-				metric.WithInstrumentationName(name),
+			logger = logger.WithValue("name", name)
+
+			counter := mustMeter.NewInt64Counter(
+				fmt.Sprintf("%s_count", name),
 				metric.WithUnit(unit.Dimensionless),
 				metric.WithDescription(description),
+				metric.WithInstrumentationName(name),
+				metric.WithInstrumentationVersion(instrumentationVersion),
 			)
+
+			logger.Debug("returning wrapped unit counter")
 
 			return &unitCounter{counter: counter}
 		}, nil
 	default:
+		logger.Debug("nil unit counter provider")
 		// not a crime to not need metrics
 		return nil, nil
 	}

@@ -105,6 +105,14 @@ func (x *ChangeActiveAccountInput) Validate(ctx context.Context) error {
 	)
 }
 
+// Validate ensures our  provided UserLoginInput meets expectations.
+func (i *PASETOCreationInput) Validate(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, i,
+		validation.Field(&i.ClientID, validation.Required),
+		validation.Field(&i.RequestTime, validation.Required),
+	)
+}
+
 // ToBytes returns the gob encoded session info.
 func (x *RequestContext) ToBytes() []byte {
 	var b bytes.Buffer

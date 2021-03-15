@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -20,7 +19,12 @@ func (c *Client) BuildGetAPIClientRequest(ctx context.Context, id uint64) (*http
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if id == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		apiClientsBasePath,
 		strconv.FormatUint(id, 10),
@@ -33,6 +37,10 @@ func (c *Client) BuildGetAPIClientRequest(ctx context.Context, id uint64) (*http
 func (c *Client) GetAPIClient(ctx context.Context, id uint64) (apiClient *types.APIClient, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if id == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAPIClientRequest(ctx, id)
 	if err != nil {
@@ -49,10 +57,7 @@ func (c *Client) BuildGetAPIClientsRequest(ctx context.Context, filter *types.Qu
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		filter.ToValues(),
-		apiClientsBasePath,
-	)
+	uri := c.BuildURL(ctx, filter.ToValues(), apiClientsBasePath)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -77,17 +82,24 @@ func (c *Client) GetAPIClients(ctx context.Context, filter *types.QueryFilter) (
 func (c *Client) BuildCreateAPIClientRequest(
 	ctx context.Context,
 	cookie *http.Cookie,
-	body *types.APICientCreationInput,
+	input *types.APICientCreationInput,
 ) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		apiClientsBasePath,
-	)
+	if cookie == nil {
+		return nil, ErrCookieRequired
+	}
 
-	req, err := c.buildDataRequest(ctx, http.MethodPost, uri, body)
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	// deliberately not validating here because it requires settings awareness
+
+	uri := c.BuildURL(ctx, nil, apiClientsBasePath)
+
+	req, err := c.buildDataRequest(ctx, http.MethodPost, uri, input)
 	if err != nil {
 		return nil, err
 	}
@@ -107,11 +119,17 @@ func (c *Client) CreateAPIClient(
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var apiClientResponse *types.APIClientCreationResponse
-
 	if cookie == nil && c.authMethod != cookieAuthMethod {
-		return nil, errors.New("cookie required for request")
+		return nil, ErrCookieRequired
 	}
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	// deliberately not validating here because it requires settings awareness
+
+	var apiClientResponse *types.APIClientCreationResponse
 
 	req, err := c.BuildCreateAPIClientRequest(ctx, cookie, input)
 	if err != nil {
@@ -130,7 +148,12 @@ func (c *Client) BuildArchiveAPIClientRequest(ctx context.Context, id uint64) (*
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if id == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		apiClientsBasePath,
 		strconv.FormatUint(id, 10),
@@ -143,6 +166,10 @@ func (c *Client) BuildArchiveAPIClientRequest(ctx context.Context, id uint64) (*
 func (c *Client) ArchiveAPIClient(ctx context.Context, id uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if id == 0 {
+		return ErrZeroIDProvided
+	}
 
 	req, err := c.BuildArchiveAPIClientRequest(ctx, id)
 	if err != nil {
@@ -157,12 +184,11 @@ func (c *Client) BuildGetAuditLogForAPIClientRequest(ctx context.Context, client
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		apiClientsBasePath,
-		strconv.FormatUint(clientID, 10),
-		"audit",
-	)
+	if clientID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, apiClientsBasePath, strconv.FormatUint(clientID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -172,6 +198,10 @@ func (c *Client) BuildGetAuditLogForAPIClientRequest(ctx context.Context, client
 func (c *Client) GetAuditLogForAPIClient(ctx context.Context, clientID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if clientID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAuditLogForAPIClientRequest(ctx, clientID)
 	if err != nil {

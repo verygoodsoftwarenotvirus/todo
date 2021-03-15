@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -26,27 +25,6 @@ const (
 type authMethod struct{}
 
 var (
-	// ErrNotFound is a handy error to return when we receive a 404 response.
-	ErrNotFound = fmt.Errorf("%d: not found", http.StatusNotFound)
-
-	// ErrInvalidRequestInput is a handy error to return when we receive a 400 response.
-	ErrInvalidRequestInput = fmt.Errorf("%d: bad request", http.StatusBadRequest)
-
-	// ErrBanned is a handy error to return when we receive a 401 response.
-	ErrBanned = fmt.Errorf("%d: banned", http.StatusForbidden)
-
-	// ErrUnauthorized is a handy error to return when we receive a 401 response.
-	ErrUnauthorized = fmt.Errorf("%d: not authorized", http.StatusUnauthorized)
-
-	// ErrInvalidTOTPToken is an error for when our TOTP validation request goes awry.
-	ErrInvalidTOTPToken = errors.New("invalid TOTP token")
-
-	// ErrNilInputProvided indicates nil input was provided in an unacceptable context.
-	ErrNilInputProvided = errors.New("nil input provided")
-
-	// ErrNoCookiesReturned indicates nil input was provided in an unacceptable context.
-	ErrNoCookiesReturned = errors.New("no cookies returned from request")
-
 	cookieAuthMethod = new(authMethod)
 	pasetoAuthMethod = new(authMethod)
 )
@@ -119,8 +97,11 @@ func (c *Client) closeResponseBody(res *http.Response) {
 }
 
 // BuildURL builds standard service URLs.
-func (c *Client) BuildURL(qp url.Values, parts ...string) string {
-	if u := c.buildRawURL(qp, parts...); u != nil {
+func (c *Client) BuildURL(ctx context.Context, qp url.Values, parts ...string) string {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if u := c.buildRawURL(ctx, qp, parts...); u != nil {
 		return u.String()
 	}
 
@@ -129,9 +110,11 @@ func (c *Client) BuildURL(qp url.Values, parts ...string) string {
 
 // buildRawURL takes a given set of query parameters and url parts, and returns.
 // a parsed url object from them.
-func (c *Client) buildRawURL(queryParams url.Values, parts ...string) *url.URL {
-	tu := *c.url
+func (c *Client) buildRawURL(ctx context.Context, queryParams url.Values, parts ...string) *url.URL {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
 
+	tu := *c.url
 	parts = append([]string{"api", "v1"}, parts...)
 
 	u, err := url.Parse(path.Join(parts...))
@@ -144,7 +127,11 @@ func (c *Client) buildRawURL(queryParams url.Values, parts ...string) *url.URL {
 		u.RawQuery = queryParams.Encode()
 	}
 
-	return tu.ResolveReference(u)
+	out := tu.ResolveReference(u)
+
+	tracing.AttachURLToSpan(span, out)
+
+	return out
 }
 
 // buildVersionlessURL builds a url without the `/api/v1/` prefix. It should
@@ -166,8 +153,8 @@ func (c *Client) buildVersionlessURL(qp url.Values, parts ...string) string {
 }
 
 // BuildWebsocketURL builds a standard url and then converts its scheme to the websocket protocol.
-func (c *Client) BuildWebsocketURL(parts ...string) string {
-	u := c.buildRawURL(nil, parts...)
+func (c *Client) BuildWebsocketURL(ctx context.Context, parts ...string) string {
+	u := c.buildRawURL(ctx, nil, parts...)
 	u.Scheme = "ws"
 
 	return u.String()

@@ -1,9 +1,11 @@
 package tracing
 
 import (
+	"net/url"
 	"strconv"
 
 	useragent "github.com/mssola/user_agent"
+	"go.opentelemetry.io/otel/codes"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -40,6 +42,8 @@ func attachToSpan(span trace.Span, key string, val interface{}) {
 		attachBooleanToSpan(span, key, x)
 	case string:
 		attachStringToSpan(span, key, x)
+	case error:
+		attachStringToSpan(span, key, x.Error())
 	default:
 		panic("invalid type to attach to span")
 	}
@@ -109,9 +113,19 @@ func AttachWebhookIDToSpan(span trace.Span, webhookID uint64) {
 	attachToSpan(span, keys.WebhookIDKey, webhookID)
 }
 
+// AttachURLToSpan attaches a given URI to a span.
+func AttachURLToSpan(span trace.Span, u *url.URL) {
+	attachToSpan(span, keys.RequestURIKey, u.String())
+}
+
 // AttachRequestURIToSpan attaches a given URI to a span.
 func AttachRequestURIToSpan(span trace.Span, uri string) {
 	attachToSpan(span, keys.RequestURIKey, uri)
+}
+
+// AttachErrorToSpan attaches a given error to a span.
+func AttachErrorToSpan(span trace.Span, err error) {
+	span.SetStatus(codes.Error, err.Error())
 }
 
 // AttachSearchQueryToSpan attaches a given search query to a span.

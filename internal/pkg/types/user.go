@@ -256,14 +256,6 @@ func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPas
 	)
 }
 
-// Validate ensures our  provided UserLoginInput meets expectations.
-func (i *PASETOCreationInput) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, i,
-		validation.Field(&i.ClientID, validation.Required),
-		validation.Field(&i.RequestTime, validation.Required),
-	)
-}
-
 // Validate ensures our provided PasswordUpdateInput meets expectations.
 func (i *PasswordUpdateInput) Validate(ctx context.Context, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,

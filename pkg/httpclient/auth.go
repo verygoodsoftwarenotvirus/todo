@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -16,6 +17,10 @@ const (
 func (c *Client) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if cookie == nil {
+		return nil, ErrCookieRequired
+	}
 
 	uri := c.buildVersionlessURL(nil, authBasePath, "status")
 
@@ -33,6 +38,10 @@ func (c *Client) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) (*
 func (c *Client) Status(ctx context.Context, cookie *http.Cookie) (*types.UserStatusResponse, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if cookie == nil {
+		return nil, ErrCookieRequired
+	}
 
 	req, err := c.BuildStatusRequest(ctx, cookie)
 	if err != nil {
@@ -57,6 +66,8 @@ func (c *Client) BuildLoginRequest(ctx context.Context, input *types.UserLoginIn
 		return nil, ErrNilInputProvided
 	}
 
+	// validating here requires settings knowledge, so we do not do it
+
 	uri := c.buildVersionlessURL(nil, usersBasePath, "login")
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -70,6 +81,8 @@ func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
+
+	// validating here requires settings knowledge, so we do not do it
 
 	req, err := c.BuildLoginRequest(ctx, input)
 	if err != nil {
@@ -118,6 +131,8 @@ func (c *Client) Logout(ctx context.Context) error {
 
 	c.closeResponseBody(res)
 
+	// should I be doing something here to undo the auth state in the client?
+
 	return nil
 }
 
@@ -129,6 +144,8 @@ func (c *Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Co
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
+
+	// validating here requires settings knowledge so we do not do it.
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "password", "new")
 
@@ -146,6 +163,16 @@ func (c *Client) BuildChangePasswordRequest(ctx context.Context, cookie *http.Co
 func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if cookie == nil {
+		return ErrCookieRequired
+	}
+
+	if input == nil {
+		return ErrNilInputProvided
+	}
+
+	// validating here requires settings knowledge so we do not do it.
 
 	req, err := c.BuildChangePasswordRequest(ctx, cookie, input)
 	if err != nil {
@@ -171,8 +198,17 @@ func (c *Client) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *h
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if cookie == nil {
+		return nil, ErrCookieRequired
+	}
+
 	if input == nil {
 		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	uri := c.buildVersionlessURL(nil, usersBasePath, "totp_secret", "new")
@@ -192,6 +228,19 @@ func (c *Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, 
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if cookie == nil {
+		return nil, ErrCookieRequired
+	}
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
 	req, err := c.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
 	if err != nil {
 		return nil, fmt.Errorf("building authentication change request: %w", err)
@@ -208,6 +257,14 @@ func (c *Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if userID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	if _, err := strconv.ParseUint(token, 10, 64); token == "" || err != nil {
+		return nil, fmt.Errorf("invalid token provided: %q", token)
+	}
+
 	uri := c.buildVersionlessURL(nil, usersBasePath, "totp_secret", "verify")
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, &types.TOTPSecretVerificationInput{
@@ -220,6 +277,14 @@ func (c *Client) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64
 func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if userID == 0 {
+		return ErrZeroIDProvided
+	}
+
+	if _, err := strconv.ParseUint(token, 10, 64); token == "" || err != nil {
+		return fmt.Errorf("invalid token provided: %q", token)
+	}
 
 	req, err := c.BuildVerifyTOTPSecretRequest(ctx, userID, token)
 	if err != nil {

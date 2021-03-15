@@ -200,9 +200,8 @@ func TestBuildURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		c, _ := NewClient(
-			UsingURL(mustParseURL(exampleURI)),
-		)
+		c, _ := NewClient(UsingURL(mustParseURL(exampleURI)))
+		ctx := context.Background()
 
 		testCases := []struct {
 			inputQuery  valuer
@@ -229,15 +228,18 @@ func TestBuildURL(T *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			actual := c.BuildURL(tc.inputQuery.ToValues(), tc.inputParts...)
+			actual := c.BuildURL(ctx, tc.inputQuery.ToValues(), tc.inputParts...)
 			assert.Equal(t, tc.expectation, actual)
 		}
 	})
 
 	T.Run("with invalid url parts", func(t *testing.T) {
 		t.Parallel()
+
+		ctx := context.Background()
 		c := buildTestClientWithInvalidURL(t)
-		assert.Empty(t, c.BuildURL(nil, asciiControlChar))
+
+		assert.Empty(t, c.BuildURL(ctx, nil, asciiControlChar))
 	})
 }
 
@@ -297,9 +299,10 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 		c, _ := NewClient(
 			UsingURL(mustParseURL(exampleURI)),
 		)
+		ctx := context.Background()
 
 		expected := "ws://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff"
-		actual := c.BuildWebsocketURL("things", "and", "stuff")
+		actual := c.BuildWebsocketURL(ctx, "things", "and", "stuff")
 
 		assert.Equal(t, expected, actual)
 	})

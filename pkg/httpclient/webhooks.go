@@ -19,7 +19,11 @@ func (c *Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http.R
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(id, 10))
+	if id == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, webhooksBasePath, strconv.FormatUint(id, 10))
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -28,6 +32,10 @@ func (c *Client) BuildGetWebhookRequest(ctx context.Context, id uint64) (*http.R
 func (c *Client) GetWebhook(ctx context.Context, id uint64) (webhook *types.Webhook, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if id == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetWebhookRequest(ctx, id)
 	if err != nil {
@@ -44,7 +52,7 @@ func (c *Client) BuildGetWebhooksRequest(ctx context.Context, filter *types.Quer
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(filter.ToValues(), webhooksBasePath)
+	uri := c.BuildURL(ctx, filter.ToValues(), webhooksBasePath)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -65,19 +73,37 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (we
 }
 
 // BuildCreateWebhookRequest builds an HTTP request for creating a webhook.
-func (c *Client) BuildCreateWebhookRequest(ctx context.Context, body *types.WebhookCreationInput) (*http.Request, error) {
+func (c *Client) BuildCreateWebhookRequest(ctx context.Context, input *types.WebhookCreationInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(nil, webhooksBasePath)
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, webhooksBasePath)
+
+	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // CreateWebhook creates a webhook.
 func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (webhook *types.Webhook, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
 
 	req, err := c.BuildCreateWebhookRequest(ctx, input)
 	if err != nil {
@@ -94,7 +120,11 @@ func (c *Client) BuildUpdateWebhookRequest(ctx context.Context, updated *types.W
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(updated.ID, 10))
+	if updated == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, webhooksBasePath, strconv.FormatUint(updated.ID, 10))
 
 	return c.buildDataRequest(ctx, http.MethodPut, uri, updated)
 }
@@ -103,6 +133,10 @@ func (c *Client) BuildUpdateWebhookRequest(ctx context.Context, updated *types.W
 func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if updated == nil {
+		return ErrNilInputProvided
+	}
 
 	req, err := c.BuildUpdateWebhookRequest(ctx, updated)
 	if err != nil {
@@ -117,7 +151,11 @@ func (c *Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*ht
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(nil, webhooksBasePath, strconv.FormatUint(id, 10))
+	if id == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, webhooksBasePath, strconv.FormatUint(id, 10))
 
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
@@ -126,6 +164,10 @@ func (c *Client) BuildArchiveWebhookRequest(ctx context.Context, id uint64) (*ht
 func (c *Client) ArchiveWebhook(ctx context.Context, id uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if id == 0 {
+		return ErrZeroIDProvided
+	}
 
 	req, err := c.BuildArchiveWebhookRequest(ctx, id)
 	if err != nil {
@@ -140,12 +182,11 @@ func (c *Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookI
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		webhooksBasePath,
-		strconv.FormatUint(webhookID, 10),
-		"audit",
-	)
+	if webhookID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, webhooksBasePath, strconv.FormatUint(webhookID, 10), "audit")
 
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -156,6 +197,10 @@ func (c *Client) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookI
 func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if webhookID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAuditLogForWebhookRequest(ctx, webhookID)
 	if err != nil {

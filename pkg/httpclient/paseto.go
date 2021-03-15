@@ -39,6 +39,15 @@ func (c *Client) BuildAPIClientAuthTokenRequest(ctx context.Context, input *type
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
 	uri := c.buildVersionlessURL(nil, pasetoBasePath)
 
 	tracing.AttachRequestURIToSpan(span, uri)
@@ -67,9 +76,18 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 		httpclient.Timeout = defaultTimeout
 	}
 
+	if secretKey == nil {
+		return "", ErrNilInputProvided
+	}
+
 	input := &types.PASETOCreationInput{
 		ClientID:    clientID,
 		RequestTime: time.Now().UTC().UnixNano(),
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return "", fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	if c.accountID != 0 {

@@ -20,7 +20,12 @@ func (c *Client) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*ht
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if itemID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		itemsBasePath,
 		strconv.FormatUint(itemID, 10),
@@ -35,6 +40,10 @@ func (c *Client) ItemExists(ctx context.Context, itemID uint64) (exists bool, er
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if itemID == 0 {
+		return false, ErrZeroIDProvided
+	}
+
 	req, err := c.BuildItemExistsRequest(ctx, itemID)
 	if err != nil {
 		return false, fmt.Errorf("building request: %w", err)
@@ -48,7 +57,12 @@ func (c *Client) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http.
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if itemID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		itemsBasePath,
 		strconv.FormatUint(itemID, 10),
@@ -62,6 +76,10 @@ func (c *Client) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http.
 func (c *Client) GetItem(ctx context.Context, itemID uint64) (item *types.Item, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if itemID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetItemRequest(ctx, itemID)
 	if err != nil {
@@ -85,6 +103,7 @@ func (c *Client) BuildSearchItemsRequest(ctx context.Context, query string, limi
 	params.Set(types.LimitQueryKey, strconv.FormatUint(uint64(limit), 10))
 
 	uri := c.BuildURL(
+		ctx,
 		params,
 		itemsBasePath,
 		"search",
@@ -98,6 +117,14 @@ func (c *Client) BuildSearchItemsRequest(ctx context.Context, query string, limi
 func (c *Client) SearchItems(ctx context.Context, query string, limit uint8) (items []*types.Item, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if query == "" {
+		return nil, ErrEmptyQueryProvided
+	}
+
+	if limit == 0 {
+		limit = 20
+	}
 
 	req, err := c.BuildSearchItemsRequest(ctx, query, limit)
 	if err != nil {
@@ -116,10 +143,7 @@ func (c *Client) BuildGetItemsRequest(ctx context.Context, filter *types.QueryFi
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		filter.ToValues(),
-		itemsBasePath,
-	)
+	uri := c.BuildURL(ctx, filter.ToValues(), itemsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -147,10 +171,16 @@ func (c *Client) BuildCreateItemRequest(ctx context.Context, input *types.ItemCr
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		itemsBasePath,
-	)
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, itemsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -160,6 +190,15 @@ func (c *Client) BuildCreateItemRequest(ctx context.Context, input *types.ItemCr
 func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (item *types.Item, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
 
 	req, err := c.BuildCreateItemRequest(ctx, input)
 	if err != nil {
@@ -176,7 +215,12 @@ func (c *Client) BuildUpdateItemRequest(ctx context.Context, item *types.Item) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if item == nil {
+		return nil, ErrNilInputProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		itemsBasePath,
 		strconv.FormatUint(item.ID, 10),
@@ -191,6 +235,10 @@ func (c *Client) UpdateItem(ctx context.Context, item *types.Item) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if item == nil {
+		return ErrNilInputProvided
+	}
+
 	req, err := c.BuildUpdateItemRequest(ctx, item)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
@@ -204,7 +252,12 @@ func (c *Client) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*h
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if itemID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		itemsBasePath,
 		strconv.FormatUint(itemID, 10),
@@ -219,6 +272,10 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if itemID == 0 {
+		return ErrZeroIDProvided
+	}
+
 	req, err := c.BuildArchiveItemRequest(ctx, itemID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
@@ -232,12 +289,11 @@ func (c *Client) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		itemsBasePath,
-		strconv.FormatUint(itemID, 10),
-		"audit",
-	)
+	if itemID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, itemsBasePath, strconv.FormatUint(itemID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -247,6 +303,10 @@ func (c *Client) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint
 func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if itemID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAuditLogForItemRequest(ctx, itemID)
 	if err != nil {

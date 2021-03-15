@@ -19,6 +19,10 @@ func (c *Client) BuildSwitchActiveAccountRequest(ctx context.Context, accountID 
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if accountID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.buildVersionlessURL(nil, usersBasePath, "account", "select")
 
 	input := &types.ChangeActiveAccountInput{
@@ -32,6 +36,10 @@ func (c *Client) BuildSwitchActiveAccountRequest(ctx context.Context, accountID 
 func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if accountID == 0 {
+		return ErrZeroIDProvided
+	}
 
 	if c.authMethod == cookieAuthMethod {
 		req, err := c.BuildSwitchActiveAccountRequest(ctx, accountID)
@@ -57,7 +65,12 @@ func (c *Client) BuildGetAccountRequest(ctx context.Context, accountID uint64) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if accountID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		accountsBasePath,
 		strconv.FormatUint(accountID, 10),
@@ -71,6 +84,10 @@ func (c *Client) BuildGetAccountRequest(ctx context.Context, accountID uint64) (
 func (c *Client) GetAccount(ctx context.Context, accountID uint64) (account *types.Account, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if accountID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAccountRequest(ctx, accountID)
 	if err != nil {
@@ -89,10 +106,7 @@ func (c *Client) BuildGetAccountsRequest(ctx context.Context, filter *types.Quer
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		filter.ToValues(),
-		accountsBasePath,
-	)
+	uri := c.BuildURL(ctx, filter.ToValues(), accountsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -120,10 +134,16 @@ func (c *Client) BuildCreateAccountRequest(ctx context.Context, input *types.Acc
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-	)
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, accountsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -133,6 +153,15 @@ func (c *Client) BuildCreateAccountRequest(ctx context.Context, input *types.Acc
 func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (account *types.Account, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
 
 	req, err := c.BuildCreateAccountRequest(ctx, input)
 	if err != nil {
@@ -149,7 +178,12 @@ func (c *Client) BuildUpdateAccountRequest(ctx context.Context, account *types.A
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if account == nil {
+		return nil, ErrNilInputProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		accountsBasePath,
 		strconv.FormatUint(account.ID, 10),
@@ -164,6 +198,10 @@ func (c *Client) UpdateAccount(ctx context.Context, account *types.Account) erro
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if account == nil {
+		return ErrNilInputProvided
+	}
+
 	req, err := c.BuildUpdateAccountRequest(ctx, account)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
@@ -177,7 +215,12 @@ func (c *Client) BuildArchiveAccountRequest(ctx context.Context, accountID uint6
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if accountID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		accountsBasePath,
 		strconv.FormatUint(accountID, 10),
@@ -192,6 +235,10 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if accountID == 0 {
+		return ErrZeroIDProvided
+	}
+
 	req, err := c.BuildArchiveAccountRequest(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
@@ -205,12 +252,16 @@ func (c *Client) BuildAddUserRequest(ctx context.Context, accountID uint64, inpu
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-		"member",
-	)
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "member")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -220,6 +271,15 @@ func (c *Client) BuildAddUserRequest(ctx context.Context, accountID uint64, inpu
 func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if input == nil {
+		return ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return fmt.Errorf("validating input: %w", validationErr)
+	}
 
 	req, err := c.BuildAddUserRequest(ctx, accountID, input)
 	if err != nil {
@@ -234,12 +294,11 @@ func (c *Client) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint64
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-		"default",
-	)
+	if accountID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "default")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
@@ -249,6 +308,10 @@ func (c *Client) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint64
 func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if accountID == 0 {
+		return ErrZeroIDProvided
+	}
 
 	req, err := c.BuildMarkAsDefaultRequest(ctx, accountID)
 	if err != nil {
@@ -263,28 +326,37 @@ func (c *Client) BuildRemoveUserRequest(ctx context.Context, accountID, userID u
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u := c.buildRawURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-		"members",
-		strconv.FormatUint(userID, 10),
-	)
+	if accountID == 0 {
+		return nil, fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
+
+	if userID == 0 {
+		return nil, fmt.Errorf("userID: %w", ErrZeroIDProvided)
+	}
+
+	u := c.buildRawURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10))
 
 	if reason != "" {
 		u.Query().Set("reason", reason)
 	}
 
-	uri := u.String()
-	tracing.AttachRequestURIToSpan(span, uri)
+	tracing.AttachURLToSpan(span, u)
 
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	return http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), nil)
 }
 
 // RemoveUser removes a user from an account.
 func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64, reason string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if accountID == 0 {
+		return fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
+
+	if userID == 0 {
+		return fmt.Errorf("userID: %w", ErrZeroIDProvided)
+	}
 
 	req, err := c.BuildRemoveUserRequest(ctx, accountID, userID, reason)
 	if err != nil {
@@ -299,14 +371,24 @@ func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accoun
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-		"members",
-		strconv.FormatUint(userID, 10),
-		"permissions",
-	)
+	if accountID == 0 {
+		return nil, fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
+
+	if userID == 0 {
+		return nil, fmt.Errorf("userID: %w", ErrZeroIDProvided)
+	}
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10), "permissions")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return c.buildDataRequest(ctx, http.MethodPatch, uri, input)
@@ -316,6 +398,23 @@ func (c *Client) BuildModifyMemberPermissionsRequest(ctx context.Context, accoun
 func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID uint64, input *types.ModifyUserPermissionsInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if accountID == 0 {
+		return fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
+
+	if userID == 0 {
+		return fmt.Errorf("userID: %w", ErrZeroIDProvided)
+	}
+
+	if input == nil {
+		return ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return fmt.Errorf("validating input: %w", validationErr)
+	}
 
 	req, err := c.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, input)
 	if err != nil {
@@ -330,12 +429,20 @@ func (c *Client) BuildTransferAccountOwnershipRequest(ctx context.Context, accou
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-		"transfer",
-	)
+	if accountID == 0 {
+		return nil, fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "transfer")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -345,6 +452,19 @@ func (c *Client) BuildTransferAccountOwnershipRequest(ctx context.Context, accou
 func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64, input *types.TransferAccountOwnershipInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if accountID == 0 {
+		return fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
+
+	if input == nil {
+		return ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return fmt.Errorf("validating input: %w", validationErr)
+	}
 
 	req, err := c.BuildTransferAccountOwnershipRequest(ctx, accountID, input)
 	if err != nil {
@@ -359,12 +479,11 @@ func (c *Client) BuildGetAuditLogForAccountRequest(ctx context.Context, accountI
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
-		"audit",
-	)
+	if accountID == 0 {
+		return nil, fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
+
+	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -374,6 +493,10 @@ func (c *Client) BuildGetAuditLogForAccountRequest(ctx context.Context, accountI
 func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if accountID == 0 {
+		return nil, fmt.Errorf("accountID: %w", ErrZeroIDProvided)
+	}
 
 	req, err := c.BuildGetAuditLogForAccountRequest(ctx, accountID)
 	if err != nil {

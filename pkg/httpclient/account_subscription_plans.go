@@ -19,7 +19,12 @@ func (c *Client) BuildGetAccountSubscriptionPlanRequest(ctx context.Context, pla
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if planID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		plansBasePath,
 		strconv.FormatUint(planID, 10),
@@ -33,6 +38,10 @@ func (c *Client) BuildGetAccountSubscriptionPlanRequest(ctx context.Context, pla
 func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (plan *types.AccountSubscriptionPlan, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if planID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
@@ -51,10 +60,7 @@ func (c *Client) BuildGetAccountSubscriptionPlansRequest(ctx context.Context, fi
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		filter.ToValues(),
-		plansBasePath,
-	)
+	uri := c.BuildURL(ctx, filter.ToValues(), plansBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -86,10 +92,12 @@ func (c *Client) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context, 
 		return nil, ErrNilInputProvided
 	}
 
-	uri := c.BuildURL(
-		nil,
-		plansBasePath,
-	)
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, plansBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -102,6 +110,11 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 
 	if input == nil {
 		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	req, err := c.BuildCreateAccountSubscriptionPlanRequest(ctx, input)
@@ -124,6 +137,7 @@ func (c *Client) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context, 
 	}
 
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		plansBasePath,
 		strconv.FormatUint(plan.ID, 10),
@@ -155,7 +169,12 @@ func (c *Client) BuildArchiveAccountSubscriptionPlanRequest(ctx context.Context,
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if planID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
 	uri := c.BuildURL(
+		ctx,
 		nil,
 		plansBasePath,
 		strconv.FormatUint(planID, 10),
@@ -170,6 +189,10 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if planID == 0 {
+		return ErrZeroIDProvided
+	}
+
 	req, err := c.BuildArchiveAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
@@ -183,12 +206,11 @@ func (c *Client) BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx context.C
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		plansBasePath,
-		strconv.FormatUint(planID, 10),
-		"audit",
-	)
+	if planID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, plansBasePath, strconv.FormatUint(planID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -198,6 +220,10 @@ func (c *Client) BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx context.C
 func (c *Client) GetAuditLogForAccountSubscriptionPlan(ctx context.Context, planID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if planID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {

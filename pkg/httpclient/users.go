@@ -23,7 +23,11 @@ func (c *Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(nil, usersBasePath, strconv.FormatUint(userID, 10))
+	if userID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -32,6 +36,10 @@ func (c *Client) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.
 func (c *Client) GetUser(ctx context.Context, userID uint64) (user *types.User, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if userID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetUserRequest(ctx, userID)
 	if err != nil {
@@ -48,7 +56,7 @@ func (c *Client) BuildGetUsersRequest(ctx context.Context, filter *types.QueryFi
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(filter.ToValues(), usersBasePath)
+	uri := c.BuildURL(ctx, filter.ToValues(), usersBasePath)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -75,7 +83,11 @@ func (c *Client) BuildSearchForUsersByUsernameRequest(ctx context.Context, usern
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u := c.buildRawURL(nil, usersBasePath, "search")
+	if username == "" {
+		return nil, ErrEmptyUsernameProvided
+	}
+
+	u := c.buildRawURL(ctx, nil, usersBasePath, "search")
 	q := u.Query()
 	q.Set(types.SearchQueryKey, username)
 	u.RawQuery = q.Encode()
@@ -89,6 +101,10 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) 
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if username == "" {
+		return nil, ErrEmptyUsernameProvided
+	}
+
 	req, err := c.BuildSearchForUsersByUsernameRequest(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
@@ -100,19 +116,33 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) 
 }
 
 // BuildCreateUserRequest builds an HTTP request for creating a user.
-func (c *Client) BuildCreateUserRequest(ctx context.Context, body *types.NewUserCreationInput) (*http.Request, error) {
+func (c *Client) BuildCreateUserRequest(ctx context.Context, input *types.NewUserCreationInput) (*http.Request, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	// deliberately not validating here
+	// maybe I should make a client-side validate method vs a server-side?
+
 	uri := c.buildVersionlessURL(nil, usersBasePath)
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, body)
+	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // CreateUser creates a new user.
 func (c *Client) CreateUser(ctx context.Context, input *types.NewUserCreationInput) (*types.UserCreationResponse, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	// deliberately not validating here
+	// maybe I should make a client-side validate method vs a server-side?
 
 	user := &types.UserCreationResponse{}
 
@@ -131,7 +161,14 @@ func (c *Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*h
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.buildRawURL(nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
+	if userID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	// deliberately not validating here
+	// maybe I should make a client-side validate method vs a server-side?
+
+	uri := c.buildRawURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
 
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
@@ -140,6 +177,10 @@ func (c *Client) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*h
 func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if userID == 0 {
+		return ErrZeroIDProvided
+	}
 
 	req, err := c.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
@@ -154,12 +195,11 @@ func (c *Client) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		usersBasePath,
-		strconv.FormatUint(userID, 10),
-		"audit",
-	)
+	if userID == 0 {
+		return nil, ErrZeroIDProvided
+	}
+
+	uri := c.BuildURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
@@ -169,6 +209,10 @@ func (c *Client) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint
 func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if userID == 0 {
+		return nil, ErrZeroIDProvided
+	}
 
 	req, err := c.BuildGetAuditLogForUserRequest(ctx, userID)
 	if err != nil {
@@ -187,6 +231,23 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, ex
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if len(avatar) == 0 {
+		return nil, fmt.Errorf("invalid length avatar passed: %d", len(avatar))
+	}
+
+	var ct string
+
+	switch strings.ToLower(strings.TrimSpace(extension)) {
+	case "jpeg":
+		ct = "image/jpeg"
+	case "png":
+		ct = "image/png"
+	case "gif":
+		ct = "image/gif"
+	default:
+		return nil, fmt.Errorf("invalid extension: %q", extension)
+	}
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -203,29 +264,11 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, ex
 		return nil, fmt.Errorf("closing avatar file: %w", closeErr)
 	}
 
-	uri := c.BuildURL(
-		nil,
-		usersBasePath,
-		"avatar",
-		"upload",
-	)
+	uri := c.BuildURL(ctx, nil, usersBasePath, "avatar", "upload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, body)
 	if err != nil {
 		return nil, fmt.Errorf("building HTTP request: %w", err)
-	}
-
-	var ct string
-
-	switch strings.ToLower(strings.TrimSpace(extension)) {
-	case "jpeg":
-		ct = "image/jpeg"
-	case "png":
-		ct = "image/png"
-	case "gif":
-		ct = "image/gif"
-	default:
-		return nil, fmt.Errorf("invalid extension: %q", extension)
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -238,6 +281,17 @@ func (c *Client) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, ex
 func (c *Client) UploadAvatar(ctx context.Context, avatar []byte, extension string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if len(avatar) == 0 {
+		return fmt.Errorf("invalid length avatar passed: %d", len(avatar))
+	}
+
+	switch strings.ToLower(strings.TrimSpace(extension)) {
+	case "jpeg", "png", "gif":
+		//
+	default:
+		return fmt.Errorf("invalid extension: %q", extension)
+	}
 
 	req, err := c.BuildAvatarUploadRequest(ctx, avatar, extension)
 	if err != nil {

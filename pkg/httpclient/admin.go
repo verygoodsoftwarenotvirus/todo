@@ -17,12 +17,16 @@ func (c *Client) BuildAccountStatusUpdateInputRequest(ctx context.Context, input
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(
-		nil,
-		adminBasePath,
-		usersBasePath,
-		"status",
-	)
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return nil, fmt.Errorf("validating input: %w", validationErr)
+	}
+
+	uri := c.BuildURL(ctx, nil, adminBasePath, usersBasePath, "status")
 
 	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
@@ -31,6 +35,15 @@ func (c *Client) BuildAccountStatusUpdateInputRequest(ctx context.Context, input
 func (c *Client) UpdateAccountStatus(ctx context.Context, input *types.UserReputationUpdateInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if input == nil {
+		return ErrNilInputProvided
+	}
+
+	if validationErr := input.Validate(ctx); validationErr != nil {
+		c.logger.Error(validationErr, "validating input")
+		return fmt.Errorf("validating input: %w", validationErr)
+	}
 
 	req, err := c.BuildAccountStatusUpdateInputRequest(ctx, input)
 	if err != nil {

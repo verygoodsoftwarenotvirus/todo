@@ -7,11 +7,40 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAPIClients(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, new(apiClientsTestSuite))
+}
+
+type apiClientsTestSuite struct {
+	suite.Suite
+
+	ctx                  context.Context
+	exampleAPIClient     *types.APIClient
+	exampleInput         *types.APICientCreationInput
+	exampleAPIClientList *types.APIClientList
+}
+
+var _ suite.SetupTestSuite = (*apiClientsTestSuite)(nil)
+
+func (s *apiClientsTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.exampleAPIClient = fakes.BuildFakeAPIClient()
+	s.exampleInput = fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
+	s.exampleAPIClientList = fakes.BuildFakeAPIClientList()
+}
+
+// TODO: finish me
 
 func TestV1Client_GetAPIClient(T *testing.T) {
 	T.Parallel()

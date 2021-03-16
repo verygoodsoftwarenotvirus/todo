@@ -42,6 +42,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tebeka/selenium v0.9.9
+	github.com/tsenart/vegeta/v12 v12.8.4
 	github.com/wagslane/go-password-validator v0.3.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.18.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.18.0

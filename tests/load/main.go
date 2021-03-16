@@ -91,8 +91,6 @@ func (a *ServiceAttacker) Clone() hazana.Attack {
 }
 
 func main() {
-	runTime := 10 * time.Minute
-
 	todoClient, err := httpclient.NewClient(
 		httpclient.UsingURI(urlToUse),
 		httpclient.UsingLogger(zerolog.NewLogger()),
@@ -102,10 +100,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	runTime := 10 * time.Minute
+
 	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
-		_rt, err := time.ParseDuration(rt)
-		if err != nil {
-			panic(err)
+		_rt, runtimeParseErr := time.ParseDuration(rt)
+		if runtimeParseErr != nil {
+			panic(runtimeParseErr)
 		}
 
 		runTime = _rt

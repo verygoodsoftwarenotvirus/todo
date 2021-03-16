@@ -238,7 +238,7 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-		exampleAccountSubscriptionPlanList := fakes.BuildFakePlanList()
+		exampleAccountSubscriptionPlanList := fakes.BuildFakeAccountSubscriptionPlanList()
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -265,7 +265,7 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 		t.Parallel()
 
 		filter := (*types.QueryFilter)(nil)
-		exampleAccountSubscriptionPlanList := fakes.BuildFakePlanList()
+		exampleAccountSubscriptionPlanList := fakes.BuildFakeAccountSubscriptionPlanList()
 		exampleAccountSubscriptionPlanList.Page, exampleAccountSubscriptionPlanList.Limit = 0, 0
 
 		ctx := context.Background()

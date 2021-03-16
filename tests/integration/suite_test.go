@@ -19,15 +19,15 @@ const (
 	pasetoAuthType = "PASETO"
 )
 
+type testClientWrapper struct {
+	main,
+	admin *httpclient.Client
+}
+
 func TestIntegration(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, new(TestSuite))
-}
-
-type testClientWrapper struct {
-	main,
-	admin *httpclient.Client
 }
 
 type TestSuite struct {

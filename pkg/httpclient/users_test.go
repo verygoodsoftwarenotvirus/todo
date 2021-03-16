@@ -8,12 +8,38 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestUsers(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, new(usersTestSuite))
+}
+
+type usersTestSuite struct {
+	suite.Suite
+
+	ctx             context.Context
+	exampleUser     *types.User
+	exampleInput    *types.NewUserCreationInput
+	exampleUserList *types.UserList
+}
+
+var _ suite.SetupTestSuite = (*usersTestSuite)(nil)
+
+func (s *usersTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.exampleUser = fakes.BuildFakeUser()
+	s.exampleInput = fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
+	s.exampleUserList = fakes.BuildFakeUserList()
+}
 
 func TestV1Client_GetUser(T *testing.T) {
 	T.Parallel()

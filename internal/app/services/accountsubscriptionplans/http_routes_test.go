@@ -37,7 +37,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 		s := buildTestService()
 		s.requestContextFetcher = requestContextFetcher
 
-		examplePlanList := fakes.BuildFakePlanList()
+		examplePlanList := fakes.BuildFakeAccountSubscriptionPlanList()
 
 		planDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		planDataManager.On("GetAccountSubscriptionPlans", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return(examplePlanList, nil)

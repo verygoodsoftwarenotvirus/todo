@@ -21,8 +21,8 @@ func BuildFakeAccountSubscriptionPlan() *types.AccountSubscriptionPlan {
 	}
 }
 
-// BuildFakePlanList builds a faked AccountSubscriptionPlanList.
-func BuildFakePlanList() *types.AccountSubscriptionPlanList {
+// BuildFakeAccountSubscriptionPlanList builds a faked AccountSubscriptionPlanList.
+func BuildFakeAccountSubscriptionPlanList() *types.AccountSubscriptionPlanList {
 	var examples []*types.AccountSubscriptionPlan
 	for i := 0; i < exampleQuantity; i++ {
 		examples = append(examples, BuildFakeAccountSubscriptionPlan())

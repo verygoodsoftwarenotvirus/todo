@@ -7,12 +7,40 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAuditLogEntrys(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, new(auditLogEntriesTestSuite))
+}
+
+type auditLogEntriesTestSuite struct {
+	suite.Suite
+
+	ctx                      context.Context
+	exampleAuditLogEntry     *types.AuditLogEntry
+	exampleInput             *types.AuditLogEntryCreationInput
+	exampleAuditLogEntryList *types.AuditLogEntryList
+}
+
+var _ suite.SetupTestSuite = (*auditLogEntriesTestSuite)(nil)
+
+func (s *auditLogEntriesTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.exampleAuditLogEntry = fakes.BuildFakeAuditLogEntry()
+	s.exampleInput = fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(s.exampleAuditLogEntry)
+	s.exampleAuditLogEntryList = fakes.BuildFakeAuditLogEntryList()
+}
+
+// TODO: finish me
 
 func TestV1Client_BuildGetAuditLogEntriesRequest(T *testing.T) {
 	T.Parallel()

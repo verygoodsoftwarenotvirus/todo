@@ -7,12 +7,40 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestAccounts(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, new(accountsTestSuite))
+}
+
+type accountsTestSuite struct {
+	suite.Suite
+
+	ctx                context.Context
+	exampleAccount     *types.Account
+	exampleInput       *types.AccountCreationInput
+	exampleAccountList *types.AccountList
+}
+
+var _ suite.SetupTestSuite = (*accountsTestSuite)(nil)
+
+func (s *accountsTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.exampleAccount = fakes.BuildFakeAccount()
+	s.exampleInput = fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
+	s.exampleAccountList = fakes.BuildFakeAccountList()
+}
+
+// TODO: finish me
 
 func TestV1Client_GetAccount(T *testing.T) {
 	T.Parallel()

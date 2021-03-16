@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
@@ -14,18 +16,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestV1Client_ItemExists(T *testing.T) {
-	T.Parallel()
+func TestItems(t *testing.T) {
+	t.Parallel()
 
+	suite.Run(t, new(itemsTestSuite))
+}
+
+type itemsTestSuite struct {
+	suite.Suite
+
+	ctx             context.Context
+	exampleItem     *types.Item
+	exampleInput    *types.ItemCreationInput
+	exampleItemList *types.ItemList
+}
+
+var _ suite.SetupTestSuite = (*itemsTestSuite)(nil)
+
+func (s *itemsTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.exampleItem = fakes.BuildFakeItem()
+	s.exampleInput = fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
+	s.exampleItemList = fakes.BuildFakeItemList()
+}
+
+func (s *itemsTestSuite) TestV1Client_ItemExists() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleItem := fakes.BuildFakeItem()
-		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, exampleItem.ID)
-
+		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, s.exampleItem.ID)
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
@@ -37,75 +58,61 @@ func TestV1Client_ItemExists(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.ItemExists(ctx, exampleItem.ID)
+		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
 
 		assert.NoError(t, err, "no error should be returned")
 		assert.True(t, actual)
 	})
 
-	T.Run("with erroneous response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleItem := fakes.BuildFakeItem()
+	s.Run("with erroneous response", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.ItemExists(ctx, exampleItem.ID)
+		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
 
 		assert.Error(t, err, "error should be returned")
 		assert.False(t, actual)
 	})
 }
 
-func TestV1Client_GetItem(T *testing.T) {
-	T.Parallel()
-
+func (s *itemsTestSuite) TestV1Client_GetItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
 
-		exampleItem := fakes.BuildFakeItem()
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleItem.ID)
+	s.Run("happy path", func() {
+		t := s.T()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleItem))
+					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
 				},
 			),
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetItem(ctx, exampleItem.ID)
+		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleItem, actual)
+		assert.Equal(t, s.exampleItem, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleItem := fakes.BuildFakeItem()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetItem(ctx, exampleItem.ID)
+		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleItem := fakes.BuildFakeItem()
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleItem.ID)
+	s.Run("with invalid response", func() {
+		t := s.T()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -118,61 +125,55 @@ func TestV1Client_GetItem(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetItem(ctx, exampleItem.ID)
+		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetItems(T *testing.T) {
-	T.Parallel()
-
+func (s *itemsTestSuite) TestV1Client_GetItems() {
 	const expectedPath = "/api/v1/items"
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
-		exampleItemList := fakes.BuildFakeItemList()
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleItemList))
+					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItemList))
 				},
 			),
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetItems(ctx, filter)
+		actual, err := c.GetItems(s.ctx, filter)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleItemList, actual)
+		assert.Equal(t, s.exampleItemList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetItems(ctx, filter)
+		actual, err := c.GetItems(s.ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
 
@@ -187,62 +188,57 @@ func TestV1Client_GetItems(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetItems(ctx, filter)
+		actual, err := c.GetItems(s.ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_SearchItems(T *testing.T) {
-	T.Parallel()
-
+func (s *itemsTestSuite) TestV1Client_SearchItems() {
 	const expectedPath = "/api/v1/items/search"
 
 	exampleQuery := "whatever"
 	spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
 		limit := types.DefaultQueryFilter().Limit
-		exampleItemList := fakes.BuildFakeItemList().Items
+
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleItemList))
+					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItemList.Items))
 				},
 			),
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.SearchItems(ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleItemList, actual)
+		assert.Equal(t, s.exampleItemList.Items, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		ctx := context.Background()
 		limit := types.DefaultQueryFilter().Limit
 		c := buildTestClientWithInvalidURL(t)
 
-		actual, err := c.SearchItems(ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
 		limit := types.DefaultQueryFilter().Limit
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -255,26 +251,21 @@ func TestV1Client_SearchItems(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.SearchItems(ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_CreateItem(T *testing.T) {
-	T.Parallel()
-
+func (s *itemsTestSuite) TestV1Client_CreateItem() {
 	const expectedPath = "/api/v1/items"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 		ctx := context.Background()
-
-		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -284,24 +275,24 @@ func TestV1Client_CreateItem(T *testing.T) {
 					var x *types.ItemCreationInput
 					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 
-					exampleInput.BelongsToAccount = 0
-					assert.Equal(t, exampleInput, x)
+					s.exampleInput.BelongsToAccount = 0
+					assert.Equal(t, s.exampleInput, x)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleItem))
+					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
 				},
 			),
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.CreateItem(ctx, exampleInput)
+		actual, err := c.CreateItem(ctx, s.exampleInput)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleItem, actual)
+		assert.Equal(t, s.exampleItem, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
@@ -315,54 +306,43 @@ func TestV1Client_CreateItem(T *testing.T) {
 	})
 }
 
-func TestV1Client_UpdateItem(T *testing.T) {
-	T.Parallel()
-
+func (s *itemsTestSuite) TestV1Client_UpdateItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleItem := fakes.BuildFakeItem()
-		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleItem.ID)
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
 				func(res http.ResponseWriter, req *http.Request) {
 					assertRequestQuality(t, req, spec)
 
-					assert.NoError(t, json.NewEncoder(res).Encode(exampleItem))
+					assert.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
 				},
 			),
 		)
 
-		err := buildTestClient(t, ts).UpdateItem(ctx, exampleItem)
+		err := buildTestClient(t, ts).UpdateItem(s.ctx, s.exampleItem)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		exampleItem := fakes.BuildFakeItem()
-
-		err := buildTestClientWithInvalidURL(t).UpdateItem(ctx, exampleItem)
+		err := buildTestClientWithInvalidURL(t).UpdateItem(s.ctx, s.exampleItem)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_ArchiveItem(T *testing.T) {
-	T.Parallel()
-
+func (s *itemsTestSuite) TestV1Client_ArchiveItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleItem := fakes.BuildFakeItem()
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleItem.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -374,35 +354,28 @@ func TestV1Client_ArchiveItem(T *testing.T) {
 			),
 		)
 
-		err := buildTestClient(t, ts).ArchiveItem(ctx, exampleItem.ID)
+		err := buildTestClient(t, ts).ArchiveItem(s.ctx, s.exampleItem.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		exampleItem := fakes.BuildFakeItem()
-
-		err := buildTestClientWithInvalidURL(t).ArchiveItem(ctx, exampleItem.ID)
+		err := buildTestClientWithInvalidURL(t).ArchiveItem(s.ctx, s.exampleItem.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetAuditLogForItem(T *testing.T) {
-	T.Parallel()
-
+func (s *itemsTestSuite) TestV1Client_GetAuditLogForItem() {
 	const (
 		expectedPath   = "/api/v1/items/%d/audit"
 		expectedMethod = http.MethodGet
 	)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		exampleItem := fakes.BuildFakeItem()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleItem.ID)
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleItem.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
 		ts := httptest.NewTLSServer(
@@ -416,32 +389,17 @@ func TestV1Client_GetAuditLogForItem(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForItem(ctx, exampleItem.ID)
+		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
-		exampleItem := fakes.BuildFakeItem()
-
-		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForItem(ctx, exampleItem.ID)
-
-		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
-	})
-
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleItem := fakes.BuildFakeItem()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleItem.ID)
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleItem.ID)
 
 		ts := httptest.NewTLSServer(
 			http.HandlerFunc(
@@ -454,7 +412,7 @@ func TestV1Client_GetAuditLogForItem(T *testing.T) {
 		)
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForItem(ctx, exampleItem.ID)
+		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

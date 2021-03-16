@@ -25,8 +25,8 @@ var (
 	// ErrNilInputProvided indicates nil input was provided in an unacceptable context.
 	ErrNilInputProvided = errors.New("nil input provided")
 
-	// ErrZeroIDProvided indicates nil input was provided in an unacceptable context.
-	ErrZeroIDProvided = errors.New("required ID provided is zero")
+	// ErrInvalidIDProvided indicates nil input was provided in an unacceptable context.
+	ErrInvalidIDProvided = errors.New("required ID provided is zero")
 
 	// ErrEmptyQueryProvided indicates the user provided an empty query.
 	ErrEmptyQueryProvided = errors.New("query provided was empty")
@@ -34,7 +34,7 @@ var (
 	// ErrEmptyUsernameProvided indicates the user provided an empty username for search.
 	ErrEmptyUsernameProvided = errors.New("empty username provided")
 
-	//ErrCookieRequired indicates a cookie is required.
+	// ErrCookieRequired indicates a cookie is required.
 	ErrCookieRequired = errors.New("cookie required for request")
 
 	// ErrNoCookiesReturned indicates nil input was provided in an unacceptable context.

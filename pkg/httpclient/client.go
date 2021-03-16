@@ -13,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 
 	"github.com/moul/http2curl"
 )
@@ -38,6 +39,7 @@ type Client struct {
 	authMethod     *authMethod
 	plainClient    *http.Client
 	authedClient   *http.Client
+	panicker       panicking.Panicker
 	contentType    string
 	accountID      uint64
 	debug          bool
@@ -68,6 +70,7 @@ func NewClient(options ...option) (*Client, error) {
 		plainClient:    http.DefaultClient,
 		debug:          false,
 		contentType:    "application/json",
+		panicker:       panicking.NewProductionPanicker(),
 		encoderDecoder: encoding.ProvideHTTPResponseEncoder(l),
 		logger:         l,
 		tracer:         tracing.NewTracer(clientName),
@@ -108,13 +111,33 @@ func (c *Client) BuildURL(ctx context.Context, qp url.Values, parts ...string) s
 	return ""
 }
 
+func buildRawURL(u *url.URL, qp url.Values, includeVersionPrefix bool, parts ...string) (*url.URL, error) {
+	tu := *u
+
+	if includeVersionPrefix {
+		parts = append([]string{"api", "v1"}, parts...)
+	}
+
+	u, err := url.Parse(path.Join(parts...))
+	if err != nil {
+		return nil, err
+	}
+
+	if qp != nil {
+		u.RawQuery = qp.Encode()
+	}
+
+	return tu.ResolveReference(u), nil
+}
+
 // buildRawURL takes a given set of query parameters and url parts, and returns.
 // a parsed url object from them.
 func (c *Client) buildRawURL(ctx context.Context, queryParams url.Values, parts ...string) *url.URL {
-	ctx, span := c.tracer.StartSpan(ctx)
+	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tu := *c.url
+
 	parts = append([]string{"api", "v1"}, parts...)
 
 	u, err := url.Parse(path.Join(parts...))
@@ -134,26 +157,25 @@ func (c *Client) buildRawURL(ctx context.Context, queryParams url.Values, parts 
 	return out
 }
 
-// buildVersionlessURL builds a url without the `/api/v1/` prefix. It should
-// otherwise be identical to buildRawURL.
-func (c *Client) buildVersionlessURL(qp url.Values, parts ...string) string {
-	tu := *c.url
+// buildVersionlessURL builds a url without the `/api/v1/` prefix. It should otherwise be identical to buildRawURL.
+func (c *Client) buildVersionlessURL(ctx context.Context, qp url.Values, parts ...string) string {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
 
-	u, err := url.Parse(path.Join(parts...))
+	u, err := buildRawURL(c.url, qp, false, parts...)
 	if err != nil {
-		c.logger.Error(err, "building url")
+		c.logger.Error(err, "building versionless url")
 		return ""
 	}
 
-	if qp != nil {
-		u.RawQuery = qp.Encode()
-	}
-
-	return tu.ResolveReference(u).String()
+	return u.String()
 }
 
 // BuildWebsocketURL builds a standard url and then converts its scheme to the websocket protocol.
 func (c *Client) BuildWebsocketURL(ctx context.Context, parts ...string) string {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
 	u := c.buildRawURL(ctx, nil, parts...)
 	u.Scheme = "ws"
 
@@ -162,6 +184,9 @@ func (c *Client) BuildWebsocketURL(ctx context.Context, parts ...string) string 
 
 // BuildHealthCheckRequest builds a health check HTTP request.
 func (c *Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
 	u := *c.url
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
 
@@ -170,6 +195,9 @@ func (c *Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, er
 
 // IsUp returns whether or not the service's health endpoint is returning 200s.
 func (c *Client) IsUp(ctx context.Context) bool {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
 	req, err := c.BuildHealthCheckRequest(ctx)
 	if err != nil {
 		c.logger.Error(err, "building request")

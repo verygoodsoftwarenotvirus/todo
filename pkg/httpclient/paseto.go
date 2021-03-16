@@ -48,7 +48,7 @@ func (c *Client) BuildAPIClientAuthTokenRequest(ctx context.Context, input *type
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	uri := c.buildVersionlessURL(nil, pasetoBasePath)
+	uri := c.buildVersionlessURL(ctx, nil, pasetoBasePath)
 
 	tracing.AttachRequestURIToSpan(span, uri)
 

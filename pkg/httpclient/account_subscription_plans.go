@@ -3,36 +3,9 @@ package httpclient
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
-
-const (
-	plansBasePath = "account_subscription_plans"
-)
-
-// BuildGetAccountSubscriptionPlanRequest builds an HTTP request for fetching an plan.
-func (c *Client) BuildGetAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if planID == 0 {
-		return nil, ErrZeroIDProvided
-	}
-
-	uri := c.BuildURL(
-		ctx,
-		nil,
-		plansBasePath,
-		strconv.FormatUint(planID, 10),
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-}
 
 // GetAccountSubscriptionPlan retrieves an plan.
 func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (plan *types.AccountSubscriptionPlan, err error) {
@@ -40,7 +13,7 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) 
 	defer span.End()
 
 	if planID == 0 {
-		return nil, ErrZeroIDProvided
+		return nil, ErrInvalidIDProvided
 	}
 
 	req, err := c.BuildGetAccountSubscriptionPlanRequest(ctx, planID)
@@ -53,17 +26,6 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) 
 	}
 
 	return plan, nil
-}
-
-// BuildGetAccountSubscriptionPlansRequest builds an HTTP request for fetching account subscription plans.
-func (c *Client) BuildGetAccountSubscriptionPlansRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	uri := c.BuildURL(ctx, filter.ToValues(), plansBasePath)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // GetAccountSubscriptionPlans retrieves a list of account subscription plans.
@@ -81,26 +43,6 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	}
 
 	return plans, nil
-}
-
-// BuildCreateAccountSubscriptionPlanRequest builds an HTTP request for creating an plan.
-func (c *Client) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if input == nil {
-		return nil, ErrNilInputProvided
-	}
-
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
-	}
-
-	uri := c.BuildURL(ctx, nil, plansBasePath)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // CreateAccountSubscriptionPlan creates an plan.
@@ -127,26 +69,6 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	return plan, err
 }
 
-// BuildUpdateAccountSubscriptionPlanRequest builds an HTTP request for updating an plan.
-func (c *Client) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context, plan *types.AccountSubscriptionPlan) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if plan == nil {
-		return nil, ErrNilInputProvided
-	}
-
-	uri := c.BuildURL(
-		ctx,
-		nil,
-		plansBasePath,
-		strconv.FormatUint(plan.ID, 10),
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return c.buildDataRequest(ctx, http.MethodPut, uri, plan)
-}
-
 // UpdateAccountSubscriptionPlan updates an plan.
 func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, plan *types.AccountSubscriptionPlan) error {
 	ctx, span := c.tracer.StartSpan(ctx)
@@ -164,33 +86,13 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, plan *types.
 	return c.executeRequest(ctx, req, &plan)
 }
 
-// BuildArchiveAccountSubscriptionPlanRequest builds an HTTP request for updating an plan.
-func (c *Client) BuildArchiveAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if planID == 0 {
-		return nil, ErrZeroIDProvided
-	}
-
-	uri := c.BuildURL(
-		ctx,
-		nil,
-		plansBasePath,
-		strconv.FormatUint(planID, 10),
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
-}
-
 // ArchiveAccountSubscriptionPlan archives an plan.
 func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if planID == 0 {
-		return ErrZeroIDProvided
+		return ErrInvalidIDProvided
 	}
 
 	req, err := c.BuildArchiveAccountSubscriptionPlanRequest(ctx, planID)
@@ -201,28 +103,13 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint
 	return c.executeRequest(ctx, req, nil)
 }
 
-// BuildGetAuditLogForAccountSubscriptionPlanRequest builds an HTTP request for fetching a list of audit log entries pertaining to an plan.
-func (c *Client) BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if planID == 0 {
-		return nil, ErrZeroIDProvided
-	}
-
-	uri := c.BuildURL(ctx, nil, plansBasePath, strconv.FormatUint(planID, 10), "audit")
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-}
-
 // GetAuditLogForAccountSubscriptionPlan retrieves a list of audit log entries pertaining to an plan.
 func (c *Client) GetAuditLogForAccountSubscriptionPlan(ctx context.Context, planID uint64) (entries []*types.AuditLogEntry, err error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if planID == 0 {
-		return nil, ErrZeroIDProvided
+		return nil, ErrInvalidIDProvided
 	}
 
 	req, err := c.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, planID)

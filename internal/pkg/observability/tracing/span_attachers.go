@@ -125,7 +125,9 @@ func AttachRequestURIToSpan(span trace.Span, uri string) {
 
 // AttachErrorToSpan attaches a given error to a span.
 func AttachErrorToSpan(span trace.Span, err error) {
-	span.SetStatus(codes.Error, err.Error())
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+	}
 }
 
 // AttachSearchQueryToSpan attaches a given search query to a span.

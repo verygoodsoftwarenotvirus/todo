@@ -278,7 +278,8 @@ func TestBuildVersionlessURL(T *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			actual := c.buildVersionlessURL(tc.inputQuery.ToValues(), tc.inputParts...)
+			ctx := context.Background()
+			actual := c.buildVersionlessURL(ctx, tc.inputQuery.ToValues(), tc.inputParts...)
 			assert.Equal(t, tc.expectation, actual)
 		}
 	})
@@ -286,7 +287,9 @@ func TestBuildVersionlessURL(T *testing.T) {
 	T.Run("with invalid url parts", func(t *testing.T) {
 		t.Parallel()
 		c := buildTestClientWithInvalidURL(t)
-		assert.Empty(t, c.buildVersionlessURL(nil, asciiControlChar))
+		ctx := context.Background()
+		actual := c.buildVersionlessURL(ctx, nil, asciiControlChar)
+		assert.Empty(t, actual)
 	})
 }
 

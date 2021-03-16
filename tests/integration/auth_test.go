@@ -54,7 +54,7 @@ func (s *TestSuite) TestLogin() {
 
 		_, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
-		u, err := url.Parse(testClient.BuildURL(nil, nil))
+		u, err := url.Parse(testClient.BuildURL(ctx, nil))
 		require.NoError(t, err)
 		u.Path = "/users/login"
 

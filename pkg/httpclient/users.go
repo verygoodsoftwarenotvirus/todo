@@ -17,7 +17,7 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (user *types.User, 
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetUserRequest(ctx, userID)
+	req, err := c.requestBuilder.BuildGetUserRequest(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -34,7 +34,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 
 	users := &types.UserList{}
 
-	req, err := c.BuildGetUsersRequest(ctx, filter)
+	req, err := c.requestBuilder.BuildGetUsersRequest(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -53,7 +53,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) 
 		return nil, ErrEmptyUsernameProvided
 	}
 
-	req, err := c.BuildSearchForUsersByUsernameRequest(ctx, username)
+	req, err := c.requestBuilder.BuildSearchForUsersByUsernameRequest(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -77,7 +77,7 @@ func (c *Client) CreateUser(ctx context.Context, input *types.NewUserCreationInp
 
 	user := &types.UserCreationResponse{}
 
-	req, err := c.BuildCreateUserRequest(ctx, input)
+	req, err := c.requestBuilder.BuildCreateUserRequest(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -96,7 +96,7 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 		return ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildArchiveUserRequest(ctx, userID)
+	req, err := c.requestBuilder.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -113,7 +113,7 @@ func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetAuditLogForUserRequest(ctx, userID)
+	req, err := c.requestBuilder.BuildGetAuditLogForUserRequest(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -141,7 +141,7 @@ func (c *Client) UploadAvatar(ctx context.Context, avatar []byte, extension stri
 		return fmt.Errorf("invalid extension: %q", extension)
 	}
 
-	req, err := c.BuildAvatarUploadRequest(ctx, avatar, extension)
+	req, err := c.requestBuilder.BuildAvatarUploadRequest(ctx, avatar, extension)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}

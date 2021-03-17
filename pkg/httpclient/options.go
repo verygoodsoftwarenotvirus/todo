@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"net/http"
-	"net/url"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -38,33 +37,6 @@ func UsingJSON() func(*Client) error {
 func UsingXML() func(*Client) error {
 	return func(c *Client) error {
 		c.contentType = "application/xml"
-
-		return nil
-	}
-}
-
-// UsingURI sets the url on the client.
-func UsingURI(raw string) func(*Client) error {
-	return func(c *Client) error {
-		logger := c.logger.WithValue("old_url", c.url.String())
-
-		c.url = mustParseURL(raw)
-
-		logger.WithValue("new_url", raw).Debug("new URI set on client")
-
-		return nil
-	}
-}
-
-// UsingURL sets the url on the client.
-func UsingURL(u *url.URL) func(*Client) error {
-	return func(c *Client) error {
-		// test uri to see if it is valid
-		if _, err := url.Parse(u.String()); err != nil {
-			return err
-		}
-
-		c.url = u
 
 		return nil
 	}

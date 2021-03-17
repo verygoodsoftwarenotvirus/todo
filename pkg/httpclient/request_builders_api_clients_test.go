@@ -69,7 +69,7 @@ func TestV1Client_BuildCreateAPIClientRequest(T *testing.T) {
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		req, err := c.BuildCreateAPIClientRequest(ctx, &http.Cookie{}, exampleInput)
+		req, err := c.requestBuilder.BuildCreateAPIClientRequest(ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, req, spec)

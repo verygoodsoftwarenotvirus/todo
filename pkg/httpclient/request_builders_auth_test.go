@@ -41,7 +41,7 @@ func TestV1Client_BuildLoginRequest(T *testing.T) {
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		req, err := c.BuildLoginRequest(ctx, nil)
+		req, err := c.requestBuilder.BuildLoginRequest(ctx, nil)
 		assert.Nil(t, req)
 		assert.Error(t, err)
 	})

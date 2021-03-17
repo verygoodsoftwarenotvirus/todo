@@ -28,8 +28,19 @@ type Builder struct {
 }
 
 // URL provides the client's URL.
-func (c *Builder) URL() *url.URL {
-	return c.url
+func (b *Builder) URL() *url.URL {
+	return b.url
+}
+
+// SetURL provides the client's URL.
+func (b *Builder) SetURL(u *url.URL) error {
+	if u == nil {
+		return ErrNoURLProvided
+	}
+
+	b.url = u
+
+	return nil
 }
 
 // NewBuilder builds a new API client for us.
@@ -53,11 +64,11 @@ func NewBuilder(u *url.URL) (*Builder, error) {
 }
 
 // BuildURL builds standard service URLs.
-func (c *Builder) BuildURL(ctx context.Context, qp url.Values, parts ...string) string {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildURL(ctx context.Context, qp url.Values, parts ...string) string {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if u := c.buildRawURL(ctx, qp, parts...); u != nil {
+	if u := b.buildRawURL(ctx, qp, parts...); u != nil {
 		return u.String()
 	}
 
@@ -85,17 +96,17 @@ func buildRawURL(u *url.URL, qp url.Values, includeVersionPrefix bool, parts ...
 
 // buildRawURL takes a given set of query parameters and url parts, and returns.
 // a parsed url object from them.
-func (c *Builder) buildRawURL(ctx context.Context, queryParams url.Values, parts ...string) *url.URL {
-	_, span := c.tracer.StartSpan(ctx)
+func (b *Builder) buildRawURL(ctx context.Context, queryParams url.Values, parts ...string) *url.URL {
+	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tu := *c.url
+	tu := *b.url
 
 	parts = append([]string{"api", "v1"}, parts...)
 
 	u, err := url.Parse(path.Join(parts...))
 	if err != nil {
-		c.logger.Error(err, "building url")
+		b.logger.Error(err, "building url")
 		return nil
 	}
 
@@ -111,13 +122,13 @@ func (c *Builder) buildRawURL(ctx context.Context, queryParams url.Values, parts
 }
 
 // buildVersionlessURL builds a url without the `/api/v1/` prefix. It should otherwise be identical to buildRawURL.
-func (c *Builder) buildVersionlessURL(ctx context.Context, qp url.Values, parts ...string) string {
-	_, span := c.tracer.StartSpan(ctx)
+func (b *Builder) buildVersionlessURL(ctx context.Context, qp url.Values, parts ...string) string {
+	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u, err := buildRawURL(c.url, qp, false, parts...)
+	u, err := buildRawURL(b.url, qp, false, parts...)
 	if err != nil {
-		c.logger.Error(err, "building versionless url")
+		b.logger.Error(err, "building versionless url")
 		return ""
 	}
 
@@ -125,30 +136,30 @@ func (c *Builder) buildVersionlessURL(ctx context.Context, qp url.Values, parts 
 }
 
 // BuildWebsocketURL builds a standard url and then converts its scheme to the websocket protocol.
-func (c *Builder) BuildWebsocketURL(ctx context.Context, parts ...string) string {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildWebsocketURL(ctx context.Context, parts ...string) string {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u := c.buildRawURL(ctx, nil, parts...)
+	u := b.buildRawURL(ctx, nil, parts...)
 	u.Scheme = "ws"
 
 	return u.String()
 }
 
 // BuildHealthCheckRequest builds a health check HTTP request.
-func (c *Builder) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u := *c.url
+	u := *b.url
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // buildDataRequest builds an HTTP request for a given method, url, and body data.
-func (c *Builder) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) buildDataRequest(ctx context.Context, method, uri string, in interface{}) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	body, err := createBodyFromStruct(in)

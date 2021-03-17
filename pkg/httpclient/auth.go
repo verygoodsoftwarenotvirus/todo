@@ -18,7 +18,7 @@ func (c *Client) Status(ctx context.Context, cookie *http.Cookie) (*types.UserSt
 		return nil, ErrCookieRequired
 	}
 
-	req, err := c.BuildStatusRequest(ctx, cookie)
+	req, err := c.requestBuilder.BuildStatusRequest(ctx, cookie)
 	if err != nil {
 		return nil, fmt.Errorf("building login request: %w", err)
 	}
@@ -43,7 +43,7 @@ func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.
 
 	// validating here requires settings knowledge, so we do not do it
 
-	req, err := c.BuildLoginRequest(ctx, input)
+	req, err := c.requestBuilder.BuildLoginRequest(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("building login request: %w", err)
 	}
@@ -68,7 +68,7 @@ func (c *Client) Logout(ctx context.Context) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildLogoutRequest(ctx)
+	req, err := c.requestBuilder.BuildLogoutRequest(ctx)
 	if err != nil {
 		return fmt.Errorf("building login request: %w", err)
 	}
@@ -100,7 +100,7 @@ func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input 
 
 	// validating here requires settings knowledge so we do not do it.
 
-	req, err := c.BuildChangePasswordRequest(ctx, cookie, input)
+	req, err := c.requestBuilder.BuildChangePasswordRequest(ctx, cookie, input)
 	if err != nil {
 		return fmt.Errorf("building authentication change request: %w", err)
 	}
@@ -137,7 +137,7 @@ func (c *Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, 
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	req, err := c.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
+	req, err := c.requestBuilder.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
 	if err != nil {
 		return nil, fmt.Errorf("building authentication change request: %w", err)
 	}
@@ -161,7 +161,7 @@ func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token stri
 		return fmt.Errorf("invalid token provided: %q", token)
 	}
 
-	req, err := c.BuildVerifyTOTPSecretRequest(ctx, userID, token)
+	req, err := c.requestBuilder.BuildVerifyTOTPSecretRequest(ctx, userID, token)
 	if err != nil {
 		return fmt.Errorf("building TOTP validation request: %w", err)
 	}

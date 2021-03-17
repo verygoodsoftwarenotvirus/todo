@@ -14,67 +14,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-func TestClient_buildAPIClientAuthTokenRequest(T *testing.T) {
-	T.Parallel()
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
-
-		exampleSecret := make([]byte, validClientSecretSize)
-		exampleInput := &types.PASETOCreationInput{
-			ClientID:    "example_client_id",
-			RequestTime: 1234567890,
-		}
-
-		req, err := c.BuildAPIClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
-
-		assert.NoError(t, err)
-		require.NotNil(t, req)
-		assert.Equal(t, http.MethodPost, req.Method)
-
-		expectedSignature := `odydXoVF97U2Q3rqE10NsrYoy-FSwOpZVJKRwadMsOE`
-		actualSignature := req.Header.Get(signatureHeaderKey)
-
-		assert.Equal(t, expectedSignature, actualSignature, "expected and actual signature header do not match")
-	})
-
-	T.Run("with error building request", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c := buildTestClientWithInvalidURL(t)
-
-		exampleSecret := make([]byte, validClientSecretSize)
-		exampleInput := &types.PASETOCreationInput{
-			ClientID:    "example_client_id",
-			RequestTime: time.Now().UTC().UnixNano(),
-		}
-
-		req, err := c.BuildAPIClientAuthTokenRequest(ctx, exampleInput, exampleSecret)
-
-		assert.Error(t, err)
-		assert.Nil(t, req)
-	})
-
-	T.Run("with invalid key", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
-
-		exampleInput := &types.PASETOCreationInput{}
-
-		req, err := c.BuildAPIClientAuthTokenRequest(ctx, exampleInput, nil)
-
-		assert.Error(t, err)
-		assert.Nil(t, req)
-	})
-}
+const (
+	signatureHeaderKey    = "Signature"
+	validClientSecretSize = 128
+)
 
 func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 	T.Parallel()

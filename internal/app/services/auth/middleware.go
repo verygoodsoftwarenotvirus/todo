@@ -71,9 +71,7 @@ func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (
 			return nil, errors.New("token expired")
 		}
 
-		payload := token.Get(pasetoDataKey)
-
-		gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(payload)
+		gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(token.Get(pasetoDataKey))
 		if base64DecodeErr != nil {
 			logger.Error(base64DecodeErr, "error decoding base64 encoded GOB payload")
 			return nil, base64DecodeErr

@@ -17,7 +17,7 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	}
 
 	if c.authMethod == cookieAuthMethod {
-		req, err := c.BuildSwitchActiveAccountRequest(ctx, accountID)
+		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
 			return fmt.Errorf("building login request: %w", err)
 		}
@@ -44,7 +44,7 @@ func (c *Client) GetAccount(ctx context.Context, accountID uint64) (account *typ
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetAccountRequest(ctx, accountID)
+	req, err := c.requestBuilder.BuildGetAccountRequest(ctx, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -61,7 +61,7 @@ func (c *Client) GetAccounts(ctx context.Context, filter *types.QueryFilter) (ac
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildGetAccountsRequest(ctx, filter)
+	req, err := c.requestBuilder.BuildGetAccountsRequest(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -87,7 +87,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	req, err := c.BuildCreateAccountRequest(ctx, input)
+	req, err := c.requestBuilder.BuildCreateAccountRequest(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -106,7 +106,7 @@ func (c *Client) UpdateAccount(ctx context.Context, account *types.Account) erro
 		return ErrNilInputProvided
 	}
 
-	req, err := c.BuildUpdateAccountRequest(ctx, account)
+	req, err := c.requestBuilder.BuildUpdateAccountRequest(ctx, account)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -123,7 +123,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
 		return ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildArchiveAccountRequest(ctx, accountID)
+	req, err := c.requestBuilder.BuildArchiveAccountRequest(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -145,7 +145,7 @@ func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *
 		return fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	req, err := c.BuildAddUserRequest(ctx, accountID, input)
+	req, err := c.requestBuilder.BuildAddUserRequest(ctx, accountID, input)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -162,7 +162,7 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 		return ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildMarkAsDefaultRequest(ctx, accountID)
+	req, err := c.requestBuilder.BuildMarkAsDefaultRequest(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -183,7 +183,7 @@ func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64, reaso
 		return fmt.Errorf("userID: %w", ErrInvalidIDProvided)
 	}
 
-	req, err := c.BuildRemoveUserRequest(ctx, accountID, userID, reason)
+	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, reason)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -213,7 +213,7 @@ func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID 
 		return fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	req, err := c.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, input)
+	req, err := c.requestBuilder.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, input)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -239,7 +239,7 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64,
 		return fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	req, err := c.BuildTransferAccountOwnershipRequest(ctx, accountID, input)
+	req, err := c.requestBuilder.BuildTransferAccountOwnershipRequest(ctx, accountID, input)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -256,7 +256,7 @@ func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID uint64) (e
 		return nil, fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
 	}
 
-	req, err := c.BuildGetAuditLogForAccountRequest(ctx, accountID)
+	req, err := c.requestBuilder.BuildGetAuditLogForAccountRequest(ctx, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}

@@ -40,25 +40,6 @@ func (s *adminTestSuite) SetupTest() {
 	s.exampleAccountList = fakes.BuildFakeAccountList()
 }
 
-func (s *adminTestSuite) TestV1Client_BuildBanUserRequest() {
-	const expectedPathFormat = "/api/v1/_admin_/users/status"
-
-	s.Run("happy path", func() {
-		t := s.T()
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
-
-		actual, err := c.BuildAccountStatusUpdateInputRequest(s.ctx, exampleInput)
-		assert.NoError(t, err)
-		require.NotNil(t, actual)
-
-		assertRequestQuality(t, actual, spec)
-	})
-}
-
 func (s *adminTestSuite) TestV1Client_BanUser() {
 	const expectedPathFormat = "/api/v1/_admin_/users/status"
 

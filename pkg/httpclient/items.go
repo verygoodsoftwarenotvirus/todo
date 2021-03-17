@@ -16,7 +16,7 @@ func (c *Client) ItemExists(ctx context.Context, itemID uint64) (exists bool, er
 		return false, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildItemExistsRequest(ctx, itemID)
+	req, err := c.requestBuilder.BuildItemExistsRequest(ctx, itemID)
 	if err != nil {
 		return false, fmt.Errorf("building request: %w", err)
 	}
@@ -33,7 +33,7 @@ func (c *Client) GetItem(ctx context.Context, itemID uint64) (item *types.Item, 
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetItemRequest(ctx, itemID)
+	req, err := c.requestBuilder.BuildGetItemRequest(ctx, itemID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -58,7 +58,7 @@ func (c *Client) SearchItems(ctx context.Context, query string, limit uint8) (it
 		limit = 20
 	}
 
-	req, err := c.BuildSearchItemsRequest(ctx, query, limit)
+	req, err := c.requestBuilder.BuildSearchItemsRequest(ctx, query, limit)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -75,7 +75,7 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (items
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildGetItemsRequest(ctx, filter)
+	req, err := c.requestBuilder.BuildGetItemsRequest(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -101,7 +101,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	req, err := c.BuildCreateItemRequest(ctx, input)
+	req, err := c.requestBuilder.BuildCreateItemRequest(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -120,7 +120,7 @@ func (c *Client) UpdateItem(ctx context.Context, item *types.Item) error {
 		return ErrNilInputProvided
 	}
 
-	req, err := c.BuildUpdateItemRequest(ctx, item)
+	req, err := c.requestBuilder.BuildUpdateItemRequest(ctx, item)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -137,7 +137,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 		return ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildArchiveItemRequest(ctx, itemID)
+	req, err := c.requestBuilder.BuildArchiveItemRequest(ctx, itemID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -154,7 +154,7 @@ func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) (entries
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetAuditLogForItemRequest(ctx, itemID)
+	req, err := c.requestBuilder.BuildGetAuditLogForItemRequest(ctx, itemID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}

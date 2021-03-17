@@ -16,15 +16,15 @@ const (
 )
 
 // BuildItemExistsRequest builds an HTTP request for checking the existence of an item.
-func (c *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		nil,
 		itemsBasePath,
@@ -36,15 +36,15 @@ func (c *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*h
 }
 
 // BuildGetItemRequest builds an HTTP request for fetching an item.
-func (c *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		nil,
 		itemsBasePath,
@@ -56,15 +56,15 @@ func (c *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http
 }
 
 // BuildSearchItemsRequest builds an HTTP request for querying items.
-func (c *Builder) BuildSearchItemsRequest(ctx context.Context, query string, limit uint8) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildSearchItemsRequest(ctx context.Context, query string, limit uint8) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	params := url.Values{}
 	params.Set(types.SearchQueryKey, query)
 	params.Set(types.LimitQueryKey, strconv.FormatUint(uint64(limit), 10))
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		params,
 		itemsBasePath,
@@ -76,19 +76,19 @@ func (c *Builder) BuildSearchItemsRequest(ctx context.Context, query string, lim
 }
 
 // BuildGetItemsRequest builds an HTTP request for fetching items.
-func (c *Builder) BuildGetItemsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildGetItemsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(ctx, filter.ToValues(), itemsBasePath)
+	uri := b.BuildURL(ctx, filter.ToValues(), itemsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // BuildCreateItemRequest builds an HTTP request for creating an item.
-func (c *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemCreationInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemCreationInput) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -96,26 +96,26 @@ func (c *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemC
 	}
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
+		b.logger.Error(validationErr, "validating input")
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	uri := c.BuildURL(ctx, nil, itemsBasePath)
+	uri := b.BuildURL(ctx, nil, itemsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
+	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // BuildUpdateItemRequest builds an HTTP request for updating an item.
-func (c *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if item == nil {
 		return nil, ErrNilInputProvided
 	}
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		nil,
 		itemsBasePath,
@@ -123,19 +123,19 @@ func (c *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) 
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return c.buildDataRequest(ctx, http.MethodPut, uri, item)
+	return b.buildDataRequest(ctx, http.MethodPut, uri, item)
 }
 
 // BuildArchiveItemRequest builds an HTTP request for updating an item.
-func (c *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		nil,
 		itemsBasePath,
@@ -147,15 +147,15 @@ func (c *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*
 }
 
 // BuildGetAuditLogForItemRequest builds an HTTP request for fetching a list of audit log entries pertaining to an item.
-func (c *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.BuildURL(ctx, nil, itemsBasePath, strconv.FormatUint(itemID, 10), "audit")
+	uri := b.BuildURL(ctx, nil, itemsBasePath, strconv.FormatUint(itemID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)

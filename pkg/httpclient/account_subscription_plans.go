@@ -16,7 +16,7 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) 
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetAccountSubscriptionPlanRequest(ctx, planID)
+	req, err := c.requestBuilder.BuildGetAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -33,7 +33,7 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildGetAccountSubscriptionPlansRequest(ctx, filter)
+	req, err := c.requestBuilder.BuildGetAccountSubscriptionPlansRequest(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -59,7 +59,7 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	req, err := c.BuildCreateAccountSubscriptionPlanRequest(ctx, input)
+	req, err := c.requestBuilder.BuildCreateAccountSubscriptionPlanRequest(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -78,7 +78,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, plan *types.
 		return ErrNilInputProvided
 	}
 
-	req, err := c.BuildUpdateAccountSubscriptionPlanRequest(ctx, plan)
+	req, err := c.requestBuilder.BuildUpdateAccountSubscriptionPlanRequest(ctx, plan)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -95,7 +95,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint
 		return ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildArchiveAccountSubscriptionPlanRequest(ctx, planID)
+	req, err := c.requestBuilder.BuildArchiveAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -112,7 +112,7 @@ func (c *Client) GetAuditLogForAccountSubscriptionPlan(ctx context.Context, plan
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, planID)
+	req, err := c.requestBuilder.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}

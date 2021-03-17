@@ -417,9 +417,11 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger = logger.
-		WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID).
-		WithValue("requested_account", pasetoRequest.AccountID)
+	logger = logger.WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID)
+
+	if pasetoRequest.AccountID != 0 {
+		logger = logger.WithValue("requested_account", pasetoRequest.AccountID)
+	}
 
 	reqTime := time.Unix(0, pasetoRequest.RequestTime)
 	if time.Until(reqTime) > requestTimeThreshold || time.Since(reqTime) > requestTimeThreshold {

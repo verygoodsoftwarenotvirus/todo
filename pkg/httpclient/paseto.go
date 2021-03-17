@@ -2,66 +2,16 @@ package httpclient
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-const (
-	pasetoBasePath        = "paseto"
-	signatureHeaderKey    = "Signature"
-	validClientSecretSize = 128
-)
-
-func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
-	if len(secretKey) < validClientSecretSize {
-		return fmt.Errorf("invalid secret key length: %d", len(secretKey))
-	}
-
-	mac := hmac.New(sha256.New, secretKey)
-	if _, macWriteErr := mac.Write(body); macWriteErr != nil {
-		return fmt.Errorf("error writing hash content: %w", macWriteErr)
-	}
-
-	req.Header.Set(signatureHeaderKey, base64.RawURLEncoding.EncodeToString(mac.Sum(nil)))
-
-	return nil
-}
-
 // BuildAPIClientAuthTokenRequest builds a request.
 func (c *Client) BuildAPIClientAuthTokenRequest(ctx context.Context, input *types.PASETOCreationInput, secretKey []byte) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if input == nil {
-		return nil, ErrNilInputProvided
-	}
-
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
-	}
-
-	uri := c.buildVersionlessURL(ctx, nil, pasetoBasePath)
-
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	req, requestBuildErr := c.buildDataRequest(ctx, http.MethodPost, uri, input)
-	if requestBuildErr != nil {
-		return nil, fmt.Errorf("error building request: %w", requestBuildErr)
-	}
-
-	if signErr := setSignatureForRequest(req, c.encoderDecoder.MustJSON(input), secretKey); signErr != nil {
-		return nil, signErr
-	}
-
-	return req, nil
+	return c.requestBuilder.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
 }
 
 func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *http.Client, clientID string, secretKey []byte) (string, error) {
@@ -94,7 +44,7 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 		input.AccountID = c.accountID
 	}
 
-	req, err := c.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
+	req, err := c.requestBuilder.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
 	if err != nil {
 		return "", err
 	}

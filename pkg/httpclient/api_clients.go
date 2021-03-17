@@ -17,7 +17,7 @@ func (c *Client) GetAPIClient(ctx context.Context, id uint64) (apiClient *types.
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetAPIClientRequest(ctx, id)
+	req, err := c.requestBuilder.BuildGetAPIClientRequest(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -32,7 +32,7 @@ func (c *Client) GetAPIClients(ctx context.Context, filter *types.QueryFilter) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildGetAPIClientsRequest(ctx, filter)
+	req, err := c.requestBuilder.BuildGetAPIClientsRequest(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -60,7 +60,7 @@ func (c *Client) CreateAPIClient(ctx context.Context, cookie *http.Cookie, input
 
 	var apiClientResponse *types.APIClientCreationResponse
 
-	req, err := c.BuildCreateAPIClientRequest(ctx, cookie, input)
+	req, err := c.requestBuilder.BuildCreateAPIClientRequest(ctx, cookie, input)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, id uint64) error {
 		return ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildArchiveAPIClientRequest(ctx, id)
+	req, err := c.requestBuilder.BuildArchiveAPIClientRequest(ctx, id)
 	if err != nil {
 		return fmt.Errorf("building request: %w", err)
 	}
@@ -98,7 +98,7 @@ func (c *Client) GetAuditLogForAPIClient(ctx context.Context, clientID uint64) (
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.BuildGetAuditLogForAPIClientRequest(ctx, clientID)
+	req, err := c.requestBuilder.BuildGetAuditLogForAPIClientRequest(ctx, clientID)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}

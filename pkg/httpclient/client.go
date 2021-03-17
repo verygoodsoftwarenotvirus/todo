@@ -66,6 +66,10 @@ func (c *Client) URL() *url.URL {
 func NewClient(u *url.URL, options ...option) (*Client, error) {
 	l := logging.NewNonOperationalLogger()
 
+	if u == nil {
+		return nil, ErrNoURLProvided
+	}
+
 	c := &Client{
 		url:            u,
 		authedClient:   http.DefaultClient,
@@ -82,10 +86,6 @@ func NewClient(u *url.URL, options ...option) (*Client, error) {
 		if err := opt(c); err != nil {
 			return nil, err
 		}
-	}
-
-	if c.url == nil {
-		return nil, ErrNoURLProvided
 	}
 
 	requestBuilder, err := requests.NewBuilder(c.url)
@@ -149,25 +149,13 @@ func (c *Client) buildRawURL(ctx context.Context, queryParams url.Values, parts 
 	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tu := *c.url
-
-	parts = append([]string{"api", "v1"}, parts...)
-
-	u, err := url.Parse(path.Join(parts...))
+	u, err := buildRawURL(c.url, queryParams, true, parts...)
 	if err != nil {
-		c.logger.Error(err, "building url")
+		c.logger.Error(err, "building versionless url")
 		return nil
 	}
 
-	if queryParams != nil {
-		u.RawQuery = queryParams.Encode()
-	}
-
-	out := tu.ResolveReference(u)
-
-	tracing.AttachURLToSpan(span, out)
-
-	return out
+	return u
 }
 
 // buildVersionlessURL builds a url without the `/api/v1/` prefix. It should otherwise be identical to buildRawURL.
@@ -197,13 +185,7 @@ func (c *Client) BuildWebsocketURL(ctx context.Context, parts ...string) string 
 
 // BuildHealthCheckRequest builds a health check HTTP request.
 func (c *Client) BuildHealthCheckRequest(ctx context.Context) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	u := *c.url
-	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
-
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	return c.requestBuilder.BuildHealthCheckRequest(ctx)
 }
 
 // IsUp returns whether or not the service's health endpoint is returning 200s.
@@ -211,7 +193,7 @@ func (c *Client) IsUp(ctx context.Context) bool {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	req, err := c.BuildHealthCheckRequest(ctx)
+	req, err := c.requestBuilder.BuildHealthCheckRequest(ctx)
 	if err != nil {
 		c.logger.Error(err, "building request")
 		return false

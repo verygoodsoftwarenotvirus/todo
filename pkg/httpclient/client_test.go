@@ -17,9 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 const (
@@ -85,26 +83,19 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	t.Helper()
 
-	var (
-		u *url.URL
-		c *http.Client
-		l = logging.NewNonOperationalLogger()
-	)
+	client, err := NewClient(mustParseURL(""), UsingLogger(logging.NewNonOperationalLogger()))
+	require.NoError(t, err)
+	require.NotNil(t, client)
 
 	if ts != nil {
-		u = mustParseURL(ts.URL)
-		c = ts.Client()
+		c := ts.Client()
+
+		require.NoError(t, client.requestBuilder.SetURL(mustParseURL(ts.URL)))
+		client.plainClient = c
+		client.authedClient = c
 	}
 
-	return &Client{
-		url:            u,
-		plainClient:    c,
-		logger:         l,
-		debug:          true,
-		authedClient:   c,
-		encoderDecoder: encoding.ProvideHTTPResponseEncoder(l),
-		tracer:         tracing.NewTracer("test"),
-	}
+	return client
 }
 
 func buildTestClientWithNilServer(t *testing.T) *Client {

@@ -15,33 +15,33 @@ const (
 )
 
 // BuildSwitchActiveAccountRequest builds an HTTP request for fetching an account.
-func (c *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.buildVersionlessURL(ctx, nil, usersBasePath, "account", "select")
+	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "account", "select")
 
 	input := &types.ChangeActiveAccountInput{
 		AccountID: accountID,
 	}
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
+	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // BuildGetAccountRequest builds an HTTP request for fetching an account.
-func (c *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		nil,
 		accountsBasePath,
@@ -53,19 +53,19 @@ func (c *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) 
 }
 
 // BuildGetAccountsRequest builds an HTTP request for fetching accounts.
-func (c *Builder) BuildGetAccountsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildGetAccountsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := c.BuildURL(ctx, filter.ToValues(), accountsBasePath)
+	uri := b.BuildURL(ctx, filter.ToValues(), accountsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
 // BuildCreateAccountRequest builds an HTTP request for creating an account.
-func (c *Builder) BuildCreateAccountRequest(ctx context.Context, input *types.AccountCreationInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildCreateAccountRequest(ctx context.Context, input *types.AccountCreationInput) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -73,26 +73,26 @@ func (c *Builder) BuildCreateAccountRequest(ctx context.Context, input *types.Ac
 	}
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
+		b.logger.Error(validationErr, "validating input")
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	uri := c.BuildURL(ctx, nil, accountsBasePath)
+	uri := b.BuildURL(ctx, nil, accountsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
+	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // BuildUpdateAccountRequest builds an HTTP request for updating an account.
-func (c *Builder) BuildUpdateAccountRequest(ctx context.Context, account *types.Account) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildUpdateAccountRequest(ctx context.Context, account *types.Account) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if account == nil {
 		return nil, ErrNilInputProvided
 	}
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		nil,
 		accountsBasePath,
@@ -100,19 +100,19 @@ func (c *Builder) BuildUpdateAccountRequest(ctx context.Context, account *types.
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return c.buildDataRequest(ctx, http.MethodPut, uri, account)
+	return b.buildDataRequest(ctx, http.MethodPut, uri, account)
 }
 
 // BuildArchiveAccountRequest builds an HTTP request for updating an account.
-func (c *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.BuildURL(
+	uri := b.BuildURL(
 		ctx,
 		nil,
 		accountsBasePath,
@@ -124,8 +124,8 @@ func (c *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint
 }
 
 // BuildAddUserRequest builds a request that adds a user from an account.
-func (c *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
@@ -133,34 +133,34 @@ func (c *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, inp
 	}
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
+		b.logger.Error(validationErr, "validating input")
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "member")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "member")
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
+	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // BuildMarkAsDefaultRequest builds a request that marks a given account as the default for a given user.
-func (c *Builder) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "default")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "default")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
 }
 
 // BuildRemoveUserRequest builds a request that removes a user from an account.
-func (c *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64, reason string) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64, reason string) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
@@ -171,7 +171,7 @@ func (c *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 		return nil, fmt.Errorf("userID: %w", ErrInvalidIDProvided)
 	}
 
-	u := c.buildRawURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10))
+	u := b.buildRawURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10))
 
 	if reason != "" {
 		u.Query().Set("reason", reason)
@@ -183,8 +183,8 @@ func (c *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 }
 
 // BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
-func (c *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID, userID uint64, input *types.ModifyUserPermissionsInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID, userID uint64, input *types.ModifyUserPermissionsInput) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
@@ -200,19 +200,19 @@ func (c *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 	}
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
+		b.logger.Error(validationErr, "validating input")
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10), "permissions")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10), "permissions")
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return c.buildDataRequest(ctx, http.MethodPatch, uri, input)
+	return b.buildDataRequest(ctx, http.MethodPatch, uri, input)
 }
 
 // BuildTransferAccountOwnershipRequest builds a request that transfers ownership of an account to a given user.
-func (c *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, accountID uint64, input *types.TransferAccountOwnershipInput) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, accountID uint64, input *types.TransferAccountOwnershipInput) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
@@ -224,26 +224,26 @@ func (c *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, acco
 	}
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
+		b.logger.Error(validationErr, "validating input")
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
-	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "transfer")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "transfer")
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return c.buildDataRequest(ctx, http.MethodPost, uri, input)
+	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // BuildGetAuditLogForAccountRequest builds an HTTP request for fetching a list of audit log entries pertaining to an account.
-func (c *Builder) BuildGetAuditLogForAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (b *Builder) BuildGetAuditLogForAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
 		return nil, fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
 	}
 
-	uri := c.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "audit")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)

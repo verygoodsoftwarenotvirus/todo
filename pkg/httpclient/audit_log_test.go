@@ -42,21 +42,6 @@ func (s *auditLogEntriesTestSuite) SetupTest() {
 	s.exampleAuditLogEntryList = fakes.BuildFakeAuditLogEntryList()
 }
 
-func (s *auditLogEntriesTestSuite) TestV1Client_BuildGetAuditLogEntriesRequest() {
-	s.Run("happy path", func() {
-		t := s.T()
-
-		c := buildTestClientWithNilServer(t)
-
-		actual, err := c.BuildGetAuditLogEntriesRequest(s.ctx, s.filter)
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
-
-		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", s.expectedPath)
-		assertRequestQuality(t, actual, spec)
-	})
-}
-
 func (s *auditLogEntriesTestSuite) TestV1Client_GetAuditLogEntries() {
 	const (
 		expectedMethod = http.MethodGet

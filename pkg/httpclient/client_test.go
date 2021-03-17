@@ -27,6 +27,8 @@ const (
 	asciiControlChar = string(byte(127))
 )
 
+// begin test helpers
+
 type (
 	argleBargle struct {
 		Name string
@@ -80,8 +82,6 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 	assert.Equal(t, spec.method, req.Method, "expected method to be %q, but was %q instead", spec.method, req.Method)
 }
 
-// begin helper funcs
-
 func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	t.Helper()
 
@@ -107,6 +107,10 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	}
 }
 
+func buildTestClientWithNilServer(t *testing.T) *Client {
+	return buildTestClient(t, httptest.NewTLSServer(nil))
+}
+
 func buildTestClientWithInvalidURL(t *testing.T) *Client {
 	t.Helper()
 
@@ -114,15 +118,11 @@ func buildTestClientWithInvalidURL(t *testing.T) *Client {
 	u := mustParseURL("https://verygoodsoftwarenotvirus.ru")
 	u.Scheme = fmt.Sprintf(`%s://`, asciiControlChar)
 
-	return &Client{
-		url:            u,
-		plainClient:    http.DefaultClient,
-		encoderDecoder: encoding.ProvideHTTPResponseEncoder(l),
-		logger:         l,
-		debug:          true,
-		authedClient:   http.DefaultClient,
-		tracer:         tracing.NewTracer("test"),
-	}
+	c, err := NewClient(u, UsingLogger(l), WithDebug())
+	require.NotNil(t, c)
+	require.NoError(t, err)
+
+	return c
 }
 
 func buildTestClientWithInvalidResponse(t *testing.T, spec *requestSpec) *Client {
@@ -139,14 +139,14 @@ func buildTestClientWithInvalidResponse(t *testing.T, spec *requestSpec) *Client
 	return buildTestClient(t, ts)
 }
 
-func buildTestClientWithJSONResponse(t *testing.T, spec *requestSpec, body interface{}) *Client {
+func buildTestClientWithJSONResponse(t *testing.T, spec *requestSpec, outputBody interface{}) *Client {
 	t.Helper()
 
 	ts := httptest.NewTLSServer(http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
 			assertRequestQuality(t, req, spec)
 
-			assert.NoError(t, json.NewEncoder(res).Encode(body))
+			assert.NoError(t, json.NewEncoder(res).Encode(outputBody))
 		},
 	))
 
@@ -167,7 +167,21 @@ func buildTestClientWithOKResponse(t *testing.T, spec *requestSpec) *Client {
 	return buildTestClient(t, ts)
 }
 
-// end helper funcs
+func buildTestClientWithRequestBodyValidation(t *testing.T, spec *requestSpec, inputBody, expectedInput, outputBody interface{}) *Client {
+	ts := httptest.NewTLSServer(http.HandlerFunc(
+		func(res http.ResponseWriter, req *http.Request) {
+			assertRequestQuality(t, req, spec)
+
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&inputBody))
+			assert.Equal(t, expectedInput, inputBody)
+			require.NoError(t, json.NewEncoder(res).Encode(outputBody))
+		},
+	))
+
+	return buildTestClient(t, ts)
+}
+
+// end test helpers
 
 func TestV1Client_AuthenticatedClient(T *testing.T) {
 	T.Parallel()
@@ -203,13 +217,10 @@ func TestNewClient(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		c, _ := NewClient(
-			UsingURL(mustParseURL(exampleURI)),
-			UsingLogger(logging.NewNonOperationalLogger()),
-			UsingHTTPClient(httptest.NewTLSServer(nil).Client()),
-		)
+		c, err := NewClient(mustParseURL(exampleURI), UsingLogger(logging.NewNonOperationalLogger()), UsingHTTPClient(httptest.NewTLSServer(nil).Client()))
 
 		require.NotNil(t, c)
+		require.NoError(t, err)
 	})
 }
 
@@ -227,7 +238,7 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 			StatusCode: http.StatusOK,
 		}
 
-		c, _ := NewClient(UsingURL(mustParseURL(exampleURI)))
+		c, _ := NewClient(mustParseURL(exampleURI))
 		assert.NotNil(t, c)
 
 		c.closeResponseBody(res)
@@ -242,7 +253,7 @@ func TestBuildURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		c, _ := NewClient(UsingURL(mustParseURL(exampleURI)))
+		c, _ := NewClient(mustParseURL(exampleURI))
 		ctx := context.Background()
 
 		testCases := []struct {
@@ -291,9 +302,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		c, _ := NewClient(
-			UsingURL(mustParseURL(exampleURI)),
-		)
+		c, _ := NewClient(mustParseURL(exampleURI))
 
 		testCases := []struct {
 			inputQuery  valuer
@@ -341,9 +350,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		c, _ := NewClient(
-			UsingURL(mustParseURL(exampleURI)),
-		)
+		c, _ := NewClient(mustParseURL(exampleURI))
 		ctx := context.Background()
 
 		expected := "ws://todo.verygoodsoftwarenotvirus.ru/api/v1/things/and/stuff"

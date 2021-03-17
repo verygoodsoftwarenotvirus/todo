@@ -2,9 +2,7 @@ package httpclient
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -48,15 +46,7 @@ func (s *accountsTestSuite) TestV1Client_GetAccount() {
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAccount))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccount)
 		actual, err := c.GetAccount(s.ctx, s.exampleAccount.ID)
 
 		require.NotNil(t, actual)
@@ -96,15 +86,7 @@ func (s *accountsTestSuite) TestV1Client_GetAccounts() {
 	s.Run("happy path", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAccountList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccountList)
 		actual, err := c.GetAccounts(s.ctx, filter)
 
 		require.NotNil(t, actual)
@@ -144,20 +126,7 @@ func (s *accountsTestSuite) TestV1Client_CreateAccount() {
 		s.exampleAccount.BelongsToUser = 0
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				var x *types.AccountCreationInput
-				require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
-
-				assert.Equal(t, exampleInput, x)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAccount))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.AccountCreationInput{}, exampleInput, s.exampleAccount)
 		actual, err := c.CreateAccount(s.ctx, exampleInput)
 
 		require.NotNil(t, actual)
@@ -165,7 +134,7 @@ func (s *accountsTestSuite) TestV1Client_CreateAccount() {
 		assert.Equal(t, s.exampleAccount, actual)
 	})
 
-	s.Run("happy path", func() {
+	s.Run("with invalid client URL", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -188,10 +157,12 @@ func (s *accountsTestSuite) TestV1Client_UpdateAccount() {
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	s.Run("happy path", func() {
+	s.Run("with invalid client URL", func() {
 		t := s.T()
 
-		err := buildTestClientWithInvalidURL(t).UpdateAccount(s.ctx, s.exampleAccount)
+		c := buildTestClientWithInvalidURL(t)
+
+		err := c.UpdateAccount(s.ctx, s.exampleAccount)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -203,8 +174,8 @@ func (s *accountsTestSuite) TestV1Client_ArchiveAccount() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID)
-
 		c := buildTestClientWithOKResponse(t, spec)
+
 		err := c.ArchiveAccount(s.ctx, s.exampleAccount.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
@@ -229,15 +200,7 @@ func (s *accountsTestSuite) TestV1Client_GetAuditLogForAccount() {
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
 
 		require.NotNil(t, actual)
@@ -260,15 +223,7 @@ func (s *accountsTestSuite) TestV1Client_GetAuditLogForAccount() {
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithInvalidResponse(t, spec)
 		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
 
 		assert.Nil(t, actual)

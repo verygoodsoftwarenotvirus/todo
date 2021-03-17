@@ -91,11 +91,7 @@ func (a *ServiceAttacker) Clone() hazana.Attack {
 }
 
 func main() {
-	todoClient, err := httpclient.NewClient(
-		httpclient.UsingURI(urlToUse),
-		httpclient.UsingLogger(zerolog.NewLogger()),
-		httpclient.UsingCookie(cookie),
-	)
+	todoClient, err := httpclient.NewClient(parsedURLToUse, httpclient.UsingLogger(zerolog.NewLogger()), httpclient.UsingCookie(cookie))
 	if err != nil {
 		log.Fatal(err)
 	}

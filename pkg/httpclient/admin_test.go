@@ -7,28 +7,51 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestV1Client_BuildBanUserRequest(T *testing.T) {
-	T.Parallel()
+func TestAdmin(t *testing.T) {
+	t.Parallel()
 
+	suite.Run(t, new(adminTestSuite))
+}
+
+type adminTestSuite struct {
+	suite.Suite
+
+	ctx                context.Context
+	exampleAccount     *types.Account
+	exampleInput       *types.AccountCreationInput
+	exampleAccountList *types.AccountList
+}
+
+var _ suite.SetupTestSuite = (*adminTestSuite)(nil)
+
+func (s *adminTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.exampleAccount = fakes.BuildFakeAccount()
+	s.exampleInput = fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
+	s.exampleAccountList = fakes.BuildFakeAccountList()
+}
+
+func (s *adminTestSuite) TestV1Client_BuildBanUserRequest() {
 	const expectedPathFormat = "/api/v1/_admin_/users/status"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
+	s.Run("happy path", func() {
+		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
+		ts := httptest.NewTLSServer(nil)
+		c := buildTestClient(t, ts)
 
-		actual, err := c.BuildAccountStatusUpdateInputRequest(ctx, exampleInput)
+		actual, err := c.BuildAccountStatusUpdateInputRequest(s.ctx, exampleInput)
 		assert.NoError(t, err)
 		require.NotNil(t, actual)
 
@@ -36,15 +59,11 @@ func TestV1Client_BuildBanUserRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_BanUser(T *testing.T) {
-	T.Parallel()
-
+func (s *adminTestSuite) TestV1Client_BanUser() {
 	const expectedPathFormat = "/api/v1/_admin_/users/status"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
@@ -58,14 +77,12 @@ func TestV1Client_BanUser(T *testing.T) {
 		))
 		c := buildTestClient(t, ts)
 
-		err := c.UpdateAccountStatus(ctx, exampleInput)
+		err := c.UpdateAccountStatus(s.ctx, exampleInput)
 		assert.NoError(t, err)
 	})
 
-	T.Run("with bad request response", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
+	s.Run("with bad request response", func() {
+		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
@@ -79,13 +96,11 @@ func TestV1Client_BanUser(T *testing.T) {
 		))
 		c := buildTestClient(t, ts)
 
-		assert.Error(t, c.UpdateAccountStatus(ctx, exampleInput))
+		assert.Error(t, c.UpdateAccountStatus(s.ctx, exampleInput))
 	})
 
-	T.Run("with otherwise invalid status code response", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
+	s.Run("with otherwise invalid status code response", func() {
+		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
@@ -99,26 +114,22 @@ func TestV1Client_BanUser(T *testing.T) {
 		))
 		c := buildTestClient(t, ts)
 
-		err := c.UpdateAccountStatus(ctx, exampleInput)
+		err := c.UpdateAccountStatus(s.ctx, exampleInput)
 		assert.Error(t, err)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		c := buildTestClientWithInvalidURL(t)
-		err := c.UpdateAccountStatus(ctx, exampleInput)
+		err := c.UpdateAccountStatus(s.ctx, exampleInput)
 
 		assert.Error(t, err)
 	})
 
-	T.Run("with timeout", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
+	s.Run("with timeout", func() {
+		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
@@ -135,7 +146,7 @@ func TestV1Client_BanUser(T *testing.T) {
 		c := buildTestClient(t, ts)
 		require.NoError(t, c.SetOptions(UsingTimeout(time.Millisecond)))
 
-		err := c.UpdateAccountStatus(ctx, exampleInput)
+		err := c.UpdateAccountStatus(s.ctx, exampleInput)
 		assert.Error(t, err)
 	})
 }

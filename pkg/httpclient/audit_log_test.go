@@ -2,9 +2,7 @@ package httpclient
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -26,62 +24,51 @@ type auditLogEntriesTestSuite struct {
 	suite.Suite
 
 	ctx                      context.Context
+	filter                   *types.QueryFilter
 	exampleAuditLogEntry     *types.AuditLogEntry
 	exampleInput             *types.AuditLogEntryCreationInput
 	exampleAuditLogEntryList *types.AuditLogEntryList
+	expectedPath             string
 }
 
 var _ suite.SetupTestSuite = (*auditLogEntriesTestSuite)(nil)
 
 func (s *auditLogEntriesTestSuite) SetupTest() {
 	s.ctx = context.Background()
+	s.expectedPath = "/api/v1/_admin_/audit_log"
+	s.filter = (*types.QueryFilter)(nil)
 	s.exampleAuditLogEntry = fakes.BuildFakeAuditLogEntry()
 	s.exampleInput = fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(s.exampleAuditLogEntry)
 	s.exampleAuditLogEntryList = fakes.BuildFakeAuditLogEntryList()
 }
 
 func (s *auditLogEntriesTestSuite) TestV1Client_BuildGetAuditLogEntriesRequest() {
-	const expectedPath = "/api/v1/_admin_/audit_log"
-
 	s.Run("happy path", func() {
 		t := s.T()
 
-		ctx := context.Background()
-		filter := (*types.QueryFilter)(nil)
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithNilServer(t)
 
-		actual, err := c.BuildGetAuditLogEntriesRequest(ctx, filter)
+		actual, err := c.BuildGetAuditLogEntriesRequest(s.ctx, s.filter)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", s.expectedPath)
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
 func (s *auditLogEntriesTestSuite) TestV1Client_GetAuditLogEntries() {
 	const (
-		expectedPath   = "/api/v1/_admin_/audit_log"
 		expectedMethod = http.MethodGet
 	)
 
-	spec := newRequestSpec(true, expectedMethod, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
-	filter := (*types.QueryFilter)(nil)
+	spec := newRequestSpec(true, expectedMethod, "includeArchived=false&limit=20&page=1&sortBy=asc", s.expectedPath)
 
 	s.Run("happy path", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAuditLogEntryList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogEntries(s.ctx, filter)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleAuditLogEntryList)
+		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
@@ -92,7 +79,7 @@ func (s *auditLogEntriesTestSuite) TestV1Client_GetAuditLogEntries() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogEntries(s.ctx, filter)
+		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
@@ -101,16 +88,8 @@ func (s *auditLogEntriesTestSuite) TestV1Client_GetAuditLogEntries() {
 	s.Run("with invalid response", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogEntries(s.ctx, filter)
+		c := buildTestClientWithInvalidResponse(t, spec)
+		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

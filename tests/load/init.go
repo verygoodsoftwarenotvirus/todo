@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -14,13 +15,16 @@ import (
 )
 
 var (
-	urlToUse string
-	cookie   *http.Cookie
+	urlToUse       string
+	parsedURLToUse *url.URL
+	cookie         *http.Cookie
 )
 
 func init() {
 	ctx := context.Background()
-	urlToUse = testutil.DetermineServiceURL()
+
+	parsedURLToUse = testutil.DetermineServiceURL()
+	urlToUse = parsedURLToUse.String()
 	logger := zerolog.NewLogger()
 
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")

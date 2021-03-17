@@ -2,9 +2,7 @@ package httpclient
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -47,15 +45,7 @@ func (s *webhooksTestSuite) TestV1Client_GetWebhook() {
 
 		spec := newRequestSpec(false, http.MethodGet, "", expectedPathFormat, s.exampleWebhook.ID)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleWebhook))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
 		actual, err := c.GetWebhook(s.ctx, s.exampleWebhook.ID)
 
 		require.NotNil(t, actual)
@@ -81,15 +71,7 @@ func (s *webhooksTestSuite) TestV1Client_GetWebhooks() {
 	s.Run("happy path", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleWebhookList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleWebhookList)
 		actual, err := c.GetWebhooks(s.ctx, nil)
 
 		require.NotNil(t, actual)
@@ -116,19 +98,7 @@ func (s *webhooksTestSuite) TestV1Client_CreateWebhook() {
 
 		s.exampleInput.BelongsToAccount = 0
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				var x *types.WebhookCreationInput
-				require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
-				assert.Equal(t, s.exampleInput, x)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleWebhook))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.WebhookCreationInput{}, s.exampleInput, s.exampleWebhook)
 		actual, err := c.CreateWebhook(s.ctx, s.exampleInput)
 
 		require.NotNil(t, actual)
@@ -152,16 +122,9 @@ func (s *webhooksTestSuite) TestV1Client_UpdateWebhook() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleWebhook.ID)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				assert.NoError(t, json.NewEncoder(res).Encode(s.exampleWebhook))
-			},
-		))
-
-		err := buildTestClient(t, ts).UpdateWebhook(s.ctx, s.exampleWebhook)
+		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
@@ -180,14 +143,9 @@ func (s *webhooksTestSuite) TestV1Client_ArchiveWebhook() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodDelete, "", expectedPathFormat, s.exampleWebhook.ID)
+		c := buildTestClientWithOKResponse(t, spec)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-			},
-		))
-
-		err := buildTestClient(t, ts).ArchiveWebhook(s.ctx, s.exampleWebhook.ID)
+		err := c.ArchiveWebhook(s.ctx, s.exampleWebhook.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
@@ -211,15 +169,7 @@ func (s *webhooksTestSuite) TestV1Client_GetAuditLogForWebhook() {
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleWebhook.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForWebhook(s.ctx, s.exampleWebhook.ID)
 
 		require.NotNil(t, actual)
@@ -242,15 +192,7 @@ func (s *webhooksTestSuite) TestV1Client_GetAuditLogForWebhook() {
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleWebhook.ID)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithInvalidResponse(t, spec)
 		actual, err := c.GetAuditLogForWebhook(s.ctx, s.exampleWebhook.ID)
 
 		assert.Nil(t, actual)

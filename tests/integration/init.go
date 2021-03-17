@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -20,7 +21,8 @@ const (
 )
 
 var (
-	urlToUse string
+	urlToUse       string
+	parsedURLToUse *url.URL
 
 	premadeAdminUser = &types.User{
 		ID:              1,
@@ -34,7 +36,8 @@ func init() {
 	ctx, span := tracing.StartSpan(context.Background())
 	defer span.End()
 
-	urlToUse = testutil.DetermineServiceURL()
+	parsedURLToUse = testutil.DetermineServiceURL()
+	urlToUse = parsedURLToUse.String()
 	logger := zerolog.NewLogger()
 
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")

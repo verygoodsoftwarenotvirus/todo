@@ -14,6 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/requests"
 
 	"github.com/moul/http2curl"
 )
@@ -35,11 +36,12 @@ type Client struct {
 	logger         logging.Logger
 	tracer         tracing.Tracer
 	encoderDecoder encoding.HTTPResponseEncoder
+	panicker       panicking.Panicker
 	url            *url.URL
-	authMethod     *authMethod
+	requestBuilder *requests.Builder
 	plainClient    *http.Client
 	authedClient   *http.Client
-	panicker       panicking.Panicker
+	authMethod     *authMethod
 	contentType    string
 	accountID      uint64
 	debug          bool
@@ -61,15 +63,15 @@ func (c *Client) URL() *url.URL {
 }
 
 // NewClient builds a new API client for us.
-func NewClient(options ...option) (*Client, error) {
+func NewClient(u *url.URL, options ...option) (*Client, error) {
 	l := logging.NewNonOperationalLogger()
 
 	c := &Client{
-		url:            mustParseURL(""),
+		url:            u,
 		authedClient:   http.DefaultClient,
 		plainClient:    http.DefaultClient,
 		debug:          false,
-		contentType:    "application/json",
+		contentType:    encoding.ContentTypeJSON,
 		panicker:       panicking.NewProductionPanicker(),
 		encoderDecoder: encoding.ProvideHTTPResponseEncoder(l),
 		logger:         l,
@@ -81,6 +83,17 @@ func NewClient(options ...option) (*Client, error) {
 			return nil, err
 		}
 	}
+
+	if c.url == nil {
+		return nil, ErrNoURLProvided
+	}
+
+	requestBuilder, err := requests.NewBuilder(c.url)
+	if err != nil {
+		return nil, err
+	}
+
+	c.requestBuilder = requestBuilder
 
 	return c, nil
 }

@@ -70,7 +70,7 @@ func (u *Uploader) ServeFiles(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set(encoding.ContentTypeHeader, attrs.ContentType)
+	res.Header().Set(encoding.ContentTypeHeaderKey, attrs.ContentType)
 
 	if _, copyErr := io.Copy(res, bytes.NewReader(fileBytes)); copyErr != nil {
 		u.logger.Error(copyErr, "copying file bytes to response")

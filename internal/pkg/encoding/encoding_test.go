@@ -44,7 +44,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
-		res.Header().Set(ContentTypeHeader, "application/xml")
+		res.Header().Set(ContentTypeHeaderKey, "application/xml")
 
 		ed.EncodeResponse(ctx, res, ex)
 		assert.Equal(t, fmt.Sprintf("<example><name>%s</name></example>", expectation), res.Body.String())
@@ -98,7 +98,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
-		res.Header().Set(ContentTypeHeader, "application/xml")
+		res.Header().Set(ContentTypeHeaderKey, "application/xml")
 
 		ed.EncodeErrorResponse(ctx, res, exampleMessage, exampleCode)
 		assert.Equal(t, fmt.Sprintf("<ErrorResponse><Message>%s</Message><Code>%d</Code></ErrorResponse>", exampleMessage, exampleCode), res.Body.String())
@@ -219,7 +219,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 			bytes.NewReader(bs),
 		)
 		require.NoError(t, err)
-		req.Header.Set(ContentTypeHeader, XMLContentType)
+		req.Header.Set(ContentTypeHeaderKey, ContentTypeXML)
 
 		var x example
 		assert.NoError(t, ed.DecodeRequest(ctx, req, &x))

@@ -57,7 +57,7 @@ func BuildNoUserPerms() permissions.ServiceUserPermissions {
 }
 
 // DetermineServiceURL returns the url, if properly configured.
-func DetermineServiceURL() string {
+func DetermineServiceURL() *url.URL {
 	ta := os.Getenv("TARGET_ADDRESS")
 	if ta == "" {
 		panic("must provide target address!")
@@ -72,7 +72,7 @@ func DetermineServiceURL() string {
 
 	log.Printf("using target address: %q\n", svcAddr)
 
-	return svcAddr
+	return u
 }
 
 // EnsureServerIsUp checks that a server is up and doesn't return until it's certain one way or the other.

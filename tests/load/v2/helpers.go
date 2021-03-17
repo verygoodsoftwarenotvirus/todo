@@ -139,12 +139,7 @@ func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, err
 		panic("url not set!")
 	}
 
-	c, err := httpclient.NewClient(
-		httpclient.UsingURI(urlToUse),
-		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
-		httpclient.UsingHTTPClient(buildHTTPClient()),
-		httpclient.UsingCookie(cookie),
-	)
+	c, err := httpclient.NewClient(parsedURLToUse, httpclient.UsingLogger(logging.NewNonOperationalLogger()), httpclient.UsingHTTPClient(buildHTTPClient()), httpclient.UsingCookie(cookie))
 	if err != nil {
 		return nil, err
 	}
@@ -158,12 +153,7 @@ func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, err
 	return c, nil
 }
 func initializePASETOPoweredClient(clientID string, secretKey []byte) (*httpclient.Client, error) {
-	c, err := httpclient.NewClient(
-		httpclient.UsingURI(urlToUse),
-		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
-		httpclient.UsingHTTPClient(buildHTTPClient()),
-		httpclient.UsingPASETO(clientID, secretKey),
-	)
+	c, err := httpclient.NewClient(parsedURLToUse, httpclient.UsingLogger(logging.NewNonOperationalLogger()), httpclient.UsingHTTPClient(buildHTTPClient()), httpclient.UsingPASETO(clientID, secretKey))
 	if err != nil {
 		return nil, err
 	}

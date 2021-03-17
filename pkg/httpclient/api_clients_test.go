@@ -2,9 +2,7 @@ package httpclient
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -52,16 +50,8 @@ func (s *apiClientsTestSuite) TestV1Client_GetAPIClient() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClient)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAPIClient))
-			},
-		))
-
-		c := buildTestClient(t, ts)
 		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		require.NotNil(t, actual)
@@ -88,15 +78,8 @@ func (s *apiClientsTestSuite) TestV1Client_GetAPIClients() {
 	s.Run("happy path", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClientList)
 
-				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAPIClientList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
 		actual, err := c.GetAPIClients(s.ctx, nil)
 
 		require.NotNil(t, actual)
@@ -124,15 +107,7 @@ func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 		t := s.T()
 
 		exampleResponse := fakes.BuildFakeAPIClientCreationResponseFromClient(s.exampleAPIClient)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
-			},
-		))
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, exampleResponse)
 
 		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
 		assert.NoError(t, err)
@@ -152,15 +127,7 @@ func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 	s.Run("with invalid response from server", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				_, err := res.Write([]byte("BLAH"))
-				assert.NoError(t, err)
-			},
-		))
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithInvalidResponse(t, spec)
 
 		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
 		assert.Error(t, err)
@@ -170,8 +137,7 @@ func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 	s.Run("without cookie", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, nil, s.exampleAPIClient)
 
 		_, err := c.CreateAPIClient(s.ctx, nil, nil)
 		assert.Error(t, err)
@@ -185,16 +151,9 @@ func (s *apiClientsTestSuite) TestV1Client_ArchiveAPIClient() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
+		c := buildTestClientWithOKResponse(t, spec)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				res.WriteHeader(http.StatusOK)
-			},
-		))
-
-		err := buildTestClient(t, ts).ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID)
+		err := c.ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
@@ -218,15 +177,7 @@ func (s *apiClientsTestSuite) TestV1Client_GetAuditLogForAPIClient() {
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		require.NotNil(t, actual)
@@ -249,15 +200,7 @@ func (s *apiClientsTestSuite) TestV1Client_GetAuditLogForAPIClient() {
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-			},
-		))
-
-		c := buildTestClient(t, ts)
+		c := buildTestClientWithInvalidResponse(t, spec)
 		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		assert.Nil(t, actual)

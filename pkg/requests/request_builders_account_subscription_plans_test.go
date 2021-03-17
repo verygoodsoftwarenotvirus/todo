@@ -1,4 +1,4 @@
-package httpclient
+package requests
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-func TestAccountSubscriptionPlansRequestBuilders(t *testing.T) {
+func TestAccountSubscriptionPlans(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, new(accountSubscriptionPlansRequestBuildersTestSuite))

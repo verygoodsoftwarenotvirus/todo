@@ -96,7 +96,7 @@ func TestArgIsNotNil(T *testing.T) {
 func TestUnmarshalBody(T *testing.T) {
 	T.Parallel()
 
-	T.Run("expected use", func(t *testing.T) {
+	T.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

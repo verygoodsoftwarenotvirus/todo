@@ -30,9 +30,12 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		return nil, errors.New("empty address not allowed")
 	}
 
-	c, err := httpclient.NewClient(
-		httpclient.UsingURI(address),
-	)
+	parsedAddress, err := url.Parse(address)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := httpclient.NewClient(parsedAddress)
 	if err != nil {
 		return nil, fmt.Errorf("initializing client: %w", err)
 	}

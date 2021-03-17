@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	// ContentTypeHeader is the HTTP standard header name for content type.
-	ContentTypeHeader = "Content-type"
-	// XMLContentType represents the XML content type.
-	XMLContentType = "application/xml"
-	// JSONContentType represents the JSON content type.
-	JSONContentType = "application/json"
+	// ContentTypeHeaderKey is the HTTP standard header name for content type.
+	ContentTypeHeaderKey = "Content-type"
+	// ContentTypeXML represents the XML content type.
+	ContentTypeXML = "application/xml"
+	// ContentTypeJSON represents the JSON content type.
+	ContentTypeJSON = "application/json"
 	// DefaultContentType is what the library defaults to.
-	DefaultContentType = JSONContentType
+	DefaultContentType = ContentTypeJSON
 )
 
 var (
@@ -70,7 +70,7 @@ func (ed *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res htt
 	_, span := ed.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
+	var ct = strings.ToLower(res.Header().Get(ContentTypeHeaderKey))
 	if ct == "" {
 		ct = DefaultContentType
 	}
@@ -78,13 +78,13 @@ func (ed *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res htt
 	var e encoder
 
 	switch ct {
-	case XMLContentType:
+	case ContentTypeXML:
 		e = xml.NewEncoder(res)
 	default:
 		e = json.NewEncoder(res)
 	}
 
-	res.Header().Set(ContentTypeHeader, ct)
+	res.Header().Set(ContentTypeHeaderKey, ct)
 	res.WriteHeader(statusCode)
 
 	if err := e.Encode(&types.ErrorResponse{Message: msg, Code: statusCode}); err != nil {
@@ -136,7 +136,7 @@ func (ed *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.Res
 	_, span := ed.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var ct = strings.ToLower(res.Header().Get(ContentTypeHeader))
+	var ct = strings.ToLower(res.Header().Get(ContentTypeHeaderKey))
 	if ct == "" {
 		ct = DefaultContentType
 	}
@@ -144,13 +144,13 @@ func (ed *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.Res
 	var e encoder
 
 	switch ct {
-	case XMLContentType:
+	case ContentTypeXML:
 		e = xml.NewEncoder(res)
 	default:
 		e = json.NewEncoder(res)
 	}
 
-	res.Header().Set(ContentTypeHeader, ct)
+	res.Header().Set(ContentTypeHeaderKey, ct)
 	res.WriteHeader(statusCode)
 
 	if err := e.Encode(v); err != nil {
@@ -190,7 +190,7 @@ func (ed *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Req
 	_, span := ed.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var ct = strings.ToLower(req.Header.Get(ContentTypeHeader))
+	var ct = strings.ToLower(req.Header.Get(ContentTypeHeaderKey))
 	if ct == "" {
 		ct = DefaultContentType
 	}
@@ -198,7 +198,7 @@ func (ed *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Req
 	var d decoder
 
 	switch ct {
-	case XMLContentType:
+	case ContentTypeXML:
 		d = xml.NewDecoder(req.Body)
 	default:
 		dec := json.NewDecoder(req.Body)

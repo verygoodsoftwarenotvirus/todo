@@ -20,7 +20,8 @@ const (
 )
 
 func init() {
-	urlToUse = testutil.DetermineServiceURL()
+	u := testutil.DetermineServiceURL()
+	urlToUse = u.String()
 
 	logger := zerolog.NewLogger()
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")

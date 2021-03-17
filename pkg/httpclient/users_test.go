@@ -2,10 +2,8 @@ package httpclient
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -23,7 +21,7 @@ func TestUsers(t *testing.T) {
 	suite.Run(t, new(usersTestSuite))
 }
 
-type usersTestSuite struct {
+type usersBaseSuite struct {
 	suite.Suite
 
 	ctx             context.Context
@@ -32,320 +30,205 @@ type usersTestSuite struct {
 	exampleUserList *types.UserList
 }
 
-var _ suite.SetupTestSuite = (*usersTestSuite)(nil)
+var _ suite.SetupTestSuite = (*usersBaseSuite)(nil)
 
-func (s *usersTestSuite) SetupTest() {
+func (s *usersBaseSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.exampleUser = fakes.BuildFakeUser()
+	// the hashed authentication is never transmitted over the wire.
+	s.exampleUser.HashedPassword = ""
+	// the two factor secret is transmitted over the wire only on creation.
+	s.exampleUser.TwoFactorSecret = ""
+	// the two factor secret validation is never transmitted over the wire.
+	s.exampleUser.TwoFactorSecretVerifiedOn = nil
+
 	s.exampleInput = fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
 	s.exampleUserList = fakes.BuildFakeUserList()
+
+	for i := 0; i < len(s.exampleUserList.Users); i++ {
+		// the hashed authentication is never transmitted over the wire.
+		s.exampleUserList.Users[i].HashedPassword = ""
+		// the two factor secret is transmitted over the wire only on creation.
+		s.exampleUserList.Users[i].TwoFactorSecret = ""
+		// the two factor secret validation is never transmitted over the wire.
+		s.exampleUserList.Users[i].TwoFactorSecretVerifiedOn = nil
+	}
 }
 
-func TestV1Client_GetUser(T *testing.T) {
-	T.Parallel()
+type usersTestSuite struct {
+	suite.Suite
 
+	usersBaseSuite
+}
+
+func (s *usersTestSuite) TestV1Client_GetUser() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleUser.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleUser.ID)
 
-		// the hashed authentication is never transmitted over the wire.
-		exampleUser.HashedPassword = ""
-		// the two factor secret is transmitted over the wire only on creation.
-		exampleUser.TwoFactorSecret = ""
-		// the two factor secret validation is never transmitted over the wire.
-		exampleUser.TwoFactorSecretVerifiedOn = nil
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleUser))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetUser(ctx, exampleUser.ID)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleUser)
+		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleUser, actual)
+		assert.Equal(t, s.exampleUser, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleUser.Salt = nil
-		exampleUser.HashedPassword = ""
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetUser(ctx, exampleUser.ID)
+		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetUsers(T *testing.T) {
-	T.Parallel()
-
+func (s *usersTestSuite) TestV1Client_GetUsers() {
 	const expectedPath = "/api/v1/users"
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleUserList := fakes.BuildFakeUserList()
-		// the hashed authentication is never transmitted over the wire.
-		exampleUserList.Users[0].HashedPassword = ""
-		exampleUserList.Users[1].HashedPassword = ""
-		exampleUserList.Users[2].HashedPassword = ""
-		// the two factor secret is transmitted over the wire only on creation.
-		exampleUserList.Users[0].TwoFactorSecret = ""
-		exampleUserList.Users[1].TwoFactorSecret = ""
-		exampleUserList.Users[2].TwoFactorSecret = ""
-		// the two factor secret validation is never transmitted over the wire.
-		exampleUserList.Users[0].TwoFactorSecretVerifiedOn = nil
-		exampleUserList.Users[1].TwoFactorSecretVerifiedOn = nil
-		exampleUserList.Users[2].TwoFactorSecretVerifiedOn = nil
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleUserList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetUsers(ctx, nil)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleUserList)
+		actual, err := c.GetUsers(s.ctx, nil)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleUserList, actual)
+		assert.Equal(t, s.exampleUserList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetUsers(ctx, nil)
+		actual, err := c.GetUsers(s.ctx, nil)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_SearchForUsersByUsername(T *testing.T) {
-	T.Parallel()
-
+func (s *usersTestSuite) TestV1Client_SearchForUsersByUsername() {
 	const expectedPath = "/api/v1/users/search"
+	exampleUsername := s.exampleUser.Username
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		exampleUsername := fakes.BuildFakeUser().Username
 		spec := newRequestSpec(true, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
 
-		exampleUserList := fakes.BuildFakeUserList()
-		// the hashed authentication is never transmitted over the wire.
-		exampleUserList.Users[0].HashedPassword = ""
-		exampleUserList.Users[1].HashedPassword = ""
-		exampleUserList.Users[2].HashedPassword = ""
-		// the two factor secret is transmitted over the wire only on creation.
-		exampleUserList.Users[0].TwoFactorSecret = ""
-		exampleUserList.Users[1].TwoFactorSecret = ""
-		exampleUserList.Users[2].TwoFactorSecret = ""
-		// the two factor secret validation is never transmitted over the wire.
-		exampleUserList.Users[0].TwoFactorSecretVerifiedOn = nil
-		exampleUserList.Users[1].TwoFactorSecretVerifiedOn = nil
-		exampleUserList.Users[2].TwoFactorSecretVerifiedOn = nil
-		exampleUsers := exampleUserList.Users
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleUsers))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.SearchForUsersByUsername(ctx, exampleUsername)
+		c := buildTestClientWithJSONResponse(t, spec, s.exampleUserList.Users)
+		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleUsers, actual)
+		assert.Equal(t, s.exampleUserList.Users, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-		exampleUsername := fakes.BuildFakeUser().Username
+	s.Run("with invalid client URL", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.SearchForUsersByUsername(ctx, exampleUsername)
+		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_CreateUser(T *testing.T) {
-	T.Parallel()
-
+func (s *usersTestSuite) TestV1Client_CreateUser() {
 	const expectedPath = "/users"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
-		expected := fakes.BuildUserCreationResponseFromUser(exampleUser)
+		expected := fakes.BuildUserCreationResponseFromUser(s.exampleUser)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.NewUserCreationInput{}, s.exampleInput, expected)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				var x *types.NewUserCreationInput
-				require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
-				assert.Equal(t, exampleInput, x)
-
-				require.NoError(t, json.NewEncoder(res).Encode(expected))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.CreateUser(ctx, exampleInput)
+		actual, err := c.CreateUser(s.ctx, s.exampleInput)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.Equal(t, expected, actual)
 	})
-
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.CreateUser(ctx, exampleInput)
+		actual, err := c.CreateUser(s.ctx, s.exampleInput)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_ArchiveUser(T *testing.T) {
-	T.Parallel()
-
+func (s *usersTestSuite) TestV1Client_ArchiveUser() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleUser.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleUser.ID)
+		c := buildTestClientWithOKResponse(t, spec)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-			},
-		))
-
-		err := buildTestClient(t, ts).ArchiveUser(ctx, exampleUser.ID)
+		err := c.ArchiveUser(s.ctx, s.exampleUser.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-
-		err := buildTestClientWithInvalidURL(t).ArchiveUser(ctx, exampleUser.ID)
+		err := buildTestClientWithInvalidURL(t).ArchiveUser(s.ctx, s.exampleUser.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetAuditLogForUser(T *testing.T) {
-	T.Parallel()
-
+func (s *usersTestSuite) TestV1Client_GetAuditLogForUser() {
 	const (
 		expectedPath   = "/api/v1/users/%d/audit"
 		expectedMethod = http.MethodGet
 	)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		exampleUser := fakes.BuildFakeUser()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleUser.ID)
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForUser(ctx, exampleUser.ID)
+		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
+		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForUser(ctx, exampleUser.ID)
+		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleUser.ID)
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-			},
-		))
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForUser(ctx, exampleUser.ID)
+		c := buildTestClientWithInvalidResponse(t, spec)
+		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

@@ -119,11 +119,7 @@ func main() {
 				quitter.ComplainAndQuit(fmt.Errorf("getting cookie: %v", cookieErr))
 			}
 
-			userClient, err := httpclient.NewClient(
-				httpclient.UsingURL(parsedURI),
-				httpclient.UsingLogger(userLogger),
-				httpclient.UsingCookie(cookie),
-			)
+			userClient, err := httpclient.NewClient(parsedURI, httpclient.UsingLogger(userLogger), httpclient.UsingCookie(cookie))
 			if err != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("error initializing client: %w", err))
 			}

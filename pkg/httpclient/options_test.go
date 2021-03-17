@@ -42,11 +42,10 @@ func TestWithURL(T *testing.T) {
 		expectedURL, err := url.Parse("https://todo.verygoodsoftwarenotvirus.ru")
 		require.NoError(t, err)
 
-		c, _ := NewClient(
-			UsingURL(expectedURL),
-		)
+		c, err := NewClient(expectedURL)
 
 		assert.NotNil(t, c)
+		assert.NoError(t, err)
 		assert.Equal(t, expectedURL, c.URL(), "expected and actual URLs do not match")
 	})
 }
@@ -57,10 +56,12 @@ func TestWithLogger(T *testing.T) {
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
 
-		c, _ := NewClient(
-			UsingLogger(logging.NewNonOperationalLogger()),
-		)
+		expectedURL, err := url.Parse("https://todo.verygoodsoftwarenotvirus.ru")
+		require.NoError(t, err)
+
+		c, err := NewClient(expectedURL, UsingLogger(logging.NewNonOperationalLogger()))
 
 		assert.NotNil(t, c)
+		assert.NoError(t, err)
 	})
 }

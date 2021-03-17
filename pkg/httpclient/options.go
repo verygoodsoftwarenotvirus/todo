@@ -59,6 +59,11 @@ func UsingURI(raw string) func(*Client) error {
 // UsingURL sets the url on the client.
 func UsingURL(u *url.URL) func(*Client) error {
 	return func(c *Client) error {
+		// test uri to see if it is valid
+		if _, err := url.Parse(u.String()); err != nil {
+			return err
+		}
+
 		c.url = u
 
 		return nil

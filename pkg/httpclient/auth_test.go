@@ -7,72 +7,93 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestV1Client_Login(T *testing.T) {
-	T.Parallel()
+func TestAuth(t *testing.T) {
+	t.Parallel()
 
+	suite.Run(t, new(authTestSuite))
+}
+
+type authTestSuite struct {
+	suite.Suite
+
+	ctx         context.Context
+	exampleUser *types.User
+}
+
+var _ suite.SetupTestSuite = (*authTestSuite)(nil)
+
+func (s *authTestSuite) SetupTest() {
+	s.ctx = context.Background()
+
+	s.exampleUser = fakes.BuildFakeUser()
+	// the hashed authentication is never transmitted over the wire.
+	s.exampleUser.HashedPassword = ""
+	// the two factor secret is transmitted over the wire only on creation.
+	s.exampleUser.TwoFactorSecret = ""
+	// the two factor secret validation is never transmitted over the wire.
+	s.exampleUser.TwoFactorSecretVerifiedOn = nil
+}
+
+func (s *authTestSuite) TestV1Client_Login() {
 	const expectedPath = "/users/login"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
 				assertRequestQuality(t, req, spec)
 
-				http.SetCookie(res, &http.Cookie{Name: exampleUser.Username})
+				http.SetCookie(res, &http.Cookie{Name: s.exampleUser.Username})
 			},
 		))
 		c := buildTestClient(t, ts)
 
-		cookie, err := c.Login(ctx, exampleInput)
+		cookie, err := c.Login(s.ctx, exampleInput)
 		require.NotNil(t, cookie)
 		assert.NoError(t, err)
 	})
 
-	T.Run("with nil input", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with nil input", func() {
+		t := s.T()
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		cookie, err := c.Login(ctx, nil)
+		cookie, err := c.Login(s.ctx, nil)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
 
 		c := buildTestClientWithInvalidURL(t)
 
-		cookie, err := c.Login(ctx, exampleInput)
+		cookie, err := c.Login(s.ctx, exampleInput)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
 
-	T.Run("with timeout", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with timeout", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
@@ -83,17 +104,15 @@ func TestV1Client_Login(T *testing.T) {
 		c := buildTestClient(t, ts)
 		c.plainClient.Timeout = 500 * time.Microsecond
 
-		cookie, err := c.Login(ctx, exampleInput)
+		cookie, err := c.Login(s.ctx, exampleInput)
 		require.Nil(t, cookie)
 		assert.Error(t, err)
 	})
 
-	T.Run("with missing cookie", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with missing cookie", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
@@ -102,25 +121,21 @@ func TestV1Client_Login(T *testing.T) {
 		))
 		c := buildTestClient(t, ts)
 
-		cookie, err := c.Login(ctx, exampleInput)
+		cookie, err := c.Login(s.ctx, exampleInput)
 		require.Nil(t, cookie)
 		assert.Error(t, err)
 	})
 }
 
-func TestV1Client_VerifyTOTPSecret(T *testing.T) {
-	T.Parallel()
-
+func (s *authTestSuite) TestV1Client_VerifyTOTPSecret() {
 	const expectedPath = "/users/totp_secret/verify"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
@@ -131,16 +146,14 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		))
 		c := buildTestClient(t, ts)
 
-		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.NoError(t, err)
 	})
 
-	T.Run("with bad request response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with bad request response", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
@@ -151,17 +164,15 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		))
 		c := buildTestClient(t, ts)
 
-		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidTOTPToken, err)
 	})
 
-	T.Run("with otherwise invalid status code response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with otherwise invalid status code response", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
@@ -172,29 +183,25 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		))
 		c := buildTestClient(t, ts)
 
-		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 
 		c := buildTestClientWithInvalidURL(t)
 
-		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
 	})
 
-	T.Run("with timeout", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with timeout", func() {
+		t := s.T()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 
 		ts := httptest.NewTLSServer(http.HandlerFunc(
 			func(res http.ResponseWriter, req *http.Request) {
@@ -208,7 +215,7 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		c := buildTestClient(t, ts)
 		c.plainClient.Timeout = time.Millisecond
 
-		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
+		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
 	})
 }

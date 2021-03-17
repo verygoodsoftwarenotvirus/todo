@@ -27,15 +27,13 @@ func TestV1Client_Login(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					http.SetCookie(res, &http.Cookie{Name: exampleUser.Username})
-				},
-			),
-		)
+				http.SetCookie(res, &http.Cookie{Name: exampleUser.Username})
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		cookie, err := c.Login(ctx, exampleInput)
@@ -76,14 +74,12 @@ func TestV1Client_Login(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-					time.Sleep(10 * time.Hour)
-				},
-			),
-		)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
+				time.Sleep(10 * time.Hour)
+			},
+		))
 		c := buildTestClient(t, ts)
 		c.plainClient.Timeout = 500 * time.Microsecond
 
@@ -99,13 +95,11 @@ func TestV1Client_Login(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(exampleUser)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-				},
-			),
-		)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		cookie, err := c.Login(ctx, exampleInput)
@@ -128,15 +122,13 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusAccepted)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusAccepted)
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
@@ -150,15 +142,13 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusBadRequest)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusBadRequest)
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
@@ -173,15 +163,13 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusInternalServerError)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusInternalServerError)
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		err := c.VerifyTOTPSecret(ctx, exampleUser.ID, exampleInput.TOTPToken)
@@ -208,17 +196,15 @@ func TestV1Client_VerifyTOTPSecret(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					time.Sleep(10 * time.Minute)
+				time.Sleep(10 * time.Minute)
 
-					res.WriteHeader(http.StatusAccepted)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusAccepted)
+			},
+		))
 		c := buildTestClient(t, ts)
 		c.plainClient.Timeout = time.Millisecond
 

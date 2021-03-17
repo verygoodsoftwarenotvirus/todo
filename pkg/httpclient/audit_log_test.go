@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAuditLogEntrys(t *testing.T) {
+func TestAuditLogEntries(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, new(auditLogEntriesTestSuite))
@@ -40,15 +40,11 @@ func (s *auditLogEntriesTestSuite) SetupTest() {
 	s.exampleAuditLogEntryList = fakes.BuildFakeAuditLogEntryList()
 }
 
-// TODO: finish me
-
-func TestV1Client_BuildGetAuditLogEntriesRequest(T *testing.T) {
-	T.Parallel()
-
+func (s *auditLogEntriesTestSuite) TestV1Client_BuildGetAuditLogEntriesRequest() {
 	const expectedPath = "/api/v1/_admin_/audit_log"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
 		ctx := context.Background()
 		filter := (*types.QueryFilter)(nil)
@@ -64,72 +60,57 @@ func TestV1Client_BuildGetAuditLogEntriesRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_GetAuditLogEntries(T *testing.T) {
-	T.Parallel()
-
+func (s *auditLogEntriesTestSuite) TestV1Client_GetAuditLogEntries() {
 	const (
 		expectedPath   = "/api/v1/_admin_/audit_log"
 		expectedMethod = http.MethodGet
 	)
 
 	spec := newRequestSpec(true, expectedMethod, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+	filter := (*types.QueryFilter)(nil)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		filter := (*types.QueryFilter)(nil)
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAuditLogEntryList))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogEntries(ctx, filter)
+		actual, err := c.GetAuditLogEntries(s.ctx, filter)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleAuditLogEntryList, actual)
+		assert.Equal(t, s.exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		filter := (*types.QueryFilter)(nil)
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogEntries(ctx, filter)
+		actual, err := c.GetAuditLogEntries(s.ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
-		filter := (*types.QueryFilter)(nil)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogEntries(ctx, filter)
+		actual, err := c.GetAuditLogEntries(s.ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

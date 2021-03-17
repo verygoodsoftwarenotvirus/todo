@@ -49,15 +49,13 @@ func TestV1Client_BanUser(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusAccepted)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusAccepted)
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		err := c.UpdateAccountStatus(ctx, exampleInput)
@@ -72,15 +70,13 @@ func TestV1Client_BanUser(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusBadRequest)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusBadRequest)
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		assert.Error(t, c.UpdateAccountStatus(ctx, exampleInput))
@@ -94,15 +90,13 @@ func TestV1Client_BanUser(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusInternalServerError)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusInternalServerError)
+			},
+		))
 		c := buildTestClient(t, ts)
 
 		err := c.UpdateAccountStatus(ctx, exampleInput)
@@ -129,17 +123,15 @@ func TestV1Client_BanUser(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					time.Sleep(10 * time.Minute)
+				time.Sleep(10 * time.Minute)
 
-					res.WriteHeader(http.StatusAccepted)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusAccepted)
+			},
+		))
 		c := buildTestClient(t, ts)
 		require.NoError(t, c.SetOptions(UsingTimeout(time.Millisecond)))
 

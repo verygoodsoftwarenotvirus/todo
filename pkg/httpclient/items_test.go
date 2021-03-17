@@ -47,15 +47,13 @@ func (s *itemsTestSuite) TestV1Client_ItemExists() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, s.exampleItem.ID)
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusOK)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusOK)
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
@@ -83,15 +81,13 @@ func (s *itemsTestSuite) TestV1Client_GetItem() {
 	s.Run("happy path", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
@@ -114,15 +110,13 @@ func (s *itemsTestSuite) TestV1Client_GetItem() {
 	s.Run("with invalid response", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
@@ -142,15 +136,13 @@ func (s *itemsTestSuite) TestV1Client_GetItems() {
 
 		filter := (*types.QueryFilter)(nil)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItemList))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleItemList))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.GetItems(s.ctx, filter)
@@ -177,15 +169,13 @@ func (s *itemsTestSuite) TestV1Client_GetItems() {
 
 		filter := (*types.QueryFilter)(nil)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.GetItems(s.ctx, filter)
@@ -206,15 +196,13 @@ func (s *itemsTestSuite) TestV1Client_SearchItems() {
 
 		limit := types.DefaultQueryFilter().Limit
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItemList.Items))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleItemList.Items))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
@@ -240,15 +228,13 @@ func (s *itemsTestSuite) TestV1Client_SearchItems() {
 		t := s.T()
 
 		limit := types.DefaultQueryFilter().Limit
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
@@ -267,21 +253,19 @@ func (s *itemsTestSuite) TestV1Client_CreateItem() {
 		t := s.T()
 		ctx := context.Background()
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					var x *types.ItemCreationInput
-					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
+				var x *types.ItemCreationInput
+				require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 
-					s.exampleInput.BelongsToAccount = 0
-					assert.Equal(t, s.exampleInput, x)
+				s.exampleInput.BelongsToAccount = 0
+				assert.Equal(t, s.exampleInput, x)
 
-					require.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.CreateItem(ctx, s.exampleInput)
@@ -314,15 +298,13 @@ func (s *itemsTestSuite) TestV1Client_UpdateItem() {
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleItem.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					assert.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
-				},
-			),
-		)
+				assert.NoError(t, json.NewEncoder(res).Encode(s.exampleItem))
+			},
+		))
 
 		err := buildTestClient(t, ts).UpdateItem(s.ctx, s.exampleItem)
 		assert.NoError(t, err, "no error should be returned")
@@ -344,15 +326,13 @@ func (s *itemsTestSuite) TestV1Client_ArchiveItem() {
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleItem.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusOK)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusOK)
+			},
+		))
 
 		err := buildTestClient(t, ts).ArchiveItem(s.ctx, s.exampleItem.ID)
 		assert.NoError(t, err, "no error should be returned")
@@ -378,15 +358,13 @@ func (s *itemsTestSuite) TestV1Client_GetAuditLogForItem() {
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleItem.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
@@ -401,15 +379,13 @@ func (s *itemsTestSuite) TestV1Client_GetAuditLogForItem() {
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleItem.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)

@@ -36,289 +36,229 @@ var _ suite.SetupTestSuite = (*apiClientsTestSuite)(nil)
 func (s *apiClientsTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.exampleAPIClient = fakes.BuildFakeAPIClient()
+	s.exampleAPIClient.ClientSecret = nil
 	s.exampleInput = fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
 	s.exampleAPIClientList = fakes.BuildFakeAPIClientList()
+
+	for i := 0; i < len(s.exampleAPIClientList.Clients); i++ {
+		s.exampleAPIClientList.Clients[i].ClientSecret = nil
+	}
 }
 
-// TODO: finish me
-
-func TestV1Client_GetAPIClient(T *testing.T) {
-	T.Parallel()
-
+func (s *apiClientsTestSuite) TestV1Client_GetAPIClient() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ClientSecret = nil
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAPIClient.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAPIClient))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAPIClient))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAPIClient(ctx, exampleAPIClient.ID)
+		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleAPIClient, actual)
+		assert.Equal(t, s.exampleAPIClient, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ClientSecret = nil
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAPIClient(ctx, exampleAPIClient.ID)
+		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetAPIClients(T *testing.T) {
-	T.Parallel()
-
+func (s *apiClientsTestSuite) TestV1Client_GetAPIClients() {
 	const expectedPath = "/api/v1/api_clients"
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAPIClientList := fakes.BuildFakeAPIClientList()
-		for i := 0; i < len(exampleAPIClientList.Clients); i++ {
-			exampleAPIClientList.Clients[i].ClientSecret = nil
-		}
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAPIClientList))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAPIClientList))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAPIClients(ctx, nil)
+		actual, err := c.GetAPIClients(s.ctx, nil)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleAPIClientList, actual)
+		assert.Equal(t, s.exampleAPIClientList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAPIClients(ctx, nil)
+		actual, err := c.GetAPIClients(s.ctx, nil)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_CreateAPIClient(T *testing.T) {
-	T.Parallel()
-
+func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 	const expectedPath = "/api/v1/api_clients"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ClientSecret = nil
-		exampleResponse := fakes.BuildFakeAPIClientCreationResponseFromClient(exampleAPIClient)
-		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+		exampleResponse := fakes.BuildFakeAPIClientCreationResponseFromClient(s.exampleAPIClient)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(exampleResponse))
+			},
+		))
 		c := buildTestClient(t, ts)
 
-		actual, err := c.CreateAPIClient(ctx, &http.Cookie{}, exampleInput)
+		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleResponse, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
 
-		actual, err := c.CreateAPIClient(ctx, &http.Cookie{}, exampleInput)
+		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response from server", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response from server", func() {
+		t := s.T()
 
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					_, err := res.Write([]byte("BLAH"))
-					assert.NoError(t, err)
-				},
-			),
-		)
+				_, err := res.Write([]byte("BLAH"))
+				assert.NoError(t, err)
+			},
+		))
 		c := buildTestClient(t, ts)
 
-		actual, err := c.CreateAPIClient(ctx, &http.Cookie{}, exampleInput)
+		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
 
-	T.Run("without cookie", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("without cookie", func() {
+		t := s.T()
 
 		ts := httptest.NewTLSServer(nil)
 		c := buildTestClient(t, ts)
 
-		_, err := c.CreateAPIClient(ctx, nil, nil)
+		_, err := c.CreateAPIClient(s.ctx, nil, nil)
 		assert.Error(t, err)
 	})
 }
 
-func TestV1Client_ArchiveAPIClient(T *testing.T) {
-	T.Parallel()
-
+func (s *apiClientsTestSuite) TestV1Client_ArchiveAPIClient() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAPIClient.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					res.WriteHeader(http.StatusOK)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusOK)
+			},
+		))
 
-		err := buildTestClient(t, ts).ArchiveAPIClient(ctx, exampleAPIClient.ID)
+		err := buildTestClient(t, ts).ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-
-		err := buildTestClientWithInvalidURL(t).ArchiveAPIClient(ctx, exampleAPIClient.ID)
+		err := buildTestClientWithInvalidURL(t).ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetAuditLogForAPIClient(T *testing.T) {
-	T.Parallel()
-
+func (s *apiClientsTestSuite) TestV1Client_GetAuditLogForAPIClient() {
 	const (
 		expectedPath   = "/api/v1/api_clients/%d/audit"
 		expectedMethod = http.MethodGet
 	)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleAPIClient.ID)
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForAPIClient(ctx, exampleAPIClient.ID)
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForAPIClient(ctx, exampleAPIClient.ID)
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleAPIClient.ID)
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForAPIClient(ctx, exampleAPIClient.ID)
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

@@ -40,338 +40,236 @@ func (s *accountsTestSuite) SetupTest() {
 	s.exampleAccountList = fakes.BuildFakeAccountList()
 }
 
-// TODO: finish me
-
-func TestV1Client_GetAccount(T *testing.T) {
-	T.Parallel()
-
+func (s *accountsTestSuite) TestV1Client_GetAccount() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAccount.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAccount))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAccount))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAccount(ctx, exampleAccount.ID)
+		actual, err := c.GetAccount(s.ctx, s.exampleAccount.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleAccount, actual)
+		assert.Equal(t, s.exampleAccount, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleAccount := fakes.BuildFakeAccount()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAccount(ctx, exampleAccount.ID)
+		actual, err := c.GetAccount(s.ctx, s.exampleAccount.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAccount.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetAccount(ctx, exampleAccount.ID)
+		c := buildTestClientWithInvalidResponse(t, spec)
+		actual, err := c.GetAccount(s.ctx, s.exampleAccount.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetAccounts(T *testing.T) {
-	T.Parallel()
-
+func (s *accountsTestSuite) TestV1Client_GetAccounts() {
 	const expectedPath = "/api/v1/accounts"
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+	filter := (*types.QueryFilter)(nil)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		filter := (*types.QueryFilter)(nil)
-		exampleAccountList := fakes.BuildFakeAccountList()
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAccountList))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAccountList))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAccounts(ctx, filter)
+		actual, err := c.GetAccounts(s.ctx, filter)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleAccountList, actual)
+		assert.Equal(t, s.exampleAccountList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		filter := (*types.QueryFilter)(nil)
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAccounts(ctx, filter)
+		actual, err := c.GetAccounts(s.ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
-		filter := (*types.QueryFilter)(nil)
-
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
-
-		c := buildTestClient(t, ts)
-		actual, err := c.GetAccounts(ctx, filter)
+		c := buildTestClientWithInvalidResponse(t, spec)
+		actual, err := c.GetAccounts(s.ctx, filter)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_CreateAccount(T *testing.T) {
-	T.Parallel()
-
+func (s *accountsTestSuite) TestV1Client_CreateAccount() {
 	const expectedPath = "/api/v1/accounts"
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = 0
-		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+		s.exampleAccount.BelongsToUser = 0
+		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					var x *types.AccountCreationInput
-					require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
+				var x *types.AccountCreationInput
+				require.NoError(t, json.NewDecoder(req.Body).Decode(&x))
 
-					assert.Equal(t, exampleInput, x)
+				assert.Equal(t, exampleInput, x)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAccount))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(s.exampleAccount))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.CreateAccount(ctx, exampleInput)
+		actual, err := c.CreateAccount(s.ctx, exampleInput)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, exampleAccount, actual)
+		assert.Equal(t, s.exampleAccount, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
+	s.Run("happy path", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.CreateAccount(ctx, exampleInput)
+		actual, err := c.CreateAccount(s.ctx, s.exampleInput)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_UpdateAccount(T *testing.T) {
-	T.Parallel()
-
+func (s *accountsTestSuite) TestV1Client_UpdateAccount() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleAccount.ID)
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					assert.NoError(t, json.NewEncoder(res).Encode(exampleAccount))
-				},
-			),
-		)
-
-		err := buildTestClient(t, ts).UpdateAccount(ctx, exampleAccount)
+		err := buildTestClientWithJSONResponse(t, spec, s.exampleAccount).UpdateAccount(s.ctx, s.exampleAccount)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-
-		err := buildTestClientWithInvalidURL(t).UpdateAccount(ctx, exampleAccount)
+		err := buildTestClientWithInvalidURL(t).UpdateAccount(s.ctx, s.exampleAccount)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_ArchiveAccount(T *testing.T) {
-	T.Parallel()
-
+func (s *accountsTestSuite) TestV1Client_ArchiveAccount() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAccount.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
-
-					res.WriteHeader(http.StatusOK)
-				},
-			),
-		)
-
-		err := buildTestClient(t, ts).ArchiveAccount(ctx, exampleAccount.ID)
+		c := buildTestClientWithOKResponse(t, spec)
+		err := c.ArchiveAccount(s.ctx, s.exampleAccount.ID)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-
-		err := buildTestClientWithInvalidURL(t).ArchiveAccount(ctx, exampleAccount.ID)
+		err := buildTestClientWithInvalidURL(t).ArchiveAccount(s.ctx, s.exampleAccount.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
 
-func TestV1Client_GetAuditLogForAccount(T *testing.T) {
-	T.Parallel()
-
+func (s *accountsTestSuite) TestV1Client_GetAuditLogForAccount() {
 	const (
 		expectedPath   = "/api/v1/accounts/%d/audit"
 		expectedMethod = http.MethodGet
 	)
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleAccount.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(exampleAuditLogEntryList))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForAccount(ctx, exampleAccount.ID)
+		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		exampleAccount := fakes.BuildFakeAccount()
+	s.Run("with invalid client url", func() {
+		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForAccount(ctx, exampleAccount.ID)
+		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 
-	T.Run("with invalid response", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("with invalid response", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, exampleAccount.ID)
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assertRequestQuality(t, req, spec)
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assertRequestQuality(t, req, spec)
 
-					require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode("BLAH"))
+			},
+		))
 
 		c := buildTestClient(t, ts)
-		actual, err := c.GetAuditLogForAccount(ctx, exampleAccount.ID)
+		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")

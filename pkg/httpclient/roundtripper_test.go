@@ -31,8 +31,7 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 				func(res http.ResponseWriter, req *http.Request) {
 					res.WriteHeader(http.StatusOK)
 				},
-			),
-		)
+			))
 
 		transport := newDefaultRoundTripper(0)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL, nil)

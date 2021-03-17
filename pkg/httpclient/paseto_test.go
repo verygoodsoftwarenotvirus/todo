@@ -84,17 +84,15 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 
 		anticipatedResult := "v2.local.QAxIpVe-ECVNI1z4xQbm_qQYomyT3h8FtV8bxkz8pBJWkT8f7HtlOpbroPDEZUKop_vaglyp76CzYy375cHmKCW8e1CCkV0Lflu4GTDyXMqQdpZMM1E6OaoQW27gaRSvWBrR3IgbFIa0AkuUFw.UGFyYWdvbiBJbml0aWF0aXZlIEVudGVycHJpc2Vz"
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					response := &types.PASETOResponse{Token: anticipatedResult}
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				response := &types.PASETOResponse{Token: anticipatedResult}
 
-					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
+				assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
-					require.NoError(t, json.NewEncoder(res).Encode(response))
-				},
-			),
-		)
+				require.NoError(t, json.NewEncoder(res).Encode(response))
+			},
+		))
 
 		c := buildTestClient(t, ts)
 
@@ -126,15 +124,13 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 	T.Run("with error executing request", func(t *testing.T) {
 		t.Parallel()
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
-					time.Sleep(time.Minute)
-				},
-			),
-		)
+				time.Sleep(time.Minute)
+			},
+		))
 
 		c := buildTestClient(t, ts)
 		require.NoError(t, c.SetOptions(UsingTimeout(time.Nanosecond)))
@@ -152,15 +148,13 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 	T.Run("with invalid status code", func(t *testing.T) {
 		t.Parallel()
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
-					res.WriteHeader(http.StatusUnauthorized)
-				},
-			),
-		)
+				res.WriteHeader(http.StatusUnauthorized)
+			},
+		))
 
 		c := buildTestClient(t, ts)
 
@@ -177,16 +171,14 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 	T.Run("with invalid response from server", func(t *testing.T) {
 		t.Parallel()
 
-		ts := httptest.NewTLSServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
+		ts := httptest.NewTLSServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				assert.NotEmpty(t, req.Header.Get(signatureHeaderKey))
 
-					_, err := res.Write([]byte("BLAH"))
-					assert.NoError(t, err)
-				},
-			),
-		)
+				_, err := res.Write([]byte("BLAH"))
+				assert.NoError(t, err)
+			},
+		))
 
 		c := buildTestClient(t, ts)
 

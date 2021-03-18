@@ -182,7 +182,7 @@ func (c *Client) createAuditLogEntryInTransaction(ctx context.Context, transacti
 	// create the audit log entry.
 	if err := c.performWriteQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
 		logger.Error(err, "executing audit log entry creation query")
-		c.rollbackTransaction(transaction)
+		c.rollbackTransaction(ctx, transaction)
 
 		return err
 	}

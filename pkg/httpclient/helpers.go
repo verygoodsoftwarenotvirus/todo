@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"reflect"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -88,11 +89,13 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	defer span.End()
 
 	if err := argIsNotPointerOrNil(dest); err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return err
 	}
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return err
 	}
 
@@ -102,6 +105,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 		}
 
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
+			tracing.AttachErrorToSpan(span, err)
 			c.logger.Error(err, "unmarshalling error response")
 		}
 
@@ -109,6 +113,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	}
 
 	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("unmarshaling body: %w", err)
 	}
 

@@ -58,7 +58,7 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 		))
 		c := buildTestClient(t, ts)
 
-		err := c.UpdateAccountStatus(s.ctx, exampleInput)
+		err := c.UpdateUserReputation(s.ctx, exampleInput)
 		assert.NoError(t, err)
 	})
 
@@ -77,7 +77,7 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 		))
 		c := buildTestClient(t, ts)
 
-		assert.Error(t, c.UpdateAccountStatus(s.ctx, exampleInput))
+		assert.Error(t, c.UpdateUserReputation(s.ctx, exampleInput))
 	})
 
 	s.Run("with otherwise invalid status code response", func() {
@@ -95,7 +95,7 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 		))
 		c := buildTestClient(t, ts)
 
-		err := c.UpdateAccountStatus(s.ctx, exampleInput)
+		err := c.UpdateUserReputation(s.ctx, exampleInput)
 		assert.Error(t, err)
 	})
 
@@ -104,7 +104,7 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		c := buildTestClientWithInvalidURL(t)
-		err := c.UpdateAccountStatus(s.ctx, exampleInput)
+		err := c.UpdateUserReputation(s.ctx, exampleInput)
 
 		assert.Error(t, err)
 	})
@@ -127,7 +127,7 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 		c := buildTestClient(t, ts)
 		require.NoError(t, c.SetOptions(UsingTimeout(time.Millisecond)))
 
-		err := c.UpdateAccountStatus(s.ctx, exampleInput)
+		err := c.UpdateUserReputation(s.ctx, exampleInput)
 		assert.Error(t, err)
 	})
 }

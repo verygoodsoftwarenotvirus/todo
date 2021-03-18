@@ -6,17 +6,17 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
-
-// BuildAPIClientAuthTokenRequest builds a request.
-func (c *Client) BuildAPIClientAuthTokenRequest(ctx context.Context, input *types.PASETOCreationInput, secretKey []byte) (*http.Request, error) {
-	return c.requestBuilder.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
-}
 
 func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *http.Client, clientID string, secretKey []byte) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if secretKey == nil {
+		return "", ErrNilInputProvided
+	}
 
 	if httpclient == nil {
 		httpclient = http.DefaultClient
@@ -26,10 +26,6 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 		httpclient.Timeout = defaultTimeout
 	}
 
-	if secretKey == nil {
-		return "", ErrNilInputProvided
-	}
-
 	input := &types.PASETOCreationInput{
 		ClientID:    clientID,
 		RequestTime: time.Now().UTC().UnixNano(),
@@ -37,6 +33,7 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
 		c.logger.Error(validationErr, "validating input")
+		tracing.AttachErrorToSpan(span, validationErr)
 		return "", fmt.Errorf("validating input: %w", validationErr)
 	}
 
@@ -46,22 +43,26 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 
 	req, err := c.requestBuilder.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return "", err
 	}
 
 	// use the default client here because we want a transport that doesn't worry about cookies or tokens.
 	res, err := c.executeRawRequest(ctx, httpclient, req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return "", fmt.Errorf("executing request: %w", err)
 	}
 
 	if resErr := errorFromResponse(res); resErr != nil {
+		tracing.AttachErrorToSpan(span, resErr)
 		return "", resErr
 	}
 
 	var tokenRes types.PASETOResponse
 
 	if unmarshalErr := c.unmarshalBody(ctx, res, &tokenRes); unmarshalErr != nil {
+		tracing.AttachErrorToSpan(span, unmarshalErr)
 		return "", unmarshalErr
 	}
 

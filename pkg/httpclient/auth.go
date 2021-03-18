@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -20,13 +21,15 @@ func (c *Client) Status(ctx context.Context, cookie *http.Cookie) (*types.UserSt
 
 	req, err := c.requestBuilder.BuildStatusRequest(ctx, cookie)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building login request: %w", err)
 	}
 
 	var output *types.UserStatusResponse
 
-	if err := c.retrieve(ctx, req, &output); err != nil {
-		return nil, err
+	if retrieveErr := c.retrieve(ctx, req, &output); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
+		return nil, retrieveErr
 	}
 
 	return output, nil
@@ -45,15 +48,17 @@ func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.
 
 	req, err := c.requestBuilder.BuildLoginRequest(ctx, input)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building login request: %w", err)
 	}
 
 	res, err := c.plainClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("encountered error executing login request: %w", err)
+		tracing.AttachErrorToSpan(span, err)
+		return nil, fmt.Errorf("executing login request: %w", err)
 	}
 
-	c.closeResponseBody(res)
+	c.closeResponseBody(ctx, res)
 
 	cookies := res.Cookies()
 	if len(cookies) > 0 {
@@ -70,15 +75,17 @@ func (c *Client) Logout(ctx context.Context) error {
 
 	req, err := c.requestBuilder.BuildLogoutRequest(ctx)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building login request: %w", err)
 	}
 
 	res, err := c.authedClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("encountered error executing login request: %w", err)
+		tracing.AttachErrorToSpan(span, err)
+		return fmt.Errorf("executing login request: %w", err)
 	}
 
-	c.closeResponseBody(res)
+	c.closeResponseBody(ctx, res)
 
 	// should I be doing something here to undo the auth state in the client?
 
@@ -102,15 +109,17 @@ func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input 
 
 	req, err := c.requestBuilder.BuildChangePasswordRequest(ctx, cookie, input)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building authentication change request: %w", err)
 	}
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("executing request: %w", err)
 	}
 
-	c.closeResponseBody(res)
+	c.closeResponseBody(ctx, res)
 
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("erroneous response code when changing authentication: %d", res.StatusCode)
@@ -134,11 +143,13 @@ func (c *Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, 
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
 		c.logger.Error(validationErr, "validating input")
+		tracing.AttachErrorToSpan(span, validationErr)
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	req, err := c.requestBuilder.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building authentication change request: %w", err)
 	}
 
@@ -158,20 +169,23 @@ func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token stri
 	}
 
 	if _, err := strconv.ParseUint(token, 10, 64); token == "" || err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("invalid token provided: %q", token)
 	}
 
 	req, err := c.requestBuilder.BuildVerifyTOTPSecretRequest(ctx, userID, token)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building TOTP validation request: %w", err)
 	}
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("executing request: %w", err)
 	}
 
-	c.closeResponseBody(res)
+	c.closeResponseBody(ctx, res)
 
 	if res.StatusCode == http.StatusBadRequest {
 		return ErrInvalidTOTPToken

@@ -43,6 +43,7 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 		defer func() {
 			if !reqBodyClosed {
 				if err := req.Body.Close(); err != nil {
+					tracing.AttachErrorToSpan(span, err)
 					t.logger.Error(err, "closing response body")
 				}
 			}
@@ -51,7 +52,8 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 
 	token, tokenRetrievalErr := t.client.fetchAuthTokenForAPIClient(ctx, http.DefaultClient, t.clientID, t.secretKey)
 	if tokenRetrievalErr != nil {
-		return nil, fmt.Errorf("error fetching prerequisite PASETO: %w", tokenRetrievalErr)
+		tracing.AttachErrorToSpan(span, tokenRetrievalErr)
+		return nil, fmt.Errorf("fetching prerequisite PASETO: %w", tokenRetrievalErr)
 	}
 
 	req.Header.Add("Authorization", token)
@@ -59,5 +61,11 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	// req.Body is assumed to be closed by the base RoundTripper.
 	reqBodyClosed = true
 
-	return t.base.RoundTrip(req)
+	res, err := t.base.RoundTrip(req)
+	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
+		return nil, fmt.Errorf("executing PASETO-authorized request: %w", tokenRetrievalErr)
+	}
+
+	return res, nil
 }

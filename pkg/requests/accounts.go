@@ -128,6 +128,10 @@ func (b *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, inp
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if accountID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}

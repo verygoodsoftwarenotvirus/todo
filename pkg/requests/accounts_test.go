@@ -3,7 +3,6 @@ package requests
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -25,6 +24,7 @@ type accountRequestBuildersTestSuite struct {
 	suite.Suite
 
 	ctx                context.Context
+	builder            *Builder
 	exampleAccount     *types.Account
 	exampleInput       *types.AccountCreationInput
 	exampleAccountList *types.AccountList
@@ -34,12 +34,13 @@ var _ suite.SetupTestSuite = (*accountRequestBuildersTestSuite)(nil)
 
 func (s *accountRequestBuildersTestSuite) SetupTest() {
 	s.ctx = context.Background()
+	s.builder = buildTestRequestBuilder()
 	s.exampleAccount = fakes.BuildFakeAccount()
 	s.exampleInput = fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
 	s.exampleAccountList = fakes.BuildFakeAccountList()
 }
 
-func (s *accountRequestBuildersTestSuite) TestV1Client_BuildGetAccountRequest() {
+func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAccountRequest() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
 	s.Run("happy path", func() {
@@ -47,51 +48,36 @@ func (s *accountRequestBuildersTestSuite) TestV1Client_BuildGetAccountRequest() 
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccount.ID)
 
-		c := buildTestClientWithNilServer(t)
-		actual, err := c.BuildGetAccountRequest(s.ctx, s.exampleAccount.ID)
+		actual, err := s.builder.BuildGetAccountRequest(s.ctx, s.exampleAccount.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_BuildGetAccountsRequest(T *testing.T) {
-	T.Parallel()
-
+func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAccountsRequest() {
 	const expectedPath = "/api/v1/accounts"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
-		ts := httptest.NewTLSServer(nil)
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		c := buildTestClient(t, ts)
-		actual, err := c.BuildGetAccountsRequest(ctx, filter)
+		actual, err := s.builder.BuildGetAccountsRequest(s.ctx, filter)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_BuildCreateAccountRequest(T *testing.T) {
-	T.Parallel()
-
+func (s *accountRequestBuildersTestSuite) TestBuilder_BuildCreateAccountRequest() {
 	const expectedPath = "/api/v1/accounts"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-
-		ts := httptest.NewTLSServer(nil)
-
-		c := buildTestClient(t, ts)
-		actual, err := c.BuildCreateAccountRequest(ctx, exampleInput)
+		actual, err := s.builder.BuildCreateAccountRequest(s.ctx, s.exampleInput)
 		assert.NoError(t, err)
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
@@ -100,66 +86,47 @@ func TestV1Client_BuildCreateAccountRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildUpdateAccountRequest(T *testing.T) {
-	T.Parallel()
-
+func (s *accountRequestBuildersTestSuite) TestBuilder_BuildUpdateAccountRequest() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		ts := httptest.NewTLSServer(nil)
-		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleAccount.ID)
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccount.ID)
 
-		c := buildTestClient(t, ts)
-		actual, err := c.BuildUpdateAccountRequest(ctx, exampleAccount)
+		actual, err := s.builder.BuildUpdateAccountRequest(s.ctx, s.exampleAccount)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_BuildArchiveAccountRequest(T *testing.T) {
-	T.Parallel()
-
+func (s *accountRequestBuildersTestSuite) TestBuilder_BuildArchiveAccountRequest() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ts := httptest.NewTLSServer(nil)
-		exampleAccount := fakes.BuildFakeAccount()
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAccount.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID)
 
-		c := buildTestClient(t, ts)
-		actual, err := c.BuildArchiveAccountRequest(ctx, exampleAccount.ID)
+		actual, err := s.builder.BuildArchiveAccountRequest(s.ctx, s.exampleAccount.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func TestV1Client_BuildGetAuditLogForAccountRequest(T *testing.T) {
-	T.Parallel()
-
+func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAuditLogForAccountRequest() {
 	const expectedPath = "/api/v1/accounts/%d/audit"
 
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
+	s.Run("happy path", func() {
+		t := s.T()
 
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
-
-		actual, err := c.BuildGetAuditLogForAccountRequest(ctx, exampleAccount.ID)
+		actual, err := s.builder.BuildGetAuditLogForAccountRequest(s.ctx, s.exampleAccount.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAccount.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleAccount.ID)
 		assertRequestQuality(t, actual, spec)
 	})
 }

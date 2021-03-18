@@ -121,7 +121,7 @@ func main() {
 
 			userClient, err := httpclient.NewClient(parsedURI, httpclient.UsingLogger(userLogger), httpclient.UsingCookie(cookie))
 			if err != nil {
-				quitter.ComplainAndQuit(fmt.Errorf("error initializing client: %w", err))
+				quitter.ComplainAndQuit(fmt.Errorf("initializing client: %w", err))
 			}
 
 			userLogger.Debug("assigned user API client")

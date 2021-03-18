@@ -182,24 +182,24 @@ func (c *Client) MarkAccountAsUserDefault(ctx context.Context, userID, accountID
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+		return fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	// create the account.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user default account assignment", query, args); writeErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return writeErr
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, accountID, changedByUser)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	return nil
@@ -238,24 +238,24 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, userID, c
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+		return fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user account permissions modification", query, args); writeErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return writeErr
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.UserAccountPermissions, input.Reason)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	logger.Debug("user permissions modified")
@@ -277,14 +277,14 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID, transf
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+		return fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	transferAccountOwnershipQuery, transferAccountOwnershipArgs := c.sqlQueryBuilder.BuildTransferAccountOwnershipQuery(input.CurrentOwner, input.NewOwner, accountID)
 
 	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user ownership transfer", transferAccountOwnershipQuery, transferAccountOwnershipArgs); writeErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return writeErr
 	}
 
@@ -292,19 +292,19 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID, transf
 
 	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships transfer", transferAccountMembershipQuery, transferAccountMembershipArgs); writeErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return writeErr
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildTransferAccountOwnershipEventEntry(accountID, transferredBy, input)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	logger.Debug("TransferAccountOwnership called")
@@ -328,24 +328,24 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+		return fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user account membership creation", query, args); writeErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return writeErr
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, accountID, input)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	logger.Debug("user added to account")
@@ -371,24 +371,24 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, userID, accountID, r
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("error beginning transaction: %w", err)
+		return fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	// create the membership.
 	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); writeErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return writeErr
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(userID, accountID, removedByUser, reason)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	return nil

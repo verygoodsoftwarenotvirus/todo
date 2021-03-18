@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-// SwitchActiveAccount will, when provided the correct credentials, fetch a login cookie.
+// SwitchActiveAccount will make a request for a cookie that reflects a new account ID.
 func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -16,18 +18,29 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 		return ErrInvalidIDProvided
 	}
 
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
+
 	if c.authMethod == cookieAuthMethod {
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
+			logger.Error(err, "building login request")
+			tracing.AttachErrorToSpan(span, err)
 			return fmt.Errorf("building login request: %w", err)
 		}
 
 		res, err := c.authedClient.Do(req)
 		if err != nil {
-			return fmt.Errorf("encountered error executing login request: %w", err)
+			logger.Error(err, "executing login request")
+			tracing.AttachErrorToSpan(span, err)
+			return fmt.Errorf("executing login request: %w", err)
 		}
 
-		c.closeResponseBody(res)
+		c.closeResponseBody(ctx, res)
+
+		if len(res.Cookies()) == 1 {
+			cookie := res.Cookies()[0]
+			return c.SetOptions(UsingCookie(cookie))
+		}
 	}
 
 	c.accountID = accountID
@@ -46,10 +59,12 @@ func (c *Client) GetAccount(ctx context.Context, accountID uint64) (account *typ
 
 	req, err := c.requestBuilder.BuildGetAccountRequest(ctx, accountID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	if retrieveErr := c.retrieve(ctx, req, &account); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
 		return nil, retrieveErr
 	}
 
@@ -63,10 +78,12 @@ func (c *Client) GetAccounts(ctx context.Context, filter *types.QueryFilter) (ac
 
 	req, err := c.requestBuilder.BuildGetAccountsRequest(ctx, filter)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	if retrieveErr := c.retrieve(ctx, req, &accounts); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
 		return nil, retrieveErr
 	}
 
@@ -84,11 +101,16 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
 		c.logger.Error(validationErr, "validating input")
+		tracing.AttachErrorToSpan(span, validationErr)
+
 		return nil, fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	req, err := c.requestBuilder.BuildCreateAccountRequest(ctx, input)
 	if err != nil {
+		c.logger.Error(err, "building request")
+		tracing.AttachErrorToSpan(span, err)
+
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
@@ -108,6 +130,7 @@ func (c *Client) UpdateAccount(ctx context.Context, account *types.Account) erro
 
 	req, err := c.requestBuilder.BuildUpdateAccountRequest(ctx, account)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
@@ -125,13 +148,14 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
 
 	req, err := c.requestBuilder.BuildArchiveAccountRequest(ctx, accountID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
 	return c.executeRequest(ctx, req, nil)
 }
 
-// AddUserToAccount adds a user from an account.
+// AddUserToAccount adds a user to an account.
 func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
@@ -142,11 +166,16 @@ func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
 		c.logger.Error(validationErr, "validating input")
+		tracing.AttachErrorToSpan(span, validationErr)
+
 		return fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	req, err := c.requestBuilder.BuildAddUserRequest(ctx, accountID, input)
 	if err != nil {
+		c.logger.Error(err, "building request")
+		tracing.AttachErrorToSpan(span, err)
+
 		return fmt.Errorf("building request: %w", err)
 	}
 
@@ -164,6 +193,7 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 
 	req, err := c.requestBuilder.BuildMarkAsDefaultRequest(ctx, accountID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
@@ -185,6 +215,7 @@ func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64, reaso
 
 	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, reason)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
@@ -210,11 +241,13 @@ func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID 
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
 		c.logger.Error(validationErr, "validating input")
+		tracing.AttachErrorToSpan(span, validationErr)
 		return fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	req, err := c.requestBuilder.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, input)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
@@ -236,11 +269,13 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64,
 
 	if validationErr := input.Validate(ctx); validationErr != nil {
 		c.logger.Error(validationErr, "validating input")
+		tracing.AttachErrorToSpan(span, validationErr)
 		return fmt.Errorf("validating input: %w", validationErr)
 	}
 
 	req, err := c.requestBuilder.BuildTransferAccountOwnershipRequest(ctx, accountID, input)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
@@ -258,10 +293,12 @@ func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID uint64) (e
 
 	req, err := c.requestBuilder.BuildGetAuditLogForAccountRequest(ctx, accountID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
 		return nil, retrieveErr
 	}
 

@@ -207,7 +207,7 @@ func (s *TestSuite) TestPASETOGeneration() {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		req, err := testClient.BuildAPIClientAuthTokenRequest(ctx, input, actualKey)
+		req, err := testClient.RequestBuilder().BuildAPIClientAuthTokenRequest(ctx, input, actualKey)
 		require.NoError(t, err)
 
 		res, err := http.DefaultClient.Do(req)

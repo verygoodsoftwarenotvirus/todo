@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -19,6 +20,7 @@ func (c *Client) GetAPIClient(ctx context.Context, id uint64) (apiClient *types.
 
 	req, err := c.requestBuilder.BuildGetAPIClientRequest(ctx, id)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
@@ -34,6 +36,7 @@ func (c *Client) GetAPIClients(ctx context.Context, filter *types.QueryFilter) (
 
 	req, err := c.requestBuilder.BuildGetAPIClientsRequest(ctx, filter)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
@@ -62,10 +65,12 @@ func (c *Client) CreateAPIClient(ctx context.Context, cookie *http.Cookie, input
 
 	req, err := c.requestBuilder.BuildCreateAPIClientRequest(ctx, cookie, input)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, err
 	}
 
 	if resErr := c.executeRequest(ctx, req, &apiClientResponse); resErr != nil {
+		tracing.AttachErrorToSpan(span, resErr)
 		return nil, fmt.Errorf("executing request: %w", resErr)
 	}
 
@@ -83,6 +88,7 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, id uint64) error {
 
 	req, err := c.requestBuilder.BuildArchiveAPIClientRequest(ctx, id)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
@@ -100,10 +106,12 @@ func (c *Client) GetAuditLogForAPIClient(ctx context.Context, clientID uint64) (
 
 	req, err := c.requestBuilder.BuildGetAuditLogForAPIClientRequest(ctx, clientID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
 		return nil, retrieveErr
 	}
 

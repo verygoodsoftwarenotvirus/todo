@@ -219,14 +219,14 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		return nil, fmt.Errorf("beginning transaction: %w", transactionStartErr)
 	}
 
 	// create the account.
 	id, accountCreationErr := c.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
 	if accountCreationErr != nil {
 		logger.Error(accountCreationErr, "creating account in database")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return nil, fmt.Errorf("creating account in database: %w", accountCreationErr)
 	}
@@ -245,7 +245,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(x, createdByUser)); err != nil {
 		logger.Error(err, "writing <> audit log event entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return nil, fmt.Errorf("writing <> audit log event entry")
 	}
@@ -259,14 +259,14 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildAddUserToAccountQuery(x.ID, addInput)
 	if err := c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		logger.Error(err, "creating account membership")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return nil, err
 	}
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(createdByUser, x.ID, addInput)); err != nil {
 		logger.Error(err, "writing account membership creation audit log event entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return nil, fmt.Errorf("writing account membership creation audit log event entry")
 	}
@@ -274,7 +274,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	if err := tx.Commit(); err != nil {
 		logger.Error(err, "committing account creation transaction")
 
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, fmt.Errorf("committing transaction: %w", err)
 	}
 
 	logger.Debug("account created")
@@ -297,24 +297,24 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, chan
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account update", query, args); execErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("error updating account: %w", execErr)
+		return fmt.Errorf("updating account: %w", execErr)
 	}
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountUpdateEventEntry(updated.BelongsToUser, updated.ID, changedByUser, changes)); err != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		logger.Error(err, "writing account update audit log event entry")
 
 		return fmt.Errorf("writing account update audit log event entry")
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", commitErr)
+		return fmt.Errorf("committing transaction: %w", commitErr)
 	}
 
 	return nil
@@ -340,24 +340,24 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID, archived
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account archive", query, args); execErr != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("error updating account: %w", execErr)
+		return fmt.Errorf("updating account: %w", execErr)
 	}
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountArchiveEventEntry(userID, accountID, archivedByUser)); err != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		logger.Error(err, "writing account archive audit log event entry")
 
 		return fmt.Errorf("writing account archive audit log event entry")
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", commitErr)
+		return fmt.Errorf("committing transaction: %w", commitErr)
 	}
 
 	return nil

@@ -9,22 +9,23 @@ import (
 
 type attackTargetPair struct {
 	attacker *vegeta.Attacker
-	targeter vegeta.Targeter
+	helper   vegetaHelper
 	name     string
 }
 
 func buildAttackTargetPairs(ctx context.Context) []*attackTargetPair {
-	itemAttacker, itemsClient, err := createAttacker(ctx, "items")
+	itemAttacker, itemsClient, requestBuilder, err := createAttacker(ctx, "items")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	itemTargeter := newItemsTargeter(itemsClient).Targeter()
+	targeter := newItemsTargeter(itemsClient, requestBuilder)
 
 	return []*attackTargetPair{
 		{
+			name:     "items",
 			attacker: itemAttacker,
-			targeter: itemTargeter,
+			helper:   targeter,
 		},
 	}
 }

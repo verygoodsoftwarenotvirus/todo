@@ -186,15 +186,23 @@ func (c *Client) handleRows(rows database.ResultIterator) error {
 	return nil
 }
 
-func (c *Client) rollbackTransaction(tx *sql.Tx) {
+func (c *Client) rollbackTransaction(ctx context.Context, tx *sql.Tx) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
 	if err := tx.Rollback(); err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		c.logger.WithValue(keys.RollbackErrorKey, true).Error(err, "rolling back transaction")
 	}
 }
 
-func (c *Client) getIDFromResult(res sql.Result) uint64 {
+func (c *Client) getIDFromResult(ctx context.Context, res sql.Result) uint64 {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
 	id, err := res.LastInsertId()
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		c.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
 	}
 
@@ -202,7 +210,13 @@ func (c *Client) getIDFromResult(res sql.Result) uint64 {
 }
 
 func (c *Client) performCountQuery(ctx context.Context, querier database.Querier, query string) (count uint64, err error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachDatabaseQueryToSpan(span, query, "count query", nil)
+
 	if err = querier.QueryRowContext(ctx, query).Scan(&count); err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return 0, fmt.Errorf("executing count query: %w", err)
 	}
 
@@ -210,9 +224,16 @@ func (c *Client) performCountQuery(ctx context.Context, querier database.Querier
 }
 
 func (c *Client) performBooleanQuery(ctx context.Context, querier database.Querier, query string, args []interface{}) (exists bool, err error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachDatabaseQueryToSpan(span, query, "boolean query", args)
+
 	if err = querier.QueryRowContext(ctx, query, args...).Scan(&exists); errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	} else if err != nil {
+		c.logger.WithValue(keys.QueryKey, query).Error(err, "executing boolean query")
+		tracing.AttachErrorToSpan(span, err)
 		return false, fmt.Errorf("executing existence query: %w", err)
 	}
 
@@ -230,12 +251,14 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	defer span.End()
 
 	logger := c.logger.WithValue("query", query).WithValue("description", queryDescription)
+	tracing.AttachDatabaseQueryToSpan(span, query, queryDescription, args)
 
 	if c.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {
 		var id uint64
 
 		if err := querier.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
 			logger.Error(err, "executing query")
+			tracing.AttachErrorToSpan(span, err)
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
@@ -246,11 +269,13 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 		res, err := querier.ExecContext(ctx, query, args...)
 		if err != nil {
 			logger.Error(err, "executing query")
+			tracing.AttachErrorToSpan(span, err)
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
 		if count, rowsCountErr := res.RowsAffected(); count == 0 || rowsCountErr != nil {
 			logger.Error(rowsCountErr, "no rows modified by query")
+			tracing.AttachErrorToSpan(span, err)
 			return 0, sql.ErrNoRows
 		}
 
@@ -262,17 +287,19 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	res, err := querier.ExecContext(ctx, query, args...)
 	if err != nil {
 		logger.Error(err, "executing query")
+		tracing.AttachErrorToSpan(span, err)
 		return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 	}
 
 	if res != nil {
 		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
 			logger.Debug("no rows modified by query")
+			tracing.AttachErrorToSpan(span, sql.ErrNoRows)
 			return 0, sql.ErrNoRows
 		}
 	}
 
 	logger.Debug("query executed successfully")
 
-	return c.getIDFromResult(res), nil
+	return c.getIDFromResult(ctx, res), nil
 }

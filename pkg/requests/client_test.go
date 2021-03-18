@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"strings"
@@ -21,6 +20,19 @@ const (
 	exampleURI       = "https://todo.verygoodsoftwarenotvirus.ru"
 	asciiControlChar = string(byte(127))
 )
+
+var (
+	parsedExampleURL *url.URL
+)
+
+func init() {
+	var err error
+
+	parsedExampleURL, err = url.Parse(exampleURI)
+	if err != nil {
+		panic(err)
+	}
+}
 
 // begin test helpers
 
@@ -73,28 +85,13 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 	assert.Equal(t, spec.method, req.Method, "expected method to be %q, but was %q instead", spec.method, req.Method)
 }
 
-func buildTestClient(t *testing.T, ts *httptest.Server) *Builder {
-	t.Helper()
-
-	var (
-		u *url.URL
-		l = logging.NewNonOperationalLogger()
-	)
-
-	if ts != nil {
-		u = mustParseURL(ts.URL)
-	}
-
+func buildTestRequestBuilder() *Builder {
 	return &Builder{
-		url:    u,
-		logger: l,
+		url:    parsedExampleURL,
+		logger: logging.NewNonOperationalLogger(),
 		debug:  true,
 		tracer: tracing.NewTracer("test"),
 	}
-}
-
-func buildTestClientWithNilServer(t *testing.T) *Builder {
-	return buildTestClient(t, httptest.NewTLSServer(nil))
 }
 
 func buildTestClientWithInvalidURL(t *testing.T) *Builder {
@@ -248,9 +245,8 @@ func TestV1Client_BuildHealthCheckRequest(T *testing.T) {
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
-		ts := httptest.NewTLSServer(nil)
 
-		c := buildTestClient(t, ts)
+		c := buildTestRequestBuilder()
 		actual, err := c.BuildHealthCheckRequest(ctx)
 
 		require.NotNil(t, actual)
@@ -268,26 +264,26 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
+
+		c := buildTestRequestBuilder()
 		expectedMethod := http.MethodPost
-		req, err := c.buildDataRequest(ctx, expectedMethod, ts.URL, exampleData)
+		req, err := c.buildDataRequest(ctx, expectedMethod, exampleURI, exampleData)
 
 		require.NotNil(t, req)
 		assert.NoError(t, err)
 
 		assert.Equal(t, expectedMethod, req.Method)
-		assert.Equal(t, ts.URL, req.URL.String())
+		assert.Equal(t, exampleURI, req.URL.String())
 	})
 
 	T.Run("with invalid structure", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
+
+		c := buildTestRequestBuilder()
 		x := &testBreakableStruct{Thing: "stuff"}
-		req, err := c.buildDataRequest(ctx, http.MethodPost, ts.URL, x)
+		req, err := c.buildDataRequest(ctx, http.MethodPost, exampleURI, x)
 
 		require.Nil(t, req)
 		assert.Error(t, err)

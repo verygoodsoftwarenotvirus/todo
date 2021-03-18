@@ -14,6 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/requests"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
@@ -53,10 +54,10 @@ func selectAction(actions ...action) *action {
 	return nil
 }
 
-func createAttacker(ctx context.Context, name string) (*vegeta.Attacker, *httpclient.Client, error) {
-	c, err := createClientForTest(ctx, name)
+func createAttacker(ctx context.Context, name string) (*vegeta.Attacker, *httpclient.Client, *requests.Builder, error) {
+	c, b, err := createClientForTest(ctx, name)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	attacker := vegeta.NewAttacker(
@@ -64,7 +65,7 @@ func createAttacker(ctx context.Context, name string) (*vegeta.Attacker, *httpcl
 		vegeta.MaxConnections(100),
 	)
 
-	return attacker, c, nil
+	return attacker, c, b, nil
 }
 
 func initializeTargetFromRequest(req *http.Request, target *vegeta.Target) error {
@@ -81,25 +82,25 @@ func initializeTargetFromRequest(req *http.Request, target *vegeta.Target) error
 	return nil
 }
 
-func createClientForTest(ctx context.Context, name string) (*httpclient.Client, error) {
+func createClientForTest(ctx context.Context, name string) (*httpclient.Client, *requests.Builder, error) {
 	user, err := utils.CreateServiceUser(ctx, urlToUse, "")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	cookie, err := utils.GetLoginCookie(ctx, urlToUse, user)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	cookieClient, err := initializeCookiePoweredClient(cookie)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	apiClient, err := cookieClient.CreateAPIClient(ctx, cookie, &types.APICientCreationInput{
@@ -111,20 +112,25 @@ func createClientForTest(ctx context.Context, name string) (*httpclient.Client, 
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	secretKey, err := base64.RawURLEncoding.DecodeString(apiClient.ClientSecret)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	pasetoClient, err := initializePASETOPoweredClient(apiClient.ClientID, secretKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return pasetoClient, nil
+	builder, err := requests.NewBuilder(parsedURLToUse)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pasetoClient, builder, nil
 }
 
 func buildHTTPClient() *http.Client {

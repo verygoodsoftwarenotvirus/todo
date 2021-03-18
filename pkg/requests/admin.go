@@ -12,8 +12,8 @@ const (
 	adminBasePath = "_admin_"
 )
 
-// BuildAccountStatusUpdateInputRequest builds a request to ban a user.
-func (b *Builder) BuildAccountStatusUpdateInputRequest(ctx context.Context, input *types.UserReputationUpdateInput) (*http.Request, error) {
+// BuildUserReputationUpdateInputRequest builds a request to ban a user.
+func (b *Builder) BuildUserReputationUpdateInputRequest(ctx context.Context, input *types.UserReputationUpdateInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

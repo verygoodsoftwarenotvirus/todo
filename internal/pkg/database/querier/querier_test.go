@@ -454,7 +454,7 @@ func TestQuerier_rollbackTransaction(T *testing.T) {
 		tx, err := c.db.BeginTx(ctx, nil)
 		require.NoError(t, err)
 
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 	})
 }
 
@@ -469,8 +469,9 @@ func TestQuerier_getIDFromResult(T *testing.T) {
 		m := &database.MockSQLResult{}
 		m.On("LastInsertId").Return(expected, nil)
 
+		ctx := context.Background()
 		c, _ := buildTestClient(t)
-		actual := c.getIDFromResult(m)
+		actual := c.getIDFromResult(ctx, m)
 
 		assert.Equal(t, uint64(expected), actual)
 	})
@@ -481,8 +482,9 @@ func TestQuerier_getIDFromResult(T *testing.T) {
 		m := &database.MockSQLResult{}
 		m.On("LastInsertId").Return(int64(0), errors.New("blah"))
 
+		ctx := context.Background()
 		c, _ := buildTestClient(t)
-		actual := c.getIDFromResult(m)
+		actual := c.getIDFromResult(ctx, m)
 
 		assert.Zero(t, actual)
 	})

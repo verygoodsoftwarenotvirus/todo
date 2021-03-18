@@ -27,7 +27,7 @@ func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
 
 	mac := hmac.New(sha256.New, secretKey)
 	if _, macWriteErr := mac.Write(body); macWriteErr != nil {
-		return fmt.Errorf("error writing hash content: %w", macWriteErr)
+		return fmt.Errorf("writing hash content: %w", macWriteErr)
 	}
 
 	req.Header.Set(signatureHeaderKey, base64.RawURLEncoding.EncodeToString(mac.Sum(nil)))
@@ -55,7 +55,7 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 
 	req, requestBuildErr := b.buildDataRequest(ctx, http.MethodPost, uri, input)
 	if requestBuildErr != nil {
-		return nil, fmt.Errorf("error building request: %w", requestBuildErr)
+		return nil, fmt.Errorf("building request: %w", requestBuildErr)
 	}
 
 	var buff bytes.Buffer

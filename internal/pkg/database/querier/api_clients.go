@@ -237,12 +237,12 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
+		return nil, fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	id, err := c.performWriteQuery(ctx, tx, false, "API client creation", query, args)
 	if err != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return nil, err
 	}
 
@@ -257,13 +257,13 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, fmt.Errorf("committing transaction: %w", err)
 	}
 
 	return x, nil
@@ -290,23 +290,23 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, clientID, accountID, arch
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "API client archive", query, args); execErr != nil {
-		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating API client: %w", execErr)
+		c.rollbackTransaction(ctx, tx)
+		return fmt.Errorf("updating API client: %w", execErr)
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(accountID, clientID, archivedByUser)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", commitErr)
+		return fmt.Errorf("committing transaction: %w", commitErr)
 	}
 
 	return nil

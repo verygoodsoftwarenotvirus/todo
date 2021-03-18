@@ -17,7 +17,6 @@ require (
 	github.com/blevesearch/bleve/v2 v2.0.2
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/cznic/ql v1.2.0 // indirect
-	github.com/emicklei/hazana v1.9.6
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.1.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0

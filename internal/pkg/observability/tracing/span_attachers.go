@@ -2,7 +2,6 @@ package tracing
 
 import (
 	"net/url"
-	"strconv"
 
 	useragent "github.com/mssola/user_agent"
 	"go.opentelemetry.io/otel/codes"
@@ -14,9 +13,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+func attachUint8ToSpan(span trace.Span, attachmentKey string, id uint8) {
+	if span != nil {
+		span.SetAttributes(attribute.Int64(attachmentKey, int64(id)))
+	}
+}
+
 func attachUint64ToSpan(span trace.Span, attachmentKey string, id uint64) {
 	if span != nil {
-		span.SetAttributes(attribute.String(attachmentKey, strconv.FormatUint(id, 10)))
+		span.SetAttributes(attribute.Int64(attachmentKey, int64(id)))
 	}
 }
 
@@ -32,10 +37,14 @@ func attachBooleanToSpan(span trace.Span, key string, b bool) {
 	}
 }
 
+func attachSliceToSpan(span trace.Span, key string, slice interface{}) {
+	span.SetAttributes(attribute.Array(key, slice))
+}
+
 func attachToSpan(span trace.Span, key string, val interface{}) {
 	switch x := val.(type) {
 	case uint8:
-		attachUint64ToSpan(span, key, uint64(x))
+		attachUint8ToSpan(span, key, x)
 	case uint64:
 		attachUint64ToSpan(span, key, x)
 	case bool:
@@ -127,6 +136,31 @@ func AttachRequestURIToSpan(span trace.Span, uri string) {
 func AttachErrorToSpan(span trace.Span, err error) {
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
+	}
+}
+
+// AttachDatabaseQueryToSpan attaches a given search query to a span.
+func AttachDatabaseQueryToSpan(span trace.Span, query, queryDescription string, args []interface{}) {
+	attachToSpan(span, keys.QueryKey, query)
+	attachToSpan(span, "query_description", queryDescription)
+
+	if args != nil {
+		attachSliceToSpan(span, "query_args", args)
+	}
+}
+
+// AttachQueryFilterToSpan attaches a given query filter to a span.
+func AttachQueryFilterToSpan(span trace.Span, filter *types.QueryFilter) {
+	if filter != nil {
+		attachUint8ToSpan(span, keys.FilterLimitKey, filter.Limit)
+		attachUint64ToSpan(span, keys.FilterPageKey, filter.Page)
+		attachUint64ToSpan(span, keys.FilterCreatedAfterKey, filter.CreatedAfter)
+		attachUint64ToSpan(span, keys.FilterCreatedBeforeKey, filter.CreatedBefore)
+		attachUint64ToSpan(span, keys.FilterUpdatedAfterKey, filter.UpdatedAfter)
+		attachUint64ToSpan(span, keys.FilterUpdatedBeforeKey, filter.UpdatedBefore)
+		attachStringToSpan(span, keys.FilterSortByKey, string(filter.SortBy))
+	} else {
+		attachBooleanToSpan(span, keys.FilterIsNilKey, true)
 	}
 }
 

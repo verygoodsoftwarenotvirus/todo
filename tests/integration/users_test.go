@@ -240,7 +240,7 @@ func (s *TestSuite) TestUsersAuditing() {
 			input.TargetAccountID = nonexistentID
 
 			// Ban user.
-			assert.Error(t, testClients.admin.UpdateAccountStatus(ctx, input))
+			assert.Error(t, testClients.admin.UpdateUserReputation(ctx, input))
 
 			x, err := testClients.admin.GetAuditLogForUser(ctx, nonexistentID)
 			assert.NoError(t, err)

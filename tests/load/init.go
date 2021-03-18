@@ -3,21 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 )
 
 var (
 	urlToUse       string
 	parsedURLToUse *url.URL
-	cookie         *http.Cookie
 )
 
 func init() {
@@ -29,16 +25,6 @@ func init() {
 
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
-
-	u, err := utils.CreateServiceUser(ctx, urlToUse, "")
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	cookie, err = utils.GetLoginCookie(ctx, urlToUse, u)
-	if err != nil {
-		logger.Fatal(err)
-	}
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

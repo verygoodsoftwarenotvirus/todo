@@ -222,12 +222,12 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
+		return nil, fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	id, err := c.performWriteQuery(ctx, tx, false, "webhook creation", query, args)
 	if err != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return nil, err
 	}
 
@@ -246,13 +246,13 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, fmt.Errorf("committing transaction: %w", err)
 	}
 
 	return x, nil
@@ -286,14 +286,14 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 
 	if err := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); err != nil {
 		logger.Error(err, "updating webhook")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("updating webhook: %w", err)
 	}
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(changedByUser, updated.BelongsToAccount, updated.ID, changes)); err != nil {
 		logger.Error(err, "writing webhook update audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing webhook update audit log entry: %w", err)
 	}
@@ -330,23 +330,23 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, accountID, archi
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook archive", query, args); execErr != nil {
-		c.rollbackTransaction(tx)
-		return fmt.Errorf("error archiving webhook: %w", execErr)
+		c.rollbackTransaction(ctx, tx)
+		return fmt.Errorf("archiving webhook: %w", execErr)
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(archivedByUserID, accountID, webhookID)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", commitErr)
+		return fmt.Errorf("committing transaction: %w", commitErr)
 	}
 
 	return nil

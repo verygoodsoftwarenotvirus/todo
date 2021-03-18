@@ -26,7 +26,7 @@ func (s *TestSuite) TestAdminUserManagement() {
 			input.TargetAccountID = nonexistentID
 
 			// Ban user.
-			assert.Error(t, testClients.admin.UpdateAccountStatus(ctx, input))
+			assert.Error(t, testClients.admin.UpdateUserReputation(ctx, input))
 		})
 	}
 
@@ -62,7 +62,7 @@ func (s *TestSuite) TestAdminUserManagement() {
 				Reason:          "testing",
 			}
 
-			assert.NoError(t, testClients.admin.UpdateAccountStatus(ctx, input))
+			assert.NoError(t, testClients.admin.UpdateUserReputation(ctx, input))
 
 			// Assert user can no longer access service
 			_, subsequentCheckErr := userClient.GetAPIClients(ctx, nil)

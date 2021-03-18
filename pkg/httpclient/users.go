@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -19,12 +20,16 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (user *types.User, 
 
 	req, err := c.requestBuilder.BuildGetUserRequest(ctx, userID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
-	err = c.retrieve(ctx, req, &user)
+	if retrieveErr := c.retrieve(ctx, req, &user); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
+		return nil, fmt.Errorf("fetching user: %w", retrieveErr)
+	}
 
-	return user, err
+	return user, nil
 }
 
 // GetUsers retrieves a list of users.
@@ -36,12 +41,16 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 
 	req, err := c.requestBuilder.BuildGetUsersRequest(ctx, filter)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
-	err = c.retrieve(ctx, req, &users)
+	if retrieveErr := c.retrieve(ctx, req, &users); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
+		return nil, fmt.Errorf("fetching users: %w", retrieveErr)
+	}
 
-	return users, err
+	return users, nil
 }
 
 // SearchForUsersByUsername retrieves a list of users.
@@ -55,12 +64,16 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) 
 
 	req, err := c.requestBuilder.BuildSearchForUsersByUsernameRequest(ctx, username)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
-	err = c.retrieve(ctx, req, &users)
+	if retrieveErr := c.retrieve(ctx, req, &users); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
+		return nil, fmt.Errorf("searching for users: %w", retrieveErr)
+	}
 
-	return users, err
+	return users, nil
 }
 
 // CreateUser creates a new user.
@@ -79,12 +92,16 @@ func (c *Client) CreateUser(ctx context.Context, input *types.NewUserCreationInp
 
 	req, err := c.requestBuilder.BuildCreateUserRequest(ctx, input)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
-	err = c.executeUnauthenticatedDataRequest(ctx, req, &user)
+	if createErr := c.executeUnauthenticatedDataRequest(ctx, req, &user); createErr != nil {
+		tracing.AttachErrorToSpan(span, createErr)
+		return nil, fmt.Errorf("creating user: %w", createErr)
+	}
 
-	return user, err
+	return user, nil
 }
 
 // ArchiveUser archives a user.
@@ -98,10 +115,16 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	req, err := c.requestBuilder.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if archiveErr := c.executeRequest(ctx, req, nil); archiveErr != nil {
+		tracing.AttachErrorToSpan(span, archiveErr)
+		return fmt.Errorf("archiving user: %w", archiveErr)
+	}
+
+	return nil
 }
 
 // GetAuditLogForUser retrieves a list of audit log entries pertaining to a user.
@@ -115,10 +138,12 @@ func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) (entries
 
 	req, err := c.requestBuilder.BuildGetAuditLogForUserRequest(ctx, userID)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("building request: %w", err)
 	}
 
 	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
+		tracing.AttachErrorToSpan(span, retrieveErr)
 		return nil, retrieveErr
 	}
 
@@ -138,13 +163,21 @@ func (c *Client) UploadAvatar(ctx context.Context, avatar []byte, extension stri
 	case "jpeg", "png", "gif":
 		//
 	default:
-		return fmt.Errorf("invalid extension: %q", extension)
+		err := fmt.Errorf("invalid extension: %q", extension)
+		tracing.AttachErrorToSpan(span, err)
+		return err
 	}
 
 	req, err := c.requestBuilder.BuildAvatarUploadRequest(ctx, avatar, extension)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("building request: %w", err)
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if uploadErr := c.executeRequest(ctx, req, nil); uploadErr != nil {
+		tracing.AttachErrorToSpan(span, uploadErr)
+		return fmt.Errorf("uploading avatar: %w", uploadErr)
+	}
+
+	return nil
 }

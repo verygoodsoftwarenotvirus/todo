@@ -298,13 +298,13 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput,
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error beginning transaction: %w", err)
+		return nil, fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	// create the item.
 	id, err := c.performWriteQuery(ctx, tx, false, "item creation", query, args)
 	if err != nil {
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 		return nil, err
 	}
 
@@ -318,13 +318,13 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput,
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, fmt.Errorf("committing transaction: %w", err)
 	}
 
 	return x, nil
@@ -346,23 +346,23 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changedByU
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item update", query, args); execErr != nil {
-		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating item: %w", execErr)
+		c.rollbackTransaction(ctx, tx)
+		return fmt.Errorf("updating item: %w", execErr)
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(changedByUser, updated.ID, updated.BelongsToAccount, changes)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", commitErr)
+		return fmt.Errorf("committing transaction: %w", commitErr)
 	}
 
 	return nil
@@ -389,23 +389,23 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 
 	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
 	if transactionStartErr != nil {
-		return fmt.Errorf("error beginning transaction: %w", transactionStartErr)
+		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
 	}
 
 	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item archive", query, args); execErr != nil {
-		c.rollbackTransaction(tx)
-		return fmt.Errorf("error updating item: %w", execErr)
+		c.rollbackTransaction(ctx, tx)
+		return fmt.Errorf("updating item: %w", execErr)
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, belongsToAccount, itemID)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
-		c.rollbackTransaction(tx)
+		c.rollbackTransaction(ctx, tx)
 
 		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("error committing transaction: %w", commitErr)
+		return fmt.Errorf("committing transaction: %w", commitErr)
 	}
 
 	return nil

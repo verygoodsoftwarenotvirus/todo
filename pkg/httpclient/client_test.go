@@ -98,10 +98,6 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	return client
 }
 
-func buildTestClientWithNilServer(t *testing.T) *Client {
-	return buildTestClient(t, httptest.NewTLSServer(nil))
-}
-
 func buildTestClientWithInvalidURL(t *testing.T) *Client {
 	t.Helper()
 
@@ -221,6 +217,7 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 	T.Run("with error", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		rc := newMockReadCloser()
 		rc.On("Close").Return(errors.New("blah"))
 
@@ -232,7 +229,7 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 		c, _ := NewClient(mustParseURL(exampleURI))
 		assert.NotNil(t, c)
 
-		c.closeResponseBody(res)
+		c.closeResponseBody(ctx, res)
 
 		mock.AssertExpectationsForObjects(t, rc)
 	})

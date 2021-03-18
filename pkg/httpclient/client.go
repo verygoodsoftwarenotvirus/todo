@@ -62,6 +62,11 @@ func (c *Client) URL() *url.URL {
 	return c.url
 }
 
+// RequestBuilder provides the client's *requests.Builder.
+func (c *Client) RequestBuilder() *requests.Builder {
+	return c.requestBuilder
+}
+
 // NewClient builds a new API client for us.
 func NewClient(u *url.URL, options ...option) (*Client, error) {
 	l := logging.NewNonOperationalLogger()
@@ -99,17 +104,16 @@ func NewClient(u *url.URL, options ...option) (*Client, error) {
 }
 
 // closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
-func closeResponseBody(logger logging.Logger, res *http.Response) {
+func (c *Client) closeResponseBody(ctx context.Context, res *http.Response) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
 	if res != nil {
 		if err := res.Body.Close(); err != nil {
-			logger.Error(err, "closing response body")
+			tracing.AttachErrorToSpan(span, err)
+			c.logger.Error(err, "closing response body")
 		}
 	}
-}
-
-// closeResponseBody takes a given HTTP response and closes its body, logging if an error occurs.
-func (c *Client) closeResponseBody(res *http.Response) {
-	closeResponseBody(c.logger, res)
 }
 
 // BuildURL builds standard service URLs.
@@ -124,38 +128,26 @@ func (c *Client) BuildURL(ctx context.Context, qp url.Values, parts ...string) s
 	return ""
 }
 
-func buildRawURL(u *url.URL, qp url.Values, includeVersionPrefix bool, parts ...string) (*url.URL, error) {
-	tu := *u
-
-	if includeVersionPrefix {
-		parts = append([]string{"api", "v1"}, parts...)
-	}
-
-	u, err := url.Parse(path.Join(parts...))
-	if err != nil {
-		return nil, err
-	}
-
-	if qp != nil {
-		u.RawQuery = qp.Encode()
-	}
-
-	return tu.ResolveReference(u), nil
-}
-
 // buildRawURL takes a given set of query parameters and url parts, and returns.
 // a parsed url object from them.
 func (c *Client) buildRawURL(ctx context.Context, queryParams url.Values, parts ...string) *url.URL {
 	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u, err := buildRawURL(c.url, queryParams, true, parts...)
+	tu := *c.url
+	parts = append([]string{"api", "v1"}, parts...)
+
+	u, err := url.Parse(path.Join(parts...))
 	if err != nil {
-		c.logger.Error(err, "building versionless url")
+		tracing.AttachErrorToSpan(span, err)
 		return nil
 	}
 
-	return u
+	if queryParams != nil {
+		u.RawQuery = queryParams.Encode()
+	}
+
+	return tu.ResolveReference(u)
 }
 
 // buildVersionlessURL builds a url without the `/api/v1/` prefix. It should otherwise be identical to buildRawURL.
@@ -163,13 +155,19 @@ func (c *Client) buildVersionlessURL(ctx context.Context, qp url.Values, parts .
 	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u, err := buildRawURL(c.url, qp, false, parts...)
+	tu := *c.url
+
+	u, err := url.Parse(path.Join(parts...))
 	if err != nil {
-		c.logger.Error(err, "building versionless url")
+		tracing.AttachErrorToSpan(span, err)
 		return ""
 	}
 
-	return u.String()
+	if qp != nil {
+		u.RawQuery = qp.Encode()
+	}
+
+	return tu.ResolveReference(u).String()
 }
 
 // BuildWebsocketURL builds a standard url and then converts its scheme to the websocket protocol.
@@ -195,17 +193,19 @@ func (c *Client) IsUp(ctx context.Context) bool {
 
 	req, err := c.requestBuilder.BuildHealthCheckRequest(ctx)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		c.logger.Error(err, "building request")
 		return false
 	}
 
 	res, err := c.plainClient.Do(req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		c.logger.Error(err, "health check")
 		return false
 	}
 
-	c.closeResponseBody(res)
+	c.closeResponseBody(ctx, res)
 
 	return res.StatusCode == http.StatusOK
 }
@@ -217,11 +217,13 @@ func (c *Client) buildDataRequest(ctx context.Context, method, uri string, in in
 
 	body, err := createBodyFromStruct(in)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, uri, body)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, err
 	}
 
@@ -241,17 +243,20 @@ func (c *Client) executeRequest(ctx context.Context, req *http.Request, out inte
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("executing request: %w", err)
 	}
 
 	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
 
 	if clientErr := errorFromResponse(res); clientErr != nil {
+		tracing.AttachErrorToSpan(span, clientErr)
 		return clientErr
 	}
 
 	if out != nil {
 		if resErr := c.unmarshalBody(ctx, res, out); resErr != nil {
+			tracing.AttachErrorToSpan(span, resErr)
 			return fmt.Errorf("loading %s %d response from server: %w", res.Request.Method, res.StatusCode, resErr)
 		}
 	}
@@ -274,6 +279,7 @@ func (c *Client) executeRawRequest(ctx context.Context, client *http.Client, req
 
 	res, err := client.Do(req.WithContext(ctx))
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, fmt.Errorf("executing request: %w", err)
 	}
 
@@ -293,10 +299,11 @@ func (c *Client) checkExistence(ctx context.Context, req *http.Request) (bool, e
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return false, err
 	}
 
-	c.closeResponseBody(res)
+	c.closeResponseBody(ctx, res)
 
 	return res.StatusCode == http.StatusOK, nil
 }
@@ -313,10 +320,12 @@ func (c *Client) retrieve(ctx context.Context, req *http.Request, obj interface{
 
 	res, err := c.executeRawRequest(ctx, c.authedClient, req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("executing request: %w", err)
 	}
 
 	if resErr := errorFromResponse(res); resErr != nil {
+		tracing.AttachErrorToSpan(span, resErr)
 		return resErr
 	}
 
@@ -330,15 +339,18 @@ func (c *Client) executeUnauthenticatedDataRequest(ctx context.Context, req *htt
 
 	res, err := c.executeRawRequest(ctx, c.plainClient, req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return fmt.Errorf("executing request: %w", err)
 	}
 
 	if resErr := errorFromResponse(res); resErr != nil {
+		tracing.AttachErrorToSpan(span, resErr)
 		return resErr
 	}
 
 	if out != nil {
 		if resErr := c.unmarshalBody(ctx, res, out); resErr != nil {
+			tracing.AttachErrorToSpan(span, resErr)
 			return fmt.Errorf("loading %s %d response from server: %w", res.Request.Method, res.StatusCode, err)
 		}
 	}

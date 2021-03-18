@@ -40,6 +40,7 @@ func (t *cookieRoundtripper) RoundTrip(req *http.Request) (*http.Response, error
 		defer func() {
 			if !reqBodyClosed {
 				if err := req.Body.Close(); err != nil {
+					tracing.AttachErrorToSpan(span, err)
 					t.logger.Error(err, "closing response body")
 				}
 			}
@@ -55,6 +56,7 @@ func (t *cookieRoundtripper) RoundTrip(req *http.Request) (*http.Response, error
 
 	res, err := t.base.RoundTrip(req)
 	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
 		return nil, err
 	}
 

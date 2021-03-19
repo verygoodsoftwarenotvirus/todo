@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/requests"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http/requests"
 
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
@@ -17,12 +17,12 @@ type vegetaHelper interface {
 }
 
 type itemsTargeter struct {
-	client         *httpclient.Client
+	client         *http.Client
 	requestBuilder *requests.Builder
 	createdItemIDs map[uint64]struct{}
 }
 
-func newItemsTargeter(client *httpclient.Client, requestBuilder *requests.Builder) *itemsTargeter {
+func newItemsTargeter(client *http.Client, requestBuilder *requests.Builder) *itemsTargeter {
 	return &itemsTargeter{
 		client:         client,
 		requestBuilder: requestBuilder,

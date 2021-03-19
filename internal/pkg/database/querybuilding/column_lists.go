@@ -95,7 +95,7 @@ var (
 	// API Clients Table.
 	//
 
-	// APIClientsTableColumns are the columns for the oauth2 clients table.
+	// APIClientsTableColumns are the columns for the API clients table.
 	APIClientsTableColumns = []string{
 		fmt.Sprintf("%s.%s", APIClientsTableName, IDColumn),
 		fmt.Sprintf("%s.%s", APIClientsTableName, ExternalIDColumn),

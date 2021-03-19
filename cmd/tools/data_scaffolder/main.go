@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	flag "github.com/spf13/pflag"
@@ -119,7 +119,7 @@ func main() {
 				quitter.ComplainAndQuit(fmt.Errorf("getting cookie: %v", cookieErr))
 			}
 
-			userClient, err := httpclient.NewClient(parsedURI, httpclient.UsingLogger(userLogger), httpclient.UsingCookie(cookie))
+			userClient, err := http.NewClient(parsedURI, http.UsingLogger(userLogger), http.UsingCookie(cookie))
 			if err != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("initializing client: %w", err))
 			}

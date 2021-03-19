@@ -53,13 +53,13 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleInput.TargetAccountID,
+			exampleInput.TargetUserID,
 			*exampleInput,
 		).Return(nil)
 		s.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
 		s.UserAccountStatusChangeHandler(res, req)
@@ -99,13 +99,13 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleInput.TargetAccountID,
+			exampleInput.TargetUserID,
 			*exampleInput,
 		).Return(nil)
 		s.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogAccountTerminationEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		auditLog.On("LogAccountTerminationEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
 		s.UserAccountStatusChangeHandler(res, req)
@@ -259,7 +259,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleInput.TargetAccountID,
+			exampleInput.TargetUserID,
 			*exampleInput,
 		).Return(sql.ErrNoRows)
 		s.userDB = udb
@@ -301,7 +301,7 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleInput.TargetAccountID,
+			exampleInput.TargetUserID,
 			*exampleInput,
 		).Return(errors.New("blah"))
 		s.userDB = udb
@@ -344,14 +344,14 @@ func TestService_UserAccountStatusChangeHandler(T *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetAccountID, exampleInput.Reason).Return()
+		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
 		s.auditLog = auditLog
 
 		udb := &mocktypes.AdminUserDataManager{}
 		udb.On(
 			"UpdateUserAccountStatus",
 			mock.Anything,
-			exampleInput.TargetAccountID,
+			exampleInput.TargetUserID,
 			*exampleInput,
 		).Return(nil)
 		s.userDB = udb

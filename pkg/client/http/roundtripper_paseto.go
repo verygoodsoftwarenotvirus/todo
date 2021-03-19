@@ -1,0 +1,70 @@
+package http
+
+import (
+	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+)
+
+// pasetoRoundTripper is a transport that uses a cookie.
+type pasetoRoundTripper struct {
+	logger    logging.Logger
+	tracer    tracing.Tracer
+	base      http.RoundTripper
+	client    *Client
+	clientID  string
+	secretKey []byte // base is the base RoundTripper used to make HTTP requests. If nil, http.DefaultTransport is used.
+
+}
+
+var pasetoRoundTripperClient = http.DefaultClient
+
+func newPASETORoundTripper(client *Client, clientID string, secretKey []byte) *pasetoRoundTripper {
+	return &pasetoRoundTripper{
+		clientID:  clientID,
+		secretKey: secretKey,
+		logger:    client.logger,
+		tracer:    client.tracer,
+		base:      newDefaultRoundTripper(client.unauthenticatedClient.Timeout),
+		client:    client,
+	}
+}
+
+// RoundTrip authorizes and authenticates the request with a cookie.
+func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	ctx, span := t.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	reqBodyClosed := false
+
+	logger := t.logger.WithRequest(req)
+
+	if req.Body != nil {
+		defer func() {
+			if !reqBodyClosed {
+				if err := req.Body.Close(); err != nil {
+					tracing.AttachErrorToSpan(span, err)
+					t.logger.Error(err, "closing response body")
+				}
+			}
+		}()
+	}
+
+	token, err := t.client.fetchAuthTokenForAPIClient(ctx, pasetoRoundTripperClient, t.clientID, t.secretKey)
+	if err != nil {
+		return nil, prepareError(err, logger, span, "fetching prerequisite PASETO")
+	}
+
+	// req.Body is assumed to be closed by the base RoundTripper.
+	reqBodyClosed = true
+
+	req.Header.Add("Authorization", token)
+
+	res, err := t.base.RoundTrip(req)
+	if err != nil {
+		return nil, prepareError(err, logger, span, "executing PASETO-authorized request")
+	}
+
+	return res, nil
+}

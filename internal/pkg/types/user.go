@@ -153,7 +153,7 @@ type (
 		BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
 		BuildArchiveUserQuery(userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{})
-		BuildSetUserStatusQuery(userID uint64, input UserReputationUpdateInput) (query string, args []interface{})
+		BuildSetUserStatusQuery(input UserReputationUpdateInput) (query string, args []interface{})
 	}
 
 	// AdminUserDataManager contains administrative User functions that we don't necessarily want to expose

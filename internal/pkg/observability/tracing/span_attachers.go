@@ -58,6 +58,13 @@ func attachToSpan(span trace.Span, key string, val interface{}) {
 	}
 }
 
+// AttachToSpan allows a user to attach any value to a span.
+func AttachToSpan(span trace.Span, key string, val interface{}) {
+	if span != nil {
+		span.SetAttributes(attribute.Any(key, val))
+	}
+}
+
 // AttachFilterToSpan provides a consistent way to attach a filter's info to a span.
 func AttachFilterToSpan(span trace.Span, page uint64, limit uint8) {
 	attachToSpan(span, keys.FilterPageKey, page)
@@ -89,8 +96,8 @@ func AttachRequestingUserIDToSpan(span trace.Span, userID uint64) {
 	attachToSpan(span, keys.RequesterKey, userID)
 }
 
-// AttachPlanIDToSpan provides a consistent way to attach a plan's ID to a span.
-func AttachPlanIDToSpan(span trace.Span, planID uint64) {
+// AttachAccountSubscriptionPlanIDToSpan provides a consistent way to attach a plan's ID to a span.
+func AttachAccountSubscriptionPlanIDToSpan(span trace.Span, planID uint64) {
 	attachToSpan(span, keys.AccountSubscriptionPlanIDKey, planID)
 }
 
@@ -102,12 +109,12 @@ func AttachRequestContextToSpan(span trace.Span, sessionInfo *types.RequestConte
 	}
 }
 
-// AttachAPIClientDatabaseIDToSpan is a consistent way to attach an oauth2 client's ID to a span.
+// AttachAPIClientDatabaseIDToSpan is a consistent way to attach an API client's database row ID to a span.
 func AttachAPIClientDatabaseIDToSpan(span trace.Span, clientID uint64) {
 	attachToSpan(span, keys.APIClientDatabaseIDKey, clientID)
 }
 
-// AttachAPIClientClientIDToSpan is a consistent way to attach an oauth2 client's ID to a span.
+// AttachAPIClientClientIDToSpan is a consistent way to attach an API client's ID to a span.
 func AttachAPIClientClientIDToSpan(span trace.Span, clientID string) {
 	attachToSpan(span, keys.APIClientClientIDKey, clientID)
 }

@@ -205,13 +205,13 @@ func (q *Sqlite) BuildUpdateUserQuery(input *types.User) (query string, args []i
 }
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (q *Sqlite) BuildSetUserStatusQuery(userID uint64, input types.UserReputationUpdateInput) (query string, args []interface{}) {
+func (q *Sqlite) BuildSetUserStatusQuery(input types.UserReputationUpdateInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.UsersTableName).
 		Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
 		Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
 		Where(squirrel.Eq{
-			querybuilding.IDColumn:         userID,
+			querybuilding.IDColumn:         input.TargetUserID,
 			querybuilding.ArchivedOnColumn: nil,
 		}),
 	)

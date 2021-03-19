@@ -95,7 +95,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		"period":      x.Period,
 	}).Info("created plan")
 
-	tracing.AttachPlanIDToSpan(span, x.ID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, x.ID)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, x.ID)
 	logger.Debug("plan created")
 
@@ -123,7 +123,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
-	tracing.AttachPlanIDToSpan(span, planID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
 	// fetch plan from database.
@@ -170,7 +170,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
-	tracing.AttachPlanIDToSpan(span, planID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	// fetch plan from database.
 	x, err := s.planDataManager.GetAccountSubscriptionPlan(ctx, planID)
@@ -218,7 +218,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
-	tracing.AttachPlanIDToSpan(span, planID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
 	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, reqCtx.User.ID)
@@ -259,7 +259,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 
 	// determine plan ID.
 	planID := s.planIDFetcher(req)
-	tracing.AttachPlanIDToSpan(span, planID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
 	x, err := s.planDataManager.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)

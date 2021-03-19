@@ -240,9 +240,9 @@ func TestMariaDB_BuildSetUserStatusQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleInput.NewReputation,
 			exampleInput.Reason,
-			exampleUser.ID,
+			exampleInput.TargetUserID,
 		}
-		actualQuery, actualArgs := q.BuildSetUserStatusQuery(exampleUser.ID, exampleInput)
+		actualQuery, actualArgs := q.BuildSetUserStatusQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

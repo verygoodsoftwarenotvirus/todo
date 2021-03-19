@@ -17,7 +17,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 )
 
 // CreateServiceUser creates a user.

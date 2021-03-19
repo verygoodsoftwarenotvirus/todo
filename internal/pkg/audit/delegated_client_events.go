@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	// APIClientAssignmentKey is the key we use to indicate that an audit log entry is associated with an oauth2 client.
+	// APIClientAssignmentKey is the key we use to indicate that an audit log entry is associated with an API client.
 	APIClientAssignmentKey = "api_client_id"
 
 	// APIClientCreationEvent events indicate a user created a API client.
@@ -16,7 +16,7 @@ const (
 	APIClientArchiveEvent = "api_client_archived"
 )
 
-// BuildAPIClientCreationEventEntry builds an entry creation input for when an oauth2 client is created.
+// BuildAPIClientCreationEventEntry builds an entry creation input for when an API client is created.
 func BuildAPIClientCreationEventEntry(client *types.APIClient) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: APIClientCreationEvent,
@@ -27,7 +27,7 @@ func BuildAPIClientCreationEventEntry(client *types.APIClient) *types.AuditLogEn
 	}
 }
 
-// BuildAPIClientArchiveEventEntry builds an entry creation input for when an oauth2 client is archived.
+// BuildAPIClientArchiveEventEntry builds an entry creation input for when an API client is archived.
 func BuildAPIClientArchiveEventEntry(accountID, clientID, archivedBy uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: APIClientArchiveEvent,

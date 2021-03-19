@@ -60,9 +60,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	logger = logger.WithValue("ban_recipient", input.TargetAccountID)
+	logger = logger.WithValue("status_change_recipient", input.TargetUserID)
 
-	if err := s.userDB.UpdateUserAccountStatus(ctx, input.TargetAccountID, *input); err != nil {
+	if err := s.userDB.UpdateUserAccountStatus(ctx, input.TargetUserID, *input); err != nil {
 		logger.Error(err, "changing user status")
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -76,9 +76,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		s.auditLog.LogUserBanEvent(ctx, reqCtx.User.ID, input.TargetAccountID, input.Reason)
+		s.auditLog.LogUserBanEvent(ctx, reqCtx.User.ID, input.TargetUserID, input.Reason)
 	case types.TerminatedAccountStatus:
-		s.auditLog.LogAccountTerminationEvent(ctx, reqCtx.User.ID, input.TargetAccountID, input.Reason)
+		s.auditLog.LogAccountTerminationEvent(ctx, reqCtx.User.ID, input.TargetUserID, input.Reason)
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 

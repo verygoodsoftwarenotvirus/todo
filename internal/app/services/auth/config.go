@@ -31,7 +31,7 @@ type (
 		SecureOnly bool          `json:"secure_only" mapstructure:"secure_only" toml:"secure_only,omitempty"`
 	}
 
-	// PASETOConfig holds our PASETO token settings.
+	// PASETOConfig holds our PASETO settings.
 	PASETOConfig struct {
 		Issuer       string        `json:"issuer" mapstructure:"issuer" toml:"issuer,omitempty"`
 		LocalModeKey []byte        `json:"local_mode_key" mapstructure:"local_mode_key" toml:"local_mode_key,omitempty"`

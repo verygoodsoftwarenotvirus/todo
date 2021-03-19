@@ -111,9 +111,9 @@ func BuildFakeUserDataStoreCreationInputFromUser(user *types.User) types.UserDat
 // BuildFakeUserReputationUpdateInputFromUser builds a faked UserReputationUpdateInput.
 func BuildFakeUserReputationUpdateInputFromUser(user *types.User) types.UserReputationUpdateInput {
 	return types.UserReputationUpdateInput{
-		TargetAccountID: fake.Uint64(),
-		NewReputation:   user.Reputation,
-		Reason:          fake.Sentence(10),
+		TargetUserID:  fake.Uint64(),
+		NewReputation: user.Reputation,
+		Reason:        fake.Sentence(10),
 	}
 }
 

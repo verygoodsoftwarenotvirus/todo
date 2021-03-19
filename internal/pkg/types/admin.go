@@ -23,9 +23,9 @@ type (
 
 	// UserReputationUpdateInput represents what an admin User could provide as input for changing statuses.
 	UserReputationUpdateInput struct {
-		NewReputation   userReputation `json:"newReputation"`
-		Reason          string         `json:"reason"`
-		TargetAccountID uint64         `json:"accountID"`
+		NewReputation userReputation `json:"newReputation"`
+		Reason        string         `json:"reason"`
+		TargetUserID  uint64         `json:"targetUserID"`
 	}
 
 	// FrontendService serves static frontend files.
@@ -39,6 +39,6 @@ func (i *UserReputationUpdateInput) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.NewReputation, validation.Required),
 		validation.Field(&i.Reason, validation.Required),
-		validation.Field(&i.TargetAccountID, validation.Required, validation.Min(uint64(1))),
+		validation.Field(&i.TargetUserID, validation.Required, validation.Min(uint64(1))),
 	)
 }

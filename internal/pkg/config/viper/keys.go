@@ -43,11 +43,11 @@ const (
 	ConfigKeyAuthSecureCookiesOnly = authKey + x + cookiesKey + x + "secure_only"
 
 	pasetoKey = "paseto"
-	// ConfigKeyAuthPASETOLifetimeKey is the key for PASETO token settings.
+	// ConfigKeyAuthPASETOLifetimeKey is the key for PASETO settings.
 	ConfigKeyAuthPASETOLifetimeKey = authKey + x + pasetoKey + x + "lifetime"
-	// ConfigKeyAuthPASETOListener is the key for PASETO token settings.
+	// ConfigKeyAuthPASETOListener is the key for PASETO settings.
 	ConfigKeyAuthPASETOListener = authKey + x + pasetoKey + x + "issuer"
-	// ConfigKeyAuthPASETOLocalModeKey is the key for PASETO token settings.
+	// ConfigKeyAuthPASETOLocalModeKey is the key for PASETO settings.
 	ConfigKeyAuthPASETOLocalModeKey = authKey + x + pasetoKey + x + "local_mode_key"
 
 	// ConfigKeyAuthEnableUserSignup is the key viper will use to refer to the AuthSettings.EnableUserSignup setting.

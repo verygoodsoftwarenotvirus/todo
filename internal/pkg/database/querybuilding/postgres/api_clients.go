@@ -28,7 +28,7 @@ func (q *Postgres) BuildGetBatchOfAPIClientsQuery(beginID, endID uint64) (query 
 	)
 }
 
-// BuildGetAPIClientByClientIDQuery returns a SQL query which requests a given OAuth2 client by its database ID.
+// BuildGetAPIClientByClientIDQuery returns a SQL query which requests a given API client by its database ID.
 func (q *Postgres) BuildGetAPIClientByClientIDQuery(clientID string) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Select(querybuilding.APIClientsTableColumns...).
@@ -40,7 +40,7 @@ func (q *Postgres) BuildGetAPIClientByClientIDQuery(clientID string) (query stri
 	)
 }
 
-// BuildGetAllAPIClientsCountQuery returns a SQL query for the number of OAuth2 clients
+// BuildGetAllAPIClientsCountQuery returns a SQL query for the number of API clients
 // in the database regardless of ownership.
 func (q *Postgres) BuildGetAllAPIClientsCountQuery() string {
 	return q.buildQueryOnly(q.sqlBuilder.
@@ -52,7 +52,7 @@ func (q *Postgres) BuildGetAllAPIClientsCountQuery() string {
 	)
 }
 
-// BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of OAuth2 clients that
+// BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of API clients that
 // meet the given client's criteria (if relevant) and belong to a given account.
 func (q *Postgres) BuildGetAPIClientsQuery(userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	return q.buildListQuery(
@@ -100,7 +100,7 @@ func (q *Postgres) BuildCreateAPIClientQuery(input *types.APICientCreationInput)
 	)
 }
 
-// BuildUpdateAPIClientQuery returns a SQL query (and args) that will update a given OAuth2 client in the database.
+// BuildUpdateAPIClientQuery returns a SQL query (and args) that will update a given API client in the database.
 func (q *Postgres) BuildUpdateAPIClientQuery(input *types.APIClient) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.APIClientsTableName).
@@ -114,7 +114,7 @@ func (q *Postgres) BuildUpdateAPIClientQuery(input *types.APIClient) (query stri
 	)
 }
 
-// BuildArchiveAPIClientQuery returns a SQL query (and arguments) that will mark an OAuth2 client as archived.
+// BuildArchiveAPIClientQuery returns a SQL query (and arguments) that will mark an API client as archived.
 func (q *Postgres) BuildArchiveAPIClientQuery(clientID, userID uint64) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Update(querybuilding.APIClientsTableName).

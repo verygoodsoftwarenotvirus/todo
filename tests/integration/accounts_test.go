@@ -18,7 +18,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 )
 
 func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
@@ -259,7 +259,7 @@ func (s *TestSuite) TestAccountsMemberships() {
 			const userCount = 1
 			// create dummy users
 			users := []*types.User{}
-			clients := []*httpclient.Client{}
+			clients := []*http.Client{}
 
 			// create users
 			for i := 0; i < userCount; i++ {

@@ -15,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
+	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
@@ -96,7 +96,7 @@ func initializeCookiePoweredClient(t *testing.T, cookie *http.Cookie) (*httpclie
 	}
 
 	if debug {
-		if setOptionErr := c.SetOptions(httpclient.WithDebug()); setOptionErr != nil {
+		if setOptionErr := c.SetOptions(httpclient.UsingDebug(true)); setOptionErr != nil {
 			return nil, setOptionErr
 		}
 	}
@@ -114,7 +114,7 @@ func initializePASETOPoweredClient(clientID string, secretKey []byte) (*httpclie
 	}
 
 	if debug {
-		if setOptionErr := c.SetOptions(httpclient.WithDebug()); setOptionErr != nil {
+		if setOptionErr := c.SetOptions(httpclient.UsingDebug(true)); setOptionErr != nil {
 			return nil, setOptionErr
 		}
 	}

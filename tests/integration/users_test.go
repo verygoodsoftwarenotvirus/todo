@@ -237,7 +237,7 @@ func (s *TestSuite) TestUsersAuditing() {
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
 			input.NewReputation = types.BannedAccountStatus
-			input.TargetAccountID = nonexistentID
+			input.TargetUserID = nonexistentID
 
 			// Ban user.
 			assert.Error(t, testClients.admin.UpdateUserReputation(ctx, input))
@@ -314,7 +314,7 @@ func (s *TestSuite) TestUsersAvatarManagement() {
 
 			avatar := testutil.BuildArbitraryImagePNGBytes(256)
 
-			require.NoError(t, testClients.main.UploadAvatar(ctx, avatar, "png"))
+			require.NoError(t, testClients.main.UploadNewAvatar(ctx, avatar, "png"))
 
 			// Assert user equality.
 			user, err := testClients.admin.GetUser(ctx, s.user.ID)

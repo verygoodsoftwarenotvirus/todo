@@ -21,9 +21,9 @@ func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := types.UserReputationUpdateInput{
-			TargetAccountID: exampleUser.ID,
-			NewReputation:   "new",
-			Reason:          "because",
+			TargetUserID:  exampleUser.ID,
+			NewReputation: "new",
+			Reason:        "because",
 		}
 
 		ctx := context.Background()
@@ -32,7 +32,7 @@ func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.UserSQLQueryBuilder.
-			On("BuildSetUserStatusQuery", exampleUser.ID, exampleInput).
+			On("BuildSetUserStatusQuery", exampleInput).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 

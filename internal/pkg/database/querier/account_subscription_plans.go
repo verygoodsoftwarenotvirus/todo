@@ -86,7 +86,7 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, accountSubscrip
 	defer span.End()
 
 	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID).Debug("GetAccountSubscriptionPlan called")
-	tracing.AttachPlanIDToSpan(span, accountSubscriptionPlanID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
 	query, args := c.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 	row := c.db.QueryRowContext(ctx, query, args...)
@@ -184,7 +184,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachPlanIDToSpan(span, updated.ID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, updated.ID)
 	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, updated.ID).Debug("UpdateAccountSubscriptionPlan called")
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
@@ -216,7 +216,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachPlanIDToSpan(span, accountSubscriptionPlanID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
 	c.logger.WithValues(map[string]interface{}{
 		keys.AccountSubscriptionPlanIDKey: accountSubscriptionPlanID,

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/httpclient"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 )
 
 func (s *TestSuite) TestAdminUserManagement() {
@@ -23,7 +23,7 @@ func (s *TestSuite) TestAdminUserManagement() {
 			defer span.End()
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
-			input.TargetAccountID = nonexistentID
+			input.TargetUserID = nonexistentID
 
 			// Ban user.
 			assert.Error(t, testClients.admin.UpdateUserReputation(ctx, input))
@@ -40,7 +40,7 @@ func (s *TestSuite) TestAdminUserManagement() {
 
 			var (
 				user       *types.User
-				userClient *httpclient.Client
+				userClient *http.Client
 			)
 
 			switch authType {
@@ -57,9 +57,9 @@ func (s *TestSuite) TestAdminUserManagement() {
 			require.NoError(t, initialCheckErr)
 
 			input := &types.UserReputationUpdateInput{
-				TargetAccountID: user.ID,
-				NewReputation:   types.BannedAccountStatus,
-				Reason:          "testing",
+				TargetUserID:  user.ID,
+				NewReputation: types.BannedAccountStatus,
+				Reason:        "testing",
 			}
 
 			assert.NoError(t, testClients.admin.UpdateUserReputation(ctx, input))

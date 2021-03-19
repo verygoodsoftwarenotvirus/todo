@@ -337,18 +337,18 @@ func TestPostgres_BuildSetUserStatusQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := types.UserReputationUpdateInput{
-			TargetAccountID: exampleUser.ID,
-			NewReputation:   "new",
-			Reason:          "test",
+			TargetUserID:  exampleUser.ID,
+			NewReputation: "new",
+			Reason:        "test",
 		}
 
 		expectedQuery := "UPDATE users SET reputation = $1, reputation_explanation = $2 WHERE archived_on IS NULL AND id = $3"
 		expectedArgs := []interface{}{
 			exampleInput.NewReputation,
 			exampleInput.Reason,
-			exampleInput.TargetAccountID,
+			exampleInput.TargetUserID,
 		}
-		actualQuery, actualArgs := q.BuildSetUserStatusQuery(exampleUser.ID, exampleInput)
+		actualQuery, actualArgs := q.BuildSetUserStatusQuery(exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

@@ -19,7 +19,7 @@ func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, inp
 	tracing.AttachUserIDToSpan(span, userID)
 	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserAccountStatus called")
 
-	query, args := c.sqlQueryBuilder.BuildSetUserStatusQuery(userID, input)
+	query, args := c.sqlQueryBuilder.BuildSetUserStatusQuery(input)
 
 	return c.performWriteQueryIgnoringReturn(ctx, c.db, "user status update query", query, args)
 }

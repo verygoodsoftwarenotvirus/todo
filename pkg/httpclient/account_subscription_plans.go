@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -23,17 +22,11 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) 
 
 	req, err := c.requestBuilder.BuildGetAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
-		logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building account subscription plan retrieval request")
 	}
 
-	if retrieveErr := c.retrieve(ctx, req, &plan); retrieveErr != nil {
-		logger.Error(retrieveErr, "retrieving plan")
-		tracing.AttachErrorToSpan(span, retrieveErr)
-
-		return nil, retrieveErr
+	if err = c.fetchAndUnmarshal(ctx, req, &plan); err != nil {
+		return nil, prepareError(err, logger, span, "retrieving plan")
 	}
 
 	return plan, nil
@@ -45,26 +38,18 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	defer span.End()
 
 	var plans *types.AccountSubscriptionPlanList
-	logger := c.logger.
-		WithValue(keys.FilterLimitKey, filter.Limit).
-		WithValue(keys.FilterIsNilKey, filter == nil).
-		WithValue(keys.FilterPageKey, filter.Page)
+
+	logger := c.loggerForFilter(filter)
 
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	req, err := c.requestBuilder.BuildGetAccountSubscriptionPlansRequest(ctx, filter)
 	if err != nil {
-		logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building account subscription plan list request")
 	}
 
-	if retrieveErr := c.retrieve(ctx, req, &plans); retrieveErr != nil {
-		logger.Error(err, "retrieving plans")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, retrieveErr
+	if err = c.fetchAndUnmarshal(ctx, req, &plans); err != nil {
+		return nil, prepareError(err, logger, span, "retrieving plans")
 	}
 
 	return plans, nil
@@ -83,25 +68,16 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	logger := c.logger.WithValue("account_subscription_plan_name", input.Name)
 
 	if err := input.Validate(ctx); err != nil {
-		logger.Error(err, "validating input")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, fmt.Errorf("validating input: %w", err)
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateAccountSubscriptionPlanRequest(ctx, input)
 	if err != nil {
-		logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building account subscription plan creation request")
 	}
 
-	if err = c.executeRequest(ctx, req, &plan); err != nil {
-		logger.Error(err, "creating plan")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, fmt.Errorf("creating plan: %w", err)
+	if err = c.fetchAndUnmarshal(ctx, req, &plan); err != nil {
+		return nil, prepareError(err, logger, span, "creating plan")
 	}
 
 	return plan, nil
@@ -120,13 +96,14 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, plan *types.
 
 	req, err := c.requestBuilder.BuildUpdateAccountSubscriptionPlanRequest(ctx, plan)
 	if err != nil {
-		logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building account subscription plan update request")
 	}
 
-	return c.executeRequest(ctx, req, &plan)
+	if err = c.fetchAndUnmarshal(ctx, req, &plan); err != nil {
+		return prepareError(err, logger, span, "updating account subscription plan")
+	}
+
+	return nil
 }
 
 // ArchiveAccountSubscriptionPlan archives an account subscription plan.
@@ -142,13 +119,14 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint
 
 	req, err := c.requestBuilder.BuildArchiveAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
-		logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building account subscription plan archive request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "archiving account subscription plan")
+	}
+
+	return nil
 }
 
 // GetAuditLogForAccountSubscriptionPlan retrieves a list of audit log entries pertaining to an account subscription plan.
@@ -164,19 +142,13 @@ func (c *Client) GetAuditLogForAccountSubscriptionPlan(ctx context.Context, plan
 
 	req, err := c.requestBuilder.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
-		logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building fetch audit log entries for account subscription plan request")
 	}
 
 	var entries []*types.AuditLogEntry
 
-	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
-		logger.Error(retrieveErr, "building request")
-		tracing.AttachErrorToSpan(span, retrieveErr)
-
-		return nil, retrieveErr
+	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
+		return nil, prepareError(err, logger, span, "retrieving audit log entries for account subscription plan")
 	}
 
 	return entries, nil

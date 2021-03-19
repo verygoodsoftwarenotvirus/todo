@@ -187,7 +187,7 @@ func (c *Client) handleRows(rows database.ResultIterator) error {
 }
 
 func (c *Client) rollbackTransaction(ctx context.Context, tx *sql.Tx) {
-	ctx, span := c.tracer.StartSpan(ctx)
+	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if err := tx.Rollback(); err != nil {
@@ -197,7 +197,7 @@ func (c *Client) rollbackTransaction(ctx context.Context, tx *sql.Tx) {
 }
 
 func (c *Client) getIDFromResult(ctx context.Context, res sql.Result) uint64 {
-	ctx, span := c.tracer.StartSpan(ctx)
+	_, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	id, err := res.LastInsertId()
@@ -234,6 +234,7 @@ func (c *Client) performBooleanQuery(ctx context.Context, querier database.Queri
 	} else if err != nil {
 		c.logger.WithValue(keys.QueryKey, query).Error(err, "executing boolean query")
 		tracing.AttachErrorToSpan(span, err)
+
 		return false, fmt.Errorf("executing existence query: %w", err)
 	}
 
@@ -259,6 +260,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 		if err := querier.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
 			logger.Error(err, "executing query")
 			tracing.AttachErrorToSpan(span, err)
+
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
@@ -270,12 +272,14 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 		if err != nil {
 			logger.Error(err, "executing query")
 			tracing.AttachErrorToSpan(span, err)
+
 			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 		}
 
 		if count, rowsCountErr := res.RowsAffected(); count == 0 || rowsCountErr != nil {
 			logger.Error(rowsCountErr, "no rows modified by query")
 			tracing.AttachErrorToSpan(span, err)
+
 			return 0, sql.ErrNoRows
 		}
 
@@ -288,6 +292,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	if err != nil {
 		logger.Error(err, "executing query")
 		tracing.AttachErrorToSpan(span, err)
+
 		return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
 	}
 
@@ -295,6 +300,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
 			logger.Debug("no rows modified by query")
 			tracing.AttachErrorToSpan(span, sql.ErrNoRows)
+
 			return 0, sql.ErrNoRows
 		}
 	}

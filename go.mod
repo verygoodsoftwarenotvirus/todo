@@ -54,6 +54,7 @@ require (
 	go.uber.org/zap v1.16.0
 	gocloud.dev v0.22.0
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
 	golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 )

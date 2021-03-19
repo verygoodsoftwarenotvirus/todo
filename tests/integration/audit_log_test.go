@@ -9,7 +9,7 @@ import (
 )
 
 func (s *TestSuite) TestAuditLogEntryListing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read in a list by an admin via %s", authType), func() {
 			t := s.T()
@@ -26,7 +26,7 @@ func (s *TestSuite) TestAuditLogEntryListing() {
 }
 
 func (s *TestSuite) TestAuditLogEntryReading() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read as an individual by an admin via %s", authType), func() {
 			t := s.T()

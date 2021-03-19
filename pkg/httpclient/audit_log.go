@@ -2,49 +2,57 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 // GetAuditLogEntries retrieves a list of entries.
-func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (entries *types.AuditLogEntryList, err error) {
+func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (*types.AuditLogEntryList, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.loggerForFilter(filter)
+
+	tracing.AttachQueryFilterToSpan(span, filter)
+
 	req, err := c.requestBuilder.BuildGetAuditLogEntriesRequest(ctx, filter)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building fetch audit log entries request")
 	}
 
-	c.logger.WithRequest(req).Debug("Fetching audit log entries")
+	logger = logger.WithRequest(req)
 
-	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
-		tracing.AttachErrorToSpan(span, retrieveErr)
-		return nil, retrieveErr
+	var entries *types.AuditLogEntryList
+	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
+		return nil, prepareError(err, logger, span, "fetching audit log entries")
 	}
 
 	return entries, nil
 }
 
 // GetAuditLogEntry retrieves an entry.
-func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (entry *types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if entryID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
+	logger := c.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
+
 	req, err := c.requestBuilder.BuildGetAuditLogEntryRequest(ctx, entryID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building get audit log entry request")
 	}
 
 	c.logger.WithRequest(req).Debug("Fetching audit log entry")
 
-	if retrieveErr := c.retrieve(ctx, req, &entry); retrieveErr != nil {
-		tracing.AttachErrorToSpan(span, retrieveErr)
-		return nil, retrieveErr
+	var entry *types.AuditLogEntry
+	if err = c.fetchAndUnmarshal(ctx, req, &entry); err != nil {
+		return nil, prepareError(err, logger, span, "retrieving audit log entry")
 	}
 
 	return entry, nil

@@ -8,10 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	testlogging "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/testing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -20,6 +19,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,7 +52,7 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 	cookie, err = utils.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
-	cookieClient, err = initializeCookiePoweredClient(cookie)
+	cookieClient, err = initializeCookiePoweredClient(t, cookie)
 	require.NoError(t, err)
 
 	apiClient, err := cookieClient.CreateAPIClient(ctx, cookie, &types.APICientCreationInput{
@@ -81,12 +81,16 @@ func buildHTTPClient() *http.Client {
 	}
 }
 
-func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, error) {
-	if urlToUse == "" {
+func initializeCookiePoweredClient(t *testing.T, cookie *http.Cookie) (*httpclient.Client, error) {
+	if parsedURLToUse == nil {
 		panic("url not set!")
 	}
 
-	c, err := httpclient.NewClient(parsedURLToUse, httpclient.UsingLogger(logging.NewNonOperationalLogger()), httpclient.UsingHTTPClient(buildHTTPClient()), httpclient.UsingCookie(cookie))
+	c, err := httpclient.NewClient(parsedURLToUse,
+		httpclient.UsingLogger(testlogging.NewLogger(t)),
+		httpclient.UsingHTTPClient(buildHTTPClient()),
+		httpclient.UsingCookie(cookie),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +104,11 @@ func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, err
 	return c, nil
 }
 func initializePASETOPoweredClient(clientID string, secretKey []byte) (*httpclient.Client, error) {
-	c, err := httpclient.NewClient(parsedURLToUse, httpclient.UsingLogger(logging.NewNonOperationalLogger()), httpclient.UsingHTTPClient(buildHTTPClient()), httpclient.UsingPASETO(clientID, secretKey))
+	c, err := httpclient.NewClient(parsedURLToUse,
+		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
+		httpclient.UsingHTTPClient(buildHTTPClient()),
+		httpclient.UsingPASETO(clientID, secretKey),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +157,7 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 	adminCookie, err := utils.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
 	require.NoError(t, err)
 
-	cClient, err := initializeCookiePoweredClient(adminCookie)
+	cClient, err := initializeCookiePoweredClient(t, adminCookie)
 	require.NoError(t, err)
 
 	code, err := totp.GenerateCode(premadeAdminUser.TwoFactorSecret, time.Now().UTC())

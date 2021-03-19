@@ -5,45 +5,43 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
-// Logger is our log wrapper.
-type Logger struct {
+// logger is our log wrapper.
+type logger struct {
 	logger        *zap.Logger
 	requestIDFunc logging.RequestIDFunc
 }
 
 // NewLogger builds a new logger.
-func NewLogger(logger *zap.Logger) (logging.Logger, error) {
+func NewLogger(l *zap.Logger) (logging.Logger, error) {
 	var (
-		l   *zap.Logger
 		err error
 	)
 
-	if logger == nil {
+	if l == nil {
 		l, err = zap.NewDevelopment()
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		l = logger
 	}
 
-	return &Logger{logger: l}, nil
+	return &logger{logger: l}, nil
 }
 
 // WithName is our obligatory contract fulfillment function.
-func (l *Logger) WithName(name string) logging.Logger {
+func (l *logger) WithName(name string) logging.Logger {
 	l2 := l.logger.Named(name)
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
 // SetLevel sets the log level for our logger.
-func (l *Logger) SetLevel(level logging.Level) {
+func (l *logger) SetLevel(level logging.Level) {
 	var lvl zapcore.Level
 
 	switch level {
@@ -61,32 +59,32 @@ func (l *Logger) SetLevel(level logging.Level) {
 }
 
 // SetRequestIDFunc satisfies our interface.
-func (l *Logger) SetRequestIDFunc(f logging.RequestIDFunc) {
+func (l *logger) SetRequestIDFunc(f logging.RequestIDFunc) {
 	l.requestIDFunc = f
 }
 
 // Info satisfies our contract for the logging.Logger Info method.
-func (l *Logger) Info(input string) {
+func (l *logger) Info(input string) {
 	l.logger.Info(input)
 }
 
 // Debug satisfies our contract for the logging.Logger Debug method.
-func (l *Logger) Debug(input string) {
+func (l *logger) Debug(input string) {
 	l.logger.Debug(input)
 }
 
 // Error satisfies our contract for the logging.Logger Error method.
-func (l *Logger) Error(err error, input string) {
+func (l *logger) Error(err error, input string) {
 	l.logger.With(zap.Error(err)).Error(input)
 }
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.
-func (l *Logger) Fatal(err error) {
+func (l *logger) Fatal(err error) {
 	l.logger.With(zap.Error(err)).Fatal(err.Error())
 }
 
 // Printf satisfies our contract for the logging.Logger Printf method.
-func (l *Logger) Printf(format string, args ...interface{}) {
+func (l *logger) Printf(format string, args ...interface{}) {
 	l.logger.Info(fmt.Sprintf(format, args...))
 }
 
@@ -216,41 +214,52 @@ func determineField(key string, val interface{}) zap.Field {
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.
-func (l *Logger) WithValues(values map[string]interface{}) logging.Logger {
+func (l *logger) WithValues(values map[string]interface{}) logging.Logger {
 	l2 := l.logger.With()
 
 	for key, val := range values {
 		l2 = l2.With(determineField(key, val))
 	}
 
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
 // WithValue satisfies our contract for the logging.Logger WithValue method.
-func (l *Logger) WithValue(key string, value interface{}) logging.Logger {
+func (l *logger) WithValue(key string, value interface{}) logging.Logger {
 	l2 := l.logger.With(determineField(key, value))
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
 // WithError satisfies our contract for the logging.Logger WithError method.
-func (l *Logger) WithError(err error) logging.Logger {
+func (l *logger) WithError(err error) logging.Logger {
 	l2 := l.logger.With(zap.Error(err))
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
-// WithRequest satisfies our contract for the logging.Logger WithRequest method.
-func (l *Logger) WithRequest(req *http.Request) logging.Logger {
-	l2 := &Logger{logger: l.logger.With(
+func (l *logger) attachRequestToLogger(req *http.Request) *zap.Logger {
+	l2 := l.logger.With(
 		zap.String("path", req.URL.Path),
 		zap.String("method", req.Method),
 		zap.String("query", req.URL.RawQuery),
-	)}
+	)
 
 	if l.requestIDFunc != nil {
 		if reqID := l.requestIDFunc(req); reqID != "" {
-			l2.logger = l2.logger.With(zap.String("request_id", reqID))
+			l2 = l2.With(zap.String("request_id", reqID))
 		}
 	}
 
 	return l2
+}
+
+// WithRequest satisfies our contract for the logging.Logger WithRequest method.
+func (l *logger) WithRequest(req *http.Request) logging.Logger {
+	return &logger{logger: l.attachRequestToLogger(req)}
+}
+
+// WithResponse satisfies our contract for the logging.Logger WithRequest method.
+func (l *logger) WithResponse(res *http.Response) logging.Logger {
+	l2 := l.attachRequestToLogger(res.Request).With(zap.Int(keys.ResponseStatusKey, res.StatusCode))
+
+	return &logger{logger: l2}
 }

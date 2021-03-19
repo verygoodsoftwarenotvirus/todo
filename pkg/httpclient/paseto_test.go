@@ -43,7 +43,7 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.unauthenticatedClient, exampleClientID, exampleSecret)
 
 		assert.NoError(t, err)
 		assert.Equal(t, anticipatedResult, token)
@@ -58,7 +58,7 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.unauthenticatedClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -82,7 +82,7 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.unauthenticatedClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -105,7 +105,7 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.unauthenticatedClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)
@@ -129,7 +129,7 @@ func TestClient_fetchAuthTokenForAPIClient(T *testing.T) {
 		exampleSecret := make([]byte, validClientSecretSize)
 		ctx := context.Background()
 
-		token, err := c.fetchAuthTokenForAPIClient(ctx, c.plainClient, exampleClientID, exampleSecret)
+		token, err := c.fetchAuthTokenForAPIClient(ctx, c.unauthenticatedClient, exampleClientID, exampleSecret)
 
 		assert.Error(t, err)
 		assert.Empty(t, token)

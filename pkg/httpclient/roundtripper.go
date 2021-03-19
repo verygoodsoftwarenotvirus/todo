@@ -40,7 +40,7 @@ func buildDefaultTransport(timeout time.Duration) *http.Transport {
 		timeout = defaultTimeout
 	}
 
-	return &http.Transport{
+	t := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout:   timeout,
@@ -52,4 +52,6 @@ func buildDefaultTransport(timeout time.Duration) *http.Transport {
 		ExpectContinueTimeout: expectContinueTimeout,
 		IdleConnTimeout:       idleConnTimeout,
 	}
+
+	return t
 }

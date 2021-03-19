@@ -2,14 +2,11 @@ package types
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 func TestWebhook_Update(T *testing.T) {
@@ -48,17 +45,6 @@ func TestWebhook_Update(T *testing.T) {
 
 		actual.Update(exampleInput)
 		assert.Equal(t, expected, actual)
-	})
-}
-
-func Test_buildErrorLogFunc(T *testing.T) {
-	T.Parallel()
-
-	T.Run("obligatory", func(t *testing.T) {
-		t.Parallel()
-		w := &Webhook{}
-		actual := buildErrorLogFunc(w, logging.NewNonOperationalLogger())
-		actual(errors.New("blah"))
 	})
 }
 

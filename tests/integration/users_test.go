@@ -39,7 +39,7 @@ func checkUserEquality(t *testing.T, expected, actual *types.User) {
 }
 
 func (s *TestSuite) TestUsersCreating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
 			t := s.T()
@@ -72,7 +72,7 @@ func (s *TestSuite) TestUsersCreating() {
 }
 
 func (s *TestSuite) TestUsersReading() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should return an error when trying to read a user that does not exist via %s", authType), func() {
 			t := s.T()
@@ -86,7 +86,7 @@ func (s *TestSuite) TestUsersReading() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
 			t := s.T()
@@ -112,7 +112,7 @@ func (s *TestSuite) TestUsersReading() {
 }
 
 func (s *TestSuite) TestUsersSearching() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should return empty slice when searching for a username that does not exist via %s", authType), func() {
 			t := s.T()
@@ -126,7 +126,7 @@ func (s *TestSuite) TestUsersSearching() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should only be accessible to admins via %s", authType), func() {
 			t := s.T()
@@ -141,7 +141,7 @@ func (s *TestSuite) TestUsersSearching() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should return be searchable via %s", authType), func() {
 			t := s.T()
@@ -178,7 +178,7 @@ func (s *TestSuite) TestUsersSearching() {
 }
 
 func (s *TestSuite) TestUsersArchiving() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to archive a non-existent user via %s", authType), func() {
 			t := s.T()
@@ -190,7 +190,7 @@ func (s *TestSuite) TestUsersArchiving() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be archived via %s", authType), func() {
 			t := s.T()
@@ -227,7 +227,7 @@ func (s *TestSuite) TestUsersArchiving() {
 }
 
 func (s *TestSuite) TestUsersAuditing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should return an error when trying to audit something that does not exist via %s", authType), func() {
 			t := s.T()
@@ -248,7 +248,7 @@ func (s *TestSuite) TestUsersAuditing() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should not be auditable by a non-admin via %s", authType), func() {
 			t := s.T()
@@ -272,7 +272,7 @@ func (s *TestSuite) TestUsersAuditing() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be audited via %s", authType), func() {
 			t := s.T()
@@ -304,7 +304,7 @@ func (s *TestSuite) TestUsersAuditing() {
 }
 
 func (s *TestSuite) TestUsersAvatarManagement() {
-	for a, c := range s.eachClient(pasetoAuthType) {
+	for a, c := range s.eachClientExcept(pasetoAuthType) {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to upload an avatar via %s", authType), func() {
 			t := s.T()

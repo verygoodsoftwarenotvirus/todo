@@ -19,13 +19,15 @@ const (
 	UserIsAdminKey = "is_admin"
 	// UsernameKey is the standard key for referring to a username.
 	UsernameKey = "username"
+	// NameKey is the standard key for referring to a name.
+	NameKey = "name"
 	// FilterCreatedAfterKey is the standard key for referring to a types.QueryFilter's CreatedAfter field.
 	FilterCreatedAfterKey = "filter_created_after"
-	// FilterCreatedAfterKey is the standard key for referring to a types.QueryFilter's CreatedBefore field.
+	// FilterCreatedBeforeKey is the standard key for referring to a types.QueryFilter's CreatedBefore field.
 	FilterCreatedBeforeKey = "filter_created_before"
-	// FilterCreatedAfterKey is the standard key for referring to a types.QueryFilter's UpdatedAfter field.
+	// FilterUpdatedAfterKey is the standard key for referring to a types.QueryFilter's UpdatedAfter field.
 	FilterUpdatedAfterKey = "filter_updated_after"
-	// FilterCreatedAfterKey is the standard key for referring to a types.QueryFilter's UpdatedAfter field.
+	// FilterUpdatedBeforeKey is the standard key for referring to a types.QueryFilter's UpdatedAfter field.
 	FilterUpdatedBeforeKey = "filter_updated_before"
 	// FilterSortByKey is the standard key for referring to a types.QueryFilter's SortBy field.
 	FilterSortByKey = "filter_sort_by"

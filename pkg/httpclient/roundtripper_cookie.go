@@ -25,7 +25,7 @@ func newCookieRoundTripper(client *Client, cookie *http.Cookie) *cookieRoundtrip
 		cookie: cookie,
 		logger: client.logger,
 		tracer: client.tracer,
-		base:   otelhttp.NewTransport(newDefaultRoundTripper(client.plainClient.Timeout)),
+		base:   otelhttp.NewTransport(newDefaultRoundTripper(client.unauthenticatedClient.Timeout)),
 	}
 }
 

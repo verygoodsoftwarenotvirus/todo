@@ -2,7 +2,6 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -20,26 +19,25 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 
 	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
 
+	logger.Debug("switching account")
+
 	if c.authMethod == cookieAuthMethod {
+		logger.Debug("making switch request because of cookie auth mode")
+
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
-			logger.Error(err, "building login request")
-			tracing.AttachErrorToSpan(span, err)
-			return fmt.Errorf("building login request: %w", err)
+			return prepareError(err, logger, span, "building switch active account request")
 		}
 
-		res, err := c.authedClient.Do(req)
+		res, err := c.fetchResponseToRequest(ctx, c.authedClient, req)
 		if err != nil {
-			logger.Error(err, "executing login request")
-			tracing.AttachErrorToSpan(span, err)
-			return fmt.Errorf("executing login request: %w", err)
+			return prepareError(err, logger, span, "executing login request")
 		}
 
 		c.closeResponseBody(ctx, res)
 
 		if len(res.Cookies()) == 1 {
-			cookie := res.Cookies()[0]
-			return c.SetOptions(UsingCookie(cookie))
+			return c.SetOptions(UsingCookie(res.Cookies()[0]))
 		}
 	}
 
@@ -49,7 +47,7 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 }
 
 // GetAccount retrieves an account.
-func (c *Client) GetAccount(ctx context.Context, accountID uint64) (account *types.Account, err error) {
+func (c *Client) GetAccount(ctx context.Context, accountID uint64) (*types.Account, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -57,41 +55,45 @@ func (c *Client) GetAccount(ctx context.Context, accountID uint64) (account *typ
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
+
 	req, err := c.requestBuilder.BuildGetAccountRequest(ctx, accountID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building account retrieval request")
 	}
 
-	if retrieveErr := c.retrieve(ctx, req, &account); retrieveErr != nil {
-		tracing.AttachErrorToSpan(span, retrieveErr)
-		return nil, retrieveErr
+	var account *types.Account
+	if err = c.fetchAndUnmarshal(ctx, req, &account); err != nil {
+		return nil, prepareError(err, logger, span, "retrieving account")
 	}
 
 	return account, nil
 }
 
 // GetAccounts retrieves a list of accounts.
-func (c *Client) GetAccounts(ctx context.Context, filter *types.QueryFilter) (accounts *types.AccountList, err error) {
+func (c *Client) GetAccounts(ctx context.Context, filter *types.QueryFilter) (*types.AccountList, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.loggerForFilter(filter)
+
+	tracing.AttachQueryFilterToSpan(span, filter)
+
 	req, err := c.requestBuilder.BuildGetAccountsRequest(ctx, filter)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building account list request")
 	}
 
-	if retrieveErr := c.retrieve(ctx, req, &accounts); retrieveErr != nil {
-		tracing.AttachErrorToSpan(span, retrieveErr)
-		return nil, retrieveErr
+	var accounts *types.AccountList
+	if err = c.fetchAndUnmarshal(ctx, req, &accounts); err != nil {
+		return nil, prepareError(err, logger, span, "retrieving accounts")
 	}
 
 	return accounts, nil
 }
 
 // CreateAccount creates an account.
-func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (account *types.Account, err error) {
+func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (*types.Account, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -99,24 +101,23 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		tracing.AttachErrorToSpan(span, validationErr)
+	logger := c.logger.WithValue("account_name", input.Name)
 
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateAccountRequest(ctx, input)
 	if err != nil {
-		c.logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building account creation request")
 	}
 
-	err = c.executeRequest(ctx, req, &account)
+	var account *types.Account
+	if err = c.fetchAndUnmarshal(ctx, req, &account); err != nil {
+		return nil, prepareError(err, logger, span, "creating account")
+	}
 
-	return account, err
+	return account, nil
 }
 
 // UpdateAccount updates an account.
@@ -128,13 +129,18 @@ func (c *Client) UpdateAccount(ctx context.Context, account *types.Account) erro
 		return ErrNilInputProvided
 	}
 
+	logger := c.logger.WithValue(keys.AccountIDKey, account.ID)
+
 	req, err := c.requestBuilder.BuildUpdateAccountRequest(ctx, account)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building account update request")
 	}
 
-	return c.executeRequest(ctx, req, &account)
+	if err = c.fetchAndUnmarshal(ctx, req, &account); err != nil {
+		return prepareError(err, logger, span, "updating account")
+	}
+
+	return nil
 }
 
 // ArchiveAccount archives an account.
@@ -146,13 +152,18 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
 		return ErrInvalidIDProvided
 	}
 
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
+
 	req, err := c.requestBuilder.BuildArchiveAccountRequest(ctx, accountID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building account archive request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "archiving account")
+	}
+
+	return nil
 }
 
 // AddUserToAccount adds a user to an account.
@@ -164,22 +175,22 @@ func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *
 		return ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		tracing.AttachErrorToSpan(span, validationErr)
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID).WithValue(keys.UserIDKey, input.UserID)
 
-		return fmt.Errorf("validating input: %w", validationErr)
+	if err := input.Validate(ctx); err != nil {
+		return prepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildAddUserRequest(ctx, accountID, input)
 	if err != nil {
-		c.logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
-
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building add user to account request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "adding user to account")
+	}
+
+	return nil
 }
 
 // MarkAsDefault marks a given account as the default for a given user.
@@ -191,35 +202,45 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 		return ErrInvalidIDProvided
 	}
 
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
+
 	req, err := c.requestBuilder.BuildMarkAsDefaultRequest(ctx, accountID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building mark account as default request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "marking account as default")
+	}
+
+	return nil
 }
 
-// RemoveUser removes a user from an account.
-func (c *Client) RemoveUser(ctx context.Context, accountID, userID uint64, reason string) error {
+// RemoveUserFromAccount removes a user from an account.
+func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID uint64, reason string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
-		return fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
+		return ErrInvalidIDProvided
 	}
 
 	if userID == 0 {
-		return fmt.Errorf("userID: %w", ErrInvalidIDProvided)
+		return ErrInvalidIDProvided
 	}
+
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID).WithValue(keys.UserIDKey, userID)
 
 	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, reason)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building remove user from account request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "removing user from account")
+	}
+
+	return nil
 }
 
 // ModifyMemberPermissions modifies a given user's permissions for a given account.
@@ -228,30 +249,33 @@ func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID 
 	defer span.End()
 
 	if accountID == 0 {
-		return fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
+		return ErrInvalidIDProvided
 	}
 
 	if userID == 0 {
-		return fmt.Errorf("userID: %w", ErrInvalidIDProvided)
+		return ErrInvalidIDProvided
 	}
 
 	if input == nil {
 		return ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		tracing.AttachErrorToSpan(span, validationErr)
-		return fmt.Errorf("validating input: %w", validationErr)
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID).WithValue(keys.UserIDKey, userID)
+
+	if err := input.Validate(ctx); err != nil {
+		return prepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, input)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building modify account member permissions request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "modifying user account permissions")
+	}
+
+	return nil
 }
 
 // TransferAccountOwnership transfers ownership of an account to a given user.
@@ -260,46 +284,52 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64,
 	defer span.End()
 
 	if accountID == 0 {
-		return fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
+		return ErrInvalidIDProvided
 	}
 
 	if input == nil {
 		return ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		tracing.AttachErrorToSpan(span, validationErr)
-		return fmt.Errorf("validating input: %w", validationErr)
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID).
+		WithValue("old_owner", input.CurrentOwner).
+		WithValue("new_owner", input.NewOwner)
+
+	if err := input.Validate(ctx); err != nil {
+		return prepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildTransferAccountOwnershipRequest(ctx, accountID, input)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building transfer account ownership request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "transferring account to user")
+	}
+
+	return nil
 }
 
 // GetAuditLogForAccount retrieves a list of audit log entries pertaining to an account.
-func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID uint64) (entries []*types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if accountID == 0 {
-		return nil, fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
+		return nil, ErrInvalidIDProvided
 	}
+
+	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
 
 	req, err := c.requestBuilder.BuildGetAuditLogForAccountRequest(ctx, accountID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building fetch audit log entries for account request")
 	}
 
-	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
-		tracing.AttachErrorToSpan(span, retrieveErr)
-		return nil, retrieveErr
+	var entries []*types.AuditLogEntry
+	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
+		return nil, prepareError(err, logger, span, "fetching audit log entries for account")
 	}
 
 	return entries, nil

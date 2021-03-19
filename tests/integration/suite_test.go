@@ -20,8 +20,7 @@ const (
 )
 
 type testClientWrapper struct {
-	main,
-	admin *httpclient.Client
+	main, admin *httpclient.Client
 }
 
 func TestIntegration(t *testing.T) {
@@ -71,7 +70,7 @@ func (s *TestSuite) SetupTest() {
 	s.ensure()
 }
 
-func (s *TestSuite) eachClient(exceptions ...string) map[string]*testClientWrapper {
+func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClientWrapper {
 	s.ensure()
 
 	clients := map[string]*testClientWrapper{

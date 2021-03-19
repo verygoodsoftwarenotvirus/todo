@@ -2,15 +2,14 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *http.Client, clientID string, secretKey []byte) (string, error) {
+func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpClient *http.Client, clientID string, secretKey []byte) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -18,12 +17,12 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 		return "", ErrNilInputProvided
 	}
 
-	if httpclient == nil {
-		httpclient = http.DefaultClient
+	if httpClient == nil {
+		httpClient = http.DefaultClient
 	}
 
-	if httpclient.Timeout == 0 {
-		httpclient.Timeout = defaultTimeout
+	if httpClient.Timeout == 0 {
+		httpClient.Timeout = defaultTimeout
 	}
 
 	input := &types.PASETOCreationInput{
@@ -31,10 +30,12 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		tracing.AttachErrorToSpan(span, validationErr)
-		return "", fmt.Errorf("validating input: %w", validationErr)
+	logger := c.logger.WithValue(keys.APIClientClientIDKey, clientID)
+
+	logger.Debug("fetching auth token")
+
+	if err := input.Validate(ctx); err != nil {
+		return "", prepareError(err, logger, span, "validating input")
 	}
 
 	if c.accountID != 0 {
@@ -43,28 +44,26 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpclient *htt
 
 	req, err := c.requestBuilder.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return "", err
+		return "", prepareError(err, logger, span, "building request")
 	}
 
 	// use the default client here because we want a transport that doesn't worry about cookies or tokens.
-	res, err := c.executeRawRequest(ctx, httpclient, req)
+	res, err := c.fetchResponseToRequest(ctx, httpClient, req)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return "", fmt.Errorf("executing request: %w", err)
+		return "", prepareError(err, logger, span, "executing request")
 	}
 
-	if resErr := errorFromResponse(res); resErr != nil {
-		tracing.AttachErrorToSpan(span, resErr)
-		return "", resErr
+	if err = errorFromResponse(res); err != nil {
+		return "", prepareError(err, logger, span, "erroneous response")
 	}
 
 	var tokenRes types.PASETOResponse
 
-	if unmarshalErr := c.unmarshalBody(ctx, res, &tokenRes); unmarshalErr != nil {
-		tracing.AttachErrorToSpan(span, unmarshalErr)
-		return "", unmarshalErr
+	if err = c.unmarshalBody(ctx, res, &tokenRes); err != nil {
+		return "", prepareError(err, logger, span, "unmarshalling body")
 	}
+
+	logger.Debug("auth token received")
 
 	return tokenRes.Token, nil
 }

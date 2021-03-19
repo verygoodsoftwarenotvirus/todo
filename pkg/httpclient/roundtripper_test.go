@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_buildDefaultTransport(T *testing.T) {
@@ -15,7 +14,8 @@ func Test_buildDefaultTransport(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		_ = buildDefaultTransport(0)
+		actual := buildDefaultTransport(0)
+		assert.NotNil(t, actual)
 	})
 }
 
@@ -31,12 +31,15 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 				func(res http.ResponseWriter, req *http.Request) {
 					res.WriteHeader(http.StatusOK)
 				},
-			))
+			),
+		)
+		ts.EnableHTTP2 = true
 
 		transport := newDefaultRoundTripper(0)
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL, nil)
+		assert.NotNil(t, transport)
 
-		require.NotNil(t, req)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL, nil)
+		assert.NotNil(t, req)
 		assert.NoError(t, err)
 
 		_, err = transport.RoundTrip(req)
@@ -49,6 +52,8 @@ func Test_newDefaultRoundTripper(T *testing.T) {
 
 	T.Run("obligatory", func(t *testing.T) {
 		t.Parallel()
-		_ = newDefaultRoundTripper(0)
+
+		rt := newDefaultRoundTripper(0)
+		assert.NotNil(t, rt)
 	})
 }

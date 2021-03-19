@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	debug         = false
+	debug         = true
 	timeout       = 5 * time.Second
 	nonexistentID = 999999999
 )

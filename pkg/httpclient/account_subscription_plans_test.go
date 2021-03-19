@@ -52,6 +52,17 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAccountSubscriptionP
 		assert.Equal(t, s.exampleAccountSubscriptionPlan, actual)
 	})
 
+	s.Run("returns error with zero ID", func() {
+		t := s.T()
+
+		c := buildTestClient(t, nil)
+		actual, err := c.GetAccountSubscriptionPlan(s.ctx, 0)
+
+		assert.Error(t, err, "no error should be returned")
+		assertErrorMatches(t, err, ErrInvalidIDProvided)
+		assert.Nil(t, actual)
+	})
+
 	s.Run("with invalid client url", func() {
 		t := s.T()
 
@@ -82,7 +93,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAccountSubscriptionP
 	s.Run("happy path", func() {
 		t := s.T()
 
-		filter := (*types.QueryFilter)(nil)
+		filter := types.DefaultQueryFilter()
 
 		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccountSubscriptionPlanList)
 		actual, err := c.GetAccountSubscriptionPlans(s.ctx, filter)
@@ -132,6 +143,28 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscripti
 		assert.Equal(t, s.exampleAccountSubscriptionPlan, actual)
 	})
 
+	s.Run("with nil input", func() {
+		t := s.T()
+
+		c := buildTestClient(t, nil)
+		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, nil)
+
+		require.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+		assertErrorMatches(t, err, ErrNilInputProvided)
+	})
+
+	s.Run("with invalid input", func() {
+		t := s.T()
+
+		c := buildTestClient(t, nil)
+		exampleInput := &types.AccountSubscriptionPlanCreationInput{}
+		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, exampleInput)
+
+		require.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+
 	s.Run("with invalid client url", func() {
 		t := s.T()
 
@@ -139,6 +172,17 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscripti
 		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, s.exampleInput)
 
 		assert.Nil(t, actual)
+		assert.Error(t, err, "error should be returned")
+	})
+
+	s.Run("with request failure", func() {
+		t := s.T()
+
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c := buildTestClientThatWaitsTooLong(t, spec)
+		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, s.exampleInput)
+
+		require.Nil(t, actual)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -156,10 +200,30 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_UpdateAccountSubscripti
 		assert.NoError(t, err, "no error should be returned")
 	})
 
+	s.Run("returns error with nil input", func() {
+		t := s.T()
+
+		c := buildTestClient(t, nil)
+		err := c.UpdateAccountSubscriptionPlan(s.ctx, nil)
+
+		assert.Error(t, err, "error should be returned")
+		assertErrorMatches(t, err, ErrNilInputProvided)
+	})
+
 	s.Run("with invalid client url", func() {
 		t := s.T()
 
 		err := buildTestClientWithInvalidURL(t).UpdateAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan)
+		assert.Error(t, err, "error should be returned")
+	})
+
+	s.Run("with request failure", func() {
+		t := s.T()
+
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
+		c := buildTestClientThatWaitsTooLong(t, spec)
+		err := c.UpdateAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan)
+
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -177,10 +241,30 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_ArchiveAccountSubscript
 		assert.NoError(t, err, "no error should be returned")
 	})
 
+	s.Run("returns error with zero ID", func() {
+		t := s.T()
+
+		c := buildTestClient(t, nil)
+
+		err := c.ArchiveAccountSubscriptionPlan(s.ctx, 0)
+		assert.Error(t, err, "error should be returned")
+		assertErrorMatches(t, err, ErrInvalidIDProvided)
+	})
+
 	s.Run("with invalid client url", func() {
 		t := s.T()
 
 		err := buildTestClientWithInvalidURL(t).ArchiveAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan.ID)
+		assert.Error(t, err, "error should be returned")
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
+		c := buildTestClientThatWaitsTooLong(t, spec)
+
+		err := c.ArchiveAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan.ID)
 		assert.Error(t, err, "error should be returned")
 	})
 }
@@ -203,6 +287,17 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAuditLogForAccountSu
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 		assert.Equal(t, exampleAuditLogEntryList, actual)
+	})
+
+	s.Run("with zero ID input", func() {
+		t := s.T()
+
+		c := buildTestClient(t, nil)
+		actual, err := c.GetAuditLogForAccountSubscriptionPlan(s.ctx, 0)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err, "no error should be returned")
+		assertErrorMatches(t, err, ErrInvalidIDProvided)
 	})
 
 	s.Run("with invalid client url", func() {

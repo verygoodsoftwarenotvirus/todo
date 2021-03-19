@@ -27,7 +27,7 @@ func checkAPIClientEquality(t *testing.T, expected, actual *types.APIClient) {
 }
 
 func (s *TestSuite) TestAPIClientsCreating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to create API clients via %s", authType), func() {
 			t := s.T()
@@ -66,7 +66,7 @@ func (s *TestSuite) TestAPIClientsCreating() {
 }
 
 func (s *TestSuite) TestAPIClientsListing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to read API clients in a list via %s", authType), func() {
 			t := s.T()
@@ -113,7 +113,7 @@ func (s *TestSuite) TestAPIClientsListing() {
 }
 
 func (s *TestSuite) TestAPIClientsReading() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to read non-existent API clients via %s", authType), func() {
 			t := s.T()
@@ -127,7 +127,7 @@ func (s *TestSuite) TestAPIClientsReading() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to read API clients via %s", authType), func() {
 			t := s.T()
@@ -161,7 +161,7 @@ func (s *TestSuite) TestAPIClientsReading() {
 }
 
 func (s *TestSuite) TestAPIClientsArchiving() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to archive non-existent API clients via %s", authType), func() {
 			t := s.T()
@@ -173,7 +173,7 @@ func (s *TestSuite) TestAPIClientsArchiving() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to archive API clients via %s", authType), func() {
 			t := s.T()
@@ -209,7 +209,7 @@ func (s *TestSuite) TestAPIClientsArchiving() {
 }
 
 func (s *TestSuite) TestAPIClientsAuditing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to audit API clients via %s", authType), func() {
 			t := s.T()

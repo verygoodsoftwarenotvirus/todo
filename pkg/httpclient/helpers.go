@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -47,7 +46,7 @@ func errorFromResponse(res *http.Response) error {
 }
 
 // argIsNotPointer checks an argument and returns whether or not it is a pointer.
-func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
+func argIsNotPointer(i interface{}) (bool, error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
 		return true, errors.New("value is not a pointer")
 	}
@@ -56,7 +55,7 @@ func argIsNotPointer(i interface{}) (notAPointer bool, err error) {
 }
 
 // argIsNotNil checks an argument and returns whether or not it is nil.
-func argIsNotNil(i interface{}) (isNil bool, err error) {
+func argIsNotNil(i interface{}) (bool, error) {
 	if i == nil {
 		return true, ErrNilInputProvided
 	}
@@ -93,10 +92,11 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 		return err
 	}
 
+	logger := c.logger.WithResponse(res)
+
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return err
+		return prepareError(err, logger, span, "unmarshalling error response")
 	}
 
 	if res.StatusCode >= http.StatusBadRequest {
@@ -105,16 +105,15 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 		}
 
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
+			logger.Error(err, "unmarshalling error response")
 			tracing.AttachErrorToSpan(span, err)
-			c.logger.Error(err, "unmarshalling error response")
 		}
 
 		return apiErr
 	}
 
 	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("unmarshaling body: %w", err)
+		return prepareError(err, logger, span, "unmarshalling response body")
 	}
 
 	return nil

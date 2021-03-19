@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-
 	"github.com/sirupsen/logrus"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 // entryWrapper has repeats of many functions for the sake of interface implementation.
@@ -19,78 +20,87 @@ type entryWrapper struct {
 // if you're calling this on an entry wrapper, then the level has
 // already been determined. I have no use for a function which
 // overrides that behavior, simple though it may be to paste it here.
-func (e *entryWrapper) SetLevel(level logging.Level) {
+func (w *entryWrapper) SetLevel(level logging.Level) {
 	switch level {
 	case logging.InfoLevel:
-		e.entry.Level = logrus.InfoLevel
+		w.entry.Level = logrus.InfoLevel
 	case logging.DebugLevel:
-		e.entry.Level = logrus.DebugLevel
+		w.entry.Level = logrus.DebugLevel
 	case logging.ErrorLevel:
-		e.entry.Level = logrus.ErrorLevel
+		w.entry.Level = logrus.ErrorLevel
 	case logging.WarnLevel:
-		e.entry.Level = logrus.WarnLevel
+		w.entry.Level = logrus.WarnLevel
 	}
 }
 
 // SetRequestIDFunc satisfies our interface.
-func (e *entryWrapper) SetRequestIDFunc(f logging.RequestIDFunc) {
-	e.requestIDFunc = f
+func (w *entryWrapper) SetRequestIDFunc(f logging.RequestIDFunc) {
+	w.requestIDFunc = f
 }
 
 // WithName is our obligatory contract fulfillment function. Logrus doesn't support named loggers.
-func (e *entryWrapper) WithName(name string) logging.Logger {
-	e.entry = e.entry.WithField(logging.LoggerNameKey, name)
-	return e
+func (w *entryWrapper) WithName(name string) logging.Logger {
+	w.entry = w.entry.WithField(logging.LoggerNameKey, name)
+	return w
 }
 
 // WithValues satisfies our interface.
-func (e *entryWrapper) WithValues(values map[string]interface{}) logging.Logger {
-	e.entry = e.entry.WithFields(values)
-	return e
+func (w *entryWrapper) WithValues(values map[string]interface{}) logging.Logger {
+	w.entry = w.entry.WithFields(values)
+	return w
 }
 
 // WithValue satisfies our interface.
-func (e *entryWrapper) WithValue(key string, value interface{}) logging.Logger {
-	e.entry = e.entry.WithField(key, value)
-	return e
+func (w *entryWrapper) WithValue(key string, value interface{}) logging.Logger {
+	w.entry = w.entry.WithField(key, value)
+	return w
 }
 
 // WithError satisfies our interface.
-func (e *entryWrapper) WithError(err error) logging.Logger {
-	e.entry = e.entry.WithError(err)
-	return e
+func (w *entryWrapper) WithError(err error) logging.Logger {
+	w.entry = w.entry.WithError(err)
+	return w
 }
 
 // WithRequest satisfies our interface.
-func (e *entryWrapper) WithRequest(req *http.Request) logging.Logger {
-	return e.WithValues(map[string]interface{}{
+func (w *entryWrapper) WithRequest(req *http.Request) logging.Logger {
+	return w.WithValues(map[string]interface{}{
 		"path":   req.URL.Path,
 		"method": req.Method,
 		"query":  req.URL.RawQuery,
 	})
 }
 
+// WithRequest satisfies our interface.
+func (w *entryWrapper) WithResponse(res *http.Response) logging.Logger {
+	w2 := w.WithRequest(res.Request)
+
+	w2 = w2.WithValue(keys.ResponseStatusKey, res.StatusCode)
+
+	return w2
+}
+
 // Info satisfies our interface.
-func (e *entryWrapper) Info(input string) {
-	e.entry.Infoln(input)
+func (w *entryWrapper) Info(input string) {
+	w.entry.Infoln(input)
 }
 
 // Printf satisfies our interface.
-func (e *entryWrapper) Printf(s string, args ...interface{}) {
-	e.entry.Infoln(fmt.Sprintf(s, args...))
+func (w *entryWrapper) Printf(s string, args ...interface{}) {
+	w.entry.Infoln(fmt.Sprintf(s, args...))
 }
 
 // Debug satisfies our interface.
-func (e *entryWrapper) Debug(input string) {
-	e.entry.Debugln(input)
+func (w *entryWrapper) Debug(input string) {
+	w.entry.Debugln(input)
 }
 
 // Error satisfies our interface.
-func (e *entryWrapper) Error(err error, input string) {
-	e.entry.Error(err, input)
+func (w *entryWrapper) Error(err error, input string) {
+	w.entry.Error(err, input)
 }
 
 // Fatal satisfies our interface.
-func (e *entryWrapper) Fatal(err error) {
-	e.entry.Fatal(err)
+func (w *entryWrapper) Fatal(err error) {
+	w.entry.Fatal(err)
 }

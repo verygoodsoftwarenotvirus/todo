@@ -1,7 +1,6 @@
 package httpclient
 
 import (
-	"fmt"
 	"net/http"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -21,13 +20,15 @@ type pasetoRoundTripper struct {
 
 }
 
+var pasetoRoundTripperClient = http.DefaultClient
+
 func newPASETORoundTripper(client *Client, clientID string, secretKey []byte) *pasetoRoundTripper {
 	return &pasetoRoundTripper{
 		clientID:  clientID,
 		secretKey: secretKey,
 		logger:    client.logger,
 		tracer:    client.tracer,
-		base:      otelhttp.NewTransport(newDefaultRoundTripper(client.plainClient.Timeout)),
+		base:      otelhttp.NewTransport(newDefaultRoundTripper(client.unauthenticatedClient.Timeout)),
 		client:    client,
 	}
 }
@@ -38,6 +39,8 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	defer span.End()
 
 	reqBodyClosed := false
+
+	logger := t.logger.WithRequest(req)
 
 	if req.Body != nil {
 		defer func() {
@@ -50,21 +53,19 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 		}()
 	}
 
-	token, tokenRetrievalErr := t.client.fetchAuthTokenForAPIClient(ctx, http.DefaultClient, t.clientID, t.secretKey)
-	if tokenRetrievalErr != nil {
-		tracing.AttachErrorToSpan(span, tokenRetrievalErr)
-		return nil, fmt.Errorf("fetching prerequisite PASETO: %w", tokenRetrievalErr)
+	token, err := t.client.fetchAuthTokenForAPIClient(ctx, pasetoRoundTripperClient, t.clientID, t.secretKey)
+	if err != nil {
+		return nil, prepareError(err, logger, span, "fetching prerequisite PASETO")
 	}
-
-	req.Header.Add("Authorization", token)
 
 	// req.Body is assumed to be closed by the base RoundTripper.
 	reqBodyClosed = true
 
+	req.Header.Add("Authorization", token)
+
 	res, err := t.base.RoundTrip(req)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("executing PASETO-authorized request: %w", tokenRetrievalErr)
+		return nil, prepareError(err, logger, span, "executing PASETO-authorized request")
 	}
 
 	return res, nil

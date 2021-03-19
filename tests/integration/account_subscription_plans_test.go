@@ -26,7 +26,7 @@ func checkPlanEquality(t *testing.T, expected, actual *types.AccountSubscription
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlansCreating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
 			t := s.T()
@@ -59,7 +59,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansCreating() {
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlansListing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to be read in a list via %s", authType), func() {
 			t := s.T()
@@ -99,7 +99,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansListing() {
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlansReading() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to read nonexistent plan via %s", authType), func() {
 			t := s.T()
@@ -113,7 +113,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansReading() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
 			t := s.T()
@@ -142,7 +142,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansReading() {
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlansUpdating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to update a non-existent plan via %s", authType), func() {
 			t := s.T()
@@ -157,7 +157,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansUpdating() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be updated via %s", authType), func() {
 			t := s.T()
@@ -200,7 +200,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansUpdating() {
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlansArchiving() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to archive nonexistent plan via %s", authType), func() {
 			t := s.T()
@@ -212,7 +212,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansArchiving() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to archive plan via %s", authType), func() {
 			t := s.T()
@@ -243,7 +243,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansArchiving() {
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlansAuditing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to audit plan that does not exist via %s", authType), func() {
 			t := s.T()
@@ -257,7 +257,7 @@ func (s *TestSuite) TestAccountSubscriptionPlansAuditing() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be auditable by non-admin via %s", authType), func() {
 			t := s.T()

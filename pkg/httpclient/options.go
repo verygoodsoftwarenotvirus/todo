@@ -56,7 +56,7 @@ func UsingLogger(logger logging.Logger) func(*Client) error {
 	}
 }
 
-// UsingHTTPClient sets the plainClient value on the client.
+// UsingHTTPClient sets the unauthenticatedClient value on the client.
 func UsingHTTPClient(client *http.Client) func(*Client) error {
 	return func(c *Client) error {
 		if client == nil {
@@ -72,7 +72,7 @@ func UsingHTTPClient(client *http.Client) func(*Client) error {
 			otelhttp.WithSpanNameFormatter(tracing.FormatSpan),
 		)
 
-		c.plainClient = client
+		c.unauthenticatedClient = client
 		c.authedClient = client
 
 		return nil
@@ -97,7 +97,7 @@ func UsingTimeout(timeout time.Duration) func(*Client) error {
 		}
 
 		c.authedClient.Timeout = timeout
-		c.plainClient.Timeout = timeout
+		c.unauthenticatedClient.Timeout = timeout
 
 		return nil
 	}

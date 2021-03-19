@@ -24,7 +24,7 @@ func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 }
 
 func (s *TestSuite) TestItemsCreating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
 			t := s.T()
@@ -55,7 +55,7 @@ func (s *TestSuite) TestItemsCreating() {
 }
 
 func (s *TestSuite) TestItemsListing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be readable in paginated form via %s", authType), func() {
 			t := s.T()
@@ -95,7 +95,7 @@ func (s *TestSuite) TestItemsListing() {
 }
 
 func (s *TestSuite) TestItemsSearching() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be search for items via %s", authType), func() {
 			t := s.T()
@@ -136,7 +136,7 @@ func (s *TestSuite) TestItemsSearching() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should only receive your own items via %s", authType), func() {
 			t := s.T()
@@ -179,7 +179,7 @@ func (s *TestSuite) TestItemsSearching() {
 }
 
 func (s *TestSuite) TestItemsExistenceChecking() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not return an error for nonexistent item via %s", authType), func() {
 			t := s.T()
@@ -194,7 +194,7 @@ func (s *TestSuite) TestItemsExistenceChecking() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not return an error for existent item via %s", authType), func() {
 			t := s.T()
@@ -220,7 +220,7 @@ func (s *TestSuite) TestItemsExistenceChecking() {
 }
 
 func (s *TestSuite) TestItemsReading() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should return an error when trying to read an item that does not exist via %s", authType), func() {
 			t := s.T()
@@ -234,7 +234,7 @@ func (s *TestSuite) TestItemsReading() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should be readable via %s", authType), func() {
 			t := s.T()
@@ -262,7 +262,7 @@ func (s *TestSuite) TestItemsReading() {
 }
 
 func (s *TestSuite) TestItemsUpdating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should return an error when trying to update something that does not exist via %s", authType), func() {
 			t := s.T()
@@ -277,7 +277,7 @@ func (s *TestSuite) TestItemsUpdating() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should be possible to update an item via %s", authType), func() {
 			t := s.T()
@@ -319,7 +319,7 @@ func (s *TestSuite) TestItemsUpdating() {
 }
 
 func (s *TestSuite) TestItemsArchiving() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should return an error when trying to delete something that does not exist via %s", authType), func() {
 			t := s.T()
@@ -331,7 +331,7 @@ func (s *TestSuite) TestItemsArchiving() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should be possible to delete an item via %s", authType), func() {
 			t := s.T()
@@ -361,7 +361,7 @@ func (s *TestSuite) TestItemsArchiving() {
 }
 
 func (s *TestSuite) TestItemsAuditing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should return an error when trying to audit something that does not exist via %s", authType), func() {
 			t := s.T()
@@ -376,7 +376,7 @@ func (s *TestSuite) TestItemsAuditing() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("it should not be auditable by a non-admin via %s", authType), func() {
 			t := s.T()

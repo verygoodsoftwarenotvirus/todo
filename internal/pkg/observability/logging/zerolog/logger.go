@@ -5,9 +5,10 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-
 	"github.com/rs/zerolog"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 func init() {
@@ -19,40 +20,36 @@ func init() {
 	}
 }
 
-// Logger is our log wrapper.
-type Logger struct {
+// logger is our log wrapper.
+type logger struct {
 	requestIDFunc logging.RequestIDFunc
 	logger        zerolog.Logger
 }
 
 // buildZerologger builds a new zerologger.
 func buildZerologger() zerolog.Logger {
-	return zerolog.
-		New(os.Stdout).
-		With().
-		Timestamp().
-		Logger()
+	return zerolog.New(os.Stdout).With().Timestamp().Logger()
 }
 
 // NewLogger builds a new logger.
 func NewLogger() logging.Logger {
-	return &Logger{logger: buildZerologger()}
+	return &logger{logger: buildZerologger()}
 }
 
 // NewLoggerWithSource builds a new logger.
-func NewLoggerWithSource(logger *zerolog.Logger) logging.Logger {
-	return &Logger{logger: *logger}
+func NewLoggerWithSource(l zerolog.Logger) logging.Logger {
+	return &logger{logger: l}
 }
 
 // WithName is our obligatory contract fulfillment function.
 // Zerolog doesn't support named loggers :( so we have this workaround.
-func (l *Logger) WithName(name string) logging.Logger {
+func (l *logger) WithName(name string) logging.Logger {
 	l2 := l.logger.With().Str(logging.LoggerNameKey, name).Logger()
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
 // SetLevel sets the log level for our logger.
-func (l *Logger) SetLevel(level logging.Level) {
+func (l *logger) SetLevel(level logging.Level) {
 	var lvl zerolog.Level
 
 	switch level {
@@ -73,62 +70,61 @@ func (l *Logger) SetLevel(level logging.Level) {
 }
 
 // SetRequestIDFunc sets the request ID retrieval function.
-func (l *Logger) SetRequestIDFunc(f logging.RequestIDFunc) {
+func (l *logger) SetRequestIDFunc(f logging.RequestIDFunc) {
 	if f != nil {
 		l.requestIDFunc = f
 	}
 }
 
 // Info satisfies our contract for the logging.Logger Info method.
-func (l *Logger) Info(input string) {
+func (l *logger) Info(input string) {
 	l.logger.Info().Msg(input)
 }
 
 // Debug satisfies our contract for the logging.Logger Debug method.
-func (l *Logger) Debug(input string) {
+func (l *logger) Debug(input string) {
 	l.logger.Debug().Msg(input)
 }
 
 // Error satisfies our contract for the logging.Logger Error method.
-func (l *Logger) Error(err error, input string) {
+func (l *logger) Error(err error, input string) {
 	l.logger.Error().Stack().Caller().Err(err).Msg(input)
 }
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.
-func (l *Logger) Fatal(err error) {
+func (l *logger) Fatal(err error) {
 	l.logger.Fatal().Caller().Err(err).Msg("")
 }
 
 // Printf satisfies our contract for the logging.Logger Printf method.
-func (l *Logger) Printf(format string, args ...interface{}) {
+func (l *logger) Printf(format string, args ...interface{}) {
 	l.logger.Printf(format, args...)
 }
 
 // WithValues satisfies our contract for the logging.Logger WithValues method.
-func (l *Logger) WithValues(values map[string]interface{}) logging.Logger {
+func (l *logger) WithValues(values map[string]interface{}) logging.Logger {
 	var l2 = l.logger.With().Logger()
 
 	for key, val := range values {
 		l2 = l2.With().Interface(key, val).Logger()
 	}
 
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
 // WithValue satisfies our contract for the logging.Logger WithValue method.
-func (l *Logger) WithValue(key string, value interface{}) logging.Logger {
+func (l *logger) WithValue(key string, value interface{}) logging.Logger {
 	l2 := l.logger.With().Interface(key, value).Logger()
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
 // WithError satisfies our contract for the logging.Logger WithError method.
-func (l *Logger) WithError(err error) logging.Logger {
+func (l *logger) WithError(err error) logging.Logger {
 	l2 := l.logger.With().Err(err).Logger()
-	return &Logger{logger: l2}
+	return &logger{logger: l2}
 }
 
-// WithRequest satisfies our contract for the logging.Logger WithRequest method.
-func (l *Logger) WithRequest(req *http.Request) logging.Logger {
+func (l *logger) attachRequestToLog(req *http.Request) zerolog.Logger {
 	l2 := l.logger.With().
 		Str("path", req.URL.Path).
 		Str("method", req.Method).
@@ -144,5 +140,17 @@ func (l *Logger) WithRequest(req *http.Request) logging.Logger {
 		}
 	}
 
-	return &Logger{logger: l2}
+	return l2
+}
+
+// WithRequest satisfies our contract for the logging.Logger WithRequest method.
+func (l *logger) WithRequest(req *http.Request) logging.Logger {
+	return &logger{logger: l.attachRequestToLog(req)}
+}
+
+// WithResponse satisfies our contract for the logging.Logger WithResponse method.
+func (l *logger) WithResponse(res *http.Response) logging.Logger {
+	l2 := l.attachRequestToLog(res.Request).With().Int(keys.ResponseStatusKey, res.StatusCode).Logger()
+
+	return &logger{logger: l2}
 }

@@ -2,10 +2,8 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -18,28 +16,26 @@ func (c *Client) UpdateUserReputation(ctx context.Context, input *types.UserRepu
 		return ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		c.logger.Error(validationErr, "validating input")
-		tracing.AttachErrorToSpan(span, validationErr)
-		return fmt.Errorf("validating input: %w", validationErr)
+	logger := c.logger.WithValue(keys.AccountIDKey, input.TargetAccountID)
+
+	if err := input.Validate(ctx); err != nil {
+		return prepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildUserReputationUpdateInputRequest(ctx, input)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building user account status update request: %w", err)
+		return prepareError(err, logger, span, "building user reputation update request")
 	}
 
-	res, err := c.executeRawRequest(ctx, c.authedClient, req)
+	res, err := c.fetchResponseToRequest(ctx, c.authedClient, req)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("executing request: %w", err)
+		return prepareError(err, logger, span, "updating user reputation")
 	}
 
 	c.closeResponseBody(ctx, res)
 
-	if res.StatusCode != http.StatusAccepted {
-		return fmt.Errorf("erroneous response code when banning user: %d", res.StatusCode)
+	if err = errorFromResponse(res); err != nil {
+		return prepareError(err, logger, span, "invalid response status")
 	}
 
 	return nil

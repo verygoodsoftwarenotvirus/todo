@@ -75,6 +75,24 @@ func (b *Builder) BuildURL(ctx context.Context, qp url.Values, parts ...string) 
 	return ""
 }
 
+// MustBuildRequest requires that a given request be built without error.
+func MustBuildRequest(req *http.Request, err error) *http.Request {
+	if err != nil {
+		panic(err)
+	}
+
+	return req
+}
+
+// Must requires that a given request be built without error.
+func (b *Builder) Must(req *http.Request, err error) *http.Request {
+	if err != nil {
+		b.panicker.Panic(err)
+	}
+
+	return req
+}
+
 func buildRawURL(u *url.URL, qp url.Values, includeVersionPrefix bool, parts ...string) (*url.URL, error) {
 	tu := *u
 

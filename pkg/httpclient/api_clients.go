@@ -2,31 +2,35 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 // GetAPIClient gets an OAuth2 client.
-func (c *Client) GetAPIClient(ctx context.Context, id uint64) (apiClient *types.APIClient, err error) {
+func (c *Client) GetAPIClient(ctx context.Context, apiClientDatabaseID uint64) (*types.APIClient, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if id == 0 {
+	if apiClientDatabaseID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.requestBuilder.BuildGetAPIClientRequest(ctx, id)
+	logger := c.logger.WithValue(keys.APIClientDatabaseIDKey, apiClientDatabaseID)
+
+	req, err := c.requestBuilder.BuildGetAPIClientRequest(ctx, apiClientDatabaseID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building retrieve API client request")
 	}
 
-	err = c.retrieve(ctx, req, &apiClient)
+	var apiClient *types.APIClient
+	if err = c.fetchAndUnmarshal(ctx, req, &apiClient); err != nil {
+		return nil, prepareError(err, logger, span, "fetching api client")
+	}
 
-	return apiClient, err
+	return apiClient, nil
 }
 
 // GetAPIClients gets a list of OAuth2 clients.
@@ -34,16 +38,21 @@ func (c *Client) GetAPIClients(ctx context.Context, filter *types.QueryFilter) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.loggerForFilter(filter)
+
+	tracing.AttachQueryFilterToSpan(span, filter)
+
 	req, err := c.requestBuilder.BuildGetAPIClientsRequest(ctx, filter)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building API clients list request")
 	}
 
 	var apiClients *types.APIClientList
-	err = c.retrieve(ctx, req, &apiClients)
+	if err = c.fetchAndUnmarshal(ctx, req, &apiClients); err != nil {
+		return nil, prepareError(err, logger, span, "fetching api clients")
+	}
 
-	return apiClients, err
+	return apiClients, nil
 }
 
 // CreateAPIClient creates an OAuth2 client. Note that cookie must not be nil in order to receive a valid response.
@@ -60,59 +69,64 @@ func (c *Client) CreateAPIClient(ctx context.Context, cookie *http.Cookie, input
 	}
 
 	// deliberately not validating here because it requires settings awareness
+	logger := c.logger.WithValue(keys.NameKey, input.Name)
 
 	var apiClientResponse *types.APIClientCreationResponse
 
 	req, err := c.requestBuilder.BuildCreateAPIClientRequest(ctx, cookie, input)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, err
+		return nil, prepareError(err, logger, span, "building create API client request")
 	}
 
-	if resErr := c.executeRequest(ctx, req, &apiClientResponse); resErr != nil {
-		tracing.AttachErrorToSpan(span, resErr)
-		return nil, fmt.Errorf("executing request: %w", resErr)
+	if err = c.fetchAndUnmarshal(ctx, req, &apiClientResponse); err != nil {
+		return nil, prepareError(err, logger, span, "creating api client")
 	}
 
 	return apiClientResponse, nil
 }
 
 // ArchiveAPIClient archives an OAuth2 client.
-func (c *Client) ArchiveAPIClient(ctx context.Context, id uint64) error {
+func (c *Client) ArchiveAPIClient(ctx context.Context, apiClientDatabaseID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if id == 0 {
+	if apiClientDatabaseID == 0 {
 		return ErrInvalidIDProvided
 	}
 
-	req, err := c.requestBuilder.BuildArchiveAPIClientRequest(ctx, id)
+	logger := c.logger.WithValue(keys.APIClientDatabaseIDKey, apiClientDatabaseID)
+
+	req, err := c.requestBuilder.BuildArchiveAPIClientRequest(ctx, apiClientDatabaseID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return fmt.Errorf("building request: %w", err)
+		return prepareError(err, logger, span, "building archive API client request")
 	}
 
-	return c.executeRequest(ctx, req, nil)
+	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
+		return prepareError(err, logger, span, "archiving api client")
+	}
+
+	return nil
 }
 
 // GetAuditLogForAPIClient retrieves a list of audit log entries pertaining to an oauth2 client.
-func (c *Client) GetAuditLogForAPIClient(ctx context.Context, clientID uint64) (entries []*types.AuditLogEntry, err error) {
+func (c *Client) GetAuditLogForAPIClient(ctx context.Context, apiClientDatabaseID uint64) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if clientID == 0 {
+	if apiClientDatabaseID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	req, err := c.requestBuilder.BuildGetAuditLogForAPIClientRequest(ctx, clientID)
+	logger := c.logger.WithValue(keys.APIClientDatabaseIDKey, apiClientDatabaseID)
+
+	req, err := c.requestBuilder.BuildGetAuditLogForAPIClientRequest(ctx, apiClientDatabaseID)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, fmt.Errorf("building request: %w", err)
+		return nil, prepareError(err, logger, span, "building retrieve audit log entries for API client request")
 	}
 
-	if retrieveErr := c.retrieve(ctx, req, &entries); retrieveErr != nil {
-		tracing.AttachErrorToSpan(span, retrieveErr)
-		return nil, retrieveErr
+	var entries []*types.AuditLogEntry
+	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
+		return nil, prepareError(err, logger, span, "retrieving plan")
 	}
 
 	return entries, nil

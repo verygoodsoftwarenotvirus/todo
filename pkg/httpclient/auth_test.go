@@ -102,7 +102,7 @@ func (s *authTestSuite) TestV1Client_Login() {
 			},
 		))
 		c := buildTestClient(t, ts)
-		c.plainClient.Timeout = 500 * time.Microsecond
+		c.unauthenticatedClient.Timeout = 500 * time.Microsecond
 
 		cookie, err := c.Login(s.ctx, exampleInput)
 		require.Nil(t, cookie)
@@ -213,7 +213,7 @@ func (s *authTestSuite) TestV1Client_VerifyTOTPSecret() {
 			},
 		))
 		c := buildTestClient(t, ts)
-		c.plainClient.Timeout = time.Millisecond
+		c.unauthenticatedClient.Timeout = time.Millisecond
 
 		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)

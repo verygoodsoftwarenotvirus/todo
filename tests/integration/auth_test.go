@@ -161,7 +161,7 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		require.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		actual, err := testClient.Status(ctx, cookie)
+		actual, err := testClient.UserStatus(ctx, cookie)
 		assert.NoError(t, err)
 
 		expected := &types.UserStatusResponse{

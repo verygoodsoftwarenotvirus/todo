@@ -9,6 +9,7 @@ import (
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
@@ -28,7 +29,7 @@ func buildNumericIDURLChunk(key string) string {
 	return fmt.Sprintf("/"+numericIDPattern, key)
 }
 
-func (s *Server) setupRouter(router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(router routing.Router, frontendSettings frontendservice.Config, _ metrics.Config, metricsHandler metrics.Handler) {
 	router.Route("/_meta_", func(metaRouter routing.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live
@@ -43,7 +44,7 @@ func (s *Server) setupRouter(router routing.Router, _ metrics.Config, metricsHan
 	}
 
 	// Frontend routes.
-	if sfd := s.frontendSettings.StaticFilesDirectory; sfd != "" {
+	if sfd := frontendSettings.StaticFilesDirectory; sfd != "" {
 		staticFileServer, err := s.frontendService.StaticDir(sfd)
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")

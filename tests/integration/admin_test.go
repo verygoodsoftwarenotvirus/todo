@@ -14,7 +14,7 @@ import (
 )
 
 func (s *TestSuite) TestAdminUserManagement() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to ban a user that does not exist via %s", authType), func() {
 			t := s.T()
@@ -30,7 +30,7 @@ func (s *TestSuite) TestAdminUserManagement() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to ban users via %s", authType), func() {
 			t := s.T()

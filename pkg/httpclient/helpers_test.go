@@ -200,7 +200,7 @@ func TestUnmarshalBody(T *testing.T) {
 		var out testingType
 
 		err := c.unmarshalBody(ctx, res, &out)
-		assert.Equal(t, expected, err)
+		assertErrorMatches(t, err, expected)
 		assert.Error(t, err, "no error should be encountered unmarshaling into a valid struct")
 
 		mock.AssertExpectationsForObjects(t, rc)

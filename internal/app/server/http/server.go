@@ -14,10 +14,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"golang.org/x/net/http2"
 )
 
 const (
@@ -26,7 +28,7 @@ const (
 )
 
 type (
-	// Server is our API httpServer.
+	// Server is our API http server.
 	Server struct {
 		authService       types.AuthService
 		accountsService   types.AccountDataService
@@ -44,9 +46,7 @@ type (
 		router            routing.Router
 		tracer            tracing.Tracer
 		httpServer        *http.Server
-		frontendSettings  frontendservice.Config
-		serverSettings    Config // Services.
-		// infra things.
+		panicker          panicking.Panicker
 	}
 )
 
@@ -73,12 +73,12 @@ func ProvideServer(
 ) (*Server, error) {
 	srv := &Server{
 		// infra things,
-		db:               db,
-		serverSettings:   serverSettings,
-		frontendSettings: frontendSettings,
-		encoder:          encoder,
-		httpServer:       provideHTTPServer(serverSettings.HTTPPort),
-		logger:           logging.EnsureLogger(logger).WithName(loggerName),
+		db:         db,
+		tracer:     tracing.NewTracer(loggerName),
+		encoder:    encoder,
+		logger:     logging.EnsureLogger(logger).WithName(loggerName),
+		panicker:   panicking.NewProductionPanicker(),
+		httpServer: provideHTTPServer(serverSettings.HTTPPort),
 
 		// services,
 		adminService:      adminService,
@@ -91,10 +91,9 @@ func ProvideServer(
 		itemsService:      itemsService,
 		apiClientsService: apiClientsService,
 		plansService:      plansService,
-		tracer:            tracing.NewTracer(loggerName),
 	}
 
-	srv.setupRouter(router, metricsSettings, metricsHandler)
+	srv.setupRouter(router, frontendSettings, metricsSettings, metricsHandler)
 
 	logger.Debug("HTTP server successfully constructed")
 
@@ -103,13 +102,19 @@ func ProvideServer(
 
 // Serve serves HTTP traffic.
 func (s *Server) Serve() {
-	s.logger.Debug("setting up opentelemetry handler")
+	s.logger.Debug("setting up server")
 
 	s.httpServer.Handler = otelhttp.NewHandler(
 		s.router.Handler(),
 		serverNamespace,
 		otelhttp.WithSpanNameFormatter(tracing.FormatSpan),
 	)
+
+	http2ServerConf := &http2.Server{}
+	if err := http2.ConfigureServer(s.httpServer, http2ServerConf); err != nil {
+		s.logger.Error(err, "configuring HTTP2")
+		s.panicker.Panic(err)
+	}
 
 	s.logger.WithValue("listening_on", s.httpServer.Addr).Debug("Listening for HTTP requests")
 

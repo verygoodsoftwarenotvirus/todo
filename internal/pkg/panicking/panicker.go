@@ -4,7 +4,7 @@ import "fmt"
 
 // Panicker abstracts panic for our tests and such.
 type Panicker interface {
-	Panic(msg string)
+	Panic(interface{})
 	Panicf(format string, args ...interface{})
 }
 
@@ -15,7 +15,7 @@ func NewProductionPanicker() Panicker {
 
 type stdLibPanicker struct{}
 
-func (p stdLibPanicker) Panic(msg string) {
+func (p stdLibPanicker) Panic(msg interface{}) {
 	panic(msg)
 }
 

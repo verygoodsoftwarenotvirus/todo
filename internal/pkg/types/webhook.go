@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -163,16 +161,6 @@ func (w *Webhook) Update(input *WebhookUpdateInput) []FieldChangeSummary {
 	}
 
 	return changes
-}
-
-func buildErrorLogFunc(w *Webhook, logger logging.Logger) func(error) {
-	return func(err error) {
-		logger.WithValues(map[string]interface{}{
-			"url":          w.URL,
-			"method":       w.Method,
-			"content_type": w.ContentType,
-		}).Error(err, "error executing webhook")
-	}
 }
 
 // Validate validates a WebhookCreationInput.

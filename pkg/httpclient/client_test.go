@@ -57,6 +57,12 @@ func newRequestSpec(bodyShouldBeEmpty bool, method, query, path string, pathArgs
 	}
 }
 
+func assertErrorMatches(t *testing.T, err1, err2 error) {
+	t.Helper()
+
+	assert.True(t, errors.Is(err1, err2))
+}
+
 func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 	t.Helper()
 
@@ -83,7 +89,10 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	t.Helper()
 
-	client, err := NewClient(mustParseURL(""), UsingLogger(logging.NewNonOperationalLogger()))
+	client, err := NewClient(
+		mustParseURL(""),
+		UsingLogger(logging.NewNonOperationalLogger()),
+	)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -91,7 +100,7 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 		c := ts.Client()
 
 		require.NoError(t, client.requestBuilder.SetURL(mustParseURL(ts.URL)))
-		client.plainClient = c
+		client.unauthenticatedClient = c
 		client.authedClient = c
 	}
 
@@ -168,6 +177,24 @@ func buildTestClientWithRequestBodyValidation(t *testing.T, spec *requestSpec, i
 	return buildTestClient(t, ts)
 }
 
+func buildTestClientThatWaitsTooLong(t *testing.T, spec *requestSpec) *Client {
+	t.Helper()
+
+	ts := httptest.NewTLSServer(http.HandlerFunc(
+		func(res http.ResponseWriter, req *http.Request) {
+			assertRequestQuality(t, req, spec)
+
+			time.Sleep(24 * time.Hour)
+		},
+	))
+
+	c := buildTestClient(t, ts)
+
+	require.NoError(t, c.SetOptions(UsingTimeout(time.Millisecond)))
+
+	return c
+}
+
 // end test helpers
 
 func TestV1Client_AuthenticatedClient(T *testing.T) {
@@ -194,7 +221,7 @@ func TestV1Client_PlainClient(T *testing.T) {
 
 		actual := c.PlainClient()
 
-		assert.Equal(t, ts.Client(), actual, "PlainClient should return the assigned plainClient")
+		assert.Equal(t, ts.Client(), actual, "PlainClient should return the assigned unauthenticatedClient")
 	})
 }
 
@@ -424,55 +451,9 @@ func TestV1Client_IsUp(T *testing.T) {
 		))
 
 		c := buildTestClient(t, ts)
-		c.plainClient.Timeout = 500 * time.Millisecond
+		c.unauthenticatedClient.Timeout = 500 * time.Millisecond
 		actual := c.IsUp(ctx)
 		assert.False(t, actual)
-	})
-}
-
-func TestV1Client_buildDataRequest(T *testing.T) {
-	T.Parallel()
-
-	exampleData := &testingType{Name: "whatever"}
-
-	T.Run("happy path", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
-		expectedMethod := http.MethodPost
-		req, err := c.buildDataRequest(ctx, expectedMethod, ts.URL, exampleData)
-
-		require.NotNil(t, req)
-		assert.NoError(t, err)
-
-		assert.Equal(t, expectedMethod, req.Method)
-		assert.Equal(t, ts.URL, req.URL.String())
-	})
-
-	T.Run("with invalid structure", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
-		x := &testBreakableStruct{Thing: "stuff"}
-		req, err := c.buildDataRequest(ctx, http.MethodPost, ts.URL, x)
-
-		require.Nil(t, req)
-		assert.Error(t, err)
-	})
-
-	T.Run("with invalid client url", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c := buildTestClientWithInvalidURL(t)
-		req, err := c.buildDataRequest(ctx, http.MethodPost, c.url.String(), exampleData)
-
-		require.Nil(t, req)
-		assert.Error(t, err)
 	})
 }
 
@@ -499,7 +480,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		err = c.executeRequest(ctx, req, &argleBargle{})
+		err = c.fetchAndUnmarshal(ctx, req, &argleBargle{})
 		assert.NoError(t, err)
 	})
 
@@ -521,7 +502,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 		require.NoError(t, err)
 
 		c.authedClient.Timeout = 500 * time.Millisecond
-		err = c.executeRequest(ctx, req, &argleBargle{})
+		err = c.fetchAndUnmarshal(ctx, req, &argleBargle{})
 		assert.Error(t, err)
 	})
 
@@ -542,7 +523,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrUnauthorized, c.executeRequest(ctx, req, &argleBargle{}))
+		assert.Equal(t, ErrUnauthorized, c.fetchAndUnmarshal(ctx, req, &argleBargle{}))
 	})
 
 	T.Run("with 404", func(t *testing.T) {
@@ -562,7 +543,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrNotFound, c.executeRequest(ctx, req, &argleBargle{}))
+		assert.Equal(t, ErrNotFound, c.fetchAndUnmarshal(ctx, req, &argleBargle{}))
 	})
 
 	T.Run("with unreadable response", func(t *testing.T) {
@@ -583,7 +564,7 @@ func TestV1Client_executeRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Error(t, c.executeRequest(ctx, req, argleBargle{}))
+		assert.Error(t, c.fetchAndUnmarshal(ctx, req, argleBargle{}))
 	})
 }
 
@@ -609,7 +590,7 @@ func TestV1Client_executeRawRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		res, err := c.executeRawRequest(ctx, &http.Client{Timeout: time.Second}, req)
+		res, err := c.fetchResponseToRequest(ctx, &http.Client{Timeout: time.Second}, req)
 		assert.Nil(t, res)
 		assert.Error(t, err)
 	})
@@ -635,7 +616,7 @@ func TestV1Client_checkExistence(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		actual, err := c.checkExistence(ctx, req)
+		actual, err := c.responseIsOK(ctx, req)
 		assert.True(t, actual)
 		assert.NoError(t, err)
 	})
@@ -658,7 +639,7 @@ func TestV1Client_checkExistence(T *testing.T) {
 		require.NoError(t, err)
 
 		c.authedClient.Timeout = 500 * time.Millisecond
-		actual, err := c.checkExistence(ctx, req)
+		actual, err := c.responseIsOK(ctx, req)
 		assert.False(t, actual)
 		assert.Error(t, err)
 	})
@@ -686,7 +667,7 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		err = c.retrieve(ctx, req, &argleBargle{})
+		err = c.fetchAndUnmarshal(ctx, req, &argleBargle{})
 		assert.NoError(t, err)
 	})
 
@@ -701,7 +682,7 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		err = c.retrieve(ctx, req, nil)
+		err = c.fetchAndUnmarshal(ctx, req, nil)
 		assert.Error(t, err)
 	})
 
@@ -723,7 +704,7 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NoError(t, err)
 
 		c.authedClient.Timeout = 500 * time.Millisecond
-		err = c.retrieve(ctx, req, &argleBargle{})
+		err = c.fetchAndUnmarshal(ctx, req, &argleBargle{})
 		assert.Error(t, err)
 	})
 
@@ -744,11 +725,11 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrNotFound, c.retrieve(ctx, req, &argleBargle{}))
+		assert.Equal(t, ErrNotFound, c.fetchAndUnmarshal(ctx, req, &argleBargle{}))
 	})
 }
 
-func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
+func TestV1Client_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 	T.Parallel()
 
 	const expectedMethod = http.MethodPost
@@ -777,7 +758,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		err = c.executeUnauthenticatedDataRequest(ctx, req, out)
+		err = c.fetchAndUnmarshalWithoutAuthentication(ctx, req, out)
 		assert.NoError(t, err)
 	})
 
@@ -803,7 +784,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		err = c.executeUnauthenticatedDataRequest(ctx, req, out)
+		err = c.fetchAndUnmarshalWithoutAuthentication(ctx, req, out)
 		assert.Error(t, err)
 		assert.Equal(t, ErrUnauthorized, err)
 	})
@@ -830,7 +811,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		err = c.executeUnauthenticatedDataRequest(ctx, req, out)
+		err = c.fetchAndUnmarshalWithoutAuthentication(ctx, req, out)
 		assert.Error(t, err)
 		assert.Equal(t, ErrNotFound, err)
 	})
@@ -857,8 +838,8 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		c.plainClient.Timeout = 500 * time.Millisecond
-		assert.Error(t, c.executeUnauthenticatedDataRequest(ctx, req, out))
+		c.unauthenticatedClient.Timeout = 500 * time.Millisecond
+		assert.Error(t, c.fetchAndUnmarshalWithoutAuthentication(ctx, req, out))
 	})
 
 	T.Run("with nil as output", func(t *testing.T) {
@@ -878,7 +859,7 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		err = c.executeUnauthenticatedDataRequest(ctx, req, testingType{})
+		err = c.fetchAndUnmarshalWithoutAuthentication(ctx, req, testingType{})
 		assert.Error(t, err)
 	})
 
@@ -898,6 +879,6 @@ func TestV1Client_executeUnauthenticatedDataRequest(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Error(t, c.executeUnauthenticatedDataRequest(ctx, req, argleBargle{}))
+		assert.Error(t, c.fetchAndUnmarshalWithoutAuthentication(ctx, req, argleBargle{}))
 	})
 }

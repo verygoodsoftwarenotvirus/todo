@@ -50,6 +50,7 @@ type Logger interface {
 	WithValues(map[string]interface{}) Logger
 	WithValue(string, interface{}) Logger
 	WithRequest(*http.Request) Logger
+	WithResponse(response *http.Response) Logger
 	WithError(error) Logger
 }
 

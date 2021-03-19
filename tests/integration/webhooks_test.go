@@ -25,7 +25,7 @@ func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
 }
 
 func (s *TestSuite) TestWebhooksCreating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be createable via %s", authType), func() {
 			t := s.T()
@@ -61,7 +61,7 @@ func (s *TestSuite) TestWebhooksCreating() {
 }
 
 func (s *TestSuite) TestWebhooksReading() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to read non-existent webhook via %s", authType), func() {
 			t := s.T()
@@ -75,7 +75,7 @@ func (s *TestSuite) TestWebhooksReading() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
 			t := s.T()
@@ -103,7 +103,7 @@ func (s *TestSuite) TestWebhooksReading() {
 }
 
 func (s *TestSuite) TestWebhooksListing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read in a list via %s", authType), func() {
 			t := s.T()
@@ -136,7 +136,7 @@ func (s *TestSuite) TestWebhooksListing() {
 }
 
 func (s *TestSuite) TestWebhooksUpdating() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to update a non-existent webhook via %s", authType), func() {
 			t := s.T()
@@ -152,7 +152,7 @@ func (s *TestSuite) TestWebhooksUpdating() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be updateable via %s", authType), func() {
 			t := s.T()
@@ -196,7 +196,7 @@ func (s *TestSuite) TestWebhooksUpdating() {
 }
 
 func (s *TestSuite) TestWebhooksArchiving() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to archive a non-existent webhook via %s", authType), func() {
 			t := s.T()
@@ -208,7 +208,7 @@ func (s *TestSuite) TestWebhooksArchiving() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be archived via %s", authType), func() {
 			t := s.T()
@@ -238,7 +238,7 @@ func (s *TestSuite) TestWebhooksArchiving() {
 }
 
 func (s *TestSuite) TestWebhooksAuditing() {
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should return an error when auditing a non-existent webhook via %s", authType), func() {
 			t := s.T()
@@ -256,7 +256,7 @@ func (s *TestSuite) TestWebhooksAuditing() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should only be auditable to admins via %s", authType), func() {
 			t := s.T()
@@ -285,7 +285,7 @@ func (s *TestSuite) TestWebhooksAuditing() {
 		})
 	}
 
-	for a, c := range s.eachClient() {
+	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be auditable via %s", authType), func() {
 			t := s.T()

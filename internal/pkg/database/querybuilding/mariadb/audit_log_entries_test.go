@@ -14,7 +14,7 @@ import (
 func TestMariaDB_BuildGetAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -35,7 +35,7 @@ func TestMariaDB_BuildGetAuditLogEntryQuery(T *testing.T) {
 func TestMariaDB_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -50,7 +50,7 @@ func TestMariaDB_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 func TestMariaDB_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -72,7 +72,7 @@ func TestMariaDB_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 func TestMariaDB_BuildGetAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -96,7 +96,7 @@ func TestMariaDB_BuildGetAuditLogEntriesQuery(T *testing.T) {
 func TestMariaDB_BuildCreateAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

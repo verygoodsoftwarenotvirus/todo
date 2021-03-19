@@ -33,7 +33,7 @@ func TestNewBleveIndexManager(T *testing.T) {
 
 	temp := os.TempDir()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		exampleIndexPath := search.IndexPath(filepath.Join(temp, "constructor_test_happy_path.bleve"))
 
@@ -58,7 +58,7 @@ func TestBleveIndexManager_Index(T *testing.T) {
 	temp := os.TempDir()
 	exampleUserID := fakes.BuildFakeUser().ID
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -86,7 +86,7 @@ func TestBleveIndexManager_Search(T *testing.T) {
 	temp := os.TempDir()
 	exampleUserID := fakes.BuildFakeUser().ID
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -187,7 +187,7 @@ func TestBleveIndexManager_Delete(T *testing.T) {
 	temp := os.TempDir()
 	exampleUserID := fakes.BuildFakeUser().ID
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

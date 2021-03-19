@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"context"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -22,23 +23,17 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	logger.Debug("switching account")
 
 	if c.authMethod == cookieAuthMethod {
-		logger.Debug("making switch request because of cookie auth mode")
-
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
-			return prepareError(err, logger, span, "building switch active account request")
+			return fmt.Errorf("building login request: %w", err)
 		}
 
-		res, err := c.fetchResponseToRequest(ctx, c.authedClient, req)
+		res, err := c.authedClient.Do(req)
 		if err != nil {
-			return prepareError(err, logger, span, "executing login request")
+			return fmt.Errorf("encountered error executing login request: %w", err)
 		}
 
 		c.closeResponseBody(ctx, res)
-
-		if len(res.Cookies()) == 1 {
-			return c.SetOptions(UsingCookie(res.Cookies()[0]))
-		}
 	}
 
 	c.accountID = accountID

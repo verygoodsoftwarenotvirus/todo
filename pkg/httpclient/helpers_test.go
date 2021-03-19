@@ -96,11 +96,11 @@ func TestArgIsNotNil(T *testing.T) {
 func TestUnmarshalBody(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 
 		expected := "whatever"
 		res := &http.Response{
@@ -118,7 +118,7 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
@@ -134,7 +134,7 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 
 		res := &http.Response{
 			Body: ioutil.NopCloser(
@@ -159,7 +159,7 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 
 		res := &http.Response{
 			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
@@ -176,7 +176,7 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 
 		err := c.unmarshalBody(ctx, nil, nil)
 		assert.Error(t, err, "error should be encountered when passed nil")
@@ -186,7 +186,7 @@ func TestUnmarshalBody(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 
 		expected := errors.New("blah")
 

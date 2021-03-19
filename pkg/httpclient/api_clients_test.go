@@ -46,11 +46,11 @@ func (s *apiClientsTestSuite) SetupTest() {
 func (s *apiClientsTestSuite) TestV1Client_GetAPIClient() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClient)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClient)
 
 		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
 
@@ -75,10 +75,10 @@ func (s *apiClientsTestSuite) TestV1Client_GetAPIClients() {
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClientList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClientList)
 
 		actual, err := c.GetAPIClients(s.ctx, nil)
 
@@ -103,11 +103,11 @@ func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		exampleResponse := fakes.BuildFakeAPIClientCreationResponseFromClient(s.exampleAPIClient)
-		c := buildTestClientWithJSONResponse(t, spec, exampleResponse)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleResponse)
 
 		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
 		assert.NoError(t, err)
@@ -137,7 +137,7 @@ func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 	s.Run("without cookie", func() {
 		t := s.T()
 
-		c := buildTestClientWithJSONResponse(t, nil, s.exampleAPIClient)
+		c, _ := buildTestClientWithJSONResponse(t, nil, s.exampleAPIClient)
 
 		_, err := c.CreateAPIClient(s.ctx, nil, nil)
 		assert.Error(t, err)
@@ -147,11 +147,11 @@ func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 func (s *apiClientsTestSuite) TestV1Client_ArchiveAPIClient() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
-		c := buildTestClientWithOKResponse(t, spec)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
@@ -171,13 +171,13 @@ func (s *apiClientsTestSuite) TestV1Client_GetAuditLogForAPIClient() {
 		expectedMethod = http.MethodGet
 	)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 
 		require.NotNil(t, actual)

@@ -40,7 +40,7 @@ func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 func TestProvidePostgres(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		buildTestService(t)
 	})
@@ -49,7 +49,7 @@ func TestProvidePostgres(T *testing.T) {
 func TestPostgres_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 		q.logQueryBuildingError(errors.New("blah"))
@@ -59,7 +59,7 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 func Test_joinUint64s(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		exampleInput := []uint64{123, 456, 789}
 		expected := "123,456,789"
@@ -72,7 +72,7 @@ func Test_joinUint64s(T *testing.T) {
 func TestProvidePostgresDB(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		_, err := ProvidePostgresDB(logging.NewNonOperationalLogger(), "")
 		assert.NoError(t, err)

@@ -12,7 +12,7 @@ import (
 func Test_buildDefaultTransport(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		actual := buildDefaultTransport(0)
 		assert.NotNil(t, actual)
@@ -22,18 +22,15 @@ func Test_buildDefaultTransport(T *testing.T) {
 func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		ts := httptest.NewServer(
-			http.HandlerFunc(
-				func(res http.ResponseWriter, req *http.Request) {
-					res.WriteHeader(http.StatusOK)
-				},
-			),
-		)
-		ts.EnableHTTP2 = true
+		ts := httptest.NewServer(http.HandlerFunc(
+			func(res http.ResponseWriter, req *http.Request) {
+				res.WriteHeader(http.StatusOK)
+			},
+		))
 
 		transport := newDefaultRoundTripper(0)
 		assert.NotNil(t, transport)
@@ -50,7 +47,7 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 func Test_newDefaultRoundTripper(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		rt := newDefaultRoundTripper(0)

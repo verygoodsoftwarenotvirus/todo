@@ -64,12 +64,12 @@ type usersTestSuite struct {
 func (s *usersTestSuite) TestV1Client_GetUser() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleUser.ID)
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleUser)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleUser)
 		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
 
 		require.NotNil(t, actual)
@@ -93,10 +93,10 @@ func (s *usersTestSuite) TestV1Client_GetUsers() {
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleUserList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleUserList)
 		actual, err := c.GetUsers(s.ctx, nil)
 
 		require.NotNil(t, actual)
@@ -119,12 +119,12 @@ func (s *usersTestSuite) TestV1Client_SearchForUsersByUsername() {
 	const expectedPath = "/api/v1/users/search"
 	exampleUsername := s.exampleUser.Username
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleUserList.Users)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleUserList.Users)
 		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
 
 		require.NotNil(t, actual)
@@ -148,7 +148,7 @@ func (s *usersTestSuite) TestV1Client_CreateUser() {
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		expected := fakes.BuildUserCreationResponseFromUser(s.exampleUser)
@@ -174,11 +174,11 @@ func (s *usersTestSuite) TestV1Client_CreateUser() {
 func (s *usersTestSuite) TestV1Client_ArchiveUser() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleUser.ID)
-		c := buildTestClientWithOKResponse(t, spec)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveUser(s.ctx, s.exampleUser.ID)
 		assert.NoError(t, err, "no error should be returned")
@@ -198,13 +198,13 @@ func (s *usersTestSuite) TestV1Client_GetAuditLogForUser() {
 		expectedMethod = http.MethodGet
 	)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 
 		require.NotNil(t, actual)

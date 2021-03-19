@@ -15,7 +15,7 @@ import (
 func TestSqlite_BuildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -37,7 +37,7 @@ func TestSqlite_BuildGetWebhookQuery(T *testing.T) {
 func TestSqlite_BuildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -52,7 +52,7 @@ func TestSqlite_BuildGetAllWebhooksCountQuery(T *testing.T) {
 func TestSqlite_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -74,7 +74,7 @@ func TestSqlite_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 func TestSqlite_BuildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -106,7 +106,7 @@ func TestSqlite_BuildGetWebhooksQuery(T *testing.T) {
 func TestSqlite_BuildCreateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -142,7 +142,7 @@ func TestSqlite_BuildCreateWebhookQuery(T *testing.T) {
 func TestSqlite_BuildUpdateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -171,7 +171,7 @@ func TestSqlite_BuildUpdateWebhookQuery(T *testing.T) {
 func TestSqlite_BuildArchiveWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

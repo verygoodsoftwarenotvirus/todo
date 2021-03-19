@@ -9,7 +9,7 @@ import (
 func TestServiceUserPermissions_hasReservedUnusedPermission10(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -23,7 +23,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission10(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission11(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -37,7 +37,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission11(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission12(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -51,7 +51,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission12(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission13(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -65,7 +65,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission13(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission14(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -79,7 +79,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission14(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission15(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -93,7 +93,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission15(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission16(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -107,7 +107,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission16(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission17(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -121,7 +121,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission17(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission18(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -135,7 +135,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission18(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission19(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -149,7 +149,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission19(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission20(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -163,7 +163,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission20(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission21(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -177,7 +177,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission21(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission22(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -191,7 +191,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission22(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission23(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -205,7 +205,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission23(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission24(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -219,7 +219,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission24(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission25(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -233,7 +233,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission25(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission26(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -247,7 +247,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission26(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission27(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -261,7 +261,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission27(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission28(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -275,7 +275,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission28(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission29(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -289,7 +289,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission29(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission3(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -303,7 +303,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission3(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission30(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -317,7 +317,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission30(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission31(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -331,7 +331,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission31(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission32(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -345,7 +345,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission32(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission4(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -359,7 +359,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission4(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission5(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -373,7 +373,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission5(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission6(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -387,7 +387,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission6(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission7(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -401,7 +401,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission7(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission8(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)
@@ -415,7 +415,7 @@ func TestServiceUserPermissions_hasReservedUnusedPermission8(T *testing.T) {
 func TestServiceUserPermissions_hasReservedUnusedPermission9(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceUserPermissions(0)

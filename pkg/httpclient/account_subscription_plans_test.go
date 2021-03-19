@@ -41,11 +41,11 @@ func (s *accountSubscriptionPlansTestSuite) SetupTest() {
 func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAccountSubscriptionPlan() {
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccountSubscriptionPlan)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAccountSubscriptionPlan)
 		actual, err := c.GetAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan.ID)
 
 		assert.NoError(t, err, "no error should be returned")
@@ -55,7 +55,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAccountSubscriptionP
 	s.Run("returns error with zero ID", func() {
 		t := s.T()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 		actual, err := c.GetAccountSubscriptionPlan(s.ctx, 0)
 
 		assert.Error(t, err, "no error should be returned")
@@ -90,12 +90,12 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAccountSubscriptionP
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		filter := types.DefaultQueryFilter()
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccountSubscriptionPlanList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAccountSubscriptionPlanList)
 		actual, err := c.GetAccountSubscriptionPlans(s.ctx, filter)
 
 		require.NotNil(t, actual)
@@ -131,7 +131,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAccountSubscriptionP
 func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscriptionPlan() {
 	const expectedPath = "/api/v1/account_subscription_plans"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
@@ -146,7 +146,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscripti
 	s.Run("with nil input", func() {
 		t := s.T()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, nil)
 
 		require.Nil(t, actual)
@@ -157,7 +157,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscripti
 	s.Run("with invalid input", func() {
 		t := s.T()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 		exampleInput := &types.AccountSubscriptionPlanCreationInput{}
 		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, exampleInput)
 
@@ -179,7 +179,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscripti
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		c := buildTestClientThatWaitsTooLong(t, spec)
+		c, _ := buildTestClientThatWaitsTooLong(t, spec)
 		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, s.exampleInput)
 
 		require.Nil(t, actual)
@@ -190,11 +190,11 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscripti
 func (s *accountSubscriptionPlansTestSuite) TestV1Client_UpdateAccountSubscriptionPlan() {
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccountSubscriptionPlan)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAccountSubscriptionPlan)
 
 		err := c.UpdateAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan)
 		assert.NoError(t, err, "no error should be returned")
@@ -203,7 +203,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_UpdateAccountSubscripti
 	s.Run("returns error with nil input", func() {
 		t := s.T()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 		err := c.UpdateAccountSubscriptionPlan(s.ctx, nil)
 
 		assert.Error(t, err, "error should be returned")
@@ -221,7 +221,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_UpdateAccountSubscripti
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
-		c := buildTestClientThatWaitsTooLong(t, spec)
+		c, _ := buildTestClientThatWaitsTooLong(t, spec)
 		err := c.UpdateAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan)
 
 		assert.Error(t, err, "error should be returned")
@@ -231,11 +231,11 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_UpdateAccountSubscripti
 func (s *accountSubscriptionPlansTestSuite) TestV1Client_ArchiveAccountSubscriptionPlan() {
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
-		c := buildTestClientWithOKResponse(t, spec)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan.ID)
 		assert.NoError(t, err, "no error should be returned")
@@ -244,7 +244,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_ArchiveAccountSubscript
 	s.Run("returns error with zero ID", func() {
 		t := s.T()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 
 		err := c.ArchiveAccountSubscriptionPlan(s.ctx, 0)
 		assert.Error(t, err, "error should be returned")
@@ -262,7 +262,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_ArchiveAccountSubscript
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
-		c := buildTestClientThatWaitsTooLong(t, spec)
+		c, _ := buildTestClientThatWaitsTooLong(t, spec)
 
 		err := c.ArchiveAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan.ID)
 		assert.Error(t, err, "error should be returned")
@@ -275,13 +275,13 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAuditLogForAccountSu
 		expectedMethod = http.MethodGet
 	)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccountSubscriptionPlan.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForAccountSubscriptionPlan(s.ctx, s.exampleAccountSubscriptionPlan.ID)
 
 		require.NotNil(t, actual)
@@ -292,7 +292,7 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_GetAuditLogForAccountSu
 	s.Run("with zero ID input", func() {
 		t := s.T()
 
-		c := buildTestClient(t, nil)
+		c, _ := buildSimpleTestClient(t)
 		actual, err := c.GetAuditLogForAccountSubscriptionPlan(s.ctx, 0)
 
 		assert.Nil(t, actual)

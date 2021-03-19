@@ -93,7 +93,7 @@ func TestQuerier_ScanAuditLogEntries(T *testing.T) {
 func TestQuerier_GetAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -143,7 +143,7 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleCount := uint64(123)
@@ -197,7 +197,7 @@ func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -390,7 +390,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 func TestQuerier_GetAuditLogEntries(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -490,7 +490,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 func TestQuerier_createAuditLogEntry(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()

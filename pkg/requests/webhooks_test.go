@@ -43,7 +43,7 @@ func (s *webhooksTestSuite) SetupTest() {
 func (s *webhooksTestSuite) TestBuilder_BuildGetWebhookRequest() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodGet, "", expectedPathFormat, s.exampleWebhook.ID)
@@ -58,7 +58,7 @@ func (s *webhooksTestSuite) TestBuilder_BuildGetWebhookRequest() {
 func (s *webhooksTestSuite) TestBuilder_BuildGetWebhooksRequest() {
 	const expectedPath = "/api/v1/webhooks"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
@@ -73,7 +73,7 @@ func (s *webhooksTestSuite) TestBuilder_BuildGetWebhooksRequest() {
 func (s *webhooksTestSuite) TestBuilder_BuildCreateWebhookRequest() {
 	const expectedPath = "/api/v1/webhooks"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
@@ -88,7 +88,7 @@ func (s *webhooksTestSuite) TestBuilder_BuildCreateWebhookRequest() {
 func (s *webhooksTestSuite) TestBuilder_BuildUpdateWebhookRequest() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleWebhook.ID)
@@ -103,7 +103,7 @@ func (s *webhooksTestSuite) TestBuilder_BuildUpdateWebhookRequest() {
 func (s *webhooksTestSuite) TestBuilder_BuildArchiveWebhookRequest() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodDelete, "", expectedPathFormat, s.exampleWebhook.ID)
@@ -118,7 +118,7 @@ func (s *webhooksTestSuite) TestBuilder_BuildArchiveWebhookRequest() {
 func (s *webhooksTestSuite) TestBuilder_BuildGetAuditLogForWebhookRequest() {
 	const expectedPath = "/api/v1/webhooks/%d/audit"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildGetAuditLogForWebhookRequest(s.ctx, s.exampleWebhook.ID)

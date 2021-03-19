@@ -34,7 +34,7 @@ func buildRequest(t *testing.T) *http.Request {
 func TestService_StaticDir(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := &service{
 			logger: logging.NewNonOperationalLogger(),
@@ -79,7 +79,7 @@ func TestService_StaticDir(T *testing.T) {
 func TestService_buildStaticFileServer(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := &service{
 			config: Config{

@@ -81,7 +81,7 @@ func TestQuerier_ScanPlans(T *testing.T) {
 func TestQuerier_GetPlan(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
@@ -177,7 +177,7 @@ func TestQuerier_GetPlan(T *testing.T) {
 func TestQuerier_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleCount := uint64(123)
@@ -234,7 +234,7 @@ func TestQuerier_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
@@ -347,7 +347,7 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
@@ -421,7 +421,7 @@ func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
@@ -489,7 +489,7 @@ func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
@@ -557,7 +557,7 @@ func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

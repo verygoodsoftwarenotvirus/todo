@@ -30,7 +30,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -139,7 +139,7 @@ func TestPlansService_CreateHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -256,7 +256,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -378,7 +378,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -583,7 +583,7 @@ func TestPlansService_ArchiveHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

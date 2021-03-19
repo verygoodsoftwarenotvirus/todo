@@ -23,6 +23,9 @@ var (
 	// ErrBanned is a handy error to return when we receive a 401 response.
 	ErrBanned = errors.New("403: banned")
 
+	// ErrInternalServerError is a handy error to return when we receive a 500 response.
+	ErrInternalServerError = errors.New("500: internal server error")
+
 	// ErrUnauthorized is a handy error to return when we receive a 401 response.
 	ErrUnauthorized = errors.New("401: not authorized")
 

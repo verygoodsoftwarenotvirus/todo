@@ -15,7 +15,7 @@ import (
 func TestMariaDB_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -37,7 +37,7 @@ func TestMariaDB_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 func TestMariaDB_BuildGetAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -58,7 +58,7 @@ func TestMariaDB_BuildGetAPIClientQuery(T *testing.T) {
 func TestMariaDB_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -80,7 +80,7 @@ func TestMariaDB_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
 func TestMariaDB_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -95,7 +95,7 @@ func TestMariaDB_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 func TestMariaDB_BuildGetAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -127,7 +127,7 @@ func TestMariaDB_BuildGetAPIClientsQuery(T *testing.T) {
 func TestMariaDB_BuildCreateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -159,7 +159,7 @@ func TestMariaDB_BuildCreateAPIClientQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -182,7 +182,7 @@ func TestMariaDB_BuildUpdateAPIClientQuery(T *testing.T) {
 func TestMariaDB_BuildArchiveAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -204,7 +204,7 @@ func TestMariaDB_BuildArchiveAPIClientQuery(T *testing.T) {
 func TestMariaDB_BuildGetAuditLogEntriesForAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

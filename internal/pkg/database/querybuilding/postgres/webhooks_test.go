@@ -15,7 +15,7 @@ import (
 func TestPostgres_BuildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -37,7 +37,7 @@ func TestPostgres_BuildGetWebhookQuery(T *testing.T) {
 func TestPostgres_BuildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -52,7 +52,7 @@ func TestPostgres_BuildGetAllWebhooksCountQuery(T *testing.T) {
 func TestPostgres_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -74,7 +74,7 @@ func TestPostgres_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 func TestPostgres_BuildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -106,7 +106,7 @@ func TestPostgres_BuildGetWebhooksQuery(T *testing.T) {
 func TestPostgres_BuildWebhookCreationQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -142,7 +142,7 @@ func TestPostgres_BuildWebhookCreationQuery(T *testing.T) {
 func TestPostgres_BuildUpdateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -171,7 +171,7 @@ func TestPostgres_BuildUpdateWebhookQuery(T *testing.T) {
 func TestPostgres_BuildArchiveWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -193,7 +193,7 @@ func TestPostgres_BuildArchiveWebhookQuery(T *testing.T) {
 func TestPostgres_BuildGetAuditLogEntriesForWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

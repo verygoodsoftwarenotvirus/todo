@@ -36,7 +36,7 @@ func buildTestService() *service {
 func TestProvideItemsService(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {

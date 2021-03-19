@@ -14,7 +14,7 @@ import (
 func TestMariaDB_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -38,7 +38,7 @@ func TestMariaDB_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 func TestMariaDB_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -60,7 +60,7 @@ func TestMariaDB_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 func TestMariaDB_BuildAddUserToAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -87,7 +87,7 @@ func TestMariaDB_BuildAddUserToAccountQuery(T *testing.T) {
 func TestMariaDB_BuildRemoveUserFromAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -110,7 +110,7 @@ func TestMariaDB_BuildRemoveUserFromAccountQuery(T *testing.T) {
 func TestMariaDB_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -131,7 +131,7 @@ func TestMariaDB_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 func TestMariaDB_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -156,7 +156,7 @@ func TestMariaDB_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 func TestMariaDB_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -177,7 +177,7 @@ func TestMariaDB_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 func TestMariaDB_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -201,7 +201,7 @@ func TestMariaDB_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 func TestMariaDB_BuildModifyUserPermissionsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -226,7 +226,7 @@ func TestMariaDB_BuildModifyUserPermissionsQuery(T *testing.T) {
 func TestMariaDB_BuildTransferAccountOwnershipQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -251,7 +251,7 @@ func TestMariaDB_BuildTransferAccountOwnershipQuery(T *testing.T) {
 func TestMariaDB_BuildTransferAccountMembershipsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

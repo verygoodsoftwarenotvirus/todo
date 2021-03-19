@@ -14,7 +14,7 @@ import (
 func TestPostgres_BuildGetPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -35,7 +35,7 @@ func TestPostgres_BuildGetPlanQuery(T *testing.T) {
 func TestPostgres_BuildGetAllPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -50,7 +50,7 @@ func TestPostgres_BuildGetAllPlansCountQuery(T *testing.T) {
 func TestPostgres_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -78,7 +78,7 @@ func TestPostgres_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 func TestPostgres_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -110,7 +110,7 @@ func TestPostgres_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 func TestPostgres_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -135,7 +135,7 @@ func TestPostgres_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 func TestPostgres_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -156,7 +156,7 @@ func TestPostgres_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 func TestPostgres_BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

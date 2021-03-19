@@ -31,7 +31,7 @@ func TestWebhooksService_List(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -147,7 +147,7 @@ func TestValidateWebhook(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
@@ -190,7 +190,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -354,7 +354,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -494,7 +494,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -732,7 +732,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

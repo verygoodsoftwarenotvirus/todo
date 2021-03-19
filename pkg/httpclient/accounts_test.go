@@ -41,12 +41,12 @@ func (s *accountsTestSuite) SetupTest() {
 func (s *accountsTestSuite) TestV1Client_GetAccount() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccount.ID)
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccount)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAccount)
 		actual, err := c.GetAccount(s.ctx, s.exampleAccount.ID)
 
 		require.NotNil(t, actual)
@@ -83,10 +83,10 @@ func (s *accountsTestSuite) TestV1Client_GetAccounts() {
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 	filter := (*types.QueryFilter)(nil)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAccountList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAccountList)
 		actual, err := c.GetAccounts(s.ctx, filter)
 
 		require.NotNil(t, actual)
@@ -120,7 +120,7 @@ func (s *accountsTestSuite) TestV1Client_CreateAccount() {
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		s.exampleAccount.BelongsToUser = 0
@@ -148,12 +148,14 @@ func (s *accountsTestSuite) TestV1Client_CreateAccount() {
 func (s *accountsTestSuite) TestV1Client_UpdateAccount() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccount.ID)
 
-		err := buildTestClientWithJSONResponse(t, spec, s.exampleAccount).UpdateAccount(s.ctx, s.exampleAccount)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAccount)
+
+		err := c.UpdateAccount(s.ctx, s.exampleAccount)
 		assert.NoError(t, err, "no error should be returned")
 	})
 
@@ -170,11 +172,11 @@ func (s *accountsTestSuite) TestV1Client_UpdateAccount() {
 func (s *accountsTestSuite) TestV1Client_ArchiveAccount() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID)
-		c := buildTestClientWithOKResponse(t, spec)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveAccount(s.ctx, s.exampleAccount.ID)
 		assert.NoError(t, err, "no error should be returned")
@@ -194,13 +196,13 @@ func (s *accountsTestSuite) TestV1Client_GetAuditLogForAccount() {
 		expectedMethod = http.MethodGet
 	)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
 
-		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
 
 		require.NotNil(t, actual)

@@ -14,7 +14,7 @@ import (
 func TestPostgres_BuildGetAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -38,7 +38,7 @@ func TestPostgres_BuildGetAccountQuery(T *testing.T) {
 func TestPostgres_BuildGetAllAccountsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -53,7 +53,7 @@ func TestPostgres_BuildGetAllAccountsCountQuery(T *testing.T) {
 func TestPostgres_BuildGetBatchOfAccountsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -75,7 +75,7 @@ func TestPostgres_BuildGetBatchOfAccountsQuery(T *testing.T) {
 func TestPostgres_BuildGetAccountsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -107,7 +107,7 @@ func TestPostgres_BuildGetAccountsQuery(T *testing.T) {
 func TestPostgres_BuildCreateAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -140,7 +140,7 @@ func TestPostgres_BuildCreateAccountQuery(T *testing.T) {
 func TestPostgres_BuildUpdateAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -165,7 +165,7 @@ func TestPostgres_BuildUpdateAccountQuery(T *testing.T) {
 func TestPostgres_BuildArchiveAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -189,7 +189,7 @@ func TestPostgres_BuildArchiveAccountQuery(T *testing.T) {
 func TestPostgres_BuildGetAuditLogEntriesForAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

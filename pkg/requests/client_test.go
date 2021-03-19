@@ -114,7 +114,7 @@ func buildTestClientWithInvalidURL(t *testing.T) *Builder {
 func TestNewBuilder(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		c, err := NewBuilder(mustParseURL(exampleURI))
@@ -224,7 +224,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		c, _ := NewBuilder(mustParseURL(exampleURI))
@@ -240,7 +240,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 func TestV1Client_BuildHealthCheckRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -260,7 +260,7 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 
 	exampleData := &testingType{Name: "whatever"}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

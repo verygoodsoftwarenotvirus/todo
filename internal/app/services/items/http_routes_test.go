@@ -32,7 +32,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -141,7 +141,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -319,7 +319,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -442,7 +442,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -563,7 +563,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -688,7 +688,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -901,7 +901,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

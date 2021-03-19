@@ -84,7 +84,7 @@ func TestQuerier_ScanAPIClients(T *testing.T) {
 func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
@@ -161,7 +161,7 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleCount := uint64(123)
@@ -211,7 +211,7 @@ func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 func TestQuerier_GetAllAPIClients(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -409,7 +409,7 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClientList := fakes.BuildFakeAPIClientList()
@@ -537,7 +537,7 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 func TestQuerier_CreateAPIClient(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
@@ -611,7 +611,7 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 func TestQuerier_ArchiveAPIClient(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
@@ -647,7 +647,7 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()

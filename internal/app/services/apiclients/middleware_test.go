@@ -23,7 +23,7 @@ import (
 func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -93,7 +93,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 func TestService_fetchAPIClientFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -125,7 +125,7 @@ func TestService_fetchAPIClientFromRequest(T *testing.T) {
 func TestService_fetchAPIClientIDFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

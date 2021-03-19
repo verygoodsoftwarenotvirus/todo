@@ -9,7 +9,7 @@ import (
 func TestSessionInfo_ToBytes(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := &RequestContext{User: UserRequestContext{ID: 123}}

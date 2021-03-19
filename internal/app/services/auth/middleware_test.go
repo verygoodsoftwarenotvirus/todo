@@ -27,7 +27,7 @@ import (
 func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -234,7 +234,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 func TestService_AuthorizationMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -317,7 +317,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 func Test_parseLoginInputFromForm(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -358,7 +358,7 @@ func Test_parseLoginInputFromForm(T *testing.T) {
 func TestService_UserLoginInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -454,7 +454,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 func TestService_AdminMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

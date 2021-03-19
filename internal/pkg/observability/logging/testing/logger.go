@@ -15,9 +15,9 @@ import (
 // logger is our log wrapper.
 type logger struct {
 	requestIDFunc logging.RequestIDFunc
-	contextValHat sync.RWMutex
 	contextValues map[string]interface{}
 	t             *testing.T
+	contextValHat sync.RWMutex
 }
 
 // newLogger builds a new logger.
@@ -38,7 +38,7 @@ func NewLogger(t *testing.T) logging.Logger {
 	return newLogger(t, nil)
 }
 
-// clone clones the current logger
+// clone clones the current logger.
 func (l *logger) clone() *logger {
 	return &logger{
 		t:             l.t,

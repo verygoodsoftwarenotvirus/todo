@@ -25,7 +25,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -144,7 +144,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -271,7 +271,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -400,7 +400,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -622,7 +622,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

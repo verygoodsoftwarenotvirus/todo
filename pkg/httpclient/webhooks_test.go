@@ -40,12 +40,12 @@ func (s *webhooksTestSuite) SetupTest() {
 func (s *webhooksTestSuite) TestV1Client_GetWebhook() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodGet, "", expectedPathFormat, s.exampleWebhook.ID)
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
 		actual, err := c.GetWebhook(s.ctx, s.exampleWebhook.ID)
 
 		require.NotNil(t, actual)
@@ -68,10 +68,10 @@ func (s *webhooksTestSuite) TestV1Client_GetWebhooks() {
 
 	spec := newRequestSpec(false, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleWebhookList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleWebhookList)
 		actual, err := c.GetWebhooks(s.ctx, nil)
 
 		require.NotNil(t, actual)
@@ -93,7 +93,7 @@ func (s *webhooksTestSuite) TestV1Client_CreateWebhook() {
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		s.exampleInput.BelongsToAccount = 0
@@ -118,11 +118,11 @@ func (s *webhooksTestSuite) TestV1Client_CreateWebhook() {
 func (s *webhooksTestSuite) TestV1Client_UpdateWebhook() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleWebhook.ID)
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
 
 		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
 		assert.NoError(t, err, "no error should be returned")
@@ -139,11 +139,11 @@ func (s *webhooksTestSuite) TestV1Client_UpdateWebhook() {
 func (s *webhooksTestSuite) TestV1Client_ArchiveWebhook() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodDelete, "", expectedPathFormat, s.exampleWebhook.ID)
-		c := buildTestClientWithOKResponse(t, spec)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveWebhook(s.ctx, s.exampleWebhook.ID)
 		assert.NoError(t, err, "no error should be returned")
@@ -163,13 +163,13 @@ func (s *webhooksTestSuite) TestV1Client_GetAuditLogForWebhook() {
 		expectedMethod = http.MethodGet
 	)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleWebhook.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForWebhook(s.ctx, s.exampleWebhook.ID)
 
 		require.NotNil(t, actual)

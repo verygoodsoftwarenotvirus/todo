@@ -14,7 +14,7 @@ import (
 func TestSqlite_BuildGetAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -35,7 +35,7 @@ func TestSqlite_BuildGetAuditLogEntryQuery(T *testing.T) {
 func TestSqlite_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -50,7 +50,7 @@ func TestSqlite_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 func TestSqlite_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -72,7 +72,7 @@ func TestSqlite_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 func TestSqlite_BuildGetAuditLogEntriesQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -96,7 +96,7 @@ func TestSqlite_BuildGetAuditLogEntriesQuery(T *testing.T) {
 func TestSqlite_BuildCreateAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

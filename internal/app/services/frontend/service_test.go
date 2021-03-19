@@ -9,7 +9,7 @@ import (
 func TestProvideFrontendService(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ProvideService(logging.NewNonOperationalLogger(), Config{})
 	})

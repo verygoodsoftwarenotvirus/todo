@@ -11,7 +11,7 @@ import (
 func TestItem_Update(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		i := &Item{}
 
@@ -43,7 +43,7 @@ func TestItem_Update(T *testing.T) {
 func TestItemCreationInput_Validate(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := &ItemCreationInput{
@@ -71,7 +71,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 func TestItemUpdateInput_Validate(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := &ItemUpdateInput{

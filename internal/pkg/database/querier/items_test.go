@@ -84,7 +84,7 @@ func TestQuerier_ScanItems(T *testing.T) {
 func TestQuerier_ItemExists(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccount := fakes.BuildFakeAccount()
@@ -166,7 +166,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 func TestQuerier_GetItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccount := fakes.BuildFakeAccount()
@@ -226,7 +226,7 @@ func TestQuerier_GetItem(T *testing.T) {
 func TestQuerier_GetAllItemsCount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -256,7 +256,7 @@ func TestQuerier_GetAllItemsCount(T *testing.T) {
 func TestQuerier_GetAllItems(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		results := make(chan []*types.Item)
@@ -454,7 +454,7 @@ func TestQuerier_GetItems(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
@@ -574,7 +574,7 @@ func TestQuerier_GetItems(T *testing.T) {
 func TestQuerier_GetItemsForAdmin(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
@@ -694,7 +694,7 @@ func TestQuerier_GetItemsForAdmin(T *testing.T) {
 func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -830,7 +830,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleItemList := fakes.BuildFakeItemList()
@@ -962,7 +962,7 @@ func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 func TestQuerier_CreateItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleItem := fakes.BuildFakeItem()
@@ -1039,7 +1039,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 func TestQuerier_UpdateItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccount := fakes.BuildFakeAccount()
@@ -1077,7 +1077,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccount := fakes.BuildFakeAccount()
@@ -1115,7 +1115,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 func TestQuerier_GetAuditLogEntriesForItem(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleItem := fakes.BuildFakeItem()

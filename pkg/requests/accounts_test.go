@@ -43,7 +43,7 @@ func (s *accountRequestBuildersTestSuite) SetupTest() {
 func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAccountRequest() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccount.ID)
@@ -58,7 +58,7 @@ func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAccountRequest() {
 func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAccountsRequest() {
 	const expectedPath = "/api/v1/accounts"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
@@ -74,7 +74,7 @@ func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAccountsRequest() 
 func (s *accountRequestBuildersTestSuite) TestBuilder_BuildCreateAccountRequest() {
 	const expectedPath = "/api/v1/accounts"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildCreateAccountRequest(s.ctx, s.exampleInput)
@@ -89,7 +89,7 @@ func (s *accountRequestBuildersTestSuite) TestBuilder_BuildCreateAccountRequest(
 func (s *accountRequestBuildersTestSuite) TestBuilder_BuildUpdateAccountRequest() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccount.ID)
@@ -104,7 +104,7 @@ func (s *accountRequestBuildersTestSuite) TestBuilder_BuildUpdateAccountRequest(
 func (s *accountRequestBuildersTestSuite) TestBuilder_BuildArchiveAccountRequest() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID)
@@ -119,7 +119,7 @@ func (s *accountRequestBuildersTestSuite) TestBuilder_BuildArchiveAccountRequest
 func (s *accountRequestBuildersTestSuite) TestBuilder_BuildGetAuditLogForAccountRequest() {
 	const expectedPath = "/api/v1/accounts/%d/audit"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildGetAuditLogForAccountRequest(s.ctx, s.exampleAccount.ID)

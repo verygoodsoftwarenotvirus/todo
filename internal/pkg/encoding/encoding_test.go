@@ -23,7 +23,7 @@ type example struct {
 func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
@@ -54,7 +54,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 func TestServerEncoderDecoder_EncodeResponseWithStatus(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
@@ -74,7 +74,7 @@ func TestServerEncoderDecoder_EncodeResponseWithStatus(T *testing.T) {
 func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
@@ -109,7 +109,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 func TestEncodeInvalidInputResponse(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -126,7 +126,7 @@ func TestEncodeInvalidInputResponse(T *testing.T) {
 func TestEncodeNotFoundResponse(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -143,7 +143,7 @@ func TestEncodeNotFoundResponse(T *testing.T) {
 func TestEncodeUnspecifiedInternalServerErrorResponse(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -160,7 +160,7 @@ func TestEncodeUnspecifiedInternalServerErrorResponse(T *testing.T) {
 func TestEncodeUnauthorizedResponse(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -177,7 +177,7 @@ func TestEncodeUnauthorizedResponse(T *testing.T) {
 func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

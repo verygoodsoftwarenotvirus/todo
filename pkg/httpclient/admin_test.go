@@ -3,9 +3,7 @@ package httpclient
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -13,7 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAdmin(t *testing.T) {
@@ -40,23 +37,15 @@ func (s *adminTestSuite) SetupTest() {
 	s.exampleAccountList = fakes.BuildFakeAccountList()
 }
 
-func (s *adminTestSuite) TestV1Client_BanUser() {
-	const expectedPathFormat = "/api/v1/_admin_/users/status"
+func (s *adminTestSuite) TestV1Client_UpdateUserReputation() {
+	const expectedPath = "/api/v1/_admin_/users/status"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				res.WriteHeader(http.StatusAccepted)
-			},
-		))
-		c := buildTestClient(t, ts)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusAccepted)
 
 		err := c.UpdateUserReputation(s.ctx, exampleInput)
 		assert.NoError(t, err)
@@ -66,16 +55,8 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				res.WriteHeader(http.StatusBadRequest)
-			},
-		))
-		c := buildTestClient(t, ts)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusBadRequest)
 
 		assert.Error(t, c.UpdateUserReputation(s.ctx, exampleInput))
 	})
@@ -84,16 +65,8 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				res.WriteHeader(http.StatusInternalServerError)
-			},
-		))
-		c := buildTestClient(t, ts)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusInternalServerError)
 
 		err := c.UpdateUserReputation(s.ctx, exampleInput)
 		assert.Error(t, err)
@@ -113,19 +86,8 @@ func (s *adminTestSuite) TestV1Client_BanUser() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				time.Sleep(10 * time.Minute)
-
-				res.WriteHeader(http.StatusAccepted)
-			},
-		))
-		c := buildTestClient(t, ts)
-		require.NoError(t, c.SetOptions(UsingTimeout(time.Millisecond)))
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c, _ := buildTestClientThatWaitsTooLong(t, spec)
 
 		err := c.UpdateUserReputation(s.ctx, exampleInput)
 		assert.Error(t, err)

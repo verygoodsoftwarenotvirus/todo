@@ -62,7 +62,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 func TestService_DecodeCookieFromRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -133,7 +133,7 @@ func TestService_DecodeCookieFromRequest(T *testing.T) {
 func TestService_fetchUserFromCookie(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -221,7 +221,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 func TestService_LoginHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -623,7 +623,7 @@ func TestService_LoginHandler(T *testing.T) {
 func TestService_LogoutHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -721,7 +721,7 @@ func TestService_LogoutHandler(T *testing.T) {
 func TestService_validateLogin(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -1134,7 +1134,7 @@ func TestService_CycleSecretHandler(T *testing.T) {
 func TestService_buildCookie(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
@@ -1160,7 +1160,7 @@ func TestService_buildCookie(T *testing.T) {
 func TestService_PASETOHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)

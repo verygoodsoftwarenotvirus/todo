@@ -49,7 +49,7 @@ type itemsTestSuite struct {
 func (s *itemsTestSuite) TestBuilder_BuildItemExistsRequest() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildItemExistsRequest(s.ctx, s.exampleItem.ID)
@@ -63,7 +63,7 @@ func (s *itemsTestSuite) TestBuilder_BuildItemExistsRequest() {
 func (s *itemsTestSuite) TestBuilder_BuildGetItemRequest() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
@@ -78,7 +78,7 @@ func (s *itemsTestSuite) TestBuilder_BuildGetItemRequest() {
 func (s *itemsTestSuite) TestBuilder_BuildGetItemsRequest() {
 	const expectedPath = "/api/v1/items"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
@@ -94,7 +94,7 @@ func (s *itemsTestSuite) TestBuilder_BuildGetItemsRequest() {
 func (s *itemsTestSuite) TestBuilder_BuildSearchItemsRequest() {
 	const expectedPath = "/api/v1/items/search"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		limit := types.DefaultQueryFilter().Limit
@@ -111,7 +111,7 @@ func (s *itemsTestSuite) TestBuilder_BuildSearchItemsRequest() {
 func (s *itemsTestSuite) TestBuilder_BuildCreateItemRequest() {
 	const expectedPath = "/api/v1/items"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildCreateItemRequest(s.ctx, s.exampleInput)
@@ -126,7 +126,7 @@ func (s *itemsTestSuite) TestBuilder_BuildCreateItemRequest() {
 func (s *itemsTestSuite) TestBuilder_BuildUpdateItemRequest() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleItem.ID)
@@ -141,7 +141,7 @@ func (s *itemsTestSuite) TestBuilder_BuildUpdateItemRequest() {
 func (s *itemsTestSuite) TestBuilder_BuildArchiveItemRequest() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleItem.ID)
@@ -156,7 +156,7 @@ func (s *itemsTestSuite) TestBuilder_BuildArchiveItemRequest() {
 func (s *itemsTestSuite) TestBuilder_BuildGetAuditLogForItemRequest() {
 	const expectedPath = "/api/v1/items/%d/audit"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildGetAuditLogForItemRequest(s.ctx, s.exampleItem.ID)

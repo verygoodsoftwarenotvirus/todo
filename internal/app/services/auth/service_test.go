@@ -45,7 +45,7 @@ func buildTestService(t *testing.T) *service {
 func TestProvideAuthService(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		logger := logging.NewNonOperationalLogger()
 		ed := encoding.ProvideHTTPResponseEncoder(logger)

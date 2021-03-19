@@ -47,12 +47,12 @@ type itemsTestSuite struct {
 func (s *itemsTestSuite) TestV1Client_ItemExists() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, s.exampleItem.ID)
 
-		c := buildTestClientWithOKResponse(t, spec)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
 
 		assert.NoError(t, err, "no error should be returned")
@@ -75,10 +75,10 @@ func (s *itemsTestSuite) TestV1Client_GetItem() {
 
 	spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
 		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
 
 		require.NotNil(t, actual)
@@ -112,12 +112,12 @@ func (s *itemsTestSuite) TestV1Client_GetItems() {
 
 	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleItemList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList)
 		actual, err := c.GetItems(s.ctx, filter)
 
 		require.NotNil(t, actual)
@@ -156,12 +156,12 @@ func (s *itemsTestSuite) TestV1Client_SearchItems() {
 	exampleQuery := "whatever"
 	spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		limit := types.DefaultQueryFilter().Limit
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleItemList.Items)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList.Items)
 		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
 
 		require.NotNil(t, actual)
@@ -181,7 +181,7 @@ func (s *itemsTestSuite) TestV1Client_SearchItems() {
 		assert.Error(t, err, "error should be returned")
 	})
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		limit := types.DefaultQueryFilter().Limit
@@ -198,7 +198,7 @@ func (s *itemsTestSuite) TestV1Client_CreateItem() {
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		s.exampleInput.BelongsToAccount = 0
@@ -229,11 +229,11 @@ func (s *itemsTestSuite) TestV1Client_CreateItem() {
 func (s *itemsTestSuite) TestV1Client_UpdateItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleItem.ID)
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
 
 		err := c.UpdateItem(s.ctx, s.exampleItem)
 		assert.NoError(t, err, "no error should be returned")
@@ -250,11 +250,11 @@ func (s *itemsTestSuite) TestV1Client_UpdateItem() {
 func (s *itemsTestSuite) TestV1Client_ArchiveItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleItem.ID)
-		c := buildTestClientWithOKResponse(t, spec)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveItem(s.ctx, s.exampleItem.ID)
 		assert.NoError(t, err, "no error should be returned")
@@ -274,13 +274,13 @@ func (s *itemsTestSuite) TestV1Client_GetAuditLogForItem() {
 		expectedMethod = http.MethodGet
 	)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleItem.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		c := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
 
 		require.NotNil(t, actual)

@@ -48,7 +48,7 @@ func (s *authTestSuite) TestV1Client_Login() {
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
@@ -70,8 +70,7 @@ func (s *authTestSuite) TestV1Client_Login() {
 	s.Run("with nil input", func() {
 		t := s.T()
 
-		ts := httptest.NewTLSServer(nil)
-		c := buildTestClient(t, ts)
+		c, _ := buildSimpleTestClient(t)
 
 		cookie, err := c.Login(s.ctx, nil)
 		assert.Nil(t, cookie)
@@ -94,15 +93,7 @@ func (s *authTestSuite) TestV1Client_Login() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-				time.Sleep(10 * time.Hour)
-			},
-		))
-		c := buildTestClient(t, ts)
-		c.unauthenticatedClient.Timeout = 500 * time.Microsecond
+		c, _ := buildTestClientThatWaitsTooLong(t, spec)
 
 		cookie, err := c.Login(s.ctx, exampleInput)
 		require.Nil(t, cookie)
@@ -113,13 +104,7 @@ func (s *authTestSuite) TestV1Client_Login() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-			},
-		))
-		c := buildTestClient(t, ts)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		cookie, err := c.Login(s.ctx, exampleInput)
 		require.Nil(t, cookie)
@@ -132,19 +117,11 @@ func (s *authTestSuite) TestV1Client_VerifyTOTPSecret() {
 
 	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				res.WriteHeader(http.StatusAccepted)
-			},
-		))
-		c := buildTestClient(t, ts)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusAccepted)
 
 		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.NoError(t, err)
@@ -154,15 +131,7 @@ func (s *authTestSuite) TestV1Client_VerifyTOTPSecret() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				res.WriteHeader(http.StatusBadRequest)
-			},
-		))
-		c := buildTestClient(t, ts)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusBadRequest)
 
 		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
@@ -173,15 +142,7 @@ func (s *authTestSuite) TestV1Client_VerifyTOTPSecret() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				res.WriteHeader(http.StatusInternalServerError)
-			},
-		))
-		c := buildTestClient(t, ts)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusInternalServerError)
 
 		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
 		assert.Error(t, err)
@@ -203,16 +164,7 @@ func (s *authTestSuite) TestV1Client_VerifyTOTPSecret() {
 
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				assertRequestQuality(t, req, spec)
-
-				time.Sleep(10 * time.Minute)
-
-				res.WriteHeader(http.StatusAccepted)
-			},
-		))
-		c := buildTestClient(t, ts)
+		c, _ := buildTestClientThatWaitsTooLong(t, spec)
 		c.unauthenticatedClient.Timeout = time.Millisecond
 
 		err := c.VerifyTOTPSecret(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)

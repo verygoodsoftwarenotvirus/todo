@@ -98,7 +98,7 @@ func TestQuerier_ScanUsers(T *testing.T) {
 func TestQuerier_GetUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -152,7 +152,7 @@ func TestQuerier_GetUser(T *testing.T) {
 func TestQuerier_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -181,7 +181,7 @@ func TestQuerier_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 func TestQuerier_GetUserByUsername(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -262,7 +262,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 
 	exampleUsername := fakes.BuildFakeUser().Username
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUserList := fakes.BuildFakeUserList()
@@ -361,7 +361,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 func TestQuerier_GetAllUsersCount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleCount := uint64(123)
@@ -413,7 +413,7 @@ func TestQuerier_GetAllUsersCount(T *testing.T) {
 func TestQuerier_GetUsers(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUserList := fakes.BuildFakeUserList()
@@ -520,7 +520,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 func TestQuerier_CreateUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleCreationTime := fakes.BuildFakeTime()
@@ -837,7 +837,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 func TestQuerier_UpdateUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -899,7 +899,7 @@ func TestQuerier_UpdateUser(T *testing.T) {
 func TestQuerier_UpdateUserPassword(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -961,7 +961,7 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -1023,7 +1023,7 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -1085,7 +1085,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 func TestQuerier_ArchiveUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -1155,7 +1155,7 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

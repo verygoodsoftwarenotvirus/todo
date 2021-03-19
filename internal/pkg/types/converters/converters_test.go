@@ -11,7 +11,7 @@ import (
 func TestConvertAuditLogEntryCreationInputToEntry(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInput()
@@ -25,7 +25,7 @@ func TestConvertAuditLogEntryCreationInputToEntry(T *testing.T) {
 func TestConvertItemToItemUpdateInput(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		expected := fakes.BuildFakeItem()

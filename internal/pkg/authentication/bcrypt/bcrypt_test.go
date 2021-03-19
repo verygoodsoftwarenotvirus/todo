@@ -25,7 +25,7 @@ func TestBcrypt_HashPassword(T *testing.T) {
 
 	x := bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost, logging.NewNonOperationalLogger())
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -62,7 +62,7 @@ func TestBcrypt_PasswordIsAcceptable(T *testing.T) {
 
 	x := bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost, logging.NewNonOperationalLogger())
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		assert.True(t, x.PasswordIsAcceptable(examplePassword))
 		assert.False(t, x.PasswordIsAcceptable("hi there"))
@@ -74,7 +74,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 
 	x := bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost, logging.NewNonOperationalLogger())
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -152,7 +152,7 @@ func TestBcrypt_ValidateLogin(T *testing.T) {
 func TestProvideBcrypt(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		bcrypt.ProvideAuthenticator(bcrypt.DefaultHashCost, logging.NewNonOperationalLogger())
 	})

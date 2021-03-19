@@ -46,7 +46,7 @@ func TestParseConfigFile(T *testing.T) {
 	ctx := context.Background()
 	logger := logging.NewNonOperationalLogger()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		tf, err := ioutil.TempFile(os.TempDir(), "*.json")

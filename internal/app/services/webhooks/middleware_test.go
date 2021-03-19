@@ -34,7 +34,7 @@ func (m *MockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) 
 func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -118,7 +118,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 func TestService_UpdateInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

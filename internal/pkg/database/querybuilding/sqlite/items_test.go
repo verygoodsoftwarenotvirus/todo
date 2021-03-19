@@ -14,7 +14,7 @@ import (
 func TestSqlite_BuildItemExistsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -38,7 +38,7 @@ func TestSqlite_BuildItemExistsQuery(T *testing.T) {
 func TestSqlite_BuildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -62,7 +62,7 @@ func TestSqlite_BuildGetItemQuery(T *testing.T) {
 func TestSqlite_BuildGetAllItemsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -77,7 +77,7 @@ func TestSqlite_BuildGetAllItemsCountQuery(T *testing.T) {
 func TestSqlite_BuildGetBatchOfItemsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -99,7 +99,7 @@ func TestSqlite_BuildGetBatchOfItemsQuery(T *testing.T) {
 func TestSqlite_BuildGetItemsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -131,7 +131,7 @@ func TestSqlite_BuildGetItemsQuery(T *testing.T) {
 func TestSqlite_BuildGetItemsWithIDsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -160,7 +160,7 @@ func TestSqlite_BuildGetItemsWithIDsQuery(T *testing.T) {
 func TestSqlite_BuildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -193,7 +193,7 @@ func TestSqlite_BuildCreateItemQuery(T *testing.T) {
 func TestSqlite_BuildUpdateItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -219,7 +219,7 @@ func TestSqlite_BuildUpdateItemQuery(T *testing.T) {
 func TestSqlite_BuildArchiveItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -243,7 +243,7 @@ func TestSqlite_BuildArchiveItemQuery(T *testing.T) {
 func TestSqlite_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

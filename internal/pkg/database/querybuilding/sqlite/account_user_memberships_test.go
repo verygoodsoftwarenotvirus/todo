@@ -14,7 +14,7 @@ import (
 func TestSqlite_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -38,7 +38,7 @@ func TestSqlite_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
 func TestSqlite_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -60,7 +60,7 @@ func TestSqlite_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -87,7 +87,7 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 func TestSqlite_BuildRemoveUserFromAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -110,7 +110,7 @@ func TestSqlite_BuildRemoveUserFromAccountQuery(T *testing.T) {
 func TestSqlite_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -131,7 +131,7 @@ func TestSqlite_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -156,7 +156,7 @@ func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -177,7 +177,7 @@ func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 func TestSqlite_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -201,7 +201,7 @@ func TestSqlite_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 func TestSqlite_BuildModifyUserPermissionsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -226,7 +226,7 @@ func TestSqlite_BuildModifyUserPermissionsQuery(T *testing.T) {
 func TestSqlite_BuildTransferAccountOwnershipQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -251,7 +251,7 @@ func TestSqlite_BuildTransferAccountOwnershipQuery(T *testing.T) {
 func TestSqlite_BuildTransferAccountMembershipsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

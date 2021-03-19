@@ -29,7 +29,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -135,7 +135,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		return reqCtx, nil
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

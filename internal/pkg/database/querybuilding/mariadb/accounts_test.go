@@ -15,7 +15,7 @@ import (
 func TestMariaDB_BuildGetAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -39,7 +39,7 @@ func TestMariaDB_BuildGetAccountQuery(T *testing.T) {
 func TestMariaDB_BuildGetAllAccountsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -54,7 +54,7 @@ func TestMariaDB_BuildGetAllAccountsCountQuery(T *testing.T) {
 func TestMariaDB_BuildGetBatchOfAccountsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -76,7 +76,7 @@ func TestMariaDB_BuildGetBatchOfAccountsQuery(T *testing.T) {
 func TestMariaDB_BuildGetAccountsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -108,7 +108,7 @@ func TestMariaDB_BuildGetAccountsQuery(T *testing.T) {
 func TestMariaDB_BuildCreateAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -141,7 +141,7 @@ func TestMariaDB_BuildCreateAccountQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -166,7 +166,7 @@ func TestMariaDB_BuildUpdateAccountQuery(T *testing.T) {
 func TestMariaDB_BuildArchiveAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -190,7 +190,7 @@ func TestMariaDB_BuildArchiveAccountQuery(T *testing.T) {
 func TestMariaDB_BuildGetAuditLogEntriesForAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

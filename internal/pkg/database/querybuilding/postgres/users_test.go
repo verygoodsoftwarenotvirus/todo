@@ -17,7 +17,7 @@ import (
 func TestPostgres_BuildUserIsBannedQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -40,7 +40,7 @@ func TestPostgres_BuildUserIsBannedQuery(T *testing.T) {
 func TestPostgres_BuildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -61,7 +61,7 @@ func TestPostgres_BuildGetUserQuery(T *testing.T) {
 func TestPostgres_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -82,7 +82,7 @@ func TestPostgres_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 func TestPostgres_BuildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -110,7 +110,7 @@ func TestPostgres_BuildGetUsersQuery(T *testing.T) {
 func TestPostgres_BuildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -131,7 +131,7 @@ func TestPostgres_BuildGetUserByUsernameQuery(T *testing.T) {
 func TestPostgres_BuildSearchForUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -152,7 +152,7 @@ func TestPostgres_BuildSearchForUserByUsernameQuery(T *testing.T) {
 func TestPostgres_BuildGetAllUsersCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -167,7 +167,7 @@ func TestPostgres_BuildGetAllUsersCountQuery(T *testing.T) {
 func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -202,7 +202,7 @@ func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
 func TestPostgres_BuildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -236,7 +236,7 @@ func TestPostgres_BuildCreateUserQuery(T *testing.T) {
 func TestPostgres_BuildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -263,7 +263,7 @@ func TestPostgres_BuildUpdateUserQuery(T *testing.T) {
 func TestPostgres_BuildUpdateUserPasswordQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -286,7 +286,7 @@ func TestPostgres_BuildUpdateUserPasswordQuery(T *testing.T) {
 func TestPostgres_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -309,7 +309,7 @@ func TestPostgres_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 func TestPostgres_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -331,7 +331,7 @@ func TestPostgres_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 func TestPostgres_BuildSetUserStatusQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -359,7 +359,7 @@ func TestPostgres_BuildSetUserStatusQuery(T *testing.T) {
 func TestPostgres_BuildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -380,7 +380,7 @@ func TestPostgres_BuildArchiveUserQuery(T *testing.T) {
 func TestPostgres_BuildGetAuditLogEntriesForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

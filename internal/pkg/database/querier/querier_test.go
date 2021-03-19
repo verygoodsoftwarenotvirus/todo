@@ -119,7 +119,7 @@ func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBui
 func TestQuerier_Migrate(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleCreationTime := fakes.BuildFakeTime()
@@ -279,7 +279,7 @@ func TestQuerier_Migrate(T *testing.T) {
 func TestQuerier_IsReady(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -320,7 +320,7 @@ func TestQuerier_IsReady(T *testing.T) {
 func TestProvideDatabaseClient(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -412,7 +412,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 func TestDefaultTimeFunc(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		assert.NotZero(t, defaultTimeFunc())
@@ -422,7 +422,7 @@ func TestDefaultTimeFunc(T *testing.T) {
 func TestQuerier_currentTime(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		c, _ := buildTestClient(t)
@@ -442,7 +442,7 @@ func TestQuerier_currentTime(T *testing.T) {
 func TestQuerier_rollbackTransaction(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -461,7 +461,7 @@ func TestQuerier_rollbackTransaction(T *testing.T) {
 func TestQuerier_getIDFromResult(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		expected := int64(123)
@@ -493,7 +493,7 @@ func TestQuerier_getIDFromResult(T *testing.T) {
 func TestQuerier_handleRows(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		mockRows := &database.MockResultIterator{}
@@ -541,7 +541,7 @@ func TestQuerier_handleRows(T *testing.T) {
 func TestQuerier_performCreateQueryIgnoringReturn(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -562,7 +562,7 @@ func TestQuerier_performCreateQueryIgnoringReturn(T *testing.T) {
 func TestQuerier_performCreateQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

@@ -17,7 +17,7 @@ import (
 func TestProvideServer(T *testing.T) {
 	T.SkipNow()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.SkipNow()
 
 		actual, err := ProvideServer(

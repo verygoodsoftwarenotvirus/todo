@@ -20,7 +20,7 @@ import (
 func TestService_UserCreationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
@@ -72,7 +72,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
@@ -128,7 +128,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
@@ -180,7 +180,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 

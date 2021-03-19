@@ -45,7 +45,7 @@ func (s *authTestSuite) SetupTest() {
 func (s *authTestSuite) TestBuilder_BuildLoginRequest() {
 	const expectedPath = "/users/login"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
@@ -69,7 +69,7 @@ func (s *authTestSuite) TestBuilder_BuildLoginRequest() {
 func (s *authTestSuite) TestBuilder_BuildVerifyTOTPSecretRequest() {
 	const expectedPath = "/users/totp_secret/verify"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)

@@ -15,7 +15,7 @@ import (
 func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -38,7 +38,7 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 func TestSqlite_BuildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -58,7 +58,7 @@ func TestSqlite_BuildGetUserQuery(T *testing.T) {
 func TestSqlite_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -79,7 +79,7 @@ func TestSqlite_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 func TestSqlite_BuildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -103,7 +103,7 @@ func TestSqlite_BuildGetUsersQuery(T *testing.T) {
 func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -124,7 +124,7 @@ func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
 func TestSqlite_BuildGetAllUsersCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -139,7 +139,7 @@ func TestSqlite_BuildGetAllUsersCountQuery(T *testing.T) {
 func TestSqlite_BuildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -173,7 +173,7 @@ func TestSqlite_BuildCreateUserQuery(T *testing.T) {
 func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -200,7 +200,7 @@ func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
 func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -223,7 +223,7 @@ func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -246,7 +246,7 @@ func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -268,7 +268,7 @@ func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 func TestSqlite_BuildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

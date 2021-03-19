@@ -45,7 +45,7 @@ func buildRequest(t *testing.T) *http.Request {
 func TestService_validateCredentialChangeRequest(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -220,7 +220,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 func TestService_ListHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -268,7 +268,7 @@ func TestService_ListHandler(T *testing.T) {
 func TestService_UsernameSearchHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -326,7 +326,7 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 func TestService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -568,7 +568,7 @@ func TestService_CreateHandler(T *testing.T) {
 func TestService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -650,7 +650,7 @@ func TestService_ReadHandler(T *testing.T) {
 func TestService_NewTOTPSecretHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -904,7 +904,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 func TestService_TOTPSecretValidationHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -1102,7 +1102,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 func TestService_UpdatePasswordHandler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -1355,7 +1355,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 	// these aren't very good tests, because the major request work is handled by interfaces.
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -1554,7 +1554,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 func TestService_Archive(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -1610,7 +1610,7 @@ func TestService_Archive(T *testing.T) {
 func TestService_buildQRCode(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 		ctx := context.Background()

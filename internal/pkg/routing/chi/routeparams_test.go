@@ -34,7 +34,7 @@ func buildRequest(t *testing.T) *http.Request {
 func Test_userIDFetcherFromRequestContext(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := &chirouteParamManager{}
@@ -66,7 +66,7 @@ func Test_userIDFetcherFromRequestContext(T *testing.T) {
 func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := &chirouteParamManager{}
@@ -101,7 +101,7 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 func Test_BuildRouteParamIDFetcher(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := &chirouteParamManager{}

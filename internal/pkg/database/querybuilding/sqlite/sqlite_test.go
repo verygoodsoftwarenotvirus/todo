@@ -41,7 +41,7 @@ func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 func TestProvideSqlite(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		buildTestService(t)
 	})
@@ -50,7 +50,7 @@ func TestProvideSqlite(T *testing.T) {
 func TestSqlite_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 		q.logQueryBuildingError(errors.New("blah"))
@@ -60,7 +60,7 @@ func TestSqlite_logQueryBuildingError(T *testing.T) {
 func TestProvideSqliteDB(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		_, err := ProvideSqliteDB(logging.NewNonOperationalLogger(), "", time.Hour)
 		assert.NoError(t, err)

@@ -14,7 +14,7 @@ import (
 func TestSqlite_BuildGetPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -35,7 +35,7 @@ func TestSqlite_BuildGetPlanQuery(T *testing.T) {
 func TestSqlite_BuildGetAllPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -50,7 +50,7 @@ func TestSqlite_BuildGetAllPlansCountQuery(T *testing.T) {
 func TestSqlite_BuildGetPlansQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -78,7 +78,7 @@ func TestSqlite_BuildGetPlansQuery(T *testing.T) {
 func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -110,7 +110,7 @@ func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
 func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -135,7 +135,7 @@ func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
 func TestSqlite_BuildArchivePlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

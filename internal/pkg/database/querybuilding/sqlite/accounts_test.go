@@ -14,7 +14,7 @@ import (
 func TestSqlite_BuildGetAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -38,7 +38,7 @@ func TestSqlite_BuildGetAccountQuery(T *testing.T) {
 func TestSqlite_BuildGetAllAccountsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -53,7 +53,7 @@ func TestSqlite_BuildGetAllAccountsCountQuery(T *testing.T) {
 func TestSqlite_BuildGetBatchOfAccountsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -75,7 +75,7 @@ func TestSqlite_BuildGetBatchOfAccountsQuery(T *testing.T) {
 func TestSqlite_BuildGetAccountsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -107,7 +107,7 @@ func TestSqlite_BuildGetAccountsQuery(T *testing.T) {
 func TestSqlite_BuildCreateAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -140,7 +140,7 @@ func TestSqlite_BuildCreateAccountQuery(T *testing.T) {
 func TestSqlite_BuildUpdateAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -165,7 +165,7 @@ func TestSqlite_BuildUpdateAccountQuery(T *testing.T) {
 func TestSqlite_BuildArchiveAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -189,7 +189,7 @@ func TestSqlite_BuildArchiveAccountQuery(T *testing.T) {
 func TestSqlite_BuildGetAuditLogEntriesForAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

@@ -38,7 +38,7 @@ func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 func TestProvideMariaDB(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		buildTestService(t)
 	})
@@ -47,7 +47,7 @@ func TestProvideMariaDB(T *testing.T) {
 func TestMariaDB_logQueryBuildingError(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 		q.logQueryBuildingError(errors.New("blah"))
@@ -57,7 +57,7 @@ func TestMariaDB_logQueryBuildingError(T *testing.T) {
 func TestProvideMariaDBConnection(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		_, err := ProvideMariaDBConnection(logging.NewNonOperationalLogger(), "")
 		assert.NoError(t, err)

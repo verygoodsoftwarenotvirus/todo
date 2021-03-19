@@ -40,6 +40,8 @@ func errorFromResponse(res *http.Response) error {
 		return ErrUnauthorized
 	case http.StatusForbidden:
 		return ErrBanned
+	case http.StatusInternalServerError:
+		return ErrInternalServerError
 	default:
 		return nil
 	}

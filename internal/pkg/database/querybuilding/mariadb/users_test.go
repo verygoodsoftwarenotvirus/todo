@@ -16,7 +16,7 @@ import (
 func TestMariaDB_BuildUserIsBannedQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -39,7 +39,7 @@ func TestMariaDB_BuildUserIsBannedQuery(T *testing.T) {
 func TestMariaDB_BuildGetUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -60,7 +60,7 @@ func TestMariaDB_BuildGetUserQuery(T *testing.T) {
 func TestMariaDB_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -81,7 +81,7 @@ func TestMariaDB_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 func TestMariaDB_BuildGetUsersQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -109,7 +109,7 @@ func TestMariaDB_BuildGetUsersQuery(T *testing.T) {
 func TestMariaDB_BuildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -130,7 +130,7 @@ func TestMariaDB_BuildGetUserByUsernameQuery(T *testing.T) {
 func TestMariaDB_BuildSearchForUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -151,7 +151,7 @@ func TestMariaDB_BuildSearchForUserByUsernameQuery(T *testing.T) {
 func TestMariaDB_BuildGetAllUsersCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -166,7 +166,7 @@ func TestMariaDB_BuildGetAllUsersCountQuery(T *testing.T) {
 func TestMariaDB_BuildTestUserCreationQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -195,7 +195,7 @@ func TestMariaDB_BuildTestUserCreationQuery(T *testing.T) {
 func TestMariaDB_BuildCreateUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -229,7 +229,7 @@ func TestMariaDB_BuildCreateUserQuery(T *testing.T) {
 func TestMariaDB_BuildSetUserStatusQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -253,7 +253,7 @@ func TestMariaDB_BuildSetUserStatusQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -280,7 +280,7 @@ func TestMariaDB_BuildUpdateUserQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateUserPasswordQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -303,7 +303,7 @@ func TestMariaDB_BuildUpdateUserPasswordQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -326,7 +326,7 @@ func TestMariaDB_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 func TestMariaDB_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -348,7 +348,7 @@ func TestMariaDB_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 func TestMariaDB_BuildArchiveUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -369,7 +369,7 @@ func TestMariaDB_BuildArchiveUserQuery(T *testing.T) {
 func TestMariaDB_BuildGetAuditLogEntriesForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

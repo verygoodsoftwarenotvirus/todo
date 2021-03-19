@@ -49,10 +49,10 @@ func (s *auditLogEntriesTestSuite) TestV1Client_GetAuditLogEntries() {
 
 	spec := newRequestSpec(true, expectedMethod, "includeArchived=false&limit=20&page=1&sortBy=asc", s.expectedPath)
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
-		c := buildTestClientWithJSONResponse(t, spec, s.exampleAuditLogEntryList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAuditLogEntryList)
 		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
 
 		require.NotNil(t, actual)

@@ -61,7 +61,7 @@ func (s *usersTestSuite) SetupTest() {
 func (s *usersTestSuite) TestBuilder_BuildGetUserRequest() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleUser.ID)
@@ -76,7 +76,7 @@ func (s *usersTestSuite) TestBuilder_BuildGetUserRequest() {
 func (s *usersTestSuite) TestBuilder_BuildGetUsersRequest() {
 	const expectedPath = "/api/v1/users"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
@@ -92,7 +92,7 @@ func (s *usersTestSuite) TestBuilder_BuildSearchForUsersByUsernameRequest() {
 	const expectedPath = "/api/v1/users/search"
 	exampleUsername := fakes.BuildFakeUser().Username
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
@@ -107,7 +107,7 @@ func (s *usersTestSuite) TestBuilder_BuildSearchForUsersByUsernameRequest() {
 func (s *usersTestSuite) TestBuilder_BuildCreateUserRequest() {
 	const expectedPath = "/users"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
@@ -122,7 +122,7 @@ func (s *usersTestSuite) TestBuilder_BuildCreateUserRequest() {
 func (s *usersTestSuite) TestBuilder_BuildArchiveUserRequest() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleUser.ID)
@@ -137,7 +137,7 @@ func (s *usersTestSuite) TestBuilder_BuildArchiveUserRequest() {
 func (s *usersTestSuite) TestBuilder_BuildGetAuditLogForUserRequest() {
 	const expectedPath = "/api/v1/users/%d/audit"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildGetAuditLogForUserRequest(s.ctx, s.exampleUser.ID)

@@ -43,7 +43,7 @@ func (s *accountSubscriptionPlansRequestBuildersTestSuite) SetupTest() {
 func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetAccountSubscriptionPlanRequest() {
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
@@ -58,7 +58,7 @@ func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetA
 func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetAccountSubscriptionPlansRequest() {
 	const expectedPath = "/api/v1/account_subscription_plans"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
@@ -75,7 +75,7 @@ func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetA
 func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildCreateAccountSubscriptionPlanRequest() {
 	const expectedPath = "/api/v1/account_subscription_plans"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildCreateAccountSubscriptionPlanRequest(s.ctx, s.exampleInput)
@@ -90,7 +90,7 @@ func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildCrea
 func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildUpdateAccountSubscriptionPlanRequest() {
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
@@ -105,7 +105,7 @@ func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildUpda
 func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildArchiveAccountSubscriptionPlanRequest() {
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
@@ -120,7 +120,7 @@ func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildArch
 func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetAuditLogForAccountSubscriptionPlanRequest() {
 	const expectedPath = "/api/v1/account_subscription_plans/%d/audit"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(s.ctx, s.exampleAccountSubscriptionPlan.ID)

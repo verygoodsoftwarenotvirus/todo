@@ -15,7 +15,7 @@ import (
 func TestMariaDB_BuildGetAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -36,7 +36,7 @@ func TestMariaDB_BuildGetAccountSubscriptionPlanQuery(T *testing.T) {
 func TestMariaDB_BuildGetAllAccountSubscriptionPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -51,7 +51,7 @@ func TestMariaDB_BuildGetAllAccountSubscriptionPlansCountQuery(T *testing.T) {
 func TestMariaDB_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -79,7 +79,7 @@ func TestMariaDB_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 func TestMariaDB_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -111,7 +111,7 @@ func TestMariaDB_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -136,7 +136,7 @@ func TestMariaDB_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 func TestMariaDB_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -157,7 +157,7 @@ func TestMariaDB_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 func TestMariaDB_BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

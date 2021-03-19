@@ -15,7 +15,7 @@ import (
 func TestPostgres_BuildItemExistsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -39,7 +39,7 @@ func TestPostgres_BuildItemExistsQuery(T *testing.T) {
 func TestPostgres_BuildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -63,7 +63,7 @@ func TestPostgres_BuildGetItemQuery(T *testing.T) {
 func TestPostgres_BuildGetAllItemsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -78,7 +78,7 @@ func TestPostgres_BuildGetAllItemsCountQuery(T *testing.T) {
 func TestPostgres_BuildGetBatchOfItemsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -100,7 +100,7 @@ func TestPostgres_BuildGetBatchOfItemsQuery(T *testing.T) {
 func TestPostgres_BuildGetItemsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -132,7 +132,7 @@ func TestPostgres_BuildGetItemsQuery(T *testing.T) {
 func TestPostgres_BuildGetItemsWithIDsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -159,7 +159,7 @@ func TestPostgres_BuildGetItemsWithIDsQuery(T *testing.T) {
 func TestPostgres_BuildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -192,7 +192,7 @@ func TestPostgres_BuildCreateItemQuery(T *testing.T) {
 func TestPostgres_BuildUpdateItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -218,7 +218,7 @@ func TestPostgres_BuildUpdateItemQuery(T *testing.T) {
 func TestPostgres_BuildArchiveItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

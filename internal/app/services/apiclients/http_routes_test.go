@@ -40,7 +40,7 @@ func buildRequest(t *testing.T) *http.Request {
 func Test_fetchUserID(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		req := buildRequest(t)
@@ -78,7 +78,7 @@ func TestService_ListHandler(T *testing.T) {
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
@@ -192,7 +192,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()

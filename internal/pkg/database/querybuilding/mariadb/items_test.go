@@ -15,7 +15,7 @@ import (
 func TestMariaDB_BuildItemExistsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -39,7 +39,7 @@ func TestMariaDB_BuildItemExistsQuery(T *testing.T) {
 func TestMariaDB_BuildGetItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -63,7 +63,7 @@ func TestMariaDB_BuildGetItemQuery(T *testing.T) {
 func TestMariaDB_BuildGetAllItemsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -78,7 +78,7 @@ func TestMariaDB_BuildGetAllItemsCountQuery(T *testing.T) {
 func TestMariaDB_BuildGetBatchOfItemsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -100,7 +100,7 @@ func TestMariaDB_BuildGetBatchOfItemsQuery(T *testing.T) {
 func TestMariaDB_BuildGetItemsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -132,7 +132,7 @@ func TestMariaDB_BuildGetItemsQuery(T *testing.T) {
 func TestMariaDB_BuildGetItemsWithIDsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -161,7 +161,7 @@ func TestMariaDB_BuildGetItemsWithIDsQuery(T *testing.T) {
 func TestMariaDB_BuildCreateItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -194,7 +194,7 @@ func TestMariaDB_BuildCreateItemQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -220,7 +220,7 @@ func TestMariaDB_BuildUpdateItemQuery(T *testing.T) {
 func TestMariaDB_BuildArchiveItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -244,7 +244,7 @@ func TestMariaDB_BuildArchiveItemQuery(T *testing.T) {
 func TestMariaDB_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

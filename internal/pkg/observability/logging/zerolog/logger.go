@@ -37,8 +37,8 @@ func NewLogger() logging.Logger {
 }
 
 // NewLoggerWithSource builds a new logger.
-func NewLoggerWithSource(l zerolog.Logger) logging.Logger {
-	return &logger{logger: l}
+func NewLoggerWithSource(l *zerolog.Logger) logging.Logger {
+	return &logger{logger: *l}
 }
 
 // WithName is our obligatory contract fulfillment function.

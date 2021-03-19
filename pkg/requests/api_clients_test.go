@@ -48,7 +48,7 @@ func (s *apiClientsTestSuite) SetupTest() {
 func (s *apiClientsTestSuite) TestBuilder_BuildGetAPIClientRequest() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
@@ -63,7 +63,7 @@ func (s *apiClientsTestSuite) TestBuilder_BuildGetAPIClientRequest() {
 func (s *apiClientsTestSuite) TestBuilder_BuildGetAPIClientsRequest() {
 	const expectedPath = "/api/v1/api_clients"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
@@ -78,7 +78,7 @@ func (s *apiClientsTestSuite) TestBuilder_BuildGetAPIClientsRequest() {
 func (s *apiClientsTestSuite) TestBuilder_BuildCreateAPIClientRequest() {
 	const expectedPath = "/api/v1/api_clients"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
@@ -93,7 +93,7 @@ func (s *apiClientsTestSuite) TestBuilder_BuildCreateAPIClientRequest() {
 func (s *apiClientsTestSuite) TestBuilder_BuildArchiveAPIClientRequest() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
@@ -108,7 +108,7 @@ func (s *apiClientsTestSuite) TestBuilder_BuildArchiveAPIClientRequest() {
 func (s *apiClientsTestSuite) TestBuilder_BuildGetAuditLogForAPIClientRequest() {
 	const expectedPath = "/api/v1/api_clients/%d/audit"
 
-	s.Run("happy path", func() {
+	s.Run("standard", func() {
 		t := s.T()
 
 		actual, err := s.builder.BuildGetAuditLogForAPIClientRequest(s.ctx, s.exampleAPIClient.ID)

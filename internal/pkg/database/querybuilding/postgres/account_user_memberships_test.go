@@ -14,7 +14,7 @@ import (
 func TestPostgres_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -35,7 +35,7 @@ func TestPostgres_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 func TestPostgres_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -56,7 +56,7 @@ func TestPostgres_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 func TestPostgres_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -80,7 +80,7 @@ func TestPostgres_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 func TestPostgres_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -102,7 +102,7 @@ func TestPostgres_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 func TestPostgres_BuildAddUserToAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -130,7 +130,7 @@ func TestPostgres_BuildAddUserToAccountQuery(T *testing.T) {
 func TestPostgres_BuildRemoveUserFromAccountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -153,7 +153,7 @@ func TestPostgres_BuildRemoveUserFromAccountQuery(T *testing.T) {
 func TestPostgres_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -178,7 +178,7 @@ func TestPostgres_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 func TestPostgres_BuildModifyUserPermissionsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -203,7 +203,7 @@ func TestPostgres_BuildModifyUserPermissionsQuery(T *testing.T) {
 func TestPostgres_BuildTransferAccountOwnershipQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -228,7 +228,7 @@ func TestPostgres_BuildTransferAccountOwnershipQuery(T *testing.T) {
 func TestPostgres_BuildTransferAccountMembershipsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

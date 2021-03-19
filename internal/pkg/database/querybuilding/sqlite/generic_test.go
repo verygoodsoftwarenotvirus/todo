@@ -22,7 +22,7 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 		"column_three",
 	}
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

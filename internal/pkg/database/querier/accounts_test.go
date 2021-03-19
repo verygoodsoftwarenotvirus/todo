@@ -82,7 +82,7 @@ func TestQuerier_ScanAccounts(T *testing.T) {
 func TestQuerier_GetAccount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -142,7 +142,7 @@ func TestQuerier_GetAccount(T *testing.T) {
 func TestQuerier_GetAllAccountsCount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -172,7 +172,7 @@ func TestQuerier_GetAllAccountsCount(T *testing.T) {
 func TestQuerier_GetAllAccounts(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
@@ -370,7 +370,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 
 	exampleUser := fakes.BuildFakeUser()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
@@ -481,7 +481,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
@@ -592,7 +592,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 func TestQuerier_CreateAccount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -703,7 +703,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 func TestQuerier_UpdateAccount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -740,7 +740,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 func TestQuerier_ArchiveAccount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -777,7 +777,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

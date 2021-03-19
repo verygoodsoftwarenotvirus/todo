@@ -14,7 +14,7 @@ import (
 func TestSqlite_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -36,7 +36,7 @@ func TestSqlite_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 func TestSqlite_BuildGetAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -57,7 +57,7 @@ func TestSqlite_BuildGetAPIClientQuery(T *testing.T) {
 func TestSqlite_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -72,7 +72,7 @@ func TestSqlite_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 func TestSqlite_BuildGetAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -104,7 +104,7 @@ func TestSqlite_BuildGetAPIClientsQuery(T *testing.T) {
 func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -136,7 +136,7 @@ func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
 func TestSqlite_BuildUpdateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -159,7 +159,7 @@ func TestSqlite_BuildUpdateAPIClientQuery(T *testing.T) {
 func TestSqlite_BuildArchiveAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

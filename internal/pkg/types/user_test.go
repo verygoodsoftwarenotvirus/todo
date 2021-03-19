@@ -13,7 +13,7 @@ import (
 func TestUser_JSONUnmarshal(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		exampleInput := User{
 			Username:                "new_username",
@@ -33,7 +33,7 @@ func TestUser_JSONUnmarshal(T *testing.T) {
 func TestUser_Update(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		actual := User{
 			Username:        "old_username",
@@ -54,7 +54,7 @@ func TestUser_Update(T *testing.T) {
 func TestUser_ToSessionInfo(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{

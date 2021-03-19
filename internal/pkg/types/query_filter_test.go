@@ -14,7 +14,7 @@ import (
 func TestFromParams(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		actual := &QueryFilter{}
 		expected := &QueryFilter{
@@ -52,7 +52,7 @@ func TestFromParams(T *testing.T) {
 func TestQueryFilter_SetPage(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		qf := &QueryFilter{}
 		expected := uint64(123)
@@ -65,7 +65,7 @@ func TestQueryFilter_SetPage(T *testing.T) {
 func TestQueryFilter_QueryPage(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		qf := &QueryFilter{Limit: 10, Page: 11}
 		expected := uint64(100)
@@ -78,7 +78,7 @@ func TestQueryFilter_QueryPage(T *testing.T) {
 func TestQueryFilter_ToValues(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		qf := &QueryFilter{
 			Page:            100,
@@ -117,7 +117,7 @@ func TestQueryFilter_ToValues(T *testing.T) {
 func TestExtractQueryFilter(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 

@@ -20,7 +20,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		From(exampleTableName).
 		Where(squirrel.Eq{fmt.Sprintf("%s.condition", exampleTableName): true})
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		qf := &types.QueryFilter{
 			Page:          100,

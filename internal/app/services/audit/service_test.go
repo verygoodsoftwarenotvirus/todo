@@ -30,7 +30,7 @@ func buildTestService() *service {
 func TestProvideAuditService(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		rpm := mockrouting.NewRouteParamManager()

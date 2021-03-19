@@ -16,7 +16,7 @@ import (
 func TestMariaDB_BuildGetWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -38,7 +38,7 @@ func TestMariaDB_BuildGetWebhookQuery(T *testing.T) {
 func TestMariaDB_BuildGetAllWebhooksCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -53,7 +53,7 @@ func TestMariaDB_BuildGetAllWebhooksCountQuery(T *testing.T) {
 func TestMariaDB_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -75,7 +75,7 @@ func TestMariaDB_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 func TestMariaDB_BuildGetWebhooksQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -107,7 +107,7 @@ func TestMariaDB_BuildGetWebhooksQuery(T *testing.T) {
 func TestMariaDB_BuildCreateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -143,7 +143,7 @@ func TestMariaDB_BuildCreateWebhookQuery(T *testing.T) {
 func TestMariaDB_BuildUpdateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -172,7 +172,7 @@ func TestMariaDB_BuildUpdateWebhookQuery(T *testing.T) {
 func TestMariaDB_BuildArchiveWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -194,7 +194,7 @@ func TestMariaDB_BuildArchiveWebhookQuery(T *testing.T) {
 func TestMariaDB_BuildGetAuditLogEntriesForWebhookQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

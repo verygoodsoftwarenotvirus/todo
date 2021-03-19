@@ -45,12 +45,8 @@ func UsingXML() func(*Client) error {
 // UsingLogger sets the logger on the client.
 func UsingLogger(logger logging.Logger) func(*Client) error {
 	return func(c *Client) error {
-		if logger == nil {
-			return nil
-		}
-
-		c.logger = logger
-		c.encoderDecoder = encoding.ProvideHTTPResponseEncoder(logger)
+		c.logger = logging.EnsureLogger(logger)
+		c.encoderDecoder = encoding.ProvideHTTPResponseEncoder(c.logger)
 
 		return nil
 	}

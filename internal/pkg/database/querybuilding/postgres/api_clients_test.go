@@ -14,7 +14,7 @@ import (
 func TestPostgres_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -36,7 +36,7 @@ func TestPostgres_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 func TestPostgres_BuildGetAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -57,7 +57,7 @@ func TestPostgres_BuildGetAPIClientQuery(T *testing.T) {
 func TestPostgres_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -72,7 +72,7 @@ func TestPostgres_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 func TestPostgres_BuildGetAPIClientsQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -104,7 +104,7 @@ func TestPostgres_BuildGetAPIClientsQuery(T *testing.T) {
 func TestPostgres_BuildCreateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -136,7 +136,7 @@ func TestPostgres_BuildCreateAPIClientQuery(T *testing.T) {
 func TestPostgres_BuildUpdateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 
@@ -159,7 +159,7 @@ func TestPostgres_BuildUpdateAPIClientQuery(T *testing.T) {
 func TestPostgres_BuildArchiveAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
-	T.Run("happy path", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestService(t)
 

@@ -16,7 +16,7 @@ import (
 func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -50,7 +50,7 @@ func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
 func TestQuerier_LogUserBanEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleServiceAdmin := fakes.BuildFakeUser()
@@ -74,7 +74,7 @@ func TestQuerier_LogUserBanEvent(T *testing.T) {
 func TestQuerier_LogAccountTerminationEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleServiceAdmin := fakes.BuildFakeUser()
@@ -98,7 +98,7 @@ func TestQuerier_LogAccountTerminationEvent(T *testing.T) {
 func TestQuerier_LogCycleCookieSecretEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -120,7 +120,7 @@ func TestQuerier_LogCycleCookieSecretEvent(T *testing.T) {
 func TestQuerier_LogSuccessfulLoginEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -142,7 +142,7 @@ func TestQuerier_LogSuccessfulLoginEvent(T *testing.T) {
 func TestQuerier_LogBannedUserLoginAttemptEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -164,7 +164,7 @@ func TestQuerier_LogBannedUserLoginAttemptEvent(T *testing.T) {
 func TestQuerier_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -186,7 +186,7 @@ func TestQuerier_LogUnsuccessfulLoginBadPasswordEvent(T *testing.T) {
 func TestQuerier_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
@@ -208,7 +208,7 @@ func TestQuerier_LogUnsuccessfulLoginBad2FATokenEvent(T *testing.T) {
 func TestQuerier_LogLogoutEvent(T *testing.T) {
 	T.Parallel()
 
-	T.Run("obligatory", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()

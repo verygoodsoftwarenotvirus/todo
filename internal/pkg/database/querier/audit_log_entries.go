@@ -145,12 +145,11 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	x = &types.AuditLogEntryList{}
-
+	tracing.AttachQueryFilterToSpan(span, filter)
 	c.logger.Debug("GetAuditLogEntries called")
 
+	x = &types.AuditLogEntryList{}
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 

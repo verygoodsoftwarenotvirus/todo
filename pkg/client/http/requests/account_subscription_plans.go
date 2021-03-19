@@ -2,10 +2,10 @@ package requests
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -14,7 +14,7 @@ const (
 	plansBasePath = "account_subscription_plans"
 )
 
-// BuildGetAccountSubscriptionPlanRequest builds an HTTP request for fetching an plan.
+// BuildGetAccountSubscriptionPlanRequest builds an HTTP request for fetching an account subscription plan.
 func (b *Builder) BuildGetAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -22,6 +22,8 @@ func (b *Builder) BuildGetAccountSubscriptionPlanRequest(ctx context.Context, pl
 	if planID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	uri := b.BuildURL(
 		ctx,
@@ -41,11 +43,12 @@ func (b *Builder) BuildGetAccountSubscriptionPlansRequest(ctx context.Context, f
 
 	uri := b.BuildURL(ctx, filter.ToValues(), plansBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
+	tracing.AttachQueryFilterToSpan(span, filter)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// BuildCreateAccountSubscriptionPlanRequest builds an HTTP request for creating an plan.
+// BuildCreateAccountSubscriptionPlanRequest builds an HTTP request for creating an account subscription plan.
 func (b *Builder) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -54,9 +57,10 @@ func (b *Builder) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context,
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger.WithValue(keys.NameKey, input.Name)
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, plansBasePath)
@@ -65,7 +69,7 @@ func (b *Builder) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context,
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// BuildUpdateAccountSubscriptionPlanRequest builds an HTTP request for updating an plan.
+// BuildUpdateAccountSubscriptionPlanRequest builds an HTTP request for updating an account subscription plan.
 func (b *Builder) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context, plan *types.AccountSubscriptionPlan) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -73,6 +77,8 @@ func (b *Builder) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context,
 	if plan == nil {
 		return nil, ErrNilInputProvided
 	}
+
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, plan.ID)
 
 	uri := b.BuildURL(
 		ctx,
@@ -85,7 +91,7 @@ func (b *Builder) BuildUpdateAccountSubscriptionPlanRequest(ctx context.Context,
 	return b.buildDataRequest(ctx, http.MethodPut, uri, plan)
 }
 
-// BuildArchiveAccountSubscriptionPlanRequest builds an HTTP request for updating an plan.
+// BuildArchiveAccountSubscriptionPlanRequest builds an HTTP request for archiving an account subscription plan.
 func (b *Builder) BuildArchiveAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -93,6 +99,8 @@ func (b *Builder) BuildArchiveAccountSubscriptionPlanRequest(ctx context.Context
 	if planID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	uri := b.BuildURL(
 		ctx,
@@ -105,7 +113,7 @@ func (b *Builder) BuildArchiveAccountSubscriptionPlanRequest(ctx context.Context
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
 
-// BuildGetAuditLogForAccountSubscriptionPlanRequest builds an HTTP request for fetching a list of audit log entries pertaining to an plan.
+// BuildGetAuditLogForAccountSubscriptionPlanRequest builds an HTTP request for fetching a list of audit log entries pertaining to an account subscription plan.
 func (b *Builder) BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx context.Context, planID uint64) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -113,6 +121,8 @@ func (b *Builder) BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx context.
 	if planID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	uri := b.BuildURL(ctx, nil, plansBasePath, strconv.FormatUint(planID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)

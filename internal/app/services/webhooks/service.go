@@ -35,7 +35,7 @@ type (
 		webhookDataManager    types.WebhookDataManager
 		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
 		webhookIDFetcher      func(*http.Request) uint64
-		encoderDecoder        encoding.HTTPResponseEncoder
+		encoderDecoder        encoding.ServerEncoderDecoder
 		tracer                tracing.Tracer
 	}
 )
@@ -44,7 +44,7 @@ type (
 func ProvideWebhooksService(
 	logger logging.Logger,
 	webhookDataManager types.WebhookDataManager,
-	encoder encoding.HTTPResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
 ) types.WebhookDataService {

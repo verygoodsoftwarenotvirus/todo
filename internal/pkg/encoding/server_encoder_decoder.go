@@ -1,0 +1,218 @@
+package encoding
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"encoding/xml"
+	"net/http"
+	"strings"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+)
+
+const (
+	// ContentTypeHeaderKey is the HTTP standard header name for content type.
+	ContentTypeHeaderKey = "Content-type"
+	contentTypeXML       = "application/xml"
+	contentTypeJSON      = "application/json"
+)
+
+var (
+	defaultContentType = ContentTypeJSON
+)
+
+type (
+	// ServerEncoderDecoder is an interface that allows for multiple implementations of HTTP response formats.
+	ServerEncoderDecoder interface {
+		EncodeResponse(ctx context.Context, res http.ResponseWriter, val interface{})
+		EncodeResponseWithStatus(ctx context.Context, res http.ResponseWriter, val interface{}, statusCode int)
+		EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int)
+		EncodeInvalidInputResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeNotFoundResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeUnspecifiedInternalServerErrorResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeUnauthorizedResponse(ctx context.Context, res http.ResponseWriter)
+		EncodeInvalidPermissionsResponse(ctx context.Context, res http.ResponseWriter)
+		DecodeRequest(ctx context.Context, req *http.Request, dest interface{}) error
+		MustJSON(v interface{}) []byte
+	}
+
+	// serverEncoderDecoder is our concrete implementation of EncoderDecoder.
+	serverEncoderDecoder struct {
+		logger logging.Logger
+		tracer tracing.Tracer
+	}
+
+	encoder interface {
+		Encode(interface{}) error
+	}
+
+	decoder interface {
+		Decode(v interface{}) error
+	}
+)
+
+// EncodeErrorResponse encodes errors to responses.
+func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int) {
+	_, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	var enc encoder
+
+	switch e.contentTypeFromString(ctx, res.Header().Get(ContentTypeHeaderKey)) {
+	case ContentTypeXML:
+		res.Header().Set(ContentTypeHeaderKey, contentTypeXML)
+		enc = xml.NewEncoder(res)
+	case ContentTypeJSON:
+		res.Header().Set(ContentTypeHeaderKey, contentTypeJSON)
+		fallthrough
+	default:
+		enc = json.NewEncoder(res)
+	}
+
+	res.WriteHeader(statusCode)
+
+	if err := enc.Encode(&types.ErrorResponse{Message: msg, Code: statusCode}); err != nil {
+		e.logger.Error(err, "encoding error response")
+		tracing.AttachErrorToSpan(span, err)
+	}
+}
+
+// EncodeInvalidInputResponse encodes a generic 400 error to a response.
+func (e *serverEncoderDecoder) EncodeInvalidInputResponse(ctx context.Context, res http.ResponseWriter) {
+	e.tracer.StartSpan(ctx)
+
+	e.EncodeErrorResponse(ctx, res, "invalid input attached to request", http.StatusBadRequest)
+}
+
+// EncodeNotFoundResponse encodes a generic 404 error to a response.
+func (e *serverEncoderDecoder) EncodeNotFoundResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	e.EncodeErrorResponse(ctx, res, "resource not found", http.StatusNotFound)
+}
+
+// EncodeUnspecifiedInternalServerErrorResponse encodes a generic 500 error to a response.
+func (e *serverEncoderDecoder) EncodeUnspecifiedInternalServerErrorResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	e.EncodeErrorResponse(ctx, res, "something has gone awry", http.StatusInternalServerError)
+}
+
+// EncodeUnauthorizedResponse encodes a generic 401 error to a response.
+func (e *serverEncoderDecoder) EncodeUnauthorizedResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	e.EncodeErrorResponse(ctx, res, "invalid credentials provided", http.StatusUnauthorized)
+}
+
+// EncodeInvalidPermissionsResponse encodes a generic 403 error to a response.
+func (e *serverEncoderDecoder) EncodeInvalidPermissionsResponse(ctx context.Context, res http.ResponseWriter) {
+	ctx, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	e.EncodeErrorResponse(ctx, res, "invalid permissions", http.StatusForbidden)
+}
+
+// EncodeResponse encodes responses.
+func (e *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}, statusCode int) {
+	_, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := e.logger.WithValue(keys.ResponseStatusKey, statusCode)
+
+	var enc encoder
+
+	switch e.contentTypeFromString(ctx, res.Header().Get(ContentTypeHeaderKey)) {
+	case ContentTypeXML:
+		res.Header().Set(ContentTypeHeaderKey, contentTypeXML)
+		enc = xml.NewEncoder(res)
+	case ContentTypeJSON:
+		res.Header().Set(ContentTypeHeaderKey, contentTypeJSON)
+		fallthrough
+	default:
+		enc = json.NewEncoder(res)
+	}
+
+	res.WriteHeader(statusCode)
+
+	if err := enc.Encode(v); err != nil {
+		logger.Error(err, "encoding response")
+		tracing.AttachErrorToSpan(span, err)
+	}
+}
+
+func (e *serverEncoderDecoder) MustJSON(v interface{}) []byte {
+	var b bytes.Buffer
+
+	if err := json.NewEncoder(&b).Encode(v); err != nil {
+		e.logger.Error(err, "marshaling to JSON: %v")
+		return []byte{}
+	}
+
+	return b.Bytes()
+}
+
+// EncodeResponse encodes successful responses.
+func (e *serverEncoderDecoder) EncodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}) {
+	ctx, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	e.encodeResponse(ctx, res, v, http.StatusOK)
+}
+
+// EncodeResponseWithStatus encodes responses and writes the provided status to the response.
+func (e *serverEncoderDecoder) EncodeResponseWithStatus(ctx context.Context, res http.ResponseWriter, v interface{}, statusCode int) {
+	ctx, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	e.encodeResponse(ctx, res, v, statusCode)
+}
+
+func (e *serverEncoderDecoder) contentTypeFromString(ctx context.Context, val string) ContentType {
+	_, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	switch strings.ToLower(strings.TrimSpace(val)) {
+	case contentTypeJSON:
+		return ContentTypeJSON
+	case contentTypeXML:
+		return ContentTypeXML
+	default:
+		return defaultContentType
+	}
+}
+
+// DecodeRequest decodes responses.
+func (e *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Request, v interface{}) error {
+	_, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	var d decoder
+
+	switch e.contentTypeFromString(ctx, req.Header.Get(ContentTypeHeaderKey)) {
+	case ContentTypeXML:
+		d = xml.NewDecoder(req.Body)
+	default:
+		// this could be cool, but it would also break a lot of how my client works:
+		// dec := json.NewDecoder(req.Body)
+		// dec.DisallowUnknownFields()
+		d = json.NewDecoder(req.Body)
+	}
+
+	return d.Decode(v)
+}
+
+// ProvideServerEncoderDecoder provides a ServerEncoderDecoder.
+func ProvideServerEncoderDecoder(logger logging.Logger) ServerEncoderDecoder {
+	return &serverEncoderDecoder{
+		logger: logging.EnsureLogger(logger).WithName("server_encoder_decoder"),
+		tracer: tracing.NewTracer("server_encoder_decoder"),
+	}
+}

@@ -98,9 +98,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	}
 
 	if res.StatusCode >= http.StatusBadRequest {
-		apiErr := &types.ErrorResponse{
-			Code: res.StatusCode,
-		}
+		apiErr := &types.ErrorResponse{Code: res.StatusCode}
 
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
 			logger.Error(err, "unmarshalling error response")

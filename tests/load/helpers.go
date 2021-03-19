@@ -11,6 +11,7 @@ import (
 
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
@@ -125,7 +126,9 @@ func createClientForTest(ctx context.Context, name string) (*httpclient.Client, 
 		return nil, nil, err
 	}
 
-	builder, err := requests.NewBuilder(parsedURLToUse)
+	logger := logging.NewNonOperationalLogger()
+
+	builder, err := requests.NewBuilder(parsedURLToUse, logger, encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON))
 	if err != nil {
 		return nil, nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -14,7 +15,7 @@ const (
 	accountsBasePath = "accounts"
 )
 
-// BuildSwitchActiveAccountRequest builds an HTTP request for fetching an account.
+// BuildSwitchActiveAccountRequest builds an HTTP request for switching active accounts.
 func (b *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -22,6 +23,8 @@ func (b *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "account", "select")
 
@@ -41,6 +44,8 @@ func (b *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) 
 		return nil, ErrInvalidIDProvided
 	}
 
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	uri := b.BuildURL(
 		ctx,
 		nil,
@@ -52,13 +57,15 @@ func (b *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// BuildGetAccountsRequest builds an HTTP request for fetching accounts.
+// BuildGetAccountsRequest builds an HTTP request for fetching a list of accounts.
 func (b *Builder) BuildGetAccountsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := b.BuildURL(ctx, filter.ToValues(), accountsBasePath)
+
 	tracing.AttachRequestURIToSpan(span, uri)
+	tracing.AttachQueryFilterToSpan(span, filter)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -72,9 +79,10 @@ func (b *Builder) BuildCreateAccountRequest(ctx context.Context, input *types.Ac
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger.WithValue(keys.NameKey, input.Name)
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath)
@@ -103,7 +111,7 @@ func (b *Builder) BuildUpdateAccountRequest(ctx context.Context, account *types.
 	return b.buildDataRequest(ctx, http.MethodPut, uri, account)
 }
 
-// BuildArchiveAccountRequest builds an HTTP request for updating an account.
+// BuildArchiveAccountRequest builds an HTTP request for archiving an account.
 func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -123,7 +131,7 @@ func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
 
-// BuildAddUserRequest builds a request that adds a user from an account.
+// BuildAddUserRequest builds a request that adds a user to an account.
 func (b *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -136,9 +144,10 @@ func (b *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, inp
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger.WithValue(keys.UserIDKey, input.UserID)
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "member")
@@ -168,14 +177,14 @@ func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 	defer span.End()
 
 	if accountID == 0 {
-		return nil, fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
+		return nil, ErrInvalidIDProvided
 	}
 
 	if userID == 0 {
 		return nil, fmt.Errorf("userID: %w", ErrInvalidIDProvided)
 	}
 
-	u := b.buildRawURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10))
+	u := b.buildAPIV1URL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10))
 
 	if reason != "" {
 		u.Query().Set("reason", reason)
@@ -192,20 +201,21 @@ func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 	defer span.End()
 
 	if accountID == 0 {
-		return nil, fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
+		return nil, ErrInvalidIDProvided
 	}
 
 	if userID == 0 {
-		return nil, fmt.Errorf("userID: %w", ErrInvalidIDProvided)
+		return nil, ErrInvalidIDProvided
 	}
 
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger.WithValue(keys.UserIDKey, userID).WithValue(keys.AccountIDKey, accountID)
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10), "permissions")
@@ -227,9 +237,10 @@ func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, acco
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "transfer")
@@ -244,7 +255,7 @@ func (b *Builder) BuildGetAuditLogForAccountRequest(ctx context.Context, account
 	defer span.End()
 
 	if accountID == 0 {
-		return nil, fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
+		return nil, ErrInvalidIDProvided
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "audit")

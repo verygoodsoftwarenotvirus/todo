@@ -58,7 +58,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	if err != nil {
 		return nil, err
 	}
-	httpResponseEncoder := encoding.ProvideHTTPResponseEncoder(logger)
+	httpResponseEncoder := encoding.ProvideServerEncoderDecoder(logger)
 	routeParamManager := chi.NewRouteParamManager()
 	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, httpResponseEncoder, routeParamManager)
 	if err != nil {

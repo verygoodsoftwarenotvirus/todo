@@ -40,7 +40,7 @@ type (
 		auditLog                 types.AuthAuditManager
 		apiClientManager         types.APIClientDataManager
 		accountMembershipManager types.AccountUserMembershipDataManager
-		encoderDecoder           encoding.HTTPResponseEncoder
+		encoderDecoder           encoding.ServerEncoderDecoder
 		cookieManager            cookieEncoderDecoder
 		sessionManager           *scs.SessionManager
 		requestContextFetcher    func(*http.Request) (*types.RequestContext, error)
@@ -58,7 +58,7 @@ func ProvideService(
 	apiClientsService types.APIClientDataManager,
 	accountMembershipManager types.AccountUserMembershipDataManager,
 	sessionManager *scs.SessionManager,
-	encoder encoding.HTTPResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
 	svc := &service{

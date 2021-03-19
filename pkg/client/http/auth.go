@@ -20,7 +20,7 @@ func (c *Client) UserStatus(ctx context.Context, cookie *http.Cookie) (*types.Us
 
 	logger := c.logger
 
-	req, err := c.requestBuilder.BuildStatusRequest(ctx, cookie)
+	req, err := c.requestBuilder.BuildUserStatusRequest(ctx, cookie)
 	if err != nil {
 		return nil, prepareError(err, logger, span, "building user status request")
 	}

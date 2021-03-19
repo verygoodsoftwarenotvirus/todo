@@ -49,7 +49,7 @@ type (
 	// ImageUploadProcessor process image uploads.
 	ImageUploadProcessor interface {
 		Process(ctx context.Context, req *http.Request, filename string) (*Image, error)
-		BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler
+		BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.ServerEncoderDecoder, filename string) http.Handler
 	}
 
 	uploadProcessor struct {
@@ -157,7 +157,7 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 }
 
 // BuildAvatarUploadMiddleware ensures that an image is attached to the request.
-func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.HTTPResponseEncoder, filename string) http.Handler {
+func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.ServerEncoderDecoder, filename string) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := p.tracer.StartSpan(req.Context())
 		defer span.End()

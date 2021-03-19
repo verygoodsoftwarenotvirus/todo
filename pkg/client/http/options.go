@@ -6,6 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http/requests"
 )
 
 type option func(*Client) error
@@ -24,7 +25,12 @@ func (c *Client) SetOptions(opts ...option) error {
 // UsingJSON sets the url on the client.
 func UsingJSON() func(*Client) error {
 	return func(c *Client) error {
-		c.contentType = "application/json"
+		requestBuilder, err := requests.NewBuilder(c.url, c.logger, encoding.ProvideClientEncoder(c.logger, encoding.ContentTypeJSON))
+		if err != nil {
+			return err
+		}
+
+		c.requestBuilder = requestBuilder
 
 		return nil
 	}
@@ -33,7 +39,12 @@ func UsingJSON() func(*Client) error {
 // UsingXML sets the url on the client.
 func UsingXML() func(*Client) error {
 	return func(c *Client) error {
-		c.contentType = "application/xml"
+		requestBuilder, err := requests.NewBuilder(c.url, c.logger, encoding.ProvideClientEncoder(c.logger, encoding.ContentTypeXML))
+		if err != nil {
+			return err
+		}
+
+		c.requestBuilder = requestBuilder
 
 		return nil
 	}
@@ -43,7 +54,6 @@ func UsingXML() func(*Client) error {
 func UsingLogger(logger logging.Logger) func(*Client) error {
 	return func(c *Client) error {
 		c.logger = logging.EnsureLogger(logger)
-		c.encoderDecoder = encoding.ProvideHTTPResponseEncoder(c.logger)
 
 		return nil
 	}

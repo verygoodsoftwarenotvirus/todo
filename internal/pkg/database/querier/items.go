@@ -174,10 +174,10 @@ func (c *Client) GetItems(ctx context.Context, accountID uint64, filter *types.Q
 	x = &types.ItemList{}
 
 	tracing.AttachAccountIDToSpan(span, accountID)
+	tracing.AttachQueryFilterToSpan(span, filter)
 	c.logger.WithValue(keys.UserIDKey, accountID).Debug("GetItems called")
 
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
@@ -200,12 +200,11 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	x = &types.ItemList{}
-
 	c.logger.Debug("GetItemsForAdmin called")
+	tracing.AttachQueryFilterToSpan(span, filter)
 
+	x = &types.ItemList{}
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 

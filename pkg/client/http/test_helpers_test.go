@@ -104,6 +104,7 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 	client, err := NewClient(
 		mustParseURL(""),
 		UsingLogger(logging.NewNonOperationalLogger()),
+		UsingJSON(),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, client)
@@ -185,6 +186,10 @@ func buildTestClientWithRequestBodyValidation(t *testing.T, spec *requestSpec, i
 			t.Helper()
 
 			assertRequestQuality(t, req, spec)
+
+			x, _ := httputil.DumpRequest(req, true)
+			y := string(x)
+			_ = y
 
 			require.NoError(t, json.NewDecoder(req.Body).Decode(&inputBody))
 			assert.Equal(t, expectedInput, inputBody)

@@ -38,9 +38,7 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var plans *types.AccountSubscriptionPlanList
-
-	logger := c.loggerForFilter(filter)
+	logger := c.loggerWithFilter(filter)
 
 	tracing.AttachQueryFilterToSpan(span, filter)
 
@@ -49,6 +47,7 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 		return nil, prepareError(err, logger, span, "building account subscription plan list request")
 	}
 
+	var plans *types.AccountSubscriptionPlanList
 	if err = c.fetchAndUnmarshal(ctx, req, &plans); err != nil {
 		return nil, prepareError(err, logger, span, "retrieving plans")
 	}

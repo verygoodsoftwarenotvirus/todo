@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -90,7 +89,7 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (*type
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.loggerForFilter(filter)
+	logger := c.loggerWithFilter(filter)
 
 	tracing.AttachQueryFilterToSpan(span, filter)
 
@@ -152,7 +151,7 @@ func (c *Client) UpdateItem(ctx context.Context, item *types.Item) error {
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return fmt.Errorf("updating item #%d", item.ID)
+		return prepareError(err, logger, span, "updating item #%d", item.ID)
 	}
 
 	return nil
@@ -175,7 +174,7 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return fmt.Errorf("archiving item #%d", itemID)
+		return prepareError(err, logger, span, "archiving item #%d", itemID)
 	}
 
 	return nil

@@ -32,7 +32,7 @@ type (
 		itemIDFetcher         func(*http.Request) uint64
 		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
 		itemCounter           metrics.UnitCounter
-		encoderDecoder        encoding.HTTPResponseEncoder
+		encoderDecoder        encoding.ServerEncoderDecoder
 		tracer                tracing.Tracer
 		search                SearchIndex
 	}
@@ -42,7 +42,7 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	itemDataManager types.ItemDataManager,
-	encoder encoding.HTTPResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	searchSettings search.Config,
 	indexProvider search.IndexManagerProvider,

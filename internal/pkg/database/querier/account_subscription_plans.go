@@ -114,11 +114,11 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	x = &types.AccountSubscriptionPlanList{}
+	tracing.AttachQueryFilterToSpan(span, filter)
 
+	x = &types.AccountSubscriptionPlanList{}
 	if filter != nil {
 		x.Page, x.Limit = filter.Page, filter.Limit
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 	}
 
 	c.logger.Debug("GetAccountSubscriptionPlans called")

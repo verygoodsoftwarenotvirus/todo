@@ -39,7 +39,7 @@ type (
 		apiClientDataManager  types.APIClientDataManager
 		userDataManager       types.UserDataManager
 		authenticator         authentication.Authenticator
-		encoderDecoder        encoding.HTTPResponseEncoder
+		encoderDecoder        encoding.ServerEncoderDecoder
 		urlClientIDExtractor  func(req *http.Request) uint64
 		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
 		apiClientCounter      metrics.UnitCounter
@@ -54,7 +54,7 @@ func ProvideAPIClientsService(
 	clientDataManager types.APIClientDataManager,
 	userDataManager types.UserDataManager,
 	authenticator authentication.Authenticator,
-	encoderDecoder encoding.HTTPResponseEncoder,
+	encoderDecoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
 ) types.APIClientDataService {

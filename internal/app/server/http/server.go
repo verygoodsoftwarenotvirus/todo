@@ -41,7 +41,7 @@ type (
 		webhooksService   types.WebhookDataService
 		itemsService      types.ItemDataService
 		db                database.DataManager
-		encoder           encoding.HTTPResponseEncoder
+		encoder           encoding.ServerEncoderDecoder
 		logger            logging.Logger
 		router            routing.Router
 		tracer            tracing.Tracer
@@ -68,7 +68,7 @@ func ProvideServer(
 	frontendService types.FrontendService,
 	db database.DataManager,
 	logger logging.Logger,
-	encoder encoding.HTTPResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 	router routing.Router,
 ) (*Server, error) {
 	srv := &Server{

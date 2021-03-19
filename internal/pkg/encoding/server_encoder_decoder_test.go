@@ -27,7 +27,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -40,7 +40,7 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -58,7 +58,7 @@ func TestServerEncoderDecoder_EncodeResponseWithStatus(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -79,7 +79,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -94,7 +94,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -106,7 +106,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 	})
 }
 
-func TestEncodeInvalidInputResponse(T *testing.T) {
+func TestServerEncoderDecoder_EncodeInvalidInputResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestEncodeInvalidInputResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 		ed.EncodeInvalidInputResponse(ctx, res)
 
 		expectedCode := http.StatusBadRequest
@@ -123,7 +123,7 @@ func TestEncodeInvalidInputResponse(T *testing.T) {
 	})
 }
 
-func TestEncodeNotFoundResponse(T *testing.T) {
+func TestServerEncoderDecoder_EncodeNotFoundResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestEncodeNotFoundResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 		ed.EncodeNotFoundResponse(ctx, res)
 
 		expectedCode := http.StatusNotFound
@@ -140,7 +140,7 @@ func TestEncodeNotFoundResponse(T *testing.T) {
 	})
 }
 
-func TestEncodeUnspecifiedInternalServerErrorResponse(T *testing.T) {
+func TestServerEncoderDecoder_EncodeUnspecifiedInternalServerErrorResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestEncodeUnspecifiedInternalServerErrorResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 		ed.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		expectedCode := http.StatusInternalServerError
@@ -157,7 +157,7 @@ func TestEncodeUnspecifiedInternalServerErrorResponse(T *testing.T) {
 	})
 }
 
-func TestEncodeUnauthorizedResponse(T *testing.T) {
+func TestServerEncoderDecoder_EncodeUnauthorizedResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -166,7 +166,7 @@ func TestEncodeUnauthorizedResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 		ed.EncodeUnauthorizedResponse(ctx, res)
 
 		expectedCode := http.StatusUnauthorized
@@ -183,7 +183,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 
 		bs, err := json.Marshal(e)
 		require.NoError(t, err)
@@ -195,6 +195,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 			bytes.NewReader(bs),
 		)
 		require.NoError(t, err)
+		req.Header.Set(ContentTypeHeaderKey, contentTypeJSON)
 
 		var x example
 		assert.NoError(t, ed.DecodeRequest(ctx, req, &x))
@@ -207,7 +208,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideHTTPResponseEncoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
 
 		bs, err := xml.Marshal(e)
 		require.NoError(t, err)
@@ -219,7 +220,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 			bytes.NewReader(bs),
 		)
 		require.NoError(t, err)
-		req.Header.Set(ContentTypeHeaderKey, ContentTypeXML)
+		req.Header.Set(ContentTypeHeaderKey, contentTypeXML)
 
 		var x example
 		assert.NoError(t, ed.DecodeRequest(ctx, req, &x))

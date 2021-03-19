@@ -37,7 +37,7 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (*t
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.loggerForFilter(filter)
+	logger := c.loggerWithFilter(filter)
 
 	tracing.AttachQueryFilterToSpan(span, filter)
 

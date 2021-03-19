@@ -27,22 +27,25 @@ func (b *Builder) BuildGetUserRequest(ctx context.Context, userID uint64) (*http
 		return nil, ErrInvalidIDProvided
 	}
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	uri := b.BuildURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10))
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// BuildGetUsersRequest builds an HTTP request for fetching a user.
+// BuildGetUsersRequest builds an HTTP request for fetching a list of users.
 func (b *Builder) BuildGetUsersRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachQueryFilterToSpan(span, filter)
 	uri := b.BuildURL(ctx, filter.ToValues(), usersBasePath)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// BuildSearchForUsersByUsernameRequest builds an HTTP request that searches for a user.
+// BuildSearchForUsersByUsernameRequest builds an HTTP request that searches for a user by their username.
 func (b *Builder) BuildSearchForUsersByUsernameRequest(ctx context.Context, username string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -51,7 +54,9 @@ func (b *Builder) BuildSearchForUsersByUsernameRequest(ctx context.Context, user
 		return nil, ErrEmptyUsernameProvided
 	}
 
-	u := b.buildRawURL(ctx, nil, usersBasePath, "search")
+	tracing.AttachUsernameToSpan(span, username)
+
+	u := b.buildAPIV1URL(ctx, nil, usersBasePath, "search")
 	q := u.Query()
 	q.Set(types.SearchQueryKey, username)
 	u.RawQuery = q.Encode()
@@ -69,14 +74,16 @@ func (b *Builder) BuildCreateUserRequest(ctx context.Context, input *types.NewUs
 		return nil, ErrNilInputProvided
 	}
 
-	// deliberately not validating here
+	tracing.AttachUsernameToSpan(span, input.Username)
 
+	// deliberately not validating here
 	uri := b.buildVersionlessURL(ctx, nil, usersBasePath)
+	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// BuildArchiveUserRequest builds an HTTP request for updating a user.
+// BuildArchiveUserRequest builds an HTTP request for archiving a user.
 func (b *Builder) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -85,10 +92,11 @@ func (b *Builder) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*
 		return nil, ErrInvalidIDProvided
 	}
 
-	// deliberately not validating here
-	// maybe I should make a client-side validate method vs a server-side?
+	tracing.AttachUserIDToSpan(span, userID)
 
-	uri := b.buildRawURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
+	// deliberately not validating here, maybe there should make a client-side validate method vs a server-side?
+
+	uri := b.buildAPIV1URL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
 
 	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 }
@@ -102,13 +110,15 @@ func (b *Builder) BuildGetAuditLogForUserRequest(ctx context.Context, userID uin
 		return nil, ErrInvalidIDProvided
 	}
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	uri := b.BuildURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// BuildAvatarUploadRequest builds a new avatar upload request.
+// BuildAvatarUploadRequest builds an HTTP request that sets a user's avatar to the provided content.
 func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, extension string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -130,27 +140,29 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 		return nil, fmt.Errorf("invalid extension: %q", extension)
 	}
 
+	logger := b.logger
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
 	part, err := writer.CreateFormFile("avatar", fmt.Sprintf("avatar.%s", extension))
 	if err != nil {
-		return nil, fmt.Errorf("writing to form file: %w", err)
+		return nil, prepareError(err, logger, span, "creating form file")
 	}
 
-	if _, copyErr := io.Copy(part, bytes.NewReader(avatar)); copyErr != nil {
-		return nil, fmt.Errorf("copying file contents to request: %w", copyErr)
+	if _, err = io.Copy(part, bytes.NewReader(avatar)); err != nil {
+		return nil, prepareError(err, logger, span, "copying file contents to request")
 	}
 
-	if closeErr := writer.Close(); closeErr != nil {
-		return nil, fmt.Errorf("closing avatar file: %w", closeErr)
+	if err = writer.Close(); err != nil {
+		return nil, prepareError(err, logger, span, "closing avatar writer")
 	}
 
 	uri := b.BuildURL(ctx, nil, usersBasePath, "avatar", "upload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, body)
 	if err != nil {
-		return nil, fmt.Errorf("building HTTP request: %w", err)
+		return nil, prepareError(err, logger, span, "building avatar upload request")
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())

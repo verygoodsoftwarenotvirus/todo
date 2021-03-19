@@ -26,7 +26,7 @@ type (
 		auditLog               types.AuditLogEntryDataManager
 		auditLogEntryIDFetcher func(*http.Request) uint64
 		requestContextFetcher  func(*http.Request) (*types.RequestContext, error)
-		encoderDecoder         encoding.HTTPResponseEncoder
+		encoderDecoder         encoding.ServerEncoderDecoder
 		tracer                 tracing.Tracer
 	}
 )
@@ -35,7 +35,7 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	auditLog types.AuditLogEntryDataManager,
-	encoder encoding.HTTPResponseEncoder,
+	encoder encoding.ServerEncoderDecoder,
 	routeParamManager routing.RouteParamManager,
 ) types.AuditLogEntryDataService {
 	return &service{

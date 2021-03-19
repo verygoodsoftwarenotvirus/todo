@@ -3,27 +3,16 @@ package requests
 import (
 	"errors"
 	"fmt"
-	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	// ErrNotFound is a handy error to return when we receive a 404 response.
-	ErrNotFound = fmt.Errorf("%d: not found", http.StatusNotFound)
-
-	// ErrInvalidRequestInput is a handy error to return when we receive a 400 response.
-	ErrInvalidRequestInput = fmt.Errorf("%d: bad request", http.StatusBadRequest)
-
 	// ErrNoURLProvided is a handy error to return when we expect a *url.URL and don't receive one.
 	ErrNoURLProvided = errors.New("no URL provided")
-
-	// ErrBanned is a handy error to return when we receive a 401 response.
-	ErrBanned = fmt.Errorf("%d: banned", http.StatusForbidden)
-
-	// ErrUnauthorized is a handy error to return when we receive a 401 response.
-	ErrUnauthorized = fmt.Errorf("%d: not authorized", http.StatusUnauthorized)
-
-	// ErrInvalidTOTPToken is an error for when our TOTP validation request goes awry.
-	ErrInvalidTOTPToken = errors.New("invalid TOTP token")
 
 	// ErrNilInputProvided indicates nil input was provided in an unacceptable context.
 	ErrNilInputProvided = errors.New("nil input provided")
@@ -31,15 +20,20 @@ var (
 	// ErrInvalidIDProvided indicates nil input was provided in an unacceptable context.
 	ErrInvalidIDProvided = errors.New("required ID provided is zero")
 
-	// ErrEmptyQueryProvided indicates the user provided an empty query.
-	ErrEmptyQueryProvided = errors.New("query provided was empty")
-
 	// ErrEmptyUsernameProvided indicates the user provided an empty username for search.
 	ErrEmptyUsernameProvided = errors.New("empty username provided")
 
 	// ErrCookieRequired indicates a cookie is required.
 	ErrCookieRequired = errors.New("cookie required for request")
-
-	// ErrNoCookiesReturned indicates nil input was provided in an unacceptable context.
-	ErrNoCookiesReturned = errors.New("no cookies returned from request")
 )
+
+// prepareError standardizes our error handling by logging, tracing, and formatting an error consistently.
+func prepareError(err error, logger logging.Logger, span trace.Span, description string) error {
+	logging.EnsureLogger(logger).Error(err, description)
+
+	if err != nil {
+		tracing.AttachErrorToSpan(span, err)
+	}
+
+	return fmt.Errorf("%s: %w", description, err)
+}

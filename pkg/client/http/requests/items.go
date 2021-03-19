@@ -2,7 +2,6 @@ package requests
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -24,6 +23,8 @@ func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*h
 		return nil, ErrInvalidIDProvided
 	}
 
+	tracing.AttachItemIDToSpan(span, itemID)
+
 	uri := b.BuildURL(
 		ctx,
 		nil,
@@ -43,6 +44,8 @@ func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
 		ctx,
@@ -75,13 +78,14 @@ func (b *Builder) BuildSearchItemsRequest(ctx context.Context, query string, lim
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// BuildGetItemsRequest builds an HTTP request for fetching items.
+// BuildGetItemsRequest builds an HTTP request for fetching a list of items.
 func (b *Builder) BuildGetItemsRequest(ctx context.Context, filter *types.QueryFilter) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	uri := b.BuildURL(ctx, filter.ToValues(), itemsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
+	tracing.AttachQueryFilterToSpan(span, filter)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
@@ -95,9 +99,10 @@ func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemC
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, itemsBasePath)
@@ -115,6 +120,8 @@ func (b *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) 
 		return nil, ErrNilInputProvided
 	}
 
+	tracing.AttachItemIDToSpan(span, item.ID)
+
 	uri := b.BuildURL(
 		ctx,
 		nil,
@@ -126,7 +133,7 @@ func (b *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) 
 	return b.buildDataRequest(ctx, http.MethodPut, uri, item)
 }
 
-// BuildArchiveItemRequest builds an HTTP request for updating an item.
+// BuildArchiveItemRequest builds an HTTP request for archiving an item.
 func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -134,6 +141,8 @@ func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
 		ctx,
@@ -154,6 +163,8 @@ func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uin
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(ctx, nil, itemsBasePath, strconv.FormatUint(itemID, 10), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)

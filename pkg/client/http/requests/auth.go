@@ -2,10 +2,11 @@ package requests
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -13,8 +14,8 @@ const (
 	authBasePath = "auth"
 )
 
-// BuildStatusRequest builds an HTTP request that fetches a user's status.
-func (b *Builder) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) (*http.Request, error) {
+// BuildUserStatusRequest builds an HTTP request that fetches a user's status.
+func (b *Builder) BuildUserStatusRequest(ctx context.Context, cookie *http.Cookie) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -22,11 +23,12 @@ func (b *Builder) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) (
 		return nil, ErrCookieRequired
 	}
 
+	logger := b.logger
 	uri := b.buildVersionlessURL(ctx, nil, authBasePath, "status")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
-		return nil, err
+		return nil, prepareError(err, logger, span, "building user status request")
 	}
 
 	req.AddCookie(cookie)
@@ -34,7 +36,7 @@ func (b *Builder) BuildStatusRequest(ctx context.Context, cookie *http.Cookie) (
 	return req, nil
 }
 
-// BuildLoginRequest builds an authenticating HTTP request.
+// BuildLoginRequest builds an HTTP request that fetches a login cookie.
 func (b *Builder) BuildLoginRequest(ctx context.Context, input *types.UserLoginInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -43,6 +45,8 @@ func (b *Builder) BuildLoginRequest(ctx context.Context, input *types.UserLoginI
 		return nil, ErrNilInputProvided
 	}
 
+	tracing.AttachUsernameToSpan(span, input.Username)
+
 	// validating here requires settings knowledge, so we do not do it
 
 	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "login")
@@ -50,7 +54,7 @@ func (b *Builder) BuildLoginRequest(ctx context.Context, input *types.UserLoginI
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// BuildLogoutRequest builds a de-authorizing HTTP request.
+// BuildLogoutRequest builds an HTTP request that clears the user's session.
 func (b *Builder) BuildLogoutRequest(ctx context.Context) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -60,7 +64,7 @@ func (b *Builder) BuildLogoutRequest(ctx context.Context) (*http.Request, error)
 	return http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
 }
 
-// BuildChangePasswordRequest builds a request to change a user's authentication.
+// BuildChangePasswordRequest builds a request to change a user's password.
 func (b *Builder) BuildChangePasswordRequest(ctx context.Context, cookie *http.Cookie, input *types.PasswordUpdateInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -96,9 +100,10 @@ func (b *Builder) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "totp_secret", "new")
@@ -113,7 +118,7 @@ func (b *Builder) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *
 	return req, nil
 }
 
-// BuildVerifyTOTPSecretRequest builds a request to validate a TOTP secret.
+// BuildVerifyTOTPSecretRequest builds a request to validate a 2FA secret.
 func (b *Builder) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64, token string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -122,8 +127,10 @@ func (b *Builder) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint6
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.UserIDKey, userID)
+
 	if _, err := strconv.ParseUint(token, 10, 64); token == "" || err != nil {
-		return nil, fmt.Errorf("invalid token provided: %q", token)
+		return nil, prepareError(err, logger, span, "invalid token provided")
 	}
 
 	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "totp_secret", "verify")

@@ -45,6 +45,8 @@ const (
 	WebhookIDKey = "webhook_id"
 	// URLKey is the standard key for referring to a url.
 	URLKey = "url"
+	// RequestMethodKey is the standard key for referring to an http.Request's Method.
+	RequestMethodKey = "request_method"
 	// RequestURIKey is the standard key for referring to an http.Request's URI.
 	RequestURIKey = "request_uri"
 	// ResponseStatusKey is the standard key for referring to an http.Request's URI.

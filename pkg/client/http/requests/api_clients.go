@@ -37,12 +37,14 @@ func (b *Builder) BuildGetAPIClientsRequest(ctx context.Context, filter *types.Q
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachQueryFilterToSpan(span, filter)
+
 	uri := b.BuildURL(ctx, filter.ToValues(), apiClientsBasePath)
 
 	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 }
 
-// BuildCreateAPIClientRequest builds an HTTP request for creating API clients.
+// BuildCreateAPIClientRequest builds an HTTP request for creating an API client.
 func (b *Builder) BuildCreateAPIClientRequest(ctx context.Context, cookie *http.Cookie, input *types.APICientCreationInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -26,8 +27,8 @@ func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
 	}
 
 	mac := hmac.New(sha256.New, secretKey)
-	if _, macWriteErr := mac.Write(body); macWriteErr != nil {
-		return fmt.Errorf("writing hash content: %w", macWriteErr)
+	if _, err := mac.Write(body); err != nil {
+		return fmt.Errorf("writing hash content: %w", err)
 	}
 
 	req.Header.Set(signatureHeaderKey, base64.RawURLEncoding.EncodeToString(mac.Sum(nil)))
@@ -35,7 +36,7 @@ func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
 	return nil
 }
 
-// BuildAPIClientAuthTokenRequest builds a request.
+// BuildAPIClientAuthTokenRequest builds a request that fetches a PASETO from the service.
 func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *types.PASETOCreationInput, secretKey []byte) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -44,28 +45,28 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger.WithValue(keys.AccountIDKey, input.AccountID).WithValue(keys.APIClientClientIDKey, input.ClientID)
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.buildVersionlessURL(ctx, nil, pasetoBasePath)
 
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	req, requestBuildErr := b.buildDataRequest(ctx, http.MethodPost, uri, input)
-	if requestBuildErr != nil {
-		return nil, fmt.Errorf("building request: %w", requestBuildErr)
+	req, err := b.buildDataRequest(ctx, http.MethodPost, uri, input)
+	if err != nil {
+		return nil, prepareError(err, logger, span, "building request")
 	}
 
-	var buff bytes.Buffer
-
-	if err := json.NewEncoder(&buff).Encode(input); err != nil {
-		b.logger.Error(err, "marshaling to JSON: %v")
+	var buffer bytes.Buffer
+	if err = json.NewEncoder(&buffer).Encode(input); err != nil {
+		return nil, prepareError(err, logger, span, "encoding body")
 	}
 
-	if signErr := setSignatureForRequest(req, buff.Bytes(), secretKey); signErr != nil {
-		return nil, signErr
+	if err = setSignatureForRequest(req, buffer.Bytes(), secretKey); err != nil {
+		return nil, prepareError(err, logger, span, "signing request")
 	}
 
 	return req, nil

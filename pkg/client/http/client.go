@@ -27,22 +27,21 @@ const (
 type authMethod struct{}
 
 var (
-	cookieAuthMethod = new(authMethod)
-	pasetoAuthMethod = new(authMethod)
+	cookieAuthMethod   = new(authMethod)
+	pasetoAuthMethod   = new(authMethod)
+	defaultContentType = encoding.ContentTypeJSON
 )
 
 // Client is a client for interacting with v1 of our HTTP API.
 type Client struct {
 	logger                logging.Logger
 	tracer                tracing.Tracer
-	encoderDecoder        encoding.HTTPResponseEncoder
 	panicker              panicking.Panicker
 	url                   *url.URL
 	requestBuilder        *requests.Builder
 	unauthenticatedClient *http.Client
 	authedClient          *http.Client
 	authMethod            *authMethod
-	contentType           string
 	accountID             uint64
 	debug                 bool
 }
@@ -80,25 +79,23 @@ func NewClient(u *url.URL, options ...option) (*Client, error) {
 		authedClient:          http.DefaultClient,
 		unauthenticatedClient: http.DefaultClient,
 		debug:                 false,
-		contentType:           encoding.ContentTypeJSON,
 		panicker:              panicking.NewProductionPanicker(),
-		encoderDecoder:        encoding.ProvideHTTPResponseEncoder(l),
 		logger:                l,
 		tracer:                tracing.NewTracer(clientName),
 	}
 
-	for _, opt := range options {
-		if err := opt(c); err != nil {
-			return nil, err
-		}
-	}
-
-	requestBuilder, err := requests.NewBuilder(c.url)
+	requestBuilder, err := requests.NewBuilder(c.url, c.logger, encoding.ProvideClientEncoder(l, defaultContentType))
 	if err != nil {
 		return nil, err
 	}
 
 	c.requestBuilder = requestBuilder
+
+	for _, opt := range options {
+		if optionSetErr := opt(c); optionSetErr != nil {
+			return nil, optionSetErr
+		}
+	}
 
 	return c, nil
 }
@@ -118,8 +115,8 @@ func (c *Client) closeResponseBody(ctx context.Context, res *http.Response) {
 	}
 }
 
-// loggerForFilter prepares a logger from the Client logger that has relevant filter information.
-func (c *Client) loggerForFilter(filter *types.QueryFilter) logging.Logger {
+// loggerWithFilter prepares a logger from the Client logger that has relevant filter information.
+func (c *Client) loggerWithFilter(filter *types.QueryFilter) logging.Logger {
 	if filter == nil {
 		return c.logger.WithValue(keys.FilterIsNilKey, true)
 	}
@@ -237,7 +234,7 @@ func (c *Client) fetchResponseToRequest(ctx context.Context, client *http.Client
 		return nil, prepareError(err, logger, span, "executing request")
 	}
 
-	if bdump, resDumpErr := httputil.DumpResponse(res, true); resDumpErr == nil {
+	if bdump, err := httputil.DumpResponse(res, true); err == nil {
 		logger = logger.WithValue("response_body", string(bdump))
 	}
 

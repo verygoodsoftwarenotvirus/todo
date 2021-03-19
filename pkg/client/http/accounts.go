@@ -26,7 +26,7 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	if c.authMethod == cookieAuthMethod {
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
-			return fmt.Errorf("building login request: %w", err)
+			return prepareError(err, logger, span, "building login request")
 		}
 
 		res, err := c.authedClient.Do(req)
@@ -72,7 +72,7 @@ func (c *Client) GetAccounts(ctx context.Context, filter *types.QueryFilter) (*t
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.loggerForFilter(filter)
+	logger := c.loggerWithFilter(filter)
 
 	tracing.AttachQueryFilterToSpan(span, filter)
 

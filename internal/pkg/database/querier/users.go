@@ -221,10 +221,10 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *ty
 
 	x = &types.UserList{}
 
+	tracing.AttachQueryFilterToSpan(span, filter)
 	c.logger.WithValue(keys.FilterIsNilKey, filter == nil).Debug("GetUsers called")
 
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 

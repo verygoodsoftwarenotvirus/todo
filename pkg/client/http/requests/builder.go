@@ -2,11 +2,14 @@ package requests
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
@@ -22,9 +25,8 @@ type Builder struct {
 	tracer tracing.Tracer
 	url    *url.URL
 
-	panicker    panicking.Panicker
-	contentType string
-	debug       bool
+	encoder  encoding.ClientEncoder
+	panicker panicking.Panicker
 }
 
 // URL provides the client's URL.
@@ -44,20 +46,23 @@ func (b *Builder) SetURL(u *url.URL) error {
 }
 
 // NewBuilder builds a new API client for us.
-func NewBuilder(u *url.URL) (*Builder, error) {
-	l := logging.NewNonOperationalLogger()
+func NewBuilder(u *url.URL, logger logging.Logger, encoder encoding.ClientEncoder) (*Builder, error) {
+	l := logging.EnsureLogger(logger)
 
 	if u == nil {
 		return nil, ErrNoURLProvided
 	}
 
+	if encoder == nil {
+		return nil, errors.New("nil encoder provided")
+	}
+
 	c := &Builder{
-		url:         u,
-		debug:       false,
-		contentType: "application/json",
-		panicker:    panicking.NewProductionPanicker(),
-		logger:      l,
-		tracer:      tracing.NewTracer(clientName),
+		url:      u,
+		logger:   l,
+		encoder:  encoder,
+		panicker: panicking.NewProductionPanicker(),
+		tracer:   tracing.NewTracer(clientName),
 	}
 
 	return c, nil
@@ -68,7 +73,7 @@ func (b *Builder) BuildURL(ctx context.Context, qp url.Values, parts ...string) 
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if u := b.buildRawURL(ctx, qp, parts...); u != nil {
+	if u := b.buildAPIV1URL(ctx, qp, parts...); u != nil {
 		return u.String()
 	}
 
@@ -112,9 +117,8 @@ func buildRawURL(u *url.URL, qp url.Values, includeVersionPrefix bool, parts ...
 	return tu.ResolveReference(u), nil
 }
 
-// buildRawURL takes a given set of query parameters and url parts, and returns.
-// a parsed url object from them.
-func (b *Builder) buildRawURL(ctx context.Context, queryParams url.Values, parts ...string) *url.URL {
+// buildRawURL takes a given set of query parameters and url parts, and returns a parsed url object from them.
+func (b *Builder) buildAPIV1URL(ctx context.Context, queryParams url.Values, parts ...string) *url.URL {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -139,7 +143,7 @@ func (b *Builder) buildRawURL(ctx context.Context, queryParams url.Values, parts
 	return out
 }
 
-// buildVersionlessURL builds a url without the `/api/v1/` prefix. It should otherwise be identical to buildRawURL.
+// buildVersionlessURL builds a url without the v1 API prefix. It should otherwise be identical to buildRawURL.
 func (b *Builder) buildVersionlessURL(ctx context.Context, qp url.Values, parts ...string) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -158,7 +162,7 @@ func (b *Builder) BuildWebsocketURL(ctx context.Context, parts ...string) string
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	u := b.buildRawURL(ctx, nil, parts...)
+	u := b.buildAPIV1URL(ctx, nil, parts...)
 	u.Scheme = "ws"
 
 	return u.String()
@@ -180,17 +184,30 @@ func (b *Builder) buildDataRequest(ctx context.Context, method, uri string, in i
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	body, err := createBodyFromStruct(in)
+	logger := b.logger.WithValue(keys.RequestMethodKey, method).WithValue(keys.URLKey, uri)
+
+	body, err := b.encoder.EncodeReader(ctx, in)
 	if err != nil {
-		return nil, err
+		return nil, prepareError(err, logger, span, "encoding request")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, uri, body)
 	if err != nil {
-		return nil, err
+		return nil, prepareError(err, logger, span, "building request")
 	}
 
-	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("Content-type", b.encoder.ContentType())
+	tracing.AttachURLToSpan(span, req.URL)
 
 	return req, nil
+}
+
+// mustParseURL parses a url or otherwise panics.
+func mustParseURL(raw string) *url.URL {
+	u, err := url.Parse(raw)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
 }

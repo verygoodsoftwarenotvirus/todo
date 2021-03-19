@@ -2,9 +2,9 @@ package requests
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -12,7 +12,7 @@ const (
 	adminBasePath = "_admin_"
 )
 
-// BuildUserReputationUpdateInputRequest builds a request to ban a user.
+// BuildUserReputationUpdateInputRequest builds a request to change a user's reputation.
 func (b *Builder) BuildUserReputationUpdateInputRequest(ctx context.Context, input *types.UserReputationUpdateInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -21,9 +21,10 @@ func (b *Builder) BuildUserReputationUpdateInputRequest(ctx context.Context, inp
 		return nil, ErrNilInputProvided
 	}
 
-	if validationErr := input.Validate(ctx); validationErr != nil {
-		b.logger.Error(validationErr, "validating input")
-		return nil, fmt.Errorf("validating input: %w", validationErr)
+	logger := b.logger.WithValue(keys.UserIDKey, input.TargetUserID)
+
+	if err := input.Validate(ctx); err != nil {
+		return nil, prepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, adminBasePath, usersBasePath, "status")

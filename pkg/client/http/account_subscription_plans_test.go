@@ -138,8 +138,8 @@ func (s *accountSubscriptionPlansTestSuite) TestV1Client_CreateAccountSubscripti
 		c := buildTestClientWithRequestBodyValidation(t, spec, &types.AccountSubscriptionPlanCreationInput{}, s.exampleInput, s.exampleAccountSubscriptionPlan)
 		actual, err := c.CreateAccountSubscriptionPlan(s.ctx, s.exampleInput)
 
-		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
+		require.NotNil(t, actual)
 		assert.Equal(t, s.exampleAccountSubscriptionPlan, actual)
 	})
 

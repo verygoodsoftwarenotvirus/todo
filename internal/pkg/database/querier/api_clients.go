@@ -191,13 +191,13 @@ func (c *Client) GetAPIClients(ctx context.Context, userID uint64, filter *types
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	x = &types.APIClientList{}
-
-	tracing.AttachUserIDToSpan(span, userID)
 	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachQueryFilterToSpan(span, filter)
+
+	x = &types.APIClientList{}
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 

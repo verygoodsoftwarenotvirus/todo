@@ -154,10 +154,10 @@ func (c *Client) GetAccounts(ctx context.Context, userID uint64, filter *types.Q
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	x = &types.AccountList{}
+	tracing.AttachQueryFilterToSpan(span, filter)
 
+	x = &types.AccountList{}
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
@@ -186,10 +186,10 @@ func (c *Client) GetAccountsForAdmin(ctx context.Context, filter *types.QueryFil
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	x = &types.AccountList{}
+	tracing.AttachQueryFilterToSpan(span, filter)
 
+	x = &types.AccountList{}
 	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit)
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 

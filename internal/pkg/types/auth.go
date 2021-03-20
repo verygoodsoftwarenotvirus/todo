@@ -26,21 +26,18 @@ func init() {
 }
 
 type (
-	// UserRequestContext contains data relevant to the user making a request.
-	UserRequestContext struct {
-		AccountPermissionsMap   map[uint64]permissions.ServiceUserPermissions `json:"-"`
-		Username                string                                        `json:"-"`
-		Status                  userReputation                                `json:"-"`
-		ID                      uint64                                        `json:"-"`
-		ActiveAccountID         uint64                                        `json:"-"`
-		ServiceAdminPermissions permissions.ServiceAdminPermissions           `json:"-"`
-	}
-
 	// RequestContext represents what we encode in our authentication cookies.
 	RequestContext struct {
 		AccountPermissionsMap map[uint64]permissions.ServiceUserPermissions `json:"-"`
 		User                  UserRequestContext                            `json:"-"`
 		ActiveAccountID       uint64                                        `json:"-"`
+	}
+
+	// UserRequestContext contains data relevant to the user making a request.
+	UserRequestContext struct {
+		Status                  userReputation                      `json:"-"`
+		ID                      uint64                              `json:"-"`
+		ServiceAdminPermissions permissions.ServiceAdminPermissions `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
@@ -143,11 +140,8 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 	reqCtx := &RequestContext{
 		User: UserRequestContext{
 			ID:                      user.ID,
-			Username:                user.Username,
 			Status:                  user.Reputation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
-			ActiveAccountID:         activeAccountID,
-			AccountPermissionsMap:   accountPermissionsMap,
 		},
 		AccountPermissionsMap: accountPermissionsMap,
 		ActiveAccountID:       activeAccountID,

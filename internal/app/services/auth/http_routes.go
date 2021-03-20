@@ -504,11 +504,8 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	reqCtx := &types.RequestContext{
 		User: types.UserRequestContext{
-			Username:                user.Username,
 			ID:                      user.ID,
-			ActiveAccountID:         requestedAccountID,
 			Status:                  user.Reputation,
-			AccountPermissionsMap:   perms,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
 		ActiveAccountID:       requestedAccountID,

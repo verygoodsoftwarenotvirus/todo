@@ -1184,11 +1184,8 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		expectedOutput := &types.RequestContext{
 			User: types.UserRequestContext{
-				Username:                exampleUser.Username,
 				ID:                      exampleUser.ID,
-				ActiveAccountID:         exampleAccount.ID,
 				Status:                  exampleUser.Reputation,
-				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},
 			ActiveAccountID:       exampleAccount.ID,
@@ -1291,11 +1288,8 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		expectedOutput := &types.RequestContext{
 			User: types.UserRequestContext{
-				Username:                exampleUser.Username,
 				ID:                      exampleUser.ID,
-				ActiveAccountID:         exampleAccount.ID,
 				Status:                  exampleUser.Reputation,
-				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},
 			ActiveAccountID:       exampleAccount.ID,

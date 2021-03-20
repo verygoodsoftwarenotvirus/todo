@@ -75,7 +75,6 @@ func (c *Client) GetRequestContextForUser(ctx context.Context, userID uint64) (r
 
 	reqCtx = &types.RequestContext{
 		User: types.UserRequestContext{
-			Username:                user.Username,
 			ID:                      user.ID,
 			Status:                  user.Reputation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
@@ -96,21 +95,21 @@ func (c *Client) GetRequestContextForUser(ctx context.Context, userID uint64) (r
 		return nil, scanErr
 	}
 
-	reqCtx.User.AccountPermissionsMap = map[uint64]permissions.ServiceUserPermissions{}
+	reqCtx.AccountPermissionsMap = map[uint64]permissions.ServiceUserPermissions{}
 
 	for _, membership := range memberships {
 		if membership.BelongsToAccount != 0 {
-			reqCtx.User.AccountPermissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
+			reqCtx.AccountPermissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
 
-			if membership.DefaultAccount && reqCtx.User.ActiveAccountID == 0 {
-				reqCtx.User.ActiveAccountID = membership.BelongsToAccount
+			if membership.DefaultAccount && reqCtx.ActiveAccountID == 0 {
+				reqCtx.ActiveAccountID = membership.BelongsToAccount
 			}
 		} else {
 			logger.WithValue("membership", membership).Info("WTF WTF WTF WTF WTF")
 		}
 	}
 
-	if reqCtx.User.ActiveAccountID == 0 {
+	if reqCtx.ActiveAccountID == 0 {
 		return nil, fmt.Errorf("default account not found for user %d", userID)
 	}
 

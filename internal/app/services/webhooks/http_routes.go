@@ -70,7 +70,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	input.BelongsToAccount = reqCtx.User.ActiveAccountID
+	input.BelongsToAccount = reqCtx.ActiveAccountID
 
 	// ensure everything's on the up-and-up
 	if err := validateWebhook(input); err != nil {
@@ -118,7 +118,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// find the webhooks.
-	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.User.ActiveAccountID, filter)
+	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.ActiveAccountID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		webhooks = &types.WebhookList{
 			Webhooks: []*types.Webhook{},
@@ -156,11 +156,11 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
-	tracing.AttachAccountIDToSpan(span, reqCtx.User.ActiveAccountID)
-	logger = logger.WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
+	tracing.AttachAccountIDToSpan(span, reqCtx.ActiveAccountID)
+	logger = logger.WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 
 	// fetch the webhook from the database.
-	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, reqCtx.User.ActiveAccountID)
+	x, err := s.webhookDataManager.GetWebhook(ctx, webhookID, reqCtx.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("No rows found in webhook database")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -196,7 +196,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	userID := reqCtx.User.ID
 	logger = logger.WithValue(keys.RequesterKey, userID)
 
-	accountID := reqCtx.User.ActiveAccountID
+	accountID := reqCtx.ActiveAccountID
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine relevant webhook ID.
@@ -264,7 +264,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	userID := reqCtx.User.ID
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
-	accountID := reqCtx.User.ActiveAccountID
+	accountID := reqCtx.ActiveAccountID
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine relevant webhook ID.
@@ -273,7 +273,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// do the deed.
-	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, reqCtx.User.ActiveAccountID, reqCtx.User.ID)
+	err := s.webhookDataManager.ArchiveWebhook(ctx, webhookID, reqCtx.ActiveAccountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)

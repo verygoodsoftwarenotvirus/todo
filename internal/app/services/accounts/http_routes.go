@@ -33,12 +33,9 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("ListHandler invoked")
-
-	// ensure query filter.
 	filter := types.ExtractQueryFilter(req)
 
-	// determine user ID.
+	// fetch request context
 	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
 	if sessionInfoRetrievalErr != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
@@ -46,7 +43,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
@@ -65,7 +62,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
-		// in the event no rows exist return an empty list.
+		// in the event no rows exist, return an empty list.
 		accounts = &types.AccountList{Accounts: []*types.Account{}}
 	} else if err != nil {
 		logger.Error(err, "error encountered fetching accounts")
@@ -73,7 +70,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// encode our response and peace.
+	// encode our response and say farewell.
 	s.encoderDecoder.RespondWithData(ctx, res, accounts)
 }
 
@@ -92,7 +89,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// determine user ID.
+	// retrieve request context.
 	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
 	if requestContextRetrievalError != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)

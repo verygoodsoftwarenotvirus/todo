@@ -51,7 +51,7 @@ func TestUser_Update(T *testing.T) {
 	})
 }
 
-func TestUser_ToSessionInfo(T *testing.T) {
+func TestRequestContextFromUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -72,9 +72,7 @@ func TestUser_ToSessionInfo(T *testing.T) {
 		expected := &RequestContext{
 			User: UserRequestContext{
 				ID:                      exampleUser.ID,
-				ActiveAccountID:         exampleAccount.ID,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
-				AccountPermissionsMap:   examplePermissions,
 			},
 			ActiveAccountID:       exampleAccount.ID,
 			AccountPermissionsMap: examplePermissions,

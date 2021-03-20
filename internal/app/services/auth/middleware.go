@@ -154,7 +154,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			}
 
 			if activeAccount, ok := s.sessionManager.Get(ctx, string(types.AccountIDContextKey)).(uint64); ok {
-				reqCtx.User.ActiveAccountID = activeAccount
+				reqCtx.ActiveAccountID = activeAccount
 			}
 
 			ctx = context.WithValue(ctx, types.RequestContextKey, reqCtx)
@@ -197,7 +197,7 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			if _, authorizedForAccount := reqCtx.User.AccountPermissionsMap[reqCtx.User.ActiveAccountID]; !authorizedForAccount {
+			if _, authorizedForAccount := reqCtx.AccountPermissionsMap[reqCtx.ActiveAccountID]; !authorizedForAccount {
 				logger.Debug("user trying to access account they are not authorized for")
 				http.Redirect(res, req, "/", http.StatusUnauthorized)
 				return
@@ -235,7 +235,7 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 				return
 			}
 
-			accountPermissions, allowed := requestContext.User.AccountPermissionsMap[requestContext.User.ActiveAccountID]
+			accountPermissions, allowed := requestContext.AccountPermissionsMap[requestContext.ActiveAccountID]
 			if !allowed {
 				logger.Debug("not authorized for account!")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -243,8 +243,8 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 			}
 
 			logger = logger.WithValue(keys.RequesterKey, requestContext.User.ID).
-				WithValue(keys.AccountIDKey, requestContext.User.ActiveAccountID).
-				WithValue(keys.PermissionsKey, requestContext.User.AccountPermissionsMap)
+				WithValue(keys.AccountIDKey, requestContext.ActiveAccountID).
+				WithValue(keys.PermissionsKey, requestContext.AccountPermissionsMap)
 
 			for _, p := range perms {
 				if !accountPermissions.HasPermission(p) {

@@ -49,8 +49,8 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
-	input.BelongsToAccount = reqCtx.User.ActiveAccountID
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
+	input.BelongsToAccount = reqCtx.ActiveAccountID
 
 	// create item in database.
 	x, err := s.itemDataManager.CreateItem(ctx, input, reqCtx.User.ID)
@@ -88,7 +88,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -96,7 +96,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, reqCtx.User.ActiveAccountID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, reqCtx.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -126,7 +126,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -134,7 +134,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
-	exists, err := s.itemDataManager.ItemExists(ctx, itemID, reqCtx.User.ActiveAccountID)
+	exists, err := s.itemDataManager.ItemExists(ctx, itemID, reqCtx.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Error(err, "error checking item existence in database")
 	}
@@ -179,7 +179,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	if reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
 	} else {
-		items, err = s.itemDataManager.GetItems(ctx, reqCtx.User.ActiveAccountID, filter)
+		items, err = s.itemDataManager.GetItems(ctx, reqCtx.ActiveAccountID, filter)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -235,7 +235,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		relevantIDs, searchErr = s.search.SearchForAdmin(ctx, query)
 	} else {
-		relevantIDs, searchErr = s.search.Search(ctx, query, reqCtx.User.ActiveAccountID)
+		relevantIDs, searchErr = s.search.Search(ctx, query, reqCtx.ActiveAccountID)
 	}
 
 	if searchErr != nil {
@@ -248,7 +248,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	if isAdminRequest {
 		items, dbErr = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
 	} else {
-		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, reqCtx.User.ActiveAccountID, filter.Limit, relevantIDs)
+		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, reqCtx.ActiveAccountID, filter.Limit, relevantIDs)
 	}
 
 	if errors.Is(dbErr, sql.ErrNoRows) {
@@ -288,8 +288,8 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
-	input.BelongsToAccount = reqCtx.User.ActiveAccountID
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
+	input.BelongsToAccount = reqCtx.ActiveAccountID
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -297,7 +297,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, reqCtx.User.ActiveAccountID)
+	x, err := s.itemDataManager.GetItem(ctx, itemID, reqCtx.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -342,7 +342,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.User.ActiveAccountID)
+	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -350,7 +350,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err := s.itemDataManager.ArchiveItem(ctx, itemID, reqCtx.User.ActiveAccountID, reqCtx.User.ID)
+	err := s.itemDataManager.ArchiveItem(ctx, itemID, reqCtx.ActiveAccountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return

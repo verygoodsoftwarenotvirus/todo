@@ -13,6 +13,7 @@ import (
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
@@ -64,6 +65,9 @@ func TestParseConfigFile(T *testing.T) {
 			},
 			Meta: config.MetaSettings{
 				RunMode: "development",
+			},
+			Encoding: encoding.Config{
+				ContentType: "application/json",
 			},
 			Auth: authservice.Config{
 				Cookies: authservice.CookieConfig{

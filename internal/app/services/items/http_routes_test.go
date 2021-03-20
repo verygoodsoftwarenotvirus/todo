@@ -46,7 +46,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.ItemList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.ItemList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -78,7 +78,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.ItemList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.ItemList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -165,7 +165,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.Item{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.Item{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -244,7 +244,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.Item{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.Item{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -581,7 +581,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Item{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Item{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -713,7 +713,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		s.search = indexManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Item{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Item{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

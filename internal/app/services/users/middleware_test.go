@@ -24,7 +24,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -76,7 +76,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -132,7 +132,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
@@ -184,7 +184,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()

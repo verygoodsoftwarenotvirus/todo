@@ -19,6 +19,10 @@ const (
 	// ConfigKeyServerDebug is the key viper will use to refer to the ServerSettings.debug setting.
 	ConfigKeyServerDebug = serverKey + x + debugKey
 
+	encodingKey = "encoding"
+	// ConfigKeyEncodingContentType is the key viper will use to refer to the encoding.Config.ContentType setting.
+	ConfigKeyEncodingContentType = encodingKey + x + "content_type"
+
 	frontendKey = "frontend"
 	// ConfigKeyFrontendDebug is the key viper will use to refer to the FrontendSettings.debug setting.
 	ConfigKeyFrontendDebug = frontendKey + x + debugKey

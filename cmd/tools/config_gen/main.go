@@ -17,6 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
@@ -55,6 +56,8 @@ const (
 	pasetoSecretSize      = 32
 	maxAttempts           = 50
 	defaultPASETOLifetime = 1 * time.Minute
+
+	contentTypeJSON = "application/json"
 )
 
 var (
@@ -136,6 +139,9 @@ func localDevelopmentConfig(filePath string) error {
 		Meta: config.MetaSettings{
 			Debug:   true,
 			RunMode: developmentEnv,
+		},
+		Encoding: encoding.Config{
+			ContentType: contentTypeJSON,
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
@@ -219,6 +225,9 @@ func frontendTestsConfig(filePath string) error {
 			Debug:   false,
 			RunMode: developmentEnv,
 		},
+		Encoding: encoding.Config{
+			ContentType: contentTypeJSON,
+		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
 		Auth: authservice.Config{
@@ -288,6 +297,9 @@ func coverageConfig(filePath string) error {
 		Meta: config.MetaSettings{
 			Debug:   true,
 			RunMode: testingEnv,
+		},
+		Encoding: encoding.Config{
+			ContentType: contentTypeJSON,
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
@@ -370,6 +382,9 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			Meta: config.MetaSettings{
 				Debug:   false,
 				RunMode: testingEnv,
+			},
+			Encoding: encoding.Config{
+				ContentType: contentTypeJSON,
 			},
 			Server: httpserver.Config{
 				Debug:           false,

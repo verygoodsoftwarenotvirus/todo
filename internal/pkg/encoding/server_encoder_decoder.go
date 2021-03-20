@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"net/http"
-	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -28,7 +28,7 @@ var (
 type (
 	// ServerEncoderDecoder is an interface that allows for multiple implementations of HTTP response formats.
 	ServerEncoderDecoder interface {
-		EncodeResponse(ctx context.Context, res http.ResponseWriter, val interface{})
+		RespondWithData(ctx context.Context, res http.ResponseWriter, val interface{})
 		EncodeResponseWithStatus(ctx context.Context, res http.ResponseWriter, val interface{}, statusCode int)
 		EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int)
 		EncodeInvalidInputResponse(ctx context.Context, res http.ResponseWriter)
@@ -37,13 +37,15 @@ type (
 		EncodeUnauthorizedResponse(ctx context.Context, res http.ResponseWriter)
 		EncodeInvalidPermissionsResponse(ctx context.Context, res http.ResponseWriter)
 		DecodeRequest(ctx context.Context, req *http.Request, dest interface{}) error
-		MustJSON(v interface{}) []byte
+		MustEncode(v interface{}) []byte
+		MustEncodeJSON(v interface{}) []byte
 	}
 
 	// serverEncoderDecoder is our concrete implementation of EncoderDecoder.
 	serverEncoderDecoder struct {
-		logger logging.Logger
-		tracer tracing.Tracer
+		logger      logging.Logger
+		tracer      tracing.Tracer
+		contentType ContentType
 	}
 
 	encoder interface {
@@ -62,7 +64,7 @@ func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http
 
 	var enc encoder
 
-	switch e.contentTypeFromString(ctx, res.Header().Get(ContentTypeHeaderKey)) {
+	switch contentTypeFromString(res.Header().Get(ContentTypeHeaderKey)) {
 	case ContentTypeXML:
 		res.Header().Set(ContentTypeHeaderKey, contentTypeXML)
 		enc = xml.NewEncoder(res)
@@ -76,7 +78,7 @@ func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http
 	res.WriteHeader(statusCode)
 
 	if err := enc.Encode(&types.ErrorResponse{Message: msg, Code: statusCode}); err != nil {
-		e.logger.Error(err, "encoding error response")
+		e.logger.Error(err, "contentType error response")
 		tracing.AttachErrorToSpan(span, err)
 	}
 }
@@ -129,7 +131,7 @@ func (e *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.Resp
 
 	var enc encoder
 
-	switch e.contentTypeFromString(ctx, res.Header().Get(ContentTypeHeaderKey)) {
+	switch contentTypeFromString(res.Header().Get(ContentTypeHeaderKey)) {
 	case ContentTypeXML:
 		res.Header().Set(ContentTypeHeaderKey, contentTypeXML)
 		enc = xml.NewEncoder(res)
@@ -143,16 +145,37 @@ func (e *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.Resp
 	res.WriteHeader(statusCode)
 
 	if err := enc.Encode(v); err != nil {
-		logger.Error(err, "encoding response")
+		logger.Error(err, "contentType response")
 		tracing.AttachErrorToSpan(span, err)
 	}
 }
 
-func (e *serverEncoderDecoder) MustJSON(v interface{}) []byte {
+func (e *serverEncoderDecoder) MustEncodeJSON(v interface{}) []byte {
 	var b bytes.Buffer
 
 	if err := json.NewEncoder(&b).Encode(v); err != nil {
-		e.logger.Error(err, "marshaling to JSON: %v")
+		e.logger.Error(err, fmt.Sprintf("marshaling to %s: %v", contentTypeToString(e.contentType), err))
+		return []byte{}
+	}
+
+	return b.Bytes()
+}
+
+func (e *serverEncoderDecoder) MustEncode(v interface{}) []byte {
+	var (
+		enc encoder
+		b   bytes.Buffer
+	)
+
+	switch e.contentType {
+	case ContentTypeXML:
+		enc = xml.NewEncoder(&b)
+	default:
+		enc = json.NewEncoder(&b)
+	}
+
+	if err := enc.Encode(v); err != nil {
+		e.logger.Error(err, fmt.Sprintf("marshaling to %s: %v", contentTypeToString(e.contentType), err))
 		return []byte{}
 	}
 
@@ -160,7 +183,7 @@ func (e *serverEncoderDecoder) MustJSON(v interface{}) []byte {
 }
 
 // EncodeResponse encodes successful responses.
-func (e *serverEncoderDecoder) EncodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}) {
+func (e *serverEncoderDecoder) RespondWithData(ctx context.Context, res http.ResponseWriter, v interface{}) {
 	ctx, span := e.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -175,20 +198,6 @@ func (e *serverEncoderDecoder) EncodeResponseWithStatus(ctx context.Context, res
 	e.encodeResponse(ctx, res, v, statusCode)
 }
 
-func (e *serverEncoderDecoder) contentTypeFromString(ctx context.Context, val string) ContentType {
-	_, span := e.tracer.StartSpan(ctx)
-	defer span.End()
-
-	switch strings.ToLower(strings.TrimSpace(val)) {
-	case contentTypeJSON:
-		return ContentTypeJSON
-	case contentTypeXML:
-		return ContentTypeXML
-	default:
-		return defaultContentType
-	}
-}
-
 // DecodeRequest decodes responses.
 func (e *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Request, v interface{}) error {
 	_, span := e.tracer.StartSpan(ctx)
@@ -196,7 +205,7 @@ func (e *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Requ
 
 	var d decoder
 
-	switch e.contentTypeFromString(ctx, req.Header.Get(ContentTypeHeaderKey)) {
+	switch contentTypeFromString(req.Header.Get(ContentTypeHeaderKey)) {
 	case ContentTypeXML:
 		d = xml.NewDecoder(req.Body)
 	default:
@@ -210,9 +219,10 @@ func (e *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Requ
 }
 
 // ProvideServerEncoderDecoder provides a ServerEncoderDecoder.
-func ProvideServerEncoderDecoder(logger logging.Logger) ServerEncoderDecoder {
+func ProvideServerEncoderDecoder(logger logging.Logger, contentType ContentType) ServerEncoderDecoder {
 	return &serverEncoderDecoder{
-		logger: logging.EnsureLogger(logger).WithName("server_encoder_decoder"),
-		tracer: tracing.NewTracer("server_encoder_decoder"),
+		logger:      logging.EnsureLogger(logger).WithName("server_encoder_decoder"),
+		tracer:      tracing.NewTracer("server_encoder_decoder"),
+		contentType: contentType,
 	}
 }

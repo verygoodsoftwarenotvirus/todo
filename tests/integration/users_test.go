@@ -331,6 +331,7 @@ func (s *TestSuite) TestUsersAvatarManagement() {
 				{EventType: audit.UserAddedToAccountEvent},
 				{EventType: audit.UserVerifyTwoFactorSecretEvent},
 				{EventType: audit.SuccessfulLoginEvent},
+				{EventType: audit.APIClientCreationEvent},
 				{EventType: audit.UserUpdateEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, s.user.ID, "")

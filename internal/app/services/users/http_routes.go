@@ -88,7 +88,7 @@ func (s *service) UsernameSearchHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// encode response.
-	s.encoderDecoder.EncodeResponse(ctx, res, users)
+	s.encoderDecoder.RespondWithData(ctx, res, users)
 }
 
 // ListHandler is a handler for responding with a list of users.
@@ -110,7 +110,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode response.
-	s.encoderDecoder.EncodeResponse(ctx, res, users)
+	s.encoderDecoder.RespondWithData(ctx, res, users)
 }
 
 // CreateHandler is our user creation route.
@@ -265,7 +265,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
 // ReadHandler is our read route.
@@ -293,7 +293,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
 // TOTPSecretVerificationHandler accepts a TOTP token as input and returns 200 if the TOTP token
@@ -607,5 +607,5 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

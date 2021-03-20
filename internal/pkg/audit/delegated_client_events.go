@@ -17,12 +17,13 @@ const (
 )
 
 // BuildAPIClientCreationEventEntry builds an entry creation input for when an API client is created.
-func BuildAPIClientCreationEventEntry(client *types.APIClient) *types.AuditLogEntryCreationInput {
+func BuildAPIClientCreationEventEntry(client *types.APIClient, createdBy uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: APIClientCreationEvent,
 		Context: map[string]interface{}{
 			APIClientAssignmentKey: client.ID,
 			CreationAssignmentKey:  client,
+			ActorAssignmentKey:     createdBy,
 		},
 	}
 }

@@ -49,7 +49,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, plans)
+	s.encoderDecoder.RespondWithData(ctx, res, plans)
 }
 
 // CreateHandler is our plan creation route.
@@ -138,7 +138,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
 // UpdateHandler returns a handler that updates an plan.
@@ -194,7 +194,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
 // ArchiveHandler returns a handler that archives an plan.
@@ -275,5 +275,5 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

@@ -18,7 +18,7 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	logger := logging.NewNonOperationalLogger()
-	ed := encoding.ProvideServerEncoderDecoder(logger)
+	ed := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
 	s, err := ProvideService(
 		logger,
@@ -48,7 +48,7 @@ func TestProvideAuthService(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		logger := logging.NewNonOperationalLogger()
-		ed := encoding.ProvideServerEncoderDecoder(logger)
+		ed := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
 		s, err := ProvideService(
 			logger,

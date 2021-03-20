@@ -1191,6 +1191,8 @@ func TestService_PASETOHandler(T *testing.T) {
 				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},
+			ActiveAccountID:       exampleAccount.ID,
+			AccountPermissionsMap: examplePerms,
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
@@ -1296,6 +1298,8 @@ func TestService_PASETOHandler(T *testing.T) {
 				AccountPermissionsMap:   examplePerms,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},
+			ActiveAccountID:       exampleAccount.ID,
+			AccountPermissionsMap: examplePerms,
 		}
 
 		ctx := context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)

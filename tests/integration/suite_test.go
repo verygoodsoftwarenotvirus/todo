@@ -19,6 +19,10 @@ const (
 	pasetoAuthType = "PASETO"
 )
 
+var (
+	globalClientExceptions = []string{}
+)
+
 type testClientWrapper struct {
 	main, admin *httpclient.Client
 }
@@ -72,6 +76,7 @@ func (s *TestSuite) SetupTest() {
 
 func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClientWrapper {
 	s.ensure()
+	t := s.T()
 
 	clients := map[string]*testClientWrapper{
 		cookieAuthType: {main: s.cookieClient, admin: s.adminCookieClient},
@@ -82,7 +87,11 @@ func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClien
 		delete(clients, name)
 	}
 
-	s.Require().NotEmpty(clients)
+	for _, name := range globalClientExceptions {
+		delete(clients, name)
+	}
+
+	require.NotEmpty(t, clients)
 
 	return clients
 }

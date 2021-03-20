@@ -27,6 +27,8 @@ func (c *Client) scanAPIClient(scan database.Scanner, includeCounts bool) (clien
 		&client.Name,
 		&client.ClientID,
 		&client.ClientSecret,
+		&client.AccountPermissions,
+		&client.AdminPermissions,
 		&client.CreatedOn,
 		&client.LastUpdatedOn,
 		&client.ArchivedOn,
@@ -255,7 +257,7 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 		CreatedOn:        c.currentTime(),
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x)); auditLogEntryWriteErr != nil {
+	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
 		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 

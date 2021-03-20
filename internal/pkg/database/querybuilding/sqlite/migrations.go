@@ -119,6 +119,8 @@ var (
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
 				secret_key TEXT NOT NULL,
+				permissions INTEGER NOT NULL DEFAULT 0,
+				admin_permissions INTEGER NOT NULL DEFAULT 0,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,

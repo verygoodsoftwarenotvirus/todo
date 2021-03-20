@@ -120,6 +120,8 @@ var (
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
 				secret_key BYTEA NOT NULL,
+				permissions BIGINT NOT NULL DEFAULT 0,
+				admin_permissions BIGINT NOT NULL DEFAULT 0,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,

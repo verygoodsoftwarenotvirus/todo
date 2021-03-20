@@ -41,19 +41,19 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if input == nil {
+	if input == nil || len(secretKey) == 0 {
 		return nil, ErrNilInputProvided
 	}
 
-	logger := b.logger.WithValue(keys.AccountIDKey, input.AccountID).WithValue(keys.APIClientClientIDKey, input.ClientID)
+	uri := b.buildVersionlessURL(ctx, nil, pasetoBasePath)
+	logger := b.logger.WithValue(keys.AccountIDKey, input.AccountID).
+		WithValue(keys.APIClientClientIDKey, input.ClientID)
+
+	tracing.AttachRequestURIToSpan(span, uri)
 
 	if err := input.Validate(ctx); err != nil {
 		return nil, prepareError(err, logger, span, "validating input")
 	}
-
-	uri := b.buildVersionlessURL(ctx, nil, pasetoBasePath)
-
-	tracing.AttachRequestURIToSpan(span, uri)
 
 	req, err := b.buildDataRequest(ctx, http.MethodPost, uri, input)
 	if err != nil {
@@ -68,6 +68,8 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 	if err = setSignatureForRequest(req, buffer.Bytes(), secretKey); err != nil {
 		return nil, prepareError(err, logger, span, "signing request")
 	}
+
+	logger.Debug("PASETO request built")
 
 	return req, nil
 }

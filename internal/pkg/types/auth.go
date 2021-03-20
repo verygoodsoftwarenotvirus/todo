@@ -38,7 +38,9 @@ type (
 
 	// RequestContext represents what we encode in our authentication cookies.
 	RequestContext struct {
-		User UserRequestContext `json:"-"`
+		AccountPermissionsMap map[uint64]permissions.ServiceUserPermissions `json:"-"`
+		User                  UserRequestContext                            `json:"-"`
+		ActiveAccountID       uint64                                        `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
@@ -147,6 +149,8 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 			ActiveAccountID:         activeAccountID,
 			AccountPermissionsMap:   accountPermissionsMap,
 		},
+		AccountPermissionsMap: accountPermissionsMap,
+		ActiveAccountID:       activeAccountID,
 	}
 
 	return reqCtx, nil

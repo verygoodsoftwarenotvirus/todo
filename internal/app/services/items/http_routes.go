@@ -107,7 +107,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
 // ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
@@ -192,7 +192,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, items)
+	s.encoderDecoder.RespondWithData(ctx, res, items)
 }
 
 // SearchHandler is our search route.
@@ -261,7 +261,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, items)
+	s.encoderDecoder.RespondWithData(ctx, res, items)
 }
 
 // UpdateHandler returns a handler that updates an item.
@@ -323,7 +323,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
 // ArchiveHandler returns a handler that archives an item.
@@ -408,5 +408,5 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

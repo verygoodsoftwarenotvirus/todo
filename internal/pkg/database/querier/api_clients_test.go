@@ -34,6 +34,8 @@ func buildMockRowsFromAPIClients(includeCounts bool, filteredCount uint64, clien
 			c.Name,
 			c.ClientID,
 			c.ClientSecret,
+			c.AccountPermissions,
+			c.AdminPermissions,
 			c.CreatedOn,
 			c.LastUpdatedOn,
 			c.ArchivedOn,

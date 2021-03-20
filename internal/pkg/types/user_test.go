@@ -76,6 +76,8 @@ func TestUser_ToSessionInfo(T *testing.T) {
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 				AccountPermissionsMap:   examplePermissions,
 			},
+			ActiveAccountID:       exampleAccount.ID,
+			AccountPermissionsMap: examplePermissions,
 		}
 
 		actual, _ := RequestContextFromUser(exampleUser, exampleAccount.ID, examplePermissions)

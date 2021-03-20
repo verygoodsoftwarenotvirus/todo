@@ -44,7 +44,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -76,7 +76,7 @@ func TestPlansService_ListHandler(T *testing.T) {
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -273,7 +273,7 @@ func TestPlansService_ReadHandler(T *testing.T) {
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -398,7 +398,7 @@ func TestPlansService_UpdateHandler(T *testing.T) {
 		s.planDataManager = planDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

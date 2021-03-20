@@ -37,6 +37,9 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault(ConfigKeyMetaRunMode, config.DefaultRunMode)
 	cfg.SetDefault(ConfigKeyServerStartupDeadline, config.DefaultStartupDeadline)
 
+	// encoding stuff.
+	cfg.SetDefault(ConfigKeyEncodingContentType, "application/json")
+
 	// auth stuff.
 	cfg.SetDefault(ConfigKeyAuthCookieDomain, authservice.DefaultCookieDomain)
 	cfg.SetDefault(ConfigKeyAuthCookieLifetime, authservice.DefaultCookieLifetime)
@@ -87,6 +90,8 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyServerStartupDeadline, input.Server.StartupDeadline)
 	cfg.Set(ConfigKeyServerHTTPPort, input.Server.HTTPPort)
 	cfg.Set(ConfigKeyServerDebug, input.Server.Debug)
+
+	cfg.Set(ConfigKeyEncodingContentType, input.Encoding.ContentType)
 
 	cfg.Set(ConfigKeyFrontendDebug, input.Frontend.Debug)
 	cfg.Set(ConfigKeyFrontendStaticFilesDir, input.Frontend.StaticFilesDirectory)

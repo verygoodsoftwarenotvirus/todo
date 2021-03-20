@@ -96,7 +96,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)
@@ -132,7 +132,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
 		s.encoderDecoder = ed
 
 		req := buildRequest(t)

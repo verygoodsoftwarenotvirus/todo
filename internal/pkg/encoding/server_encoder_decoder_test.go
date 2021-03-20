@@ -20,19 +20,19 @@ type example struct {
 	Name string `json:"name" xml:"name"`
 }
 
-func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
+func TestServerEncoderDecoder_RespondWithData(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed.EncodeResponse(ctx, res, ex)
+		ed.RespondWithData(ctx, res, ex)
 		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
 	})
 
@@ -40,13 +40,13 @@ func TestServerEncoderDecoder_EncodeResponse(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeaderKey, "application/xml")
 
-		ed.EncodeResponse(ctx, res, ex)
+		ed.RespondWithData(ctx, res, ex)
 		assert.Equal(t, fmt.Sprintf("<example><name>%s</name></example>", expectation), res.Body.String())
 	})
 }
@@ -58,7 +58,7 @@ func TestServerEncoderDecoder_EncodeResponseWithStatus(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -79,7 +79,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -94,7 +94,7 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -115,7 +115,7 @@ func TestServerEncoderDecoder_EncodeInvalidInputResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 		ed.EncodeInvalidInputResponse(ctx, res)
 
 		expectedCode := http.StatusBadRequest
@@ -132,7 +132,7 @@ func TestServerEncoderDecoder_EncodeNotFoundResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 		ed.EncodeNotFoundResponse(ctx, res)
 
 		expectedCode := http.StatusNotFound
@@ -149,7 +149,7 @@ func TestServerEncoderDecoder_EncodeUnspecifiedInternalServerErrorResponse(T *te
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 		ed.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		expectedCode := http.StatusInternalServerError
@@ -166,7 +166,7 @@ func TestServerEncoderDecoder_EncodeUnauthorizedResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 		ed.EncodeUnauthorizedResponse(ctx, res)
 
 		expectedCode := http.StatusUnauthorized
@@ -183,7 +183,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		bs, err := json.Marshal(e)
 		require.NoError(t, err)
@@ -208,7 +208,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		bs, err := xml.Marshal(e)
 		require.NoError(t, err)

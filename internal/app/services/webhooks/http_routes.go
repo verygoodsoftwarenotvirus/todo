@@ -131,7 +131,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode the response.
-	s.encoderDecoder.EncodeResponse(ctx, res, webhooks)
+	s.encoderDecoder.RespondWithData(ctx, res, webhooks)
 }
 
 // ReadHandler returns a GET handler that returns an webhook.
@@ -174,7 +174,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode the response.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
 // UpdateHandler returns a handler that updates an webhook.
@@ -244,7 +244,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// let everybody know we're good.
-	s.encoderDecoder.EncodeResponse(ctx, res, webhook)
+	s.encoderDecoder.RespondWithData(ctx, res, webhook)
 }
 
 // ArchiveHandler returns a handler that archives an webhook.
@@ -329,5 +329,5 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

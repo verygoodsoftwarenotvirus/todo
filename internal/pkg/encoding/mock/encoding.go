@@ -21,13 +21,18 @@ type EncoderDecoder struct {
 	mock.Mock
 }
 
-// MustJSON satisfies our MustJSON interface.
-func (m *EncoderDecoder) MustJSON(v interface{}) []byte {
+// MustEncode satisfies our EncoderDecoder interface.
+func (m *EncoderDecoder) MustEncode(v interface{}) []byte {
 	return m.Called(v).Get(0).([]byte)
 }
 
-// EncodeResponse satisfies our EncoderDecoder interface.
-func (m *EncoderDecoder) EncodeResponse(ctx context.Context, res http.ResponseWriter, val interface{}) {
+// MustEncodeJSON satisfies our EncoderDecoder interface.
+func (m *EncoderDecoder) MustEncodeJSON(v interface{}) []byte {
+	return m.Called(v).Get(0).([]byte)
+}
+
+// RespondWithData satisfies our EncoderDecoder interface.
+func (m *EncoderDecoder) RespondWithData(ctx context.Context, res http.ResponseWriter, val interface{}) {
 	m.Called(ctx, res, val)
 }
 

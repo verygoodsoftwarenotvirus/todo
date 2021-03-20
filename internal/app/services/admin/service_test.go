@@ -21,7 +21,6 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	logger := logging.NewNonOperationalLogger()
-	ed := encoding.ProvideServerEncoderDecoder(logger)
 
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
@@ -33,7 +32,7 @@ func buildTestService(t *testing.T) *service {
 		&mocktypes.AdminUserDataManager{},
 		&mocktypes.AuditLogEntryDataManager{},
 		scs.New(),
-		ed,
+		encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON),
 		rpm,
 	)
 
@@ -47,8 +46,8 @@ func TestProvideAdminService(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		logger := logging.NewNonOperationalLogger()
-		ed := encoding.ProvideServerEncoderDecoder(logger)
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
@@ -60,7 +59,7 @@ func TestProvideAdminService(T *testing.T) {
 			&mocktypes.AdminUserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			scs.New(),
-			ed,
+			encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON),
 			rpm,
 		)
 

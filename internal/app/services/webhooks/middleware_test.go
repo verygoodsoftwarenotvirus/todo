@@ -39,7 +39,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := fakes.BuildFakeWebhookCreationInput()
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
@@ -66,7 +66,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := &types.WebhookCreationInput{}
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
@@ -123,7 +123,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(fakes.BuildFakeWebhook())
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)

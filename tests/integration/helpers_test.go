@@ -23,6 +23,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	useTestLogger = false
+)
+
 func reverseString(s string) string {
 	runes := []rune(s)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
@@ -86,8 +90,13 @@ func initializeCookiePoweredClient(t *testing.T, cookie *http.Cookie) (*httpclie
 		panic("url not set!")
 	}
 
+	loggerToUse := logging.NewNonOperationalLogger()
+	if useTestLogger {
+		loggerToUse = testlogging.NewLogger(t)
+	}
+
 	c, err := httpclient.NewClient(parsedURLToUse,
-		httpclient.UsingLogger(testlogging.NewLogger(t)),
+		httpclient.UsingLogger(loggerToUse),
 		httpclient.UsingHTTPClient(buildHTTPClient()),
 		httpclient.UsingCookie(cookie),
 	)

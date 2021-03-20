@@ -29,7 +29,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		jsonBytes, err := json.Marshal(&exampleInput)
@@ -56,7 +56,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService(t)
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger())
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleCreationInput := &types.UserReputationUpdateInput{}
 		jsonBytes, err := json.Marshal(&exampleCreationInput)

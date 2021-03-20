@@ -43,7 +43,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -74,7 +74,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -152,7 +152,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		s.auditLog = auditLogEntryManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntry{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntry{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

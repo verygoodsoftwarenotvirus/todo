@@ -396,7 +396,7 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 		statusResponse.UserIsAuthenticated = true
 	}
 
-	s.encoderDecoder.EncodeResponse(ctx, res, statusResponse)
+	s.encoderDecoder.RespondWithData(ctx, res, statusResponse)
 }
 
 const (
@@ -445,7 +445,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	mac := hmac.New(sha256.New, client.ClientSecret)
-	if _, macWriteErr := mac.Write(s.encoderDecoder.MustJSON(pasetoRequest)); macWriteErr != nil {
+	if _, macWriteErr := mac.Write(s.encoderDecoder.MustEncodeJSON(pasetoRequest)); macWriteErr != nil {
 		logger.Error(macWriteErr, "writing HMAC message for comparison")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
@@ -466,14 +466,14 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
-	var requestedAccountID uint64
-
 	defaultAccountID, perms, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, client.BelongsToAccount)
 	if membershipRetrievalErr != nil {
 		logger.Error(membershipRetrievalErr, "retrieving perms for API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
+
+	var requestedAccountID uint64
 
 	if pasetoRequest.AccountID != 0 {
 		if _, isMember := perms[pasetoRequest.AccountID]; !isMember {
@@ -511,6 +511,8 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 			AccountPermissionsMap:   perms,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
+		ActiveAccountID:       requestedAccountID,
+		AccountPermissionsMap: perms,
 	}
 
 	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(reqCtx.ToBytes()))

@@ -50,7 +50,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -86,7 +86,7 @@ func TestWebhooksService_List(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -378,7 +378,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -527,7 +527,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		s.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

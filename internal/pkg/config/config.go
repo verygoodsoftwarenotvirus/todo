@@ -22,6 +22,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
@@ -65,6 +66,7 @@ type (
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
+		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
 		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
@@ -100,6 +102,10 @@ func (cfg *ServerConfig) Validate(ctx context.Context) error {
 	}
 
 	if err := cfg.Meta.Validate(ctx); err != nil {
+		return fmt.Errorf("validating the Meta portion of config: %w", err)
+	}
+
+	if err := cfg.Encoding.Validate(ctx); err != nil {
 		return fmt.Errorf("validating the Meta portion of config: %w", err)
 	}
 

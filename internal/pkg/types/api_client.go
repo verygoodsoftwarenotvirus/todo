@@ -17,15 +17,17 @@ const (
 type (
 	// APIClient represents a User-authorized API client.
 	APIClient struct {
-		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn       *uint64 `json:"archivedOn"`
-		Name             string  `json:"name"`
-		ClientID         string  `json:"clientID"`
-		ExternalID       string  `json:"externalID"`
-		ClientSecret     []byte  `json:"-"`
-		CreatedOn        uint64  `json:"createdOn"`
-		ID               uint64  `json:"id"`
-		BelongsToAccount uint64  `json:"belongsToAccount"`
+		LastUpdatedOn      *uint64                             `json:"lastUpdatedOn"`
+		ArchivedOn         *uint64                             `json:"archivedOn"`
+		Name               string                              `json:"name"`
+		ClientID           string                              `json:"clientID"`
+		ExternalID         string                              `json:"externalID"`
+		ClientSecret       []byte                              `json:"-"`
+		CreatedOn          uint64                              `json:"createdOn"`
+		ID                 uint64                              `json:"id"`
+		BelongsToAccount   uint64                              `json:"belongsToAccount"`
+		AccountPermissions permissions.ServiceUserPermissions  `json:"accountPermissions"`
+		AdminPermissions   permissions.ServiceAdminPermissions `json:"adminPermissions"`
 	}
 
 	// APIClientList is a response struct containing a list of API clients.
@@ -40,6 +42,7 @@ type (
 		Name                    string                              `json:"name"`
 		ClientID                string                              `json:"-"`
 		ClientSecret            []byte                              `json:"-"`
+		Permissions             permissions.ServiceUserPermissions  `json:"-"`
 		ServiceAdminPermissions permissions.ServiceAdminPermissions `json:"-"`
 		BelongsToAccount        uint64                              `json:"-"`
 	}

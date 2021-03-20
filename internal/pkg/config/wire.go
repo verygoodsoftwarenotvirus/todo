@@ -12,6 +12,7 @@ var (
 			"Database",
 			"Observability",
 			"Meta",
+			"Encoding",
 			"Frontend",
 			"Uploads",
 			"Search",

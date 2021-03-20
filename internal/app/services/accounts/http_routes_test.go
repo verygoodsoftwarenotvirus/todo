@@ -44,7 +44,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -81,7 +81,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -292,7 +292,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()
@@ -423,7 +423,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
 		s.encoderDecoder = ed
 
 		res := httptest.NewRecorder()

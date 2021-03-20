@@ -179,6 +179,8 @@ var (
 				"    `name` VARCHAR(128) DEFAULT '',",
 				"    `client_id` VARCHAR(64) NOT NULL,",
 				"    `secret_key` BINARY(128) NOT NULL,",
+				"    `permissions` BIGINT UNSIGNED NOT NULL DEFAULT 0,",
+				"    `admin_permissions` BIGINT UNSIGNED NOT NULL DEFAULT 0,",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",

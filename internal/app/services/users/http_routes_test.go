@@ -232,7 +232,7 @@ func TestService_ListHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.UserList{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.UserList{}))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -281,7 +281,7 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.User{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.User{}))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)
@@ -583,7 +583,7 @@ func TestService_ReadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.User{}))
+		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.User{}))
 		s.encoderDecoder = ed
 
 		res, req := httptest.NewRecorder(), buildRequest(t)

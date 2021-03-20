@@ -54,7 +54,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, entries)
+	s.encoderDecoder.RespondWithData(ctx, res, entries)
 }
 
 // ReadHandler returns a GET handler that returns an audit log entry.
@@ -93,5 +93,5 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.EncodeResponse(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

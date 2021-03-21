@@ -128,14 +128,10 @@ const (
 	APIClientsTableNameColumn = "name"
 	// APIClientsTableClientIDColumn is what the API clients table calls the <> column.
 	APIClientsTableClientIDColumn = "client_id"
-	// APIClientsTablePermissionsColumn is what the API clients table calls the <> column.
-	APIClientsTablePermissionsColumn = "permissions"
-	// APIClientsTableAdminPermissionsColumn is what the API clients table calls the <> column.
-	APIClientsTableAdminPermissionsColumn = "admin_permissions"
 	// APIClientsTableSecretKeyColumn is what the API clients table calls the <> column.
 	APIClientsTableSecretKeyColumn = "secret_key"
 	// APIClientsTableOwnershipColumn is what the API clients table calls the <> column.
-	APIClientsTableOwnershipColumn = accountOwnershipColumn
+	APIClientsTableOwnershipColumn = userOwnershipColumn
 
 	//
 	// Webhooks Table.

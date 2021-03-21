@@ -161,14 +161,19 @@ func (cfg *ServerConfig) ProvideDatabaseClient(
 		return nil, errNilDatabaseConnection
 	}
 
+	var qb database.SQLQueryBuilder
+	shouldCreateTestUser := cfg.Meta.RunMode != ProductionRunMode
+
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
 	case "sqlite":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, sqlite.ProvideSqlite(logger))
+		qb = sqlite.ProvideSqlite(logger)
 	case "mariadb":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, mariadb.ProvideMariaDB(logger))
+		qb = mariadb.ProvideMariaDB(logger)
 	case "postgres":
-		return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, postgres.ProvidePostgres(logger))
+		qb = postgres.ProvidePostgres(logger)
 	default:
 		return nil, fmt.Errorf("invalid provider: %q", cfg.Database.Provider)
 	}
+
+	return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, qb, shouldCreateTestUser)
 }

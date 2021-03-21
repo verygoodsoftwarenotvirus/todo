@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	globalClientExceptions = []string{}
+	globalClientExceptions []string
 )
 
 type testClientWrapper struct {
@@ -74,6 +74,17 @@ func (s *TestSuite) SetupTest() {
 	s.ensure()
 }
 
+/*
+func (s *TestSuite) runForEachClientExcept(t *testing.T, subtestBuilder func(*testClientWrapper) func(), exceptions ...string) {
+	t.Helper()
+
+	for a, c := range s.eachClientExcept(exceptions...) {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("%s via %s", t.Name(), authType), subtestBuilder(testClients))
+	}
+}
+*/
+
 func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClientWrapper {
 	s.ensure()
 	t := s.T()
@@ -104,7 +115,7 @@ func (s *TestSuite) checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats 
 	t := s.T()
 
 	for testName, stat := range stats.TestStats {
-		if stat.End.Sub(stat.Start) < minimumTestThreshold {
+		if stat.End.Sub(stat.Start) < minimumTestThreshold && stat.Passed {
 			t.Fatalf("suspiciously quick test execution time: %q", testName)
 		}
 	}

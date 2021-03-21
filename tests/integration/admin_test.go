@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 )
 
-func (s *TestSuite) TestAdminUserManagement() {
+func (s *TestSuite) TestAdmin_Returns404WhenModifyingUserReputation() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to ban a user that does not exist via %s", authType), func() {
@@ -29,7 +29,9 @@ func (s *TestSuite) TestAdminUserManagement() {
 			assert.Error(t, testClients.admin.UpdateUserReputation(ctx, input))
 		})
 	}
+}
 
+func (s *TestSuite) TestAdmin_BanningUsers() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to ban users via %s", authType), func() {

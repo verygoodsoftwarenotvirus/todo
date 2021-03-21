@@ -54,6 +54,7 @@ func ProvideDatabaseClient(
 	db *sql.DB,
 	cfg *dbconfig.Config,
 	sqlQueryBuilder database.SQLQueryBuilder,
+	shouldCreateTestUser bool,
 ) (database.DataManager, error) {
 	tracer := tracing.NewTracer(tracingName)
 
@@ -81,7 +82,12 @@ func ProvideDatabaseClient(
 	if cfg.RunMigrations {
 		c.logger.Debug("migrating querier")
 
-		if err := c.Migrate(ctx, cfg.MaxPingAttempts, cfg.CreateTestUser); err != nil {
+		var testUser *types.TestUserCreationConfig
+		if shouldCreateTestUser {
+			testUser = cfg.CreateTestUser
+		}
+
+		if err := c.Migrate(ctx, cfg.MaxPingAttempts, testUser); err != nil {
 			return nil, fmt.Errorf("migrating database: %w", err)
 		}
 
@@ -110,12 +116,8 @@ func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig 
 		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
 
 		// these structs will be fleshed out by createUser
-		user := &types.User{
-			Username: testUserConfig.Username,
-		}
-		account := &types.Account{
-			DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
-		}
+		user := &types.User{Username: testUserConfig.Username}
+		account := &types.Account{DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32)}
 
 		if userCreationErr := c.createUser(ctx, user, account, query, args); userCreationErr != nil {
 			c.logger.Error(userCreationErr, "creating test user")
@@ -251,7 +253,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("query", query).WithValue("description", queryDescription)
+	logger := c.logger.WithValue("query", query).WithValue("description", queryDescription).WithValue("args", args)
 	tracing.AttachDatabaseQueryToSpan(span, query, queryDescription, args)
 
 	if c.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {

@@ -94,7 +94,7 @@ func (q *Sqlite) BuildCreateAPIClientQuery(input *types.APICientCreationInput) (
 			input.Name,
 			input.ClientID,
 			input.ClientSecret,
-			input.BelongsToAccount,
+			input.BelongsToUser,
 		),
 	)
 }
@@ -107,7 +107,7 @@ func (q *Sqlite) BuildUpdateAPIClientQuery(input *types.APIClient) (query string
 		Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                       input.ID,
-			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToAccount,
+			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToUser,
 			querybuilding.ArchivedOnColumn:               nil,
 		}),
 	)

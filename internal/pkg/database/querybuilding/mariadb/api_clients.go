@@ -94,7 +94,7 @@ func (q *MariaDB) BuildCreateAPIClientQuery(input *types.APICientCreationInput) 
 			input.Name,
 			input.ClientID,
 			input.ClientSecret,
-			input.BelongsToAccount,
+			input.BelongsToUser,
 		),
 	)
 }
@@ -108,7 +108,7 @@ func (q *MariaDB) BuildUpdateAPIClientQuery(input *types.APIClient) (query strin
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                       input.ID,
 			querybuilding.ArchivedOnColumn:               nil,
-			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToAccount,
+			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToUser,
 		}),
 	)
 }

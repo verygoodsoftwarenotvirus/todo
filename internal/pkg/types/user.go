@@ -63,16 +63,12 @@ type (
 		RequiresPasswordChange    bool                                `json:"requiresPasswordChange"`
 	}
 
-	// TestUserCreationConfig is a helper struct because of cyclical imports.
+	// TestUserCreationConfig is here because of cyclical imports.
 	TestUserCreationConfig struct {
-		// Username defines our test user's username we create in the event we create them.
-		Username string `json:"username" mapstructure:"username" toml:"username,omitempty"`
-		// Password defines our test user's authentication we create in the event we create them.
-		Password string `json:"password" mapstructure:"password" toml:"password,omitempty"`
-		// HashedPassword is the hashed form of the above authentication.
+		Username       string `json:"username" mapstructure:"username" toml:"username,omitempty"`
+		Password       string `json:"password" mapstructure:"password" toml:"password,omitempty"`
 		HashedPassword string `json:"hashed_password" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
-		// IsServiceAdmin defines our test user's admin status we create in the event we create them.
-		IsServiceAdmin bool `json:"is_site_admin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
+		IsServiceAdmin bool   `json:"is_site_admin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
 	}
 
 	// UserList represents a list of users.
@@ -223,14 +219,6 @@ func (u *User) ToStatusResponse() *UserStatusResponse {
 		UserAccountStatus:        u.Reputation,
 		AccountStatusExplanation: u.ReputationExplanation,
 		ServiceAdminPermissions:  u.ServiceAdminPermissions.ServiceAdminPermissionsSummary(),
-	}
-}
-
-// ToUserDataStoreCreationInput creates a UserDataStoreCreationInput from a TestUserCreationConfig.
-func (cfg *TestUserCreationConfig) ToUserDataStoreCreationInput() UserDataStoreCreationInput {
-	return UserDataStoreCreationInput{
-		Username:       cfg.Username,
-		HashedPassword: cfg.HashedPassword,
 	}
 }
 

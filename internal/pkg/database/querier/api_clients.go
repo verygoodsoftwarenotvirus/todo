@@ -27,12 +27,10 @@ func (c *Client) scanAPIClient(scan database.Scanner, includeCounts bool) (clien
 		&client.Name,
 		&client.ClientID,
 		&client.ClientSecret,
-		&client.AccountPermissions,
-		&client.AdminPermissions,
 		&client.CreatedOn,
 		&client.LastUpdatedOn,
 		&client.ArchivedOn,
-		&client.BelongsToAccount,
+		&client.BelongsToUser,
 	}
 
 	if includeCounts {
@@ -230,7 +228,7 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 
 	logger := c.logger.WithValues(map[string]interface{}{
 		keys.APIClientClientIDKey: input.ClientID,
-		keys.UserIDKey:            input.BelongsToAccount,
+		keys.UserIDKey:            input.BelongsToUser,
 	})
 
 	logger.Debug("CreateAPIClient called")
@@ -249,12 +247,12 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 	}
 
 	x := &types.APIClient{
-		ID:               id,
-		Name:             input.Name,
-		ClientID:         input.ClientID,
-		ClientSecret:     input.ClientSecret,
-		BelongsToAccount: input.BelongsToAccount,
-		CreatedOn:        c.currentTime(),
+		ID:            id,
+		Name:          input.Name,
+		ClientID:      input.ClientID,
+		ClientSecret:  input.ClientSecret,
+		BelongsToUser: input.BelongsToUser,
+		CreatedOn:     c.currentTime(),
 	}
 
 	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {

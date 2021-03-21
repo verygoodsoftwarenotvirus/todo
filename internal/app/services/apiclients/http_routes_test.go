@@ -196,7 +196,7 @@ func TestService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		s := buildTestService(t)
@@ -284,7 +284,7 @@ func TestService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		s := buildTestService(t)
@@ -325,7 +325,7 @@ func TestService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		s := buildTestService(t)
@@ -384,7 +384,7 @@ func TestService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		s := buildTestService(t)
@@ -443,7 +443,7 @@ func TestService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		s := buildTestService(t)
@@ -508,7 +508,7 @@ func TestService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		s := buildTestService(t)
@@ -574,7 +574,7 @@ func TestService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		s := buildTestService(t)

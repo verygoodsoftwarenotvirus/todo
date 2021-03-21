@@ -102,8 +102,6 @@ var (
 		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableNameColumn),
 		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableClientIDColumn),
 		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableSecretKeyColumn),
-		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTablePermissionsColumn),
-		fmt.Sprintf("%s.%s", APIClientsTableName, APIClientsTableAdminPermissionsColumn),
 		fmt.Sprintf("%s.%s", APIClientsTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", APIClientsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", APIClientsTableName, ArchivedOnColumn),

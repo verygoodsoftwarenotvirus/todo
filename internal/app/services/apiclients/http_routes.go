@@ -78,6 +78,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// check request context for user ID.
+	reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
+	if !ok || reqCtx == nil {
+		logger.Debug("no request context attached to API client creation request")
+		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		return
+	}
+
 	// keep relevant data in mind.
 	logger = logger.WithValue("username", input.Username)
 
@@ -125,8 +133,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	input.BelongsToAccount = s.fetchUserID(req)
-	input.ServiceAdminPermissions = user.ServiceAdminPermissions
+	input.BelongsToUser = user.ID
 
 	// create the client.
 	client, err := s.apiClientDataManager.CreateAPIClient(ctx, input, user.ID)

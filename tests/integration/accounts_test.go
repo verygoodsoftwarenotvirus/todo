@@ -29,7 +29,7 @@ func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func (s *TestSuite) TestAccountsCreating() {
+func (s *TestSuite) TestAccounts_Creating() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to create accounts via %s", authType), func() {
@@ -62,7 +62,7 @@ func (s *TestSuite) TestAccountsCreating() {
 	}
 }
 
-func (s *TestSuite) TestAccountsListing() {
+func (s *TestSuite) TestAccounts_Listing() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to list accounts via %s", authType), func() {
@@ -102,7 +102,7 @@ func (s *TestSuite) TestAccountsListing() {
 	}
 }
 
-func (s *TestSuite) TestAccountsReading() {
+func (s *TestSuite) TestAccounts_Reading_Returns404ForNonexistentAccount() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to read a non-existent account via %s", authType), func() {
@@ -116,7 +116,9 @@ func (s *TestSuite) TestAccountsReading() {
 			assert.Error(t, err)
 		})
 	}
+}
 
+func (s *TestSuite) TestAccounts_Reading() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to read an account via %s", authType), func() {
@@ -144,7 +146,7 @@ func (s *TestSuite) TestAccountsReading() {
 	}
 }
 
-func (s *TestSuite) TestAccountsUpdating() {
+func (s *TestSuite) TestAccounts_Updating_Returns404ForNonexistentAccount() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to update a non-existent account via %s", authType), func() {
@@ -159,7 +161,9 @@ func (s *TestSuite) TestAccountsUpdating() {
 			assert.Error(t, testClients.main.UpdateAccount(ctx, exampleAccount))
 		})
 	}
+}
 
+func (s *TestSuite) TestAccounts_Updating() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to update an account via %s", authType), func() {
@@ -202,7 +206,7 @@ func (s *TestSuite) TestAccountsUpdating() {
 	}
 }
 
-func (s *TestSuite) TestAccountsArchiving() {
+func (s *TestSuite) TestAccounts_Archiving_Returns404ForNonexistentAccount() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to archiv a non-existent account via %s", authType), func() {
@@ -214,7 +218,9 @@ func (s *TestSuite) TestAccountsArchiving() {
 			assert.Error(t, testClients.main.ArchiveAccount(ctx, nonexistentID))
 		})
 	}
+}
 
+func (s *TestSuite) TestAccounts_Archiving() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to archive an account via %s", authType), func() {
@@ -245,7 +251,7 @@ func (s *TestSuite) TestAccountsArchiving() {
 	}
 }
 
-func (s *TestSuite) TestAccountsMemberships() {
+func (s *TestSuite) TestAccounts_ChangingMemberships() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to change members of an account via %s", authType), func() {
@@ -370,7 +376,9 @@ func (s *TestSuite) TestAccountsMemberships() {
 			}
 		})
 	}
+}
 
+func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to transfer ownership of an account via %s", authType), func() {
@@ -457,7 +465,7 @@ func (s *TestSuite) TestAccountsMemberships() {
 	}
 }
 
-func (s *TestSuite) TestAccountsAuditing() {
+func (s *TestSuite) TestAccounts_Auditing_Returns404ForNonexistentAccount() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to audit a non-existent account via %s", authType), func() {
@@ -472,7 +480,9 @@ func (s *TestSuite) TestAccountsAuditing() {
 			assert.Empty(t, x)
 		})
 	}
+}
 
+func (s *TestSuite) TestAccounts_Auditing_InaccessibleToNonAdmins() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to audit an account as non-admin via %s", authType), func() {
@@ -496,7 +506,9 @@ func (s *TestSuite) TestAccountsAuditing() {
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
 		})
 	}
+}
 
+func (s *TestSuite) TestAccounts_Auditing() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to audit an account via %s", authType), func() {

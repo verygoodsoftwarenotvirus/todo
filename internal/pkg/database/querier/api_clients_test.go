@@ -34,12 +34,10 @@ func buildMockRowsFromAPIClients(includeCounts bool, filteredCount uint64, clien
 			c.Name,
 			c.ClientID,
 			c.ClientSecret,
-			c.AccountPermissions,
-			c.AdminPermissions,
 			c.CreatedOn,
 			c.LastUpdatedOn,
 			c.ArchivedOn,
-			c.BelongsToAccount,
+			c.BelongsToUser,
 		}
 
 		if includeCounts {
@@ -626,7 +624,7 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildArchiveAPIClientQuery", exampleAPIClient.ID, exampleAPIClient.BelongsToAccount).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildArchiveAPIClientQuery", exampleAPIClient.ID, exampleAPIClient.BelongsToUser).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -638,7 +636,7 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual := c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToAccount, 0)
+		actual := c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser, 0)
 		assert.NoError(t, actual)
 		assert.Equal(t, expected, actual)
 

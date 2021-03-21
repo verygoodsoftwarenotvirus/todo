@@ -94,7 +94,7 @@ func (q *Postgres) BuildCreateAPIClientQuery(input *types.APICientCreationInput)
 			input.Name,
 			input.ClientID,
 			input.ClientSecret,
-			input.BelongsToAccount,
+			input.BelongsToUser,
 		).
 		Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
 	)
@@ -109,7 +109,7 @@ func (q *Postgres) BuildUpdateAPIClientQuery(input *types.APIClient) (query stri
 		Where(squirrel.Eq{
 			querybuilding.IDColumn:                       input.ID,
 			querybuilding.ArchivedOnColumn:               nil,
-			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToAccount,
+			querybuilding.APIClientsTableOwnershipColumn: input.BelongsToUser,
 		}),
 	)
 }

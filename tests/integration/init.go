@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"strings"
 	"time"
@@ -15,9 +16,9 @@ import (
 )
 
 const (
-	debug         = true
-	timeout       = 5 * time.Second
-	nonexistentID = 999999999
+	debug                = true
+	timeout              = 5 * time.Second
+	nonexistentID uint64 = math.MaxUint32
 )
 
 var (

@@ -1169,7 +1169,7 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
 			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1273,7 +1273,7 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
 			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1378,7 +1378,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		ctx := context.Background()
 
@@ -1402,7 +1402,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
 			ClientID:    exampleAPIClient.ClientID,
@@ -1431,7 +1431,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
 			ClientID:    exampleAPIClient.ClientID,
@@ -1472,7 +1472,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
 			ClientID:    exampleAPIClient.ClientID,
@@ -1523,7 +1523,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
 			ClientID:    exampleAPIClient.ClientID,
@@ -1582,7 +1582,7 @@ func TestService_PASETOHandler(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		exampleInput := &types.PASETOCreationInput{
 			ClientID:    exampleAPIClient.ClientID,
@@ -1647,7 +1647,7 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
 			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1698,7 +1698,7 @@ func TestService_PASETOHandler(T *testing.T) {
 
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.BelongsToAccount = exampleUser.ID
+		exampleAPIClient.BelongsToUser = exampleUser.ID
 
 		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
 			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)

@@ -12,6 +12,13 @@ import (
 	"github.com/go-sql-driver/mysql"
 	sqlite "github.com/mattn/go-sqlite3"
 
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/postgresstore"
+	"github.com/alexedwards/scs/sqlite3store"
+	"github.com/alexedwards/scs/v2"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	postgresql "github.com/lib/pq"
+
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/mariadb"
@@ -19,13 +26,6 @@ import (
 	zqlite "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
-	"github.com/alexedwards/scs/mysqlstore"
-	"github.com/alexedwards/scs/postgresstore"
-	"github.com/alexedwards/scs/sqlite3store"
-	"github.com/alexedwards/scs/v2"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-	postgresql "github.com/lib/pq"
 )
 
 const (
@@ -40,16 +40,21 @@ const (
 	DefaultMetricsCollectionInterval = 2 * time.Second
 )
 
-// Config represents our database configuration.
-type Config struct {
-	CreateTestUser            *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
-	Provider                  string                        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-	ConnectionDetails         database.ConnectionDetails    `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
-	MetricsCollectionInterval time.Duration                 `json:"metrics_collection_interval" mapstructure:"metrics_collection_interval" toml:"metrics_collection_interval,omitempty"`
-	Debug                     bool                          `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
-	RunMigrations             bool                          `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
-	MaxPingAttempts           uint8                         `json:"max_ping_attempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
-}
+type (
+	// Config represents our database configuration.
+	Config struct {
+		CreateTestUser            *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
+		Provider                  string                        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
+		ConnectionDetails         database.ConnectionDetails    `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
+		MetricsCollectionInterval time.Duration                 `json:"metrics_collection_interval" mapstructure:"metrics_collection_interval" toml:"metrics_collection_interval,omitempty"`
+		Debug                     bool                          `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
+		RunMigrations             bool                          `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
+		MaxPingAttempts           uint8                         `json:"max_ping_attempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
+	}
+
+	// Config represents our test user creation configuration.
+
+)
 
 // Validate validates an DatabaseSettings struct.
 func (cfg *Config) Validate(ctx context.Context) error {

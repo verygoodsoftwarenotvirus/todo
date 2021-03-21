@@ -20,7 +20,7 @@ import (
 )
 
 func (s *TestSuite) TestLogin() {
-	s.Run("logging in and out works via cookie", func() {
+	s.Run("logging in and out works", func() {
 		t := s.T()
 
 		ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
@@ -45,7 +45,9 @@ func (s *TestSuite) TestLogin() {
 
 		assert.NoError(t, testClient.Logout(ctx))
 	})
+}
 
+func (s *TestSuite) TestLogin_WithoutBodyFails() {
 	s.Run("login request without body fails", func() {
 		t := s.T()
 
@@ -66,8 +68,10 @@ func (s *TestSuite) TestLogin() {
 		requireNotNilAndNoProblems(t, res, err)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 	})
+}
 
-	s.Run("should not be able to log in with the wrong authentication", func() {
+func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginWithInvalidPassword() {
+	s.Run("should not be able to log in with the wrong password", func() {
 		t := s.T()
 
 		ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
@@ -91,7 +95,9 @@ func (s *TestSuite) TestLogin() {
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
+}
 
+func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginAsANonexistentUser() {
 	s.Run("should not be able to login as someone that does not exist", func() {
 		t := s.T()
 
@@ -111,8 +117,10 @@ func (s *TestSuite) TestLogin() {
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
+}
 
-	s.Run("should not be able to login without validating TOTP secret", func() {
+func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginWithoutValidating2FASecret() {
+	s.Run("should not be able to login without validating 2FA secret", func() {
 		t := s.T()
 
 		ctx, span := tracing.StartSpan(context.Background())

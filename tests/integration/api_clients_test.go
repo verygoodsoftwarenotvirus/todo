@@ -22,11 +22,11 @@ func checkAPIClientEquality(t *testing.T, expected, actual *types.APIClient) {
 	assert.NotEmpty(t, actual.ExternalID, "expected ExternalID for API client #%d to not be empty, but it was", actual.ID)
 	assert.NotEmpty(t, actual.ClientID, "expected ClientID for API client #%d to not be empty, but it was", actual.ID)
 	assert.Empty(t, actual.ClientSecret, "expected ClientSecret for API client #%d to not be empty, but it was", actual.ID)
-	assert.NotZero(t, actual.BelongsToAccount, "expected BelongsToAccount for API client #%d to not be zero, but it was", actual.ID)
+	assert.NotZero(t, actual.BelongsToUser, "expected BelongsToUser for API client #%d to not be zero, but it was", actual.ID)
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func (s *TestSuite) TestAPIClientsCreating() {
+func (s *TestSuite) TestAPIClients_Creating() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to create API clients via %s", authType), func() {
@@ -65,7 +65,7 @@ func (s *TestSuite) TestAPIClientsCreating() {
 	}
 }
 
-func (s *TestSuite) TestAPIClientsListing() {
+func (s *TestSuite) TestAPIClients_Listing() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to read API clients in a list via %s", authType), func() {
@@ -112,7 +112,7 @@ func (s *TestSuite) TestAPIClientsListing() {
 	}
 }
 
-func (s *TestSuite) TestAPIClientsReading() {
+func (s *TestSuite) TestAPIClients_Reading_Returns404ForNonexistentAPIClient() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to read non-existent API clients via %s", authType), func() {
@@ -126,7 +126,9 @@ func (s *TestSuite) TestAPIClientsReading() {
 			assert.Error(t, err)
 		})
 	}
+}
 
+func (s *TestSuite) TestAPIClients_Reading() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to read API clients via %s", authType), func() {
@@ -160,7 +162,7 @@ func (s *TestSuite) TestAPIClientsReading() {
 	}
 }
 
-func (s *TestSuite) TestAPIClientsArchiving() {
+func (s *TestSuite) TestAPIClients_Archiving_Returns404ForNonexistentAPIClient() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should not be possible to archive non-existent API clients via %s", authType), func() {
@@ -172,7 +174,9 @@ func (s *TestSuite) TestAPIClientsArchiving() {
 			assert.Error(t, testClients.main.ArchiveAPIClient(ctx, nonexistentID))
 		})
 	}
+}
 
+func (s *TestSuite) TestAPIClients_Archiving() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to archive API clients via %s", authType), func() {
@@ -208,7 +212,7 @@ func (s *TestSuite) TestAPIClientsArchiving() {
 	}
 }
 
-func (s *TestSuite) TestAPIClientsAuditing() {
+func (s *TestSuite) TestAPIClients_Auditing() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be possible to audit API clients via %s", authType), func() {

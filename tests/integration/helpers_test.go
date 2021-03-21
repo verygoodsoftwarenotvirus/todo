@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -173,7 +174,7 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 	require.NoError(t, err)
 
 	apiClient, err := cClient.CreateAPIClient(ctx, adminCookie, &types.APICientCreationInput{
-		Name: "admin_paseto_client",
+		Name: fmt.Sprintf("admin_paseto_client_%d", time.Now().UnixNano()),
 		UserLoginInput: types.UserLoginInput{
 			Username:  premadeAdminUser.Username,
 			Password:  premadeAdminUser.HashedPassword,

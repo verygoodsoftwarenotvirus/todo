@@ -24,7 +24,7 @@ func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func (s *TestSuite) TestWebhooksCreating() {
+func (s *TestSuite) TestWebhooks_Creating() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be createable via %s", authType), func() {
@@ -60,7 +60,7 @@ func (s *TestSuite) TestWebhooksCreating() {
 	}
 }
 
-func (s *TestSuite) TestWebhooksReading() {
+func (s *TestSuite) TestWebhooks_Reading_Returns404ForNonexistentWebhook() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to read non-existent webhook via %s", authType), func() {
@@ -74,7 +74,9 @@ func (s *TestSuite) TestWebhooksReading() {
 			assert.Error(t, err)
 		})
 	}
+}
 
+func (s *TestSuite) TestWebhooks_Reading() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
@@ -102,7 +104,7 @@ func (s *TestSuite) TestWebhooksReading() {
 	}
 }
 
-func (s *TestSuite) TestWebhooksListing() {
+func (s *TestSuite) TestWebhooks_Listing() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be read in a list via %s", authType), func() {
@@ -135,7 +137,7 @@ func (s *TestSuite) TestWebhooksListing() {
 	}
 }
 
-func (s *TestSuite) TestWebhooksUpdating() {
+func (s *TestSuite) TestWebhooks_Updating_Returns404ForNonexistentWebhook() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to update a non-existent webhook via %s", authType), func() {
@@ -151,7 +153,9 @@ func (s *TestSuite) TestWebhooksUpdating() {
 			assert.Error(t, err)
 		})
 	}
+}
 
+func (s *TestSuite) TestWebhooks_Updating() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be updateable via %s", authType), func() {
@@ -195,7 +199,7 @@ func (s *TestSuite) TestWebhooksUpdating() {
 	}
 }
 
-func (s *TestSuite) TestWebhooksArchiving() {
+func (s *TestSuite) TestWebhooks_Archiving_Returns404ForNonexistentWebhook() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should fail to archive a non-existent webhook via %s", authType), func() {
@@ -207,7 +211,9 @@ func (s *TestSuite) TestWebhooksArchiving() {
 			assert.Error(t, testClients.main.ArchiveWebhook(ctx, nonexistentID))
 		})
 	}
+}
 
+func (s *TestSuite) TestWebhooks_Archiving() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be able to be archived via %s", authType), func() {
@@ -237,7 +243,7 @@ func (s *TestSuite) TestWebhooksArchiving() {
 	}
 }
 
-func (s *TestSuite) TestWebhooksAuditing() {
+func (s *TestSuite) TestWebhooks_Auditing_Returns404ForNonexistentWebhook() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should return an error when auditing a non-existent webhook via %s", authType), func() {
@@ -255,7 +261,9 @@ func (s *TestSuite) TestWebhooksAuditing() {
 			assert.Empty(t, x)
 		})
 	}
+}
 
+func (s *TestSuite) TestWebhooks_Auditing_InaccessibleToNonAdmins() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should only be auditable to admins via %s", authType), func() {
@@ -284,7 +292,9 @@ func (s *TestSuite) TestWebhooksAuditing() {
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
 		})
 	}
+}
 
+func (s *TestSuite) TestWebhooks_Auditing() {
 	for a, c := range s.eachClientExcept() {
 		authType, testClients := a, c
 		s.Run(fmt.Sprintf("should be auditable via %s", authType), func() {

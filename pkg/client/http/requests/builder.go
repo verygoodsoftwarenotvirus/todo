@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -188,12 +189,12 @@ func (b *Builder) buildDataRequest(ctx context.Context, method, uri string, in i
 
 	body, err := b.encoder.EncodeReader(ctx, in)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "encoding request")
+		return nil, errs.PrepareError(err, logger, span, "encoding request")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, uri, body)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building request")
+		return nil, errs.PrepareError(err, logger, span, "building request")
 	}
 
 	req.Header.Set("Content-type", b.encoder.ContentType())

@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -21,12 +22,12 @@ func (c *Client) ItemExists(ctx context.Context, itemID uint64) (bool, error) {
 
 	req, err := c.requestBuilder.BuildItemExistsRequest(ctx, itemID)
 	if err != nil {
-		return false, prepareError(err, logger, span, "building item existence request")
+		return false, errs.PrepareError(err, logger, span, "building item existence request")
 	}
 
 	exists, err := c.responseIsOK(ctx, req)
 	if err != nil {
-		return false, prepareError(err, logger, span, "checking existence for item #%d", itemID)
+		return false, errs.PrepareError(err, logger, span, "checking existence for item #%d", itemID)
 	}
 
 	return exists, nil
@@ -45,12 +46,12 @@ func (c *Client) GetItem(ctx context.Context, itemID uint64) (*types.Item, error
 
 	req, err := c.requestBuilder.BuildGetItemRequest(ctx, itemID)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building get item request")
+		return nil, errs.PrepareError(err, logger, span, "building get item request")
 	}
 
 	var item *types.Item
 	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return nil, prepareError(err, logger, span, "retrieving item")
+		return nil, errs.PrepareError(err, logger, span, "retrieving item")
 	}
 
 	return item, nil
@@ -73,12 +74,12 @@ func (c *Client) SearchItems(ctx context.Context, query string, limit uint8) ([]
 
 	req, err := c.requestBuilder.BuildSearchItemsRequest(ctx, query, limit)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building search for items request")
+		return nil, errs.PrepareError(err, logger, span, "building search for items request")
 	}
 
 	var items []*types.Item
 	if err = c.fetchAndUnmarshal(ctx, req, &items); err != nil {
-		return nil, prepareError(err, logger, span, "retrieving items")
+		return nil, errs.PrepareError(err, logger, span, "retrieving items")
 	}
 
 	return items, nil
@@ -95,12 +96,12 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (*type
 
 	req, err := c.requestBuilder.BuildGetItemsRequest(ctx, filter)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building items list request")
+		return nil, errs.PrepareError(err, logger, span, "building items list request")
 	}
 
 	var items *types.ItemList
 	if err = c.fetchAndUnmarshal(ctx, req, &items); err != nil {
-		return nil, prepareError(err, logger, span, "retrieving items")
+		return nil, errs.PrepareError(err, logger, span, "retrieving items")
 	}
 
 	return items, nil
@@ -118,17 +119,17 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	logger := c.logger
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, prepareError(err, logger, span, "validating input")
+		return nil, errs.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateItemRequest(ctx, input)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building create item request")
+		return nil, errs.PrepareError(err, logger, span, "building create item request")
 	}
 
 	var item *types.Item
 	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return nil, prepareError(err, logger, span, "creating item")
+		return nil, errs.PrepareError(err, logger, span, "creating item")
 	}
 
 	return item, nil
@@ -147,11 +148,11 @@ func (c *Client) UpdateItem(ctx context.Context, item *types.Item) error {
 
 	req, err := c.requestBuilder.BuildUpdateItemRequest(ctx, item)
 	if err != nil {
-		return prepareError(err, logger, span, "building update item request")
+		return errs.PrepareError(err, logger, span, "building update item request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return prepareError(err, logger, span, "updating item #%d", item.ID)
+		return errs.PrepareError(err, logger, span, "updating item #%d", item.ID)
 	}
 
 	return nil
@@ -170,11 +171,11 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 
 	req, err := c.requestBuilder.BuildArchiveItemRequest(ctx, itemID)
 	if err != nil {
-		return prepareError(err, logger, span, "building archive item request")
+		return errs.PrepareError(err, logger, span, "building archive item request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return prepareError(err, logger, span, "archiving item #%d", itemID)
+		return errs.PrepareError(err, logger, span, "archiving item #%d", itemID)
 	}
 
 	return nil
@@ -193,12 +194,12 @@ func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) ([]*type
 
 	req, err := c.requestBuilder.BuildGetAuditLogForItemRequest(ctx, itemID)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building get audit log entries for item request")
+		return nil, errs.PrepareError(err, logger, span, "building get audit log entries for item request")
 	}
 
 	var entries []*types.AuditLogEntry
 	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, prepareError(err, logger, span, "retrieving plan")
+		return nil, errs.PrepareError(err, logger, span, "retrieving plan")
 	}
 
 	return entries, nil

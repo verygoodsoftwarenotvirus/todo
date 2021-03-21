@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -147,22 +148,22 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 
 	part, err := writer.CreateFormFile("avatar", fmt.Sprintf("avatar.%s", extension))
 	if err != nil {
-		return nil, prepareError(err, logger, span, "creating form file")
+		return nil, errs.PrepareError(err, logger, span, "creating form file")
 	}
 
 	if _, err = io.Copy(part, bytes.NewReader(avatar)); err != nil {
-		return nil, prepareError(err, logger, span, "copying file contents to request")
+		return nil, errs.PrepareError(err, logger, span, "copying file contents to request")
 	}
 
 	if err = writer.Close(); err != nil {
-		return nil, prepareError(err, logger, span, "closing avatar writer")
+		return nil, errs.PrepareError(err, logger, span, "closing avatar writer")
 	}
 
 	uri := b.BuildURL(ctx, nil, usersBasePath, "avatar", "upload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, body)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building avatar upload request")
+		return nil, errs.PrepareError(err, logger, span, "building avatar upload request")
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())

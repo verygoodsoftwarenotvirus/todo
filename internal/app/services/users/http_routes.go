@@ -137,7 +137,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// NOTE: I feel comfortable letting username be in the logger, since
-	// the logging statements below are only in the event of errors. If
+	// the logging statements below are only in the event of errs. If
 	// and when that changes, this can/should be removed.
 	logger = logger.WithValue(keys.UsernameKey, userInput.Username)
 	tracing.AttachUsernameToSpan(span, userInput.Username)

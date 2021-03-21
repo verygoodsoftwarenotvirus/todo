@@ -30,6 +30,9 @@ var (
 
 	// ErrInvalidConfiguration denotes that the provided configuration is invalid.
 	ErrInvalidConfiguration = errors.New("configuration invalid")
+
+	// ErrBucketIsUnavailable denotes that the requested bucket is invalid.
+	ErrBucketIsUnavailable = errors.New("bucket is unavailable")
 )
 
 type (
@@ -89,7 +92,7 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config, r
 	if available, err := u.bucket.IsAccessible(ctx); err != nil {
 		return nil, fmt.Errorf("verifying bucket accessibility: %w", err)
 	} else if !available {
-		return nil, errors.New("bucket is unavailable")
+		return nil, ErrBucketIsUnavailable
 	}
 
 	return u, nil

@@ -9,7 +9,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-// BuildQueryOnly builds a given query, handles whatever errors and returns just the query and args.
+// BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.
 func (q *Sqlite) buildQueryOnly(builder squirrel.Sqlizer) string {
 	query, _, err := builder.ToSql()
 	q.logQueryBuildingError(err)
@@ -17,7 +17,7 @@ func (q *Sqlite) buildQueryOnly(builder squirrel.Sqlizer) string {
 	return query
 }
 
-// BuildQuery builds a given query, handles whatever errors and returns just the query and args.
+// BuildQuery builds a given query, handles whatever errs and returns just the query and args.
 func (q *Sqlite) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
 	query, args, err := builder.ToSql()
 	q.logQueryBuildingError(err)

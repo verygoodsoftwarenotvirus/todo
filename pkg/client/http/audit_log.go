@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -21,14 +22,14 @@ func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.A
 
 	req, err := c.requestBuilder.BuildGetAuditLogEntryRequest(ctx, entryID)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building get audit log entry request")
+		return nil, errs.PrepareError(err, logger, span, "building get audit log entry request")
 	}
 
 	c.logger.WithRequest(req).Debug("Fetching audit log entry")
 
 	var entry *types.AuditLogEntry
 	if err = c.fetchAndUnmarshal(ctx, req, &entry); err != nil {
-		return nil, prepareError(err, logger, span, "retrieving audit log entry")
+		return nil, errs.PrepareError(err, logger, span, "retrieving audit log entry")
 	}
 
 	return entry, nil
@@ -45,14 +46,14 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 
 	req, err := c.requestBuilder.BuildGetAuditLogEntriesRequest(ctx, filter)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building fetch audit log entries request")
+		return nil, errs.PrepareError(err, logger, span, "building fetch audit log entries request")
 	}
 
 	logger = logger.WithRequest(req)
 
 	var entries *types.AuditLogEntryList
 	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, prepareError(err, logger, span, "fetching audit log entries")
+		return nil, errs.PrepareError(err, logger, span, "fetching audit log entries")
 	}
 
 	return entries, nil

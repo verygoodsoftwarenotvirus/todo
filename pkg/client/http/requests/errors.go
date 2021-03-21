@@ -2,12 +2,6 @@ package requests
 
 import (
 	"errors"
-	"fmt"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-
-	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -26,14 +20,3 @@ var (
 	// ErrCookieRequired indicates a cookie is required.
 	ErrCookieRequired = errors.New("cookie required for request")
 )
-
-// prepareError standardizes our error handling by logging, tracing, and formatting an error consistently.
-func prepareError(err error, logger logging.Logger, span trace.Span, description string) error {
-	logging.EnsureLogger(logger).Error(err, description)
-
-	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-	}
-
-	return fmt.Errorf("%s: %w", description, err)
-}

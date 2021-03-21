@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	errs "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -36,8 +37,8 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	filter := types.ExtractQueryFilter(req)
 
 	// fetch request context
-	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -50,10 +51,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	adminQueryPresent := parseBool(rawQueryAdminKey)
 	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
-	var (
-		accounts *types.AccountList
-		err      error
-	)
+	var accounts *types.AccountList
 
 	if reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
@@ -65,7 +63,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		// in the event no rows exist, return an empty list.
 		accounts = &types.AccountList{Accounts: []*types.Account{}}
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching accounts")
+		errs.AcknowledgeError(err, logger, span, "fetching accounts")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -90,8 +88,9 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// retrieve request context.
-	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
-	if requestContextRetrievalError != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		errs.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -103,7 +102,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// create account in database.
 	x, err := s.accountDataManager.CreateAccount(ctx, input, reqCtx.User.ID)
 	if err != nil {
-		logger.Error(err, "error creating account")
+		errs.AcknowledgeError(err, logger, span, "creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -111,7 +110,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, x.ID)
 
 	// notify relevant parties.
-
 	s.accountCounter.Increment(ctx)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
@@ -145,7 +143,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching account from database")
+		errs.AcknowledgeError(err, logger, span, "fetching account from database")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -170,8 +168,9 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
-	if requestContextRetrievalError != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		errs.AcknowledgeError(err, logger, span, "fetching request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -191,7 +190,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered getting account")
+		errs.AcknowledgeError(err, logger, span, "fetching account from database")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -201,7 +200,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// update account in database.
 	if err = s.accountDataManager.UpdateAccount(ctx, x, 0, changeReport); err != nil {
-		logger.Error(err, "error encountered updating account")
+		errs.AcknowledgeError(err, logger, span, "updating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -218,9 +217,9 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		errs.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -234,12 +233,12 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// archive the account in the database.
-	err := s.accountDataManager.ArchiveAccount(ctx, accountID, reqCtx.User.ID, reqCtx.User.ID)
+	err = s.accountDataManager.ArchiveAccount(ctx, accountID, reqCtx.User.ID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered deleting account")
+		errs.AcknowledgeError(err, logger, span, "archiving account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -271,8 +270,9 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
-	if requestContextRetrievalError != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		errs.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -281,8 +281,8 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// create account in database.
-	if err := s.accountMembershipDataManager.AddUserToAccount(ctx, input, accountID, reqCtx.User.ID); err != nil {
-		logger.Error(err, "error creating account")
+	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, accountID, reqCtx.User.ID); err != nil {
+		errs.AcknowledgeError(err, logger, span, "adding user to account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -314,8 +314,9 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
-	if requestContextRetrievalError != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		errs.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -323,11 +324,9 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
-	// check if requesting user is authorized to make the change
-
 	// create account in database.
-	if err := s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, reqCtx.User.ID, input); err != nil {
-		logger.Error(err, "error creating account")
+	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, reqCtx.User.ID, input); err != nil {
+		errs.AcknowledgeError(err, logger, span, "modifying user permissions")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -366,7 +365,7 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 
 	// transfer ownership of account in database.
 	if err := s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, reqCtx.User.ID, input); err != nil {
-		logger.Error(err, "error creating account")
+		errs.AcknowledgeError(err, logger, span, "transferring account ownership")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -393,8 +392,9 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	logger = logger.WithValue(keys.AccountIDKey, userID)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
-	if requestContextRetrievalError != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		errs.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -403,8 +403,8 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// remove user from account in database.
-	if err := s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, reqCtx.User.ID, reason); err != nil {
-		logger.Error(err, "error creating account")
+	if err = s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, reqCtx.User.ID, reason); err != nil {
+		errs.AcknowledgeError(err, logger, span, "removing user from account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -436,7 +436,7 @@ func (s *service) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Reques
 	// mark account as default in database.
 	err := s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, reqCtx.User.ID, accountID, reqCtx.User.ID)
 	if err != nil {
-		logger.Error(err, "error marking account as default")
+		errs.AcknowledgeError(err, logger, span, "marking account as default")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -453,9 +453,9 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		errs.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -473,7 +473,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching audit log entries")
+		errs.AcknowledgeError(err, logger, span, "fetching audit log entries")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

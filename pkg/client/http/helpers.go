@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"reflect"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -89,12 +90,12 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	logger := c.logger.WithResponse(res)
 
 	if err := argIsNotPointerOrNil(dest); err != nil {
-		return prepareError(err, logger, span, "nil marshal target")
+		return errs.PrepareError(err, logger, span, "nil marshal target")
 	}
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return prepareError(err, logger, span, "unmarshalling error response")
+		return errs.PrepareError(err, logger, span, "unmarshalling error response")
 	}
 
 	if res.StatusCode >= http.StatusBadRequest {
@@ -109,7 +110,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	}
 
 	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
-		return prepareError(err, logger, span, "unmarshalling response body")
+		return errs.PrepareError(err, logger, span, "unmarshalling response body")
 	}
 
 	return nil

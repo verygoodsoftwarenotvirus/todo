@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -102,7 +103,7 @@ func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemC
 	logger := b.logger
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, prepareError(err, logger, span, "validating input")
+		return nil, errs.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, itemsBasePath)

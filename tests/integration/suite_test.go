@@ -25,8 +25,9 @@ var (
 )
 
 type testClientWrapper struct {
-	authType    string
-	main, admin *httpclient.Client
+	main     *httpclient.Client
+	admin    *httpclient.Client
+	authType string
 }
 
 func TestIntegration(t *testing.T) {

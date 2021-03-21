@@ -60,11 +60,11 @@ output:
 # all available settings of specific linters
 linters-settings:
   errcheck:
-    # report about not checking of errors in type assertions: `a := b.(MyStruct)`;
+    # report about not checking of errs in type assertions: `a := b.(MyStruct)`;
     # default is false: such cases aren't reported by default.
     check-type-assertions: true
 
-    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
+    # report about assignment of errs to blank identifier: `num, _ := strconv.Atoi(numStr)`;
     # default is false: such cases aren't reported by default.
     check-blank: true
 
@@ -184,7 +184,7 @@ linters:
   enable:
     # Enabled By Default
     - deadcode # Finds unused code
-    - errcheck # Errcheck is a program for checking for unchecked errors in go programs. These unchecked errors can be critical bugs in some cases
+    - errcheck # Errcheck is a program for checking for unchecked errs in go programs. These unchecked errs can be critical bugs in some cases
     - gosimple # Linter for Go source code that specializes in simplifying a code
     - govet # Vet examines Go source code and reports suspicious constructs, such as Printf calls whose arguments do not align with the format string
     - ineffassign # Detects when assignments to existing variables are not used
@@ -213,7 +213,7 @@ linters:
     - gocyclo # Computes and checks the cyclomatic complexity of functions
     - godot # Check if comments end in a period
     - godox # Tool for detection of FIXME, TODO and other comment keywords
-    - goerr113 # Golang linter to check the errors handling expressions
+    - goerr113 # Golang linter to check the errs handling expressions
     - gofmt # Gofmt checks whether code was gofmt-ed. By default this tool runs with -s option to check for code simplification
     # gofumpt # Gofumpt checks whether code was gofumpt-ed.
     - goheader # Checks is file header matches to pattern
@@ -249,7 +249,7 @@ linters:
     - gochecknoglobals # Checks that no globals are present in Go code
     - dupl # Tool for code clone detection
     - funlen # Tool for detection of long functions
-    - wrapcheck # Checks that errors returned from external packages are wrapped
+    - wrapcheck # Checks that errs returned from external packages are wrapped
     - gofumpt # Gofumpt checks whether code was gofumpt-ed.
     - testpackage # linter that makes you use a separate _test package
     - rowserrcheck # checks whether Err of rows is checked successfully; lots of false positives
@@ -387,7 +387,7 @@ issues:
 
     - linters:
         - goerr113
-      text: "do not define dynamic errors"
+      text: "do not define dynamic errs"
 
     # ignore this error type because it isn't defined anywhere, and it's detecting a false positive
     - linters:

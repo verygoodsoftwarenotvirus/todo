@@ -53,7 +53,7 @@ func buildMockRowsFromAPIClients(includeCounts bool, filteredCount uint64, clien
 func TestQuerier_ScanAPIClients(T *testing.T) {
 	T.Parallel()
 
-	T.Run("surfaces row errors", func(t *testing.T) {
+	T.Run("surfaces row errs", func(t *testing.T) {
 		t.Parallel()
 
 		q, _ := buildTestClient(t)
@@ -66,7 +66,7 @@ func TestQuerier_ScanAPIClients(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("logs row closing errors", func(t *testing.T) {
+	T.Run("logs row closing errs", func(t *testing.T) {
 		t.Parallel()
 
 		q, _ := buildTestClient(t)

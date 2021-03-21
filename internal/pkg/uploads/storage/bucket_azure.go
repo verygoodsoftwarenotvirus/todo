@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -129,10 +128,8 @@ func buildPipelineOptions(logger logging.Logger, retrying *AzureRetryConfig) azb
 				switch level {
 				case pipeline.LogNone:
 					// shouldn't happen, but do nothing just in case
-				case pipeline.LogPanic, pipeline.LogFatal:
-					logger.Fatal(errors.New(message))
-				case pipeline.LogError:
-					logger.Error(errors.New("message"), "azure pipeline error")
+				case pipeline.LogPanic, pipeline.LogFatal, pipeline.LogError:
+					logger.Error(nil, message)
 				case pipeline.LogWarning:
 					logger.Debug(message)
 				case pipeline.LogInfo:

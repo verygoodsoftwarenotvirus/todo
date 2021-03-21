@@ -3,21 +3,16 @@ package config
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/go-sql-driver/mysql"
-	sqlite "github.com/mattn/go-sqlite3"
-
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/sqlite3store"
 	"github.com/alexedwards/scs/v2"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	postgresql "github.com/lib/pq"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -40,6 +35,10 @@ const (
 	DefaultMetricsCollectionInterval = 2 * time.Second
 )
 
+var (
+	errInvalidDatabase = errors.New("invalid database type selected")
+)
+
 type (
 	// Config represents our database configuration.
 	Config struct {
@@ -51,9 +50,6 @@ type (
 		RunMigrations             bool                          `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
 		MaxPingAttempts           uint8                         `json:"max_ping_attempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
 	}
-
-	// Config represents our test user creation configuration.
-
 )
 
 // Validate validates an DatabaseSettings struct.
@@ -76,21 +72,7 @@ func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, er
 	case SqliteProviderKey:
 		return zqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
 	default:
-		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
-	}
-}
-
-// ProvideDatabaseDriver provides .
-func (cfg *Config) ProvideDatabaseDriver() driver.Driver {
-	switch cfg.Provider {
-	case PostgresProviderKey:
-		return &postgresql.Driver{}
-	case MariaDBProviderKey:
-		return &mysql.MySQLDriver{}
-	case SqliteProviderKey:
-		return &sqlite.SQLiteDriver{}
-	default:
-		panic("invalid provider")
+		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
 	}
 }
 

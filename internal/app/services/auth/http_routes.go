@@ -145,7 +145,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
 	encoded, err := s.cookieManager.Encode(s.config.Cookies.Name, value)
 	if err != nil {
-		// NOTE: these errors should be infrequent, and should cause alarm when they do occur
+		// NOTE: these errs should be infrequent, and should cause alarm when they do occur
 		s.logger.WithName(cookieErrorLogName).Error(err, "error encoding cookie")
 		return nil, err
 	}

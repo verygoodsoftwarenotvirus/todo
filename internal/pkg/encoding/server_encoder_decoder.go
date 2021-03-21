@@ -57,7 +57,7 @@ type (
 	}
 )
 
-// EncodeErrorResponse encodes errors to responses.
+// EncodeErrorResponse encodes errs to responses.
 func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int) {
 	_, span := e.tracer.StartSpan(ctx)
 	defer span.End()

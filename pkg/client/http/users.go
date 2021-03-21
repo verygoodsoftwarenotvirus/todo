@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -23,12 +24,12 @@ func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error
 
 	req, err := c.requestBuilder.BuildGetUserRequest(ctx, userID)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building get user request")
+		return nil, errs.PrepareError(err, logger, span, "building get user request")
 	}
 
 	var user *types.User
 	if err = c.fetchAndUnmarshal(ctx, req, &user); err != nil {
-		return nil, prepareError(err, logger, span, "fetching user")
+		return nil, errs.PrepareError(err, logger, span, "fetching user")
 	}
 
 	return user, nil
@@ -45,12 +46,12 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (*type
 
 	req, err := c.requestBuilder.BuildGetUsersRequest(ctx, filter)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building users list request")
+		return nil, errs.PrepareError(err, logger, span, "building users list request")
 	}
 
 	var users *types.UserList
 	if err = c.fetchAndUnmarshal(ctx, req, &users); err != nil {
-		return nil, prepareError(err, logger, span, "retrieving users")
+		return nil, errs.PrepareError(err, logger, span, "retrieving users")
 	}
 
 	return users, nil
@@ -69,12 +70,12 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) 
 
 	req, err := c.requestBuilder.BuildSearchForUsersByUsernameRequest(ctx, username)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building username search request")
+		return nil, errs.PrepareError(err, logger, span, "building username search request")
 	}
 
 	var users []*types.User
 	if err = c.fetchAndUnmarshal(ctx, req, &users); err != nil {
-		return nil, prepareError(err, logger, span, "searching for users")
+		return nil, errs.PrepareError(err, logger, span, "searching for users")
 	}
 
 	return users, nil
@@ -96,12 +97,12 @@ func (c *Client) CreateUser(ctx context.Context, input *types.NewUserCreationInp
 
 	req, err := c.requestBuilder.BuildCreateUserRequest(ctx, input)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building create user request")
+		return nil, errs.PrepareError(err, logger, span, "building create user request")
 	}
 
 	var user *types.UserCreationResponse
 	if err = c.fetchAndUnmarshalWithoutAuthentication(ctx, req, &user); err != nil {
-		return nil, prepareError(err, logger, span, "creating user")
+		return nil, errs.PrepareError(err, logger, span, "creating user")
 	}
 
 	return user, nil
@@ -120,11 +121,11 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	req, err := c.requestBuilder.BuildArchiveUserRequest(ctx, userID)
 	if err != nil {
-		return prepareError(err, logger, span, "building archive user request")
+		return errs.PrepareError(err, logger, span, "building archive user request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return prepareError(err, logger, span, "archiving user")
+		return errs.PrepareError(err, logger, span, "archiving user")
 	}
 
 	return nil
@@ -143,12 +144,12 @@ func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) ([]*type
 
 	req, err := c.requestBuilder.BuildGetAuditLogForUserRequest(ctx, userID)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building get audit log entries for user request")
+		return nil, errs.PrepareError(err, logger, span, "building get audit log entries for user request")
 	}
 
 	var entries []*types.AuditLogEntry
 	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, prepareError(err, logger, span, "retrieving audit log entries for user")
+		return nil, errs.PrepareError(err, logger, span, "retrieving audit log entries for user")
 	}
 
 	return entries, nil
@@ -170,16 +171,16 @@ func (c *Client) UploadNewAvatar(ctx context.Context, avatar []byte, extension s
 		//
 	default:
 		err := fmt.Errorf("invalid extension: %q", extension)
-		return prepareError(err, logger, span, "uploading avatar")
+		return errs.PrepareError(err, logger, span, "uploading avatar")
 	}
 
 	req, err := c.requestBuilder.BuildAvatarUploadRequest(ctx, avatar, extension)
 	if err != nil {
-		return prepareError(err, logger, span, "building avatar upload request")
+		return errs.PrepareError(err, logger, span, "building avatar upload request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return prepareError(err, logger, span, "uploading avatar")
+		return errs.PrepareError(err, logger, span, "uploading avatar")
 	}
 
 	return nil

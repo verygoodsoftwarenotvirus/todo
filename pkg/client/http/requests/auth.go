@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -28,7 +29,7 @@ func (b *Builder) BuildUserStatusRequest(ctx context.Context, cookie *http.Cooki
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
-		return nil, prepareError(err, logger, span, "building user status request")
+		return nil, errs.PrepareError(err, logger, span, "building user status request")
 	}
 
 	req.AddCookie(cookie)
@@ -103,7 +104,7 @@ func (b *Builder) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *
 	logger := b.logger
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, prepareError(err, logger, span, "validating input")
+		return nil, errs.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "totp_secret", "new")
@@ -130,7 +131,7 @@ func (b *Builder) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint6
 	logger := b.logger.WithValue(keys.UserIDKey, userID)
 
 	if _, err := strconv.ParseUint(token, 10, 64); token == "" || err != nil {
-		return nil, prepareError(err, logger, span, "invalid token provided")
+		return nil, errs.PrepareError(err, logger, span, "invalid token provided")
 	}
 
 	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "totp_secret", "verify")

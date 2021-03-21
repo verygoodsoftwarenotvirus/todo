@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -21,23 +22,23 @@ func (c *Client) UpdateUserReputation(ctx context.Context, input *types.UserRepu
 	tracing.AttachAccountIDToSpan(span, input.TargetUserID)
 
 	if err := input.Validate(ctx); err != nil {
-		return prepareError(err, logger, span, "validating input")
+		return errs.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildUserReputationUpdateInputRequest(ctx, input)
 	if err != nil {
-		return prepareError(err, logger, span, "building user reputation update request")
+		return errs.PrepareError(err, logger, span, "building user reputation update request")
 	}
 
 	res, err := c.fetchResponseToRequest(ctx, c.authedClient, req)
 	if err != nil {
-		return prepareError(err, logger, span, "updating user reputation")
+		return errs.PrepareError(err, logger, span, "updating user reputation")
 	}
 
 	c.closeResponseBody(ctx, res)
 
 	if err = errorFromResponse(res); err != nil {
-		return prepareError(err, logger, span, "invalid response status")
+		return errs.PrepareError(err, logger, span, "invalid response status")
 	}
 
 	return nil

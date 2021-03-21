@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -53,7 +54,7 @@ func (b *Builder) BuildCreateWebhookRequest(ctx context.Context, input *types.We
 	logger := b.logger.WithValue(keys.NameKey, input.Name)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, prepareError(err, logger, span, "validating input")
+		return nil, errs.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, webhooksBasePath)

@@ -53,7 +53,7 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 func TestQuerier_ScanAccounts(T *testing.T) {
 	T.Parallel()
 
-	T.Run("surfaces row errors", func(t *testing.T) {
+	T.Run("surfaces row errs", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestClient(t)
 		mockRows := &database.MockResultIterator{}
@@ -65,7 +65,7 @@ func TestQuerier_ScanAccounts(T *testing.T) {
 		assert.Error(t, err)
 	})
 
-	T.Run("logs row closing errors", func(t *testing.T) {
+	T.Run("logs row closing errs", func(t *testing.T) {
 		t.Parallel()
 		q, _ := buildTestClient(t)
 		mockRows := &database.MockResultIterator{}

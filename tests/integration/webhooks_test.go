@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,9 +24,8 @@ func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
 }
 
 func (s *TestSuite) TestWebhooks_Creating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be createable via %s", authType), func() {
+	s.runForEachClientExcept("should be createable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -56,14 +54,13 @@ func (s *TestSuite) TestWebhooks_Creating() {
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Reading_Returns404ForNonexistentWebhook() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to read non-existent webhook via %s", authType), func() {
+	s.runForEachClientExcept("should fail to read non-existent webhook", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -72,14 +69,13 @@ func (s *TestSuite) TestWebhooks_Reading_Returns404ForNonexistentWebhook() {
 			// Fetch webhook.
 			_, err := testClients.main.GetWebhook(ctx, nonexistentID)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Reading() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be read", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -100,14 +96,13 @@ func (s *TestSuite) TestWebhooks_Reading() {
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, actual.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Listing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be read in a list via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be read in a list", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -133,14 +128,13 @@ func (s *TestSuite) TestWebhooks_Listing() {
 			for _, webhook := range actual.Webhooks {
 				assert.NoError(t, testClients.main.ArchiveWebhook(ctx, webhook.ID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Updating_Returns404ForNonexistentWebhook() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to update a non-existent webhook via %s", authType), func() {
+	s.runForEachClientExcept("should fail to update a non-existent webhook", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -151,14 +145,13 @@ func (s *TestSuite) TestWebhooks_Updating_Returns404ForNonexistentWebhook() {
 
 			err := testClients.main.UpdateWebhook(ctx, exampleWebhook)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Updating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be updateable via %s", authType), func() {
+	s.runForEachClientExcept("should be updateable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -195,28 +188,26 @@ func (s *TestSuite) TestWebhooks_Updating() {
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, actual.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Archiving_Returns404ForNonexistentWebhook() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to archive a non-existent webhook via %s", authType), func() {
+	s.runForEachClientExcept("should fail to archive a non-existent webhook", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			assert.Error(t, testClients.main.ArchiveWebhook(ctx, nonexistentID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Archiving() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be archived via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be archived", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -239,14 +230,13 @@ func (s *TestSuite) TestWebhooks_Archiving() {
 				{EventType: audit.WebhookArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Auditing_Returns404ForNonexistentWebhook() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should return an error when auditing a non-existent webhook via %s", authType), func() {
+	s.runForEachClientExcept("should return an error when auditing a non-existent webhook", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -259,14 +249,13 @@ func (s *TestSuite) TestWebhooks_Auditing_Returns404ForNonexistentWebhook() {
 			x, err := testClients.admin.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Auditing_InaccessibleToNonAdmins() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should only be auditable to admins via %s", authType), func() {
+	s.runForEachClientExcept("should only be auditable to admins", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -290,14 +279,13 @@ func (s *TestSuite) TestWebhooks_Auditing_InaccessibleToNonAdmins() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestWebhooks_Auditing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be auditable via %s", authType), func() {
+	s.runForEachClientExcept("should be auditable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -321,6 +309,6 @@ func (s *TestSuite) TestWebhooks_Auditing() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
-		})
-	}
+		}
+	})
 }

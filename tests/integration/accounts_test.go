@@ -30,9 +30,8 @@ func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
 }
 
 func (s *TestSuite) TestAccounts_Creating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to create accounts via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to create accounts", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -58,14 +57,13 @@ func (s *TestSuite) TestAccounts_Creating() {
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Listing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to list accounts via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to list accounts", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -98,14 +96,13 @@ func (s *TestSuite) TestAccounts_Listing() {
 			for _, createdAccount := range actual.Accounts {
 				assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Reading_Returns404ForNonexistentAccount() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to read a non-existent account via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to read a non-existent account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -114,14 +111,13 @@ func (s *TestSuite) TestAccounts_Reading_Returns404ForNonexistentAccount() {
 			// Attempt to fetch nonexistent account.
 			_, err := testClients.main.GetAccount(ctx, nonexistentID)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Reading() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to read an account via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to read an account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -142,14 +138,13 @@ func (s *TestSuite) TestAccounts_Reading() {
 
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Updating_Returns404ForNonexistentAccount() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to update a non-existent account via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to update a non-existent account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -159,14 +154,13 @@ func (s *TestSuite) TestAccounts_Updating_Returns404ForNonexistentAccount() {
 			exampleAccount.ID = nonexistentID
 
 			assert.Error(t, testClients.main.UpdateAccount(ctx, exampleAccount))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Updating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to update an account via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to update an account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -202,28 +196,26 @@ func (s *TestSuite) TestAccounts_Updating() {
 
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Archiving_Returns404ForNonexistentAccount() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to archiv a non-existent account via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to archiv a non-existent account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			assert.Error(t, testClients.main.ArchiveAccount(ctx, nonexistentID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Archiving() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to archive an account via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to archive an account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -247,14 +239,13 @@ func (s *TestSuite) TestAccounts_Archiving() {
 				{EventType: audit.AccountArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_ChangingMemberships() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to change members of an account via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to change members of an account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			logger := testlogging.NewLogger(t)
@@ -374,14 +365,13 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			for i := 0; i < userCount; i++ {
 				require.NoError(t, testClients.admin.ArchiveUser(ctx, users[i].ID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_OwnershipTransfer() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to transfer ownership of an account via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to transfer ownership of an account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -461,14 +451,13 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
 
 			require.NoError(t, testClients.admin.ArchiveUser(ctx, futureOwner.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Auditing_Returns404ForNonexistentAccount() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to audit a non-existent account via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to audit a non-existent account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -478,14 +467,13 @@ func (s *TestSuite) TestAccounts_Auditing_Returns404ForNonexistentAccount() {
 
 			assert.NoError(t, err)
 			assert.Empty(t, x)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Auditing_InaccessibleToNonAdmins() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to audit an account as non-admin via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to audit an account as non-admin", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -504,14 +492,13 @@ func (s *TestSuite) TestAccounts_Auditing_InaccessibleToNonAdmins() {
 
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_Auditing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to audit an account via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to audit an account", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -530,6 +517,6 @@ func (s *TestSuite) TestAccounts_Auditing() {
 
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-		})
-	}
+		}
+	})
 }

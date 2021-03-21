@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -24,6 +25,7 @@ var (
 )
 
 type testClientWrapper struct {
+	authType    string
 	main, admin *httpclient.Client
 }
 
@@ -74,24 +76,20 @@ func (s *TestSuite) SetupTest() {
 	s.ensure()
 }
 
-/*
-func (s *TestSuite) runForEachClientExcept(t *testing.T, subtestBuilder func(*testClientWrapper) func(), exceptions ...string) {
-	t.Helper()
-
+func (s *TestSuite) runForEachClientExcept(name string, subtestBuilder func(*testClientWrapper) func(), exceptions ...string) {
 	for a, c := range s.eachClientExcept(exceptions...) {
 		authType, testClients := a, c
-		s.Run(fmt.Sprintf("%s via %s", t.Name(), authType), subtestBuilder(testClients))
+		s.Run(fmt.Sprintf("%s via %s", name, authType), subtestBuilder(testClients))
 	}
 }
-*/
 
 func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClientWrapper {
 	s.ensure()
 	t := s.T()
 
 	clients := map[string]*testClientWrapper{
-		cookieAuthType: {main: s.cookieClient, admin: s.adminCookieClient},
-		pasetoAuthType: {main: s.pasetoClient, admin: s.adminPASETOClient},
+		cookieAuthType: {authType: cookieAuthType, main: s.cookieClient, admin: s.adminCookieClient},
+		pasetoAuthType: {authType: pasetoAuthType, main: s.pasetoClient, admin: s.adminPASETOClient},
 	}
 
 	for _, name := range exceptions {
@@ -112,15 +110,28 @@ var _ suite.WithStats = (*TestSuite)(nil)
 const minimumTestThreshold = 1 * time.Millisecond
 
 func (s *TestSuite) checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats *suite.SuiteInformation) {
-	t := s.T()
-
 	for testName, stat := range stats.TestStats {
 		if stat.End.Sub(stat.Start) < minimumTestThreshold && stat.Passed {
-			t.Fatalf("suspiciously quick test execution time: %q", testName)
+			s.T().Fatalf("suspiciously quick test execution time: %q", testName)
 		}
 	}
 }
 
+func (s *TestSuite) checkTestRunsForAppropriateRunCount(stats *suite.SuiteInformation) {
+	/*
+		Acknowledged that this:
+			1. a corny thing to do
+			2. an annoying thing to have to update when you add new tests
+			3. the source of a false negative when debugging a singular test
+
+		That said, in the event someone boo-boos and leaves something in globalClientExceptions, this part will fail,
+		which is worth it.
+	*/
+	const totalExpectedTestCount = 81
+	require.Equal(s.T(), totalExpectedTestCount, len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))
+}
+
 func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
 	s.checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats)
+	s.checkTestRunsForAppropriateRunCount(stats)
 }

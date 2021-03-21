@@ -1,17 +1,14 @@
 package integration
 
 import (
-	"fmt"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func (s *TestSuite) TestAuditLogEntryListing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be read in a list by an admin via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be read in a list by an admin", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -21,14 +18,13 @@ func (s *TestSuite) TestAuditLogEntryListing() {
 			requireNotNilAndNoProblems(t, actual, err)
 
 			assert.NotEmpty(t, actual.Entries)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAuditLogEntryReading() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be read as an individual by an admin via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be read as an individual by an admin", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -43,6 +39,6 @@ func (s *TestSuite) TestAuditLogEntryReading() {
 			}
 
 			assert.NotEmpty(t, actual.Entries)
-		})
-	}
+		}
+	})
 }

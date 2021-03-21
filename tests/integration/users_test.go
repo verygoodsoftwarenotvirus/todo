@@ -39,9 +39,8 @@ func checkUserEquality(t *testing.T, expected, actual *types.User) {
 }
 
 func (s *TestSuite) TestUsers_Creating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
+	s.runForEachClientExcept("should be creatable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -67,14 +66,13 @@ func (s *TestSuite) TestUsers_Creating() {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
 
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Reading_Returns404ForNonexistentUser() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should return an error when trying to read a user that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("should return an error when trying to read a user that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -83,14 +81,13 @@ func (s *TestSuite) TestUsers_Reading_Returns404ForNonexistentUser() {
 			actual, err := testClients.admin.GetUser(ctx, nonexistentID)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Reading() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be read", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -109,14 +106,13 @@ func (s *TestSuite) TestUsers_Reading() {
 
 			// Clean up.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, actual.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Searching_ReturnsEmptyWhenSearchingForUsernameThatIsNotPresentInTheDatabase() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should return empty slice when searching for a username that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("it should return empty slice when searching for a username that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -125,14 +121,13 @@ func (s *TestSuite) TestUsers_Searching_ReturnsEmptyWhenSearchingForUsernameThat
 			actual, err := testClients.admin.SearchForUsersByUsername(ctx, "   this is a really long string that contains characters unlikely to yield any real results   ")
 			assert.Nil(t, actual)
 			assert.NoError(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Searching_OnlyAccessibleToAdmins() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should only be accessible to admins via %s", authType), func() {
+	s.runForEachClientExcept("it should only be accessible to admins", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -142,14 +137,13 @@ func (s *TestSuite) TestUsers_Searching_OnlyAccessibleToAdmins() {
 			actual, err := testClients.main.SearchForUsersByUsername(ctx, s.user.Username)
 			assert.Nil(t, actual)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Searching() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should return be searchable via %s", authType), func() {
+	s.runForEachClientExcept("it should return be searchable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -179,28 +173,26 @@ func (s *TestSuite) TestUsers_Searching() {
 			for _, id := range createdUserIDs {
 				require.NoError(t, testClients.admin.ArchiveUser(ctx, id))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Archiving_Returns404ForNonexistentUser() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to archive a non-existent user via %s", authType), func() {
+	s.runForEachClientExcept("should fail to archive a non-existent user", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			assert.Error(t, testClients.admin.ArchiveUser(ctx, nonexistentID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Archiving() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be archived via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be archived", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -230,14 +222,13 @@ func (s *TestSuite) TestUsers_Archiving() {
 				{EventType: audit.UserArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Auditing_Returns404ForNonexistentUser() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should return an error when trying to audit something that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("it should return an error when trying to audit something that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -253,14 +244,13 @@ func (s *TestSuite) TestUsers_Auditing_Returns404ForNonexistentUser() {
 			x, err := testClients.admin.GetAuditLogForUser(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Auditing_InaccessibleToNonAdmins() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should not be auditable by a non-admin via %s", authType), func() {
+	s.runForEachClientExcept("it should not be auditable by a non-admin", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -279,14 +269,13 @@ func (s *TestSuite) TestUsers_Auditing_InaccessibleToNonAdmins() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_Auditing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be audited via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be audited", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -311,14 +300,13 @@ func (s *TestSuite) TestUsers_Auditing() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestUsers_AvatarManagement() {
-	for a, c := range s.eachClientExcept(pasetoAuthType) {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to upload an avatar via %s", authType), func() {
+	s.runForEachClientExcept("should be able to upload an avatar", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -349,6 +337,6 @@ func (s *TestSuite) TestUsers_AvatarManagement() {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, s.user.ID, "")
 
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, s.user.ID))
-		})
-	}
+		}
+	}, pasetoAuthType)
 }

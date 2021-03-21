@@ -24,9 +24,8 @@ func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 }
 
 func (s *TestSuite) TestItems_Creating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
+	s.runForEachClientExcept("should be creatable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -50,14 +49,13 @@ func (s *TestSuite) TestItems_Creating() {
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Listing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be readable in paginated form via %s", authType), func() {
+	s.runForEachClientExcept("should be readable in paginated form", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -90,14 +88,13 @@ func (s *TestSuite) TestItems_Listing() {
 			for _, createdItem := range actual.Items {
 				assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Searching() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be search for items via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be search for items", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -133,14 +130,13 @@ func (s *TestSuite) TestItems_Searching() {
 			for _, createdItem := range expected {
 				assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Searching_ReturnsOnlyItemsThatBelongToYou() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should only receive your own items via %s", authType), func() {
+	s.runForEachClientExcept("should only receive your own items", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -176,14 +172,13 @@ func (s *TestSuite) TestItems_Searching_ReturnsOnlyItemsThatBelongToYou() {
 			for _, createdItem := range expected {
 				assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_ExistenceChecking_ReturnsFalseForNonexistentItem() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not return an error for nonexistent item via %s", authType), func() {
+	s.runForEachClientExcept("should not return an error for nonexistent item", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -193,14 +188,13 @@ func (s *TestSuite) TestItems_ExistenceChecking_ReturnsFalseForNonexistentItem()
 			actual, err := testClients.main.ItemExists(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.False(t, actual)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_ExistenceChecking_ReturnsTrueForValidItem() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not return an error for existent item via %s", authType), func() {
+	s.runForEachClientExcept("should not return an error for existent item", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -219,14 +213,13 @@ func (s *TestSuite) TestItems_ExistenceChecking_ReturnsTrueForValidItem() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Reading_Returns404ForNonexistentItem() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should return an error when trying to read an item that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("it should return an error when trying to read an item that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -235,14 +228,13 @@ func (s *TestSuite) TestItems_Reading_Returns404ForNonexistentItem() {
 			// Attempt to fetch nonexistent item.
 			_, err := testClients.main.GetItem(ctx, nonexistentID)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Reading() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should be readable via %s", authType), func() {
+	s.runForEachClientExcept("it should be readable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -263,14 +255,13 @@ func (s *TestSuite) TestItems_Reading() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Updating_Returns404ForNonexistentItem() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should return an error when trying to update something that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("it should return an error when trying to update something that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -280,14 +271,13 @@ func (s *TestSuite) TestItems_Updating_Returns404ForNonexistentItem() {
 			exampleItem.ID = nonexistentID
 
 			assert.Error(t, testClients.main.UpdateItem(ctx, exampleItem))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Updating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should be possible to update an item via %s", authType), func() {
+	s.runForEachClientExcept("it should be possible to update an item", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -322,28 +312,26 @@ func (s *TestSuite) TestItems_Updating() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Archiving_Returns404ForNonexistentItem() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should return an error when trying to delete something that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("it should return an error when trying to delete something that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			assert.Error(t, testClients.main.ArchiveItem(ctx, nonexistentID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Archiving() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should be possible to delete an item via %s", authType), func() {
+	s.runForEachClientExcept("it should be possible to delete an item", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -366,14 +354,13 @@ func (s *TestSuite) TestItems_Archiving() {
 				{EventType: audit.ItemArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Auditing_Returns404ForNonexistentItem() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should return an error when trying to audit something that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("it should return an error when trying to audit something that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -383,14 +370,13 @@ func (s *TestSuite) TestItems_Auditing_Returns404ForNonexistentItem() {
 
 			assert.NoError(t, err)
 			assert.Empty(t, x)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestItems_Auditing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("it should not be auditable by a non-admin via %s", authType), func() {
+	s.runForEachClientExcept("it should not be auditable by a non-admin", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -409,6 +395,6 @@ func (s *TestSuite) TestItems_Auditing() {
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		})
-	}
+		}
+	})
 }

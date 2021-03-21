@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/stretchr/testify/assert"
@@ -14,9 +13,8 @@ import (
 )
 
 func (s *TestSuite) TestAdmin_Returns404WhenModifyingUserReputation() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to ban a user that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to ban a user that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -27,14 +25,13 @@ func (s *TestSuite) TestAdmin_Returns404WhenModifyingUserReputation() {
 
 			// Ban user.
 			assert.Error(t, testClients.admin.UpdateUserReputation(ctx, input))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAdmin_BanningUsers() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to ban users via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to ban users", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -45,13 +42,13 @@ func (s *TestSuite) TestAdmin_BanningUsers() {
 				userClient *http.Client
 			)
 
-			switch authType {
+			switch testClients.authType {
 			case cookieAuthType:
 				user, _, userClient, _ = createUserAndClientForTest(ctx, t)
 			case pasetoAuthType:
 				user, _, _, userClient = createUserAndClientForTest(ctx, t)
 			default:
-				log.Panicf("invalid auth type: %q", authType)
+				log.Panicf("invalid auth type: %q", testClients.authType)
 			}
 
 			// Assert that user can access service
@@ -72,6 +69,6 @@ func (s *TestSuite) TestAdmin_BanningUsers() {
 
 			// Clean up.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, user.ID))
-		})
-	}
+		}
+	})
 }

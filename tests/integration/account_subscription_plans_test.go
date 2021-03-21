@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,9 +25,8 @@ func checkPlanEquality(t *testing.T, expected, actual *types.AccountSubscription
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Creating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be creatable via %s", authType), func() {
+	s.runForEachClientExcept("should be creatable", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -54,14 +52,13 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Creating() {
 
 			// Clean up.
 			assert.NoError(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Listing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to be read in a list via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to be read in a list", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -94,14 +91,13 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Listing() {
 			for _, plan := range created {
 				assert.NoError(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, plan.ID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Reading_Returns404ForNonexistentAccountSubscriptionPlan() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to read nonexistent plan via %s", authType), func() {
+	s.runForEachClientExcept("should fail to read nonexistent plan", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -110,14 +106,13 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Reading_Returns404ForNonexisten
 			// Attempt to fetch nonexistent plan.
 			_, err := testClients.admin.GetAccountSubscriptionPlan(ctx, nonexistentID)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Reading() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be read via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be read", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -139,14 +134,13 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Reading() {
 
 			// Clean up plan.
 			assert.NoError(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, createdPlan.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Updating_Returns404ForNonexistentAccountSubscriptionPlan() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to update a non-existent plan via %s", authType), func() {
+	s.runForEachClientExcept("should fail to update a non-existent plan", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -156,14 +150,13 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Updating_Returns404ForNonexiste
 			exampleAccountSubscriptionPlan.ID = nonexistentID
 
 			assert.Error(t, testClients.admin.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Updating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be able to be updated via %s", authType), func() {
+	s.runForEachClientExcept("should be able to be updated", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -199,28 +192,26 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Updating() {
 
 			// Clean up plan.
 			assert.NoError(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, createdAccountSubscriptionPlan.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Archiving_Returns404ForNonexistentAccountSubscriptionPlan() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to archive nonexistent plan via %s", authType), func() {
+	s.runForEachClientExcept("should fail to archive nonexistent plan", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
 			assert.Error(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, nonexistentID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Archiving() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to archive plan via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to archive plan", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -244,14 +235,13 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Archiving() {
 				{EventType: audit.AccountSubscriptionPlanArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccountSubscriptionPlan.ID, audit.AccountSubscriptionPlanAssignmentKey)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Auditing_Returns404ForNonexistentAccountSubscriptionPlan() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should fail to audit plan that does not exist via %s", authType), func() {
+	s.runForEachClientExcept("should fail to audit plan that does not exist", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -260,14 +250,13 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Auditing_Returns404ForNonexiste
 			x, err := testClients.admin.GetAuditLogForAccountSubscriptionPlan(ctx, nonexistentID)
 			assert.NoError(t, err)
 			assert.Empty(t, x)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccountSubscriptionPlans_Auditing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be auditable by non-admin via %s", authType), func() {
+	s.runForEachClientExcept("should not be auditable by non-admin", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -286,6 +275,6 @@ func (s *TestSuite) TestAccountSubscriptionPlans_Auditing() {
 
 			// Clean up plan.
 			assert.NoError(t, testClients.admin.ArchiveAccountSubscriptionPlan(ctx, createdPlan.ID))
-		})
-	}
+		}
+	})
 }

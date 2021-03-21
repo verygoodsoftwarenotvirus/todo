@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,9 +26,8 @@ func checkAPIClientEquality(t *testing.T, expected, actual *types.APIClient) {
 }
 
 func (s *TestSuite) TestAPIClients_Creating() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to create API clients via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to create API clients", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -61,14 +59,13 @@ func (s *TestSuite) TestAPIClients_Creating() {
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAPIClients_Listing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to read API clients in a list via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to read API clients in a list", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			const clientsToMake = 1
@@ -108,14 +105,13 @@ func (s *TestSuite) TestAPIClients_Listing() {
 			for _, createdAPIClientID := range expected {
 				assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClientID))
 			}
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAPIClients_Reading_Returns404ForNonexistentAPIClient() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to read non-existent API clients via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to read non-existent API clients", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -124,14 +120,13 @@ func (s *TestSuite) TestAPIClients_Reading_Returns404ForNonexistentAPIClient() {
 			// Attempt to fetch nonexistent API client.
 			_, err := testClients.main.GetAPIClient(ctx, nonexistentID)
 			assert.Error(t, err)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAPIClients_Reading() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to read API clients via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to read API clients", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -158,28 +153,26 @@ func (s *TestSuite) TestAPIClients_Reading() {
 
 			// Clean up API client.
 			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAPIClients_Archiving_Returns404ForNonexistentAPIClient() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should not be possible to archive non-existent API clients via %s", authType), func() {
+	s.runForEachClientExcept("should not be possible to archive non-existent API clients", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(context.Background(), t.Name())
 			defer span.End()
 
 			assert.Error(t, testClients.main.ArchiveAPIClient(ctx, nonexistentID))
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAPIClients_Archiving() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to archive API clients via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to archive API clients", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -208,14 +201,13 @@ func (s *TestSuite) TestAPIClients_Archiving() {
 				{EventType: audit.APIClientArchiveEvent},
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAPIClient.ID, audit.APIClientAssignmentKey)
-		})
-	}
+		}
+	})
 }
 
 func (s *TestSuite) TestAPIClients_Auditing() {
-	for a, c := range s.eachClientExcept() {
-		authType, testClients := a, c
-		s.Run(fmt.Sprintf("should be possible to audit API clients via %s", authType), func() {
+	s.runForEachClientExcept("should be possible to audit API clients", func(testClients *testClientWrapper) func() {
+		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
@@ -240,6 +232,6 @@ func (s *TestSuite) TestAPIClients_Auditing() {
 
 			// Clean up API client.
 			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
-		})
-	}
+		}
+	})
 }

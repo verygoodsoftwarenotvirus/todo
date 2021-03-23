@@ -111,7 +111,7 @@ frontend-only: ensure-pnpm clean-frontend
 
 .PHONY: format-frontend
 format-frontend:
-	(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run format )
+	(cd $(FRONTEND_DIR) && $(FRONTEND_TOOL) run format)
 
 .PHONY: format-backend
 format-backend:

@@ -16,6 +16,7 @@ require (
 	github.com/aws/aws-sdk-go v1.37.30
 	github.com/blevesearch/bleve/v2 v2.0.2
 	github.com/brianvoe/gofakeit/v5 v5.11.2
+	github.com/carolynvs/magex v0.5.0
 	github.com/cznic/ql v1.2.0 // indirect
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.1.1
@@ -27,6 +28,7 @@ require (
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/lib/pq v1.10.0
 	github.com/luna-duclos/instrumentedsql v1.1.3
+	github.com/magefile/mage v1.11.0
 	github.com/makiuchi-d/gozxing v0.0.0-20210302045325-d599004e2b52
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/moul/http2curl v1.0.0

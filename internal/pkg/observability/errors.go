@@ -14,13 +14,14 @@ func PrepareError(err error, logger logging.Logger, span trace.Span, description
 	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 
 	logging.EnsureLogger(logger).Error(err, desc)
-	tracing.AttachErrorToSpan(span, err)
+	tracing.AttachErrorToSpan(span, desc, err)
 
 	return fmt.Errorf("%s: %w", desc, err)
 }
 
 // AcknowledgeError standardizes our error handling by logging and tracing consistently.
 func AcknowledgeError(err error, logger logging.Logger, span trace.Span, descriptionFmt string, descriptionArgs ...interface{}) {
+	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 	logging.EnsureLogger(logger).Error(err, fmt.Sprintf(descriptionFmt, descriptionArgs...))
-	tracing.AttachErrorToSpan(span, err)
+	tracing.AttachErrorToSpan(span, desc, err)
 }

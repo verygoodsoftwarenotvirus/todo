@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -62,7 +63,10 @@ func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http
 	_, span := e.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var enc encoder
+	var (
+		enc    encoder
+		logger = e.logger.WithValue("error_message", msg).WithValue(keys.ResponseStatusKey, statusCode)
+	)
 
 	switch contentTypeFromString(res.Header().Get(ContentTypeHeaderKey)) {
 	case ContentTypeXML:
@@ -78,8 +82,7 @@ func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http
 	res.WriteHeader(statusCode)
 
 	if err := enc.Encode(&types.ErrorResponse{Message: msg, Code: statusCode}); err != nil {
-		e.logger.Error(err, "contentType error response")
-		tracing.AttachErrorToSpan(span, err)
+		observability.AcknowledgeError(err, logger, span, "encoding error response")
 	}
 }
 
@@ -145,8 +148,7 @@ func (e *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.Resp
 	res.WriteHeader(statusCode)
 
 	if err := enc.Encode(v); err != nil {
-		logger.Error(err, "contentType response")
-		tracing.AttachErrorToSpan(span, err)
+		observability.AcknowledgeError(err, logger, span, "encoding response")
 	}
 }
 

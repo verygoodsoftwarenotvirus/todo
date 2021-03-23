@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"io"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
@@ -34,16 +35,14 @@ func (e *clientEncoder) EncodeReader(ctx context.Context, data interface{}) (io.
 	case ContentTypeXML:
 		out, err := xml.Marshal(data)
 		if err != nil {
-			tracing.AttachErrorToSpan(span, err)
-			return nil, err
+			return nil, observability.PrepareError(err, e.logger, span, "marshaling to XML")
 		}
 
 		return bytes.NewReader(out), nil
 	default:
 		out, err := json.Marshal(data)
 		if err != nil {
-			tracing.AttachErrorToSpan(span, err)
-			return nil, err
+			return nil, observability.PrepareError(err, e.logger, span, "marshaling to JSON")
 		}
 
 		return bytes.NewReader(out), nil

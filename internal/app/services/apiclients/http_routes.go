@@ -36,10 +36,13 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
-
-	// extract filter.
 	filter := types.ExtractQueryFilter(req)
+	logger := s.logger.WithRequest(req).
+		WithValue(keys.FilterLimitKey, filter.Limit).
+		WithValue(keys.FilterPageKey, filter.Page).
+		WithValue(keys.FilterSortByKey, string(filter.SortBy))
+
+	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user.
 	userID := s.fetchUserID(req)
@@ -172,7 +175,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -210,7 +213,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)

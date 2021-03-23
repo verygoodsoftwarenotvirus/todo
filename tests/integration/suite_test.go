@@ -108,12 +108,14 @@ func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClien
 
 var _ suite.WithStats = (*TestSuite)(nil)
 
-const minimumTestThreshold = 1 * time.Millisecond
-
 func (s *TestSuite) checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats *suite.SuiteInformation) {
-	for testName, stat := range stats.TestStats {
-		if stat.End.Sub(stat.Start) < minimumTestThreshold && stat.Passed {
-			s.T().Fatalf("suspiciously quick test execution time: %q", testName)
+	const minimumTestThreshold = 1 * time.Millisecond
+
+	if stats.Passed() {
+		for testName, stat := range stats.TestStats {
+			if stat.End.Sub(stat.Start) < minimumTestThreshold && stat.Passed {
+				s.T().Fatalf("suspiciously quick test execution time: %q", testName)
+			}
 		}
 	}
 }
@@ -129,7 +131,10 @@ func (s *TestSuite) checkTestRunsForAppropriateRunCount(stats *suite.SuiteInform
 		which is worth it.
 	*/
 	const totalExpectedTestCount = 81
-	require.Equal(s.T(), totalExpectedTestCount, len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))
+
+	if stats.Passed() {
+		require.Equal(s.T(), totalExpectedTestCount, len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))
+	}
 }
 
 func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {

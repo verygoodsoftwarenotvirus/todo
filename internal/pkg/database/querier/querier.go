@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
@@ -193,8 +194,7 @@ func (c *Client) rollbackTransaction(ctx context.Context, tx *sql.Tx) {
 	defer span.End()
 
 	if err := tx.Rollback(); err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		c.logger.WithValue(keys.RollbackErrorKey, true).Error(err, "rolling back transaction")
+		observability.AcknowledgeError(err, c.logger, span, "rolling back transaction")
 	}
 }
 
@@ -204,8 +204,7 @@ func (c *Client) getIDFromResult(ctx context.Context, res sql.Result) uint64 {
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		c.logger.WithValue(keys.RowIDErrorKey, true).Error(err, "fetching row ID")
+		observability.AcknowledgeError(err, c.logger.WithValue(keys.RowIDErrorKey, true), span, "fetching row ID")
 	}
 
 	return uint64(id)
@@ -218,8 +217,7 @@ func (c *Client) performCountQuery(ctx context.Context, querier database.Querier
 	tracing.AttachDatabaseQueryToSpan(span, query, "count query", nil)
 
 	if err = querier.QueryRowContext(ctx, query).Scan(&count); err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return 0, fmt.Errorf("executing count query: %w", err)
+		return 0, observability.PrepareError(err, c.logger, span, "executing count query")
 	}
 
 	return count, nil
@@ -229,15 +227,13 @@ func (c *Client) performBooleanQuery(ctx context.Context, querier database.Queri
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger.WithValue(keys.DatabaseQueryKey, query)
 	tracing.AttachDatabaseQueryToSpan(span, query, "boolean query", args)
 
 	if err = querier.QueryRowContext(ctx, query, args...).Scan(&exists); errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	} else if err != nil {
-		c.logger.WithValue(keys.QueryKey, query).Error(err, "executing boolean query")
-		tracing.AttachErrorToSpan(span, err)
-
-		return false, fmt.Errorf("executing existence query: %w", err)
+		return false, observability.PrepareError(err, logger, span, "executing boolean query")
 	}
 
 	return exists, nil
@@ -260,10 +256,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 		var id uint64
 
 		if err := querier.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
-			logger.Error(err, "executing query")
-			tracing.AttachErrorToSpan(span, err)
-
-			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
+			return 0, observability.PrepareError(err, logger, span, "executing %s query", queryDescription)
 		}
 
 		logger.Debug("query executed successfully")
@@ -272,15 +265,12 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	} else if c.idStrategy == ReturningStatementIDRetrievalStrategy {
 		res, err := querier.ExecContext(ctx, query, args...)
 		if err != nil {
-			logger.Error(err, "executing query")
-			tracing.AttachErrorToSpan(span, err)
-
-			return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
+			return 0, observability.PrepareError(err, logger, span, "executing %s query", queryDescription)
 		}
 
 		if count, rowsCountErr := res.RowsAffected(); count == 0 || rowsCountErr != nil {
-			logger.Error(rowsCountErr, "no rows modified by query")
-			tracing.AttachErrorToSpan(span, err)
+			logger.Debug("no rows modified by query")
+			span.AddEvent("no_rows_modified")
 
 			return 0, sql.ErrNoRows
 		}
@@ -292,16 +282,13 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 
 	res, err := querier.ExecContext(ctx, query, args...)
 	if err != nil {
-		logger.Error(err, "executing query")
-		tracing.AttachErrorToSpan(span, err)
-
-		return 0, fmt.Errorf("executing %s query: %w", queryDescription, err)
+		return 0, observability.PrepareError(err, logger, span, "executing query")
 	}
 
 	if res != nil {
 		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
 			logger.Debug("no rows modified by query")
-			tracing.AttachErrorToSpan(span, sql.ErrNoRows)
+			span.AddEvent("no_rows_modified")
 
 			return 0, sql.ErrNoRows
 		}

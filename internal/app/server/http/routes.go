@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/heptiolabs/healthcheck"
@@ -29,7 +30,10 @@ func buildNumericIDURLChunk(key string) string {
 	return fmt.Sprintf("/"+numericIDPattern, key)
 }
 
-func (s *Server) setupRouter(router routing.Router, frontendSettings frontendservice.Config, _ metrics.Config, metricsHandler metrics.Handler) {
+func (s *Server) setupRouter(ctx context.Context, router routing.Router, frontendSettings frontendservice.Config, _ metrics.Config, metricsHandler metrics.Handler) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
 	router.Route("/_meta_", func(metaRouter routing.Router) {
 		health := healthcheck.NewHandler()
 		// Expose a liveness check on /live

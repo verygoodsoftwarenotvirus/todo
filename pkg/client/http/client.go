@@ -40,6 +40,7 @@ type Client struct {
 	panicker              panicking.Panicker
 	url                   *url.URL
 	requestBuilder        *requests.Builder
+	encoder               encoding.ClientEncoder
 	unauthenticatedClient *http.Client
 	authedClient          *http.Client
 	authMethod            *authMethod
@@ -77,12 +78,13 @@ func NewClient(u *url.URL, options ...option) (*Client, error) {
 
 	c := &Client{
 		url:                   u,
-		authedClient:          http.DefaultClient,
-		unauthenticatedClient: http.DefaultClient,
-		debug:                 false,
-		panicker:              panicking.NewProductionPanicker(),
 		logger:                l,
+		debug:                 false,
 		tracer:                tracing.NewTracer(clientName),
+		panicker:              panicking.NewProductionPanicker(),
+		encoder:               encoding.ProvideClientEncoder(l, encoding.ContentTypeJSON),
+		authedClient:          &http.Client{Transport: buildWrappedTransport(defaultTimeout), Timeout: defaultTimeout},
+		unauthenticatedClient: &http.Client{Transport: buildWrappedTransport(defaultTimeout), Timeout: defaultTimeout},
 	}
 
 	requestBuilder, err := requests.NewBuilder(c.url, c.logger, encoding.ProvideClientEncoder(l, defaultContentType))
@@ -110,8 +112,7 @@ func (c *Client) closeResponseBody(ctx context.Context, res *http.Response) {
 
 	if res != nil {
 		if err := res.Body.Close(); err != nil {
-			tracing.AttachErrorToSpan(span, err)
-			logger.Error(err, "closing response body")
+			observability.AcknowledgeError(err, logger, span, "closing response body")
 		}
 	}
 }
@@ -143,10 +144,11 @@ func (c *Client) buildRawURL(ctx context.Context, queryParams url.Values, parts 
 	defer span.End()
 
 	tu := *c.url
+	logger := c.logger.WithValue(keys.URLQueryKey, queryParams.Encode())
 
 	u, err := url.Parse(path.Join(append([]string{"api", "v1"}, parts...)...))
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
+		observability.AcknowledgeError(err, logger, span, "building URL")
 		return nil
 	}
 
@@ -166,7 +168,7 @@ func (c *Client) buildVersionlessURL(ctx context.Context, qp url.Values, parts .
 
 	u, err := url.Parse(path.Join(parts...))
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
+		tracing.AttachErrorToSpan(span, "building url", err)
 		return ""
 	}
 
@@ -197,16 +199,14 @@ func (c *Client) IsUp(ctx context.Context) bool {
 
 	req, err := c.requestBuilder.BuildHealthCheckRequest(ctx)
 	if err != nil {
-		logger.Error(err, "building request")
-		tracing.AttachErrorToSpan(span, err)
+		observability.AcknowledgeError(err, logger, span, "building health check request")
 
 		return false
 	}
 
 	res, err := c.fetchResponseToRequest(ctx, c.unauthenticatedClient, req)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		logger.Error(err, "health check")
+		observability.AcknowledgeError(err, logger, span, "performing health check")
 
 		return false
 	}
@@ -260,8 +260,7 @@ func (c *Client) executeAndUnmarshal(ctx context.Context, req *http.Request, htt
 	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
 
 	if err = errorFromResponse(res); err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return err
+		return observability.PrepareError(err, logger, span, "executing request")
 	}
 
 	if out != nil {

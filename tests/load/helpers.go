@@ -136,13 +136,6 @@ func createClientForTest(ctx context.Context, name string) (*httpclient.Client, 
 	return pasetoClient, builder, nil
 }
 
-func buildHTTPClient() *http.Client {
-	return &http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   10 * time.Second,
-	}
-}
-
 func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, error) {
 	if urlToUse == "" {
 		panic("url not set!")
@@ -151,7 +144,6 @@ func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, err
 	c, err := httpclient.NewClient(
 		parsedURLToUse,
 		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
-		httpclient.UsingHTTPClient(buildHTTPClient()),
 		httpclient.UsingCookie(cookie),
 	)
 	if err != nil {
@@ -170,7 +162,6 @@ func initializePASETOPoweredClient(clientID string, secretKey []byte) (*httpclie
 	c, err := httpclient.NewClient(
 		parsedURLToUse,
 		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
-		httpclient.UsingHTTPClient(buildHTTPClient()),
 		httpclient.UsingPASETO(clientID, secretKey),
 	)
 	if err != nil {

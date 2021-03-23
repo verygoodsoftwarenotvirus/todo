@@ -20,11 +20,13 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
-	logger.Debug("ListHandler invoked")
-
-	// ensure query filter.
 	filter := types.ExtractQueryFilter(req)
+	logger := s.logger.WithRequest(req).
+		WithValue(keys.FilterLimitKey, filter.Limit).
+		WithValue(keys.FilterPageKey, filter.Page).
+		WithValue(keys.FilterSortByKey, string(filter.SortBy))
+
+	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
 	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
@@ -35,7 +37,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	var (
 		entries *types.AuditLogEntryList
@@ -74,7 +76,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine audit log entry ID.
 	entryID := s.auditLogEntryIDFetcher(req)

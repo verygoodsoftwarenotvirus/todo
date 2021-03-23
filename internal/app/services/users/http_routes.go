@@ -441,7 +441,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// determine relevant user ID.
 	tracing.AttachUserIDToSpan(span, reqCtx.User.ID)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// make sure everything's on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(

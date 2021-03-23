@@ -2,9 +2,9 @@ package tracing
 
 import (
 	"net/url"
+	"time"
 
 	useragent "github.com/mssola/user_agent"
-	"go.opentelemetry.io/otel/codes"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -66,9 +66,10 @@ func AttachToSpan(span trace.Span, key string, val interface{}) {
 }
 
 // AttachFilterToSpan provides a consistent way to attach a filter's info to a span.
-func AttachFilterToSpan(span trace.Span, page uint64, limit uint8) {
+func AttachFilterToSpan(span trace.Span, page uint64, limit uint8, sortBy string) {
 	attachToSpan(span, keys.FilterPageKey, page)
 	attachToSpan(span, keys.FilterLimitKey, limit)
+	attachStringToSpan(span, keys.FilterSortByKey, sortBy)
 }
 
 // AttachAuditLogEntryIDToSpan attaches an audit log entry ID to a given span.
@@ -105,6 +106,7 @@ func AttachAccountSubscriptionPlanIDToSpan(span trace.Span, planID uint64) {
 func AttachRequestContextToSpan(span trace.Span, reqCtx *types.RequestContext) {
 	if reqCtx != nil {
 		attachToSpan(span, keys.RequesterKey, reqCtx.User.ID)
+		attachToSpan(span, keys.ActiveAccountIDKey, reqCtx.ActiveAccountID)
 		attachToSpan(span, keys.UserIsAdminKey, reqCtx.User.ServiceAdminPermissions.IsServiceAdmin())
 	}
 }
@@ -140,15 +142,19 @@ func AttachRequestURIToSpan(span trace.Span, uri string) {
 }
 
 // AttachErrorToSpan attaches a given error to a span.
-func AttachErrorToSpan(span trace.Span, err error) {
+func AttachErrorToSpan(span trace.Span, description string, err error) {
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(
+			err,
+			trace.WithTimestamp(time.Now()),
+			trace.WithAttributes(attribute.String("error.description", description)),
+		)
 	}
 }
 
 // AttachDatabaseQueryToSpan attaches a given search query to a span.
 func AttachDatabaseQueryToSpan(span trace.Span, query, queryDescription string, args []interface{}) {
-	attachToSpan(span, keys.QueryKey, query)
+	attachToSpan(span, keys.DatabaseQueryKey, query)
 	attachToSpan(span, "query_description", queryDescription)
 
 	if args != nil {

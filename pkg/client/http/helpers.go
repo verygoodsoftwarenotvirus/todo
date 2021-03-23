@@ -100,14 +100,17 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	if res.StatusCode >= http.StatusBadRequest {
 		apiErr := &types.ErrorResponse{Code: res.StatusCode}
 
+		// FIXME: these should be encoders
 		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
+			observability.AcknowledgeError(err, logger, span, "unmarshaling error response")
 			logger.Error(err, "unmarshalling error response")
-			tracing.AttachErrorToSpan(span, err)
+			tracing.AttachErrorToSpan(span, "", err)
 		}
 
 		return apiErr
 	}
 
+	// FIXME: these should be encoders
 	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
 		return observability.PrepareError(err, logger, span, "unmarshalling response body")
 	}

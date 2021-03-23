@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -191,7 +192,12 @@ func Lint() error {
 	}
 
 	if err := runContainer(
-		[]string{"--rm", "--volume"},
+		[]string{
+			"--rm",
+			"--volume",
+			fmt.Sprintf("%s:%s", cwd, cwd),
+			fmt.Sprintf("--workdir=%s", cwd),
+		},
 		lintImage,
 		"golangci-lint",
 		"run",
@@ -200,6 +206,23 @@ func Lint() error {
 	); err != nil {
 		return err
 	}
+
+	//if err := sh.Run(
+	//	containerRunner,
+	//	"run",
+	//	"--rm",
+	//	"--volume",
+	//	fmt.Sprintf("%s:%s", cwd, cwd),
+	//	fmt.Sprintf("--workdir=%s", cwd),
+	//	"--env=GO111MODULE=on",
+	//	lintImage,
+	//	"golangci-lint",
+	//	"run",
+	//	"--config=.golangci.yml",
+	//	"./...",
+	//); err != nil {
+	//	return err
+	//}
 
 	return nil
 }

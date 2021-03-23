@@ -45,8 +45,7 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 		defer func() {
 			if !reqBodyClosed {
 				if err := req.Body.Close(); err != nil {
-					tracing.AttachErrorToSpan(span, err)
-					t.logger.Error(err, "closing response body")
+					observability.AcknowledgeError(err, logger, span, "closing response body")
 				}
 			}
 		}()

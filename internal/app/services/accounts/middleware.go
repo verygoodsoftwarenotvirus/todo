@@ -38,6 +38,8 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		logger.Debug("attached creation input for account to request")
+
 		ctx = context.WithValue(ctx, createMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -65,6 +67,8 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		logger.Debug("attached update input for account to request")
+
 		ctx = context.WithValue(ctx, updateMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -90,6 +94,8 @@ func (s *service) AddMemberInputMiddleware(next http.Handler) http.Handler {
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		logger.Debug("attached account membership creation input to request")
 
 		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
@@ -117,6 +123,8 @@ func (s *service) ModifyMemberPermissionsInputMiddleware(next http.Handler) http
 			return
 		}
 
+		logger.Debug("attached membership permission modification input to request")
+
 		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -142,6 +150,8 @@ func (s *service) AccountTransferInputMiddleware(next http.Handler) http.Handler
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		logger.Debug("attached account transfer input to request")
 
 		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))

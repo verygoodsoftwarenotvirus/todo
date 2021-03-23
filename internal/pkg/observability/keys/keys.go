@@ -13,6 +13,8 @@ const (
 	RequesterKey = "requested_by"
 	// AccountIDKey is the standard key for referring to an account ID.
 	AccountIDKey = "account_id"
+	// ActiveAccountIDKey is the standard key for referring to an active account ID.
+	ActiveAccountIDKey = "active_account_id"
 	// UserIDKey is the standard key for referring to a user ID.
 	UserIDKey = "user_id"
 	// UserIsAdminKey is the standard key for referring to a user's admin status.
@@ -53,8 +55,10 @@ const (
 	ResponseStatusKey = "response_status"
 	// ReasonKey is the standard key for referring to a reason.
 	ReasonKey = "reason"
-	// QueryKey is the standard key for referring to a query.
-	QueryKey = "query"
+	// DatabaseQueryKey is the standard key for referring to a database query.
+	DatabaseQueryKey = "database_query"
+	// URLQueryKey is the standard key for referring to a url query.
+	URLQueryKey = "url_query"
 	// ConnectionDetailsKey is the standard key for referring to a database's URI.
 	ConnectionDetailsKey = "connection_details"
 	// SearchQueryKey is the standard key for referring to a search query parameter value.

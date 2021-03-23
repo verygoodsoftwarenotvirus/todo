@@ -240,8 +240,8 @@ linters:
     - unconvert # Remove unnecessary type conversions
     - unparam # Reports unused function parameters
     - whitespace # Tool for detection of leading and trailing whitespace
-    - wsl # Whitespace Linter - Forces you to use empty lines!
   disable:
+    - wsl # Whitespace Linter - Forces you to use empty lines!  # easily the most annoying one on here
     - stylecheck # Stylecheck is a replacement for golint
     - exhaustivestruct # Checks if all struct's fields are initialized
     - gochecknoinits # Checks that no init functions are present in Go code

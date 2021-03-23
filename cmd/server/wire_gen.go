@@ -100,7 +100,7 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	adminService := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
 	frontendService := frontend.ProvideService(logger, frontendConfig)
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, frontendService, dbm, logger, serverEncoderDecoder, router)
+	httpserverServer, err := httpserver.ProvideServer(ctx, httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, frontendService, dbm, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

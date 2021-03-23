@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -48,7 +47,6 @@ func TestNewClient(T *testing.T) {
 		c, err := NewClient(
 			mustParseURL(exampleURI),
 			UsingLogger(logging.NewNonOperationalLogger()),
-			UsingHTTPClient(httptest.NewTLSServer(nil).Client()),
 		)
 
 		require.NotNil(t, c)
@@ -284,7 +282,7 @@ func TestV1Client_fetchAndUnmarshal(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrUnauthorized, c.fetchAndUnmarshal(ctx, req, &argleBargle{}))
+		assert.True(t, errors.Is(c.fetchAndUnmarshal(ctx, req, &argleBargle{}), ErrUnauthorized))
 	})
 
 	T.Run("with 404", func(t *testing.T) {
@@ -298,7 +296,7 @@ func TestV1Client_fetchAndUnmarshal(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrNotFound, c.fetchAndUnmarshal(ctx, req, &argleBargle{}))
+		assert.True(t, errors.Is(c.fetchAndUnmarshal(ctx, req, &argleBargle{}), ErrNotFound))
 	})
 
 	T.Run("with unreadable response", func(t *testing.T) {
@@ -443,7 +441,7 @@ func TestV1Client_retrieve(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		assert.Equal(t, ErrNotFound, c.fetchAndUnmarshal(ctx, req, &argleBargle{}))
+		assert.True(t, errors.Is(c.fetchAndUnmarshal(ctx, req, &argleBargle{}), ErrNotFound))
 	})
 }
 
@@ -492,7 +490,7 @@ func TestV1Client_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 		err = c.fetchAndUnmarshalWithoutAuthentication(ctx, req, out)
 		assert.Error(t, err)
-		assert.Equal(t, ErrUnauthorized, err)
+		assert.True(t, errors.Is(err, ErrUnauthorized))
 	})
 
 	T.Run("with 404", func(t *testing.T) {
@@ -513,7 +511,7 @@ func TestV1Client_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 		err = c.fetchAndUnmarshalWithoutAuthentication(ctx, req, out)
 		assert.Error(t, err)
-		assert.Equal(t, ErrNotFound, err)
+		assert.True(t, errors.Is(err, ErrNotFound))
 	})
 
 	T.Run("with timeout", func(t *testing.T) {

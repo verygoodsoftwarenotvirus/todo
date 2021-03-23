@@ -22,6 +22,8 @@ require (
 	github.com/go-chi/cors v1.1.1
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gojektech/heimdall v5.0.2+incompatible // indirect
+	github.com/gojektech/heimdall/v6 v6.1.0
 	github.com/google/uuid v1.2.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/securecookie v1.1.1

@@ -33,8 +33,13 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
 	filter := types.ExtractQueryFilter(req)
+	logger := s.logger.WithRequest(req).
+		WithValue(keys.FilterLimitKey, filter.Limit).
+		WithValue(keys.FilterPageKey, filter.Page).
+		WithValue(keys.FilterSortByKey, string(filter.SortBy))
+
+	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// fetch request context
 	reqCtx, err := s.requestContextFetcher(req)
@@ -43,10 +48,11 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
-	// determine if it's an admin request
+	// determine if this is an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
 	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
@@ -56,7 +62,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	if reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
 	} else {
-		accounts, err = s.accountDataManager.GetAccounts(ctx, reqCtx.User.ID, filter)
+		accounts, err = s.accountDataManager.GetAccounts(ctx, requester, filter)
 	}
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -96,23 +102,26 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
-	input.BelongsToUser = reqCtx.User.ID
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
+	input.BelongsToUser = requester
 
 	// create account in database.
-	x, err := s.accountDataManager.CreateAccount(ctx, input, reqCtx.User.ID)
+	account, err := s.accountDataManager.CreateAccount(ctx, input, requester)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	tracing.AttachAccountIDToSpan(span, x.ID)
+	logger = logger.WithValue(keys.AccountIDKey, account.ID)
+	tracing.AttachAccountIDToSpan(span, account.ID)
 
 	// notify relevant parties.
+	logger.Debug("created account")
 	s.accountCounter.Increment(ctx)
 
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, account, http.StatusCreated)
 }
 
 // ReadHandler returns a GET handler that returns an account.
@@ -123,22 +132,23 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
-	if sessionInfoRetrievalErr != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// fetch account from database.
-	x, err := s.accountDataManager.GetAccount(ctx, accountID, reqCtx.User.ID)
+	account, err := s.accountDataManager.GetAccount(ctx, accountID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -149,7 +159,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, account)
 }
 
 // UpdateHandler returns a handler that updates an account.
@@ -176,8 +186,9 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
-	input.BelongsToUser = reqCtx.User.ID
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
+	input.BelongsToUser = requester
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -185,7 +196,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// fetch account from database.
-	x, err := s.accountDataManager.GetAccount(ctx, accountID, reqCtx.User.ID)
+	account, err := s.accountDataManager.GetAccount(ctx, accountID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -196,17 +207,17 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update the data structure.
-	changeReport := x.Update(input)
+	changeReport := account.Update(input)
 
 	// update account in database.
-	if err = s.accountDataManager.UpdateAccount(ctx, x, 0, changeReport); err != nil {
+	if err = s.accountDataManager.UpdateAccount(ctx, account, requester, changeReport); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, account)
 }
 
 // ArchiveHandler returns a handler that archives an account.
@@ -224,16 +235,17 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// archive the account in the database.
-	err = s.accountDataManager.ArchiveAccount(ctx, accountID, reqCtx.User.ID, reqCtx.User.ID)
+	err = s.accountDataManager.ArchiveAccount(ctx, accountID, requester, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -265,10 +277,6 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	accountID := s.accountIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, accountID)
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
-
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)
 	if err != nil {
@@ -277,11 +285,16 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	requester := reqCtx.User.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, requester)
+
+	accountID := s.accountIDFetcher(req)
+	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, accountID, reqCtx.User.ID); err != nil {
+	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, accountID, requester); err != nil {
 		observability.AcknowledgeError(err, logger, span, "adding user to account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -305,14 +318,6 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	accountID := s.accountIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, accountID)
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
-
-	userID := s.userIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, userID)
-	logger = logger.WithValue(keys.UserIDKey, userID)
-
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)
 	if err != nil {
@@ -321,11 +326,20 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 		return
 	}
 
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+
+	accountID := s.accountIDFetcher(req)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
+	userID := s.userIDFetcher(req)
+	logger = logger.WithValue(keys.UserIDKey, userID)
+	tracing.AttachAccountIDToSpan(span, userID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, reqCtx.User.ID, input); err != nil {
+	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, requester, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "modifying user permissions")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -354,17 +368,19 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
-	if requestContextRetrievalError != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "transferring account ownership")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
+	requester := reqCtx.User.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, requester)
 
 	// transfer ownership of account in database.
-	if err := s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, reqCtx.User.ID, input); err != nil {
+	if err = s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, requester, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "transferring account ownership")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -383,14 +399,6 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	// check request context for parsed input struct.
 	reason := req.URL.Query().Get("reason")
 
-	accountID := s.accountIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, accountID)
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
-
-	userID := s.userIDFetcher(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue(keys.AccountIDKey, userID)
-
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)
 	if err != nil {
@@ -399,11 +407,20 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+
+	accountID := s.accountIDFetcher(req)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
+	userID := s.userIDFetcher(req)
+	logger = logger.WithValue(keys.UserIDKey, userID)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	// remove user from account in database.
-	if err = s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, reqCtx.User.ID, reason); err != nil {
+	if err = s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, requester, reason); err != nil {
 		observability.AcknowledgeError(err, logger, span, "removing user from account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -420,22 +437,22 @@ func (s *service) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Reques
 	logger := s.logger.WithRequest(req)
 
 	accountID := s.accountIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalError := s.requestContextFetcher(req)
-	if requestContextRetrievalError != nil {
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// mark account as default in database.
-	err := s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, reqCtx.User.ID, accountID, reqCtx.User.ID)
-	if err != nil {
+	if err = s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, requester, accountID, requester); err != nil {
 		observability.AcknowledgeError(err, logger, span, "marking account as default")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -460,25 +477,26 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
-	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	x, err := s.accountDataManager.GetAuditLogEntriesForAccount(ctx, accountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
-	} else if err != nil {
+	}
+
+	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching audit log entries")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
 	s.encoderDecoder.RespondWithData(ctx, res, x)

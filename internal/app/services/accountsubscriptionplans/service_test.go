@@ -20,13 +20,13 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:                logging.NewNonOperationalLogger(),
-		planCounter:           &mockmetrics.UnitCounter{},
-		planDataManager:       &mocktypes.AccountSubscriptionPlanDataManager{},
-		planIDFetcher:         func(req *http.Request) uint64 { return 0 },
-		requestContextFetcher: func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
-		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
-		tracer:                tracing.NewTracer("test"),
+		logger:                             logging.NewNonOperationalLogger(),
+		planCounter:                        &mockmetrics.UnitCounter{},
+		accountSubscriptionPlanDataManager: &mocktypes.AccountSubscriptionPlanDataManager{},
+		accountSubscriptionPlanIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		requestContextFetcher:              func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
+		encoderDecoder:                     mockencoding.NewMockEncoderDecoder(),
+		tracer:                             tracing.NewTracer("test"),
 	}
 }
 

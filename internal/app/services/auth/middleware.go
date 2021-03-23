@@ -281,7 +281,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+		logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 		if !reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")

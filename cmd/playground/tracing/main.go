@@ -19,7 +19,7 @@ func prepareError(err error, logger logging.Logger, span trace.Span, description
 	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 
 	logging.EnsureLogger(logger).Error(err, desc)
-	tracing.AttachErrorToSpan(span, err)
+	tracing.AttachErrorToSpan(span, desc, err)
 
 	return fmt.Errorf("%s: %w", desc, err)
 }

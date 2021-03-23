@@ -59,7 +59,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// try to pluck the parsed input from the request context.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.WebhookCreationInput)
@@ -102,10 +102,13 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
-
-	// figure out how specific we need to be.
 	filter := types.ExtractQueryFilter(req)
+	logger := s.logger.WithRequest(req).
+		WithValue(keys.FilterLimitKey, filter.Limit).
+		WithValue(keys.FilterPageKey, filter.Page).
+		WithValue(keys.FilterSortByKey, string(filter.SortBy))
+
+	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
 	reqCtx, sessionInfoRetrievalErr := s.requestContextFetcher(req)
@@ -115,7 +118,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.ActiveAccountID, filter)
@@ -149,7 +152,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -309,7 +312,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)

@@ -31,6 +31,7 @@ func UsingJSON() func(*Client) error {
 		}
 
 		c.requestBuilder = requestBuilder
+		c.encoder = encoding.ProvideClientEncoder(c.logger, encoding.ContentTypeJSON)
 
 		return nil
 	}
@@ -45,6 +46,7 @@ func UsingXML() func(*Client) error {
 		}
 
 		c.requestBuilder = requestBuilder
+		c.encoder = encoding.ProvideClientEncoder(c.logger, encoding.ContentTypeXML)
 
 		return nil
 	}
@@ -54,26 +56,6 @@ func UsingXML() func(*Client) error {
 func UsingLogger(logger logging.Logger) func(*Client) error {
 	return func(c *Client) error {
 		c.logger = logging.EnsureLogger(logger)
-
-		return nil
-	}
-}
-
-// UsingHTTPClient sets the HTTP client on the service client.
-func UsingHTTPClient(client *http.Client) func(*Client) error {
-	return func(c *Client) error {
-		if client == nil {
-			return nil
-		}
-
-		if client.Timeout == 0 {
-			client.Timeout = defaultTimeout
-		}
-
-		client.Transport = buildWrappedTransport(client.Timeout)
-
-		c.unauthenticatedClient = client
-		c.authedClient = client
 
 		return nil
 	}

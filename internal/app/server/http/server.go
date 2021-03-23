@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -52,6 +53,7 @@ type (
 
 // ProvideServer builds a new Server instance.
 func ProvideServer(
+	ctx context.Context,
 	serverSettings Config,
 	frontendSettings frontendservice.Config,
 	metricsSettings metrics.Config,
@@ -93,7 +95,7 @@ func ProvideServer(
 		plansService:      plansService,
 	}
 
-	srv.setupRouter(router, frontendSettings, metricsSettings, metricsHandler)
+	srv.setupRouter(ctx, router, frontendSettings, metricsSettings, metricsHandler)
 
 	logger.Debug("HTTP server successfully constructed")
 

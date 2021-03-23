@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"testing"
 
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
@@ -21,6 +22,7 @@ func TestProvideServer(T *testing.T) {
 		t.SkipNow()
 
 		actual, err := ProvideServer(
+			context.Background(),
 			Config{},
 			frontendservice.Config{},
 			metrics.Config{},

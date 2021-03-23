@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
@@ -33,13 +34,13 @@ func (t *cookieRoundtripper) RoundTrip(req *http.Request) (*http.Response, error
 	defer span.End()
 
 	reqBodyClosed := false
+	logger := t.logger.WithRequest(req)
 
 	if req.Body != nil {
 		defer func() {
 			if !reqBodyClosed {
 				if err := req.Body.Close(); err != nil {
-					tracing.AttachErrorToSpan(span, err)
-					t.logger.Error(err, "closing response body")
+					observability.AcknowledgeError(err, t.logger, span, "closing response body")
 				}
 			}
 		}()
@@ -54,8 +55,7 @@ func (t *cookieRoundtripper) RoundTrip(req *http.Request) (*http.Response, error
 
 	res, err := t.base.RoundTrip(req)
 	if err != nil {
-		tracing.AttachErrorToSpan(span, err)
-		return nil, err
+		return nil, observability.PrepareError(err, logger, span, "executing roundtrip")
 	}
 
 	if responseCookies := res.Cookies(); len(responseCookies) == 1 {

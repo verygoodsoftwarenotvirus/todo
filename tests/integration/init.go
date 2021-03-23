@@ -6,7 +6,6 @@ import (
 	"math"
 	"net/url"
 	"strings"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
@@ -17,7 +16,6 @@ import (
 
 const (
 	debug                = true
-	timeout              = 5 * time.Second
 	nonexistentID uint64 = math.MaxUint32
 )
 

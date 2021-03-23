@@ -35,6 +35,9 @@ var (
 )
 
 // Logger represents a simple logging interface we can build wrappers around.
+// Note that someone, naive and green, may be enticed to add a method to this interface akin to:
+// WithQueryFilter(*types.QueryFilter) Logger
+// This is a fool's errand, which would introduce a disallowed import cycle.
 type Logger interface {
 	Info(string)
 	Debug(string)
@@ -64,9 +67,9 @@ func EnsureLogger(logger Logger) Logger {
 }
 
 var doNotLog = map[string]struct{}{
-	// "/metrics": {},
-	"/build/":  {},
-	"/assets/": {},
+	"/metrics": {}, // metrics scrapes
+	"/build/":  {}, // svelte output
+	"/assets/": {}, // static files
 }
 
 // BuildLoggingMiddleware builds a logging middleware.

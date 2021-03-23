@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -20,36 +21,38 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
-	logger.Debug("ListHandler invoked")
-
-	// ensure query filter.
 	filter := types.ExtractQueryFilter(req)
+	logger := s.logger.WithRequest(req).
+		WithValue(keys.FilterLimitKey, filter.Limit).
+		WithValue(keys.FilterPageKey, filter.Page).
+		WithValue(keys.FilterSortByKey, string(filter.SortBy))
+
+	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
-	plans, err := s.planDataManager.GetAccountSubscriptionPlans(ctx, filter)
+	accountSubscriptionPlans, err := s.accountSubscriptionPlanDataManager.GetAccountSubscriptionPlans(ctx, filter)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
-		plans = &types.AccountSubscriptionPlanList{AccountSubscriptionPlans: []*types.AccountSubscriptionPlan{}}
+		accountSubscriptionPlans = &types.AccountSubscriptionPlanList{AccountSubscriptionPlans: []*types.AccountSubscriptionPlan{}}
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching accountsubscriptionplans")
+		observability.AcknowledgeError(err, logger, span, "fetching account subscription accountSubscriptionPlans")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, plans)
+	s.encoderDecoder.RespondWithData(ctx, res, accountSubscriptionPlans)
 }
 
 // CreateHandler is our plan creation route.
@@ -58,7 +61,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("CreateHandler called")
 
 	// check request context for parsed input struct.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.AccountSubscriptionPlanCreationInput)
@@ -69,38 +71,30 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// create plan in database.
-	x, err := s.planDataManager.CreateAccountSubscriptionPlan(ctx, input)
+	accountSubscriptionPlan, err := s.accountSubscriptionPlanDataManager.CreateAccountSubscriptionPlan(ctx, input)
 	if err != nil {
-		logger.Error(err, "error creating plan")
+		observability.AcknowledgeError(err, logger, span, "creating plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	logger.WithValues(map[string]interface{}{
-		"id":          x.ID,
-		"name":        x.Name,
-		"description": x.Description,
-		"price":       x.Price,
-		"period":      x.Period,
-	}).Info("created plan")
-
-	tracing.AttachAccountSubscriptionPlanIDToSpan(span, x.ID)
-	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, x.ID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlan.ID)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlan.ID)
 	logger.Debug("plan created")
 
 	s.planCounter.Increment(ctx)
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, accountSubscriptionPlan, http.StatusCreated)
 }
 
 // ReadHandler returns a GET handler that returns an plan.
@@ -111,34 +105,34 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine plan ID.
-	planID := s.planIDFetcher(req)
-	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
-	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
+	accountSubscriptionPlanID := s.accountSubscriptionPlanIDFetcher(req)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID)
 
 	// fetch plan from database.
-	x, err := s.planDataManager.GetAccountSubscriptionPlan(ctx, planID)
+	accountSubscriptionPlan, err := s.accountSubscriptionPlanDataManager.GetAccountSubscriptionPlan(ctx, accountSubscriptionPlanID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching plan from database")
+		observability.AcknowledgeError(err, logger, span, "fetching account subscription plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, accountSubscriptionPlan)
 }
 
 // UpdateHandler returns a handler that updates an plan.
@@ -157,44 +151,44 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine plan ID.
-	planID := s.planIDFetcher(req)
-	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
-	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
+	accountSubscriptionPlanID := s.accountSubscriptionPlanIDFetcher(req)
+	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID)
+	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
 	// fetch plan from database.
-	x, err := s.planDataManager.GetAccountSubscriptionPlan(ctx, planID)
+	accountSubscriptionPlan, err := s.accountSubscriptionPlanDataManager.GetAccountSubscriptionPlan(ctx, accountSubscriptionPlanID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered getting plan")
+		observability.AcknowledgeError(err, logger, span, "fetching account subscription plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// update the data structure.
-	changeReport := x.Update(input)
+	changeReport := accountSubscriptionPlan.Update(input)
 
 	// update plan in database.
-	if err = s.planDataManager.UpdateAccountSubscriptionPlan(ctx, x, reqCtx.User.ID, changeReport); err != nil {
-		logger.Error(err, "error encountered updating plan")
+	if err = s.accountSubscriptionPlanDataManager.UpdateAccountSubscriptionPlan(ctx, accountSubscriptionPlan, reqCtx.User.ID, changeReport); err != nil {
+		observability.AcknowledgeError(err, logger, span, "updating account subscription plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, accountSubscriptionPlan)
 }
 
 // ArchiveHandler returns a handler that archives an plan.
@@ -205,28 +199,28 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine plan ID.
-	planID := s.planIDFetcher(req)
+	planID := s.accountSubscriptionPlanIDFetcher(req)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
-	err := s.planDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, reqCtx.User.ID)
+	err = s.accountSubscriptionPlanDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered deleting plan")
+		observability.AcknowledgeError(err, logger, span, "archiving account subscription plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -244,36 +238,35 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.UserIDKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// determine plan ID.
-	planID := s.planIDFetcher(req)
+	planID := s.accountSubscriptionPlanIDFetcher(req)
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 	logger = logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
-	x, err := s.planDataManager.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)
+	auditLogEntries, err := s.accountSubscriptionPlanDataManager.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, planID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching audit log entries")
+		observability.AcknowledgeError(err, logger, span, "fetching audit log entries")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
+	logger.WithValue("entry_count", len(auditLogEntries)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, auditLogEntries)
 }

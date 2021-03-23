@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -23,13 +23,13 @@ func (c *Client) UserStatus(ctx context.Context, cookie *http.Cookie) (*types.Us
 
 	req, err := c.requestBuilder.BuildUserStatusRequest(ctx, cookie)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building user status request")
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
 	}
 
 	var output *types.UserStatusResponse
 
 	if err = c.fetchAndUnmarshal(ctx, req, &output); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving plan")
+		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
 	}
 
 	return output, nil
@@ -49,12 +49,12 @@ func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.
 
 	req, err := c.requestBuilder.BuildLoginRequest(ctx, input)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building login request")
+		return nil, observability.PrepareError(err, logger, span, "building login request")
 	}
 
 	res, err := c.fetchResponseToRequest(ctx, c.unauthenticatedClient, req)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "executing login request")
+		return nil, observability.PrepareError(err, logger, span, "executing login request")
 	}
 
 	c.closeResponseBody(ctx, res)
@@ -76,12 +76,12 @@ func (c *Client) Logout(ctx context.Context) error {
 
 	req, err := c.requestBuilder.BuildLogoutRequest(ctx)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building logout request")
+		return observability.PrepareError(err, logger, span, "building logout request")
 	}
 
 	res, err := c.fetchResponseToRequest(ctx, c.authedClient, req)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "executing logout request")
+		return observability.PrepareError(err, logger, span, "executing logout request")
 	}
 
 	c.closeResponseBody(ctx, res)
@@ -110,18 +110,18 @@ func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input 
 
 	req, err := c.requestBuilder.BuildChangePasswordRequest(ctx, cookie, input)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building change password request")
+		return observability.PrepareError(err, logger, span, "building change password request")
 	}
 
 	res, err := c.fetchResponseToRequest(ctx, c.unauthenticatedClient, req)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "changing password")
+		return observability.PrepareError(err, logger, span, "changing password")
 	}
 
 	c.closeResponseBody(ctx, res)
 
 	if res.StatusCode != http.StatusOK {
-		return errs.PrepareError(err, logger, span, "invalid response code: %d", res.StatusCode)
+		return observability.PrepareError(err, logger, span, "invalid response code: %d", res.StatusCode)
 	}
 
 	return nil
@@ -143,17 +143,17 @@ func (c *Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, 
 	logger := c.logger
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCycleTwoFactorSecretRequest(ctx, cookie, input)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building cycle two factor secret request")
+		return nil, observability.PrepareError(err, logger, span, "building cycle two factor secret request")
 	}
 
 	var output *types.TOTPSecretRefreshResponse
 	if err = c.fetchAndUnmarshal(ctx, req, &output); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "cycling two factor secret")
+		return nil, observability.PrepareError(err, logger, span, "cycling two factor secret")
 	}
 
 	return output, nil
@@ -171,17 +171,17 @@ func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token stri
 	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
 	if _, err := strconv.ParseUint(token, 10, 64); token == "" || err != nil {
-		return errs.PrepareError(err, logger, span, "invalid token provided: %q", token)
+		return observability.PrepareError(err, logger, span, "invalid token provided: %q", token)
 	}
 
 	req, err := c.requestBuilder.BuildVerifyTOTPSecretRequest(ctx, userID, token)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building verify two factor secret request")
+		return observability.PrepareError(err, logger, span, "building verify two factor secret request")
 	}
 
 	res, err := c.fetchResponseToRequest(ctx, c.unauthenticatedClient, req)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "verifying two factor secret")
+		return observability.PrepareError(err, logger, span, "verifying two factor secret")
 	}
 
 	c.closeResponseBody(ctx, res)
@@ -189,7 +189,7 @@ func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token stri
 	if res.StatusCode == http.StatusBadRequest {
 		return ErrInvalidTOTPToken
 	} else if res.StatusCode != http.StatusAccepted {
-		return errs.PrepareError(err, logger, span, "erroneous response code when validating TOTP secret: %d", res.StatusCode)
+		return observability.PrepareError(err, logger, span, "erroneous response code when validating TOTP secret: %d", res.StatusCode)
 	}
 
 	return nil

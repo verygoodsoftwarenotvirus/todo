@@ -20,6 +20,10 @@ import (
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 )
 
+var (
+	errEmptyAddressUnallowed = errors.New("empty address not allowed")
+)
+
 // CreateServiceUser creates a user.
 func CreateServiceUser(ctx context.Context, address, username string) (*types.User, error) {
 	if username == "" {
@@ -27,7 +31,7 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 	}
 
 	if address == "" {
-		return nil, errors.New("empty address not allowed")
+		return nil, errEmptyAddressUnallowed
 	}
 
 	parsedAddress, err := url.Parse(address)
@@ -45,11 +49,9 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		Password: gofakeit.Password(true, true, true, true, true, 64),
 	}
 
-	ucr, userCreationErr := c.CreateUser(ctx, in)
-	if userCreationErr != nil {
-		return nil, userCreationErr
-	} else if ucr == nil {
-		return nil, errors.New("something strange happened")
+	ucr, err := c.CreateUser(ctx, in)
+	if err != nil {
+		return nil, err
 	}
 
 	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
@@ -125,5 +127,5 @@ func GetLoginCookie(ctx context.Context, serviceURL string, u *types.User) (*htt
 		return cookies[0], nil
 	}
 
-	return nil, errors.New("no cookie found :(")
+	return nil, http.ErrNoCookie
 }

@@ -2,14 +2,13 @@ package requests
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -55,7 +54,7 @@ func NewBuilder(u *url.URL, logger logging.Logger, encoder encoding.ClientEncode
 	}
 
 	if encoder == nil {
-		return nil, errors.New("nil encoder provided")
+		return nil, ErrNilEncoderProvided
 	}
 
 	c := &Builder{
@@ -189,12 +188,12 @@ func (b *Builder) buildDataRequest(ctx context.Context, method, uri string, in i
 
 	body, err := b.encoder.EncodeReader(ctx, in)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "encoding request")
+		return nil, observability.PrepareError(err, logger, span, "encoding request")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, uri, body)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building request")
+		return nil, observability.PrepareError(err, logger, span, "building request")
 	}
 
 	req.Header.Set("Content-type", b.encoder.ContentType())

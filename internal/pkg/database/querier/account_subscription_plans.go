@@ -169,7 +169,7 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanCreationEventEntry(x)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return nil, fmt.Errorf("writing account subscription plan creation audit log entry")
+		return nil, fmt.Errorf("writing account subscription plan creation audit log entry: %w", err)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
@@ -201,7 +201,7 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(changedBy, updated.ID, changes)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("writing account subscription plan update audit log entry")
+		return fmt.Errorf("writing account subscription plan update audit log entry: %w", err)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
@@ -237,7 +237,7 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(archivedBy, accountSubscriptionPlanID)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("writing account subscription plan archive audit log entry")
+		return fmt.Errorf("writing account subscription plan archive audit log entry: %w", err)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {

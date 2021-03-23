@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -23,12 +23,12 @@ func (c *Client) GetAPIClient(ctx context.Context, apiClientDatabaseID uint64) (
 
 	req, err := c.requestBuilder.BuildGetAPIClientRequest(ctx, apiClientDatabaseID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building retrieve API client request")
+		return nil, observability.PrepareError(err, logger, span, "building retrieve API client request")
 	}
 
 	var apiClient *types.APIClient
 	if err = c.fetchAndUnmarshal(ctx, req, &apiClient); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "fetching api client")
+		return nil, observability.PrepareError(err, logger, span, "fetching api client")
 	}
 
 	return apiClient, nil
@@ -45,12 +45,12 @@ func (c *Client) GetAPIClients(ctx context.Context, filter *types.QueryFilter) (
 
 	req, err := c.requestBuilder.BuildGetAPIClientsRequest(ctx, filter)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building API clients list request")
+		return nil, observability.PrepareError(err, logger, span, "building API clients list request")
 	}
 
 	var apiClients *types.APIClientList
 	if err = c.fetchAndUnmarshal(ctx, req, &apiClients); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "fetching api clients")
+		return nil, observability.PrepareError(err, logger, span, "fetching api clients")
 	}
 
 	return apiClients, nil
@@ -76,11 +76,11 @@ func (c *Client) CreateAPIClient(ctx context.Context, cookie *http.Cookie, input
 
 	req, err := c.requestBuilder.BuildCreateAPIClientRequest(ctx, cookie, input)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building create API client request")
+		return nil, observability.PrepareError(err, logger, span, "building create API client request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &apiClientResponse); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "creating api client")
+		return nil, observability.PrepareError(err, logger, span, "creating api client")
 	}
 
 	return apiClientResponse, nil
@@ -99,11 +99,11 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, apiClientDatabaseID uint6
 
 	req, err := c.requestBuilder.BuildArchiveAPIClientRequest(ctx, apiClientDatabaseID)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building archive API client request")
+		return observability.PrepareError(err, logger, span, "building archive API client request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "archiving api client")
+		return observability.PrepareError(err, logger, span, "archiving api client")
 	}
 
 	return nil
@@ -122,12 +122,12 @@ func (c *Client) GetAuditLogForAPIClient(ctx context.Context, apiClientDatabaseI
 
 	req, err := c.requestBuilder.BuildGetAuditLogForAPIClientRequest(ctx, apiClientDatabaseID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building retrieve audit log entries for API client request")
+		return nil, observability.PrepareError(err, logger, span, "building retrieve audit log entries for API client request")
 	}
 
 	var entries []*types.AuditLogEntry
 	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving plan")
+		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
 	}
 
 	return entries, nil

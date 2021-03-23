@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -27,7 +27,7 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	if c.authMethod == cookieAuthMethod {
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
-			return errs.PrepareError(err, logger, span, "building login request")
+			return observability.PrepareError(err, logger, span, "building login request")
 		}
 
 		res, err := c.authedClient.Do(req)
@@ -57,12 +57,12 @@ func (c *Client) GetAccount(ctx context.Context, accountID uint64) (*types.Accou
 
 	req, err := c.requestBuilder.BuildGetAccountRequest(ctx, accountID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building account retrieval request")
+		return nil, observability.PrepareError(err, logger, span, "building account retrieval request")
 	}
 
 	var account *types.Account
 	if err = c.fetchAndUnmarshal(ctx, req, &account); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving account")
+		return nil, observability.PrepareError(err, logger, span, "retrieving account")
 	}
 
 	return account, nil
@@ -79,12 +79,12 @@ func (c *Client) GetAccounts(ctx context.Context, filter *types.QueryFilter) (*t
 
 	req, err := c.requestBuilder.BuildGetAccountsRequest(ctx, filter)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building account list request")
+		return nil, observability.PrepareError(err, logger, span, "building account list request")
 	}
 
 	var accounts *types.AccountList
 	if err = c.fetchAndUnmarshal(ctx, req, &accounts); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving accounts")
+		return nil, observability.PrepareError(err, logger, span, "retrieving accounts")
 	}
 
 	return accounts, nil
@@ -102,17 +102,17 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	logger := c.logger.WithValue("account_name", input.Name)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateAccountRequest(ctx, input)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building account creation request")
+		return nil, observability.PrepareError(err, logger, span, "building account creation request")
 	}
 
 	var account *types.Account
 	if err = c.fetchAndUnmarshal(ctx, req, &account); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "creating account")
+		return nil, observability.PrepareError(err, logger, span, "creating account")
 	}
 
 	return account, nil
@@ -132,11 +132,11 @@ func (c *Client) UpdateAccount(ctx context.Context, account *types.Account) erro
 
 	req, err := c.requestBuilder.BuildUpdateAccountRequest(ctx, account)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building account update request")
+		return observability.PrepareError(err, logger, span, "building account update request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &account); err != nil {
-		return errs.PrepareError(err, logger, span, "updating account")
+		return observability.PrepareError(err, logger, span, "updating account")
 	}
 
 	return nil
@@ -156,11 +156,11 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
 
 	req, err := c.requestBuilder.BuildArchiveAccountRequest(ctx, accountID)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building account archive request")
+		return observability.PrepareError(err, logger, span, "building account archive request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "archiving account")
+		return observability.PrepareError(err, logger, span, "archiving account")
 	}
 
 	return nil
@@ -180,16 +180,16 @@ func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *
 	tracing.AttachUserIDToSpan(span, input.UserID)
 
 	if err := input.Validate(ctx); err != nil {
-		return errs.PrepareError(err, logger, span, "validating input")
+		return observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildAddUserRequest(ctx, accountID, input)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building add user to account request")
+		return observability.PrepareError(err, logger, span, "building add user to account request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "adding user to account")
+		return observability.PrepareError(err, logger, span, "adding user to account")
 	}
 
 	return nil
@@ -209,11 +209,11 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 
 	req, err := c.requestBuilder.BuildMarkAsDefaultRequest(ctx, accountID)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building mark account as default request")
+		return observability.PrepareError(err, logger, span, "building mark account as default request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "marking account as default")
+		return observability.PrepareError(err, logger, span, "marking account as default")
 	}
 
 	return nil
@@ -238,11 +238,11 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID ui
 
 	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, reason)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building remove user from account request")
+		return observability.PrepareError(err, logger, span, "building remove user from account request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "removing user from account")
+		return observability.PrepareError(err, logger, span, "removing user from account")
 	}
 
 	return nil
@@ -270,16 +270,16 @@ func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID 
 	tracing.AttachUserIDToSpan(span, userID)
 
 	if err := input.Validate(ctx); err != nil {
-		return errs.PrepareError(err, logger, span, "validating input")
+		return observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildModifyMemberPermissionsRequest(ctx, accountID, userID, input)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building modify account member permissions request")
+		return observability.PrepareError(err, logger, span, "building modify account member permissions request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "modifying user account permissions")
+		return observability.PrepareError(err, logger, span, "modifying user account permissions")
 	}
 
 	return nil
@@ -306,16 +306,16 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64,
 	tracing.AttachToSpan(span, "new_owner", input.NewOwner)
 
 	if err := input.Validate(ctx); err != nil {
-		return errs.PrepareError(err, logger, span, "validating input")
+		return observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildTransferAccountOwnershipRequest(ctx, accountID, input)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building transfer account ownership request")
+		return observability.PrepareError(err, logger, span, "building transfer account ownership request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "transferring account to user")
+		return observability.PrepareError(err, logger, span, "transferring account to user")
 	}
 
 	return nil
@@ -335,12 +335,12 @@ func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID uint64) ([
 
 	req, err := c.requestBuilder.BuildGetAuditLogForAccountRequest(ctx, accountID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building fetch audit log entries for account request")
+		return nil, observability.PrepareError(err, logger, span, "building fetch audit log entries for account request")
 	}
 
 	var entries []*types.AuditLogEntry
 	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "fetching audit log entries for account")
+		return nil, observability.PrepareError(err, logger, span, "fetching audit log entries for account")
 	}
 
 	return entries, nil

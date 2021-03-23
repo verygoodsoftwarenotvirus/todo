@@ -9,7 +9,10 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-var errInvalidType = errors.New("unexpected type received")
+var (
+	errInvalidType     = errors.New("unexpected type received")
+	errDurationTooLong = errors.New("duration too long")
+)
 
 var _ validation.Rule = (*urlValidator)(nil)
 
@@ -46,7 +49,7 @@ func (v *stringDurationValidator) Validate(value interface{}) error {
 	}
 
 	if d > v.maxDuration {
-		return fmt.Errorf("too large a duration: %v", d)
+		return fmt.Errorf("%w: %v", errDurationTooLong, d)
 	}
 
 	return nil

@@ -29,6 +29,10 @@ const (
 	maxPASETOLifetime = 10 * time.Minute
 )
 
+var (
+	errNilInput = errors.New("nil input provided")
+)
+
 // BuildViperConfig is a constructor function that initializes a viper config.
 func BuildViperConfig() *viper.Viper {
 	cfg := viper.New()
@@ -75,7 +79,7 @@ func BuildViperConfig() *viper.Viper {
 // FromConfig returns a viper instance from a config struct.
 func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	if input == nil {
-		return nil, errors.New("nil input provided")
+		return nil, errNilInput
 	}
 
 	if err := input.Validate(context.Background()); err != nil {

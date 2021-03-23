@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -11,16 +12,22 @@ import (
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
 
-type vegetaHelper interface {
-	Targeter() func(*vegeta.Target) error
-	HandleResult(res *vegeta.Result)
-}
+type (
+	vegetaHelper interface {
+		Targeter() func(*vegeta.Target) error
+		HandleResult(res *vegeta.Result)
+	}
 
-type itemsTargeter struct {
-	client         *http.Client
-	requestBuilder *requests.Builder
-	createdItemIDs map[uint64]struct{}
-}
+	itemsTargeter struct {
+		client         *http.Client
+		requestBuilder *requests.Builder
+		createdItemIDs map[uint64]struct{}
+	}
+)
+
+var (
+	errInvalidAction = errors.New("invalid action")
+)
 
 func newItemsTargeter(client *http.Client, requestBuilder *requests.Builder) *itemsTargeter {
 	return &itemsTargeter{
@@ -104,7 +111,7 @@ func (t *itemsTargeter) Targeter() func(*vegeta.Target) error {
 
 			return initializeTargetFromRequest(req, target)
 		default:
-			return fmt.Errorf("invalid action: %q", n)
+			return fmt.Errorf("%s: %w", n, errInvalidAction)
 		}
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -36,7 +36,7 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpClient *htt
 	logger.Debug("fetching auth token")
 
 	if err := input.Validate(ctx); err != nil {
-		return "", errs.PrepareError(err, logger, span, "validating input")
+		return "", observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	if c.accountID != 0 {
@@ -45,23 +45,23 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpClient *htt
 
 	req, err := c.requestBuilder.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)
 	if err != nil {
-		return "", errs.PrepareError(err, logger, span, "building request")
+		return "", observability.PrepareError(err, logger, span, "building request")
 	}
 
 	// use the default client here because we want a transport that doesn't worry about cookies or tokens.
 	res, err := c.fetchResponseToRequest(ctx, httpClient, req)
 	if err != nil {
-		return "", errs.PrepareError(err, logger, span, "executing request")
+		return "", observability.PrepareError(err, logger, span, "executing request")
 	}
 
 	if err = errorFromResponse(res); err != nil {
-		return "", errs.PrepareError(err, logger, span, "erroneous response")
+		return "", observability.PrepareError(err, logger, span, "erroneous response")
 	}
 
 	var tokenRes types.PASETOResponse
 
 	if err = c.unmarshalBody(ctx, res, &tokenRes); err != nil {
-		return "", errs.PrepareError(err, logger, span, "unmarshalling body")
+		return "", observability.PrepareError(err, logger, span, "unmarshalling body")
 	}
 
 	logger.Debug("auth token received")

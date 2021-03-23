@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -125,7 +125,7 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 	defer span.End()
 
 	if len(avatar) == 0 {
-		return nil, fmt.Errorf("invalid length avatar passed: %d", len(avatar))
+		return nil, ErrNilInputProvided
 	}
 
 	var ct string
@@ -138,7 +138,7 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 	case "gif":
 		ct = "image/gif"
 	default:
-		return nil, fmt.Errorf("invalid extension: %q", extension)
+		return nil, fmt.Errorf("%s: %w", extension, ErrInvalidPhotoEncodingForUpload)
 	}
 
 	logger := b.logger
@@ -148,22 +148,22 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 
 	part, err := writer.CreateFormFile("avatar", fmt.Sprintf("avatar.%s", extension))
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "creating form file")
+		return nil, observability.PrepareError(err, logger, span, "creating form file")
 	}
 
 	if _, err = io.Copy(part, bytes.NewReader(avatar)); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "copying file contents to request")
+		return nil, observability.PrepareError(err, logger, span, "copying file contents to request")
 	}
 
 	if err = writer.Close(); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "closing avatar writer")
+		return nil, observability.PrepareError(err, logger, span, "closing avatar writer")
 	}
 
 	uri := b.BuildURL(ctx, nil, usersBasePath, "avatar", "upload")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, body)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building avatar upload request")
+		return nil, observability.PrepareError(err, logger, span, "building avatar upload request")
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())

@@ -23,6 +23,10 @@ const (
 	maxCORSAge = 300
 )
 
+var (
+	errInvalidMethod = errors.New("invalid method")
+)
+
 var _ routing.Router = (*router)(nil)
 
 type router struct {
@@ -146,23 +150,23 @@ func (r *router) AddRoute(method, path string, handler http.HandlerFunc, middlew
 	case http.MethodGet:
 		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
 	case http.MethodHead:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Head(path, handler)
 	case http.MethodPost:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Post(path, handler)
 	case http.MethodPut:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Put(path, handler)
 	case http.MethodPatch:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Patch(path, handler)
 	case http.MethodDelete:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Delete(path, handler)
 	case http.MethodConnect:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Connect(path, handler)
 	case http.MethodOptions:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Options(path, handler)
 	case http.MethodTrace:
-		r.router.With(convertMiddleware(middleware...)...).Get(path, handler)
+		r.router.With(convertMiddleware(middleware...)...).Trace(path, handler)
 	default:
-		return fmt.Errorf("invalid method: %q", method)
+		return fmt.Errorf("%s: %w", method, errInvalidMethod)
 	}
 
 	return nil
@@ -243,7 +247,7 @@ func (r *router) FetchContextFromRequest(req *http.Request) (*types.RequestConte
 		return reqCtx, nil
 	}
 
-	return nil, errors.New("no session info attached to request")
+	return nil, errNoRequestContextAvailable
 }
 
 // BuildRouteParamIDFetcher builds a function that fetches a given key from a path with variables added by a router.

@@ -30,7 +30,7 @@ func newThumbnailer(contentType string, quality int) (thumbnailer, error) {
 	case imageGIF:
 		return &gifThumbnailer{}, nil
 	default:
-		return nil, fmt.Errorf("invalid content type: %s", contentType)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidImageContentType, contentType)
 	}
 }
 

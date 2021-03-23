@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -25,7 +25,7 @@ func (b *Builder) BuildUserReputationUpdateInputRequest(ctx context.Context, inp
 	logger := b.logger.WithValue(keys.UserIDKey, input.TargetUserID)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, adminBasePath, usersBasePath, "status")

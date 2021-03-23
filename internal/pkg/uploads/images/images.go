@@ -33,8 +33,11 @@ const (
 )
 
 var (
+	// ErrInvalidContentType is what we return to indicate the provided data was of the wrong type.
+	ErrInvalidContentType = errors.New("invalid content type")
+
 	// ErrInvalidImageContentType is what we return to indicate the provided image was of the wrong type.
-	ErrInvalidImageContentType = errors.New("invalid content type")
+	ErrInvalidImageContentType = errors.New("invalid image content type")
 )
 
 type (
@@ -113,7 +116,7 @@ func validateContentType(filename string) error {
 	case imagePNG, imageJPEG, imageGIF:
 		return nil
 	default:
-		return fmt.Errorf("invalid content type: %s", contentType)
+		return fmt.Errorf("%w: %s", ErrInvalidContentType, contentType)
 	}
 }
 

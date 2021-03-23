@@ -36,7 +36,8 @@ const (
 )
 
 var (
-	errInvalidDatabase = errors.New("invalid database type selected")
+	errInvalidDatabase = errors.New("invalid database")
+	errNilDBProvided   = errors.New("invalid DB connection provided")
 )
 
 type (
@@ -84,7 +85,7 @@ func (cfg *Config) ProvideDatabasePlaceholderFormat() (squirrel.PlaceholderForma
 	case MariaDBProviderKey, SqliteProviderKey:
 		return squirrel.Question, nil
 	default:
-		return nil, fmt.Errorf("invalid database type selected: %q", cfg.Provider)
+		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
 	}
 }
 
@@ -123,7 +124,7 @@ func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config,
 	sessionManager := scs.New()
 
 	if db == nil {
-		return nil, errors.New("invalid DB connection provided")
+		return nil, errNilDBProvided
 	}
 
 	switch dbConf.Provider {
@@ -134,7 +135,7 @@ func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config,
 	case SqliteProviderKey:
 		sessionManager.Store = sqlite3store.New(db)
 	default:
-		return nil, fmt.Errorf("invalid database provider: %q", dbConf.Provider)
+		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, dbConf.Provider)
 	}
 
 	sessionManager.Lifetime = cookieConfig.Lifetime

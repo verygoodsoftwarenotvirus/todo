@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	errs "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -27,13 +27,13 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			errs.AcknowledgeError(err, logger, span, "decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			errs.AcknowledgeError(err, logger, span, "validating input")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -54,13 +54,13 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			errs.AcknowledgeError(err, logger, span, "decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			errs.AcknowledgeError(err, logger, span, "validating input")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -80,13 +80,13 @@ func (s *service) AddMemberInputMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			errs.AcknowledgeError(err, logger, span, "decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			errs.AcknowledgeError(err, logger, span, "validating input")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -106,13 +106,13 @@ func (s *service) ModifyMemberPermissionsInputMiddleware(next http.Handler) http
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			errs.AcknowledgeError(err, logger, span, "decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			errs.AcknowledgeError(err, logger, span, "validating input")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -132,13 +132,13 @@ func (s *service) AccountTransferInputMiddleware(next http.Handler) http.Handler
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			errs.AcknowledgeError(err, logger, span, "decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			errs.AcknowledgeError(err, logger, span, "validating input")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

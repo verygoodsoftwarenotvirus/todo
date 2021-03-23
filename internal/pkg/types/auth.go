@@ -123,18 +123,24 @@ func (x *RequestContext) ToBytes() []byte {
 	return b.Bytes()
 }
 
+var (
+	errNilUser          = errors.New("non-nil user required for request context")
+	errZeroAccountID    = errors.New("active account ID required for request context")
+	errNilPermissionMap = errors.New("non-nil permissions map required for request context")
+)
+
 // RequestContextFromUser produces a RequestContext object from a User's data.
 func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]permissions.ServiceUserPermissions) (*RequestContext, error) {
 	if user == nil {
-		return nil, errors.New("non-nil user required for request context")
+		return nil, errNilUser
 	}
 
 	if activeAccountID == 0 {
-		return nil, errors.New("active account ID required for request context")
+		return nil, errZeroAccountID
 	}
 
 	if accountPermissionsMap == nil {
-		return nil, errors.New("non-nil permissions map required for request context")
+		return nil, errNilPermissionMap
 	}
 
 	reqCtx := &RequestContext{

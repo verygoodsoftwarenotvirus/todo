@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -232,7 +232,7 @@ func (c *Client) fetchResponseToRequest(ctx context.Context, client *http.Client
 	// this should be the only use of .Do in this package
 	res, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "executing request")
+		return nil, observability.PrepareError(err, logger, span, "executing request")
 	}
 
 	if bdump, err := httputil.DumpResponse(res, true); err == nil {
@@ -254,7 +254,7 @@ func (c *Client) executeAndUnmarshal(ctx context.Context, req *http.Request, htt
 
 	res, err := c.fetchResponseToRequest(ctx, httpClient, req)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "executing request")
+		return observability.PrepareError(err, logger, span, "executing request")
 	}
 
 	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
@@ -266,7 +266,7 @@ func (c *Client) executeAndUnmarshal(ctx context.Context, req *http.Request, htt
 
 	if out != nil {
 		if err = c.unmarshalBody(ctx, res, out); err != nil {
-			return errs.PrepareError(err, logger, span, "loading %s %d response from server", res.Request.Method, res.StatusCode)
+			return observability.PrepareError(err, logger, span, "loading %s %d response from server", res.Request.Method, res.StatusCode)
 		}
 	}
 
@@ -292,7 +292,7 @@ func (c *Client) responseIsOK(ctx context.Context, req *http.Request) (bool, err
 
 	res, err := c.fetchResponseToRequest(ctx, c.authedClient, req)
 	if err != nil {
-		return false, errs.PrepareError(err, logger, span, "executing existence request")
+		return false, observability.PrepareError(err, logger, span, "executing existence request")
 	}
 
 	c.closeResponseBody(ctx, res)

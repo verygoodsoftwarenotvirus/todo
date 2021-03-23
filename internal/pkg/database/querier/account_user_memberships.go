@@ -2,6 +2,7 @@ package querier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
@@ -13,6 +14,8 @@ import (
 
 var (
 	_ types.AccountUserMembershipDataManager = (*Client)(nil)
+
+	errDefaultAccountNotFoundForUser = errors.New("default account not found for user")
 )
 
 // scanAccountUserMembership takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountUserMembership struct.
@@ -110,7 +113,7 @@ func (c *Client) GetRequestContextForUser(ctx context.Context, userID uint64) (r
 	}
 
 	if reqCtx.ActiveAccountID == 0 {
-		return nil, fmt.Errorf("default account not found for user %d", userID)
+		return nil, fmt.Errorf("%w: %d", errDefaultAccountNotFoundForUser, userID)
 	}
 
 	return reqCtx, nil
@@ -156,7 +159,7 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 	}
 
 	if defaultAccount == 0 {
-		return 0, nil, fmt.Errorf("default account not found for user %d", userID)
+		return 0, nil, fmt.Errorf("%w: %d", errDefaultAccountNotFoundForUser, userID)
 	}
 
 	logger.WithValue("permissions_map", permissionsMap).Info("returning permission map")

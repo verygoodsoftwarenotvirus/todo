@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -22,12 +22,12 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID uint64) (*types.Webho
 
 	req, err := c.requestBuilder.BuildGetWebhookRequest(ctx, webhookID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building get webhook request")
+		return nil, observability.PrepareError(err, logger, span, "building get webhook request")
 	}
 
 	var webhook *types.Webhook
 	if err = c.fetchAndUnmarshal(ctx, req, &webhook); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving webhook")
+		return nil, observability.PrepareError(err, logger, span, "retrieving webhook")
 	}
 
 	return webhook, nil
@@ -44,12 +44,12 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (*t
 
 	req, err := c.requestBuilder.BuildGetWebhooksRequest(ctx, filter)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building webhooks list request")
+		return nil, observability.PrepareError(err, logger, span, "building webhooks list request")
 	}
 
 	var webhooks *types.WebhookList
 	if err = c.fetchAndUnmarshal(ctx, req, &webhooks); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving webhooks")
+		return nil, observability.PrepareError(err, logger, span, "retrieving webhooks")
 	}
 
 	return webhooks, nil
@@ -68,17 +68,17 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 	logger.Debug("creating webhook")
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateWebhookRequest(ctx, input)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building create webhook request")
+		return nil, observability.PrepareError(err, logger, span, "building create webhook request")
 	}
 
 	var webhook *types.Webhook
 	if err = c.fetchAndUnmarshal(ctx, req, &webhook); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "creating webhook")
+		return nil, observability.PrepareError(err, logger, span, "creating webhook")
 	}
 
 	logger.Debug("webhook created")
@@ -99,11 +99,11 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) erro
 
 	req, err := c.requestBuilder.BuildUpdateWebhookRequest(ctx, updated)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building update webhook request")
+		return observability.PrepareError(err, logger, span, "building update webhook request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &updated); err != nil {
-		return errs.PrepareError(err, logger, span, "updating webhook")
+		return observability.PrepareError(err, logger, span, "updating webhook")
 	}
 
 	return nil
@@ -122,11 +122,11 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID uint64) error {
 
 	req, err := c.requestBuilder.BuildArchiveWebhookRequest(ctx, webhookID)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building archive webhook request")
+		return observability.PrepareError(err, logger, span, "building archive webhook request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "archiving webhook")
+		return observability.PrepareError(err, logger, span, "archiving webhook")
 	}
 
 	return nil
@@ -145,12 +145,12 @@ func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) ([
 
 	req, err := c.requestBuilder.BuildGetAuditLogForWebhookRequest(ctx, webhookID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building get audit log entries for webhook request")
+		return nil, observability.PrepareError(err, logger, span, "building get audit log entries for webhook request")
 	}
 
 	var entries []*types.AuditLogEntry
 	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving audit log entries for webhook")
+		return nil, observability.PrepareError(err, logger, span, "retrieving audit log entries for webhook")
 	}
 
 	return entries, nil

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -83,7 +83,7 @@ func (b *Builder) BuildCreateAccountRequest(ctx context.Context, input *types.Ac
 	logger := b.logger.WithValue(keys.NameKey, input.Name)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath)
@@ -148,7 +148,7 @@ func (b *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, inp
 	logger := b.logger.WithValue(keys.UserIDKey, input.UserID)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "member")
@@ -216,7 +216,7 @@ func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 	logger := b.logger.WithValue(keys.UserIDKey, userID).WithValue(keys.AccountIDKey, accountID)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10), "permissions")
@@ -241,7 +241,7 @@ func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, acco
 	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "transfer")

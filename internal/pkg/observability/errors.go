@@ -1,4 +1,4 @@
-package errs
+package observability
 
 import (
 	"fmt"

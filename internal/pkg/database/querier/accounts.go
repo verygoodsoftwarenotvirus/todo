@@ -244,10 +244,10 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 	logger.Debug("account created")
 
 	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(x, createdByUser)); err != nil {
-		logger.Error(err, "writing <> audit log event entry")
+		logger.Error(err, "writing account creation audit log event entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return nil, fmt.Errorf("writing <> audit log event entry")
+		return nil, fmt.Errorf("writing account creation audit log event entry: %w", err)
 	}
 
 	addInput := &types.AddUserToAccountInput{
@@ -268,7 +268,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 		logger.Error(err, "writing account membership creation audit log event entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return nil, fmt.Errorf("writing account membership creation audit log event entry")
+		return nil, fmt.Errorf("writing account membership creation audit log event entry: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -310,7 +310,7 @@ func (c *Client) UpdateAccount(ctx context.Context, updated *types.Account, chan
 		c.rollbackTransaction(ctx, tx)
 		logger.Error(err, "writing account update audit log event entry")
 
-		return fmt.Errorf("writing account update audit log event entry")
+		return fmt.Errorf("writing account update audit log event entry: %w", err)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
@@ -353,7 +353,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID, userID, archived
 		c.rollbackTransaction(ctx, tx)
 		logger.Error(err, "writing account archive audit log event entry")
 
-		return fmt.Errorf("writing account archive audit log event entry")
+		return fmt.Errorf("writing account archive audit log event entry: %w", err)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {

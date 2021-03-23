@@ -3,13 +3,12 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -30,7 +29,7 @@ func mustParseURL(raw string) *url.URL {
 // errorFromResponse returns library errors according to a response's status code.
 func errorFromResponse(res *http.Response) error {
 	if res == nil {
-		return errors.New("nil response")
+		return ErrNilResponse
 	}
 
 	switch res.StatusCode {
@@ -52,7 +51,7 @@ func errorFromResponse(res *http.Response) error {
 // argIsNotPointer checks an argument and returns whether or not it is a pointer.
 func argIsNotPointer(i interface{}) (bool, error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
-		return true, errors.New("value is not a pointer")
+		return true, ErrArgumentIsNotPointer
 	}
 
 	return false, nil
@@ -90,12 +89,12 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	logger := c.logger.WithResponse(res)
 
 	if err := argIsNotPointerOrNil(dest); err != nil {
-		return errs.PrepareError(err, logger, span, "nil marshal target")
+		return observability.PrepareError(err, logger, span, "nil marshal target")
 	}
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "unmarshalling error response")
+		return observability.PrepareError(err, logger, span, "unmarshalling error response")
 	}
 
 	if res.StatusCode >= http.StatusBadRequest {
@@ -110,7 +109,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	}
 
 	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
-		return errs.PrepareError(err, logger, span, "unmarshalling response body")
+		return observability.PrepareError(err, logger, span, "unmarshalling response body")
 	}
 
 	return nil

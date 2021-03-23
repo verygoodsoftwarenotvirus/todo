@@ -36,6 +36,11 @@ const (
 	totpTokenFormKey = "totpToken"
 )
 
+var (
+	errTokenExpired  = errors.New("token expired")
+	errTokenNotFound = errors.New("no token data found")
+)
+
 // parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
 func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
 	if err := req.ParseForm(); err == nil {
@@ -68,7 +73,7 @@ func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (
 		}
 
 		if time.Now().UTC().After(token.Expiration) {
-			return nil, errors.New("token expired")
+			return nil, errTokenExpired
 		}
 
 		gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(token.Get(pasetoDataKey))
@@ -88,7 +93,7 @@ func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (
 		return reqContext, nil
 	}
 
-	return nil, errors.New("no token data found")
+	return nil, errTokenNotFound
 }
 
 // CookieAuthenticationMiddleware checks every request for a user cookie.

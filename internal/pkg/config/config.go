@@ -46,7 +46,10 @@ const (
 	randReadSize   = 24
 )
 
-var errNilDatabaseConnection = errors.New("nil DB connection provided")
+var (
+	errNilDatabaseConnection   = errors.New("nil DB connection provided")
+	errInvalidDatabaseProvider = errors.New("invalid database provider")
+)
 
 func init() {
 	b := make([]byte, 64)
@@ -172,7 +175,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(
 	case "postgres":
 		qb = postgres.ProvidePostgres(logger)
 	default:
-		return nil, fmt.Errorf("invalid provider: %q", cfg.Database.Provider)
+		return nil, fmt.Errorf("%w: %q", errInvalidDatabaseProvider, cfg.Database.Provider)
 	}
 
 	return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, qb, shouldCreateTestUser)

@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -23,12 +23,12 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, planID uint64) 
 
 	req, err := c.requestBuilder.BuildGetAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building account subscription plan retrieval request")
+		return nil, observability.PrepareError(err, logger, span, "building account subscription plan retrieval request")
 	}
 
 	var plan *types.AccountSubscriptionPlan
 	if err = c.fetchAndUnmarshal(ctx, req, &plan); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving plan")
+		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
 	}
 
 	return plan, nil
@@ -45,12 +45,12 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 
 	req, err := c.requestBuilder.BuildGetAccountSubscriptionPlansRequest(ctx, filter)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building account subscription plan list request")
+		return nil, observability.PrepareError(err, logger, span, "building account subscription plan list request")
 	}
 
 	var plans *types.AccountSubscriptionPlanList
 	if err = c.fetchAndUnmarshal(ctx, req, &plans); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving plans")
+		return nil, observability.PrepareError(err, logger, span, "retrieving plans")
 	}
 
 	return plans, nil
@@ -68,17 +68,17 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	logger := c.logger.WithValue("account_subscription_plan_name", input.Name)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateAccountSubscriptionPlanRequest(ctx, input)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building account subscription plan creation request")
+		return nil, observability.PrepareError(err, logger, span, "building account subscription plan creation request")
 	}
 
 	var plan *types.AccountSubscriptionPlan
 	if err = c.fetchAndUnmarshal(ctx, req, &plan); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "creating plan")
+		return nil, observability.PrepareError(err, logger, span, "creating plan")
 	}
 
 	return plan, nil
@@ -98,11 +98,11 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, plan *types.
 
 	req, err := c.requestBuilder.BuildUpdateAccountSubscriptionPlanRequest(ctx, plan)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building account subscription plan update request")
+		return observability.PrepareError(err, logger, span, "building account subscription plan update request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &plan); err != nil {
-		return errs.PrepareError(err, logger, span, "updating account subscription plan")
+		return observability.PrepareError(err, logger, span, "updating account subscription plan")
 	}
 
 	return nil
@@ -122,11 +122,11 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, planID uint
 
 	req, err := c.requestBuilder.BuildArchiveAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
-		return errs.PrepareError(err, logger, span, "building account subscription plan archive request")
+		return observability.PrepareError(err, logger, span, "building account subscription plan archive request")
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return errs.PrepareError(err, logger, span, "archiving account subscription plan")
+		return observability.PrepareError(err, logger, span, "archiving account subscription plan")
 	}
 
 	return nil
@@ -146,12 +146,12 @@ func (c *Client) GetAuditLogForAccountSubscriptionPlan(ctx context.Context, plan
 
 	req, err := c.requestBuilder.BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx, planID)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building fetch audit log entries for account subscription plan request")
+		return nil, observability.PrepareError(err, logger, span, "building fetch audit log entries for account subscription plan request")
 	}
 
 	var entries []*types.AuditLogEntry
 	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "retrieving audit log entries for account subscription plan")
+		return nil, observability.PrepareError(err, logger, span, "retrieving audit log entries for account subscription plan")
 	}
 
 	return entries, nil

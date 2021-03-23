@@ -43,4 +43,16 @@ var (
 
 	// ErrNoCookiesReturned indicates nil input was provided in an unacceptable context.
 	ErrNoCookiesReturned = errors.New("no cookies returned from request")
+
+	// ErrInvalidAvatarSize indicates an invalid avatar was provided.
+	ErrInvalidAvatarSize = errors.New("invalid avatar size")
+
+	// ErrInvalidImageExtension indicates an invalid image extension was provided.
+	ErrInvalidImageExtension = errors.New("invalid image extension")
+
+	// ErrNilResponse indicates we received a nil response.
+	ErrNilResponse = errors.New("nil response")
+
+	// ErrArgumentIsNotPointer indicates we received a non-pointer interface argument.
+	ErrArgumentIsNotPointer = errors.New("value is not a pointer")
 )

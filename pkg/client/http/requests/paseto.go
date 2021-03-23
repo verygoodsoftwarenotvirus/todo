@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/errs"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -24,7 +24,7 @@ const (
 
 func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
 	if len(secretKey) < validClientSecretSize {
-		return fmt.Errorf("invalid secret key length: %d", len(secretKey))
+		return fmt.Errorf("%w: %d", ErrInvalidSecretKeyLength, len(secretKey))
 	}
 
 	mac := hmac.New(sha256.New, secretKey)
@@ -53,21 +53,21 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	if err := input.Validate(ctx); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "validating input")
+		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := b.buildDataRequest(ctx, http.MethodPost, uri, input)
 	if err != nil {
-		return nil, errs.PrepareError(err, logger, span, "building request")
+		return nil, observability.PrepareError(err, logger, span, "building request")
 	}
 
 	var buffer bytes.Buffer
 	if err = json.NewEncoder(&buffer).Encode(input); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "encoding body")
+		return nil, observability.PrepareError(err, logger, span, "encoding body")
 	}
 
 	if err = setSignatureForRequest(req, buffer.Bytes(), secretKey); err != nil {
-		return nil, errs.PrepareError(err, logger, span, "signing request")
+		return nil, observability.PrepareError(err, logger, span, "signing request")
 	}
 
 	logger.Debug("PASETO request built")

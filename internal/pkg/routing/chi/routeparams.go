@@ -15,6 +15,10 @@ import (
 
 type chirouteParamManager struct{}
 
+var (
+	errNoRequestContextAvailable = errors.New("no RequestContext attached to request context")
+)
+
 // NewRouteParamManager provides a new RouteParamManager.
 func NewRouteParamManager() routing.RouteParamManager {
 	return &chirouteParamManager{}
@@ -35,7 +39,7 @@ func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types
 		return reqCtx, nil
 	}
 
-	return nil, errors.New("no session info attached to request")
+	return nil, errNoRequestContextAvailable
 }
 
 // BuildRouteParamIDFetcher builds a function that fetches a given key from a path with variables added by a router.

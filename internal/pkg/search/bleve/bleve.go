@@ -25,6 +25,10 @@ const (
 	testingSearchIndexName search.IndexName = "testing"
 )
 
+var (
+	errInvalidIndexName = errors.New("invalid index name")
+)
+
 var _ search.IndexManager = (*bleveIndexManager)(nil)
 
 type (
@@ -63,7 +67,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 				return nil, newIndexErr
 			}
 		default:
-			return nil, fmt.Errorf("invalid index name: %q", name)
+			return nil, fmt.Errorf("%s: %w", name, errInvalidIndexName)
 		}
 	} else if openIndexErr != nil {
 		logger.Error(openIndexErr, "failed to open index")

@@ -20,17 +20,24 @@ type (
 	}
 )
 
-// Providers is our wire superset of providers this package offers.
-var Providers = wire.NewSet(
-	ProvideServer,
+var (
+	// Providers is our wire superset of providers this package offers.
+	Providers = wire.NewSet(
+		ProvideServer,
+	)
+
+	errNilServer       = errors.New("provided HTTP server was nil")
+	errNilServerConfig = errors.New("provided server config was nil")
 )
 
 // ProvideServer builds a new Server instance.
 func ProvideServer(cfg *config.ServerConfig, httpServer *httpserver.Server) (*Server, error) {
 	if cfg == nil {
-		return nil, errors.New("provided config was nil")
-	} else if httpServer == nil {
-		return nil, errors.New("provided http server was nil")
+		return nil, errNilServerConfig
+	}
+
+	if httpServer == nil {
+		return nil, errNilServer
 	}
 
 	srv := &Server{

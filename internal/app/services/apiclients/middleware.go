@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -14,9 +15,12 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 		x := new(types.APICientCreationInput)
 
+		logger := s.logger.WithRequest(req)
+
 		// decode value from request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			s.logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}

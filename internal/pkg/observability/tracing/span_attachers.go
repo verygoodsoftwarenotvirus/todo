@@ -1,6 +1,8 @@
 package tracing
 
 import (
+	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -41,23 +43,6 @@ func attachSliceToSpan(span trace.Span, key string, slice interface{}) {
 	span.SetAttributes(attribute.Array(key, slice))
 }
 
-func attachToSpan(span trace.Span, key string, val interface{}) {
-	switch x := val.(type) {
-	case uint8:
-		attachUint8ToSpan(span, key, x)
-	case uint64:
-		attachUint64ToSpan(span, key, x)
-	case bool:
-		attachBooleanToSpan(span, key, x)
-	case string:
-		attachStringToSpan(span, key, x)
-	case error:
-		attachStringToSpan(span, key, x.Error())
-	default:
-		panic("invalid type to attach to span")
-	}
-}
-
 // AttachToSpan allows a user to attach any value to a span.
 func AttachToSpan(span trace.Span, key string, val interface{}) {
 	if span != nil {
@@ -67,78 +52,103 @@ func AttachToSpan(span trace.Span, key string, val interface{}) {
 
 // AttachFilterToSpan provides a consistent way to attach a filter's info to a span.
 func AttachFilterToSpan(span trace.Span, page uint64, limit uint8, sortBy string) {
-	attachToSpan(span, keys.FilterPageKey, page)
-	attachToSpan(span, keys.FilterLimitKey, limit)
+	attachUint64ToSpan(span, keys.FilterPageKey, page)
+	attachUint8ToSpan(span, keys.FilterLimitKey, limit)
 	attachStringToSpan(span, keys.FilterSortByKey, sortBy)
 }
 
 // AttachAuditLogEntryIDToSpan attaches an audit log entry ID to a given span.
 func AttachAuditLogEntryIDToSpan(span trace.Span, entryID uint64) {
-	attachToSpan(span, keys.AuditLogEntryIDKey, entryID)
+	attachUint64ToSpan(span, keys.AuditLogEntryIDKey, entryID)
 }
 
 // AttachAuditLogEntryEventTypeToSpan attaches an audit log entry ID to a given span.
 func AttachAuditLogEntryEventTypeToSpan(span trace.Span, eventType string) {
-	attachToSpan(span, keys.AuditLogEntryEventTypeKey, eventType)
+	attachStringToSpan(span, keys.AuditLogEntryEventTypeKey, eventType)
 }
 
 // AttachAccountIDToSpan provides a consistent way to attach an account's ID to a span.
 func AttachAccountIDToSpan(span trace.Span, accountID uint64) {
-	attachToSpan(span, keys.AccountIDKey, accountID)
+	attachUint64ToSpan(span, keys.AccountIDKey, accountID)
 }
 
 // AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachUserIDToSpan(span trace.Span, userID uint64) {
-	attachToSpan(span, keys.UserIDKey, userID)
+	attachUint64ToSpan(span, keys.UserIDKey, userID)
 }
 
 // AttachRequestingUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachRequestingUserIDToSpan(span trace.Span, userID uint64) {
-	attachToSpan(span, keys.RequesterKey, userID)
+	attachUint64ToSpan(span, keys.RequesterKey, userID)
 }
 
 // AttachAccountSubscriptionPlanIDToSpan provides a consistent way to attach a plan's ID to a span.
 func AttachAccountSubscriptionPlanIDToSpan(span trace.Span, planID uint64) {
-	attachToSpan(span, keys.AccountSubscriptionPlanIDKey, planID)
+	attachUint64ToSpan(span, keys.AccountSubscriptionPlanIDKey, planID)
 }
 
 // AttachRequestContextToSpan provides a consistent way to attach a RequestContext object to a span.
 func AttachRequestContextToSpan(span trace.Span, reqCtx *types.RequestContext) {
 	if reqCtx != nil {
-		attachToSpan(span, keys.RequesterKey, reqCtx.User.ID)
-		attachToSpan(span, keys.ActiveAccountIDKey, reqCtx.ActiveAccountID)
-		attachToSpan(span, keys.UserIsAdminKey, reqCtx.User.ServiceAdminPermissions.IsServiceAdmin())
+		attachUint64ToSpan(span, keys.RequesterKey, reqCtx.User.ID)
+		attachUint64ToSpan(span, keys.ActiveAccountIDKey, reqCtx.ActiveAccountID)
+		attachBooleanToSpan(span, keys.UserIsAdminKey, reqCtx.User.ServiceAdminPermissions.IsServiceAdmin())
 	}
 }
 
 // AttachAPIClientDatabaseIDToSpan is a consistent way to attach an API client's database row ID to a span.
 func AttachAPIClientDatabaseIDToSpan(span trace.Span, clientID uint64) {
-	attachToSpan(span, keys.APIClientDatabaseIDKey, clientID)
+	attachUint64ToSpan(span, keys.APIClientDatabaseIDKey, clientID)
 }
 
 // AttachAPIClientClientIDToSpan is a consistent way to attach an API client's ID to a span.
 func AttachAPIClientClientIDToSpan(span trace.Span, clientID string) {
-	attachToSpan(span, keys.APIClientClientIDKey, clientID)
+	attachStringToSpan(span, keys.APIClientClientIDKey, clientID)
 }
 
 // AttachUsernameToSpan provides a consistent way to attach a user's username to a span.
 func AttachUsernameToSpan(span trace.Span, username string) {
-	attachToSpan(span, keys.UsernameKey, username)
+	attachStringToSpan(span, keys.UsernameKey, username)
 }
 
 // AttachWebhookIDToSpan provides a consistent way to attach a webhook's ID to a span.
 func AttachWebhookIDToSpan(span trace.Span, webhookID uint64) {
-	attachToSpan(span, keys.WebhookIDKey, webhookID)
+	attachUint64ToSpan(span, keys.WebhookIDKey, webhookID)
 }
 
 // AttachURLToSpan attaches a given URI to a span.
 func AttachURLToSpan(span trace.Span, u *url.URL) {
-	attachToSpan(span, keys.RequestURIKey, u.String())
+	attachStringToSpan(span, keys.RequestURIKey, u.String())
 }
 
 // AttachRequestURIToSpan attaches a given URI to a span.
 func AttachRequestURIToSpan(span trace.Span, uri string) {
-	attachToSpan(span, keys.RequestURIKey, uri)
+	attachStringToSpan(span, keys.RequestURIKey, uri)
+}
+
+// AttachRequestToSpan attaches a given *http.Request to a span.
+func AttachRequestToSpan(span trace.Span, req *http.Request) {
+	if req != nil {
+		attachStringToSpan(span, keys.RequestURIKey, req.URL.String())
+		attachStringToSpan(span, keys.RequestMethodKey, req.Method)
+
+		for k, v := range req.Header {
+			attachSliceToSpan(span, fmt.Sprintf("%s.%s", keys.RequestHeadersKey, k), v)
+		}
+	}
+}
+
+// AttachResponseToSpan attaches a given *http.Response to a span.
+func AttachResponseToSpan(span trace.Span, res *http.Response) {
+	if res != nil {
+		AttachRequestToSpan(span, res.Request)
+
+		span.SetAttributes(attribute.Int(keys.ResponseStatusKey, res.StatusCode))
+
+		for k, v := range res.Header {
+			attachSliceToSpan(span, fmt.Sprintf("%s.%s", keys.ResponseHeadersKey, k), v)
+		}
+	}
 }
 
 // AttachErrorToSpan attaches a given error to a span.
@@ -154,11 +164,11 @@ func AttachErrorToSpan(span trace.Span, description string, err error) {
 
 // AttachDatabaseQueryToSpan attaches a given search query to a span.
 func AttachDatabaseQueryToSpan(span trace.Span, query, queryDescription string, args []interface{}) {
-	attachToSpan(span, keys.DatabaseQueryKey, query)
-	attachToSpan(span, "query_description", queryDescription)
+	attachStringToSpan(span, keys.DatabaseQueryKey, query)
+	attachStringToSpan(span, "query_description", queryDescription)
 
 	if args != nil {
-		attachSliceToSpan(span, "query_args", args)
+		span.SetAttributes(attribute.Any("query_args", args))
 	}
 }
 
@@ -179,19 +189,19 @@ func AttachQueryFilterToSpan(span trace.Span, filter *types.QueryFilter) {
 
 // AttachSearchQueryToSpan attaches a given search query to a span.
 func AttachSearchQueryToSpan(span trace.Span, query string) {
-	attachToSpan(span, keys.SearchQueryKey, query)
+	attachStringToSpan(span, keys.SearchQueryKey, query)
 }
 
 // AttachUserAgentDataToSpan attaches a given search query to a span.
 func AttachUserAgentDataToSpan(span trace.Span, ua *useragent.UserAgent) {
 	if ua != nil {
-		attachToSpan(span, keys.UserAgentOSKey, ua.OS())
-		attachToSpan(span, keys.UserAgentMobileKey, ua.Mobile())
-		attachToSpan(span, keys.UserAgentBotKey, ua.Bot())
+		attachStringToSpan(span, keys.UserAgentOSKey, ua.OS())
+		attachBooleanToSpan(span, keys.UserAgentMobileKey, ua.Mobile())
+		attachBooleanToSpan(span, keys.UserAgentBotKey, ua.Bot())
 	}
 }
 
 // AttachItemIDToSpan attaches an item ID to a given span.
 func AttachItemIDToSpan(span trace.Span, itemID uint64) {
-	attachToSpan(span, keys.ItemIDKey, itemID)
+	attachUint64ToSpan(span, keys.ItemIDKey, itemID)
 }

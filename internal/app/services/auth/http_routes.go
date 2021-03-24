@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -17,6 +16,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -25,68 +25,61 @@ import (
 	"github.com/o1egl/paseto"
 )
 
-var (
-	errNoSessionInfo = errors.New("no session info attached to context")
-	errTokenLoading  = errors.New("error loading token")
-)
-
 // getUserIDFromCookie takes a request object and fetches the cookie data if it is present.
 func (s *service) getUserIDFromCookie(ctx context.Context, req *http.Request) (context.Context, uint64, error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := s.logger.WithRequest(req)
+
 	if cookie, cookieErr := req.Cookie(s.config.Cookies.Name); !errors.Is(cookieErr, http.ErrNoCookie) && cookie != nil {
 		var (
-			token   string
-			loadErr error
+			token string
+			err   error
 		)
 
-		if decodeErr := s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token); decodeErr != nil {
-			return nil, 0, fmt.Errorf("decoding request cookie: %w", decodeErr)
+		if err = s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token); err != nil {
+			return nil, 0, observability.PrepareError(err, logger, span, "retrieving request context")
 		}
 
-		ctx, loadErr = s.sessionManager.Load(ctx, token)
-		if loadErr != nil {
-			return nil, 0, errTokenLoading
+		ctx, err = s.sessionManager.Load(ctx, token)
+		if err != nil {
+			return nil, 0, observability.PrepareError(err, logger, span, "loading session")
 		}
 
-		reqCtx, ok := s.sessionManager.Get(ctx, userIDContextKey).(uint64)
+		userID, ok := s.sessionManager.Get(ctx, userIDContextKey).(uint64)
 		if !ok {
-			return nil, 0, errNoSessionInfo
+			return nil, 0, observability.PrepareError(err, logger, span, "retrieving session data")
 		}
 
-		return ctx, reqCtx, nil
+		logger.Debug("determined userID from request cookie")
+
+		return ctx, userID, nil
 	}
 
 	return nil, 0, http.ErrNoCookie
 }
 
-// fetchUserFromCookie takes a request object and fetches the cookie, and then the user for that cookie.
-func (s *service) fetchUserFromCookie(ctx context.Context, req *http.Request) (*types.User, error) {
+// determineUserFromRequestCookie takes a request object and fetches the cookie, and then the user for that cookie.
+func (s *service) determineUserFromRequestCookie(ctx context.Context, req *http.Request) (*types.User, error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithRequest(req).WithValue("cookie_count", len(req.Cookies()))
-	logger.Debug("fetchUserFromCookie called")
+	logger.Debug("determineUserFromRequestCookie called")
 
-	var (
-		userID    uint64
-		decodeErr error
-	)
-
-	ctx, userID, decodeErr = s.getUserIDFromCookie(ctx, req)
-	if decodeErr != nil {
-		s.logger.WithError(decodeErr).Debug("unable to fetch cookie data from request")
-		return nil, fmt.Errorf("fetching cookie data from request: %w", decodeErr)
+	ctx, userID, err := s.getUserIDFromCookie(ctx, req)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "fetching cookie data from request")
 	}
 
-	user, userFetchErr := s.userDataManager.GetUser(ctx, userID)
-	if userFetchErr != nil {
-		s.logger.Debug("unable to determine user from request")
-		return nil, fmt.Errorf("determining user from request: %w", userFetchErr)
+	user, err := s.userDataManager.GetUser(ctx, userID)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "fetching user from database")
 	}
 
 	tracing.AttachUserIDToSpan(span, userID)
+	logger.Debug("user determined from request cookie")
 
 	return user, nil
 }
@@ -112,18 +105,19 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 
 	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, authentication.ErrPasswordHashTooWeak) {
 		// if the login is otherwise valid, but the password is too weak, try to rehash it.
-		logger.Debug("hashed password was deemed to weak, updating its hash")
+		logger.Debug("hashed password was deemed too weak, updating its hash")
 
 		// re-hash the authentication
-		updated, hashErr := s.authenticator.HashPassword(ctx, loginInput.Password)
-		if hashErr != nil {
-			return false, fmt.Errorf("updating password hash: %w", hashErr)
+		var updated string
+		updated, err = s.authenticator.HashPassword(ctx, loginInput.Password)
+		if err != nil {
+			return false, observability.PrepareError(err, logger, span, "hashing password at new strength")
 		}
 
 		// update stored hashed password in the database.
 		user.HashedPassword = updated
 		if updateErr := s.userDataManager.UpdateUser(ctx, user, nil); updateErr != nil {
-			return false, fmt.Errorf("saving updated password hash: %w", updateErr)
+			return false, observability.PrepareError(err, logger, span, "saving updated password hash")
 		}
 
 		return loginValid, nil
@@ -131,12 +125,11 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 
 	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
 		return false, err
+	} else if err != nil {
+		return false, observability.PrepareError(err, logger, span, "validating login")
 	}
 
-	if err != nil {
-		logger.Error(err, "issue validating login")
-		return false, err
-	}
+	logger.Debug("login validated")
 
 	return loginValid, nil
 }
@@ -184,9 +177,15 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UsernameKey, loginData.Username)
 
 	user, err := s.userDataManager.GetUserByUsername(ctx, loginData.Username)
-	if user == nil || (err != nil && errors.Is(err, sql.ErrNoRows)) {
-		logger.WithValue("user_is_nil", user == nil).Error(err, "fetching user")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
+	if err != nil || user == nil {
+		observability.AcknowledgeError(err, logger, span, "fetching user")
+
+		if errors.Is(err, sql.ErrNoRows) {
+			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+		} else {
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
+		}
+
 		return
 	}
 
@@ -203,6 +202,8 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UserIDKey, user.ID).WithValue("login_valid", loginValid)
 
 	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "validating login")
+
 		if errors.Is(err, authentication.ErrInvalidTwoFactorCode) {
 			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
 		} else if errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
@@ -220,22 +221,22 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defaultAccountID, _, membershipsCheckErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
-	if membershipsCheckErr != nil {
-		logger.Error(membershipsCheckErr, "error encountered checking for user permissionsMap")
+	defaultAccountID, _, err := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "fetching user memberships")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
-	ctx, sessionErr := s.sessionManager.Load(ctx, "")
-	if sessionErr != nil {
-		logger.Error(sessionErr, "error loading token")
+	ctx, err = s.sessionManager.Load(ctx, "")
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "loading token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
-	if renewTokenErr := s.sessionManager.RenewToken(ctx); renewTokenErr != nil {
-		logger.Error(renewTokenErr, "error encountered renewing token")
+	if err = s.sessionManager.RenewToken(ctx); err != nil {
+		observability.AcknowledgeError(err, logger, span, "renewing token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
@@ -245,14 +246,14 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
-		logger.Error(err, "error encountered writing to session store")
+		observability.AcknowledgeError(err, logger, span, "writing to session store")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
-	cookie, cookieErr := s.buildCookie(token, expiry)
-	if cookieErr != nil {
-		logger.Error(cookieErr, "error encountered building cookie")
+	cookie, err := s.buildCookie(token, expiry)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "building cookie")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
@@ -284,18 +285,18 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	logger = logger.WithValue("requested_id", input.AccountID)
 
 	// determine user ID.
-	reqCtx, reqCtxRetrievalErr := s.requestContextFetcher(req)
-	if reqCtxRetrievalErr != nil {
-		logger.Error(reqCtxRetrievalErr, "error fetching request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "fetching request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
 	logger = logger.WithValue("user_id", reqCtx.User.ID)
 
-	_, perms, permissionsErr := s.accountMembershipManager.GetMembershipsForUser(ctx, reqCtx.User.ID)
-	if permissionsErr != nil {
-		logger.Error(permissionsErr, "checking permissions")
+	_, perms, err := s.accountMembershipManager.GetMembershipsForUser(ctx, reqCtx.User.ID)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "checking permissions")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
@@ -306,15 +307,15 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	ctx, sessionErr := s.sessionManager.Load(ctx, "")
-	if sessionErr != nil {
-		logger.Error(sessionErr, "loading token")
+	ctx, err = s.sessionManager.Load(ctx, "")
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "loading token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
-	if renewTokenErr := s.sessionManager.RenewToken(ctx); renewTokenErr != nil {
-		logger.Error(renewTokenErr, "error encountered renewing token")
+	if err = s.sessionManager.RenewToken(ctx); err != nil {
+		observability.AcknowledgeError(err, logger, span, "renewing token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
@@ -323,19 +324,19 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
-		logger.Error(err, "error encountered writing to session store")
+		observability.AcknowledgeError(err, logger, span, "writing to session store")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
 	cookie, err := s.buildCookie(token, expiry)
 	if err != nil {
-		logger.Error(err, "error encountered building cookie")
+		observability.AcknowledgeError(err, logger, span, "building cookie")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
-	logger.Debug("successfully changed user's cookie account")
+	logger.Debug("successfully changed cookie active account")
 	http.SetCookie(res, cookie)
 
 	res.WriteHeader(http.StatusAccepted)
@@ -349,22 +350,22 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "fetching request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	ctx, sessionErr := s.sessionManager.Load(ctx, "")
-	if sessionErr != nil {
-		logger.Error(sessionErr, "error loading token")
+	ctx, err = s.sessionManager.Load(ctx, "")
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "loading token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
 
 	if destroyErr := s.sessionManager.Destroy(ctx); destroyErr != nil {
-		logger.Error(destroyErr, "destroying user session")
+		observability.AcknowledgeError(err, logger, span, "destroying user session")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
 	}
@@ -375,13 +376,15 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 			http.SetCookie(res, c)
 			s.auditLog.LogLogoutEvent(ctx, reqCtx.User.ID)
 		} else {
-			logger.Error(cookieBuildingErr, "error encountered building cookie")
+			observability.AcknowledgeError(err, logger, span, "building cookie")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 			return
 		}
 	} else {
 		logger.WithError(cookieRetrievalErr).Debug("logout was called, but encountered error loading cookie from request")
 	}
+
+	logger.Debug("user logged out")
 }
 
 // StatusHandler returns the user info for the user making the request.
@@ -391,7 +394,7 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 
 	statusResponse := &types.UserStatusResponse{}
 
-	if user, err := s.fetchUserFromCookie(ctx, req); err == nil {
+	if user, err := s.determineUserFromRequestCookie(ctx, req); err == nil {
 		statusResponse = user.ToStatusResponse()
 		statusResponse.UserIsAuthenticated = true
 	}
@@ -430,23 +433,23 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	sum, decodeErr := base64.RawURLEncoding.DecodeString(req.Header.Get(signatureHeaderKey))
-	if decodeErr != nil || len(sum) == 0 {
-		logger.WithValue("sum_length", len(sum)).Error(decodeErr, "invalid signature")
+	sum, err := base64.RawURLEncoding.DecodeString(req.Header.Get(signatureHeaderKey))
+	if err != nil || len(sum) == 0 {
+		logger.WithValue("sum_length", len(sum)).Error(err, "invalid signature")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	client, clientRetrievalErr := s.apiClientManager.GetAPIClientByClientID(ctx, pasetoRequest.ClientID)
 	if clientRetrievalErr != nil {
-		logger.Error(clientRetrievalErr, "retrieving API client")
+		observability.AcknowledgeError(err, logger, span, "fetching API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	mac := hmac.New(sha256.New, client.ClientSecret)
 	if _, macWriteErr := mac.Write(s.encoderDecoder.MustEncodeJSON(pasetoRequest)); macWriteErr != nil {
-		logger.Error(macWriteErr, "writing HMAC message for comparison")
+		observability.AcknowledgeError(err, logger, span, "writing HMAC message for comparison")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -457,18 +460,18 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, userRetrievalErr := s.userDataManager.GetUser(ctx, client.BelongsToUser)
-	if userRetrievalErr != nil {
-		logger.Error(userRetrievalErr, "retrieving user")
+	user, err := s.userDataManager.GetUser(ctx, client.BelongsToUser)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving user")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
-	defaultAccountID, perms, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
-	if membershipRetrievalErr != nil {
-		logger.Error(membershipRetrievalErr, "retrieving perms for API client")
+	defaultAccountID, perms, err := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving perms for API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -515,9 +518,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(reqCtx.ToBytes()))
 
 	// Encrypt data
-	token, tokenEncryptErr := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, "")
-	if tokenEncryptErr != nil {
-		logger.Error(tokenEncryptErr, "encrypting PASETO")
+	token, err := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, "")
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "encrypting PASETO")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -527,7 +530,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		ExpiresAt: jsonToken.Expiration.String(),
 	}
 
-	logger.Info("Issuing PASETO")
+	logger.Info("PASETO issued")
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
 }
@@ -541,9 +544,9 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 	logger.Info("cycling cookie secret!")
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "fetching request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}

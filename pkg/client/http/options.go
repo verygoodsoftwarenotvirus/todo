@@ -97,6 +97,7 @@ func UsingCookie(cookie *http.Cookie) func(*Client) error {
 
 		c.authMethod = cookieAuthMethod
 		c.authedClient.Transport = newCookieRoundTripper(c, cookie)
+		c.authedClient = buildRetryingClient(c.authedClient, c.logger)
 
 		return nil
 	}
@@ -107,6 +108,7 @@ func UsingPASETO(clientID string, secretKey []byte) func(*Client) error {
 	return func(c *Client) error {
 		c.authMethod = pasetoAuthMethod
 		c.authedClient.Transport = newPASETORoundTripper(c, clientID, secretKey)
+		c.authedClient = buildRetryingClient(c.authedClient, c.logger)
 
 		return nil
 	}

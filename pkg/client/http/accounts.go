@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -27,15 +26,12 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	if c.authMethod == cookieAuthMethod {
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
-			return observability.PrepareError(err, logger, span, "building login request")
+			return observability.PrepareError(err, logger, span, "building account switch request")
 		}
 
-		res, err := c.authedClient.Do(req)
-		if err != nil {
-			return fmt.Errorf("encountered error executing login request: %w", err)
+		if err = c.executeAndUnmarshal(ctx, req, c.authedClient, nil); err != nil {
+			return observability.PrepareError(err, logger, span, "executing account switch request")
 		}
-
-		c.closeResponseBody(ctx, res)
 	}
 
 	c.accountID = accountID

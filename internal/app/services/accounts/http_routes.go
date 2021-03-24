@@ -39,6 +39,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		WithValue(keys.FilterPageKey, filter.Page).
 		WithValue(keys.FilterSortByKey, string(filter.SortBy))
 
+	tracing.AttachRequestToSpan(span, req)
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// fetch request context
@@ -84,6 +85,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check request context for parsed input struct.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.AccountCreationInput)
@@ -130,6 +132,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)
@@ -168,6 +171,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check for parsed input attached to request context.
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.AccountUpdateInput)
@@ -226,6 +230,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)
@@ -268,6 +273,7 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check request context for parsed input struct.
 	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.AddUserToAccountInput)
@@ -309,6 +315,7 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check request context for parsed input struct.
 	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.ModifyUserPermissionsInput)
@@ -354,6 +361,7 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check request context for parsed input struct.
 	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.TransferAccountOwnershipInput)
@@ -395,6 +403,7 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check request context for parsed input struct.
 	reason := req.URL.Query().Get("reason")
@@ -435,6 +444,7 @@ func (s *service) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Reques
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	accountID := s.accountIDFetcher(req)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -467,7 +477,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("AuditEntryHandler invoked")
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)

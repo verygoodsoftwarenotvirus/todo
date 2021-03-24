@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -30,19 +32,22 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	logger = logger.WithValue("new_status", input.NewReputation)
 
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
+
+	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	if !reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() {
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
-	logger = logger.WithValue("ban_giver", reqCtx.User.ID)
+	requester := reqCtx.User.ID
+	logger = logger.WithValue("ban_giver", requester)
 
 	var allowed bool
 
@@ -62,12 +67,13 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	logger = logger.WithValue("status_change_recipient", input.TargetUserID)
 
-	if err := s.userDB.UpdateUserAccountStatus(ctx, input.TargetUserID, *input); err != nil {
+	if err = s.userDB.UpdateUserAccountStatus(ctx, input.TargetUserID, *input); err != nil {
 		logger.Error(err, "changing user status")
 
 		if errors.Is(err, sql.ErrNoRows) {
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		} else {
+			observability.AcknowledgeError(err, logger, span, "retrieving request context")
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		}
 
@@ -76,9 +82,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		s.auditLog.LogUserBanEvent(ctx, reqCtx.User.ID, input.TargetUserID, input.Reason)
+		s.auditLog.LogUserBanEvent(ctx, requester, input.TargetUserID, input.Reason)
 	case types.TerminatedAccountStatus:
-		s.auditLog.LogAccountTerminationEvent(ctx, reqCtx.User.ID, input.TargetUserID, input.Reason)
+		s.auditLog.LogAccountTerminationEvent(ctx, requester, input.TargetUserID, input.Reason)
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 

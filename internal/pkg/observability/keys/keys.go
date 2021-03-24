@@ -2,65 +2,69 @@ package keys
 
 const (
 	// AuditLogEntryIDKey is the standard key for referring to an audit log entry ID.
-	AuditLogEntryIDKey = "audit_log_entry_id"
+	AuditLogEntryIDKey = "audit_log_entry.id"
 	// AuditLogEntryEventTypeKey is the standard key for referring to an audit log event type.
-	AuditLogEntryEventTypeKey = "event_type"
+	AuditLogEntryEventTypeKey = "audit_log_entry.event_type"
 	// AccountSubscriptionPlanIDKey is the standard key for referring to an account subscription plan ID.
-	AccountSubscriptionPlanIDKey = "account_subscription_plan_id"
+	AccountSubscriptionPlanIDKey = "account_subscription_plan.id"
 	// PermissionsKey is the standard key for referring to an account user membership ID.
-	PermissionsKey = "permissions"
+	PermissionsKey = "user.permissions"
 	// RequesterKey is the standard key for referring to a requesting user's ID.
 	RequesterKey = "requested_by"
 	// AccountIDKey is the standard key for referring to an account ID.
-	AccountIDKey = "account_id"
+	AccountIDKey = "account.id"
 	// ActiveAccountIDKey is the standard key for referring to an active account ID.
 	ActiveAccountIDKey = "active_account_id"
 	// UserIDKey is the standard key for referring to a user ID.
-	UserIDKey = "user_id"
+	UserIDKey = "user.id"
 	// UserIsAdminKey is the standard key for referring to a user's admin status.
-	UserIsAdminKey = "is_admin"
+	UserIsAdminKey = "user.is_admin"
 	// UsernameKey is the standard key for referring to a username.
-	UsernameKey = "username"
+	UsernameKey = "user.username"
 	// NameKey is the standard key for referring to a name.
 	NameKey = "name"
 	// FilterCreatedAfterKey is the standard key for referring to a types.QueryFilter's CreatedAfter field.
-	FilterCreatedAfterKey = "filter_created_after"
+	FilterCreatedAfterKey = "query_filter.created_after"
 	// FilterCreatedBeforeKey is the standard key for referring to a types.QueryFilter's CreatedBefore field.
-	FilterCreatedBeforeKey = "filter_created_before"
+	FilterCreatedBeforeKey = "query_filter.created_before"
 	// FilterUpdatedAfterKey is the standard key for referring to a types.QueryFilter's UpdatedAfter field.
-	FilterUpdatedAfterKey = "filter_updated_after"
+	FilterUpdatedAfterKey = "query_filter.updated_after"
 	// FilterUpdatedBeforeKey is the standard key for referring to a types.QueryFilter's UpdatedAfter field.
-	FilterUpdatedBeforeKey = "filter_updated_before"
+	FilterUpdatedBeforeKey = "query_filter.updated_before"
 	// FilterSortByKey is the standard key for referring to a types.QueryFilter's SortBy field.
-	FilterSortByKey = "filter_sort_by"
+	FilterSortByKey = "query_filter.sort_by"
 	// FilterPageKey is the standard key for referring to a types.QueryFilter's page.
-	FilterPageKey = "filter_page"
+	FilterPageKey = "query_filter.page"
 	// FilterLimitKey is the standard key for referring to a types.QueryFilter's limit.
-	FilterLimitKey = "filter_limit"
+	FilterLimitKey = "query_filter.limit"
 	// FilterIsNilKey is the standard key for referring to a types.QueryFilter's null status.
-	FilterIsNilKey = "filter_is_nil"
+	FilterIsNilKey = "query_filter.is_nil"
 	// APIClientClientIDKey is the standard key for referring to an API client's database ID.
-	APIClientClientIDKey = "api_client_id"
+	APIClientClientIDKey = "api_client.id"
 	// APIClientDatabaseIDKey is the standard key for referring to an API client's database ID.
-	APIClientDatabaseIDKey = "api_client_row_id"
+	APIClientDatabaseIDKey = "api_client.row_id"
 	// WebhookIDKey is the standard key for referring to a webhook's ID.
-	WebhookIDKey = "webhook_id"
+	WebhookIDKey = "webhook.id"
 	// URLKey is the standard key for referring to a url.
 	URLKey = "url"
+	// RequestHeadersKey is the standard key for referring to an http.Request's Headers.
+	RequestHeadersKey = "request.headers"
 	// RequestMethodKey is the standard key for referring to an http.Request's Method.
-	RequestMethodKey = "request_method"
+	RequestMethodKey = "request.method"
 	// RequestURIKey is the standard key for referring to an http.Request's URI.
-	RequestURIKey = "request_uri"
+	RequestURIKey = "request.uri"
 	// ResponseStatusKey is the standard key for referring to an http.Request's URI.
-	ResponseStatusKey = "response_status"
+	ResponseStatusKey = "response.status"
+	// ResponseHeadersKey is the standard key for referring to an http.Response's Headers.
+	ResponseHeadersKey = "response.headers"
 	// ReasonKey is the standard key for referring to a reason.
 	ReasonKey = "reason"
 	// DatabaseQueryKey is the standard key for referring to a database query.
 	DatabaseQueryKey = "database_query"
 	// URLQueryKey is the standard key for referring to a url query.
-	URLQueryKey = "url_query"
+	URLQueryKey = "url.query"
 	// ConnectionDetailsKey is the standard key for referring to a database's URI.
-	ConnectionDetailsKey = "connection_details"
+	ConnectionDetailsKey = "database.connection_details"
 	// SearchQueryKey is the standard key for referring to a search query parameter value.
 	SearchQueryKey = "search_query"
 	// UserAgentOSKey is the standard key for referring to a search query parameter value.

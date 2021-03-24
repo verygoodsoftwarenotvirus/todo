@@ -23,10 +23,12 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gojektech/heimdall v5.0.2+incompatible // indirect
-	github.com/gojektech/heimdall/v6 v6.1.0
+	github.com/gojektech/heimdall/v6 v6.1.0 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/securecookie v1.1.1
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/lib/pq v1.10.0
 	github.com/luna-duclos/instrumentedsql v1.1.3

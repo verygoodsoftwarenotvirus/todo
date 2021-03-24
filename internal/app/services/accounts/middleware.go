@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -25,6 +26,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
@@ -54,6 +56,7 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
@@ -82,6 +85,7 @@ func (s *service) AddMemberInputMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
@@ -110,6 +114,7 @@ func (s *service) ModifyMemberPermissionsInputMiddleware(next http.Handler) http
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
@@ -138,6 +143,7 @@ func (s *service) AccountTransferInputMiddleware(next http.Handler) http.Handler
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")

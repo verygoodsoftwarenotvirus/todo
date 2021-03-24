@@ -160,7 +160,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
 
-		actualUser, err := s.fetchUserFromCookie(ctx, req)
+		actualUser, err := s.determineUserFromRequestCookie(ctx, req)
 		assert.Equal(t, exampleUser, actualUser)
 		assert.NoError(t, err)
 
@@ -177,7 +177,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		require.NotNil(t, req)
 		require.NoError(t, err)
 
-		actualUser, err := s.fetchUserFromCookie(req.Context(), req)
+		actualUser, err := s.determineUserFromRequestCookie(req.Context(), req)
 		assert.Nil(t, actualUser)
 		assert.Error(t, err)
 	})
@@ -210,7 +210,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		).Return((*types.User)(nil), expectedError)
 		s.userDataManager = udb
 
-		actualUser, err := s.fetchUserFromCookie(req.Context(), req)
+		actualUser, err := s.determineUserFromRequestCookie(req.Context(), req)
 		assert.Nil(t, actualUser)
 		assert.Error(t, err)
 

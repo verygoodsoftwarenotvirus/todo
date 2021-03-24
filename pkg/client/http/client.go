@@ -223,7 +223,6 @@ func (c *Client) fetchResponseToRequest(ctx context.Context, client *http.Client
 	defer span.End()
 
 	logger := c.logger.WithRequest(req)
-	logger.Debug("executing request")
 
 	if command, err := http2curl.GetCurlCommand(req); err == nil && c.debug {
 		logger = c.logger.WithValue("curl", command.String())
@@ -235,7 +234,8 @@ func (c *Client) fetchResponseToRequest(ctx context.Context, client *http.Client
 		return nil, observability.PrepareError(err, logger, span, "executing request")
 	}
 
-	if bdump, err := httputil.DumpResponse(res, true); err == nil {
+	var bdump []byte
+	if bdump, err = httputil.DumpResponse(res, true); err == nil {
 		logger = logger.WithValue("response_body", string(bdump))
 	}
 

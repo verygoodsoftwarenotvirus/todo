@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -22,18 +23,17 @@ func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Han
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.Error(err, "provided input was invalid")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		ctx = context.WithValue(ctx, accountStatusUpdateMiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
+		next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, accountStatusUpdateMiddlewareCtxKey, x)))
 	})
 }

@@ -37,42 +37,6 @@ func buildRequest(t *testing.T) *http.Request {
 	return req
 }
 
-func Test_fetchUserID(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		req := buildRequest(t)
-
-		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-
-		// for the service.fetchUserID() call
-
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(t, err)
-
-		req = req.WithContext(
-			context.WithValue(req.Context(), types.RequestContextKey, reqCtx),
-		)
-		s := buildTestService(t)
-
-		actual := s.fetchUserID(req)
-		assert.Equal(t, exampleUser.ID, actual)
-	})
-
-	T.Run("without context value present", func(t *testing.T) {
-		t.Parallel()
-
-		req := buildRequest(t)
-		expected := uint64(0)
-		s := buildTestService(t)
-
-		actual := s.fetchUserID(req)
-		assert.Equal(t, expected, actual)
-	})
-}
-
 func TestService_ListHandler(T *testing.T) {
 	T.Parallel()
 
@@ -203,9 +167,9 @@ func TestService_CreateHandler(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 
 		mockDB.UserDataManager.On(
-			"GetUserByUsername",
+			"GetUser",
 			mock.Anything,
-			exampleInput.Username,
+			exampleUser.ID,
 		).Return(exampleUser, nil)
 
 		a := &mockauth.Authenticator{}
@@ -291,9 +255,9 @@ func TestService_CreateHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
-			"GetUserByUsername",
+			"GetUser",
 			mock.Anything,
-			exampleInput.Username,
+			exampleUser.ID,
 		).Return((*types.User)(nil), errors.New("blah"))
 		s.apiClientDataManager = mockDB
 		s.userDataManager = mockDB
@@ -332,9 +296,9 @@ func TestService_CreateHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
-			"GetUserByUsername",
+			"GetUser",
 			mock.Anything,
-			exampleInput.Username,
+			exampleUser.ID,
 		).Return(exampleUser, nil)
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
@@ -390,10 +354,11 @@ func TestService_CreateHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		mockDB := database.BuildMockDatabase()
+
 		mockDB.UserDataManager.On(
-			"GetUserByUsername",
+			"GetUser",
 			mock.Anything,
-			exampleInput.Username,
+			exampleUser.ID,
 		).Return(exampleUser, nil)
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
@@ -450,9 +415,9 @@ func TestService_CreateHandler(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 
 		mockDB.UserDataManager.On(
-			"GetUserByUsername",
+			"GetUser",
 			mock.Anything,
-			exampleInput.Username,
+			exampleUser.ID,
 		).Return(exampleUser, nil)
 
 		a := &mockauth.Authenticator{}
@@ -515,9 +480,9 @@ func TestService_CreateHandler(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 
 		mockDB.UserDataManager.On(
-			"GetUserByUsername",
+			"GetUser",
 			mock.Anything,
-			exampleInput.Username,
+			exampleUser.ID,
 		).Return(exampleUser, nil)
 
 		a := &mockauth.Authenticator{}
@@ -581,9 +546,9 @@ func TestService_CreateHandler(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 
 		mockDB.UserDataManager.On(
-			"GetUserByUsername",
+			"GetUser",
 			mock.Anything,
-			exampleInput.Username,
+			exampleUser.ID,
 		).Return(exampleUser, nil)
 
 		a := &mockauth.Authenticator{}

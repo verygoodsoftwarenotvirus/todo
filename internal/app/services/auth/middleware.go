@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
@@ -58,7 +59,7 @@ func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
 	return nil
 }
 
-func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
+func (s *service) fetchRequestContextFromRequest(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -67,28 +68,26 @@ func (s *service) checkRequestForToken(ctx context.Context, req *http.Request) (
 	if rawToken := req.Header.Get(pasetoAuthorizationKey); rawToken != "" {
 		var token paseto.JSONToken
 
-		if decryptErr := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); decryptErr != nil {
-			logger.Error(decryptErr, "error decrypting PASETO")
-			return nil, decryptErr
+		if err := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); err != nil {
+			return nil, observability.PrepareError(err, logger, span, "decrypting PASETO")
 		}
 
 		if time.Now().UTC().After(token.Expiration) {
 			return nil, errTokenExpired
 		}
 
-		gobEncoded, base64DecodeErr := base64.RawURLEncoding.DecodeString(token.Get(pasetoDataKey))
-		if base64DecodeErr != nil {
-			logger.Error(base64DecodeErr, "error decoding base64 encoded GOB payload")
-			return nil, base64DecodeErr
+		gobEncoded, err := base64.RawURLEncoding.DecodeString(token.Get(pasetoDataKey))
+		if err != nil {
+			return nil, observability.PrepareError(err, logger, span, "decoding base64 encoded GOB payload")
 		}
 
 		var reqContext *types.RequestContext
 
-		gobDecodeErr := gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&reqContext)
-		if gobDecodeErr != nil {
-			logger.Error(gobDecodeErr, "error decoding GOB encoded session info payload")
-			return nil, gobDecodeErr
+		if err = gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&reqContext); err != nil {
+			return nil, observability.PrepareError(err, logger, span, "decoding GOB encoded session info payload")
 		}
+
+		logger.Debug("returning request context")
 
 		return reqContext, nil
 	}
@@ -105,24 +104,26 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		logger := s.logger.WithRequest(req)
 
 		// fetch the user from the request.
-		user, err := s.fetchUserFromCookie(ctx, req)
+		user, err := s.determineUserFromRequestCookie(ctx, req)
 		if err != nil {
-			// we deliberately aren't logging here because it's done in fetchUserFromCookie
+			// we deliberately aren't logging here because it's done in determineUserFromRequestCookie
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "cookie required", http.StatusUnauthorized)
 			return
 		}
 
 		if user != nil {
+			logger = logger.WithValue(keys.UserIDKey, user.ID)
+
 			defaultAccount, userPermissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
 			if membershipRetrievalErr != nil {
-				logger.Error(membershipRetrievalErr, "retrieving userPermissions for cookie authentication")
+				observability.AcknowledgeError(membershipRetrievalErr, logger, span, "fetching user memberships")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
 			reqCtx, requestContextErr := types.RequestContextFromUser(user, defaultAccount, userPermissions)
 			if requestContextErr != nil {
-				logger.Error(membershipRetrievalErr, "forming request context")
+				observability.AcknowledgeError(requestContextErr, logger, span, "forming request context")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
@@ -146,14 +147,14 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 		// handle cookies if relevant.
 		if cookieContext, userID, err := s.getUserIDFromCookie(ctx, req); err == nil && userID != 0 {
-			tracing.AttachUserIDToSpan(span, userID)
 			ctx = cookieContext
 
+			tracing.AttachUserIDToSpan(span, userID)
 			logger = logger.WithValue(keys.RequesterKey, userID)
 
 			reqCtx, userIsBannedErr := s.userDataManager.GetRequestContextForUser(ctx, userID)
 			if userIsBannedErr != nil {
-				logger.Error(userIsBannedErr, "fetching user info for cookie")
+				observability.AcknowledgeError(userIsBannedErr, logger, span, "fetching user info for cookie")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
@@ -168,9 +169,9 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		tokenRequestContext, tokenErr := s.checkRequestForToken(ctx, req)
-		if tokenErr != nil {
-			logger.Error(tokenErr, "error extracting token from request")
+		tokenRequestContext, err := s.fetchRequestContextFromRequest(ctx, req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "extracting token from request")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
 		}
@@ -303,13 +304,13 @@ func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Han
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.Error(err, "provided input was invalid")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -331,14 +332,14 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		x := new(types.UserLoginInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			if x = parseLoginInputFromForm(req); x == nil {
-				logger.Error(err, "error encountered decoding request body")
+				observability.AcknowledgeError(err, logger, span, "decoding request body")
 				s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
 				return
 			}
 		}
 
 		if err := x.Validate(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
-			logger.Error(err, "provided input was invalid")
+			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -359,13 +360,13 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 
 		x := new(types.PASETOCreationInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.Error(err, "provided input was invalid")
+			observability.AcknowledgeError(err, logger, span, "provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

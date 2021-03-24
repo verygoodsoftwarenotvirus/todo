@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -22,14 +23,15 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	return &service{
-		apiClientDataManager: database.BuildMockDatabase(),
-		logger:               logging.NewNonOperationalLogger(),
-		encoderDecoder:       mockencoding.NewMockEncoderDecoder(),
-		authenticator:        &mockauth.Authenticator{},
-		urlClientIDExtractor: func(req *http.Request) uint64 { return 0 },
-		apiClientCounter:     &mockmetrics.UnitCounter{},
-		secretGenerator:      &mockSecretGenerator{},
-		tracer:               tracing.NewTracer(serviceName),
+		apiClientDataManager:  database.BuildMockDatabase(),
+		logger:                logging.NewNonOperationalLogger(),
+		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
+		authenticator:         &mockauth.Authenticator{},
+		requestContextFetcher: chi.NewRouteParamManager().FetchContextFromRequest,
+		urlClientIDExtractor:  func(req *http.Request) uint64 { return 0 },
+		apiClientCounter:      &mockmetrics.UnitCounter{},
+		secretGenerator:       &mockSecretGenerator{},
+		tracer:                tracing.NewTracer(serviceName),
 	}
 }
 

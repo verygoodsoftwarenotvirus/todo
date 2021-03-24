@@ -19,8 +19,6 @@ type pasetoRoundTripper struct {
 
 }
 
-var pasetoRoundTripperClient = http.DefaultClient
-
 func newPASETORoundTripper(client *Client, clientID string, secretKey []byte) *pasetoRoundTripper {
 	return &pasetoRoundTripper{
 		clientID:  clientID,
@@ -31,6 +29,8 @@ func newPASETORoundTripper(client *Client, clientID string, secretKey []byte) *p
 		client:    client,
 	}
 }
+
+var pasetoRoundTripperClient = buildRetryingClient(&http.Client{Timeout: defaultTimeout}, nil)
 
 // RoundTrip authorizes and authenticates the request with a cookie.
 func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {

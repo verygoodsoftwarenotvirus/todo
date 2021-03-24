@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -17,19 +18,10 @@ const (
 	// APIClientIDURIParamKey is used for referring to API client IDs in router params.
 	APIClientIDURIParamKey = "apiClientID"
 
-	clientIDKey types.ContextKey = "client_id"
-
-	clientIDSize     = 32
-	clientSecretSize = 128
+	clientIDSize                      = 32
+	clientSecretSize                  = 128
+	clientIDKey      types.ContextKey = "client_id"
 )
-
-// fetchUserID grabs a userID out of the request context.
-func (s *service) fetchUserID(req *http.Request) uint64 {
-	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
-		return reqCtx.User.ID
-	}
-	return 0
-}
 
 // ListHandler is a handler that returns a list of API clients.
 func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
@@ -45,19 +37,26 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user.
-	userID := s.fetchUserID(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue(keys.UserIDKey, userID)
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	requester := reqCtx.User.ID
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, requester)
 
 	// fetch API clients.
-	apiClients, err := s.apiClientDataManager.GetAPIClients(ctx, userID, filter)
+	apiClients, err := s.apiClientDataManager.GetAPIClients(ctx, requester, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		// just return an empty list if there are no results.
 		apiClients = &types.APIClientList{
 			Clients: []*types.APIClient{},
 		}
 	} else if err != nil {
-		logger.Error(err, "encountered error getting list of API clients from apiClientDataManager")
+		observability.AcknowledgeError(err, logger, span, "fetching API clients from database")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -82,20 +81,21 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// check request context for user ID.
-	reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
-	if !ok || reqCtx == nil {
-		logger.Debug("no request context attached to API client creation request")
-		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// keep relevant data in mind.
+	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue("username", input.Username)
 
 	// retrieve user.
-	user, err := s.userDataManager.GetUserByUsername(ctx, input.Username)
+	user, err := s.userDataManager.GetUser(ctx, reqCtx.User.ID)
 	if err != nil {
-		logger.Error(err, "fetching user by username")
+		observability.AcknowledgeError(err, logger, span, "fetching user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -118,20 +118,20 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "validating user credentials")
+		observability.AcknowledgeError(err, logger, span, "validating user credentials")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// set some data.
 	if input.ClientID, err = s.secretGenerator.GenerateClientID(); err != nil {
-		logger.Error(err, "generating client id")
+		observability.AcknowledgeError(err, logger, span, "generating client id")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	if input.ClientSecret, err = s.secretGenerator.GenerateClientSecret(); err != nil {
-		logger.Error(err, "generating client secret")
+		observability.AcknowledgeError(err, logger, span, "generating client secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -141,7 +141,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// create the client.
 	client, err := s.apiClientDataManager.CreateAPIClient(ctx, input, user.ID)
 	if err != nil {
-		logger.Error(err, "creating API client")
+		observability.AcknowledgeError(err, logger, span, "creating API client")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -167,15 +167,16 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
+	requester := reqCtx.User.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, requester)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -183,12 +184,12 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
 
 	// fetch item from database.
-	x, err := s.apiClientDataManager.GetAPIClientByDatabaseID(ctx, apiClientID, reqCtx.User.ID)
+	x, err := s.apiClientDataManager.GetAPIClientByDatabaseID(ctx, apiClientID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching item from database")
+		observability.AcknowledgeError(err, logger, span, "fetching API client from database")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -205,15 +206,16 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
+	requester := reqCtx.User.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, requester)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -221,12 +223,12 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, apiClientID)
 
 	// archive the API client in the database.
-	err := s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, reqCtx.ActiveAccountID, reqCtx.User.ID)
+	err = s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, reqCtx.ActiveAccountID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered deleting API client")
+		observability.AcknowledgeError(err, logger, span, "archiving API client")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -246,9 +248,17 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger := s.logger.WithRequest(req)
 	logger.Debug("AuditEntryHandler invoked")
 
-	userID := s.fetchUserID(req)
-	tracing.AttachUserIDToSpan(span, userID)
-	logger = logger.WithValue(keys.UserIDKey, userID)
+	// determine user.
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	requester := reqCtx.User.ID
+	tracing.AttachRequestContextToSpan(span, reqCtx)
+	logger = logger.WithValue(keys.UserIDKey, requester)
 
 	// determine relevant API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -260,7 +270,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching API clients")
+		observability.AcknowledgeError(err, logger, span, "fetching audit log entries for API client")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

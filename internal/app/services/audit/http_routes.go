@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -29,9 +30,9 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -39,18 +40,16 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
-	var (
-		entries *types.AuditLogEntryList
-		err     error
-	)
+	var entries *types.AuditLogEntryList
+	entries, err = s.auditLog.GetAuditLogEntries(ctx, filter)
 
-	if entries, err = s.auditLog.GetAuditLogEntries(ctx, filter); errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
 		entries = &types.AuditLogEntryList{
 			Entries: []*types.AuditLogEntry{},
 		}
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching entries")
+		observability.AcknowledgeError(err, logger, span, "fetching audit log entries")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -68,9 +67,9 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger.Debug("ReadHandler invoked")
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -89,7 +88,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching audit log entry from database")
+		observability.AcknowledgeError(err, logger, span, "fetching audit log entry")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

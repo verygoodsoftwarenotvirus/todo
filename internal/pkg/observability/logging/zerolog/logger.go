@@ -125,22 +125,26 @@ func (l *logger) WithError(err error) logging.Logger {
 }
 
 func (l *logger) attachRequestToLog(req *http.Request) zerolog.Logger {
-	l2 := l.logger.With().
-		Str("path", req.URL.Path).
-		Str("method", req.Method).
-		Logger()
+	if req != nil {
+		l2 := l.logger.With().
+			Str("path", req.URL.Path).
+			Str("method", req.Method).
+			Logger()
 
-	if req.URL.RawQuery != "" {
-		l2 = l2.With().Str("query", req.URL.RawQuery).Logger()
-	}
-
-	if l.requestIDFunc != nil {
-		if reqID := l.requestIDFunc(req); reqID != "" {
-			l2 = l2.With().Str("request_id", reqID).Logger()
+		if req.URL.RawQuery != "" {
+			l2 = l2.With().Str("query", req.URL.RawQuery).Logger()
 		}
+
+		if l.requestIDFunc != nil {
+			if reqID := l.requestIDFunc(req); reqID != "" {
+				l2 = l2.With().Str("request_id", reqID).Logger()
+			}
+		}
+
+		return l2
 	}
 
-	return l2
+	return l.logger
 }
 
 // WithRequest satisfies our contract for the logging.Logger WithRequest method.
@@ -150,7 +154,10 @@ func (l *logger) WithRequest(req *http.Request) logging.Logger {
 
 // WithResponse satisfies our contract for the logging.Logger WithResponse method.
 func (l *logger) WithResponse(res *http.Response) logging.Logger {
-	l2 := l.attachRequestToLog(res.Request).With().Int(keys.ResponseStatusKey, res.StatusCode).Logger()
+	l2 := l.logger.With().Logger()
+	if res != nil {
+		l2 = l.attachRequestToLog(res.Request).With().Int(keys.ResponseStatusKey, res.StatusCode).Logger()
+	}
 
 	return &logger{logger: l2}
 }

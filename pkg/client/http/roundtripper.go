@@ -1,10 +1,14 @@
 package http
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -13,6 +17,10 @@ import (
 const (
 	userAgentHeader = "User-Agent"
 	userAgent       = "TODO Service Client"
+
+	maxRetryCount = 10
+	minRetryWait  = 500 * time.Millisecond
+	maxRetryWait  = 5 * time.Second
 
 	keepAlive             = 30 * time.Second
 	tlsHandshakeTimeout   = 10 * time.Second
@@ -59,4 +67,42 @@ func buildWrappedTransport(timeout time.Duration) http.RoundTripper {
 	}
 
 	return otelhttp.NewTransport(t, otelhttp.WithSpanNameFormatter(tracing.FormatSpan))
+}
+
+func buildRetryingClient(client *http.Client, logger logging.Logger) *http.Client {
+	rc := &retryablehttp.Client{
+		HTTPClient:   client,
+		Logger:       logging.EnsureLogger(logger),
+		RetryWaitMin: minRetryWait,
+		RetryWaitMax: maxRetryWait,
+		RetryMax:     maxRetryCount,
+		RequestLogHook: func(_ retryablehttp.Logger, req *http.Request, numTries int) {
+			if req != nil {
+				logger.WithRequest(req).WithValue("attempt_number", numTries).Debug("making request")
+			}
+		},
+		ResponseLogHook: func(_ retryablehttp.Logger, res *http.Response) {
+			if res != nil {
+				logger.WithResponse(res).Debug("received response")
+			}
+		},
+		CheckRetry: func(ctx context.Context, res *http.Response, err error) (bool, error) {
+			ctx, span := tracing.StartCustomSpan(ctx, "CheckRetry")
+			defer span.End()
+
+			tracing.AttachResponseToSpan(span, res)
+
+			return retryablehttp.DefaultRetryPolicy(ctx, res, err)
+		},
+		Backoff: retryablehttp.DefaultBackoff,
+		ErrorHandler: func(res *http.Response, err error, numTries int) (*http.Response, error) {
+			logger.WithValue("try_number", numTries).WithResponse(res).Error(err, "executing request")
+			return res, err
+		},
+	}
+
+	c := rc.StandardClient()
+	c.Timeout = defaultTimeout
+
+	return c
 }

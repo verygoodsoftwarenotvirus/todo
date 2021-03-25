@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -18,7 +18,12 @@ var (
 )
 
 // scanAPIClient takes a Scanner (i.e. *sql.Row) and scans its results into an APIClient struct.
-func (c *Client) scanAPIClient(scan database.Scanner, includeCounts bool) (client *types.APIClient, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanAPIClient(ctx context.Context, scan database.Scanner, includeCounts bool) (client *types.APIClient, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	client = &types.APIClient{}
 
 	targetVars := []interface{}{
@@ -37,19 +42,24 @@ func (c *Client) scanAPIClient(scan database.Scanner, includeCounts bool) (clien
 		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
+	if err = scan.Scan(targetVars...); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning API client database result")
 	}
 
 	return client, filteredCount, totalCount, nil
 }
 
 // scanAPIClients takes sql rows and turns them into a slice of API Clients.
-func (c *Client) scanAPIClients(rows database.ResultIterator, includeCounts bool) (clients []*types.APIClient, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanAPIClients(ctx context.Context, rows database.ResultIterator, includeCounts bool) (clients []*types.APIClient, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	for rows.Next() {
-		client, fc, tc, scanErr := c.scanAPIClient(rows, includeCounts)
+		client, fc, tc, scanErr := c.scanAPIClient(ctx, rows, includeCounts)
 		if scanErr != nil {
-			return nil, 0, 0, scanErr
+			return nil, 0, 0, observability.PrepareError(scanErr, logger, span, "scanning API client")
 		}
 
 		if includeCounts {
@@ -65,13 +75,8 @@ func (c *Client) scanAPIClients(rows database.ResultIterator, includeCounts bool
 		clients = append(clients, client)
 	}
 
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, 0, 0, rowsErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing rows")
-		return nil, 0, 0, closeErr
+	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
 	return clients, filteredCount, totalCount, nil
@@ -92,13 +97,13 @@ func (c *Client) GetAPIClientByClientID(ctx context.Context, clientID string) (*
 	query, args := c.sqlQueryBuilder.BuildGetAPIClientByClientIDQuery(clientID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	client, _, _, err := c.scanAPIClient(row, false)
+	client, _, _, err := c.scanAPIClient(ctx, row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("querying for API client: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying for API client")
 	}
 
 	return client, nil
@@ -121,13 +126,13 @@ func (c *Client) GetAPIClientByDatabaseID(ctx context.Context, clientID, userID 
 	query, args := c.sqlQueryBuilder.BuildGetAPIClientByDatabaseIDQuery(clientID, userID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	client, _, _, err := c.scanAPIClient(row, false)
+	client, _, _, err := c.scanAPIClient(ctx, row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("querying for API client: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying for API client")
 	}
 
 	return client, nil
@@ -148,32 +153,32 @@ func (c *Client) GetAllAPIClients(ctx context.Context, results chan []*types.API
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllAPIClients called")
+	logger := c.logger.WithValue("batch_size", batchSize)
 
-	count, countErr := c.GetTotalAPIClientCount(ctx)
-	if countErr != nil {
-		return fmt.Errorf("fetching count of API clients: %w", countErr)
+	count, err := c.GetTotalAPIClientCount(ctx)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "fetching count of API clients")
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := c.sqlQueryBuilder.BuildGetBatchOfAPIClientsQuery(begin, end)
-			logger := c.logger.WithValues(map[string]interface{}{
+			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
 			})
 
 			rows, queryErr := c.db.Query(query, args...)
-			if errors.Is(queryErr, sql.ErrNoRows) {
-				return
-			} else if queryErr != nil {
-				logger.Error(queryErr, "querying for database rows")
+			if queryErr != nil {
+				if !errors.Is(queryErr, sql.ErrNoRows) {
+					logger.Error(queryErr, "querying for database rows")
+				}
 				return
 			}
 
-			clients, _, _, scanErr := c.scanAPIClients(rows, false)
+			clients, _, _, scanErr := c.scanAPIClients(ctx, rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -209,11 +214,11 @@ func (c *Client) GetAPIClients(ctx context.Context, userID uint64, filter *types
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("querying for API clients: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying for API clients")
 	}
 
-	if x.Clients, x.FilteredCount, x.TotalCount, err = c.scanAPIClients(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+	if x.Clients, x.FilteredCount, x.TotalCount, err = c.scanAPIClients(ctx, rows, true); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
 	}
 
 	logger.WithValue("result_count", len(x.Clients)).Debug("GetAPIClients called")
@@ -237,16 +242,16 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("beginning transaction: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	id, err := c.performWriteQuery(ctx, tx, false, "API client creation", query, args)
 	if err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return nil, err
+		return nil, observability.PrepareError(err, logger, span, "creating API client")
 	}
 
-	x := &types.APIClient{
+	client := &types.APIClient{
 		ID:            id,
 		Name:          input.Name,
 		ClientID:      input.ClientID,
@@ -255,18 +260,16 @@ func (c *Client) CreateAPIClient(ctx context.Context, input *types.APICientCreat
 		CreatedOn:     c.currentTime(),
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(client, createdByUser)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return nil, observability.PrepareError(err, logger, span, "writing API client creation audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
-	return x, nil
+	return client, nil
 }
 
 // ArchiveAPIClient archives an API client.
@@ -288,25 +291,23 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, clientID, accountID, arch
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAPIClientQuery(clientID, accountID)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "API client archive", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "API client archive", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating API client: %w", execErr)
+		return observability.PrepareError(err, logger, span, "updating API client")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(accountID, clientID, archivedByUser)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(accountID, clientID, archivedByUser)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing API client archive audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -317,18 +318,18 @@ func (c *Client) GetAuditLogEntriesForAPIClient(ctx context.Context, clientID ui
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAuditLogEntriesForAPIClient called")
+	logger := c.logger.WithValue(keys.APIClientDatabaseIDKey, clientID)
 
 	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForAPIClientQuery(clientID)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
 	}
 
 	return auditLogEntries, nil

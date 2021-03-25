@@ -496,19 +496,22 @@ func TestQuerier_handleRows(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
+
 		mockRows := &database.MockResultIterator{}
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(nil)
 
 		c, _ := buildTestClient(t)
 
-		err := c.handleRows(mockRows)
+		err := c.checkRowsForErrorAndClose(ctx, mockRows)
 		assert.NoError(t, err)
 	})
 
 	T.Run("with row error", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		expected := errors.New("blah")
 
 		mockRows := &database.MockResultIterator{}
@@ -516,7 +519,7 @@ func TestQuerier_handleRows(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		err := c.handleRows(mockRows)
+		err := c.checkRowsForErrorAndClose(ctx, mockRows)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, expected))
 	})
@@ -524,6 +527,7 @@ func TestQuerier_handleRows(T *testing.T) {
 	T.Run("with close error", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		expected := errors.New("blah")
 
 		mockRows := &database.MockResultIterator{}
@@ -532,7 +536,7 @@ func TestQuerier_handleRows(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		err := c.handleRows(mockRows)
+		err := c.checkRowsForErrorAndClose(ctx, mockRows)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, expected))
 	})

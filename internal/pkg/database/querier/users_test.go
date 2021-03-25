@@ -65,6 +65,7 @@ func TestQuerier_ScanUsers(T *testing.T) {
 	T.Run("surfaces row errs", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
@@ -73,13 +74,14 @@ func TestQuerier_ScanUsers(T *testing.T) {
 		mockRows.On("Err").
 			Return(errors.New("blah"))
 
-		_, _, _, err := q.scanUsers(mockRows, false)
+		_, _, _, err := q.scanUsers(ctx, mockRows, false)
 		assert.Error(t, err)
 	})
 
 	T.Run("logs row closing errs", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
@@ -90,7 +92,7 @@ func TestQuerier_ScanUsers(T *testing.T) {
 		mockRows.On("Close").
 			Return(errors.New("blah"))
 
-		_, _, _, err := q.scanUsers(mockRows, false)
+		_, _, _, err := q.scanUsers(ctx, mockRows, false)
 		assert.Error(t, err)
 	})
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -89,7 +88,7 @@ func ProvideDatabaseClient(
 		}
 
 		if err := c.Migrate(ctx, cfg.MaxPingAttempts, testUser); err != nil {
-			return nil, fmt.Errorf("migrating database: %w", err)
+			return nil, observability.PrepareError(err, logger, span, "migrating database")
 		}
 
 		c.logger.Debug("querier migrated!")
@@ -120,9 +119,9 @@ func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig 
 		user := &types.User{Username: testUserConfig.Username}
 		account := &types.Account{DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32)}
 
-		if userCreationErr := c.createUser(ctx, user, account, query, args); userCreationErr != nil {
-			c.logger.Error(userCreationErr, "creating test user")
-			return fmt.Errorf("creating test user: %w", userCreationErr)
+		if err := c.createUser(ctx, user, account, query, args); err != nil {
+			c.logger.Error(err, "creating test user")
+			return observability.PrepareError(err, c.logger, span, "creating test user")
 		}
 
 		c.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
@@ -175,15 +174,20 @@ func (c *Client) currentTime() uint64 {
 	return c.timeFunc()
 }
 
-func (c *Client) handleRows(rows database.ResultIterator) error {
-	if rowErr := rows.Err(); rowErr != nil {
-		c.logger.Error(rowErr, "row error")
-		return rowErr
+func (c *Client) checkRowsForErrorAndClose(ctx context.Context, rows database.ResultIterator) error {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger
+
+	if err := rows.Err(); err != nil {
+		c.logger.Error(err, "row error")
+		return observability.PrepareError(err, logger, span, "row error")
 	}
 
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing database rows")
-		return closeErr
+	if err := rows.Close(); err != nil {
+		c.logger.Error(err, "closing database rows")
+		return observability.PrepareError(err, logger, span, "closing database rows")
 	}
 
 	return nil
@@ -268,7 +272,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 			return 0, observability.PrepareError(err, logger, span, "executing %s query", queryDescription)
 		}
 
-		if count, rowsCountErr := res.RowsAffected(); count == 0 || rowsCountErr != nil {
+		if count, err := res.RowsAffected(); count == 0 || err != nil {
 			logger.Debug("no rows modified by query")
 			span.AddEvent("no_rows_modified")
 
@@ -286,7 +290,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 	}
 
 	if res != nil {
-		if rowCount, rowCountErr := res.RowsAffected(); rowCountErr == nil && rowCount == 0 {
+		if rowCount, err := res.RowsAffected(); err == nil && rowCount == 0 {
 			logger.Debug("no rows modified by query")
 			span.AddEvent("no_rows_modified")
 

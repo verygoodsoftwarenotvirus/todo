@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -18,7 +18,12 @@ var (
 )
 
 // scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
-func (c *Client) scanItem(scan database.Scanner, includeCounts bool) (x *types.Item, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanItem(ctx context.Context, scan database.Scanner, includeCounts bool) (x *types.Item, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	x = &types.Item{}
 
 	targetVars := []interface{}{
@@ -36,17 +41,22 @@ func (c *Client) scanItem(scan database.Scanner, includeCounts bool) (x *types.I
 		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
+	if err = scan.Scan(targetVars...); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "")
 	}
 
 	return x, filteredCount, totalCount, nil
 }
 
 // scanItems takes some database rows and turns them into a slice of items.
-func (c *Client) scanItems(rows database.ResultIterator, includeCounts bool) (items []*types.Item, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanItems(ctx context.Context, rows database.ResultIterator, includeCounts bool) (items []*types.Item, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	for rows.Next() {
-		x, fc, tc, scanErr := c.scanItem(rows, includeCounts)
+		x, fc, tc, scanErr := c.scanItem(ctx, rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, scanErr
 		}
@@ -64,8 +74,8 @@ func (c *Client) scanItems(rows database.ResultIterator, includeCounts bool) (it
 		items = append(items, x)
 	}
 
-	if handleErr := c.handleRows(rows); handleErr != nil {
-		return nil, 0, 0, handleErr
+	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
 	return items, filteredCount, totalCount, nil
@@ -78,11 +88,6 @@ func (c *Client) ItemExists(ctx context.Context, itemID, accountID uint64) (exis
 
 	tracing.AttachItemIDToSpan(span, itemID)
 	tracing.AttachAccountIDToSpan(span, accountID)
-
-	c.logger.WithValues(map[string]interface{}{
-		keys.ItemIDKey: itemID,
-		keys.UserIDKey: accountID,
-	}).Debug("ItemExists called")
 
 	query, args := c.sqlQueryBuilder.BuildItemExistsQuery(itemID, accountID)
 
@@ -97,17 +102,17 @@ func (c *Client) GetItem(ctx context.Context, itemID, accountID uint64) (*types.
 	tracing.AttachItemIDToSpan(span, itemID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.ItemIDKey: itemID,
 		keys.UserIDKey: accountID,
-	}).Debug("GetItem called")
+	})
 
 	query, args := c.sqlQueryBuilder.BuildGetItemQuery(itemID, accountID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	item, _, _, err := c.scanItem(row, false)
+	item, _, _, err := c.scanItem(ctx, row, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning item: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning item")
 	}
 
 	return item, nil
@@ -128,18 +133,18 @@ func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item, ba
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllItems called")
+	logger := c.logger.WithValue("batch_size", batchSize)
 
-	count, countErr := c.GetAllItemsCount(ctx)
-	if countErr != nil {
-		return fmt.Errorf("fetching count of items: %w", countErr)
+	count, err := c.GetAllItemsCount(ctx)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "fetching count of items")
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := c.sqlQueryBuilder.BuildGetBatchOfItemsQuery(begin, end)
-			logger := c.logger.WithValues(map[string]interface{}{
+			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
@@ -153,7 +158,7 @@ func (c *Client) GetAllItems(ctx context.Context, results chan []*types.Item, ba
 				return
 			}
 
-			items, _, _, scanErr := c.scanItems(rows, false)
+			items, _, _, scanErr := c.scanItems(ctx, rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -172,10 +177,10 @@ func (c *Client) GetItems(ctx context.Context, accountID uint64, filter *types.Q
 	defer span.End()
 
 	x = &types.ItemList{}
+	logger := filter.AttachToLogger(c.logger).WithValue(keys.AccountIDKey, accountID)
 
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachQueryFilterToSpan(span, filter)
-	c.logger.WithValue(keys.UserIDKey, accountID).Debug("GetItems called")
 
 	if filter != nil {
 		x.Page, x.Limit = filter.Page, filter.Limit
@@ -185,11 +190,11 @@ func (c *Client) GetItems(ctx context.Context, accountID uint64, filter *types.Q
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing items list retrieval query: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "executing items list retrieval query")
 	}
 
-	if x.Items, x.FilteredCount, x.TotalCount, err = c.scanItems(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning items: %w", err)
+	if x.Items, x.FilteredCount, x.TotalCount, err = c.scanItems(ctx, rows, true); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning items")
 	}
 
 	return x, nil
@@ -200,7 +205,7 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetItemsForAdmin called")
+	logger := filter.AttachToLogger(c.logger)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	x = &types.ItemList{}
@@ -212,11 +217,11 @@ func (c *Client) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing items list retrieval query for admin: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "executing items list retrieval query for admin")
 	}
 
-	if x.Items, x.FilteredCount, x.TotalCount, err = c.scanItems(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning items: %w", err)
+	if x.Items, x.FilteredCount, x.TotalCount, err = c.scanItems(ctx, rows, true); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning items")
 	}
 
 	return x, nil
@@ -233,22 +238,22 @@ func (c *Client) GetItemsWithIDs(ctx context.Context, accountID uint64, limit ui
 		limit = uint8(types.DefaultLimit)
 	}
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.UserIDKey: accountID,
 		"limit":        limit,
 		"id_count":     len(ids),
-	}).Debug("GetItemsWithIDs called")
+	})
 
 	query, args := c.sqlQueryBuilder.BuildGetItemsWithIDsQuery(accountID, limit, ids, false)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("fetching items from database: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "fetching items from database")
 	}
 
-	items, _, _, err := c.scanItems(rows, false)
+	items, _, _, err := c.scanItems(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning items: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning items")
 	}
 
 	return items, nil
@@ -263,22 +268,22 @@ func (c *Client) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids [
 		limit = uint8(types.DefaultLimit)
 	}
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		"limit":    limit,
 		"id_count": len(ids),
 		"ids":      ids,
-	}).Debug(fmt.Sprintf("GetItemsWithIDsForAdmin called: %v", ids))
+	})
 
 	query, args := c.sqlQueryBuilder.BuildGetItemsWithIDsQuery(0, limit, ids, true)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("fetching items from database: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "fetching items from database")
 	}
 
-	items, _, _, err := c.scanItems(rows, false)
+	items, _, _, err := c.scanItems(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning items: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning items")
 	}
 
 	return items, nil
@@ -297,14 +302,14 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput,
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("beginning transaction: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	// create the item.
 	id, err := c.performWriteQuery(ctx, tx, false, "item creation", query, args)
 	if err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return nil, err
+		return nil, observability.PrepareError(err, logger, span, "creating item")
 	}
 
 	x := &types.Item{
@@ -315,15 +320,13 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput,
 		CreatedOn:        c.currentTime(),
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x, createdByUser)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return nil, observability.PrepareError(err, logger, span, "writing item creation audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return x, nil
@@ -343,25 +346,23 @@ func (c *Client) UpdateItem(ctx context.Context, updated *types.Item, changedByU
 
 	query, args := c.sqlQueryBuilder.BuildUpdateItemQuery(updated)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item update", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "item update", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating item: %w", execErr)
+		return observability.PrepareError(err, logger, span, "updating item")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(changedByUser, updated.ID, updated.BelongsToAccount, changes)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(changedByUser, updated.ID, updated.BelongsToAccount, changes)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing item update audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -386,25 +387,23 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID, belongsToAccount, arch
 
 	query, args := c.sqlQueryBuilder.BuildArchiveItemQuery(itemID, belongsToAccount)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "item archive", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "item archive", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating item: %w", execErr)
+		return observability.PrepareError(err, logger, span, "updating item")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, belongsToAccount, itemID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, belongsToAccount, itemID)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing item archive audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -415,18 +414,18 @@ func (c *Client) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAuditLogEntriesForItem called")
+	logger := c.logger.WithValue(keys.ItemIDKey, itemID)
 
 	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForItemQuery(itemID)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning audit log entries")
 	}
 
 	return auditLogEntries, nil

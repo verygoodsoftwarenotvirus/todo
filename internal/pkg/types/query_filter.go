@@ -6,6 +6,9 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 const (
@@ -47,6 +50,45 @@ func DefaultQueryFilter() *QueryFilter {
 		Limit:  DefaultLimit,
 		SortBy: SortAscending,
 	}
+}
+
+// AttachToLogger attaches a QueryFilter's values to a logging.Logger.
+func (qf *QueryFilter) AttachToLogger(logger logging.Logger) logging.Logger {
+	l := logging.EnsureLogger(logger)
+
+	if qf == nil {
+		return l.WithValue(keys.FilterIsNilKey, true)
+	}
+
+	if qf.Page != 0 {
+		l = l.WithValue(pageQueryKey, qf.Page)
+	}
+
+	if qf.Limit != 0 {
+		l = l.WithValue(LimitQueryKey, qf.Limit)
+	}
+
+	if qf.SortBy != "" {
+		l = l.WithValue(sortByQueryKey, qf.SortBy)
+	}
+
+	if qf.CreatedBefore != 0 {
+		l = l.WithValue(createdBeforeQueryKey, qf.CreatedBefore)
+	}
+
+	if qf.CreatedAfter != 0 {
+		l = l.WithValue(createdAfterQueryKey, qf.CreatedAfter)
+	}
+
+	if qf.UpdatedBefore != 0 {
+		l = l.WithValue(updatedBeforeQueryKey, qf.UpdatedBefore)
+	}
+
+	if qf.UpdatedAfter != 0 {
+		l = l.WithValue(updatedAfterQueryKey, qf.UpdatedAfter)
+	}
+
+	return l
 }
 
 // FromParams overrides the core QueryFilter values with values retrieved from url.Params.

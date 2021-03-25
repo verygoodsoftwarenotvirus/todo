@@ -149,7 +149,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 		if cookieContext, userID, err := s.getUserIDFromCookie(ctx, req); err == nil && userID != 0 {
 			ctx = cookieContext
 
-			tracing.AttachUserIDToSpan(span, userID)
+			tracing.AttachRequestingUserIDToSpan(span, userID)
 			logger = logger.WithValue(keys.RequesterKey, userID)
 
 			reqCtx, userIsBannedErr := s.userDataManager.GetRequestContextForUser(ctx, userID)

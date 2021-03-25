@@ -36,6 +36,9 @@ func (l *noopLogger) SetRequestIDFunc(RequestIDFunc) {}
 // WithName satisfies our interface.
 func (l *noopLogger) WithName(string) Logger { return l }
 
+// Clone satisfies our interface.
+func (l *noopLogger) Clone() Logger { return l }
+
 // WithValues satisfies our interface.
 func (l *noopLogger) WithValues(map[string]interface{}) Logger { return l }
 

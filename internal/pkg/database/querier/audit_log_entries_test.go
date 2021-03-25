@@ -65,19 +65,21 @@ func TestQuerier_ScanAuditLogEntries(T *testing.T) {
 	T.Run("surfaces row errs", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanAuditLogEntries(mockRows, false)
+		_, _, err := q.scanAuditLogEntries(ctx, mockRows, false)
 		assert.Error(t, err)
 	})
 
 	T.Run("logs row closing errs", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
@@ -85,7 +87,7 @@ func TestQuerier_ScanAuditLogEntries(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanAuditLogEntries(mockRows, false)
+		_, _, err := q.scanAuditLogEntries(ctx, mockRows, false)
 		assert.Error(t, err)
 	})
 }

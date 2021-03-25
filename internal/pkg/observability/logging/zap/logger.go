@@ -213,6 +213,12 @@ func determineField(key string, val interface{}) zap.Field {
 	}
 }
 
+// Clone satisfies our contract for the logging.Logger WithValue method.
+func (l *logger) Clone() logging.Logger {
+	l2 := l.logger.With()
+	return &logger{logger: l2}
+}
+
 // WithValues satisfies our contract for the logging.Logger WithValues method.
 func (l *logger) WithValues(values map[string]interface{}) logging.Logger {
 	l2 := l.logger.With()

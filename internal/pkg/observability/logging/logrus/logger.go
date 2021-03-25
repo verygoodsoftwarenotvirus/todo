@@ -94,6 +94,11 @@ func (l *logger) Printf(format string, args ...interface{}) {
 	l.logger.Printf(format, args...)
 }
 
+// Clone satisfies our contract for the logging.Logger Clone method.
+func (l *logger) Clone() logging.Logger {
+	return NewLogger(l.logger)
+}
+
 // WithValues satisfies our contract for the logging.Logger WithValues method.
 func (l *logger) WithValues(values map[string]interface{}) logging.Logger {
 	return &entryWrapper{entry: l.logger.WithFields(values)}

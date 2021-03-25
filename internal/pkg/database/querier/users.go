@@ -21,7 +21,11 @@ var (
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
 	user = &types.User{}
 
 	var perms uint32
@@ -49,8 +53,8 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
+	if err = scan.Scan(targetVars...); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
 	user.ServiceAdminPermissions = permissions.NewServiceAdminPermissions(perms)
@@ -59,11 +63,16 @@ func (c *Client) scanUser(scan database.Scanner, includeCounts bool) (user *type
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (c *Client) scanUsers(rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanUsers(ctx context.Context, rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	for rows.Next() {
-		user, fc, tc, scanErr := c.scanUser(rows, includeCounts)
+		user, fc, tc, scanErr := c.scanUser(ctx, rows, includeCounts)
 		if scanErr != nil {
-			return nil, 0, 0, fmt.Errorf("scanning user result: %w", scanErr)
+			return nil, 0, 0, observability.PrepareError(scanErr, logger, span, "scanning user result")
 		}
 
 		if includeCounts {
@@ -79,13 +88,8 @@ func (c *Client) scanUsers(rows database.ResultIterator, includeCounts bool) (us
 		users = append(users, user)
 	}
 
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, 0, 0, rowsErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing rows")
-		return nil, 0, 0, closeErr
+	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
 	return users, filteredCount, totalCount, nil
@@ -111,7 +115,7 @@ func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSec
 
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := c.scanUser(row, false)
+	u, _, _, err := c.scanUser(ctx, row, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
@@ -168,13 +172,13 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 	query, args := c.sqlQueryBuilder.BuildGetUserByUsernameQuery(username)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := c.scanUser(row, false)
+	u, _, _, err := c.scanUser(ctx, row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("scanning user: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
 	return u, nil
@@ -185,7 +189,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("SearchForUsersByUsername called")
+	logger := c.logger.WithValue(keys.SearchQueryKey, usernameQuery)
 
 	query, args := c.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(usernameQuery)
 
@@ -195,12 +199,12 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("querying database for users: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying database for users")
 	}
 
-	u, _, _, err := c.scanUsers(rows, false)
+	u, _, _, err := c.scanUsers(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning user: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
 	return u, nil
@@ -224,7 +228,7 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *ty
 	x = &types.UserList{}
 
 	tracing.AttachQueryFilterToSpan(span, filter)
-	c.logger.WithValue(keys.FilterIsNilKey, filter == nil).Debug("GetUsers called")
+	logger := filter.AttachToLogger(c.logger)
 
 	if filter != nil {
 		x.Page, x.Limit = filter.Page, filter.Limit
@@ -234,11 +238,11 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *ty
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("scanning user: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
-	if x.Users, x.FilteredCount, x.TotalCount, err = c.scanUsers(rows, true); err != nil {
-		return nil, fmt.Errorf("loading response from database: %w", err)
+	if x.Users, x.FilteredCount, x.TotalCount, err = c.scanUsers(ctx, rows, true); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "loading response from database")
 	}
 
 	return x, nil
@@ -251,25 +255,25 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 
 	logger := c.logger.WithValue("username", user.Username)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	userID, userCreateErr := c.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs)
-	if userCreateErr != nil {
+	userID, err := c.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs)
+	if err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return userCreateErr
+		return observability.PrepareError(err, logger, span, "creating user")
 	}
 
 	user.ID = userID
 	account.BelongsToUser = user.ID
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
 	// create the account.
@@ -277,25 +281,23 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 	accountCreationInput.DefaultUserPermissions = account.DefaultUserPermissions
 	accountCreationQuery, accountCreationArgs := c.sqlQueryBuilder.BuildAccountCreationQuery(accountCreationInput)
 
-	accountID, accountCreateErr := c.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
-	if accountCreateErr != nil {
+	accountID, err := c.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
+	if err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return accountCreateErr
+		return observability.PrepareError(err, logger, span, "create account")
 	}
 
 	account.ID = accountID
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing account creation audit log entry")
 	}
 
 	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(userID, accountID)
-	if accountMembershipErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); accountMembershipErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return accountMembershipErr
+		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
 	}
 
 	addToAccountInput := &types.AddUserToAccountInput{
@@ -304,15 +306,15 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 		Reason:                 "account creation",
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, addToAccountInput)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, addToAccountInput)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -324,7 +326,7 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	defer span.End()
 
 	tracing.AttachUsernameToSpan(span, input.Username)
-	c.logger.WithValue(keys.UsernameKey, input.Username).Debug("CreateUser called")
+	logger := c.logger.WithValue(keys.UsernameKey, input.Username)
 
 	// create the user.
 	userCreationQuery, userCreationArgs := c.sqlQueryBuilder.BuildCreateUserQuery(input)
@@ -344,7 +346,7 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 	}
 
 	if err := c.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {
-		return nil, err
+		return nil, observability.PrepareError(err, logger, span, "creating user")
 	}
 
 	return user, nil
@@ -363,25 +365,25 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User, changes []
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user update", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user update", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating user: %w", execErr)
+		return observability.PrepareError(err, logger, span, "updating user")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateEventEntry(updated.ID, nil)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateEventEntry(updated.ID, nil)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -399,25 +401,25 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user authentication update", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user authentication update", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating user's password: %w", execErr)
+		return fmt.Errorf("updating user's password: %w", err)
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdatePasswordEventEntry(userID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdatePasswordEventEntry(userID)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -434,25 +436,25 @@ func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, n
 
 	query, args := c.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(userID, newSecret)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret update", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret update", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating user's two factor secret: %w", execErr)
+		return fmt.Errorf("updating user's two factor secret: %w", err)
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -470,25 +472,25 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 
 	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("writing verified two factor status to database: %w", execErr)
+		return observability.PrepareError(err, logger, span, "writing verified two factor status to database")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -506,32 +508,32 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 
 	archiveUserQuery, archiveUserArgs := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user archive", archiveUserQuery, archiveUserArgs); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user archive", archiveUserQuery, archiveUserArgs); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("archiving user: %w", execErr)
+		return observability.PrepareError(err, logger, span, "archiving user")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
 	archiveMembershipsQuery, archiveMembershipsArgs := c.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(userID)
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("archiving user account memberships: %w", execErr)
+		return observability.PrepareError(err, logger, span, "archiving user account memberships")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -542,18 +544,18 @@ func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) (
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("GetAuditLogEntriesForUser called")
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
 	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(userID)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
 	}
 
 	return auditLogEntries, nil

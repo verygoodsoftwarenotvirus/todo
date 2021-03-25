@@ -111,6 +111,11 @@ func (l *logger) Printf(format string, args ...interface{}) {
 	l.t.Logf("%s", l.jsonString(format, args...))
 }
 
+// Clone satisfies our contract for the logging.Logger WithValue method.
+func (l *logger) Clone() logging.Logger {
+	return &logger{t: l.t}
+}
+
 // WithValues satisfies our contract for the logging.Logger WithValues method.
 func (l *logger) WithValues(values map[string]interface{}) logging.Logger {
 	l2 := l.clone()

@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -17,7 +17,11 @@ var (
 )
 
 // scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
-func (c *Client) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
+func (c *Client) scanAuditLogEntry(ctx context.Context, scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
 	entry = &types.AuditLogEntry{}
 
 	targetVars := []interface{}{
@@ -32,19 +36,24 @@ func (c *Client) scanAuditLogEntry(scan database.Scanner, includeCounts bool) (e
 		targetVars = append(targetVars, &totalCount)
 	}
 
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, scanErr
+	if err = scan.Scan(targetVars...); err != nil {
+		return nil, 0, observability.PrepareError(err, logger, span, "scanning API client database result")
 	}
 
 	return entry, totalCount, nil
 }
 
 // scanAuditLogEntries takes some database rows and turns them into a slice of AuditLogEntry pointers.
-func (c *Client) scanAuditLogEntries(rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
+func (c *Client) scanAuditLogEntries(ctx context.Context, rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	for rows.Next() {
-		x, tc, scanErr := c.scanAuditLogEntry(rows, includeCounts)
+		x, tc, scanErr := c.scanAuditLogEntry(ctx, rows, includeCounts)
 		if scanErr != nil {
-			return nil, 0, scanErr
+			return nil, 0, observability.PrepareError(scanErr, logger, span, "scanning audit log entries")
 		}
 
 		if includeCounts {
@@ -56,13 +65,8 @@ func (c *Client) scanAuditLogEntries(rows database.ResultIterator, includeCounts
 		entries = append(entries, x)
 	}
 
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, 0, rowsErr
-	}
-
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing database rows")
-		return nil, 0, closeErr
+	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+		return nil, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
 	return entries, totalCount, nil
@@ -74,14 +78,14 @@ func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.A
 	defer span.End()
 
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
-	c.logger.WithValue(keys.AuditLogEntryIDKey, entryID).Debug("GetAuditLogEntry called")
+	logger := c.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
 
 	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntryQuery(entryID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	entry, _, err := c.scanAuditLogEntry(row, false)
+	entry, _, err := c.scanAuditLogEntry(ctx, row, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning audit log entry: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning audit log entry")
 	}
 
 	return entry, nil
@@ -102,18 +106,18 @@ func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*type
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllAuditLogEntries called")
+	logger := c.logger.WithValue("batch_size", batchSize)
 
-	count, countErr := c.GetAllAuditLogEntriesCount(ctx)
-	if countErr != nil {
-		return fmt.Errorf("fetching count of entries: %w", countErr)
+	count, err := c.GetAllAuditLogEntriesCount(ctx)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "fetching count of entries")
 	}
 
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
 			query, args := c.sqlQueryBuilder.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
-			logger := c.logger.WithValues(map[string]interface{}{
+			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
@@ -127,7 +131,7 @@ func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*type
 				return
 			}
 
-			auditLogEntries, _, scanErr := c.scanAuditLogEntries(rows, false)
+			auditLogEntries, _, scanErr := c.scanAuditLogEntries(ctx, rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -146,7 +150,7 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 	defer span.End()
 
 	tracing.AttachQueryFilterToSpan(span, filter)
-	c.logger.Debug("GetAuditLogEntries called")
+	logger := filter.AttachToLogger(c.logger)
 
 	x = &types.AuditLogEntryList{}
 	if filter != nil {
@@ -157,11 +161,11 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	if x.Entries, x.TotalCount, err = c.scanAuditLogEntries(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning audit log entry: %w", err)
+	if x.Entries, x.TotalCount, err = c.scanAuditLogEntries(ctx, rows, true); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning audit log entry")
 	}
 
 	return x, nil

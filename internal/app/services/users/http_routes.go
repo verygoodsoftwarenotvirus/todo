@@ -243,7 +243,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 	// figure out who this is all for.
 	requester := reqCtx.User.ID
 	logger = logger.WithValue(keys.RequesterKey, requester)
-	tracing.AttachUserIDToSpan(span, requester)
+	tracing.AttachRequestingUserIDToSpan(span, requester)
 
 	// fetch user data.
 	user, err := s.userDataManager.GetUser(ctx, requester)
@@ -376,7 +376,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	// document who this is for.
-	tracing.AttachUserIDToSpan(span, reqCtx.User.ID)
+	tracing.AttachRequestingUserIDToSpan(span, reqCtx.User.ID)
 	tracing.AttachUsernameToSpan(span, user.Username)
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
@@ -431,7 +431,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// determine relevant user ID.
-	tracing.AttachUserIDToSpan(span, reqCtx.User.ID)
+	tracing.AttachRequestingUserIDToSpan(span, reqCtx.User.ID)
 	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 
 	// make sure everything's on the up-and-up

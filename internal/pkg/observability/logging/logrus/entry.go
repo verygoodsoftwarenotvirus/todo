@@ -44,6 +44,14 @@ func (w *entryWrapper) WithName(name string) logging.Logger {
 	return w
 }
 
+// Clone satisfies our interface.
+func (w *entryWrapper) Clone() logging.Logger {
+	return &entryWrapper{
+		entry:         w.entry,
+		requestIDFunc: w.requestIDFunc,
+	}
+}
+
 // WithValues satisfies our interface.
 func (w *entryWrapper) WithValues(values map[string]interface{}) logging.Logger {
 	w.entry = w.entry.WithFields(values)

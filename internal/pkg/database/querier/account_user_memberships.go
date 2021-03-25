@@ -3,10 +3,10 @@ package querier
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -19,7 +19,10 @@ var (
 )
 
 // scanAccountUserMembership takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountUserMembership struct.
-func (c *Client) scanAccountUserMembership(scan database.Scanner) (x *types.AccountUserMembership, err error) {
+func (c *Client) scanAccountUserMembership(ctx context.Context, scan database.Scanner) (x *types.AccountUserMembership, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
 	x = &types.AccountUserMembership{}
 
 	var rawPerms int64
@@ -34,8 +37,8 @@ func (c *Client) scanAccountUserMembership(scan database.Scanner) (x *types.Acco
 		&x.ArchivedOn,
 	}
 
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, scanErr
+	if err = scan.Scan(targetVars...); err != nil {
+		return nil, observability.PrepareError(err, c.logger, span, "scanning account user memberships")
 	}
 
 	newPerms := permissions.NewServiceUserPermissions(uint32(rawPerms))
@@ -45,9 +48,14 @@ func (c *Client) scanAccountUserMembership(scan database.Scanner) (x *types.Acco
 }
 
 // scanAccountUserMemberships takes some database rows and turns them into a slice of memberships.
-func (c *Client) scanAccountUserMemberships(rows database.ResultIterator) (memberships []*types.AccountUserMembership, err error) {
+func (c *Client) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (memberships []*types.AccountUserMembership, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger
+
 	for rows.Next() {
-		x, scanErr := c.scanAccountUserMembership(rows)
+		x, scanErr := c.scanAccountUserMembership(ctx, rows)
 		if scanErr != nil {
 			return nil, scanErr
 		}
@@ -55,8 +63,8 @@ func (c *Client) scanAccountUserMemberships(rows database.ResultIterator) (membe
 		memberships = append(memberships, x)
 	}
 
-	if handleErr := c.handleRows(rows); handleErr != nil {
-		return nil, handleErr
+	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
 	return memberships, nil
@@ -71,9 +79,38 @@ func (c *Client) GetRequestContextForUser(ctx context.Context, userID uint64) (r
 
 	logger.Debug("GetRequestContextForUser called")
 
-	user, fetchUserErr := c.GetUser(ctx, userID)
-	if fetchUserErr != nil {
-		return nil, fetchUserErr
+	user, err := c.GetUser(ctx, userID)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "fetching user from database")
+	}
+
+	getAccountMembershipsQuery, getAccountMembershipsArgs := c.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(userID)
+
+	membershipRows, err := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "fetching user's memberships from database")
+	}
+
+	memberships, err := c.scanAccountUserMemberships(ctx, membershipRows)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning user's memberships from database")
+	}
+
+	activeAccountID := uint64(0)
+	accountPermissionsMap := map[uint64]permissions.ServiceUserPermissions{}
+
+	for _, membership := range memberships {
+		if membership.BelongsToAccount != 0 {
+			accountPermissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
+
+			if membership.DefaultAccount && activeAccountID == 0 {
+				activeAccountID = membership.BelongsToAccount
+			}
+		}
+	}
+
+	if activeAccountID == 0 {
+		return nil, observability.PrepareError(errDefaultAccountNotFoundForUser, logger, span, "default account not found for user #%d", userID)
 	}
 
 	reqCtx = &types.RequestContext{
@@ -82,38 +119,8 @@ func (c *Client) GetRequestContextForUser(ctx context.Context, userID uint64) (r
 			Status:                  user.Reputation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
-	}
-
-	getAccountMembershipsQuery, getAccountMembershipsArgs := c.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(userID)
-
-	membershipRows, getMembershipsErr := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
-	if getMembershipsErr != nil {
-		logger.Error(getMembershipsErr, "fetching memberships from database")
-		return nil, getMembershipsErr
-	}
-
-	memberships, scanErr := c.scanAccountUserMemberships(membershipRows)
-	if scanErr != nil {
-		logger.Error(scanErr, "scanning memberships from database")
-		return nil, scanErr
-	}
-
-	reqCtx.AccountPermissionsMap = map[uint64]permissions.ServiceUserPermissions{}
-
-	for _, membership := range memberships {
-		if membership.BelongsToAccount != 0 {
-			reqCtx.AccountPermissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
-
-			if membership.DefaultAccount && reqCtx.ActiveAccountID == 0 {
-				reqCtx.ActiveAccountID = membership.BelongsToAccount
-			}
-		} else {
-			logger.WithValue("membership", membership).Info("WTF WTF WTF WTF WTF")
-		}
-	}
-
-	if reqCtx.ActiveAccountID == 0 {
-		return nil, fmt.Errorf("%w: %d", errDefaultAccountNotFoundForUser, userID)
+		AccountPermissionsMap: accountPermissionsMap,
+		ActiveAccountID:       activeAccountID,
 	}
 
 	return reqCtx, nil
@@ -124,24 +131,17 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey: userID,
-	})
-
-	logger.Debug("GetMembershipsForUser called")
-
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
 	getAccountMembershipsQuery, getAccountMembershipsArgs := c.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(userID)
 
-	membershipRows, getMembershipsErr := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
-	if getMembershipsErr != nil {
-		logger.Error(getMembershipsErr, "fetching memberships from database")
-		return 0, nil, getMembershipsErr
+	membershipRows, err := c.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
+	if err != nil {
+		return 0, nil, observability.PrepareError(err, logger, span, "fetching memberships from database")
 	}
 
-	memberships, scanErr := c.scanAccountUserMemberships(membershipRows)
-	if scanErr != nil {
-		logger.Error(scanErr, "scanning memberships from database")
-		return 0, nil, scanErr
+	memberships, err := c.scanAccountUserMemberships(ctx, membershipRows)
+	if err != nil {
+		return 0, nil, observability.PrepareError(err, logger, span, "scanning memberships from database")
 	}
 
 	permissionsMap = map[uint64]permissions.ServiceUserPermissions{}
@@ -153,16 +153,12 @@ func (c *Client) GetMembershipsForUser(ctx context.Context, userID uint64) (defa
 			if membership.DefaultAccount && defaultAccount == 0 {
 				defaultAccount = membership.BelongsToAccount
 			}
-		} else {
-			logger.WithValue("membership", membership).Info("WTF WTF WTF WTF WTF")
 		}
 	}
 
 	if defaultAccount == 0 {
-		return 0, nil, fmt.Errorf("%w: %d", errDefaultAccountNotFoundForUser, userID)
+		return 0, nil, observability.PrepareError(errDefaultAccountNotFoundForUser, logger, span, "account not found for user #%d", userID)
 	}
-
-	logger.WithValue("permissions_map", permissionsMap).Info("returning permission map")
 
 	return defaultAccount, permissionsMap, nil
 }
@@ -184,24 +180,22 @@ func (c *Client) MarkAccountAsUserDefault(ctx context.Context, userID, accountID
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction: %w", err)
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	// create the account.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user default account assignment", query, args); writeErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user default account assignment", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return writeErr
+		return observability.PrepareError(err, logger, span, "assigning user default account")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, accountID, changedByUser)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, accountID, changedByUser)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "account not found for user")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -240,24 +234,22 @@ func (c *Client) ModifyUserPermissions(ctx context.Context, accountID, userID, c
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction: %w", err)
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	// create the membership.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user account permissions modification", query, args); writeErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user account permissions modification", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return writeErr
+		return observability.PrepareError(err, logger, span, "modifying user account permissions")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.UserAccountPermissions, input.Reason)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.UserAccountPermissions, input.Reason)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing user account membership permission modification audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Debug("user permissions modified")
@@ -279,34 +271,32 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID, transf
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction: %w", err)
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	transferAccountOwnershipQuery, transferAccountOwnershipArgs := c.sqlQueryBuilder.BuildTransferAccountOwnershipQuery(input.CurrentOwner, input.NewOwner, accountID)
 
 	// create the membership.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user ownership transfer", transferAccountOwnershipQuery, transferAccountOwnershipArgs); writeErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user ownership transfer", transferAccountOwnershipQuery, transferAccountOwnershipArgs); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return writeErr
+		return observability.PrepareError(err, logger, span, "transferring account to new owner")
 	}
 
 	transferAccountMembershipQuery, transferAccountMembershipArgs := c.sqlQueryBuilder.BuildTransferAccountMembershipsQuery(input.CurrentOwner, input.NewOwner, accountID)
 
 	// create the membership.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships transfer", transferAccountMembershipQuery, transferAccountMembershipArgs); writeErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships transfer", transferAccountMembershipQuery, transferAccountMembershipArgs); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return writeErr
+		return observability.PrepareError(err, logger, span, "transferring account memberships")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildTransferAccountOwnershipEventEntry(accountID, transferredBy, input)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildTransferAccountOwnershipEventEntry(accountID, transferredBy, input)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing account ownership transfer audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Debug("TransferAccountOwnership called")
@@ -330,24 +320,22 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction: %w", err)
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	// create the membership.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user account membership creation", query, args); writeErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user account membership creation", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return writeErr
+		return observability.PrepareError(err, logger, span, "creating user account membership")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, accountID, input)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, accountID, input)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Debug("user added to account")
@@ -373,24 +361,22 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, userID, accountID, r
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction: %w", err)
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	// create the membership.
-	if writeErr := c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); writeErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user membership removal", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return writeErr
+		return observability.PrepareError(err, logger, span, "removing user from account")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(userID, accountID, removedByUser, reason)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(userID, accountID, removedByUser, reason)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing remove user from account audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil

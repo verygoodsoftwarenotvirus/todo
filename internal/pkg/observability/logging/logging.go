@@ -10,7 +10,7 @@ import (
 
 const (
 	// LoggerNameKey is a key we can use to denote logger names across implementations.
-	LoggerNameKey = "__name__"
+	LoggerNameKey = "_name_"
 )
 
 type (
@@ -49,6 +49,7 @@ type Logger interface {
 	SetRequestIDFunc(RequestIDFunc)
 
 	// Builder functions
+	Clone() Logger
 	WithName(string) Logger
 	WithValues(map[string]interface{}) Logger
 	WithValue(string, interface{}) Logger

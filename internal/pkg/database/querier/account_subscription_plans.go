@@ -2,11 +2,11 @@ package querier
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -17,10 +17,14 @@ var (
 )
 
 // scanPlan takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountSubscriptionPlan struct.
-func (c *Client) scanAccountSubscriptionPlan(scan database.Scanner, includeCounts bool) (plan *types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
-	plan = &types.AccountSubscriptionPlan{}
+func (c *Client) scanAccountSubscriptionPlan(ctx context.Context, scan database.Scanner, includeCounts bool) (plan *types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
 
 	var rawPeriod string
+	plan = &types.AccountSubscriptionPlan{}
 
 	targetVars := []interface{}{
 		&plan.ID,
@@ -38,13 +42,13 @@ func (c *Client) scanAccountSubscriptionPlan(scan database.Scanner, includeCount
 		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
+	if err = scan.Scan(targetVars...); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning account")
 	}
 
-	p, parseErr := time.ParseDuration(rawPeriod)
-	if parseErr != nil {
-		return nil, 0, 0, parseErr
+	p, err := time.ParseDuration(rawPeriod)
+	if err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "parsing stored account subscription plan period duration")
 	}
 
 	plan.Period = p
@@ -53,11 +57,16 @@ func (c *Client) scanAccountSubscriptionPlan(scan database.Scanner, includeCount
 }
 
 // scanAccountSubscriptionPlans takes some database rows and turns them into a slice of account subscription plans.
-func (c *Client) scanAccountSubscriptionPlans(rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanAccountSubscriptionPlans(ctx context.Context, rows database.ResultIterator, includeCounts bool) (plans []*types.AccountSubscriptionPlan, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	for rows.Next() {
-		x, fc, tc, scanErr := c.scanAccountSubscriptionPlan(rows, includeCounts)
+		x, fc, tc, scanErr := c.scanAccountSubscriptionPlan(ctx, rows, includeCounts)
 		if scanErr != nil {
-			return nil, 0, 0, scanErr
+			return nil, 0, 0, observability.PrepareError(scanErr, logger, span, "scanning account subscription plan")
 		}
 
 		if includeCounts {
@@ -73,8 +82,8 @@ func (c *Client) scanAccountSubscriptionPlans(rows database.ResultIterator, incl
 		plans = append(plans, x)
 	}
 
-	if handleErr := c.handleRows(rows); handleErr != nil {
-		return nil, 0, 0, handleErr
+	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
 	return plans, filteredCount, totalCount, nil
@@ -85,15 +94,17 @@ func (c *Client) GetAccountSubscriptionPlan(ctx context.Context, accountSubscrip
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID).Debug("GetAccountSubscriptionPlan called")
+	logger := c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID)
+
+	logger.Debug("GetAccountSubscriptionPlan called")
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
 	query, args := c.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	plan, _, _, err := c.scanAccountSubscriptionPlan(row, false)
+	plan, _, _, err := c.scanAccountSubscriptionPlan(ctx, row, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning account subscription plan: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning account subscription plan")
 	}
 
 	return plan, nil
@@ -114,6 +125,8 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := filter.AttachToLogger(c.logger)
+
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	x = &types.AccountSubscriptionPlanList{}
@@ -121,17 +134,15 @@ func (c *Client) GetAccountSubscriptionPlans(ctx context.Context, filter *types.
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	c.logger.Debug("GetAccountSubscriptionPlans called")
-
 	query, args := c.sqlQueryBuilder.BuildGetAccountSubscriptionPlansQuery(filter)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing account subscription plan list retrieval query: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying for account subscription plans")
 	}
 
-	if x.AccountSubscriptionPlans, x.FilteredCount, x.TotalCount, err = c.scanAccountSubscriptionPlans(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning account subscription account subscription plans: %w", err)
+	if x.AccountSubscriptionPlans, x.FilteredCount, x.TotalCount, err = c.scanAccountSubscriptionPlans(ctx, rows, true); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning account subscription plans")
 	}
 
 	return x, nil
@@ -142,20 +153,19 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("CreateAccountSubscriptionPlan called")
-
 	query, args := c.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
+	logger := c.logger.WithValue(keys.NameKey, input.Name)
 
-	tx, tramsactionStartErr := c.db.BeginTx(ctx, nil)
-	if tramsactionStartErr != nil {
-		return nil, fmt.Errorf("beginning transaction: %w", tramsactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	// create the account subscription plan.
-	id, accountSubscriptionPlanCreationErr := c.performWriteQuery(ctx, tx, false, "account subscription plan creation", query, args)
-	if accountSubscriptionPlanCreationErr != nil {
+	id, err := c.performWriteQuery(ctx, tx, false, "account subscription plan creation", query, args)
+	if err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return nil, accountSubscriptionPlanCreationErr
+		return nil, observability.PrepareError(err, logger, span, "creating account subscription plan")
 	}
 
 	x := &types.AccountSubscriptionPlan{
@@ -167,13 +177,13 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 		CreatedOn:   c.currentTime(),
 	}
 
-	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanCreationEventEntry(x)); err != nil {
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanCreationEventEntry(x)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return nil, fmt.Errorf("writing account subscription plan creation audit log entry: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "writing account subscription plan creation audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return x, nil
@@ -185,27 +195,27 @@ func (c *Client) UpdateAccountSubscriptionPlan(ctx context.Context, updated *typ
 	defer span.End()
 
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, updated.ID)
-	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, updated.ID).Debug("UpdateAccountSubscriptionPlan called")
+	logger := c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, updated.ID)
 
 	query, args := c.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account subscription plan update", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "account subscription plan update", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating account subscription plan: %w", execErr)
+		return observability.PrepareError(err, logger, span, "updating account subscription plan")
 	}
 
-	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(changedBy, updated.ID, changes)); err != nil {
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanUpdateEventEntry(changedBy, updated.ID, changes)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("writing account subscription plan update audit log entry: %w", err)
+		return observability.PrepareError(err, logger, span, "writing account subscription plan update audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -218,30 +228,30 @@ func (c *Client) ArchiveAccountSubscriptionPlan(ctx context.Context, accountSubs
 
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.AccountSubscriptionPlanIDKey: accountSubscriptionPlanID,
 		keys.UserIDKey:                    archivedBy,
-	}).Debug("ArchiveAccountSubscriptionPlan called")
+	})
 
 	query, args := c.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "account subscription plan archive", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "account subscription plan archive", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating account subscription plan: %w", execErr)
+		return observability.PrepareError(err, logger, span, "updating account subscription plan")
 	}
 
-	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(archivedBy, accountSubscriptionPlanID)); err != nil {
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountSubscriptionPlanArchiveEventEntry(archivedBy, accountSubscriptionPlanID)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("writing account subscription plan archive audit log entry: %w", err)
+		return observability.PrepareError(err, logger, span, "writing account subscription plan archive audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -252,18 +262,18 @@ func (c *Client) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Contex
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID).Debug("GetAuditLogEntriesForAccountSubscriptionPlan called")
+	logger := c.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID)
 
 	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning audit log entries")
 	}
 
 	return auditLogEntries, nil

@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -20,7 +21,11 @@ var (
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
-func (c *Client) scanWebhook(scan database.Scanner, includeCounts bool) (webhook *types.Webhook, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanWebhook(ctx context.Context, scan database.Scanner, includeCounts bool) (webhook *types.Webhook, filteredCount, totalCount uint64, err error) {
+	_, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
 	webhook = &types.Webhook{}
 
 	var (
@@ -49,8 +54,8 @@ func (c *Client) scanWebhook(scan database.Scanner, includeCounts bool) (webhook
 		targetVars = append(targetVars, &filteredCount, &totalCount)
 	}
 
-	if scanErr := scan.Scan(targetVars...); scanErr != nil {
-		return nil, 0, 0, scanErr
+	if err = scan.Scan(targetVars...); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning webhook")
 	}
 
 	if events := strings.Split(eventsStr, querybuilding.WebhooksTableEventsSeparator); len(events) >= 1 && events[0] != "" {
@@ -69,9 +74,14 @@ func (c *Client) scanWebhook(scan database.Scanner, includeCounts bool) (webhook
 }
 
 // scanWebhooks provides a consistent way to turn sql rows into a slice of webhooks.
-func (c *Client) scanWebhooks(rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
+func (c *Client) scanWebhooks(ctx context.Context, rows database.ResultIterator, includeCounts bool) (webhooks []*types.Webhook, filteredCount, totalCount uint64, err error) {
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := c.logger.WithValue("include_counts", includeCounts)
+
 	for rows.Next() {
-		webhook, fc, tc, scanErr := c.scanWebhook(rows, includeCounts)
+		webhook, fc, tc, scanErr := c.scanWebhook(ctx, rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, scanErr
 		}
@@ -89,13 +99,13 @@ func (c *Client) scanWebhooks(rows database.ResultIterator, includeCounts bool) 
 		webhooks = append(webhooks, webhook)
 	}
 
-	if rowErr := rows.Err(); rowErr != nil {
-		return nil, 0, 0, rowErr
+	if err = rows.Err(); err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "fetching webhook from database")
 	}
 
-	if closeErr := rows.Close(); closeErr != nil {
-		c.logger.Error(closeErr, "closing rows")
-		return nil, 0, 0, closeErr
+	if err = rows.Close(); err != nil {
+		c.logger.Error(err, "closing rows")
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "fetching webhook from database")
 	}
 
 	return webhooks, filteredCount, totalCount, nil
@@ -109,17 +119,20 @@ func (c *Client) GetWebhook(ctx context.Context, webhookID, accountID uint64) (*
 	tracing.AttachUserIDToSpan(span, accountID)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 
-	c.logger.WithValues(map[string]interface{}{
+	logger := c.logger.WithValues(map[string]interface{}{
 		keys.WebhookIDKey: webhookID,
 		keys.AccountIDKey: accountID,
-	}).Debug("GetWebhook called")
+	})
 
 	query, args := c.sqlQueryBuilder.BuildGetWebhookQuery(webhookID, accountID)
 	row := c.db.QueryRowContext(ctx, query, args...)
 
-	webhook, _, _, err := c.scanWebhook(row, false)
+	webhook, _, _, err := c.scanWebhook(ctx, row, false)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning webhook")
+	}
 
-	return webhook, err
+	return webhook, nil
 }
 
 // GetAllWebhooksCount fetches the count of webhooks from the database that meet a particular filter.
@@ -152,11 +165,11 @@ func (c *Client) GetWebhooks(ctx context.Context, accountID uint64, filter *type
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, observability.PrepareError(err, logger, span, "fetching webhook from database")
 	}
 
-	if x.Webhooks, x.FilteredCount, x.TotalCount, err = c.scanWebhooks(rows, true); err != nil {
-		return nil, fmt.Errorf("scanning database response: %w", err)
+	if x.Webhooks, x.FilteredCount, x.TotalCount, err = c.scanWebhooks(ctx, rows, true); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning database response")
 	}
 
 	return x, nil
@@ -167,11 +180,11 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllWebhooks called")
+	logger := c.logger.WithValue("batch_size", batchSize)
 
-	count, countErr := c.GetAllWebhooksCount(ctx)
-	if countErr != nil {
-		return fmt.Errorf("fetching count of webhooks: %w", countErr)
+	count, err := c.GetAllWebhooksCount(ctx)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "fetching count of webhooks")
 	}
 
 	increment := uint64(batchSize)
@@ -180,7 +193,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 		endID := beginID + increment
 		go func(begin, end uint64) {
 			query, args := c.sqlQueryBuilder.BuildGetBatchOfWebhooksQuery(begin, end)
-			logger := c.logger.WithValues(map[string]interface{}{
+			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
@@ -194,7 +207,7 @@ func (c *Client) GetAllWebhooks(ctx context.Context, resultChannel chan []*types
 				return
 			}
 
-			webhooks, _, _, scanErr := c.scanWebhooks(rows, false)
+			webhooks, _, _, scanErr := c.scanWebhooks(ctx, rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -222,13 +235,13 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 
 	tx, err := c.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("beginning transaction: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
 	id, err := c.performWriteQuery(ctx, tx, false, "webhook creation", query, args)
 	if err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return nil, err
+		return nil, observability.PrepareError(err, logger, span, "creating webhook")
 	}
 
 	x := &types.Webhook{
@@ -244,15 +257,15 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 		CreatedOn:        c.currentTime(),
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x, createdByUser)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x, createdByUser)); err != nil {
+		logger.Error(err, "writing <> audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return nil, fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return nil, fmt.Errorf("writing <> audit log entry: %w", err)
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return nil, fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return x, nil
@@ -277,31 +290,27 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook, chan
 
 	query, args := c.sqlQueryBuilder.BuildUpdateWebhookQuery(updated)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		logger.Error(transactionStartErr, "starting webhook update transaction")
-
-		return fmt.Errorf("starting webhook update transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if err := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); err != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); err != nil {
 		logger.Error(err, "updating webhook")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("updating webhook: %w", err)
+		return observability.PrepareError(err, logger, span, "updating webhook")
 	}
 
-	if err := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(changedByUser, updated.BelongsToAccount, updated.ID, changes)); err != nil {
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(changedByUser, updated.BelongsToAccount, updated.ID, changes)); err != nil {
 		logger.Error(err, "writing webhook update audit log entry")
 		c.rollbackTransaction(ctx, tx)
 
-		return fmt.Errorf("writing webhook update audit log entry: %w", err)
+		return observability.PrepareError(err, logger, span, "writing webhook update audit log entry")
 	}
 
-	if err := tx.Commit(); err != nil {
-		logger.Error(err, "committing transaction")
-
-		return fmt.Errorf("committing transaction: %w", err)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Debug("successfully updated webhook")
@@ -328,25 +337,23 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID, accountID, archi
 
 	query, args := c.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, accountID)
 
-	tx, transactionStartErr := c.db.BeginTx(ctx, nil)
-	if transactionStartErr != nil {
-		return fmt.Errorf("beginning transaction: %w", transactionStartErr)
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if execErr := c.performWriteQueryIgnoringReturn(ctx, tx, "webhook archive", query, args); execErr != nil {
+	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "webhook archive", query, args); err != nil {
 		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("archiving webhook: %w", execErr)
+		return observability.PrepareError(err, logger, span, "archiving webhook")
 	}
 
-	if auditLogEntryWriteErr := c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(archivedByUserID, accountID, webhookID)); auditLogEntryWriteErr != nil {
-		logger.Error(auditLogEntryWriteErr, "writing <> audit log entry")
+	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(archivedByUserID, accountID, webhookID)); err != nil {
 		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", auditLogEntryWriteErr)
+		return observability.PrepareError(err, logger, span, "writing webhook archive audit log entry")
 	}
 
-	if commitErr := tx.Commit(); commitErr != nil {
-		return fmt.Errorf("committing transaction: %w", commitErr)
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	return nil
@@ -357,18 +364,17 @@ func (c *Client) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uin
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAuditLogEntriesForWebhook called")
-
+	logger := c.logger.WithValue(keys.WebhookIDKey, webhookID)
 	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(webhookID)
 
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("querying database for audit log entries: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	auditLogEntries, _, err := c.scanAuditLogEntries(rows, false)
+	auditLogEntries, _, err := c.scanAuditLogEntries(ctx, rows, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning response from database: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
 	}
 
 	return auditLogEntries, nil

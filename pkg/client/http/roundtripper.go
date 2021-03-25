@@ -18,9 +18,9 @@ const (
 	userAgentHeader = "User-Agent"
 	userAgent       = "TODO Service Client"
 
-	maxRetryCount = 10
-	minRetryWait  = 500 * time.Millisecond
-	maxRetryWait  = 5 * time.Second
+	maxRetryCount = 5
+	minRetryWait  = 100 * time.Millisecond
+	maxRetryWait  = time.Second
 
 	keepAlive             = 30 * time.Second
 	tlsHandshakeTimeout   = 10 * time.Second

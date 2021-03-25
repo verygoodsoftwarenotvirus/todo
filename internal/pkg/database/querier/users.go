@@ -9,6 +9,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
@@ -92,9 +93,10 @@ func (c *Client) scanUsers(rows database.ResultIterator, includeCounts bool) (us
 
 // getUser fetches a user.
 func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSecret bool) (*types.User, error) {
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	ctx, span := c.tracer.StartSpan(ctx)
+	defer span.End()
 
-	logger.Debug("GetUser called")
+	logger := c.logger.WithValue(keys.UserIDKey, userID)
 
 	var (
 		query string
@@ -111,7 +113,7 @@ func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSec
 
 	u, _, _, err := c.scanUser(row, false)
 	if err != nil {
-		return nil, fmt.Errorf("scanning user: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
 	return u, nil

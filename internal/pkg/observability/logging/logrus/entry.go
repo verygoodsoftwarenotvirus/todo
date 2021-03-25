@@ -64,11 +64,15 @@ func (w *entryWrapper) WithError(err error) logging.Logger {
 
 // WithRequest satisfies our interface.
 func (w *entryWrapper) WithRequest(req *http.Request) logging.Logger {
-	return w.WithValues(map[string]interface{}{
-		"path":   req.URL.Path,
-		"method": req.Method,
-		"query":  req.URL.RawQuery,
-	})
+	if req != nil {
+		return w.WithValues(map[string]interface{}{
+			"path":   req.URL.Path,
+			"method": req.Method,
+			"query":  req.URL.RawQuery,
+		})
+	}
+
+	return w
 }
 
 // WithRequest satisfies our interface.

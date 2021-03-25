@@ -237,19 +237,23 @@ func (l *logger) WithError(err error) logging.Logger {
 }
 
 func (l *logger) attachRequestToLogger(req *http.Request) *zap.Logger {
-	l2 := l.logger.With(
-		zap.String("path", req.URL.Path),
-		zap.String("method", req.Method),
-		zap.String("query", req.URL.RawQuery),
-	)
+	if req != nil {
+		l2 := l.logger.With(
+			zap.String("path", req.URL.Path),
+			zap.String("method", req.Method),
+			zap.String("query", req.URL.RawQuery),
+		)
 
-	if l.requestIDFunc != nil {
-		if reqID := l.requestIDFunc(req); reqID != "" {
-			l2 = l2.With(zap.String("request_id", reqID))
+		if l.requestIDFunc != nil {
+			if reqID := l.requestIDFunc(req); reqID != "" {
+				l2 = l2.With(zap.String("request_id", reqID))
+			}
 		}
+
+		return l2
 	}
 
-	return l2
+	return l.logger
 }
 
 // WithRequest satisfies our contract for the logging.Logger WithRequest method.

@@ -110,19 +110,23 @@ func (l *logger) WithError(err error) logging.Logger {
 }
 
 func (l *logger) attachRequestToLog(req *http.Request) *logrus.Logger {
-	l2 := l.logger.WithFields(map[string]interface{}{
-		"path":   req.URL.Path,
-		"method": req.Method,
-		"query":  req.URL.RawQuery,
-	})
+	if req != nil {
+		l2 := l.logger.WithFields(map[string]interface{}{
+			"path":   req.URL.Path,
+			"method": req.Method,
+			"query":  req.URL.RawQuery,
+		})
 
-	if l.requestIDFunc != nil {
-		if reqID := l.requestIDFunc(req); reqID != "" {
-			l2 = l2.WithField("request_id", reqID)
+		if l.requestIDFunc != nil {
+			if reqID := l.requestIDFunc(req); reqID != "" {
+				l2 = l2.WithField("request_id", reqID)
+			}
 		}
+
+		return l2.Logger
 	}
 
-	return l2.Logger
+	return l.logger
 }
 
 // WithRequest satisfies our contract for the logging.Logger WithRequest method.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -17,13 +18,13 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.Error(err, "provided input was invalid")
+			logger.WithValue("validation_error", err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -44,13 +45,13 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.Error(err, "provided input was invalid")
+			logger.WithValue("validation_error", err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

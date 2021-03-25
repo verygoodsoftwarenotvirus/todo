@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -32,13 +33,13 @@ func (s *service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx, s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
-			logger.Error(err, "provided input was invalid")
+			logger.WithValue("validation_error", err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -60,13 +61,13 @@ func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx, s.authSettings.MinimumPasswordLength); err != nil {
-			logger.Error(err, "provided input was invalid")
+			logger.WithValue("validation_error", err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -88,13 +89,13 @@ func (s *service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.Error(err, "provided input was invalid")
+			logger.WithValue("validation_error", err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -116,13 +117,13 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			logger.Error(err, "error encountered decoding request body")
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.Error(err, "provided input was invalid")
+			logger.WithValue("validation_error", err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

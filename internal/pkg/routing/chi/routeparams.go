@@ -26,7 +26,7 @@ func NewRouteParamManager() routing.RouteParamManager {
 
 // UserIDFetcherFromRequestContext fetches a user ID from a request.
 func (r chirouteParamManager) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
-	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
+	if reqCtx, err := r.FetchContextFromRequest(req); err == nil && reqCtx != nil {
 		return reqCtx.User.ID
 	}
 

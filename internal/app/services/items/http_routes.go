@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -41,9 +42,9 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -53,23 +54,23 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToAccount = reqCtx.ActiveAccountID
 
 	// create item in database.
-	x, err := s.itemDataManager.CreateItem(ctx, input, reqCtx.User.ID)
+	item, err := s.itemDataManager.CreateItem(ctx, input, reqCtx.User.ID)
 	if err != nil {
-		logger.Error(err, "error creating item")
+		observability.AcknowledgeError(err, logger, span, "creating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	tracing.AttachItemIDToSpan(span, x.ID)
-	logger = logger.WithValue(keys.ItemIDKey, x.ID)
+	tracing.AttachItemIDToSpan(span, item.ID)
+	logger = logger.WithValue(keys.ItemIDKey, item.ID)
 
 	// notify relevant parties.
-	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
-		logger.Error(searchIndexErr, "adding item to search index")
+	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
+		observability.AcknowledgeError(err, logger, span, "adding item to search index")
 	}
 
 	s.itemCounter.Increment(ctx)
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, x, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, item, http.StatusCreated)
 }
 
 // ReadHandler returns a GET handler that returns an item.
@@ -80,9 +81,9 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -101,7 +102,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching item from database")
+		observability.AcknowledgeError(err, logger, span, "retrieving item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -118,9 +119,9 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		s.logger.Error(err, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -135,8 +136,8 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 
 	// fetch item from database.
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, reqCtx.ActiveAccountID)
-	if errors.Is(err, sql.ErrNoRows) {
-		logger.Error(err, "error checking item existence in database")
+	if !errors.Is(err, sql.ErrNoRows) {
+		observability.AcknowledgeError(err, logger, span, "checking item existence")
 	}
 
 	if !exists || errors.Is(err, sql.ErrNoRows) {
@@ -158,9 +159,9 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -173,10 +174,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	adminQueryPresent := parseBool(rawQueryAdminKey)
 	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
-	var (
-		items *types.ItemList
-		err   error
-	)
+	var items *types.ItemList
 
 	if reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
@@ -188,7 +186,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		// in the event no rows exist return an empty list.
 		items = &types.ItemList{Items: []*types.Item{}}
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching items")
+		observability.AcknowledgeError(err, logger, span, "retrieving items")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -213,9 +211,9 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		s.logger.Error(err, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -230,36 +228,33 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 
 	var (
 		relevantIDs []uint64
-		searchErr   error
-
-		items []*types.Item
-		dbErr error
+		items       []*types.Item
 	)
 
 	if isAdminRequest {
-		relevantIDs, searchErr = s.search.SearchForAdmin(ctx, query)
+		relevantIDs, err = s.search.SearchForAdmin(ctx, query)
 	} else {
-		relevantIDs, searchErr = s.search.Search(ctx, query, reqCtx.ActiveAccountID)
+		relevantIDs, err = s.search.Search(ctx, query, reqCtx.ActiveAccountID)
 	}
 
-	if searchErr != nil {
-		logger.Error(searchErr, "error encountered executing search query")
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "executing item search query")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// fetch items from database.
 	if isAdminRequest {
-		items, dbErr = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
+		items, err = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
 	} else {
-		items, dbErr = s.itemDataManager.GetItemsWithIDs(ctx, reqCtx.ActiveAccountID, filter.Limit, relevantIDs)
+		items, err = s.itemDataManager.GetItemsWithIDs(ctx, reqCtx.ActiveAccountID, filter.Limit, relevantIDs)
 	}
 
-	if errors.Is(dbErr, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
 		items = []*types.Item{}
-	} else if dbErr != nil {
-		logger.Error(dbErr, "error encountered fetching items")
+	} else if err != nil {
+		observability.AcknowledgeError(err, logger, span, "searching items")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -284,9 +279,9 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -306,7 +301,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered getting item")
+		observability.AcknowledgeError(err, logger, span, "retrieving item for update")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -316,14 +311,14 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// update item in database.
 	if err = s.itemDataManager.UpdateItem(ctx, x, reqCtx.User.ID, changeReport); err != nil {
-		logger.Error(err, "error encountered updating item")
+		observability.AcknowledgeError(err, logger, span, "updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// notify relevant parties.
 	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
-		logger.Error(searchIndexErr, "updating item in search index")
+		observability.AcknowledgeError(err, logger, span, "updating item in search index")
 	}
 
 	// encode our response and peace.
@@ -338,9 +333,9 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -354,12 +349,12 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err := s.itemDataManager.ArchiveItem(ctx, itemID, reqCtx.ActiveAccountID, reqCtx.User.ID)
+	err = s.itemDataManager.ArchiveItem(ctx, itemID, reqCtx.ActiveAccountID, reqCtx.User.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered deleting item")
+		observability.AcknowledgeError(err, logger, span, "archiving item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -368,7 +363,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	s.itemCounter.Decrement(ctx)
 
 	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
-		logger.Error(indexDeleteErr, "error removing item from search index")
+		observability.AcknowledgeError(err, logger, span, "removing from search index")
 	}
 
 	// encode our response and peace.
@@ -381,12 +376,11 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user ID.
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -404,12 +398,10 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching audit log entries")
+		observability.AcknowledgeError(err, logger, span, "retrieving audit log entries for item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
 	s.encoderDecoder.RespondWithData(ctx, res, x)

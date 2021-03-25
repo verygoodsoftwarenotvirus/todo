@@ -35,7 +35,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -65,7 +65,7 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -94,7 +94,7 @@ func (s *service) AddMemberInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -123,7 +123,7 @@ func (s *service) ModifyMemberPermissionsInputMiddleware(next http.Handler) http
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -152,7 +152,7 @@ func (s *service) AccountTransferInputMiddleware(next http.Handler) http.Handler
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

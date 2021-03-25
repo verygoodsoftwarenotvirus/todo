@@ -8,14 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 )
 
 const (
@@ -230,24 +229,6 @@ func (r *router) Put(pattern string, handler http.HandlerFunc) {
 // Trace satisfies our interface by wrapping the underlying router's Trace method.
 func (r *router) Trace(pattern string, handler http.HandlerFunc) {
 	r.router.Trace(pattern, handler)
-}
-
-// UserIDFetcherFromRequestContext fetches a user ID from a request.
-func (r *router) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
-	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
-		return reqCtx.User.ID
-	}
-
-	return 0
-}
-
-// requestContextFetcherFromRequestContext fetches a RequestContext from a request.
-func (r *router) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
-	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
-		return reqCtx, nil
-	}
-
-	return nil, errNoRequestContextAvailable
 }
 
 // BuildRouteParamIDFetcher builds a function that fetches a given key from a path with variables added by a router.

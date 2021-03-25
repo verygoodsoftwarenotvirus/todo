@@ -6,7 +6,7 @@ import (
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2"
@@ -35,7 +35,7 @@ func buildTestService(t *testing.T) *service {
 		&mocktypes.AccountUserMembershipDataManager{},
 		scs.New(),
 		ed,
-		mockrouting.NewRouteParamManager(),
+		chi.NewRouteParamManager(),
 	)
 	require.NoError(t, err)
 
@@ -65,7 +65,7 @@ func TestProvideAuthService(T *testing.T) {
 			&mocktypes.AccountUserMembershipDataManager{},
 			scs.New(),
 			ed,
-			mockrouting.NewRouteParamManager(),
+			chi.NewRouteParamManager(),
 		)
 		assert.NotNil(t, s)
 		assert.NoError(t, err)

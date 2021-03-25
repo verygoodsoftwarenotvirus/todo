@@ -72,11 +72,6 @@ func AttachAccountIDToSpan(span trace.Span, accountID uint64) {
 	attachUint64ToSpan(span, keys.AccountIDKey, accountID)
 }
 
-// AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.
-func AttachUserIDToSpan(span trace.Span, userID uint64) {
-	attachUint64ToSpan(span, keys.UserIDKey, userID)
-}
-
 // AttachRequestingUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachRequestingUserIDToSpan(span trace.Span, userID uint64) {
 	attachUint64ToSpan(span, keys.RequesterKey, userID)
@@ -104,6 +99,19 @@ func AttachAPIClientDatabaseIDToSpan(span trace.Span, clientID uint64) {
 // AttachAPIClientClientIDToSpan is a consistent way to attach an API client's ID to a span.
 func AttachAPIClientClientIDToSpan(span trace.Span, clientID string) {
 	attachStringToSpan(span, keys.APIClientClientIDKey, clientID)
+}
+
+// AttachUserToSpan provides a consistent way to attach a user to a span.
+func AttachUserToSpan(span trace.Span, user *types.User) {
+	if user != nil {
+		AttachUserIDToSpan(span, user.ID)
+		AttachUsernameToSpan(span, user.Username)
+	}
+}
+
+// AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.
+func AttachUserIDToSpan(span trace.Span, userID uint64) {
+	attachUint64ToSpan(span, keys.UserIDKey, userID)
 }
 
 // AttachUsernameToSpan provides a consistent way to attach a user's username to a span.

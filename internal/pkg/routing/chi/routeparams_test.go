@@ -31,38 +31,6 @@ func buildRequest(t *testing.T) *http.Request {
 	return req
 }
 
-func Test_userIDFetcherFromRequestContext(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		r := &chirouteParamManager{}
-
-		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-
-		req := buildRequest(t)
-		req = req.WithContext(
-			context.WithValue(req.Context(), types.RequestContextKey, expected),
-		)
-
-		actual := r.UserIDFetcherFromRequestContext(req)
-		assert.Equal(t, expected.User.ID, actual)
-	})
-
-	T.Run("without attached value", func(t *testing.T) {
-		t.Parallel()
-
-		r := &chirouteParamManager{}
-
-		req := buildRequest(t)
-		actual := r.UserIDFetcherFromRequestContext(req)
-
-		assert.Zero(t, actual)
-	})
-}
-
 func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 	T.Parallel()
 

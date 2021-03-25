@@ -143,7 +143,7 @@ func (s *service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, erro
 			rl.Debug("static file requested")
 		}
 
-		if _, ok := validRoutes[req.URL.Path]; ok {
+		if _, routeValid := validRoutes[req.URL.Path]; routeValid {
 			req.URL.Path = "/"
 		} else if dest, ok := redirections[req.URL.Path]; ok {
 			req.URL.Path = dest

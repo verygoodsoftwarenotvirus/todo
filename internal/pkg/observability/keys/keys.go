@@ -10,7 +10,7 @@ const (
 	// PermissionsKey is the standard key for referring to an account user membership ID.
 	PermissionsKey = "user.permissions"
 	// RequesterKey is the standard key for referring to a requesting user's ID.
-	RequesterKey = "requested_by"
+	RequesterKey = "request.made_by"
 	// AccountIDKey is the standard key for referring to an account ID.
 	AccountIDKey = "account.id"
 	// ActiveAccountIDKey is the standard key for referring to an active account ID.

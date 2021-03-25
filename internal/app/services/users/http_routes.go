@@ -10,6 +10,7 @@ import (
 	"image/png"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -32,12 +33,7 @@ const (
 
 // validateCredentialChangeRequest takes a user's credentials and determines
 // if they match what is on record.
-func (s *service) validateCredentialChangeRequest(
-	ctx context.Context,
-	userID uint64,
-	password,
-	totpToken string,
-) (user *types.User, httpStatus int) {
+func (s *service) validateCredentialChangeRequest(ctx context.Context, userID uint64, password, totpToken string) (user *types.User, httpStatus int) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -53,15 +49,9 @@ func (s *service) validateCredentialChangeRequest(
 	}
 
 	// validate login.
-	if valid, validationErr := s.authenticator.ValidateLogin(
-		ctx,
-		user.HashedPassword,
-		password,
-		user.TwoFactorSecret,
-		totpToken,
-		user.Salt,
-	); validationErr != nil {
-		logger.Error(err, "error encountered validating credentials")
+	valid, validationErr := s.authenticator.ValidateLogin(ctx, user.HashedPassword, password, user.TwoFactorSecret, totpToken, user.Salt)
+	if validationErr != nil {
+		logger.WithValue("validation_error", validationErr).Debug("error validating credentials")
 		return nil, http.StatusBadRequest
 	} else if !valid {
 		logger.WithValue("valid", valid).Error(err, "invalid credentials")
@@ -82,7 +72,7 @@ func (s *service) UsernameSearchHandler(res http.ResponseWriter, req *http.Reque
 	// fetch user data.
 	users, err := s.userDataManager.SearchForUsersByUsername(ctx, query)
 	if err != nil {
-		logger.Error(err, "error fetching users for UsernameSearchHandler route")
+		observability.AcknowledgeError(err, logger, span, "searching for users")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -104,7 +94,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch user data.
 	users, err := s.userDataManager.GetUsers(ctx, qf)
 	if err != nil {
-		logger.Error(err, "error fetching users for ListHandler route")
+		observability.AcknowledgeError(err, logger, span, "fetching users")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -144,6 +134,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// ensure the authentication isn't garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
+		logger.WithValue("password_validation_error", err).Debug("weak password provided to user creation route")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "authentication too weak!", http.StatusBadRequest)
 		return
 	}
@@ -151,7 +142,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// hash the authentication.
 	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
 	if err != nil {
-		logger.Error(err, "valid input not attached to request")
+		observability.AcknowledgeError(err, logger, span, "hashing password")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -165,14 +156,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// generate a two factor secret.
 	if input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret(); err != nil {
-		logger.Error(err, "error generating TOTP secret")
+		observability.AcknowledgeError(err, logger, span, "error generating TOTP secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// generate a salt.
 	if input.Salt, err = s.secretGenerator.GenerateSalt(); err != nil {
-		logger.Error(err, "error generating salt")
+		observability.AcknowledgeError(err, logger, span, "error generating salt")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -180,7 +171,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// create the user.
 	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
 	if userCreationErr != nil {
-		logger.Error(userCreationErr, "error creating user")
+		observability.AcknowledgeError(err, logger, span, "error creating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -207,6 +198,8 @@ func (s *service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := s.logger.WithValue(keys.UsernameKey, username)
+
 	// "otpauth://totp/{{ .Issuer }}:{{ .EnsureUsername }}?secret={{ .Secret }}&issuer={{ .Issuer }}",
 	otpString := fmt.Sprintf(
 		"otpauth://totp/%s:%s?secret=%s&issuer=%s",
@@ -218,14 +211,14 @@ func (s *service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 
 	bmp, err := qrcode.NewQRCodeWriter().EncodeWithoutHint(otpString, gozxing.BarcodeFormat_QR_CODE, 128, 128)
 	if err != nil {
-		s.logger.Error(err, "trying to encode secret to qr code")
+		observability.AcknowledgeError(err, logger, span, "encoding secret to QR code")
 		return ""
 	}
 
 	// encode the QR code to PNG.
 	var b bytes.Buffer
 	if err = png.Encode(&b, bmp); err != nil {
-		s.logger.Error(err, "trying to encode secret to qr code")
+		observability.AcknowledgeError(err, logger, span, "encoding QR code to PNG")
 		return ""
 	}
 
@@ -240,32 +233,32 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
-	reqCtx, requestContextRetrievalErr := s.requestContextFetcher(req)
-	if requestContextRetrievalErr != nil {
-		s.logger.Error(requestContextRetrievalErr, "retrieving request context")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	// figure out who this is all for.
-	userID := reqCtx.User.ID
-	logger = logger.WithValue(keys.UserIDKey, userID)
-	tracing.AttachUserIDToSpan(span, userID)
+	requester := reqCtx.User.ID
+	logger = logger.WithValue(keys.RequesterKey, requester)
+	tracing.AttachUserIDToSpan(span, requester)
 
 	// fetch user data.
-	x, err := s.userDataManager.GetUser(ctx, userID)
+	user, err := s.userDataManager.GetUser(ctx, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no such user")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching user from database")
+		observability.AcknowledgeError(err, logger, span, "fetching user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// encode response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, user)
 }
 
 // ReadHandler is our read route.
@@ -287,7 +280,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error fetching user from database")
+		observability.AcknowledgeError(err, logger, span, "fetching user from database")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -316,7 +309,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
 	if err != nil {
-		logger.Error(err, "fetching user")
+		observability.AcknowledgeError(err, logger, span, "fetching user with unverified two factor secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -336,7 +329,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 		statusCode = http.StatusAccepted
 
 		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
-			logger.Error(updateUserErr, "updating user to indicate their 2FA secret is validated")
+			observability.AcknowledgeError(err, logger, span, "marking 2FA secret as validated")
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return
 		}
@@ -361,10 +354,9 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	// also check for the user's ID.
-	reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
-	if !ok || reqCtx == nil {
-		logger.Debug("no user ID attached to TOTP secret refresh request")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -391,7 +383,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// set the two factor secret.
 	tfs, err := s.secretGenerator.GenerateTwoFactorSecret()
 	if err != nil {
-		logger.Error(err, "error encountered generating random TOTP string")
+		observability.AcknowledgeError(err, logger, span, "generating 2FA secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -400,8 +392,8 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	user.TwoFactorSecretVerifiedOn = nil
 
 	// update the user in the database.
-	if err := s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
-		logger.Error(err, "error encountered updating TOTP token")
+	if err = s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
+		observability.AcknowledgeError(err, logger, span, "updating 2FA secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -431,10 +423,9 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	// check request context for user ID.
-	reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
-	if !ok || reqCtx == nil {
-		logger.Debug("no user ID attached to UpdatePasswordHandler request")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -460,7 +451,8 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	tracing.AttachUsernameToSpan(span, user.Username)
 
 	// ensure the authentication isn't garbage-tier
-	if err := passwordvalidator.Validate(input.NewPassword, minimumPasswordEntropy); err != nil {
+	if err = passwordvalidator.Validate(input.NewPassword, minimumPasswordEntropy); err != nil {
+		logger.WithValue("password_validation_error", err).Debug("invalid password provided")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "new authentication is too weak!", http.StatusBadRequest)
 		return
 	}
@@ -468,23 +460,23 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	// hash the new authentication.
 	newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
-		logger.Error(err, "error authentication authentication")
+		observability.AcknowledgeError(err, logger, span, "hashing password")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// update the user.
 	if err = s.userDataManager.UpdateUserPassword(ctx, user.ID, newPasswordHash); err != nil {
-		logger.Error(err, "error encountered updating user")
+		observability.AcknowledgeError(err, logger, span, "error encountered updating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// we're all good, log the user out
-	cookie, cookieRetrievalErr := req.Cookie(s.authSettings.Cookies.Name)
-	if cookieRetrievalErr != nil {
+	cookie, err := req.Cookie(s.authSettings.Cookies.Name)
+	if err != nil {
 		// this should never occur in production
-		logger.Error(cookieRetrievalErr, "retrieving cookie to invalidate upon request")
+		observability.AcknowledgeError(err, logger, span, "retrieving cookie to invalidate")
 	} else {
 		cookie.MaxAge = -1
 		http.SetCookie(res, cookie)
@@ -494,6 +486,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
 }
 
+// FIXME: dependency inject this.
 func (s *service) determineAvatarWebPath(storageProviderPath string) *string {
 	x := storageProviderPath
 	return &x
@@ -506,10 +499,9 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 
 	logger := s.logger.WithRequest(req)
 
-	// check request context for user ID.
-	reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
-	if !ok || reqCtx == nil {
-		logger.Debug("no user ID attached to UpdateAvatarHandler request")
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "retrieving request context")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -517,9 +509,9 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
 	logger.Debug("request context data extracted")
 
-	user, userFetchErr := s.userDataManager.GetUser(ctx, reqCtx.User.ID)
-	if userFetchErr != nil {
-		logger.Error(userFetchErr, "fetching associated user")
+	user, err := s.userDataManager.GetUser(ctx, reqCtx.User.ID)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "fetching associated user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -527,25 +519,26 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 	logger.Debug("retrieved user from database")
 
-	img, imageProcessErr := s.imageUploadProcessor.Process(ctx, req, "avatar")
-	if imageProcessErr != nil || img == nil {
-		logger.Error(imageProcessErr, "processing provided avatar upload file")
+	img, err := s.imageUploadProcessor.Process(ctx, req, "avatar")
+	if err != nil || img == nil {
+		observability.AcknowledgeError(err, logger, span, "processing provided avatar upload file")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
 
 	internalPath := fmt.Sprintf("avatar_%d", reqCtx.User.ID)
+	logger = logger.WithValue("file_size", len(img.Data)).WithValue("internal_path", internalPath)
 
-	if saveErr := s.uploadManager.SaveFile(ctx, internalPath, img.Data); saveErr != nil {
-		logger.WithValue("file_size", len(img.Data)).Error(saveErr, "saving provided avatar")
+	if err = s.uploadManager.SaveFile(ctx, internalPath, img.Data); err != nil {
+		observability.AcknowledgeError(err, logger, span, "saving provided avatar")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	user.AvatarSrc = s.determineAvatarWebPath(internalPath)
 
-	if userUpdateErr := s.userDataManager.UpdateUser(ctx, user, nil); userUpdateErr != nil {
-		logger.WithValue("file_size", len(img.Data)).Error(userUpdateErr, "updating user info")
+	if err = s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
+		observability.AcknowledgeError(err, logger, span, "updating user info")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -569,7 +562,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "deleting user from database")
+		observability.AcknowledgeError(err, logger, span, "archiving user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -587,7 +580,6 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("AuditEntryHandler invoked")
 
 	// figure out who this is for.
 	userID := s.userIDFetcher(req)
@@ -599,12 +591,10 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	} else if err != nil {
-		logger.Error(err, "error encountered fetching items")
+		observability.AcknowledgeError(err, logger, span, "fetching audit log entries for user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
 	s.encoderDecoder.RespondWithData(ctx, res, x)

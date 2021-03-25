@@ -31,7 +31,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating request input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -58,7 +58,7 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating request input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

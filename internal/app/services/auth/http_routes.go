@@ -66,7 +66,6 @@ func (s *service) determineUserFromRequestCookie(ctx context.Context, req *http.
 	defer span.End()
 
 	logger := s.logger.WithRequest(req).WithValue("cookie_count", len(req.Cookies()))
-	logger.Debug("determineUserFromRequestCookie called")
 
 	ctx, userID, err := s.getUserIDFromCookie(ctx, req)
 	if err != nil {
@@ -165,11 +164,10 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("LoginHandler called")
 
 	loginData, ok := ctx.Value(userLoginInputMiddlewareCtxKey).(*types.UserLoginInput)
 	if !ok || loginData == nil {
-		logger.Error(nil, "no UserLoginInput found for /login request")
+		logger.Debug("no input found for login request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
 		return
 	}
@@ -178,19 +176,18 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	user, err := s.userDataManager.GetUserByUsername(ctx, loginData.Username)
 	if err != nil || user == nil {
-		observability.AcknowledgeError(err, logger, span, "fetching user")
-
 		if errors.Is(err, sql.ErrNoRows) {
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		} else {
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
+			observability.AcknowledgeError(err, logger, span, "fetching user")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error fetching user", http.StatusUnauthorized)
 		}
 
 		return
 	}
 
-	tracing.AttachUserIDToSpan(span, user.ID)
-	tracing.AttachUsernameToSpan(span, user.Username)
+	logger = logger.WithValue(keys.UserIDKey, user.ID)
+	tracing.AttachUserToSpan(span, user)
 
 	if user.IsBanned() {
 		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
@@ -199,7 +196,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	loginValid, err := s.validateLogin(ctx, user, loginData)
-	logger = logger.WithValue(keys.UserIDKey, user.ID).WithValue("login_valid", loginValid)
+	logger.WithValue("login_valid", loginValid)
 
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "validating login")
@@ -420,10 +417,11 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	requestedAccount := pasetoRequest.AccountID
 	logger = logger.WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID)
 
-	if pasetoRequest.AccountID != 0 {
-		logger = logger.WithValue("requested_account", pasetoRequest.AccountID)
+	if requestedAccount != 0 {
+		logger = logger.WithValue("requested_account", requestedAccount)
 	}
 
 	reqTime := time.Unix(0, pasetoRequest.RequestTime)
@@ -478,15 +476,15 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	var requestedAccountID uint64
 
-	if pasetoRequest.AccountID != 0 {
-		if _, isMember := perms[pasetoRequest.AccountID]; !isMember {
+	if requestedAccount != 0 {
+		if _, isMember := perms[requestedAccount]; !isMember {
 			logger.WithValue("perms", perms).Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
 		}
 
-		logger.WithValue("requested_account", pasetoRequest.AccountID).Debug("setting token account ID to requested account")
-		requestedAccountID = pasetoRequest.AccountID
+		logger.WithValue("requested_account", requestedAccount).Debug("setting token account ID to requested account")
+		requestedAccountID = requestedAccount
 	} else {
 		requestedAccountID = defaultAccountID
 	}

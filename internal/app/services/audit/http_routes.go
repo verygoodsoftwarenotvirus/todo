@@ -64,7 +64,6 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("ReadHandler invoked")
 
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)

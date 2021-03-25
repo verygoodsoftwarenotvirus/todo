@@ -189,13 +189,13 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 // AuthorizationMiddleware checks to see if a user is associated with the request, and then determines whether said request can proceed.
 func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := s.tracer.StartSpan(req.Context())
+		_, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
 
 		// UserAttributionMiddleware should be called before this middleware.
-		if reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext); ok {
+		if reqCtx, err := s.requestContextFetcher(req); err == nil && reqCtx != nil {
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
 			if reqCtx.User.Status == types.BannedAccountStatus {
 				logger.Debug("banned user attempted to make request")
@@ -227,10 +227,10 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 
 			logger := s.logger.WithRequest(req)
 
-			// check for a cookie first if we can.
-			requestContext, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
-			if !ok {
-				logger.Debug("no request context attached!")
+			// check for a request context first.
+			requestContext, err := s.requestContextFetcher(req)
+			if err != nil {
+				observability.AcknowledgeError(err, logger, span, "retrieving request context")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
@@ -274,10 +274,10 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		reqCtx, ok := ctx.Value(types.RequestContextKey).(*types.RequestContext)
 
-		if !ok || reqCtx == nil {
-			logger.Debug("AdminMiddleware called without user attached to context")
+		reqCtx, err := s.requestContextFetcher(req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "retrieving request context")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
 		}
@@ -310,7 +310,7 @@ func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Han
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -327,7 +327,6 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		logger.Debug("UserLoginInputMiddleware called")
 
 		x := new(types.UserLoginInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
@@ -356,7 +355,6 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		logger.Debug("PASETOCreationInputMiddleware called")
 
 		x := new(types.PASETOCreationInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
@@ -366,7 +364,7 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "provided input was invalid")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

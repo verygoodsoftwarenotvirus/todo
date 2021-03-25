@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
@@ -30,9 +31,6 @@ func buildTestService(t *testing.T) *service {
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On("GetAllUsersCount", mock.MatchedBy(testutil.ContextMatcher)).Return(expectedUserCount, nil)
 
-	rpm := mockrouting.NewRouteParamManager()
-	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
-
 	s := ProvideUsersService(
 		&authservice.Config{},
 		logging.NewNonOperationalLogger(),
@@ -45,10 +43,10 @@ func buildTestService(t *testing.T) *service {
 		},
 		&images.MockImageUploadProcessor{},
 		&mockuploads.UploadManager{},
-		rpm,
+		chi.NewRouteParamManager(),
 	)
 
-	mock.AssertExpectationsForObjects(t, mockDB, uc, rpm)
+	mock.AssertExpectationsForObjects(t, mockDB, uc)
 
 	return s.(*service)
 }

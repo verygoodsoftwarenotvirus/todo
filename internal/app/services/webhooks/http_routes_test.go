@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -142,44 +141,6 @@ func TestWebhooksService_List(T *testing.T) {
 	})
 }
 
-func TestValidateWebhook(T *testing.T) {
-	T.Parallel()
-
-	exampleUser := fakes.BuildFakeUser()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-
-		assert.NoError(t, validateWebhook(exampleInput))
-	})
-
-	T.Run("with invalid method", func(t *testing.T) {
-		t.Parallel()
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-		exampleInput.Method = " MEATLOAF "
-
-		assert.Error(t, validateWebhook(exampleInput))
-	})
-
-	T.Run("with invalid url", func(t *testing.T) {
-		t.Parallel()
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-		exampleInput.URL = "%zzzzz"
-
-		assert.Error(t, validateWebhook(exampleInput))
-	})
-}
-
 func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
@@ -234,44 +195,6 @@ func TestWebhooksService_Create(T *testing.T) {
 		assert.Equal(t, http.StatusCreated, res.Code)
 
 		mock.AssertExpectationsForObjects(t, mc, wd, ed)
-	})
-
-	T.Run("with invalid webhook request", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleWebhook.URL = "%zzzzz"
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On(
-			"EncodeErrorResponse",
-			mock.Anything,
-			mock.Anything,
-			fmt.Sprintf(`invalid url provided: parse %q: invalid URL escape "%%zz"`, exampleWebhook.URL),
-			http.StatusBadRequest,
-		)
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
-
-		s.CreateHandler(res, req)
-		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
 
 	T.Run("without input attached", func(t *testing.T) {

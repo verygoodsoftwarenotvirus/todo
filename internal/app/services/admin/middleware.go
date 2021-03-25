@@ -29,7 +29,7 @@ func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Han
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
+			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

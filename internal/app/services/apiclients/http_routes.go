@@ -246,7 +246,6 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
-	logger.Debug("AuditEntryHandler invoked")
 
 	// determine user.
 	reqCtx, err := s.requestContextFetcher(req)
@@ -274,8 +273,6 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	logger.WithValue("entry_count", len(x)).Debug("returning from AuditEntryHandler")
 
 	// encode our response and peace.
 	s.encoderDecoder.RespondWithData(ctx, res, x)

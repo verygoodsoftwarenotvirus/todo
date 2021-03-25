@@ -68,8 +68,6 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	logger = logger.WithValue("status_change_recipient", input.TargetUserID)
 
 	if err = s.userDB.UpdateUserAccountStatus(ctx, input.TargetUserID, *input); err != nil {
-		logger.Error(err, "changing user status")
-
 		if errors.Is(err, sql.ErrNoRows) {
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		} else {

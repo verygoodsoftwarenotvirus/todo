@@ -157,8 +157,6 @@ function clearTopics() {
 // URL
 let urlIsValid: boolean = false;
 function validateURL(): void {
-  logger.debug("validateURL called")
-
   urlIsValid = false;
   try {
     // only allow secure (lol) protocols

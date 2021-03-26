@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -16,7 +17,9 @@ func TestSqlite_BuildGetPlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
@@ -24,7 +27,7 @@ func TestSqlite_BuildGetPlanQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
+		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -37,10 +40,12 @@ func TestSqlite_BuildGetAllPlansCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL"
-		actualQuery := q.BuildGetAllAccountSubscriptionPlansCountQuery()
+		actualQuery := q.BuildGetAllAccountSubscriptionPlansCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -52,7 +57,9 @@ func TestSqlite_BuildGetPlansQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
@@ -67,7 +74,7 @@ func TestSqlite_BuildGetPlansQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlansQuery(filter)
+		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlansQuery(ctx, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -80,7 +87,9 @@ func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
@@ -97,7 +106,7 @@ func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
 			exampleAccountSubscriptionPlan.Price,
 			exampleAccountSubscriptionPlan.Period.String(),
 		}
-		actualQuery, actualArgs := q.BuildCreateAccountSubscriptionPlanQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildCreateAccountSubscriptionPlanQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -112,7 +121,9 @@ func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
@@ -124,7 +135,7 @@ func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
 			exampleAccountSubscriptionPlan.Period.String(),
 			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan)
+		actualQuery, actualArgs := q.BuildUpdateAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -137,7 +148,9 @@ func TestSqlite_BuildArchivePlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
@@ -145,7 +158,7 @@ func TestSqlite_BuildArchivePlanQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
+		actualQuery, actualArgs := q.BuildArchiveAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

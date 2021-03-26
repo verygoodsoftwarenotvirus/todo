@@ -112,9 +112,9 @@ func (q *SQLQuerier) getUser(ctx context.Context, userID uint64, withVerifiedTOT
 	)
 
 	if withVerifiedTOTPSecret {
-		query, args = q.sqlQueryBuilder.BuildGetUserQuery(userID)
+		query, args = q.sqlQueryBuilder.BuildGetUserQuery(ctx, userID)
 	} else {
-		query, args = q.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+		query, args = q.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx, userID)
 	}
 
 	row := q.db.QueryRowContext(ctx, query, args...)
@@ -139,7 +139,7 @@ func (q *SQLQuerier) UserHasStatus(ctx context.Context, userID uint64, statuses 
 	logger := q.logger.WithValue(keys.UserIDKey, userID).WithValue("statuses", statuses)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	query, args := q.sqlQueryBuilder.BuildUserHasStatusQuery(userID, statuses...)
+	query, args := q.sqlQueryBuilder.BuildUserHasStatusQuery(ctx, userID, statuses...)
 
 	result, err := q.performBooleanQuery(ctx, q.db, query, args)
 	if err != nil {
@@ -189,7 +189,7 @@ func (q *SQLQuerier) GetUserByUsername(ctx context.Context, username string) (*t
 	tracing.AttachUsernameToSpan(span, username)
 	logger := q.logger.WithValue(keys.UsernameKey, username)
 
-	query, args := q.sqlQueryBuilder.BuildGetUserByUsernameQuery(username)
+	query, args := q.sqlQueryBuilder.BuildGetUserByUsernameQuery(ctx, username)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	u, _, _, err := q.scanUser(ctx, row, false)
@@ -216,7 +216,7 @@ func (q *SQLQuerier) SearchForUsersByUsername(ctx context.Context, usernameQuery
 	tracing.AttachSearchQueryToSpan(span, usernameQuery)
 	logger := q.logger.WithValue(keys.SearchQueryKey, usernameQuery)
 
-	query, args := q.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(usernameQuery)
+	query, args := q.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(ctx, usernameQuery)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -242,7 +242,7 @@ func (q *SQLQuerier) GetAllUsersCount(ctx context.Context) (uint64, error) {
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllUsersCountQuery(), "fetching count of users")
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllUsersCountQuery(ctx), "fetching count of users")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of users")
 	}
@@ -264,7 +264,7 @@ func (q *SQLQuerier) GetUsers(ctx context.Context, filter *types.QueryFilter) (x
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetUsersQuery(filter)
+	query, args := q.sqlQueryBuilder.BuildGetUsersQuery(ctx, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -307,7 +307,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 	// create the account.
 	accountCreationInput := types.NewAccountCreationInputForUser(user)
 	accountCreationInput.DefaultUserPermissions = account.DefaultUserPermissions
-	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(accountCreationInput)
+	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, accountCreationInput)
 
 	accountID, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
 	if err != nil {
@@ -322,7 +322,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 		return observability.PrepareError(err, logger, span, "writing account creation audit log entry")
 	}
 
-	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(userID, accountID)
+	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(ctx, userID, accountID)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
@@ -362,7 +362,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 	logger := q.logger.WithValue(keys.UsernameKey, input.Username)
 
 	// create the user.
-	userCreationQuery, userCreationArgs := q.sqlQueryBuilder.BuildCreateUserQuery(input)
+	userCreationQuery, userCreationArgs := q.sqlQueryBuilder.BuildCreateUserQuery(ctx, input)
 
 	user := &types.User{
 		Username:        input.Username,
@@ -387,7 +387,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 
 // UpdateUser receives a complete User struct and updates its record in the database.
 // NOTE: this function uses the ID provided in the input to make its query.
-func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, changes []types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -398,7 +398,7 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, change
 	tracing.AttachUsernameToSpan(span, updated.Username)
 	logger := q.logger.WithValue(keys.UsernameKey, updated.Username)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateUserQuery(updated)
+	query, args := q.sqlQueryBuilder.BuildUpdateUserQuery(ctx, updated)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -438,7 +438,7 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newH
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
+	query, args := q.sqlQueryBuilder.BuildUpdateUserPasswordQuery(ctx, userID, newHash)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -478,7 +478,7 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID uint6
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(userID, newSecret)
+	query, args := q.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(ctx, userID, newSecret)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -514,7 +514,7 @@ func (q *SQLQuerier) VerifyUserTwoFactorSecret(ctx context.Context, userID uint6
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := q.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
+	query, args := q.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(ctx, userID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -550,7 +550,7 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	archiveUserQuery, archiveUserArgs := q.sqlQueryBuilder.BuildArchiveUserQuery(userID)
+	archiveUserQuery, archiveUserArgs := q.sqlQueryBuilder.BuildArchiveUserQuery(ctx, userID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -567,7 +567,7 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
 		return observability.PrepareError(err, logger, span, "writing user archive audit log entry")
 	}
 
-	archiveMembershipsQuery, archiveMembershipsArgs := q.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(userID)
+	archiveMembershipsQuery, archiveMembershipsArgs := q.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(ctx, userID)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -592,7 +592,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForUser(ctx context.Context, userID uint6
 
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(userID)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(ctx, userID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

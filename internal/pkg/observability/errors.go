@@ -11,7 +11,7 @@ import (
 )
 
 // PrepareError standardizes our error handling by logging, tracing, and formatting an error consistently.
-func PrepareError(err error, logger logging.Logger, span trace.Span, descriptionFmt string, descriptionArgs ...interface{}) error {
+func PrepareError(err error, logger logging.Logger, span tracing.Span, descriptionFmt string, descriptionArgs ...interface{}) error {
 	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 
 	logging.EnsureLogger(logger).Error(err, desc)
@@ -24,7 +24,7 @@ func PrepareError(err error, logger logging.Logger, span trace.Span, description
 }
 
 // AcknowledgeError standardizes our error handling by logging and tracing consistently.
-func AcknowledgeError(err error, logger logging.Logger, span trace.Span, descriptionFmt string, descriptionArgs ...interface{}) {
+func AcknowledgeError(err error, logger logging.Logger, span tracing.Span, descriptionFmt string, descriptionArgs ...interface{}) {
 	if err != nil && span != nil {
 		desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 		logging.EnsureLogger(logger).Error(err, desc)
@@ -33,7 +33,7 @@ func AcknowledgeError(err error, logger logging.Logger, span trace.Span, descrip
 }
 
 // NoteEvent standardizes our logging and tracing notifications.
-func NoteEvent(logger logging.Logger, span trace.Span, descriptionFmt string, descriptionArgs ...interface{}) {
+func NoteEvent(logger logging.Logger, span tracing.Span, descriptionFmt string, descriptionArgs ...interface{}) {
 	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 	logging.EnsureLogger(logger).Debug(desc)
 	span.AddEvent(desc, trace.WithTimestamp(time.Now().UTC()))

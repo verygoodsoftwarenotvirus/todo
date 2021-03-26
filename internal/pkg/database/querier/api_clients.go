@@ -94,7 +94,7 @@ func (q *SQLQuerier) GetAPIClientByClientID(ctx context.Context, clientID string
 	tracing.AttachAPIClientClientIDToSpan(span, clientID)
 	logger := q.logger.WithValue(keys.APIClientClientIDKey, clientID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAPIClientByClientIDQuery(clientID)
+	query, args := q.sqlQueryBuilder.BuildGetAPIClientByClientIDQuery(ctx, clientID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	client, _, _, err := q.scanAPIClient(ctx, row, false)
@@ -126,7 +126,7 @@ func (q *SQLQuerier) GetAPIClientByDatabaseID(ctx context.Context, clientID, use
 		keys.UserIDKey:              userID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetAPIClientByDatabaseIDQuery(clientID, userID)
+	query, args := q.sqlQueryBuilder.BuildGetAPIClientByDatabaseIDQuery(ctx, clientID, userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	client, _, _, err := q.scanAPIClient(ctx, row, false)
@@ -148,7 +148,7 @@ func (q *SQLQuerier) GetTotalAPIClientCount(ctx context.Context) (uint64, error)
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAPIClientsCountQuery(), "fetching count of API clients")
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAPIClientsCountQuery(ctx), "fetching count of API clients")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of API clients")
 	}
@@ -175,7 +175,7 @@ func (q *SQLQuerier) GetAllAPIClients(ctx context.Context, results chan []*types
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := q.sqlQueryBuilder.BuildGetBatchOfAPIClientsQuery(begin, end)
+			query, args := q.sqlQueryBuilder.BuildGetBatchOfAPIClientsQuery(ctx, begin, end)
 			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -221,7 +221,7 @@ func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID uint64, filter *t
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetAPIClientsQuery(userID, filter)
+	query, args := q.sqlQueryBuilder.BuildGetAPIClientsQuery(ctx, userID, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -254,7 +254,7 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APICientC
 		keys.UserIDKey:            input.BelongsToUser,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildCreateAPIClientQuery(input)
+	query, args := q.sqlQueryBuilder.BuildCreateAPIClientQuery(ctx, input)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -309,7 +309,7 @@ func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, 
 		keys.UserIDKey:              archivedByUser,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveAPIClientQuery(clientID, accountID)
+	query, args := q.sqlQueryBuilder.BuildArchiveAPIClientQuery(ctx, clientID, accountID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -345,7 +345,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForAPIClient(ctx context.Context, clientI
 	logger := q.logger.WithValue(keys.APIClientDatabaseIDKey, clientID)
 	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAPIClientQuery(clientID)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAPIClientQuery(ctx, clientID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

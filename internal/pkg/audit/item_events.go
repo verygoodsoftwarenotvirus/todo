@@ -30,7 +30,7 @@ func BuildItemCreationEventEntry(item *types.Item, createdByUser uint64) *types.
 }
 
 // BuildItemUpdateEventEntry builds an entry creation input for when an item is updated.
-func BuildItemUpdateEventEntry(changedByUser, itemID, accountID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildItemUpdateEventEntry(changedByUser, itemID, accountID uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: ItemUpdateEvent,
 		Context: map[string]interface{}{

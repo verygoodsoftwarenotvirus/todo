@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -24,7 +25,9 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -44,6 +47,7 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
 			exampleTableName,
 			exampleOwnershipColumn,
 			exampleColumns,
@@ -59,7 +63,9 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 
 	T.Run("for admin without archived", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -76,6 +82,7 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
 			exampleTableName,
 			exampleOwnershipColumn,
 			exampleColumns,
@@ -91,7 +98,9 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 
 	T.Run("for admin with archived", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -109,6 +118,7 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
 			exampleTableName,
 			exampleOwnershipColumn,
 			exampleColumns,

@@ -30,7 +30,7 @@ func BuildWebhookCreationEventEntry(webhook *types.Webhook, createdByUser uint64
 }
 
 // BuildWebhookUpdateEventEntry builds an entry creation input for when a webhook is updated.
-func BuildWebhookUpdateEventEntry(changedByUser, accountID, webhookID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildWebhookUpdateEventEntry(changedByUser, accountID, webhookID uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: WebhookUpdateEvent,
 		Context: map[string]interface{}{

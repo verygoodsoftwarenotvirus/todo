@@ -48,19 +48,6 @@ type (
 		ID           uint64 `json:"id"`
 	}
 
-	// APIClientSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	APIClientSQLQueryBuilder interface {
-		BuildGetBatchOfAPIClientsQuery(beginID, endID uint64) (query string, args []interface{})
-		BuildGetAPIClientByClientIDQuery(clientID string) (query string, args []interface{})
-		BuildGetAPIClientByDatabaseIDQuery(clientID, userID uint64) (query string, args []interface{})
-		BuildGetAllAPIClientsCountQuery() string
-		BuildGetAPIClientsQuery(accountID uint64, filter *QueryFilter) (query string, args []interface{})
-		BuildCreateAPIClientQuery(input *APICientCreationInput) (query string, args []interface{})
-		BuildUpdateAPIClientQuery(input *APIClient) (query string, args []interface{})
-		BuildArchiveAPIClientQuery(clientID, userID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForAPIClientQuery(userID uint64) (query string, args []interface{})
-	}
-
 	// APIClientDataManager handles API clients.
 	APIClientDataManager interface {
 		GetAPIClientByClientID(ctx context.Context, clientID string) (*APIClient, error)

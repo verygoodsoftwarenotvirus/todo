@@ -6,6 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -32,12 +33,13 @@ var (
 	currentUnixTimeQuery = squirrel.Expr(`UNIX_TIMESTAMP()`)
 )
 
-var _ database.SQLQueryBuilder = (*MariaDB)(nil)
+var _ querybuilding.SQLQueryBuilder = (*MariaDB)(nil)
 
 type (
 	// MariaDB is our main MariaDB interaction db.
 	MariaDB struct {
 		logger              logging.Logger
+		tracer              tracing.Tracer
 		sqlBuilder          squirrel.StatementBuilderType
 		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
@@ -68,18 +70,19 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 func ProvideMariaDB(logger logging.Logger) *MariaDB {
 	return &MariaDB{
 		logger:              logging.EnsureLogger(logger).WithName(loggerName),
+		tracer:              tracing.NewTracer("mariadb_query_builder"),
 		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
 }
 
-// logQueryBuildingError logs errs that may occur during query construction.
-// Such errs should be few and far between, as the generally only occur with
-// type discrepancies or other misuses of SQL. An alert should be set up for
-// any log entries with the given name, and those alerts should be investigated
-// with the utmost priority.
-func (q *MariaDB) logQueryBuildingError(err error) {
+// logQueryBuildingError logs errs that may occur during query construction. Such errors should be few and far between,
+// as the generally only occur with type discrepancies or other misuses of SQL. An alert should be set up for any log
+// entries with the given name, and those alerts should be investigated quickly.
+func (b *MariaDB) logQueryBuildingError(span tracing.Span, err error) {
 	if err != nil {
-		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
+		logger := b.logger.WithValue(keys.QueryErrorKey, true)
+
+		observability.AcknowledgeError(err, logger, span, "building query")
 	}
 }

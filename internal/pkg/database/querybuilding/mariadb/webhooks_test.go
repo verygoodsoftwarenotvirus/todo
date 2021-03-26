@@ -1,16 +1,16 @@
 package mariadb
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMariaDB_BuildGetWebhookQuery(T *testing.T) {
@@ -18,7 +18,9 @@ func TestMariaDB_BuildGetWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
@@ -27,7 +29,7 @@ func TestMariaDB_BuildGetWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToAccount)
+		actualQuery, actualArgs := q.BuildGetWebhookQuery(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -40,10 +42,12 @@ func TestMariaDB_BuildGetAllWebhooksCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
-		actualQuery := q.BuildGetAllWebhooksCountQuery()
+		actualQuery := q.BuildGetAllWebhooksCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -55,7 +59,9 @@ func TestMariaDB_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -64,7 +70,7 @@ func TestMariaDB_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfWebhooksQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfWebhooksQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -77,7 +83,9 @@ func TestMariaDB_BuildGetWebhooksQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -96,7 +104,7 @@ func TestMariaDB_BuildGetWebhooksQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetWebhooksQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.BuildGetWebhooksQuery(ctx, exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -109,7 +117,9 @@ func TestMariaDB_BuildCreateWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
@@ -130,7 +140,7 @@ func TestMariaDB_BuildCreateWebhookQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, querybuilding.WebhooksTableTopicsSeparator),
 			exampleWebhook.BelongsToAccount,
 		}
-		actualQuery, actualArgs := q.BuildCreateWebhookQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildCreateWebhookQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -145,7 +155,9 @@ func TestMariaDB_BuildUpdateWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
@@ -161,7 +173,7 @@ func TestMariaDB_BuildUpdateWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateWebhookQuery(exampleWebhook)
+		actualQuery, actualArgs := q.BuildUpdateWebhookQuery(ctx, exampleWebhook)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -174,7 +186,9 @@ func TestMariaDB_BuildArchiveWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
@@ -183,7 +197,7 @@ func TestMariaDB_BuildArchiveWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToAccount)
+		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -196,13 +210,15 @@ func TestMariaDB_BuildGetAuditLogEntriesForWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
 		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.webhook_id') ORDER BY audit_log.created_on", exampleWebhook.ID)
 		expectedArgs := []interface{}(nil)
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForWebhookQuery(exampleWebhook.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForWebhookQuery(ctx, exampleWebhook.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

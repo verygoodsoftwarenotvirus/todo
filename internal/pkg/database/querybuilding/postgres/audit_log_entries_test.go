@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -16,7 +17,9 @@ func TestPostgres_BuildGetAuditLogEntryQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
@@ -24,7 +27,7 @@ func TestPostgres_BuildGetAuditLogEntryQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAuditLogEntryQuery(exampleAuditLogEntry.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntryQuery(ctx, exampleAuditLogEntry.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -37,10 +40,12 @@ func TestPostgres_BuildGetAllAuditLogEntriesCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(audit_log.id) FROM audit_log"
-		actualQuery := q.BuildGetAllAuditLogEntriesCountQuery()
+		actualQuery := q.BuildGetAllAuditLogEntriesCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -52,7 +57,9 @@ func TestPostgres_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -61,7 +68,7 @@ func TestPostgres_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfAuditLogEntriesQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfAuditLogEntriesQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -74,7 +81,9 @@ func TestPostgres_BuildGetAuditLogEntriesQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
@@ -85,7 +94,7 @@ func TestPostgres_BuildGetAuditLogEntriesQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesQuery(filter)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesQuery(ctx, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -98,7 +107,9 @@ func TestPostgres_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
 
@@ -106,7 +117,7 @@ func TestPostgres_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForItemQuery(exampleItem.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForItemQuery(ctx, exampleItem.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -119,7 +130,9 @@ func TestPostgres_BuildCreateAuditLogEntryQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
@@ -134,7 +147,7 @@ func TestPostgres_BuildCreateAuditLogEntryQuery(T *testing.T) {
 			exampleAuditLogEntry.EventType,
 			exampleAuditLogEntry.Context,
 		}
-		actualQuery, actualArgs := q.BuildCreateAuditLogEntryQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildCreateAuditLogEntryQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

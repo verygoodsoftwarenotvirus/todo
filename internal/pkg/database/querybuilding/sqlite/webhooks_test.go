@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -17,7 +18,9 @@ func TestSqlite_BuildGetWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
@@ -26,7 +29,7 @@ func TestSqlite_BuildGetWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToAccount)
+		actualQuery, actualArgs := q.BuildGetWebhookQuery(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -39,10 +42,12 @@ func TestSqlite_BuildGetAllWebhooksCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(webhooks.id) FROM webhooks WHERE webhooks.archived_on IS NULL"
-		actualQuery := q.BuildGetAllWebhooksCountQuery()
+		actualQuery := q.BuildGetAllWebhooksCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -54,7 +59,9 @@ func TestSqlite_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -63,7 +70,7 @@ func TestSqlite_BuildGetBatchOfWebhooksQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfWebhooksQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfWebhooksQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -76,7 +83,9 @@ func TestSqlite_BuildGetWebhooksQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -95,7 +104,7 @@ func TestSqlite_BuildGetWebhooksQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetWebhooksQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.BuildGetWebhooksQuery(ctx, exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -108,7 +117,9 @@ func TestSqlite_BuildCreateWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
@@ -129,7 +140,7 @@ func TestSqlite_BuildCreateWebhookQuery(T *testing.T) {
 			strings.Join(exampleWebhook.Topics, querybuilding.WebhooksTableTopicsSeparator),
 			exampleWebhook.BelongsToAccount,
 		}
-		actualQuery, actualArgs := q.BuildCreateWebhookQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildCreateWebhookQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -144,7 +155,9 @@ func TestSqlite_BuildUpdateWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
@@ -160,7 +173,7 @@ func TestSqlite_BuildUpdateWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateWebhookQuery(exampleWebhook)
+		actualQuery, actualArgs := q.BuildUpdateWebhookQuery(ctx, exampleWebhook)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -173,7 +186,9 @@ func TestSqlite_BuildArchiveWebhookQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
 
@@ -182,7 +197,7 @@ func TestSqlite_BuildArchiveWebhookQuery(T *testing.T) {
 			exampleWebhook.BelongsToAccount,
 			exampleWebhook.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(exampleWebhook.ID, exampleWebhook.BelongsToAccount)
+		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

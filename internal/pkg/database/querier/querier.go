@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -42,7 +43,7 @@ var _ database.DataManager = (*SQLQuerier)(nil)
 type SQLQuerier struct {
 	config          *dbconfig.Config
 	db              *sql.DB
-	sqlQueryBuilder database.SQLQueryBuilder
+	sqlQueryBuilder querybuilding.SQLQueryBuilder
 	timeFunc        func() uint64
 	logger          logging.Logger
 	tracer          tracing.Tracer
@@ -56,7 +57,7 @@ func ProvideDatabaseClient(
 	logger logging.Logger,
 	db *sql.DB,
 	cfg *dbconfig.Config,
-	sqlQueryBuilder database.SQLQueryBuilder,
+	sqlQueryBuilder querybuilding.SQLQueryBuilder,
 	shouldCreateTestUser bool,
 ) (database.DataManager, error) {
 	tracer := tracing.NewTracer(tracingName)
@@ -116,7 +117,7 @@ func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserCon
 	if testUserConfig != nil {
 		q.logger.Debug("creating test user")
 
-		query, args := q.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
+		query, args := q.sqlQueryBuilder.BuildTestUserCreationQuery(ctx, testUserConfig)
 
 		// these structs will be fleshed out by createUser
 		user := &types.User{Username: testUserConfig.Username}

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -17,7 +18,9 @@ func TestPostgres_BuildItemExistsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
@@ -28,7 +31,7 @@ func TestPostgres_BuildItemExistsQuery(T *testing.T) {
 			exampleItem.BelongsToAccount,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildItemExistsQuery(exampleItem.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildItemExistsQuery(ctx, exampleItem.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -41,7 +44,9 @@ func TestPostgres_BuildGetItemQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
@@ -52,7 +57,7 @@ func TestPostgres_BuildGetItemQuery(T *testing.T) {
 			exampleItem.BelongsToAccount,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetItemQuery(exampleItem.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildGetItemQuery(ctx, exampleItem.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -65,10 +70,12 @@ func TestPostgres_BuildGetAllItemsCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
-		actualQuery := q.BuildGetAllItemsCountQuery()
+		actualQuery := q.BuildGetAllItemsCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -80,7 +87,9 @@ func TestPostgres_BuildGetBatchOfItemsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -89,7 +98,7 @@ func TestPostgres_BuildGetBatchOfItemsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfItemsQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfItemsQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -102,7 +111,9 @@ func TestPostgres_BuildGetItemsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -121,7 +132,7 @@ func TestPostgres_BuildGetItemsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetItemsQuery(exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.BuildGetItemsQuery(ctx, exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -134,7 +145,9 @@ func TestPostgres_BuildGetItemsWithIDsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleIDs := []uint64{
@@ -148,7 +161,7 @@ func TestPostgres_BuildGetItemsWithIDsQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetItemsWithIDsQuery(exampleUser.ID, defaultLimit, exampleIDs, false)
+		actualQuery, actualArgs := q.BuildGetItemsWithIDsQuery(ctx, exampleUser.ID, defaultLimit, exampleIDs, false)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -161,7 +174,9 @@ func TestPostgres_BuildCreateItemQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
@@ -179,7 +194,7 @@ func TestPostgres_BuildCreateItemQuery(T *testing.T) {
 			exampleItem.Details,
 			exampleItem.BelongsToAccount,
 		}
-		actualQuery, actualArgs := q.BuildCreateItemQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildCreateItemQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -194,7 +209,9 @@ func TestPostgres_BuildUpdateItemQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
@@ -207,7 +224,7 @@ func TestPostgres_BuildUpdateItemQuery(T *testing.T) {
 			exampleItem.BelongsToAccount,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateItemQuery(exampleItem)
+		actualQuery, actualArgs := q.BuildUpdateItemQuery(ctx, exampleItem)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -220,7 +237,9 @@ func TestPostgres_BuildArchiveItemQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
@@ -231,7 +250,7 @@ func TestPostgres_BuildArchiveItemQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveItemQuery(exampleItem.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildArchiveItemQuery(ctx, exampleItem.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

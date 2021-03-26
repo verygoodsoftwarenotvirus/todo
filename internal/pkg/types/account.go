@@ -43,19 +43,6 @@ type (
 		BelongsToUser          uint64                             `json:"-"`
 	}
 
-	// AccountSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	AccountSQLQueryBuilder interface {
-		BuildGetAccountQuery(accountID, userID uint64) (query string, args []interface{})
-		BuildGetAllAccountsCountQuery() string
-		BuildGetBatchOfAccountsQuery(beginID, endID uint64) (query string, args []interface{})
-		BuildGetAccountsQuery(userID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
-		BuildAccountCreationQuery(input *AccountCreationInput) (query string, args []interface{})
-		BuildUpdateAccountQuery(input *Account) (query string, args []interface{})
-		BuildArchiveAccountQuery(accountID, userID uint64) (query string, args []interface{})
-		BuildTransferAccountOwnershipQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForAccountQuery(accountID uint64) (query string, args []interface{})
-	}
-
 	// AccountDataManager describes a structure capable of storing accounts permanently.
 	AccountDataManager interface {
 		GetAccount(ctx context.Context, accountID, userID uint64) (*Account, error)
@@ -64,7 +51,7 @@ type (
 		GetAccounts(ctx context.Context, userID uint64, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
 		CreateAccount(ctx context.Context, input *AccountCreationInput, createdByUser uint64) (*Account, error)
-		UpdateAccount(ctx context.Context, updated *Account, changedByUser uint64, changes []FieldChangeSummary) error
+		UpdateAccount(ctx context.Context, updated *Account, changedByUser uint64, changes []*FieldChangeSummary) error
 		ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser uint64) error
 		GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*AuditLogEntry, error)
 	}
@@ -92,11 +79,11 @@ type (
 )
 
 // Update merges an AccountUpdateInput with an account.
-func (x *Account) Update(input *AccountUpdateInput) []FieldChangeSummary {
-	var out []FieldChangeSummary
+func (x *Account) Update(input *AccountUpdateInput) []*FieldChangeSummary {
+	var out []*FieldChangeSummary
 
 	if input.Name != "" && input.Name != x.Name {
-		out = append(out, FieldChangeSummary{
+		out = append(out, &FieldChangeSummary{
 			FieldName: "Name",
 			OldValue:  x.Name,
 			NewValue:  input.Name,

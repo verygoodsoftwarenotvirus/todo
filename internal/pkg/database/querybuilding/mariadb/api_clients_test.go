@@ -1,15 +1,15 @@
 package mariadb
 
 import (
+	"context"
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMariaDB_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
@@ -17,7 +17,9 @@ func TestMariaDB_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -26,7 +28,7 @@ func TestMariaDB_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfAPIClientsQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfAPIClientsQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -39,7 +41,9 @@ func TestMariaDB_BuildGetAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
@@ -47,7 +51,7 @@ func TestMariaDB_BuildGetAPIClientQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAPIClient.ClientID,
 		}
-		actualQuery, actualArgs := q.BuildGetAPIClientByClientIDQuery(exampleAPIClient.ClientID)
+		actualQuery, actualArgs := q.BuildGetAPIClientByClientIDQuery(ctx, exampleAPIClient.ClientID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -60,7 +64,9 @@ func TestMariaDB_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
@@ -69,7 +75,7 @@ func TestMariaDB_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
 			exampleAPIClient.BelongsToUser,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAPIClientByDatabaseIDQuery(exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildGetAPIClientByDatabaseIDQuery(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -82,10 +88,12 @@ func TestMariaDB_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(api_clients.id) FROM api_clients WHERE api_clients.archived_on IS NULL"
-		actualQuery := q.BuildGetAllAPIClientsCountQuery()
+		actualQuery := q.BuildGetAllAPIClientsCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -97,7 +105,9 @@ func TestMariaDB_BuildGetAPIClientsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -116,7 +126,7 @@ func TestMariaDB_BuildGetAPIClientsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetAPIClientsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.BuildGetAPIClientsQuery(ctx, exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -129,7 +139,9 @@ func TestMariaDB_BuildCreateAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
@@ -146,7 +158,7 @@ func TestMariaDB_BuildCreateAPIClientQuery(T *testing.T) {
 			exampleAPIClient.ClientSecret,
 			exampleAPIClient.BelongsToUser,
 		}
-		actualQuery, actualArgs := q.BuildCreateAPIClientQuery(exampleAPIClientInput)
+		actualQuery, actualArgs := q.BuildCreateAPIClientQuery(ctx, exampleAPIClientInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -161,7 +173,9 @@ func TestMariaDB_BuildUpdateAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
@@ -171,7 +185,7 @@ func TestMariaDB_BuildUpdateAPIClientQuery(T *testing.T) {
 			exampleAPIClient.BelongsToUser,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateAPIClientQuery(exampleAPIClient)
+		actualQuery, actualArgs := q.BuildUpdateAPIClientQuery(ctx, exampleAPIClient)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -184,7 +198,9 @@ func TestMariaDB_BuildArchiveAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
@@ -193,7 +209,7 @@ func TestMariaDB_BuildArchiveAPIClientQuery(T *testing.T) {
 			exampleAPIClient.BelongsToUser,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -206,13 +222,15 @@ func TestMariaDB_BuildGetAuditLogEntriesForAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.api_client_id') ORDER BY audit_log.created_on", exampleAPIClient.ID)
 		expectedArgs := []interface{}(nil)
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAPIClientQuery(exampleAPIClient.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAPIClientQuery(ctx, exampleAPIClient.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

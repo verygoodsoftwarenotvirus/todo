@@ -1,15 +1,15 @@
 package mariadb
 
 import (
+	"context"
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMariaDB_BuildGetAccountQuery(T *testing.T) {
@@ -17,7 +17,9 @@ func TestMariaDB_BuildGetAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -28,7 +30,7 @@ func TestMariaDB_BuildGetAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildGetAccountQuery(ctx, exampleAccount.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -41,10 +43,12 @@ func TestMariaDB_BuildGetAllAccountsCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL"
-		actualQuery := q.BuildGetAllAccountsCountQuery()
+		actualQuery := q.BuildGetAllAccountsCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -56,7 +60,9 @@ func TestMariaDB_BuildGetBatchOfAccountsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -65,7 +71,7 @@ func TestMariaDB_BuildGetBatchOfAccountsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfAccountsQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfAccountsQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -78,7 +84,9 @@ func TestMariaDB_BuildGetAccountsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -97,7 +105,7 @@ func TestMariaDB_BuildGetAccountsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountsQuery(exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.BuildGetAccountsQuery(ctx, exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -110,7 +118,9 @@ func TestMariaDB_BuildCreateAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -128,7 +138,7 @@ func TestMariaDB_BuildCreateAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.DefaultUserPermissions,
 		}
-		actualQuery, actualArgs := q.BuildAccountCreationQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildAccountCreationQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -143,7 +153,9 @@ func TestMariaDB_BuildUpdateAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -155,7 +167,7 @@ func TestMariaDB_BuildUpdateAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateAccountQuery(exampleAccount)
+		actualQuery, actualArgs := q.BuildUpdateAccountQuery(ctx, exampleAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -168,7 +180,9 @@ func TestMariaDB_BuildArchiveAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -179,7 +193,7 @@ func TestMariaDB_BuildArchiveAccountQuery(T *testing.T) {
 			exampleUser.ID,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildArchiveAccountQuery(ctx, exampleAccount.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -192,13 +206,15 @@ func TestMariaDB_BuildGetAuditLogEntriesForAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccount := fakes.BuildFakeAccount()
 
 		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.account_id') ORDER BY audit_log.created_on", exampleAccount.ID)
 		expectedArgs := []interface{}(nil)
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountQuery(exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountQuery(ctx, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

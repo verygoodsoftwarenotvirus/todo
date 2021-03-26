@@ -63,7 +63,7 @@ func BuildUserUpdatePasswordEventEntry(userID uint64) *types.AuditLogEntryCreati
 }
 
 // BuildUserUpdateEventEntry builds an entry creation input for when a user is updated.
-func BuildUserUpdateEventEntry(userID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildUserUpdateEventEntry(userID uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: UserUpdateEvent,
 		Context: map[string]interface{}{

@@ -12,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -96,7 +97,7 @@ func TestQuerier_GetPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).
+			On("BuildGetAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -123,7 +124,7 @@ func TestQuerier_GetPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).
+			On("BuildGetAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -150,7 +151,7 @@ func TestQuerier_GetPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).
+			On("BuildGetAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -192,7 +193,7 @@ func TestQuerier_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAllAccountSubscriptionPlansCountQuery").
+			On("BuildGetAllAccountSubscriptionPlansCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
 			Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -218,7 +219,7 @@ func TestQuerier_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAllAccountSubscriptionPlansCountQuery").
+			On("BuildGetAllAccountSubscriptionPlansCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
 			Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -250,7 +251,7 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery", filter).
+			On("BuildGetAccountSubscriptionPlansQuery", mock.MatchedBy(testutil.ContextMatcher), filter).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -278,7 +279,7 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery", filter).
+			On("BuildGetAccountSubscriptionPlansQuery", mock.MatchedBy(testutil.ContextMatcher), filter).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -305,7 +306,7 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery", filter).
+			On("BuildGetAccountSubscriptionPlansQuery", mock.MatchedBy(testutil.ContextMatcher), filter).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -332,7 +333,7 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery", filter).
+			On("BuildGetAccountSubscriptionPlansQuery", mock.MatchedBy(testutil.ContextMatcher), filter).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -366,7 +367,7 @@ func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildCreateAccountSubscriptionPlanQuery", exampleInput).
+			On("BuildCreateAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).
 			Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -404,7 +405,7 @@ func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildCreateAccountSubscriptionPlanQuery", exampleInput).
+			On("BuildCreateAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).
 			Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -438,7 +439,7 @@ func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildUpdateAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan).
+			On("BuildUpdateAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan).
 			Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -471,7 +472,7 @@ func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildUpdateAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan).
+			On("BuildUpdateAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan).
 			Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -506,7 +507,7 @@ func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildArchiveAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).
+			On("BuildArchiveAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).
 			Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -539,7 +540,7 @@ func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildArchiveAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).
+			On("BuildArchiveAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).
 			Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -571,7 +572,7 @@ func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On("BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On("BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -594,7 +595,7 @@ func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On("BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On("BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -617,7 +618,7 @@ func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On("BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery", exampleAccountSubscriptionPlan.ID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On("BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountSubscriptionPlan.ID).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).

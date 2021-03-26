@@ -22,7 +22,7 @@ const (
 	bitSize   = 64
 
 	// testingSearchIndexName is an index name that is only valid for testing's sake.
-	testingSearchIndexName search.IndexName = "testing"
+	testingSearchIndexName search.IndexName = "example_index_name"
 )
 
 var (
@@ -48,7 +48,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 		index = preexistingIndex
 	}
 
-	if errors.Is(openIndexErr, bleve.ErrorIndexPathDoesNotExist) {
+	if errors.Is(openIndexErr, bleve.ErrorIndexPathDoesNotExist) || errors.Is(openIndexErr, bleve.ErrorIndexMetaMissing) {
 		logger.WithValue("path", path).Debug("tried to open existing index, but didn't find it")
 
 		var newIndexErr error

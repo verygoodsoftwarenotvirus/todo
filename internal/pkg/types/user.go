@@ -133,25 +133,6 @@ type (
 		TwoFactorSecret string `json:"twoFactorSecret"`
 	}
 
-	// UserSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	UserSQLQueryBuilder interface {
-		BuildUserHasStatusQuery(userID uint64, statuses ...string) (query string, args []interface{})
-		BuildGetUserQuery(userID uint64) (query string, args []interface{})
-		BuildGetUsersQuery(filter *QueryFilter) (query string, args []interface{})
-		BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
-		BuildGetUserByUsernameQuery(username string) (query string, args []interface{})
-		BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{})
-		BuildGetAllUsersCountQuery() (query string)
-		BuildCreateUserQuery(input *UserDataStoreCreationInput) (query string, args []interface{})
-		BuildUpdateUserQuery(input *User) (query string, args []interface{})
-		BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{})
-		BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{})
-		BuildVerifyUserTwoFactorSecretQuery(userID uint64) (query string, args []interface{})
-		BuildArchiveUserQuery(userID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForUserQuery(userID uint64) (query string, args []interface{})
-		BuildSetUserStatusQuery(input UserReputationUpdateInput) (query string, args []interface{})
-	}
-
 	// AdminUserDataManager contains administrative User functions that we don't necessarily want to expose
 	// to, say, the collection of handlers.
 	AdminUserDataManager interface {
@@ -169,7 +150,7 @@ type (
 		GetAllUsersCount(ctx context.Context) (uint64, error)
 		GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
 		CreateUser(ctx context.Context, input *UserDataStoreCreationInput) (*User, error)
-		UpdateUser(ctx context.Context, updated *User, changes []FieldChangeSummary) error
+		UpdateUser(ctx context.Context, updated *User, changes []*FieldChangeSummary) error
 		UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error
 		ArchiveUser(ctx context.Context, userID uint64) error
 		GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*AuditLogEntry, error)

@@ -445,7 +445,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.Webhook{}),
 			exampleUser.ID,
-			mock.IsType([]types.FieldChangeSummary{}),
+			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
 		s.webhookDataManager = wd
 
@@ -618,7 +618,7 @@ func TestWebhooksService_Update(T *testing.T) {
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.Webhook{}),
 			exampleUser.ID,
-			mock.IsType([]types.FieldChangeSummary{}),
+			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
 		s.webhookDataManager = wd
 

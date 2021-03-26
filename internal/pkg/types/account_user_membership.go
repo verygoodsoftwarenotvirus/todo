@@ -60,19 +60,6 @@ type (
 		UserAccountPermissions permissions.ServiceUserPermissions `json:"userAccountPermissions"`
 	}
 
-	// AccountUserMembershipSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	AccountUserMembershipSQLQueryBuilder interface {
-		BuildArchiveAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{})
-		BuildGetAccountMembershipsForUserQuery(userID uint64) (query string, args []interface{})
-		BuildMarkAccountAsUserDefaultQuery(userID, accountID uint64) (query string, args []interface{})
-		BuildModifyUserPermissionsQuery(userID, accountID uint64, permissions permissions.ServiceUserPermissions) (query string, args []interface{})
-		BuildTransferAccountMembershipsQuery(currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{})
-		BuildUserIsMemberOfAccountQuery(userID, accountID uint64) (query string, args []interface{})
-		BuildCreateMembershipForNewUserQuery(userID, accountID uint64) (query string, args []interface{})
-		BuildAddUserToAccountQuery(accountID uint64, input *AddUserToAccountInput) (query string, args []interface{})
-		BuildRemoveUserFromAccountQuery(userID, accountID uint64) (query string, args []interface{})
-	}
-
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
 	AccountUserMembershipDataManager interface {
 		GetMembershipsForUser(ctx context.Context, userID uint64) (uint64, map[uint64]permissions.ServiceUserPermissions, error)

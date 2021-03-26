@@ -40,7 +40,7 @@ func (m *AccountSubscriptionPlanDataManager) CreateAccountSubscriptionPlan(ctx c
 }
 
 // UpdateAccountSubscriptionPlan is a mock function.
-func (m *AccountSubscriptionPlanDataManager) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan, changedBy uint64, changes []types.FieldChangeSummary) error {
+func (m *AccountSubscriptionPlanDataManager) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan, changedBy uint64, changes []*types.FieldChangeSummary) error {
 	return m.Called(ctx, updated).Error(0)
 }
 

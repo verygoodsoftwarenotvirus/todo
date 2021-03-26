@@ -1,6 +1,7 @@
 package tracing
 
 import (
+	"context"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
@@ -9,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type tracingErrorHandler struct{}
@@ -42,4 +44,41 @@ func (c *Config) SetupJaeger() (func(), error) {
 	}
 
 	return flush, nil
+}
+
+// Tracer describes a tracer.
+type Tracer interface {
+	StartSpan(ctx context.Context) (context.Context, trace.Span)
+	StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span)
+}
+
+var _ Tracer = (*otSpanManager)(nil)
+
+type otSpanManager struct {
+	tracer trace.Tracer
+}
+
+// NewTracer creates a Tracer.
+func NewTracer(name string) Tracer {
+	return &otSpanManager{
+		tracer: otel.Tracer(name),
+	}
+}
+
+// StartSpan wraps tracer.Start.
+func (t *otSpanManager) StartSpan(ctx context.Context) (context.Context, trace.Span) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	return t.tracer.Start(ctx, GetCallerName())
+}
+
+// StartCustomSpan wraps tracer.Start.
+func (t *otSpanManager) StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	return t.tracer.Start(ctx, name)
 }

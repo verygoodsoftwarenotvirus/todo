@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 	"regexp"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 const (
@@ -42,6 +44,7 @@ func TestProvidePostgres(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		buildTestService(t)
 	})
 }
@@ -51,8 +54,12 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
-		q.logQueryBuildingError(errors.New("blah"))
+		ctx := context.Background()
+		_, span := tracing.StartSpan(ctx)
+
+		q.logQueryBuildingError(span, errors.New("blah"))
 	})
 }
 
@@ -61,6 +68,7 @@ func Test_joinUint64s(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		exampleInput := []uint64{123, 456, 789}
 		expected := "123,456,789"
 		actual := joinUint64s(exampleInput)
@@ -74,6 +82,7 @@ func TestProvidePostgresDB(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		_, err := ProvidePostgresDB(logging.NewNonOperationalLogger(), "")
 		assert.NoError(t, err)
 	})

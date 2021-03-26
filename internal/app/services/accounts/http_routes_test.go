@@ -142,13 +142,12 @@ func TestAccountsService_ListHandler(T *testing.T) {
 func TestAccountsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
 		s := buildTestService()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
@@ -159,7 +158,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{})).Return(exampleAccount, nil)
+		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), exampleUser.ID).Return(exampleAccount, nil)
 		s.accountDataManager = accountDataManager
 
 		mc := &mockmetrics.UnitCounter{}
@@ -194,6 +193,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 
 		ctx := context.Background()
 		s := buildTestService()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
 			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -228,7 +228,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
@@ -239,7 +239,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{})).Return((*types.Account)(nil), errors.New("blah"))
+		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -419,7 +419,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
-		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{})).Return(nil)
+		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(nil)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -590,7 +590,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
-		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{})).Return(errors.New("blah"))
+		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -639,7 +639,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(nil)
+		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID, exampleUser.ID).Return(nil)
 		s.accountDataManager = accountDataManager
 
 		mc := &mockmetrics.UnitCounter{}
@@ -680,7 +680,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(sql.ErrNoRows)
+		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID, exampleUser.ID).Return(sql.ErrNoRows)
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -721,7 +721,7 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		}
 
 		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(errors.New("blah"))
+		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID, exampleUser.ID).Return(errors.New("blah"))
 		s.accountDataManager = accountDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()

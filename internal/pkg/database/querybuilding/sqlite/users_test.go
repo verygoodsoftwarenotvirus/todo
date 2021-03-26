@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -17,7 +18,9 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -27,7 +30,7 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 			types.BannedAccountStatus,
 			types.TerminatedAccountStatus,
 		}
-		actualQuery, actualArgs := q.BuildUserHasStatusQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -40,14 +43,16 @@ func TestSqlite_BuildGetUserQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetUserQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildGetUserQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -60,7 +65,9 @@ func TestSqlite_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -68,7 +75,7 @@ func TestSqlite_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetUserWithUnverifiedTwoFactorSecretQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -81,7 +88,9 @@ func TestSqlite_BuildGetUsersQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
@@ -92,7 +101,7 @@ func TestSqlite_BuildGetUsersQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetUsersQuery(filter)
+		actualQuery, actualArgs := q.BuildGetUsersQuery(ctx, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -105,7 +114,9 @@ func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -113,7 +124,7 @@ func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 		}
-		actualQuery, actualArgs := q.BuildGetUserByUsernameQuery(exampleUser.Username)
+		actualQuery, actualArgs := q.BuildGetUserByUsernameQuery(ctx, exampleUser.Username)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -126,10 +137,12 @@ func TestSqlite_BuildGetAllUsersCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL"
-		actualQuery := q.BuildGetAllUsersCountQuery()
+		actualQuery := q.BuildGetAllUsersCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -141,7 +154,9 @@ func TestSqlite_BuildCreateUserQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
@@ -160,7 +175,7 @@ func TestSqlite_BuildCreateUserQuery(T *testing.T) {
 			types.UnverifiedAccountStatus,
 			0,
 		}
-		actualQuery, actualArgs := q.BuildCreateUserQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildCreateUserQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -175,7 +190,9 @@ func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -189,7 +206,7 @@ func TestSqlite_BuildUpdateUserQuery(T *testing.T) {
 			exampleUser.TwoFactorSecretVerifiedOn,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateUserQuery(exampleUser)
+		actualQuery, actualArgs := q.BuildUpdateUserQuery(ctx, exampleUser)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -202,7 +219,9 @@ func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -212,7 +231,7 @@ func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 			false,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateUserPasswordQuery(exampleUser.ID, exampleUser.HashedPassword)
+		actualQuery, actualArgs := q.BuildUpdateUserPasswordQuery(ctx, exampleUser.ID, exampleUser.HashedPassword)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -225,7 +244,9 @@ func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -235,7 +256,7 @@ func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 			exampleUser.TwoFactorSecret,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateUserTwoFactorSecretQuery(exampleUser.ID, exampleUser.TwoFactorSecret)
+		actualQuery, actualArgs := q.BuildUpdateUserTwoFactorSecretQuery(ctx, exampleUser.ID, exampleUser.TwoFactorSecret)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -248,7 +269,9 @@ func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -257,7 +280,7 @@ func TestSqlite_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 			types.GoodStandingAccountStatus,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildVerifyUserTwoFactorSecretQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildVerifyUserTwoFactorSecretQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -270,7 +293,9 @@ func TestSqlite_BuildArchiveUserQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -278,7 +303,7 @@ func TestSqlite_BuildArchiveUserQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveUserQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildArchiveUserQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

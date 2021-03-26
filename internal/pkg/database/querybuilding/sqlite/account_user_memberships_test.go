@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"math"
 	"testing"
 
@@ -11,36 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildMarkAccountAsUserPrimaryQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-		q, _ := buildTestService(t)
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-
-		expectedQuery := "UPDATE account_user_memberships SET default_account = (belongs_to_user = ? AND belongs_to_account = ?) WHERE archived_on IS NULL AND belongs_to_user = ?"
-		expectedArgs := []interface{}{
-			exampleUser.ID,
-			exampleAccount.ID,
-			exampleUser.ID,
-		}
-		actualQuery, actualArgs := q.BuildMarkAccountAsUserPrimaryQuery(exampleUser.ID, exampleAccount.ID)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
 func TestSqlite_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -49,7 +28,7 @@ func TestSqlite_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildUserIsMemberOfAccountQuery(exampleUser.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildUserIsMemberOfAccountQuery(ctx, exampleUser.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -62,7 +41,9 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -76,7 +57,7 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleInput.UserAccountPermissions,
 		}
-		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(exampleAccount.ID, exampleInput)
+		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(ctx, exampleAccount.ID, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -89,7 +70,9 @@ func TestSqlite_BuildRemoveUserFromAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -99,7 +82,7 @@ func TestSqlite_BuildRemoveUserFromAccountQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildRemoveUserFromAccountQuery(exampleUser.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildRemoveUserFromAccountQuery(ctx, exampleUser.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -112,7 +95,9 @@ func TestSqlite_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -120,7 +105,7 @@ func TestSqlite_BuildArchiveAccountMembershipsForUserQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAccountMembershipsForUserQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildArchiveAccountMembershipsForUserQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -133,7 +118,9 @@ func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -145,7 +132,7 @@ func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 			true,
 			math.MaxUint32,
 		}
-		actualQuery, actualArgs := q.BuildCreateMembershipForNewUserQuery(exampleUser.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildCreateMembershipForNewUserQuery(ctx, exampleUser.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -158,7 +145,9 @@ func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 
@@ -166,7 +155,7 @@ func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountMembershipsForUserQuery(exampleUser.ID)
+		actualQuery, actualArgs := q.BuildGetAccountMembershipsForUserQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -179,7 +168,9 @@ func TestSqlite_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -190,7 +181,7 @@ func TestSqlite_BuildMarkAccountAsUserDefaultQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildMarkAccountAsUserDefaultQuery(exampleUser.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildMarkAccountAsUserDefaultQuery(ctx, exampleUser.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -203,7 +194,9 @@ func TestSqlite_BuildModifyUserPermissionsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -215,7 +208,7 @@ func TestSqlite_BuildModifyUserPermissionsQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildModifyUserPermissionsQuery(exampleUser.ID, exampleAccount.ID, examplePermissions)
+		actualQuery, actualArgs := q.BuildModifyUserPermissionsQuery(ctx, exampleUser.ID, exampleAccount.ID, examplePermissions)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -228,7 +221,9 @@ func TestSqlite_BuildTransferAccountOwnershipQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleOldOwner := fakes.BuildFakeUser()
 		exampleNewOwner := fakes.BuildFakeUser()
@@ -240,7 +235,7 @@ func TestSqlite_BuildTransferAccountOwnershipQuery(T *testing.T) {
 			exampleOldOwner.ID,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildTransferAccountOwnershipQuery(exampleOldOwner.ID, exampleNewOwner.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildTransferAccountOwnershipQuery(ctx, exampleOldOwner.ID, exampleNewOwner.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -253,7 +248,9 @@ func TestSqlite_BuildTransferAccountMembershipsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleOldOwner := fakes.BuildFakeUser()
 		exampleNewOwner := fakes.BuildFakeUser()
@@ -265,7 +262,7 @@ func TestSqlite_BuildTransferAccountMembershipsQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleOldOwner.ID,
 		}
-		actualQuery, actualArgs := q.BuildTransferAccountMembershipsQuery(exampleOldOwner.ID, exampleNewOwner.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildTransferAccountMembershipsQuery(ctx, exampleOldOwner.ID, exampleNewOwner.ID, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

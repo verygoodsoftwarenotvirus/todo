@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -16,7 +17,9 @@ func TestPostgres_BuildGetAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -27,7 +30,7 @@ func TestPostgres_BuildGetAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountQuery(exampleAccount.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildGetAccountQuery(ctx, exampleAccount.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -40,10 +43,12 @@ func TestPostgres_BuildGetAllAccountsCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL"
-		actualQuery := q.BuildGetAllAccountsCountQuery()
+		actualQuery := q.BuildGetAllAccountsCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -55,7 +60,9 @@ func TestPostgres_BuildGetBatchOfAccountsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -64,7 +71,7 @@ func TestPostgres_BuildGetBatchOfAccountsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfAccountsQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfAccountsQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -77,7 +84,9 @@ func TestPostgres_BuildGetAccountsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -96,7 +105,7 @@ func TestPostgres_BuildGetAccountsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountsQuery(exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.BuildGetAccountsQuery(ctx, exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -109,7 +118,9 @@ func TestPostgres_BuildCreateAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -127,7 +138,7 @@ func TestPostgres_BuildCreateAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.DefaultUserPermissions,
 		}
-		actualQuery, actualArgs := q.BuildAccountCreationQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildAccountCreationQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -142,7 +153,9 @@ func TestPostgres_BuildUpdateAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -154,7 +167,7 @@ func TestPostgres_BuildUpdateAccountQuery(T *testing.T) {
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateAccountQuery(exampleAccount)
+		actualQuery, actualArgs := q.BuildUpdateAccountQuery(ctx, exampleAccount)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -167,7 +180,9 @@ func TestPostgres_BuildArchiveAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
@@ -178,7 +193,7 @@ func TestPostgres_BuildArchiveAccountQuery(T *testing.T) {
 			exampleUser.ID,
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAccountQuery(exampleAccount.ID, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildArchiveAccountQuery(ctx, exampleAccount.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -191,7 +206,9 @@ func TestPostgres_BuildGetAuditLogEntriesForAccountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccount := fakes.BuildFakeAccount()
 
@@ -199,7 +216,7 @@ func TestPostgres_BuildGetAuditLogEntriesForAccountQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAccount.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountQuery(exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountQuery(ctx, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

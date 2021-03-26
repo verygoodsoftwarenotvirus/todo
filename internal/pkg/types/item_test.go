@@ -20,7 +20,7 @@ func TestItem_Update(T *testing.T) {
 			Details: fake.Word(),
 		}
 
-		expected := []FieldChangeSummary{
+		expected := []*FieldChangeSummary{
 			{
 				FieldName: "Name",
 				OldValue:  i.Name,

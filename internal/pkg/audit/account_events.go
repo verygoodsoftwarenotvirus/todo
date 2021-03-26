@@ -30,7 +30,7 @@ func BuildAccountCreationEventEntry(account *types.Account, createdByUser uint64
 }
 
 // BuildAccountUpdateEventEntry builds an entry creation input for when an account is updated.
-func BuildAccountUpdateEventEntry(userID, accountID, changedByUser uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildAccountUpdateEventEntry(userID, accountID, changedByUser uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: AccountUpdateEvent,
 		Context: map[string]interface{}{

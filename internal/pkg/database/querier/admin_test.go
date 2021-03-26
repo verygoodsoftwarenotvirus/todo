@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 )
 
 func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
@@ -32,7 +33,7 @@ func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.UserSQLQueryBuilder.
-			On("BuildSetUserStatusQuery", exampleInput).
+			On("BuildSetUserStatusQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 

@@ -19,6 +19,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querier"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/sqlite"
@@ -164,7 +165,7 @@ func (cfg *ServerConfig) ProvideDatabaseClient(
 		return nil, errNilDatabaseConnection
 	}
 
-	var qb database.SQLQueryBuilder
+	var qb querybuilding.SQLQueryBuilder
 	shouldCreateTestUser := cfg.Meta.RunMode != ProductionRunMode
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {

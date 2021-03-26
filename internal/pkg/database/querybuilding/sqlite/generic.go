@@ -1,33 +1,38 @@
 package sqlite
 
 import (
+	"context"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
 )
 
 // BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.
-func (q *Sqlite) buildQueryOnly(builder squirrel.Sqlizer) string {
+func (b *Sqlite) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) string {
 	query, _, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	b.logQueryBuildingError(span, err)
 
 	return query
 }
 
 // BuildQuery builds a given query, handles whatever errs and returns just the query and args.
-func (q *Sqlite) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
+func (b *Sqlite) buildQuery(span tracing.Span, builder squirrel.Sqlizer) (query string, args []interface{}) {
 	query, args, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	b.logQueryBuildingError(span, err)
 
 	return query, args
 }
 
-func (q *Sqlite) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
+func (b *Sqlite) buildTotalCountQuery(ctx context.Context, tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
 	where := squirrel.Eq{}
-	totalCountQueryBuilder := q.sqlBuilder.
+	totalCountQueryBuilder := b.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
 
@@ -45,12 +50,18 @@ func (q *Sqlite) buildTotalCountQuery(tableName, ownershipColumn string, userID 
 		totalCountQueryBuilder = totalCountQueryBuilder.Where(where)
 	}
 
-	return q.buildQuery(totalCountQueryBuilder)
+	return b.buildQuery(span, totalCountQueryBuilder)
 }
 
-func (q *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Sqlite) buildFilteredCountQuery(ctx context.Context, tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	}
 	where := squirrel.Eq{}
-	filteredCountQueryBuilder := q.sqlBuilder.
+	filteredCountQueryBuilder := b.sqlBuilder.
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
 
@@ -72,18 +83,26 @@ func (q *Sqlite) buildFilteredCountQuery(tableName, ownershipColumn string, user
 		filteredCountQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, tableName, filteredCountQueryBuilder)
 	}
 
-	return q.buildQuery(filteredCountQueryBuilder)
+	return b.buildQuery(span, filteredCountQueryBuilder)
 }
 
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Sqlite) buildListQuery(ctx context.Context, tableName, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	}
+
 	var includeArchived bool
 	if filter != nil {
 		includeArchived = filter.IncludeArchived
 	}
 
-	filteredCountQuery, filteredCountQueryArgs := q.buildFilteredCountQuery(
+	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(
+		ctx,
 		tableName,
 		ownershipColumn,
 		ownerID,
@@ -92,15 +111,9 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 		filter,
 	)
 
-	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(
-		tableName,
-		ownershipColumn,
-		ownerID,
-		forAdmin,
-		includeArchived,
-	)
+	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, tableName, ownershipColumn, ownerID, forAdmin, includeArchived)
 
-	builder := q.sqlBuilder.
+	builder := b.sqlBuilder.
 		Select(append(
 			columns,
 			fmt.Sprintf("(%s) as total_count", totalCountQuery),
@@ -121,7 +134,7 @@ func (q *Sqlite) buildListQuery(tableName, ownershipColumn string, columns []str
 		builder = querybuilding.ApplyFilterToQueryBuilder(filter, tableName, builder)
 	}
 
-	query, selectArgs := q.buildQuery(builder)
+	query, selectArgs := b.buildQuery(span, builder)
 
 	return query, append(append(filteredCountQueryArgs, totalCountQueryArgs...), selectArgs...)
 }

@@ -705,7 +705,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(exampleItem, nil)
-		itemDataManager.On("UpdateItem", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Item{}), mock.IsType([]types.FieldChangeSummary{})).Return(nil)
+		itemDataManager.On("UpdateItem", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Item{}), mock.IsType([]*types.FieldChangeSummary{})).Return(nil)
 		s.itemDataManager = itemDataManager
 
 		indexManager := &mocksearch.IndexManager{}
@@ -864,7 +864,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On("GetItem", mock.MatchedBy(testutil.ContextMatcher), exampleItem.ID, exampleAccount.ID).Return(exampleItem, nil)
-		itemDataManager.On("UpdateItem", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Item{}), mock.IsType([]types.FieldChangeSummary{})).Return(errors.New("blah"))
+		itemDataManager.On("UpdateItem", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Item{}), mock.IsType([]*types.FieldChangeSummary{})).Return(errors.New("blah"))
 		s.itemDataManager = itemDataManager
 
 		ed := mockencoding.NewMockEncoderDecoder()

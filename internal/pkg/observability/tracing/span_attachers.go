@@ -83,7 +83,7 @@ func AttachAccountSubscriptionPlanIDToSpan(span trace.Span, planID uint64) {
 }
 
 // AttachChangeSummarySpan provides a consistent way to attach a RequestContext object to a span.
-func AttachChangeSummarySpan(span trace.Span, typeName string, changes []types.FieldChangeSummary) {
+func AttachChangeSummarySpan(span trace.Span, typeName string, changes []*types.FieldChangeSummary) {
 	for i, change := range changes {
 		span.SetAttributes(attribute.Any(fmt.Sprintf("%s.field_changes.%d", typeName, i), change))
 	}

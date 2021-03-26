@@ -232,7 +232,6 @@ linters:
     - nolintlint # Reports ill-formed or insufficient nolint directives
     - prealloc # Finds slice declarations that could potentially be preallocated
     # rowserrcheck # checks whether Err of rows is checked successfully
-    - scopelint # Scopelint checks for unpinned variables in go programs
     - sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed.
     # stylecheck # Stylecheck is a replacement for golint
     # testpackage # linter that makes you use a separate _test package

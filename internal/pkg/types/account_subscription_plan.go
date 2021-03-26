@@ -44,24 +44,13 @@ type (
 		Period      time.Duration `json:"period"`
 	}
 
-	// AccountSubscriptionPlanSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	AccountSubscriptionPlanSQLQueryBuilder interface {
-		BuildGetAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
-		BuildGetAllAccountSubscriptionPlansCountQuery() string
-		BuildGetAccountSubscriptionPlansQuery(filter *QueryFilter) (query string, args []interface{})
-		BuildCreateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlanCreationInput) (query string, args []interface{})
-		BuildUpdateAccountSubscriptionPlanQuery(input *AccountSubscriptionPlan) (query string, args []interface{})
-		BuildArchiveAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(planID uint64) (query string, args []interface{})
-	}
-
 	// AccountSubscriptionPlanDataManager describes a structure capable of storing account subscription plans permanently.
 	AccountSubscriptionPlanDataManager interface {
 		GetAccountSubscriptionPlan(ctx context.Context, planID uint64) (*AccountSubscriptionPlan, error)
 		GetAllAccountSubscriptionPlansCount(ctx context.Context) (uint64, error)
 		GetAccountSubscriptionPlans(ctx context.Context, filter *QueryFilter) (*AccountSubscriptionPlanList, error)
 		CreateAccountSubscriptionPlan(ctx context.Context, input *AccountSubscriptionPlanCreationInput) (*AccountSubscriptionPlan, error)
-		UpdateAccountSubscriptionPlan(ctx context.Context, updated *AccountSubscriptionPlan, changedBy uint64, changes []FieldChangeSummary) error
+		UpdateAccountSubscriptionPlan(ctx context.Context, updated *AccountSubscriptionPlan, changedBy uint64, changes []*FieldChangeSummary) error
 		ArchiveAccountSubscriptionPlan(ctx context.Context, planID, archivedBy uint64) error
 		GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Context, planID uint64) ([]*AuditLogEntry, error)
 	}
@@ -81,11 +70,11 @@ type (
 )
 
 // Update merges an PlanInput with an plan.
-func (x *AccountSubscriptionPlan) Update(input *AccountSubscriptionPlanUpdateInput) []FieldChangeSummary {
-	var out []FieldChangeSummary
+func (x *AccountSubscriptionPlan) Update(input *AccountSubscriptionPlanUpdateInput) []*FieldChangeSummary {
+	var out []*FieldChangeSummary
 
 	if input.Name != "" && input.Name != x.Name {
-		out = append(out, FieldChangeSummary{
+		out = append(out, &FieldChangeSummary{
 			FieldName: "Name",
 			OldValue:  x.Name,
 			NewValue:  input.Name,

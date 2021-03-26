@@ -98,7 +98,7 @@ func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID uint64) (
 	tracing.AttachItemIDToSpan(span, itemID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	query, args := q.sqlQueryBuilder.BuildItemExistsQuery(itemID, accountID)
+	query, args := q.sqlQueryBuilder.BuildItemExistsQuery(ctx, itemID, accountID)
 
 	result, err := q.performBooleanQuery(ctx, q.db, query, args)
 	if err != nil {
@@ -129,7 +129,7 @@ func (q *SQLQuerier) GetItem(ctx context.Context, itemID, accountID uint64) (*ty
 		keys.UserIDKey: accountID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetItemQuery(itemID, accountID)
+	query, args := q.sqlQueryBuilder.BuildGetItemQuery(ctx, itemID, accountID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	item, _, _, err := q.scanItem(ctx, row, false)
@@ -147,7 +147,7 @@ func (q *SQLQuerier) GetAllItemsCount(ctx context.Context) (uint64, error) {
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllItemsCountQuery(), "fetching count of items")
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllItemsCountQuery(ctx), "fetching count of items")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of items")
 	}
@@ -174,7 +174,7 @@ func (q *SQLQuerier) GetAllItems(ctx context.Context, results chan []*types.Item
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := q.sqlQueryBuilder.BuildGetBatchOfItemsQuery(begin, end)
+			query, args := q.sqlQueryBuilder.BuildGetBatchOfItemsQuery(ctx, begin, end)
 			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -221,7 +221,7 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *typ
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetItemsQuery(accountID, false, filter)
+	query, args := q.sqlQueryBuilder.BuildGetItemsQuery(ctx, accountID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -248,7 +248,7 @@ func (q *SQLQuerier) GetItemsForAdmin(ctx context.Context, filter *types.QueryFi
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetItemsQuery(0, true, filter)
+	query, args := q.sqlQueryBuilder.BuildGetItemsQuery(ctx, 0, true, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -283,7 +283,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limi
 		"id_count":     len(ids),
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(accountID, limit, ids, false)
+	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, accountID, limit, ids, false)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -317,7 +317,7 @@ func (q *SQLQuerier) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, i
 		"ids":      ids,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(0, limit, ids, true)
+	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, 0, limit, ids, true)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -344,7 +344,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 	logger := q.logger.WithValue(keys.RequesterKey, createdByUser)
 	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 
-	query, args := q.sqlQueryBuilder.BuildCreateItemQuery(input)
+	query, args := q.sqlQueryBuilder.BuildCreateItemQuery(ctx, input)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -382,7 +382,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the
 // provided input to have a valid ID.
-func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -395,7 +395,7 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
 	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateItemQuery(updated)
+	query, args := q.sqlQueryBuilder.BuildUpdateItemQuery(ctx, updated)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -442,7 +442,7 @@ func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archive
 		keys.AccountIDKey: accountID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveItemQuery(itemID, accountID)
+	query, args := q.sqlQueryBuilder.BuildArchiveItemQuery(ctx, itemID, accountID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -478,7 +478,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForItem(ctx context.Context, itemID uint6
 	logger := q.logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForItemQuery(itemID)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForItemQuery(ctx, itemID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

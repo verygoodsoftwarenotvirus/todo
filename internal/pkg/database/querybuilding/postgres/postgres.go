@@ -10,6 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -32,12 +33,13 @@ var (
 	currentUnixTimeQuery = squirrel.Expr(`extract(epoch FROM NOW())`)
 )
 
-var _ database.SQLQueryBuilder = (*Postgres)(nil)
+var _ querybuilding.SQLQueryBuilder = (*Postgres)(nil)
 
 type (
 	// Postgres is our main Postgres interaction db.
 	Postgres struct {
 		logger              logging.Logger
+		tracer              tracing.Tracer
 		sqlBuilder          squirrel.StatementBuilderType
 		externalIDGenerator querybuilding.ExternalIDGenerator
 	}
@@ -73,6 +75,7 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 func ProvidePostgres(logger logging.Logger) *Postgres {
 	pg := &Postgres{
 		logger:              logging.EnsureLogger(logger).WithName(loggerName),
+		tracer:              tracing.NewTracer("postgres_query_builder"),
 		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
 	}
@@ -80,13 +83,12 @@ func ProvidePostgres(logger logging.Logger) *Postgres {
 	return pg
 }
 
-// logQueryBuildingError logs errs that may occur during query construction.
-// Such errs should be few and far between, as the generally only occur with
-// type discrepancies or other misuses of SQL. An alert should be set up for
-// any log entries with the given name, and those alerts should be investigated
-// with the utmost priority.
-func (q *Postgres) logQueryBuildingError(err error) {
+// logQueryBuildingError logs errs that may occur during query construction. Such errors should be few and far between,
+// as the generally only occur with type discrepancies or other misuses of SQL. An alert should be set up for any log
+// entries with the given name, and those alerts should be investigated quickly.
+func (b *Postgres) logQueryBuildingError(span tracing.Span, err error) {
 	if err != nil {
-		q.logger.WithValue(keys.QueryErrorKey, true).Error(err, "building query")
+		logger := b.logger.WithValue(keys.QueryErrorKey, true)
+		observability.AcknowledgeError(err, logger, span, "building query")
 	}
 }

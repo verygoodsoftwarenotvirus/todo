@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"context"
 	"errors"
 	"regexp"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 )
 
 const (
@@ -43,6 +45,7 @@ func TestProvideSqlite(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		buildTestService(t)
 	})
 }
@@ -52,8 +55,12 @@ func TestSqlite_logQueryBuildingError(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
-		q.logQueryBuildingError(errors.New("blah"))
+		ctx := context.Background()
+		_, span := tracing.StartSpan(ctx)
+
+		q.logQueryBuildingError(span, errors.New("blah"))
 	})
 }
 
@@ -62,6 +69,7 @@ func TestProvideSqliteDB(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		_, err := ProvideSqliteDB(logging.NewNonOperationalLogger(), "", time.Hour)
 		assert.NoError(t, err)
 	})

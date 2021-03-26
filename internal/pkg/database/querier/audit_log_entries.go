@@ -84,7 +84,7 @@ func (q *SQLQuerier) GetAuditLogEntry(ctx context.Context, entryID uint64) (*typ
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
 	logger := q.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntryQuery(entryID)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntryQuery(ctx, entryID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	entry, _, err := q.scanAuditLogEntry(ctx, row, false)
@@ -102,7 +102,7 @@ func (q *SQLQuerier) GetAllAuditLogEntriesCount(ctx context.Context) (uint64, er
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery(), "fetching count of audit logs entries")
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery(ctx), "fetching count of audit logs entries")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of audit log entries")
 	}
@@ -129,7 +129,7 @@ func (q *SQLQuerier) GetAllAuditLogEntries(ctx context.Context, results chan []*
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := q.sqlQueryBuilder.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
+			query, args := q.sqlQueryBuilder.BuildGetBatchOfAuditLogEntriesQuery(ctx, begin, end)
 			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -170,7 +170,7 @@ func (q *SQLQuerier) GetAuditLogEntries(ctx context.Context, filter *types.Query
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesQuery(filter)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesQuery(ctx, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -198,7 +198,7 @@ func (q *SQLQuerier) createAuditLogEntryInTransaction(ctx context.Context, trans
 	}
 
 	logger := q.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
-	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
+	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(ctx, input)
 
 	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
 	logger.Debug("audit log entry created")
@@ -234,7 +234,7 @@ func (q *SQLQuerier) createAuditLogEntry(ctx context.Context, querier database.Q
 	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
 	logger = logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
 
-	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
+	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(ctx, input)
 
 	// create the audit log entry.
 	id, err := q.performWriteQuery(ctx, querier, false, "audit log entry creation", query, args)

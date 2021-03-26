@@ -99,7 +99,7 @@ func (q *SQLQuerier) GetAccount(ctx context.Context, accountID, userID uint64) (
 		keys.UserIDKey:    userID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetAccountQuery(accountID, userID)
+	query, args := q.sqlQueryBuilder.BuildGetAccountQuery(ctx, accountID, userID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	account, _, _, err := q.scanAccount(ctx, row, false)
@@ -117,7 +117,7 @@ func (q *SQLQuerier) GetAllAccountsCount(ctx context.Context) (uint64, error) {
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAccountsCountQuery(), "fetching count of all accounts")
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAccountsCountQuery(ctx), "fetching count of all accounts")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of accounts")
 	}
@@ -148,7 +148,7 @@ func (q *SQLQuerier) GetAllAccounts(ctx context.Context, results chan []*types.A
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := q.sqlQueryBuilder.BuildGetBatchOfAccountsQuery(begin, end)
+			query, args := q.sqlQueryBuilder.BuildGetBatchOfAccountsQuery(ctx, begin, end)
 			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -194,7 +194,7 @@ func (q *SQLQuerier) GetAccounts(ctx context.Context, userID uint64, filter *typ
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(userID, false, filter)
+	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, userID, false, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -221,7 +221,7 @@ func (q *SQLQuerier) GetAccountsForAdmin(ctx context.Context, filter *types.Quer
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(0, true, filter)
+	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, 0, true, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -247,7 +247,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	logger := q.logger.WithValue(keys.RequesterKey, createdByUser).WithValue(keys.UserIDKey, input.BelongsToUser)
 	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 
-	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(input)
+	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, input)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -284,7 +284,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 		Reason:                 "account creation",
 	}
 
-	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildAddUserToAccountQuery(account.ID, addInput)
+	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildAddUserToAccountQuery(ctx, account.ID, addInput)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return nil, observability.PrepareError(err, logger, span, "creating account membership")
@@ -306,7 +306,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 }
 
 // UpdateAccount updates a particular account. Note that UpdateAccount expects the provided input to have a valid ID.
-func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser uint64, changes []types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser uint64, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -319,7 +319,7 @@ func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, 
 	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 	tracing.AttachChangeSummarySpan(span, "account", changes)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateAccountQuery(updated)
+	query, args := q.sqlQueryBuilder.BuildUpdateAccountQuery(ctx, updated)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -361,7 +361,7 @@ func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, arch
 		keys.UserIDKey:    userID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveAccountQuery(accountID, userID)
+	query, args := q.sqlQueryBuilder.BuildArchiveAccountQuery(ctx, accountID, userID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -397,7 +397,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForAccount(ctx context.Context, accountID
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger := q.logger.WithValue(keys.AccountIDKey, accountID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountQuery(accountID)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountQuery(ctx, accountID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

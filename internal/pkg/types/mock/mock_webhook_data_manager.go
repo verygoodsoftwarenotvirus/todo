@@ -45,7 +45,7 @@ func (m *WebhookDataManager) CreateWebhook(ctx context.Context, input *types.Web
 }
 
 // UpdateWebhook satisfies our WebhookDataManager interface.
-func (m *WebhookDataManager) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser uint64, changes []types.FieldChangeSummary) error {
+func (m *WebhookDataManager) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser uint64, changes []*types.FieldChangeSummary) error {
 	return m.Called(ctx, updated, changedByUser, changes).Error(0)
 }
 

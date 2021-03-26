@@ -22,6 +22,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		qf := &types.QueryFilter{
 			Page:          100,
 			Limit:         50,
@@ -43,6 +44,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 
 	T.Run("basic usecase", func(t *testing.T) {
 		t.Parallel()
+
 		qf := &types.QueryFilter{Limit: 15, Page: 2}
 
 		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 LIMIT 15 OFFSET 15"
@@ -56,6 +58,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 
 	T.Run("whole kit and kaboodle", func(t *testing.T) {
 		t.Parallel()
+
 		qf := &types.QueryFilter{
 			Limit:         20,
 			Page:          6,
@@ -76,6 +79,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 
 	T.Run("with zero limit", func(t *testing.T) {
 		t.Parallel()
+
 		qf := &types.QueryFilter{Limit: 0, Page: 1}
 		expected := "SELECT things FROM stuff WHERE stuff.condition = $1 LIMIT 250"
 		x := ApplyFilterToQueryBuilder(qf, exampleTableName, baseQueryBuilder)

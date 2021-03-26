@@ -88,7 +88,7 @@ func (q *SQLQuerier) GetRequestContextForUser(ctx context.Context, userID uint64
 		return nil, observability.PrepareError(err, logger, span, "fetching user from database")
 	}
 
-	getAccountMembershipsQuery, getAccountMembershipsArgs := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(userID)
+	getAccountMembershipsQuery, getAccountMembershipsArgs := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(ctx, userID)
 
 	membershipRows, err := q.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
 	if err != nil {
@@ -142,7 +142,7 @@ func (q *SQLQuerier) GetMembershipsForUser(ctx context.Context, userID uint64) (
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(userID)
+	query, args := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(ctx, userID)
 
 	membershipRows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -192,7 +192,7 @@ func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accou
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 
-	query, args := q.sqlQueryBuilder.BuildMarkAccountAsUserDefaultQuery(userID, accountID)
+	query, args := q.sqlQueryBuilder.BuildMarkAccountAsUserDefaultQuery(ctx, userID, accountID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -234,7 +234,7 @@ func (q *SQLQuerier) UserIsMemberOfAccount(ctx context.Context, userID, accountI
 	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	query, args := q.sqlQueryBuilder.BuildUserIsMemberOfAccountQuery(userID, accountID)
+	query, args := q.sqlQueryBuilder.BuildUserIsMemberOfAccountQuery(ctx, userID, accountID)
 
 	result, err := q.performBooleanQuery(ctx, q.db, query, args)
 	if err != nil {
@@ -268,7 +268,7 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userI
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 
-	query, args := q.sqlQueryBuilder.BuildModifyUserPermissionsQuery(userID, accountID, input.UserAccountPermissions)
+	query, args := q.sqlQueryBuilder.BuildModifyUserPermissionsQuery(ctx, userID, accountID, input.UserAccountPermissions)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -324,7 +324,7 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	transferAccountOwnershipQuery, transferAccountOwnershipArgs := q.sqlQueryBuilder.BuildTransferAccountOwnershipQuery(input.CurrentOwner, input.NewOwner, accountID)
+	transferAccountOwnershipQuery, transferAccountOwnershipArgs := q.sqlQueryBuilder.BuildTransferAccountOwnershipQuery(ctx, input.CurrentOwner, input.NewOwner, accountID)
 
 	// create the membership.
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user ownership transfer", transferAccountOwnershipQuery, transferAccountOwnershipArgs); err != nil {
@@ -332,7 +332,7 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 		return observability.PrepareError(err, logger, span, "transferring account to new owner")
 	}
 
-	transferAccountMembershipQuery, transferAccountMembershipArgs := q.sqlQueryBuilder.BuildTransferAccountMembershipsQuery(input.CurrentOwner, input.NewOwner, accountID)
+	transferAccountMembershipQuery, transferAccountMembershipArgs := q.sqlQueryBuilder.BuildTransferAccountMembershipsQuery(ctx, input.CurrentOwner, input.NewOwner, accountID)
 
 	// create the membership.
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user memberships transfer", transferAccountMembershipQuery, transferAccountMembershipArgs); err != nil {
@@ -376,7 +376,7 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachRequestingUserIDToSpan(span, addedByUser)
 
-	query, args := q.sqlQueryBuilder.BuildAddUserToAccountQuery(accountID, input)
+	query, args := q.sqlQueryBuilder.BuildAddUserToAccountQuery(ctx, accountID, input)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -427,7 +427,7 @@ func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountI
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachRequestingUserIDToSpan(span, removedByUser)
 
-	query, args := q.sqlQueryBuilder.BuildRemoveUserFromAccountQuery(userID, accountID)
+	query, args := q.sqlQueryBuilder.BuildRemoveUserFromAccountQuery(ctx, userID, accountID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {

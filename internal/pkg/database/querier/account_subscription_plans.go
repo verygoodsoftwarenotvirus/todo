@@ -101,7 +101,7 @@ func (q *SQLQuerier) GetAccountSubscriptionPlan(ctx context.Context, accountSubs
 	logger := q.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID)
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
+	query, args := q.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(ctx, accountSubscriptionPlanID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	plan, _, _, err := q.scanAccountSubscriptionPlan(ctx, row, false)
@@ -119,7 +119,7 @@ func (q *SQLQuerier) GetAllAccountSubscriptionPlansCount(ctx context.Context) (u
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery(), "fetching count of account subscription plans")
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAccountSubscriptionPlansCountQuery(ctx), "fetching count of account subscription plans")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of account subscription plans")
 	}
@@ -140,7 +140,7 @@ func (q *SQLQuerier) GetAccountSubscriptionPlans(ctx context.Context, filter *ty
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetAccountSubscriptionPlansQuery(filter)
+	query, args := q.sqlQueryBuilder.BuildGetAccountSubscriptionPlansQuery(ctx, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -163,7 +163,7 @@ func (q *SQLQuerier) CreateAccountSubscriptionPlan(ctx context.Context, input *t
 		return nil, ErrNilInputProvided
 	}
 
-	query, args := q.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(input)
+	query, args := q.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(ctx, input)
 	logger := q.logger.WithValue(keys.NameKey, input.Name)
 
 	tx, err := q.db.BeginTx(ctx, nil)
@@ -202,7 +202,7 @@ func (q *SQLQuerier) CreateAccountSubscriptionPlan(ctx context.Context, input *t
 }
 
 // UpdateAccountSubscriptionPlan updates a particular plan. Note that UpdatePlan expects the provided input to have a valid ID.
-func (q *SQLQuerier) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan, changedBy uint64, changes []types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateAccountSubscriptionPlan(ctx context.Context, updated *types.AccountSubscriptionPlan, changedBy uint64, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -215,7 +215,7 @@ func (q *SQLQuerier) UpdateAccountSubscriptionPlan(ctx context.Context, updated 
 	tracing.AttachRequestingUserIDToSpan(span, changedBy)
 	tracing.AttachChangeSummarySpan(span, "account", changes)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(updated)
+	query, args := q.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(ctx, updated)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -252,7 +252,7 @@ func (q *SQLQuerier) ArchiveAccountSubscriptionPlan(ctx context.Context, account
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 	tracing.AttachRequestingUserIDToSpan(span, archivedBy)
 
-	query, args := q.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
+	query, args := q.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(ctx, accountSubscriptionPlanID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -288,7 +288,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Co
 	logger := q.logger.WithValue(keys.AccountSubscriptionPlanIDKey, accountSubscriptionPlanID)
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(accountSubscriptionPlanID)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(ctx, accountSubscriptionPlanID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

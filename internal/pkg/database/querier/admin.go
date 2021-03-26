@@ -20,7 +20,7 @@ func (q *SQLQuerier) UpdateUserAccountStatus(ctx context.Context, userID uint64,
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	query, args := q.sqlQueryBuilder.BuildSetUserStatusQuery(input)
+	query, args := q.sqlQueryBuilder.BuildSetUserStatusQuery(ctx, input)
 
 	if err := q.performWriteQueryIgnoringReturn(ctx, q.db, "user status update query", query, args); err != nil {
 		return observability.PrepareError(err, logger, span, "user status update")

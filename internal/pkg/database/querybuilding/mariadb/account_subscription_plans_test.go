@@ -1,15 +1,15 @@
 package mariadb
 
 import (
+	"context"
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMariaDB_BuildGetAccountSubscriptionPlanQuery(T *testing.T) {
@@ -17,7 +17,9 @@ func TestMariaDB_BuildGetAccountSubscriptionPlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
@@ -25,7 +27,7 @@ func TestMariaDB_BuildGetAccountSubscriptionPlanQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
+		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -38,10 +40,12 @@ func TestMariaDB_BuildGetAllAccountSubscriptionPlansCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(account_subscription_plans.id) FROM account_subscription_plans WHERE account_subscription_plans.archived_on IS NULL"
-		actualQuery := q.BuildGetAllAccountSubscriptionPlansCountQuery()
+		actualQuery := q.BuildGetAllAccountSubscriptionPlansCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -53,7 +57,9 @@ func TestMariaDB_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
@@ -68,7 +74,7 @@ func TestMariaDB_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlansQuery(filter)
+		actualQuery, actualArgs := q.BuildGetAccountSubscriptionPlansQuery(ctx, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -81,7 +87,9 @@ func TestMariaDB_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
@@ -98,7 +106,7 @@ func TestMariaDB_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 			exampleAccountSubscriptionPlan.Price,
 			exampleAccountSubscriptionPlan.Period.String(),
 		}
-		actualQuery, actualArgs := q.BuildCreateAccountSubscriptionPlanQuery(exampleInput)
+		actualQuery, actualArgs := q.BuildCreateAccountSubscriptionPlanQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -113,7 +121,9 @@ func TestMariaDB_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
@@ -125,7 +135,7 @@ func TestMariaDB_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 			exampleAccountSubscriptionPlan.Period.String(),
 			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan)
+		actualQuery, actualArgs := q.BuildUpdateAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -138,7 +148,9 @@ func TestMariaDB_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
@@ -146,7 +158,7 @@ func TestMariaDB_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAccountSubscriptionPlan.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
+		actualQuery, actualArgs := q.BuildArchiveAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -159,13 +171,15 @@ func TestMariaDB_BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(T *testi
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.plan_id') ORDER BY audit_log.created_on", exampleAccountSubscriptionPlan.ID)
 		expectedArgs := []interface{}(nil)
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(exampleAccountSubscriptionPlan.ID)
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

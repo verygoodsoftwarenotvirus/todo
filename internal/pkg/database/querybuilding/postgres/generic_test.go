@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -24,7 +25,9 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -43,14 +46,7 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(
-			exampleTableName,
-			exampleOwnershipColumn,
-			exampleColumns,
-			exampleUser.ID,
-			false,
-			filter,
-		)
+		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleOwnershipColumn, exampleColumns, exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -59,7 +55,9 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 
 	T.Run("for admin without archived", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -75,14 +73,7 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(
-			exampleTableName,
-			exampleOwnershipColumn,
-			exampleColumns,
-			exampleUser.ID,
-			true,
-			filter,
-		)
+		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleOwnershipColumn, exampleColumns, exampleUser.ID, true, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -91,7 +82,9 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 
 	T.Run("for admin with archived", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -108,14 +101,7 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(
-			exampleTableName,
-			exampleOwnershipColumn,
-			exampleColumns,
-			exampleUser.ID,
-			true,
-			filter,
-		)
+		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleOwnershipColumn, exampleColumns, exampleUser.ID, true, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

@@ -28,7 +28,7 @@ func BuildAccountSubscriptionPlanCreationEventEntry(plan *types.AccountSubscript
 }
 
 // BuildAccountSubscriptionPlanUpdateEventEntry builds an entry creation input for when an plan is updated.
-func BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID uint64, changes []types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildAccountSubscriptionPlanUpdateEventEntry(userID, planID uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: AccountSubscriptionPlanUpdateEvent,
 		Context: map[string]interface{}{

@@ -168,7 +168,7 @@ var (
 
 // BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a postgres database.
-func (q *Postgres) BuildMigrationFunc(db *sql.DB) func() {
+func (b *Postgres) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
 		if err := darwin.Migrate(driver, migrations, nil); err != nil {

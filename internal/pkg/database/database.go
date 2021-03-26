@@ -64,19 +64,4 @@ type (
 		types.AdminAuditManager
 		types.AuthAuditManager
 	}
-
-	// SQLQueryBuilder describes anything that builds SQL queries to manage our data.
-	SQLQueryBuilder interface {
-		BuildMigrationFunc(db *sql.DB) func()
-		BuildTestUserCreationQuery(testUserConfig *types.TestUserCreationConfig) (query string, args []interface{})
-
-		types.AccountSQLQueryBuilder
-		types.AccountUserMembershipSQLQueryBuilder
-		types.AccountSubscriptionPlanSQLQueryBuilder
-		types.UserSQLQueryBuilder
-		types.AuditLogEntrySQLQueryBuilder
-		types.APIClientSQLQueryBuilder
-		types.WebhookSQLQueryBuilder
-		types.ItemSQLQueryBuilder
-	}
 )

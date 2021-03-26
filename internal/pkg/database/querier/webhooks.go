@@ -130,7 +130,7 @@ func (q *SQLQuerier) GetWebhook(ctx context.Context, webhookID, accountID uint64
 		keys.AccountIDKey: accountID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetWebhookQuery(webhookID, accountID)
+	query, args := q.sqlQueryBuilder.BuildGetWebhookQuery(ctx, webhookID, accountID)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
 	webhook, _, _, err := q.scanWebhook(ctx, row, false)
@@ -148,7 +148,7 @@ func (q *SQLQuerier) GetAllWebhooksCount(ctx context.Context) (uint64, error) {
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllWebhooksCountQuery(), "fetching count of webhooks")
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllWebhooksCountQuery(ctx), "fetching count of webhooks")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of webhooks")
 	}
@@ -174,7 +174,7 @@ func (q *SQLQuerier) GetWebhooks(ctx context.Context, accountID uint64, filter *
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetWebhooksQuery(accountID, filter)
+	query, args := q.sqlQueryBuilder.BuildGetWebhooksQuery(ctx, accountID, filter)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -213,7 +213,7 @@ func (q *SQLQuerier) GetAllWebhooks(ctx context.Context, resultChannel chan []*t
 	for beginID := uint64(1); beginID <= count; beginID += increment {
 		endID := beginID + increment
 		go func(begin, end uint64) {
-			query, args := q.sqlQueryBuilder.BuildGetBatchOfWebhooksQuery(begin, end)
+			query, args := q.sqlQueryBuilder.BuildGetBatchOfWebhooksQuery(ctx, begin, end)
 			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
@@ -254,7 +254,7 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
 	logger := q.logger.WithValue(keys.AccountIDKey, input.BelongsToAccount)
 
-	query, args := q.sqlQueryBuilder.BuildCreateWebhookQuery(input)
+	query, args := q.sqlQueryBuilder.BuildCreateWebhookQuery(ctx, input)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -296,7 +296,7 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 
 // UpdateWebhook updates a particular webhook.
 // NOTE: this function expects the provided input to have a non-zero ID.
-func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser uint64, changes []types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser uint64, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -313,7 +313,7 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 		WithValue(keys.RequesterKey, changedByUser).
 		WithValue(keys.AccountIDKey, updated.BelongsToAccount)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateWebhookQuery(updated)
+	query, args := q.sqlQueryBuilder.BuildUpdateWebhookQuery(ctx, updated)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -366,7 +366,7 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 		keys.RequesterKey: archivedByUserID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveWebhookQuery(webhookID, accountID)
+	query, args := q.sqlQueryBuilder.BuildArchiveWebhookQuery(ctx, webhookID, accountID)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -400,7 +400,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID
 	}
 
 	logger := q.logger.WithValue(keys.WebhookIDKey, webhookID)
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(webhookID)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(ctx, webhookID)
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {

@@ -1,11 +1,13 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -22,24 +24,27 @@ func joinUint64s(in []uint64) string {
 }
 
 // BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.
-func (q *Postgres) buildQueryOnly(builder squirrel.Sqlizer) string {
+func (b *Postgres) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) string {
 	query, _, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	b.logQueryBuildingError(span, err)
 
 	return query
 }
 
 // BuildQuery builds a given query, handles whatever errs and returns just the query and args.
-func (q *Postgres) buildQuery(builder squirrel.Sqlizer) (query string, args []interface{}) {
+func (b *Postgres) buildQuery(span tracing.Span, builder squirrel.Sqlizer) (query string, args []interface{}) {
 	query, args, err := builder.ToSql()
-	q.logQueryBuildingError(err)
+	b.logQueryBuildingError(span, err)
 
 	return query, args
 }
 
-func (q *Postgres) buildTotalCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
+func (b *Postgres) buildTotalCountQuery(ctx context.Context, tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
 	where := squirrel.Eq{}
-	totalCountQueryBuilder := q.sqlBuilder.
+	totalCountQueryBuilder := b.sqlBuilder.
 		PlaceholderFormat(squirrel.Question).
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
@@ -58,12 +63,18 @@ func (q *Postgres) buildTotalCountQuery(tableName, ownershipColumn string, userI
 		totalCountQueryBuilder = totalCountQueryBuilder.Where(where)
 	}
 
-	return q.buildQuery(totalCountQueryBuilder)
+	return b.buildQuery(span, totalCountQueryBuilder)
 }
 
-func (q *Postgres) buildFilteredCountQuery(tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Postgres) buildFilteredCountQuery(ctx context.Context, tableName, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	}
 	where := squirrel.Eq{}
-	filteredCountQueryBuilder := q.sqlBuilder.
+	filteredCountQueryBuilder := b.sqlBuilder.
 		PlaceholderFormat(squirrel.Question).
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
@@ -86,35 +97,28 @@ func (q *Postgres) buildFilteredCountQuery(tableName, ownershipColumn string, us
 		filteredCountQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, tableName, filteredCountQueryBuilder)
 	}
 
-	return q.buildQuery(filteredCountQueryBuilder)
+	return b.buildQuery(span, filteredCountQueryBuilder)
 }
 
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *Postgres) buildListQuery(tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Postgres) buildListQuery(ctx context.Context, tableName, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	ctx, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	}
+
 	var includeArchived bool
 	if filter != nil {
 		includeArchived = filter.IncludeArchived
 	}
 
-	filteredCountQuery, filteredCountQueryArgs := q.buildFilteredCountQuery(
-		tableName,
-		ownershipColumn,
-		userID,
-		forAdmin,
-		includeArchived,
-		filter,
-	)
+	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, tableName, ownershipColumn, userID, forAdmin, includeArchived, filter)
+	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, tableName, ownershipColumn, userID, forAdmin, includeArchived)
 
-	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(
-		tableName,
-		ownershipColumn,
-		userID,
-		forAdmin,
-		includeArchived,
-	)
-
-	builder := q.sqlBuilder.
+	builder := b.sqlBuilder.
 		Select(append(
 			columns,
 			fmt.Sprintf("(%s) as total_count", totalCountQuery),
@@ -135,7 +139,7 @@ func (q *Postgres) buildListQuery(tableName, ownershipColumn string, columns []s
 		builder = querybuilding.ApplyFilterToQueryBuilder(filter, tableName, builder)
 	}
 
-	query, selectArgs := q.buildQuery(builder)
+	query, selectArgs := b.buildQuery(span, builder)
 
 	return query, append(append(filteredCountQueryArgs, totalCountQueryArgs...), selectArgs...)
 }

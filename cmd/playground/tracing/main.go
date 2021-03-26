@@ -15,7 +15,7 @@ import (
 )
 
 // prepareError standardizes our error handling by logging, tracing, and formatting an error consistently.
-func prepareError(err error, logger logging.Logger, span trace.Span, descriptionFmt string, descriptionArgs ...interface{}) error {
+func prepareError(err error, logger logging.Logger, span tracing.Span, descriptionFmt string, descriptionArgs ...interface{}) error {
 	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 
 	logging.EnsureLogger(logger).Error(err, desc)

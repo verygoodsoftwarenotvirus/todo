@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -16,7 +17,9 @@ func TestPostgres_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		beginID, endID := uint64(1), uint64(1000)
 
@@ -25,7 +28,7 @@ func TestPostgres_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 			beginID,
 			endID,
 		}
-		actualQuery, actualArgs := q.BuildGetBatchOfAPIClientsQuery(beginID, endID)
+		actualQuery, actualArgs := q.BuildGetBatchOfAPIClientsQuery(ctx, beginID, endID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -38,7 +41,9 @@ func TestPostgres_BuildGetAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
@@ -46,7 +51,7 @@ func TestPostgres_BuildGetAPIClientQuery(T *testing.T) {
 		expectedArgs := []interface{}{
 			exampleAPIClient.ClientID,
 		}
-		actualQuery, actualArgs := q.BuildGetAPIClientByClientIDQuery(exampleAPIClient.ClientID)
+		actualQuery, actualArgs := q.BuildGetAPIClientByClientIDQuery(ctx, exampleAPIClient.ClientID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -59,10 +64,12 @@ func TestPostgres_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(api_clients.id) FROM api_clients WHERE api_clients.archived_on IS NULL"
-		actualQuery := q.BuildGetAllAPIClientsCountQuery()
+		actualQuery := q.BuildGetAllAPIClientsCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -74,7 +81,9 @@ func TestPostgres_BuildGetAPIClientsQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
@@ -93,7 +102,7 @@ func TestPostgres_BuildGetAPIClientsQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetAPIClientsQuery(exampleUser.ID, filter)
+		actualQuery, actualArgs := q.BuildGetAPIClientsQuery(ctx, exampleUser.ID, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -106,7 +115,9 @@ func TestPostgres_BuildCreateAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
@@ -123,7 +134,7 @@ func TestPostgres_BuildCreateAPIClientQuery(T *testing.T) {
 			exampleAPIClient.ClientSecret,
 			exampleAPIClient.BelongsToUser,
 		}
-		actualQuery, actualArgs := q.BuildCreateAPIClientQuery(exampleAPIClientInput)
+		actualQuery, actualArgs := q.BuildCreateAPIClientQuery(ctx, exampleAPIClientInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -138,7 +149,9 @@ func TestPostgres_BuildUpdateAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
@@ -148,7 +161,7 @@ func TestPostgres_BuildUpdateAPIClientQuery(T *testing.T) {
 			exampleAPIClient.BelongsToUser,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildUpdateAPIClientQuery(exampleAPIClient)
+		actualQuery, actualArgs := q.BuildUpdateAPIClientQuery(ctx, exampleAPIClient)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -161,7 +174,9 @@ func TestPostgres_BuildArchiveAPIClientQuery(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		q, _ := buildTestService(t)
+		ctx := context.Background()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
@@ -170,7 +185,7 @@ func TestPostgres_BuildArchiveAPIClientQuery(T *testing.T) {
 			exampleAPIClient.BelongsToUser,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

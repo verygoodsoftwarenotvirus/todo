@@ -166,7 +166,6 @@ func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoder
 		defer span.End()
 
 		logger := p.logger.WithRequest(req)
-		logger.Debug("avatar upload middleware invoked")
 
 		file, info, err := req.FormFile(filename)
 		if err != nil {

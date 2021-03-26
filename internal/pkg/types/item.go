@@ -47,20 +47,6 @@ type (
 		BelongsToAccount uint64 `json:"-"`
 	}
 
-	// ItemSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	ItemSQLQueryBuilder interface {
-		BuildItemExistsQuery(itemID, accountID uint64) (query string, args []interface{})
-		BuildGetItemQuery(itemID, accountID uint64) (query string, args []interface{})
-		BuildGetAllItemsCountQuery() string
-		BuildGetBatchOfItemsQuery(beginID, endID uint64) (query string, args []interface{})
-		BuildGetItemsQuery(accountID uint64, forAdmin bool, filter *QueryFilter) (query string, args []interface{})
-		BuildGetItemsWithIDsQuery(accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{})
-		BuildCreateItemQuery(input *ItemCreationInput) (query string, args []interface{})
-		BuildUpdateItemQuery(input *Item) (query string, args []interface{})
-		BuildArchiveItemQuery(itemID, accountID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForItemQuery(itemID uint64) (query string, args []interface{})
-	}
-
 	// ItemDataManager describes a structure capable of storing items permanently.
 	ItemDataManager interface {
 		ItemExists(ctx context.Context, itemID, accountID uint64) (bool, error)
@@ -72,7 +58,7 @@ type (
 		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*Item, error)
 		GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput, createdByUser uint64) (*Item, error)
-		UpdateItem(ctx context.Context, updated *Item, changedByUser uint64, changes []FieldChangeSummary) error
+		UpdateItem(ctx context.Context, updated *Item, changedByUser uint64, changes []*FieldChangeSummary) error
 		ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedByUserID uint64) error
 		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
 	}
@@ -94,11 +80,11 @@ type (
 )
 
 // Update merges an ItemUpdateInput with an item.
-func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
-	var out []FieldChangeSummary
+func (x *Item) Update(input *ItemUpdateInput) []*FieldChangeSummary {
+	var out []*FieldChangeSummary
 
 	if input.Name != "" && input.Name != x.Name {
-		out = append(out, FieldChangeSummary{
+		out = append(out, &FieldChangeSummary{
 			FieldName: "Name",
 			OldValue:  x.Name,
 			NewValue:  input.Name,
@@ -108,7 +94,7 @@ func (x *Item) Update(input *ItemUpdateInput) []FieldChangeSummary {
 	}
 
 	if input.Details != "" && input.Details != x.Details {
-		out = append(out, FieldChangeSummary{
+		out = append(out, &FieldChangeSummary{
 			FieldName: "Details",
 			OldValue:  x.Details,
 			NewValue:  input.Details,

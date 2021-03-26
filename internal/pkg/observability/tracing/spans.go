@@ -28,36 +28,12 @@ func StartSpan(ctx context.Context) (context.Context, trace.Span) {
 	return otel.Tracer("_anon_").Start(ctx, GetCallerName())
 }
 
-// Tracer describes a tracer.
-type Tracer interface {
-	StartSpan(ctx context.Context) (context.Context, trace.Span)
-}
-
-var _ Tracer = (*otSpanManager)(nil)
-
-type otSpanManager struct {
-	tracer trace.Tracer
-}
-
-// NewTracer creates a Tracer.
-func NewTracer(name string) Tracer {
-	return &otSpanManager{
-		tracer: otel.Tracer(name),
-	}
-}
-
-// StartSpan wraps tracer.Start.
-func (t *otSpanManager) StartSpan(ctx context.Context) (context.Context, trace.Span) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	return t.tracer.Start(ctx, GetCallerName())
-}
-
 var uriIDReplacementRegex = regexp.MustCompile(`/\d+`)
 
 // FormatSpan formats a span.
 func FormatSpan(operation string, req *http.Request) string {
 	return fmt.Sprintf("%s %s: %s", req.Method, uriIDReplacementRegex.ReplaceAllString(req.URL.Path, "/<id>"), operation)
 }
+
+// Span is a simple alias for the OpenTelemetry span interface.
+type Span trace.Span

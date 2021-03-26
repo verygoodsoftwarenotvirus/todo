@@ -178,7 +178,7 @@ func (q *Postgres) BuildTestUserCreationQuery(testUserConfig *types.TestUserCrea
 // admins have DB access and will change that value via SQL query.
 // There should be no way to update a user via this structure
 // such that they would have admin privileges.
-func (q *Postgres) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (q *Postgres) BuildCreateUserQuery(input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	return q.buildQuery(q.sqlBuilder.
 		Insert(querybuilding.UsersTableName).
 		Columns(

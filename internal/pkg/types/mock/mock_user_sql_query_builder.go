@@ -49,7 +49,7 @@ func (m *UserSQLQueryBuilder) BuildGetAllUsersCountQuery() (query string) {
 }
 
 // BuildCreateUserQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildCreateUserQuery(input types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildCreateUserQuery(input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

@@ -212,6 +212,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// update the data structure.
 	changeReport := account.Update(input)
+	tracing.AttachChangeSummarySpan(span, "account", changeReport)
 
 	// update account in database.
 	if err = s.accountDataManager.UpdateAccount(ctx, account, requester, changeReport); err != nil {
@@ -407,6 +408,7 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 
 	// check request context for parsed input struct.
 	reason := req.URL.Query().Get("reason")
+	logger = logger.WithValue(keys.ReasonKey, reason)
 
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)

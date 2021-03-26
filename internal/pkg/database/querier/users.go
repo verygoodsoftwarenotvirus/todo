@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
@@ -17,15 +16,15 @@ import (
 )
 
 var (
-	_ types.UserDataManager = (*Client)(nil)
+	_ types.UserDataManager = (*SQLQuerier)(nil)
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (c *Client) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
-	_, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
+	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("include_counts", includeCounts)
+	logger := q.logger.WithValue("include_counts", includeCounts)
 	user = &types.User{}
 
 	var perms uint32
@@ -63,14 +62,14 @@ func (c *Client) scanUser(ctx context.Context, scan database.Scanner, includeCou
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (c *Client) scanUsers(ctx context.Context, rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
-	_, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) scanUsers(ctx context.Context, rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
+	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("include_counts", includeCounts)
+	logger := q.logger.WithValue("include_counts", includeCounts)
 
 	for rows.Next() {
-		user, fc, tc, scanErr := c.scanUser(ctx, rows, includeCounts)
+		user, fc, tc, scanErr := q.scanUser(ctx, rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, observability.PrepareError(scanErr, logger, span, "scanning user result")
 		}
@@ -88,7 +87,7 @@ func (c *Client) scanUsers(ctx context.Context, rows database.ResultIterator, in
 		users = append(users, user)
 	}
 
-	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+	if err = q.checkRowsForErrorAndClose(ctx, rows); err != nil {
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
@@ -96,11 +95,16 @@ func (c *Client) scanUsers(ctx context.Context, rows database.ResultIterator, in
 }
 
 // getUser fetches a user.
-func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSecret bool) (*types.User, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSecret bool) (*types.User, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	if userID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	var (
 		query string
@@ -108,14 +112,14 @@ func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSec
 	)
 
 	if withVerifiedTOTPSecret {
-		query, args = c.sqlQueryBuilder.BuildGetUserQuery(userID)
+		query, args = q.sqlQueryBuilder.BuildGetUserQuery(userID)
 	} else {
-		query, args = c.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
+		query, args = q.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(userID)
 	}
 
-	row := c.db.QueryRowContext(ctx, query, args...)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := c.scanUser(ctx, row, false)
+	u, _, _, err := q.scanUser(ctx, row, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
@@ -124,55 +128,71 @@ func (c *Client) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSec
 }
 
 // UserHasStatus fetches whether or not an item exists from the database.
-func (c *Client) UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (banned bool, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (banned bool, err error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if userID == 0 {
+		return false, ErrInvalidIDProvided
+	}
+
+	logger := q.logger.WithValue(keys.UserIDKey, userID).WithValue("statuses", statuses)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	c.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey: userID,
-	}).Debug("UserIsBanned called")
+	query, args := q.sqlQueryBuilder.BuildUserHasStatusQuery(userID, statuses...)
 
-	query, args := c.sqlQueryBuilder.BuildUserHasStatusQuery(userID, statuses...)
+	result, err := q.performBooleanQuery(ctx, q.db, query, args)
+	if err != nil {
+		return false, observability.PrepareError(err, logger, span, "performing user status check")
+	}
 
-	return c.performBooleanQuery(ctx, c.db, query, args)
+	return result, nil
 }
 
 // GetUser fetches a user.
-func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if userID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
 
 	tracing.AttachUserIDToSpan(span, userID)
 
-	return c.getUser(ctx, userID, true)
+	return q.getUser(ctx, userID, true)
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified 2FA secret.
-func (c *Client) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
+
+	if userID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
 
 	tracing.AttachUserIDToSpan(span, userID)
 
-	return c.getUser(ctx, userID, false)
+	return q.getUser(ctx, userID, false)
 }
 
 // GetUserByUsername fetches a user by their username.
-func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if username == "" {
+		return nil, ErrEmptyInputProvided
+	}
+
 	tracing.AttachUsernameToSpan(span, username)
-	logger := c.logger.WithValue(keys.UsernameKey, username)
+	logger := q.logger.WithValue(keys.UsernameKey, username)
 
-	logger.Debug("GetUserByUsername called")
+	query, args := q.sqlQueryBuilder.BuildGetUserByUsernameQuery(username)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	query, args := c.sqlQueryBuilder.BuildGetUserByUsernameQuery(username)
-	row := c.db.QueryRowContext(ctx, query, args...)
-
-	u, _, _, err := c.scanUser(ctx, row, false)
+	u, _, _, err := q.scanUser(ctx, row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -185,15 +205,20 @@ func (c *Client) GetUserByUsername(ctx context.Context, username string) (*types
 }
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
-func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*types.User, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue(keys.SearchQueryKey, usernameQuery)
+	if usernameQuery == "" {
+		return []*types.User{}, ErrEmptyInputProvided
+	}
 
-	query, args := c.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(usernameQuery)
+	tracing.AttachSearchQueryToSpan(span, usernameQuery)
+	logger := q.logger.WithValue(keys.SearchQueryKey, usernameQuery)
 
-	rows, err := c.db.QueryContext(ctx, query, args...)
+	query, args := q.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(usernameQuery)
+
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -202,7 +227,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 		return nil, observability.PrepareError(err, logger, span, "querying database for users")
 	}
 
-	u, _, _, err := c.scanUsers(ctx, rows, false)
+	u, _, _, err := q.scanUsers(ctx, rows, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
@@ -211,37 +236,42 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, usernameQuery str
 }
 
 // GetAllUsersCount fetches a count of users from the database that meet a particular filter.
-func (c *Client) GetAllUsersCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetAllUsersCount(ctx context.Context) (uint64, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllUsersCount called")
+	logger := q.logger
 
-	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllUsersCountQuery())
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllUsersCountQuery(), "fetching count of users")
+	if err != nil {
+		return 0, observability.PrepareError(err, logger, span, "querying for count of users")
+	}
+
+	return count, nil
 }
 
 // GetUsers fetches a list of users from the database that meet a particular filter.
-func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *types.UserList, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *types.UserList, err error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	x = &types.UserList{}
 
 	tracing.AttachQueryFilterToSpan(span, filter)
-	logger := filter.AttachToLogger(c.logger)
+	logger := filter.AttachToLogger(q.logger)
 
 	if filter != nil {
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := c.sqlQueryBuilder.BuildGetUsersQuery(filter)
+	query, args := q.sqlQueryBuilder.BuildGetUsersQuery(filter)
 
-	rows, err := c.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
-	if x.Users, x.FilteredCount, x.TotalCount, err = c.scanUsers(ctx, rows, true); err != nil {
+	if x.Users, x.FilteredCount, x.TotalCount, err = q.scanUsers(ctx, rows, true); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "loading response from database")
 	}
 
@@ -249,54 +279,52 @@ func (c *Client) GetUsers(ctx context.Context, filter *types.QueryFilter) (x *ty
 }
 
 // createUser creates a user. The `user` and `account` parameters are meant to be filled out.
-func (c *Client) createUser(ctx context.Context, user *types.User, account *types.Account, userCreationQuery string, userCreationArgs []interface{}) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *types.Account, userCreationQuery string, userCreationArgs []interface{}) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("username", user.Username)
+	logger := q.logger.WithValue("username", user.Username)
 
-	tx, err := c.db.BeginTx(ctx, nil)
+	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	userID, err := c.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs)
+	userID, err := q.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs)
 	if err != nil {
-		c.rollbackTransaction(ctx, tx)
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "creating user")
 	}
 
 	user.ID = userID
 	account.BelongsToUser = user.ID
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
-		logger.Error(err, "writing <> audit log entry")
-		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", err)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user creation audit log entry")
 	}
 
 	// create the account.
 	accountCreationInput := types.NewAccountCreationInputForUser(user)
 	accountCreationInput.DefaultUserPermissions = account.DefaultUserPermissions
-	accountCreationQuery, accountCreationArgs := c.sqlQueryBuilder.BuildAccountCreationQuery(accountCreationInput)
+	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(accountCreationInput)
 
-	accountID, err := c.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
+	accountID, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
 	if err != nil {
-		c.rollbackTransaction(ctx, tx)
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "create account")
 	}
 
 	account.ID = accountID
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
-		c.rollbackTransaction(ctx, tx)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing account creation audit log entry")
 	}
 
-	addUserToAccountQuery, addUserToAccountArgs := c.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(userID, accountID)
-	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
-		c.rollbackTransaction(ctx, tx)
+	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(userID, accountID)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
 	}
 
@@ -306,46 +334,51 @@ func (c *Client) createUser(ctx context.Context, user *types.User, account *type
 		Reason:                 "account creation",
 	}
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, addToAccountInput)); err != nil {
-		logger.Error(err, "writing <> audit log entry")
-		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", err)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, addToAccountInput)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	tracing.AttachUserIDToSpan(span, user.ID)
+	tracing.AttachAccountIDToSpan(span, account.ID)
+
 	return nil
 }
 
 // CreateUser creates a user.
-func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreationInput) (*types.User, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreCreationInput) (*types.User, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if input == nil {
+		return nil, ErrNilInputProvided
+	}
+
 	tracing.AttachUsernameToSpan(span, input.Username)
-	logger := c.logger.WithValue(keys.UsernameKey, input.Username)
+	logger := q.logger.WithValue(keys.UsernameKey, input.Username)
 
 	// create the user.
-	userCreationQuery, userCreationArgs := c.sqlQueryBuilder.BuildCreateUserQuery(input)
+	userCreationQuery, userCreationArgs := q.sqlQueryBuilder.BuildCreateUserQuery(input)
 
 	user := &types.User{
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
-		CreatedOn:       c.currentTime(),
+		CreatedOn:       q.currentTime(),
 	}
 
 	account := &types.Account{
 		Name:                   input.Username,
 		PlanID:                 nil,
-		CreatedOn:              c.currentTime(),
+		CreatedOn:              q.currentTime(),
 		DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
 	}
 
-	if err := c.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {
+	if err := q.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "creating user")
 	}
 
@@ -354,32 +387,32 @@ func (c *Client) CreateUser(ctx context.Context, input types.UserDataStoreCreati
 
 // UpdateUser receives a complete User struct and updates its record in the database.
 // NOTE: this function uses the ID provided in the input to make its query.
-func (c *Client) UpdateUser(ctx context.Context, updated *types.User, changes []types.FieldChangeSummary) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, changes []types.FieldChangeSummary) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if updated == nil {
+		return ErrNilInputProvided
+	}
+
 	tracing.AttachUsernameToSpan(span, updated.Username)
-	logger := c.logger.WithValue(keys.UsernameKey, updated.Username)
+	logger := q.logger.WithValue(keys.UsernameKey, updated.Username)
 
-	logger.Debug("UpdateUser called")
+	query, args := q.sqlQueryBuilder.BuildUpdateUserQuery(updated)
 
-	query, args := c.sqlQueryBuilder.BuildUpdateUserQuery(updated)
-
-	tx, err := c.db.BeginTx(ctx, nil)
+	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user update", query, args); err != nil {
-		c.rollbackTransaction(ctx, tx)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user update", query, args); err != nil {
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating user")
 	}
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateEventEntry(updated.ID, nil)); err != nil {
-		logger.Error(err, "writing <> audit log entry")
-		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", err)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateEventEntry(updated.ID, changes)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user update audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -390,32 +423,36 @@ func (c *Client) UpdateUser(ctx context.Context, updated *types.User, changes []
 }
 
 // UpdateUserPassword updates a user's authentication hash in the database.
-func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if userID == 0 {
+		return ErrInvalidIDProvided
+	}
+
+	if newHash == "" {
+		return ErrEmptyInputProvided
+	}
+
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	logger.Debug("UpdateUserPassword called")
+	query, args := q.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
 
-	query, args := c.sqlQueryBuilder.BuildUpdateUserPasswordQuery(userID, newHash)
-
-	tx, err := c.db.BeginTx(ctx, nil)
+	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user authentication update", query, args); err != nil {
-		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating user's password: %w", err)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user authentication update", query, args); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "updating user password")
 	}
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdatePasswordEventEntry(userID)); err != nil {
-		logger.Error(err, "writing <> audit log entry")
-		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", err)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdatePasswordEventEntry(userID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user password update audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -426,31 +463,36 @@ func (c *Client) UpdateUserPassword(ctx context.Context, userID uint64, newHash 
 }
 
 // UpdateUserTwoFactorSecret marks a user's two factor secret as validated.
-func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, newSecret string) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, newSecret string) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if userID == 0 {
+		return ErrInvalidIDProvided
+	}
+
+	if newSecret == "" {
+		return ErrEmptyInputProvided
+	}
+
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
-	logger.Debug("UpdateUserTwoFactorSecret called")
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := c.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(userID, newSecret)
+	query, args := q.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(userID, newSecret)
 
-	tx, err := c.db.BeginTx(ctx, nil)
+	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret update", query, args); err != nil {
-		c.rollbackTransaction(ctx, tx)
-		return fmt.Errorf("updating user's two factor secret: %w", err)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user 2FA secret update", query, args); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "updating user 2FA secret")
 	}
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID)); err != nil {
-		logger.Error(err, "writing <> audit log entry")
-		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", err)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing update 2FA secret audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -461,32 +503,32 @@ func (c *Client) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, n
 }
 
 // VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
-func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if userID == 0 {
+		return ErrInvalidIDProvided
+	}
+
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	logger.Debug("VerifyUserTwoFactorSecret called")
+	query, args := q.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
 
-	query, args := c.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(userID)
-
-	tx, err := c.db.BeginTx(ctx, nil)
+	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); err != nil {
-		c.rollbackTransaction(ctx, tx)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); err != nil {
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing verified two factor status to database")
 	}
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID)); err != nil {
-		logger.Error(err, "writing <> audit log entry")
-		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", err)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user 2FA secret verification audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -497,38 +539,38 @@ func (c *Client) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) e
 }
 
 // ArchiveUser archives a user.
-func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if userID == 0 {
+		return ErrInvalidIDProvided
+	}
+
 	tracing.AttachUserIDToSpan(span, userID)
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	logger.Debug("ArchiveUser called")
+	archiveUserQuery, archiveUserArgs := q.sqlQueryBuilder.BuildArchiveUserQuery(userID)
 
-	archiveUserQuery, archiveUserArgs := c.sqlQueryBuilder.BuildArchiveUserQuery(userID)
-
-	tx, err := c.db.BeginTx(ctx, nil)
+	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user archive", archiveUserQuery, archiveUserArgs); err != nil {
-		c.rollbackTransaction(ctx, tx)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user archive", archiveUserQuery, archiveUserArgs); err != nil {
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "archiving user")
 	}
 
-	if err = c.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); err != nil {
-		logger.Error(err, "writing <> audit log entry")
-		c.rollbackTransaction(ctx, tx)
-
-		return fmt.Errorf("writing <> audit log entry: %w", err)
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user archive audit log entry")
 	}
 
-	archiveMembershipsQuery, archiveMembershipsArgs := c.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(userID)
+	archiveMembershipsQuery, archiveMembershipsArgs := q.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(userID)
 
-	if err = c.performWriteQueryIgnoringReturn(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); err != nil {
-		c.rollbackTransaction(ctx, tx)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); err != nil {
+		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "archiving user account memberships")
 	}
 
@@ -540,20 +582,24 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 }
 
 // GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.
-func (c *Client) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
+	if userID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
 
-	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(userID)
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	rows, err := c.db.QueryContext(ctx, query, args...)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(userID)
+
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	auditLogEntries, _, err := c.scanAuditLogEntries(ctx, rows, false)
+	auditLogEntries, _, err := q.scanAuditLogEntries(ctx, rows, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
 	}

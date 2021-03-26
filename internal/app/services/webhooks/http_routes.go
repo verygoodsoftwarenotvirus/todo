@@ -195,10 +195,11 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update it.
-	changes := webhook.Update(input)
+	changeReport := webhook.Update(input)
+	tracing.AttachChangeSummarySpan(span, "webhook", changeReport)
 
 	// save the update in the database.
-	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, userID, changes); err != nil {
+	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, userID, changeReport); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Debug("attempted to update nonexistent webhook")
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)

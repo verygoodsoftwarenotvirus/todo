@@ -142,7 +142,7 @@ type (
 		BuildGetUserByUsernameQuery(username string) (query string, args []interface{})
 		BuildSearchForUserByUsernameQuery(usernameQuery string) (query string, args []interface{})
 		BuildGetAllUsersCountQuery() (query string)
-		BuildCreateUserQuery(input UserDataStoreCreationInput) (query string, args []interface{})
+		BuildCreateUserQuery(input *UserDataStoreCreationInput) (query string, args []interface{})
 		BuildUpdateUserQuery(input *User) (query string, args []interface{})
 		BuildUpdateUserPasswordQuery(userID uint64, newHash string) (query string, args []interface{})
 		BuildUpdateUserTwoFactorSecretQuery(userID uint64, newSecret string) (query string, args []interface{})
@@ -168,7 +168,7 @@ type (
 		SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*User, error)
 		GetAllUsersCount(ctx context.Context) (uint64, error)
 		GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
-		CreateUser(ctx context.Context, input UserDataStoreCreationInput) (*User, error)
+		CreateUser(ctx context.Context, input *UserDataStoreCreationInput) (*User, error)
 		UpdateUser(ctx context.Context, updated *User, changes []FieldChangeSummary) error
 		UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error
 		ArchiveUser(ctx context.Context, userID uint64) error

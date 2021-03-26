@@ -308,6 +308,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// update the data structure.
 	changeReport := x.Update(input)
+	tracing.AttachChangeSummarySpan(span, "item", changeReport)
 
 	// update item in database.
 	if err = s.itemDataManager.UpdateItem(ctx, x, reqCtx.User.ID, changeReport); err != nil {

@@ -100,8 +100,8 @@ func BuildFakeUserCreationInputFromUser(user *types.User) *types.NewUserCreation
 }
 
 // BuildFakeUserDataStoreCreationInputFromUser builds a faked UserDataStoreCreationInput.
-func BuildFakeUserDataStoreCreationInputFromUser(user *types.User) types.UserDataStoreCreationInput {
-	return types.UserDataStoreCreationInput{
+func BuildFakeUserDataStoreCreationInputFromUser(user *types.User) *types.UserDataStoreCreationInput {
+	return &types.UserDataStoreCreationInput{
 		Username:        user.Username,
 		HashedPassword:  user.HashedPassword,
 		TwoFactorSecret: user.TwoFactorSecret,

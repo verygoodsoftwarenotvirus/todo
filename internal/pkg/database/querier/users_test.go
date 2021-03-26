@@ -905,6 +905,7 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleUser.HashedPassword = "$2b$10$3euPcmQFCiblsZeEu5s7p.9OVHgeHWFDk9nhMqZ0m/3pd/lhwZgES"
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -935,6 +936,7 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleUser.HashedPassword = "$2b$10$3euPcmQFCiblsZeEu5s7p.9OVHgeHWFDk9nhMqZ0m/3pd/lhwZgES"
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()

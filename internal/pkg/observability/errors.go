@@ -2,6 +2,7 @@ package observability
 
 import (
 	"fmt"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -14,16 +15,26 @@ func PrepareError(err error, logger logging.Logger, span trace.Span, description
 	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
 
 	logging.EnsureLogger(logger).Error(err, desc)
-	tracing.AttachErrorToSpan(span, desc, err)
+
+	if span != nil {
+		tracing.AttachErrorToSpan(span, desc, err)
+	}
 
 	return fmt.Errorf("%s: %w", desc, err)
 }
 
 // AcknowledgeError standardizes our error handling by logging and tracing consistently.
 func AcknowledgeError(err error, logger logging.Logger, span trace.Span, descriptionFmt string, descriptionArgs ...interface{}) {
-	if err != nil {
+	if err != nil && span != nil {
 		desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
-		logging.EnsureLogger(logger).Error(err, fmt.Sprintf(descriptionFmt, descriptionArgs...))
+		logging.EnsureLogger(logger).Error(err, desc)
 		tracing.AttachErrorToSpan(span, desc, err)
 	}
+}
+
+// NoteEvent standardizes our logging and tracing notifications.
+func NoteEvent(logger logging.Logger, span trace.Span, descriptionFmt string, descriptionArgs ...interface{}) {
+	desc := fmt.Sprintf(descriptionFmt, descriptionArgs...)
+	logging.EnsureLogger(logger).Debug(desc)
+	span.AddEvent(desc, trace.WithTimestamp(time.Now().UTC()))
 }

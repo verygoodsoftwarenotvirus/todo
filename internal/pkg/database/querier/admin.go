@@ -4,90 +4,107 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-var _ types.AdminUserDataManager = (*Client)(nil)
+var _ types.AdminUserDataManager = (*SQLQuerier)(nil)
 
 // UpdateUserAccountStatus updates a user's account status.
-func (c *Client) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
-	c.logger.WithValue(keys.UserIDKey, userID).Debug("UpdateUserAccountStatus called")
 
-	query, args := c.sqlQueryBuilder.BuildSetUserStatusQuery(input)
+	query, args := q.sqlQueryBuilder.BuildSetUserStatusQuery(input)
 
-	return c.performWriteQueryIgnoringReturn(ctx, c.db, "user status update query", query, args)
+	if err := q.performWriteQueryIgnoringReturn(ctx, q.db, "user status update query", query, args); err != nil {
+		return observability.PrepareError(err, logger, span, "user status update")
+	}
+
+	return nil
 }
 
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.
-func (c *Client) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, banRecipient)
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
+	q.createAuditLogEntry(ctx, q.db, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
 }
 
 // LogAccountTerminationEvent saves a UserBannedEvent in the audit log table.
-func (c *Client) LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, terminee)
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildAccountTerminationEventEntry(terminator, terminee, reason))
+	q.createAuditLogEntry(ctx, q.db, audit.BuildAccountTerminationEventEntry(terminator, terminee, reason))
 }
 
 // LogCycleCookieSecretEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildCycleCookieSecretEvent(userID))
+	tracing.AttachUserIDToSpan(span, userID)
+
+	q.createAuditLogEntry(ctx, q.db, audit.BuildCycleCookieSecretEvent(userID))
 }
 
 // LogSuccessfulLoginEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildSuccessfulLoginEventEntry(userID))
+	tracing.AttachUserIDToSpan(span, userID)
+
+	q.createAuditLogEntry(ctx, q.db, audit.BuildSuccessfulLoginEventEntry(userID))
 }
 
 // LogBannedUserLoginAttemptEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildBannedUserLoginAttemptEventEntry(userID))
+	tracing.AttachUserIDToSpan(span, userID)
+
+	q.createAuditLogEntry(ctx, q.db, audit.BuildBannedUserLoginAttemptEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
+	tracing.AttachUserIDToSpan(span, userID)
+
+	q.createAuditLogEntry(ctx, q.db, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
+	tracing.AttachUserIDToSpan(span, userID)
+
+	q.createAuditLogEntry(ctx, q.db, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
 }
 
 // LogLogoutEvent implements our AuditLogEntryDataManager interface.
-func (c *Client) LogLogoutEvent(ctx context.Context, userID uint64) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) LogLogoutEvent(ctx context.Context, userID uint64) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.createAuditLogEntry(ctx, c.db, audit.BuildLogoutEventEntry(userID))
+	tracing.AttachUserIDToSpan(span, userID)
+
+	q.createAuditLogEntry(ctx, q.db, audit.BuildLogoutEventEntry(userID))
 }

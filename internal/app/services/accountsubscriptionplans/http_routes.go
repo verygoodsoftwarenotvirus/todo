@@ -179,6 +179,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// update the data structure.
 	changeReport := accountSubscriptionPlan.Update(input)
+	tracing.AttachChangeSummarySpan(span, "account_subscription_plan", changeReport)
 
 	// update plan in database.
 	if err = s.accountSubscriptionPlanDataManager.UpdateAccountSubscriptionPlan(ctx, accountSubscriptionPlan, reqCtx.User.ID, changeReport); err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -26,17 +27,19 @@ const (
 	loggerName  = name
 	tracingName = name
 
+	defaultBatchSize = 1000
+
 	// DefaultIDRetrievalStrategy uses the standard library .LastInsertId method to retrieve the ID.
 	DefaultIDRetrievalStrategy idRetrievalStrategy = iota
 	// ReturningStatementIDRetrievalStrategy scans IDs to results for database drivers that support queries with RETURNING statements.
 	ReturningStatementIDRetrievalStrategy
 )
 
-var _ database.DataManager = (*Client)(nil)
+var _ database.DataManager = (*SQLQuerier)(nil)
 
-// Client is a wrapper around a database querier. Client is where all logging and trace propagation should happen,
+// SQLQuerier is a wrapper around a database querier. SQLQuerier is where all logging and trace propagation should happen,
 // the querier is where the actual database querying is performed.
-type Client struct {
+type SQLQuerier struct {
 	config          *dbconfig.Config
 	db              *sql.DB
 	sqlQueryBuilder database.SQLQueryBuilder
@@ -61,7 +64,7 @@ func ProvideDatabaseClient(
 	ctx, span := tracer.StartSpan(ctx)
 	defer span.End()
 
-	c := &Client{
+	c := &SQLQuerier{
 		db:              db,
 		config:          cfg,
 		tracer:          tracer,
@@ -98,53 +101,52 @@ func ProvideDatabaseClient(
 }
 
 // Migrate is a simple wrapper around the core querier Migrate call.
-func (c *Client) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Info("migrating db")
+	q.logger.Info("migrating db")
 
-	if !c.IsReady(ctx, maxAttempts) {
+	if !q.IsReady(ctx, maxAttempts) {
 		return database.ErrDBUnready
 	}
 
-	c.migrateOnce.Do(c.sqlQueryBuilder.BuildMigrationFunc(c.db))
+	q.migrateOnce.Do(q.sqlQueryBuilder.BuildMigrationFunc(q.db))
 
 	if testUserConfig != nil {
-		c.logger.Debug("creating test user")
+		q.logger.Debug("creating test user")
 
-		query, args := c.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
+		query, args := q.sqlQueryBuilder.BuildTestUserCreationQuery(testUserConfig)
 
 		// these structs will be fleshed out by createUser
 		user := &types.User{Username: testUserConfig.Username}
 		account := &types.Account{DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32)}
 
-		if err := c.createUser(ctx, user, account, query, args); err != nil {
-			c.logger.Error(err, "creating test user")
-			return observability.PrepareError(err, c.logger, span, "creating test user")
+		if err := q.createUser(ctx, user, account, query, args); err != nil {
+			q.logger.Error(err, "creating test user")
+			return observability.PrepareError(err, q.logger, span, "creating test user")
 		}
 
-		c.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
+		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
 	}
 
 	return nil
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
-func (c *Client) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) IsReady(ctx context.Context, maxAttempts uint8) (ready bool) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	attemptCount := 0
 
-	logger := c.logger.WithValues(map[string]interface{}{
+	logger := q.logger.WithValues(map[string]interface{}{
 		"interval":     time.Second.String(),
 		"max_attempts": maxAttempts,
 	})
-	logger.Debug("IsReady called")
 
 	for !ready {
-		err := c.db.PingContext(ctx)
+		err := q.db.PingContext(ctx)
 		if err != nil {
 			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for db")
 			time.Sleep(time.Second)
@@ -166,72 +168,72 @@ func defaultTimeFunc() uint64 {
 	return uint64(time.Now().Unix())
 }
 
-func (c *Client) currentTime() uint64 {
-	if c == nil || c.timeFunc == nil {
+func (q *SQLQuerier) currentTime() uint64 {
+	if q == nil || q.timeFunc == nil {
 		return defaultTimeFunc()
 	}
 
-	return c.timeFunc()
+	return q.timeFunc()
 }
 
-func (c *Client) checkRowsForErrorAndClose(ctx context.Context, rows database.ResultIterator) error {
-	_, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) checkRowsForErrorAndClose(ctx context.Context, rows database.ResultIterator) error {
+	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger
+	logger := q.logger
 
 	if err := rows.Err(); err != nil {
-		c.logger.Error(err, "row error")
+		q.logger.Error(err, "row error")
 		return observability.PrepareError(err, logger, span, "row error")
 	}
 
 	if err := rows.Close(); err != nil {
-		c.logger.Error(err, "closing database rows")
+		q.logger.Error(err, "closing database rows")
 		return observability.PrepareError(err, logger, span, "closing database rows")
 	}
 
 	return nil
 }
 
-func (c *Client) rollbackTransaction(ctx context.Context, tx *sql.Tx) {
-	_, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) rollbackTransaction(ctx context.Context, tx *sql.Tx) {
+	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if err := tx.Rollback(); err != nil {
-		observability.AcknowledgeError(err, c.logger, span, "rolling back transaction")
+		observability.AcknowledgeError(err, q.logger, span, "rolling back transaction")
 	}
 }
 
-func (c *Client) getIDFromResult(ctx context.Context, res sql.Result) uint64 {
-	_, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) getIDFromResult(ctx context.Context, res sql.Result) uint64 {
+	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		observability.AcknowledgeError(err, c.logger.WithValue(keys.RowIDErrorKey, true), span, "fetching row ID")
+		observability.AcknowledgeError(err, q.logger.WithValue(keys.RowIDErrorKey, true), span, "fetching row ID")
 	}
 
 	return uint64(id)
 }
 
-func (c *Client) performCountQuery(ctx context.Context, querier database.Querier, query string) (count uint64, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.Querier, query, queryDesc string) (count uint64, err error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachDatabaseQueryToSpan(span, query, "count query", nil)
+	tracing.AttachDatabaseQueryToSpan(span, query, fmt.Sprintf("%s count query", queryDesc), nil)
 
 	if err = querier.QueryRowContext(ctx, query).Scan(&count); err != nil {
-		return 0, observability.PrepareError(err, c.logger, span, "executing count query")
+		return 0, observability.PrepareError(err, q.logger, span, "executing count query")
 	}
 
 	return count, nil
 }
 
-func (c *Client) performBooleanQuery(ctx context.Context, querier database.Querier, query string, args []interface{}) (exists bool, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.Querier, query string, args []interface{}) (exists bool, err error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue(keys.DatabaseQueryKey, query)
+	logger := q.logger.WithValue(keys.DatabaseQueryKey, query)
 	tracing.AttachDatabaseQueryToSpan(span, query, "boolean query", args)
 
 	if err = querier.QueryRowContext(ctx, query, args...).Scan(&exists); errors.Is(err, sql.ErrNoRows) {
@@ -243,20 +245,20 @@ func (c *Client) performBooleanQuery(ctx context.Context, querier database.Queri
 	return exists, nil
 }
 
-func (c *Client) performWriteQueryIgnoringReturn(ctx context.Context, querier database.Querier, queryDescription, query string, args []interface{}) error {
-	_, err := c.performWriteQuery(ctx, querier, true, queryDescription, query, args)
+func (q *SQLQuerier) performWriteQueryIgnoringReturn(ctx context.Context, querier database.Querier, queryDescription, query string, args []interface{}) error {
+	_, err := q.performWriteQuery(ctx, querier, true, queryDescription, query, args)
 
 	return err
 }
 
-func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Querier, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("query", query).WithValue("description", queryDescription).WithValue("args", args)
+	logger := q.logger.WithValue("query", query).WithValue("description", queryDescription).WithValue("args", args)
 	tracing.AttachDatabaseQueryToSpan(span, query, queryDescription, args)
 
-	if c.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {
+	if q.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {
 		var id uint64
 
 		if err := querier.QueryRowContext(ctx, query, args...).Scan(&id); err != nil {
@@ -266,7 +268,7 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 		logger.Debug("query executed successfully")
 
 		return id, nil
-	} else if c.idStrategy == ReturningStatementIDRetrievalStrategy {
+	} else if q.idStrategy == ReturningStatementIDRetrievalStrategy {
 		res, err := querier.ExecContext(ctx, query, args...)
 		if err != nil {
 			return 0, observability.PrepareError(err, logger, span, "executing %s query", queryDescription)
@@ -300,5 +302,5 @@ func (c *Client) performWriteQuery(ctx context.Context, querier database.Querier
 
 	logger.Debug("query executed successfully")
 
-	return c.getIDFromResult(ctx, res), nil
+	return q.getIDFromResult(ctx, res), nil
 }

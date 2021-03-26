@@ -188,7 +188,9 @@ func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 	u := b.buildAPIV1URL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10))
 
 	if reason != "" {
-		u.Query().Set("reason", reason)
+		q := u.Query()
+		q.Set("reason", reason)
+		u.RawQuery = q.Encode()
 	}
 
 	tracing.AttachURLToSpan(span, u)

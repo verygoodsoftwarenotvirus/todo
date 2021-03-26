@@ -13,15 +13,15 @@ import (
 )
 
 var (
-	_ types.AuditLogEntryDataManager = (*Client)(nil)
+	_ types.AuditLogEntryDataManager = (*SQLQuerier)(nil)
 )
 
 // scanAuditLogEntry takes a database Scanner (i.e. *sql.Row) and scans the result into an AuditLogEntry struct.
-func (c *Client) scanAuditLogEntry(ctx context.Context, scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
-	_, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) scanAuditLogEntry(ctx context.Context, scan database.Scanner, includeCounts bool) (entry *types.AuditLogEntry, totalCount uint64, err error) {
+	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("include_counts", includeCounts)
+	logger := q.logger.WithValue("include_counts", includeCounts)
 	entry = &types.AuditLogEntry{}
 
 	targetVars := []interface{}{
@@ -44,14 +44,14 @@ func (c *Client) scanAuditLogEntry(ctx context.Context, scan database.Scanner, i
 }
 
 // scanAuditLogEntries takes some database rows and turns them into a slice of AuditLogEntry pointers.
-func (c *Client) scanAuditLogEntries(ctx context.Context, rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
-	_, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) scanAuditLogEntries(ctx context.Context, rows database.ResultIterator, includeCounts bool) (entries []*types.AuditLogEntry, totalCount uint64, err error) {
+	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("include_counts", includeCounts)
+	logger := q.logger.WithValue("include_counts", includeCounts)
 
 	for rows.Next() {
-		x, tc, scanErr := c.scanAuditLogEntry(ctx, rows, includeCounts)
+		x, tc, scanErr := q.scanAuditLogEntry(ctx, rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, observability.PrepareError(scanErr, logger, span, "scanning audit log entries")
 		}
@@ -65,7 +65,7 @@ func (c *Client) scanAuditLogEntries(ctx context.Context, rows database.ResultIt
 		entries = append(entries, x)
 	}
 
-	if err = c.checkRowsForErrorAndClose(ctx, rows); err != nil {
+	if err = q.checkRowsForErrorAndClose(ctx, rows); err != nil {
 		return nil, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
@@ -73,17 +73,21 @@ func (c *Client) scanAuditLogEntries(ctx context.Context, rows database.ResultIt
 }
 
 // GetAuditLogEntry fetches an audit log entry from the database.
-func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if entryID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
-	logger := c.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
+	logger := q.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
 
-	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntryQuery(entryID)
-	row := c.db.QueryRowContext(ctx, query, args...)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntryQuery(entryID)
+	row := q.db.QueryRowContext(ctx, query, args...)
 
-	entry, _, err := c.scanAuditLogEntry(ctx, row, false)
+	entry, _, err := q.scanAuditLogEntry(ctx, row, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning audit log entry")
 	}
@@ -92,23 +96,32 @@ func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.A
 }
 
 // GetAllAuditLogEntriesCount fetches the count of audit log entries from the database that meet a particular filter.
-func (c *Client) GetAllAuditLogEntriesCount(ctx context.Context) (count uint64, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	c.logger.Debug("GetAllAuditLogEntriesCount called")
+	logger := q.logger
 
-	return c.performCountQuery(ctx, c.db, c.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery())
+	count, err := q.performCountQuery(ctx, q.db, q.sqlQueryBuilder.BuildGetAllAuditLogEntriesCountQuery(), "fetching count of audit logs entries")
+	if err != nil {
+		return 0, observability.PrepareError(err, logger, span, "querying for count of audit log entries")
+	}
+
+	return count, nil
 }
 
 // GetAllAuditLogEntries fetches a list of all audit log entries in the database.
-func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*types.AuditLogEntry, batchSize uint16) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetAllAuditLogEntries(ctx context.Context, results chan []*types.AuditLogEntry, batchSize uint16) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue("batch_size", batchSize)
+	if results == nil {
+		return ErrNilInputProvided
+	}
 
-	count, err := c.GetAllAuditLogEntriesCount(ctx)
+	logger := q.logger.WithValue("batch_size", batchSize)
+
+	count, err := q.GetAllAuditLogEntriesCount(ctx)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "fetching count of entries")
 	}
@@ -116,14 +129,14 @@ func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*type
 	for beginID := uint64(1); beginID <= count; beginID += uint64(batchSize) {
 		endID := beginID + uint64(batchSize)
 		go func(begin, end uint64) {
-			query, args := c.sqlQueryBuilder.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
+			query, args := q.sqlQueryBuilder.BuildGetBatchOfAuditLogEntriesQuery(begin, end)
 			logger = logger.WithValues(map[string]interface{}{
 				"query": query,
 				"begin": begin,
 				"end":   end,
 			})
 
-			rows, queryErr := c.db.Query(query, args...)
+			rows, queryErr := q.db.Query(query, args...)
 			if errors.Is(queryErr, sql.ErrNoRows) {
 				return
 			} else if queryErr != nil {
@@ -131,7 +144,7 @@ func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*type
 				return
 			}
 
-			auditLogEntries, _, scanErr := c.scanAuditLogEntries(ctx, rows, false)
+			auditLogEntries, _, scanErr := q.scanAuditLogEntries(ctx, rows, false)
 			if scanErr != nil {
 				logger.Error(scanErr, "scanning database rows")
 				return
@@ -145,26 +158,26 @@ func (c *Client) GetAllAuditLogEntries(ctx context.Context, results chan []*type
 }
 
 // GetAuditLogEntries fetches a list of audit log entries from the database that meet a particular filter.
-func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (x *types.AuditLogEntryList, err error) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilter) (x *types.AuditLogEntryList, err error) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachQueryFilterToSpan(span, filter)
-	logger := filter.AttachToLogger(c.logger)
+	logger := filter.AttachToLogger(q.logger)
 
 	x = &types.AuditLogEntryList{}
 	if filter != nil {
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := c.sqlQueryBuilder.BuildGetAuditLogEntriesQuery(filter)
+	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesQuery(filter)
 
-	rows, err := c.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}
 
-	if x.Entries, x.TotalCount, err = c.scanAuditLogEntries(ctx, rows, true); err != nil {
+	if x.Entries, x.TotalCount, err = q.scanAuditLogEntries(ctx, rows, true); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning audit log entry")
 	}
 
@@ -172,20 +185,28 @@ func (c *Client) GetAuditLogEntries(ctx context.Context, filter *types.QueryFilt
 }
 
 // createAuditLogEntryInTransaction creates an audit log entry in the database.
-func (c *Client) createAuditLogEntryInTransaction(ctx context.Context, transaction *sql.Tx, input *types.AuditLogEntryCreationInput) error {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) createAuditLogEntryInTransaction(ctx context.Context, transaction *sql.Tx, input *types.AuditLogEntryCreationInput) error {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
-	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
+	if input == nil {
+		return ErrNilInputProvided
+	}
+
+	if transaction == nil {
+		return ErrNilTransactionProvided
+	}
+
+	logger := q.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
+	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
 	logger.Debug("audit log entry created")
 
 	// create the audit log entry.
-	if err := c.performWriteQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
+	if err := q.performWriteQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
 		logger.Error(err, "executing audit log entry creation query")
-		c.rollbackTransaction(ctx, transaction)
+		q.rollbackTransaction(ctx, transaction)
 
 		return err
 	}
@@ -194,19 +215,34 @@ func (c *Client) createAuditLogEntryInTransaction(ctx context.Context, transacti
 }
 
 // createAuditLogEntry creates an audit log entry in the database.
-func (c *Client) createAuditLogEntry(ctx context.Context, querier database.Querier, input *types.AuditLogEntryCreationInput) {
-	ctx, span := c.tracer.StartSpan(ctx)
+func (q *SQLQuerier) createAuditLogEntry(ctx context.Context, querier database.Querier, input *types.AuditLogEntryCreationInput) {
+	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
-	logger := c.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
+	logger := q.logger
 
-	query, args := c.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
+	if input == nil {
+		observability.NoteEvent(logger, span, "early return due to nil input")
+		return
+	}
+
+	if querier == nil {
+		observability.NoteEvent(logger, span, "early return due to nil querier")
+		return
+	}
+
+	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
+	logger = logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
+
+	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(input)
 
 	// create the audit log entry.
-	if err := c.performWriteQueryIgnoringReturn(ctx, querier, "audit log entry creation", query, args); err != nil {
+	id, err := q.performWriteQuery(ctx, querier, false, "audit log entry creation", query, args)
+	if err != nil {
 		logger.Error(err, "executing audit log entry creation query")
 	}
+
+	tracing.AttachAuditLogEntryIDToSpan(span, id)
 
 	logger.Debug("audit log entry created")
 }

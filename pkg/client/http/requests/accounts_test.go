@@ -2,7 +2,9 @@ package requests
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -110,6 +112,23 @@ func (s *accountRequestBuildersTestSuite) TestBuilder_BuildArchiveAccountRequest
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID)
 
 		actual, err := s.builder.BuildArchiveAccountRequest(s.ctx, s.exampleAccount.ID)
+		assert.NoError(t, err, "no error should be returned")
+
+		assertRequestQuality(t, actual, spec)
+	})
+}
+
+func (s *accountRequestBuildersTestSuite) TestBuilder_BuildRemoveUserRequest() {
+	const expectedPathFormat = "/api/v1/accounts/%d/members/%d"
+
+	s.Run("standard", func() {
+		t := s.T()
+
+		reason := t.Name()
+		expectedReason := url.QueryEscape(reason)
+		spec := newRequestSpec(true, http.MethodDelete, fmt.Sprintf("reason=%s", expectedReason), expectedPathFormat, s.exampleAccount.ID, s.exampleAccount.BelongsToUser)
+
+		actual, err := s.builder.BuildRemoveUserRequest(s.ctx, s.exampleAccount.ID, s.exampleAccount.BelongsToUser, reason)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)

@@ -40,9 +40,9 @@ const (
 	// FilterIsNilKey is the standard key for referring to a types.QueryFilter's null status.
 	FilterIsNilKey = "query_filter.is_nil"
 	// APIClientClientIDKey is the standard key for referring to an API client's database ID.
-	APIClientClientIDKey = "api_client.id"
+	APIClientClientIDKey = "api_client.client_id"
 	// APIClientDatabaseIDKey is the standard key for referring to an API client's database ID.
-	APIClientDatabaseIDKey = "api_client.row_id"
+	APIClientDatabaseIDKey = "api_client.id"
 	// WebhookIDKey is the standard key for referring to a webhook's ID.
 	WebhookIDKey = "webhook.id"
 	// URLKey is the standard key for referring to a url.

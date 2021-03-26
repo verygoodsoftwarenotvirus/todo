@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	zerolog.CallerSkipFrameCount++
+	zerolog.CallerSkipFrameCount += 2
 	zerolog.DisableSampling(true)
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 	zerolog.TimestampFunc = func() time.Time {

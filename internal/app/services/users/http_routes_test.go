@@ -342,7 +342,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(types.UserDataStoreCreationInput{})).Return(exampleUser, nil)
+		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.UserDataStoreCreationInput{})).Return(exampleUser, nil)
 		s.userDataManager = db
 
 		db.AccountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{})).Return(exampleAccount, nil)
@@ -457,7 +457,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(types.UserDataStoreCreationInput{})).Return(exampleUser, nil)
+		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.UserDataStoreCreationInput{})).Return(exampleUser, nil)
 		s.userDataManager = db
 
 		sg := &mockSecretGenerator{}
@@ -498,7 +498,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(types.UserDataStoreCreationInput{})).Return(exampleUser, nil)
+		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.UserDataStoreCreationInput{})).Return(exampleUser, nil)
 		s.userDataManager = db
 
 		sg := &mockSecretGenerator{}
@@ -540,7 +540,7 @@ func TestService_CreateHandler(T *testing.T) {
 		s.authenticator = auth
 
 		db := database.BuildMockDatabase()
-		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(types.UserDataStoreCreationInput{})).Return(exampleUser, errors.New("blah"))
+		db.UserDataManager.On("CreateUser", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.UserDataStoreCreationInput{})).Return(exampleUser, errors.New("blah"))
 		s.userDataManager = db
 
 		ed := mockencoding.NewMockEncoderDecoder()

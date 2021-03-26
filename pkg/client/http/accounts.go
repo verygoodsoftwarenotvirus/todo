@@ -228,6 +228,10 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID ui
 		return ErrInvalidIDProvided
 	}
 
+	if reason == "" {
+		return ErrEmptyInputProvided
+	}
+
 	logger := c.logger.WithValue(keys.AccountIDKey, accountID).WithValue(keys.UserIDKey, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachUserIDToSpan(span, userID)

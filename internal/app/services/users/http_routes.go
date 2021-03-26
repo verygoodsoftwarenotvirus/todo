@@ -486,10 +486,8 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
 }
 
-// FIXME: dependency inject this.
-func (s *service) determineAvatarWebPath(storageProviderPath string) *string {
-	x := storageProviderPath
-	return &x
+func stringPointer(storageProviderPath string) *string {
+	return &storageProviderPath
 }
 
 // AvatarUploadHandler updates a user's avatar.
@@ -535,7 +533,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	user.AvatarSrc = s.determineAvatarWebPath(internalPath)
+	user.AvatarSrc = stringPointer(internalPath)
 
 	if err = s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating user info")

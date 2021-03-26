@@ -6,7 +6,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -62,7 +61,7 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 	}
 
 	var buffer bytes.Buffer
-	if err = json.NewEncoder(&buffer).Encode(input); err != nil {
+	if err = b.encoder.Encode(ctx, &buffer, input); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "encoding body")
 	}
 

@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -100,9 +99,8 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 	if res.StatusCode >= http.StatusBadRequest {
 		apiErr := &types.ErrorResponse{Code: res.StatusCode}
 
-		// FIXME: these should be encoders
-		if err = json.Unmarshal(bodyBytes, &apiErr); err != nil {
-			observability.AcknowledgeError(err, logger, span, "unmarshaling error response")
+		if err = c.encoder.Unmarshal(ctx, bodyBytes, &apiErr); err != nil {
+			observability.AcknowledgeError(err, logger, span, "unmarshalling error response")
 			logger.Error(err, "unmarshalling error response")
 			tracing.AttachErrorToSpan(span, "", err)
 		}
@@ -110,8 +108,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 		return apiErr
 	}
 
-	// FIXME: these should be encoders
-	if err = json.Unmarshal(bodyBytes, &dest); err != nil {
+	if err = c.encoder.Unmarshal(ctx, bodyBytes, &dest); err != nil {
 		return observability.PrepareError(err, logger, span, "unmarshalling response body")
 	}
 

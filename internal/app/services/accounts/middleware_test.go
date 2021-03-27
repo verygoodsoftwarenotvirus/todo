@@ -9,9 +9,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -21,148 +24,157 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestService_CreationInputMiddleware(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-
-		exampleCreationInput := fakes.BuildFakeAccountCreationInput()
-		jsonBytes, err := json.Marshal(&exampleCreationInput)
-		require.NoError(t, err)
-
-		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		actual := s.CreationInputMiddleware(mh)
-		actual.ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mh)
-	})
-
-	T.Run("bad input", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-
-		exampleCreationInput := &types.AccountCreationInput{}
-		jsonBytes, err := json.Marshal(&exampleCreationInput)
-		require.NoError(t, err)
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		actual := s.CreationInputMiddleware(&testutil.MockHTTPHandler{})
-		actual.ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-	})
-
-	T.Run("with error decoding request", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
-		ed.On(
-			"EncodeErrorResponse",
-			mock.Anything,
-			mock.Anything,
-			"invalid request content",
-			http.StatusBadRequest,
-		)
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		mh := &testutil.MockHTTPHandler{}
-		actual := s.CreationInputMiddleware(mh)
-		actual.ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ed, mh)
-	})
+func TestAccountsServiceMiddleware(t *testing.T) {
+	suite.Run(t, new(accountsServiceMiddlewareTestSuite))
 }
 
-func TestService_UpdateInputMiddleware(T *testing.T) {
-	T.Parallel()
+type accountsServiceMiddlewareTestSuite struct {
+	suite.Suite
 
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
+	ctx            context.Context
+	service        *service
+	exampleUser    *types.User
+	exampleAccount *types.Account
+}
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+var _ suite.SetupTestSuite = (*accountsServiceMiddlewareTestSuite)(nil)
 
-		exampleCreationInput := fakes.BuildFakeAccountUpdateInputFromAccount(fakes.BuildFakeAccount())
-		jsonBytes, err := json.Marshal(&exampleCreationInput)
-		require.NoError(t, err)
+func (s *accountsServiceMiddlewareTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.service = buildTestService()
+	s.exampleUser = fakes.BuildFakeUser()
+	s.exampleAccount = fakes.BuildFakeAccount()
 
-		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		actual := s.UpdateInputMiddleware(mh)
-		actual.ServeHTTP(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mh)
+	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
+		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	})
+	require.NoError(s.T(), err)
 
-	T.Run("with error decoding request", func(t *testing.T) {
-		t.Parallel()
+	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	s.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+		return reqCtx, nil
+	}
+	s.service.accountIDFetcher = func(req *http.Request) uint64 {
+		return s.exampleAccount.ID
+	}
+}
 
-		ctx := context.Background()
-		s := buildTestService()
+func (s *accountsServiceMiddlewareTestSuite) TestServiceCreationInputMiddleware() {
+	t := s.T()
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
-		ed.On(
-			"EncodeErrorResponse",
-			mock.Anything,
-			mock.Anything,
-			"invalid request content",
-			http.StatusBadRequest,
-		)
-		s.encoderDecoder = ed
+	exampleCreationInput := fakes.BuildFakeAccountCreationInput()
+	jsonBytes, err := json.Marshal(&exampleCreationInput)
+	require.NoError(t, err)
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
-		require.NoError(t, err)
-		require.NotNil(t, req)
+	mh := &testutil.MockHTTPHandler{}
+	mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
-		mh := &testutil.MockHTTPHandler{}
-		actual := s.UpdateInputMiddleware(mh)
-		actual.ServeHTTP(res, req)
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+	require.NoError(t, err)
+	require.NotNil(t, req)
 
-		assert.Equal(t, http.StatusBadRequest, res.Code)
+	actual := s.service.CreationInputMiddleware(mh)
+	actual.ServeHTTP(res, req)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
-	})
+	assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+	mock.AssertExpectationsForObjects(t, mh)
+}
+
+func (s *accountsServiceMiddlewareTestSuite) TestServiceCreationInputMiddlewareWithInvalidInput() {
+	t := s.T()
+
+	exampleCreationInput := &types.AccountCreationInput{}
+	jsonBytes, err := json.Marshal(&exampleCreationInput)
+	require.NoError(t, err)
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+	require.NoError(t, err)
+	require.NotNil(t, req)
+
+	actual := s.service.CreationInputMiddleware(&testutil.MockHTTPHandler{})
+	actual.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+}
+
+func (s *accountsServiceMiddlewareTestSuite) TestServiceCreationInputMiddlewareWithErrorDecodingRequest() {
+	t := s.T()
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+	ed.On(
+		"EncodeErrorResponse",
+		mock.Anything,
+		mock.Anything,
+		"invalid request content",
+		http.StatusBadRequest,
+	)
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+	require.NoError(t, err)
+	require.NotNil(t, req)
+
+	mh := &testutil.MockHTTPHandler{}
+	actual := s.service.CreationInputMiddleware(mh)
+	actual.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+
+	mock.AssertExpectationsForObjects(t, ed, mh)
+}
+
+func (s *accountsServiceMiddlewareTestSuite) TestServiceUpdateInputMiddleware() {
+	t := s.T()
+
+	exampleCreationInput := fakes.BuildFakeAccountUpdateInputFromAccount(fakes.BuildFakeAccount())
+	jsonBytes, err := json.Marshal(&exampleCreationInput)
+	require.NoError(t, err)
+
+	mh := &testutil.MockHTTPHandler{}
+	mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+	require.NoError(t, err)
+	require.NotNil(t, req)
+
+	actual := s.service.UpdateInputMiddleware(mh)
+	actual.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+	mock.AssertExpectationsForObjects(t, mh)
+}
+
+func (s *accountsServiceMiddlewareTestSuite) TestServiceUpdateInputMiddlewareWithInvalidInput() {
+	t := s.T()
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+	ed.On(
+		"EncodeErrorResponse",
+		mock.Anything,
+		mock.Anything,
+		"invalid request content",
+		http.StatusBadRequest,
+	)
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+	require.NoError(t, err)
+	require.NotNil(t, req)
+
+	mh := &testutil.MockHTTPHandler{}
+	actual := s.service.UpdateInputMiddleware(mh)
+	actual.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+
+	mock.AssertExpectationsForObjects(t, ed, mh)
 }

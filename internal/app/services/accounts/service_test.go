@@ -31,31 +31,25 @@ func buildTestService() *service {
 	}
 }
 
-func TestProvideAccountsService(T *testing.T) {
-	T.Parallel()
+func TestProvideAccountsService(t *testing.T) {
+	var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {
+		return &mockmetrics.UnitCounter{}
+	}
 
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
+	rpm := mockrouting.NewRouteParamManager()
+	rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
+	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
-		var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {
-			return &mockmetrics.UnitCounter{}
-		}
+	s := ProvideService(
+		logging.NewNonOperationalLogger(),
+		&mocktypes.AccountDataManager{},
+		&mocktypes.AccountUserMembershipDataManager{},
+		mockencoding.NewMockEncoderDecoder(),
+		ucp,
+		rpm,
+	)
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+	assert.NotNil(t, s)
 
-		s := ProvideService(
-			logging.NewNonOperationalLogger(),
-			&mocktypes.AccountDataManager{},
-			&mocktypes.AccountUserMembershipDataManager{},
-			mockencoding.NewMockEncoderDecoder(),
-			ucp,
-			rpm,
-		)
-
-		assert.NotNil(t, s)
-
-		mock.AssertExpectationsForObjects(t, rpm)
-	})
+	mock.AssertExpectationsForObjects(t, rpm)
 }

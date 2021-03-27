@@ -8,8 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -18,730 +21,542 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestAccountsService_ListHandler(T *testing.T) {
-	T.Parallel()
-
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		exampleAccountList := fakes.BuildFakeAccountList()
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleAccountList, nil)
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
-
-	T.Run("with no rows returned", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
-
-	T.Run("with error fetching accounts from database", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
+func TestAccountsService(t *testing.T) {
+	suite.Run(t, new(accountsServiceTestSuite))
 }
 
-func TestAccountsService_CreateHandler(T *testing.T) {
-	T.Parallel()
+type accountsServiceTestSuite struct {
+	suite.Suite
 
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-
-		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), exampleUser.ID).Return(exampleAccount, nil)
-		s.accountDataManager = accountDataManager
-
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher))
-		s.accountCounter = mc
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}), http.StatusCreated)
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
-
-		s.CreateHandler(res, req)
-
-		assert.Equal(t, http.StatusCreated, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, mc, ed)
-	})
-
-	T.Run("without input attached", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.CreateHandler(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ed)
-	})
-
-	T.Run("with error creating account", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
-
-		s.CreateHandler(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
+	ctx            context.Context
+	service        *service
+	exampleUser    *types.User
+	exampleAccount *types.Account
 }
 
-func TestAccountsService_ReadHandler(T *testing.T) {
-	T.Parallel()
+var _ suite.SetupTestSuite = (*accountsServiceTestSuite)(nil)
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+func (s *accountsServiceTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.service = buildTestService()
+	s.exampleUser = fakes.BuildFakeUser()
+	s.exampleAccount = fakes.BuildFakeAccount()
 
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ReadHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
+		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	})
+	require.NoError(s.T(), err)
 
-	T.Run("with no such account in database", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ReadHandler(res, req)
-
-		assert.Equal(t, http.StatusNotFound, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
-
-	T.Run("with error fetching account from database", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ReadHandler(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
+	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	s.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+		return reqCtx, nil
+	}
+	s.service.accountIDFetcher = func(req *http.Request) uint64 {
+		return s.exampleAccount.ID
+	}
 }
 
-func TestAccountsService_UpdateHandler(T *testing.T) {
-	T.Parallel()
+func (s *accountsServiceTestSuite) TestService_ListHandler() {
+	t := s.T()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+	exampleAccountList := fakes.BuildFakeAccountList()
 
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleAccountList, nil)
+	s.service.accountDataManager = accountDataManager
 
-		ctx := context.Background()
-		s := buildTestService()
-		exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(exampleAccount)
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
+	s.service.encoderDecoder = ed
 
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
 
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
+	s.service.ListHandler(res, req)
 
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
-		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(nil)
-		s.accountDataManager = accountDataManager
+	assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, s.accountDataManager, ed)
-	})
-
-	T.Run("without update input", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.UpdateHandler(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-
-		mock.AssertExpectationsForObjects(t, ed)
-	})
-
-	T.Run("with no rows fetching account", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(exampleAccount)
-
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-
-		assert.Equal(t, http.StatusNotFound, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
-
-	T.Run("with error fetching account", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(exampleAccount)
-
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
-
-	T.Run("with error updating account", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService()
-
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(exampleAccount)
-
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
-
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID).Return(exampleAccount, nil)
-		accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(errors.New("blah"))
-		s.accountDataManager = accountDataManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func TestAccountsService_ArchiveHandler(T *testing.T) {
-	T.Parallel()
+func (s *accountsServiceTestSuite) TestListHandlerWithNoRowsReturned() {
+	t := s.T()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
+	s.service.accountDataManager = accountDataManager
 
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
+	s.service.encoderDecoder = ed
 
-		ctx := context.Background()
-		s := buildTestService()
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
 
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
+	s.service.ListHandler(res, req)
 
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
+	assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID, exampleUser.ID).Return(nil)
-		s.accountDataManager = accountDataManager
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
 
-		mc := &mockmetrics.UnitCounter{}
-		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
-		s.accountCounter = mc
+func (s *accountsServiceTestSuite) TestListHandlerWithErrorFetchingAccountsFromDatabase() {
+	t := s.T()
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
+	s.service.accountDataManager = accountDataManager
 
-		s.ArchiveHandler(res, req)
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
 
-		assert.Equal(t, http.StatusNoContent, res.Code)
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, accountDataManager, mc)
-	})
+	s.service.ListHandler(res, req)
 
-	T.Run("with no account in database", func(t *testing.T) {
-		t.Parallel()
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		ctx := context.Background()
-		s := buildTestService()
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
 
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
+func (s *accountsServiceTestSuite) TestCreateHandler() {
+	t := s.T()
 
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
+	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
 
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID, exampleUser.ID).Return(sql.ErrNoRows)
-		s.accountDataManager = accountDataManager
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), s.exampleUser.ID).Return(s.exampleAccount, nil)
+	s.service.accountDataManager = accountDataManager
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+	mc := &mockmetrics.UnitCounter{}
+	mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher))
+	s.service.accountCounter = mc
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}), http.StatusCreated)
+	s.service.encoderDecoder = ed
 
-		s.ArchiveHandler(res, req)
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
 
-		assert.Equal(t, http.StatusNotFound, res.Code)
+	req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
 
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
+	s.service.CreateHandler(res, req)
 
-	T.Run("with error writing to database", func(t *testing.T) {
-		t.Parallel()
+	assert.Equal(t, http.StatusCreated, res.Code)
 
-		ctx := context.Background()
-		s := buildTestService()
+	mock.AssertExpectationsForObjects(t, accountDataManager, mc, ed)
+}
 
-		s.accountIDFetcher = func(req *http.Request) uint64 {
-			return exampleAccount.ID
-		}
+func (s *accountsServiceTestSuite) TestCreateHandlerWithoutInputAttachedToRequest() {
+	t := s.T()
 
-		s.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-			reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-			require.NoError(t, err)
-			return reqCtx, nil
-		}
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
 
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleUser.ID, exampleUser.ID).Return(errors.New("blah"))
-		s.accountDataManager = accountDataManager
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+	s.service.CreateHandler(res, req)
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		s.ArchiveHandler(res, req)
+	mock.AssertExpectationsForObjects(t, ed)
+}
 
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+func (s *accountsServiceTestSuite) TestCreateHandlerWithErrorCreatingAccount() {
+	t := s.T()
 
-		mock.AssertExpectationsForObjects(t, accountDataManager, ed)
-	})
+	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), s.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
+
+	s.service.CreateHandler(res, req)
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestReadHandler() {
+	t := s.T()
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return(s.exampleAccount, nil)
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.ReadHandler(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestReadHandlerWithNoAccountInDatabase() {
+	t := s.T()
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.ReadHandler(res, req)
+
+	assert.Equal(t, http.StatusNotFound, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestReadHandlerWithErrorReadingFromDatabase() {
+	t := s.T()
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.ReadHandler(res, req)
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestUpdateHandler() {
+	t := s.T()
+
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return(s.exampleAccount, nil)
+	accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), s.exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(nil)
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+
+	s.service.UpdateHandler(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, s.service.accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestUpdateHandlerWithoutUpdateInputAttachedToRequest() {
+	t := s.T()
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.UpdateHandler(res, req)
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+
+	mock.AssertExpectationsForObjects(t, ed)
+}
+
+func (s *accountsServiceTestSuite) TestUpdateHandlerWithNoRows() {
+	t := s.T()
+
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+
+	s.service.UpdateHandler(res, req)
+
+	assert.Equal(t, http.StatusNotFound, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestUpdateHandlerWithErrorQueryingForAccount() {
+	t := s.T()
+
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+
+	s.service.UpdateHandler(res, req)
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestUpdateHandlerWithErrorUpdatingAccount() {
+	t := s.T()
+
+	s.exampleAccount = fakes.BuildFakeAccount()
+	s.exampleAccount.BelongsToUser = s.exampleUser.ID
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return(s.exampleAccount, nil)
+	accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), s.exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(errors.New("blah"))
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+
+	s.service.UpdateHandler(res, req)
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestArchiveHandler() {
+	t := s.T()
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID, s.exampleUser.ID).Return(nil)
+	s.service.accountDataManager = accountDataManager
+
+	mc := &mockmetrics.UnitCounter{}
+	mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
+	s.service.accountCounter = mc
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.ArchiveHandler(res, req)
+
+	assert.Equal(t, http.StatusNoContent, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, mc)
+}
+
+func (s *accountsServiceTestSuite) TestArchiveHandlerWithNoAccountInDatabase() {
+	t := s.T()
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID, s.exampleUser.ID).Return(sql.ErrNoRows)
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.ArchiveHandler(res, req)
+
+	assert.Equal(t, http.StatusNotFound, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
+}
+
+func (s *accountsServiceTestSuite) TestArchiveHandlerWithErrorWritingToDatabase() {
+	t := s.T()
+
+	accountDataManager := &mocktypes.AccountDataManager{}
+	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID, s.exampleUser.ID).Return(errors.New("blah"))
+	s.service.accountDataManager = accountDataManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.ArchiveHandler(res, req)
+
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }

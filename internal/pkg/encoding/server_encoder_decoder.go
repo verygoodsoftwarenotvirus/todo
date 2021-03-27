@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -46,6 +46,7 @@ type (
 	serverEncoderDecoder struct {
 		logger      logging.Logger
 		tracer      tracing.Tracer
+		panicker    panicking.Panicker
 		contentType ContentType
 	}
 
@@ -156,8 +157,7 @@ func (e *serverEncoderDecoder) MustEncodeJSON(v interface{}) []byte {
 	var b bytes.Buffer
 
 	if err := json.NewEncoder(&b).Encode(v); err != nil {
-		e.logger.Error(err, fmt.Sprintf("marshaling to %s: %v", contentTypeToString(e.contentType), err))
-		return []byte{}
+		e.panicker.Panicf("encoding JSON content: %w", err)
 	}
 
 	return b.Bytes()
@@ -177,8 +177,7 @@ func (e *serverEncoderDecoder) MustEncode(v interface{}) []byte {
 	}
 
 	if err := enc.Encode(v); err != nil {
-		e.logger.Error(err, fmt.Sprintf("marshaling to %s: %v", contentTypeToString(e.contentType), err))
-		return []byte{}
+		e.panicker.Panicf("encoding %s content: %w", e.contentType, err)
 	}
 
 	return b.Bytes()
@@ -225,6 +224,7 @@ func ProvideServerEncoderDecoder(logger logging.Logger, contentType ContentType)
 	return &serverEncoderDecoder{
 		logger:      logging.EnsureLogger(logger).WithName("server_encoder_decoder"),
 		tracer:      tracing.NewTracer("server_encoder_decoder"),
+		panicker:    panicking.NewProductionPanicker(),
 		contentType: contentType,
 	}
 }

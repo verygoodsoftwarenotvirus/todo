@@ -148,7 +148,7 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithEmptyIndexAndSearch() {
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
-	results, err := im.Search(s.ctx, "", s.exampleAccountID)
+	results, err := im.Search(s.ctx, "example", s.exampleAccountID)
 	assert.Empty(t, results)
 	assert.NoError(t, err)
 

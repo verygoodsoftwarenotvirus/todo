@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 
@@ -27,8 +27,8 @@ func init() {
 }
 
 const (
-	defaultMinimumPasswordSize = 16
 	bcryptCostCompensation     = 2
+	defaultMinimumPasswordSize = 16
 
 	// DefaultHashCost is what it says on the tin.
 	DefaultHashCost = HashCost(bcrypt.DefaultCost + bcryptCostCompensation)
@@ -71,9 +71,14 @@ func (b *Authenticator) HashPassword(ctx context.Context, passwordToHash string)
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(passwordToHash), int(b.hashCost))
+	logger := b.logger
 
-	return string(hashedPass), err
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(passwordToHash), int(b.hashCost))
+	if err != nil {
+		return "", observability.PrepareError(err, logger, span, "hashing password")
+	}
+
+	return string(hashedPass), nil
 }
 
 // ValidateLogin validates a login attempt by:
@@ -91,20 +96,22 @@ func (b *Authenticator) ValidateLogin(
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	passwordMatches = b.PasswordMatches(ctx, hashedPassword, providedPassword, nil)
 	if !passwordMatches {
 		return false, authentication.ErrPasswordDoesNotMatch
 	}
 
-	if err := b.hashedPasswordIsTooWeak(ctx, hashedPassword); err != nil {
+	if err = b.hashedPasswordIsTooWeak(ctx, hashedPassword); err != nil {
 		// NOTE: this can end up with a return set where passwordMatches is true and the err is not nil.
 		// This is the valid case in the event the user has logged in with a valid authentication, but the
 		// bcrypt cost has been raised since they last logged in.
-		return passwordMatches, fmt.Errorf("validating authentication: %w", err)
+		return passwordMatches, observability.PrepareError(err, logger, span, "validating password")
 	}
 
 	if !totp.Validate(twoFactorCode, twoFactorSecret) {
-		b.logger.WithValues(map[string]interface{}{
+		logger.WithValues(map[string]interface{}{
 			"password_matches": passwordMatches,
 			"2fa_secret":       twoFactorSecret,
 			"provided_code":    twoFactorCode,
@@ -129,9 +136,11 @@ func (b *Authenticator) hashedPasswordIsTooWeak(ctx context.Context, hashedPassw
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	cost, err := bcrypt.Cost([]byte(hashedPassword))
 	if err != nil {
-		return fmt.Errorf("checking hashed authentication cost: %w", err)
+		return observability.PrepareError(err, logger, span, "checking hashed password cost")
 	}
 
 	if uint(cost) < b.hashCost {

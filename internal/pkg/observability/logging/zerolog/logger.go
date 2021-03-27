@@ -107,6 +107,12 @@ func (l *logger) Clone() logging.Logger {
 	return &logger{logger: l2}
 }
 
+// WithValue satisfies our contract for the logging.Logger WithValue method.
+func (l *logger) WithValue(key string, value interface{}) logging.Logger {
+	l2 := l.logger.With().Interface(key, value).Logger()
+	return &logger{logger: l2}
+}
+
 // WithValues satisfies our contract for the logging.Logger WithValues method.
 func (l *logger) WithValues(values map[string]interface{}) logging.Logger {
 	var l2 = l.logger.With().Logger()
@@ -115,12 +121,6 @@ func (l *logger) WithValues(values map[string]interface{}) logging.Logger {
 		l2 = l2.With().Interface(key, val).Logger()
 	}
 
-	return &logger{logger: l2}
-}
-
-// WithValue satisfies our contract for the logging.Logger WithValue method.
-func (l *logger) WithValue(key string, value interface{}) logging.Logger {
-	l2 := l.logger.With().Interface(key, value).Logger()
 	return &logger{logger: l2}
 }
 

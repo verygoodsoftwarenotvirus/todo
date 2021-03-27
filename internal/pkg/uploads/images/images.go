@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -129,24 +130,20 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 
 	file, info, err := req.FormFile(filename)
 	if err != nil {
-		logger.Error(err, "parsing file from request")
-		return nil, fmt.Errorf("reading image from request: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "parsing file from request")
 	}
 
 	if contentTypeErr := validateContentType(info.Filename); contentTypeErr != nil {
-		logger.Error(contentTypeErr, "validating the content type")
-		return nil, contentTypeErr
+		return nil, observability.PrepareError(contentTypeErr, logger, span, "validating the content type")
 	}
 
 	bs, err := ioutil.ReadAll(file)
 	if err != nil {
-		logger.Error(err, "reading file from request")
-		return nil, fmt.Errorf("reading attached image: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "reading file from request")
 	}
 
 	if _, _, err = image.Decode(bytes.NewReader(bs)); err != nil {
-		logger.Error(err, "decoding the image data")
-		return nil, fmt.Errorf("decoding attached image: %w", err)
+		return nil, observability.PrepareError(err, logger, span, "decoding the image data")
 	}
 
 	i := &Image{
@@ -169,7 +166,7 @@ func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoder
 
 		file, info, err := req.FormFile(filename)
 		if err != nil {
-			logger.Error(err, "parsing request form")
+			observability.AcknowledgeError(err, logger, span, "parsing request form")
 			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 			return
 		}
@@ -178,7 +175,7 @@ func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoder
 
 		bs, err := ioutil.ReadAll(file)
 		if err != nil {
-			logger.Error(err, "reading attached file")
+			observability.AcknowledgeError(err, logger, span, "reading attached file")
 			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 			return
 		}
@@ -186,12 +183,10 @@ func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoder
 		logger.Debug("image upload read from request")
 
 		if _, _, err = image.Decode(bytes.NewReader(bs)); err != nil {
-			logger.Error(err, "decoding attached image")
+			observability.AcknowledgeError(err, logger, span, "decoding attached image")
 			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 			return
 		}
-
-		logger.Debug("image decoded successfully")
 
 		i := &Image{
 			Filename:    info.Filename,
@@ -201,8 +196,6 @@ func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoder
 		}
 
 		req = req.WithContext(context.WithValue(ctx, parsedImageContextKey, i))
-
-		logger.Debug("attached image to context")
 
 		next.ServeHTTP(res, req)
 	})

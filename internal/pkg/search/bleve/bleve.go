@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -17,9 +18,8 @@ import (
 )
 
 const (
-	fuzziness = 2
-	base      = 10
-	bitSize   = 64
+	base    = 10
+	bitSize = 64
 
 	// testingSearchIndexName is an index name that is only valid for testing's sake.
 	testingSearchIndexName search.IndexName = "example_index_name"
@@ -67,7 +67,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 				return nil, newIndexErr
 			}
 		default:
-			return nil, fmt.Errorf("%s: %w", name, errInvalidIndexName)
+			return nil, fmt.Errorf("opening %s index: %w", name, errInvalidIndexName)
 		}
 	} else if openIndexErr != nil {
 		logger.Error(openIndexErr, "failed to open index")
@@ -95,31 +95,35 @@ func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interfa
 	return sm.index.Index(strconv.FormatUint(id, base), value)
 }
 
-// Search implements our IndexManager interface.
-func (sm *bleveIndexManager) Search(ctx context.Context, query string, accountID uint64) (ids []uint64, err error) {
+// search executes search queries.
+func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID uint64, forAdmin bool) (ids []uint64, err error) {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachSearchQueryToSpan(span, query)
-	sm.logger.WithValues(map[string]interface{}{
-		keys.SearchQueryKey: query,
-		keys.AccountIDKey:   accountID,
-	}).Debug("performing search")
+	logger := sm.logger.WithValue(keys.SearchQueryKey, query)
+
+	if query == "" {
+		return nil, search.ErrEmptyQueryProvided
+	}
+
+	if forAdmin && accountID == 0 {
+		logger = logger.WithValue(keys.AccountIDKey, accountID)
+	}
 
 	q := bleve.NewFuzzyQuery(query)
 	q.SetFuzziness(searcher.MaxFuzziness)
 
 	searchResults, err := sm.index.SearchInContext(ctx, bleve.NewSearchRequest(q))
 	if err != nil {
-		sm.logger.Error(err, "performing search query")
-		return nil, err
+		return nil, observability.PrepareError(err, logger, span, "performing search query")
 	}
 
 	for _, result := range searchResults.Hits {
 		x, parseErr := strconv.ParseUint(result.ID, base, bitSize)
 		if parseErr != nil {
 			// this should literally never happen
-			return nil, fmt.Errorf("*gasp* impossible error occurred for resultID %s: %w", result.ID, parseErr)
+			return nil, observability.PrepareError(err, logger, span, "error parsing integer stored in search index for #%s", result.ID)
 		}
 
 		ids = append(ids, x)
@@ -128,35 +132,14 @@ func (sm *bleveIndexManager) Search(ctx context.Context, query string, accountID
 	return ids, nil
 }
 
+// Search implements our IndexManager interface.
+func (sm *bleveIndexManager) Search(ctx context.Context, query string, accountID uint64) (ids []uint64, err error) {
+	return sm.search(ctx, query, accountID, false)
+}
+
 // SearchForAdmin implements our IndexManager interface.
 func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error) {
-	ctx, span := sm.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachSearchQueryToSpan(span, query)
-	logger := sm.logger.WithValue(keys.SearchQueryKey, query)
-	logger.Debug("performing search for admin")
-
-	q := bleve.NewFuzzyQuery(query)
-	q.SetFuzziness(fuzziness)
-
-	searchResults, err := sm.index.SearchInContext(ctx, bleve.NewSearchRequest(q))
-	if err != nil {
-		sm.logger.Error(err, "performing search query")
-		return nil, err
-	}
-
-	for _, result := range searchResults.Hits {
-		x, parseErr := strconv.ParseUint(result.ID, base, bitSize)
-		if parseErr != nil {
-			// this should literally never happen
-			return nil, fmt.Errorf("*gasp* impossible error occurred for resultID %s: %w", result.ID, parseErr)
-		}
-
-		ids = append(ids, x)
-	}
-
-	return ids, nil
+	return sm.search(ctx, query, 0, true)
 }
 
 // Delete implements our IndexManager interface.
@@ -164,9 +147,10 @@ func (sm *bleveIndexManager) Delete(ctx context.Context, id uint64) error {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := sm.logger.WithValue("id", id)
+
 	if err := sm.index.Delete(strconv.FormatUint(id, base)); err != nil {
-		sm.logger.Error(err, "removing from index")
-		return err
+		return observability.PrepareError(err, logger, span, "removing from index")
 	}
 
 	sm.logger.WithValue("id", id).Debug("removed from index")

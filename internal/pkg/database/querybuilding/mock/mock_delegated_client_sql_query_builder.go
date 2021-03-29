@@ -52,7 +52,7 @@ func (m *APIClientSQLQueryBuilder) BuildGetAPIClientsQuery(ctx context.Context, 
 }
 
 // BuildCreateAPIClientQuery implements our interface.
-func (m *APIClientSQLQueryBuilder) BuildCreateAPIClientQuery(ctx context.Context, input *types.APICientCreationInput) (query string, args []interface{}) {
+func (m *APIClientSQLQueryBuilder) BuildCreateAPIClientQuery(ctx context.Context, input *types.APIClientCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

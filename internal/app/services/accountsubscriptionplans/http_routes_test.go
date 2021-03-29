@@ -33,6 +33,8 @@ type accountSubscriptionPlansServiceHTTPRoutesTestSuite struct {
 	suite.Suite
 
 	ctx                            context.Context
+	req                            *http.Request
+	res                            *httptest.ResponseRecorder
 	service                        *service
 	exampleUser                    *types.User
 	exampleAccount                 *types.Account
@@ -43,17 +45,20 @@ type accountSubscriptionPlansServiceHTTPRoutesTestSuite struct {
 var _ suite.SetupTestSuite = (*accountSubscriptionPlansServiceHTTPRoutesTestSuite)(nil)
 
 func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) SetupTest() {
+	t := s.T()
+
 	s.ctx = context.Background()
 	s.service = buildTestService()
 	s.exampleUser = fakes.BuildFakeUser()
 	s.exampleAccount = fakes.BuildFakeAccountForUser(s.exampleUser)
+	s.exampleAccount.BelongsToUser = s.exampleUser.ID
 	s.exampleAccountSubscriptionPlan = fakes.BuildFakeAccountSubscriptionPlan()
 	s.exampleInput = fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(s.exampleAccountSubscriptionPlan)
 
 	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
 		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	})
-	require.NoError(s.T(), err)
+	require.NoError(t, err)
 
 	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 	s.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
@@ -62,6 +67,16 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) SetupTest() {
 	s.service.accountSubscriptionPlanIDFetcher = func(req *http.Request) uint64 {
 		return s.exampleAccountSubscriptionPlan.ID
 	}
+
+	s.res = httptest.NewRecorder()
+	s.req, err = http.NewRequestWithContext(
+		s.ctx,
+		http.MethodGet,
+		"http://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, s.req)
 }
 
 var _ suite.WithStats = (*accountSubscriptionPlansServiceHTTPRoutesTestSuite)(nil)
@@ -85,19 +100,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ListHandler(s.res, s.req)
 
-	s.service.ListHandler(res, req)
-
-	assert.Equal(t, http.StatusOK, res.Code, "expected %d ins.service.atus response, got %d", http.StatusOK, res.Code)
+	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d ins.service.atus response, got %d", http.StatusOK, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -113,19 +118,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlanList{}))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ListHandler(s.res, s.req)
 
-	s.service.ListHandler(res, req)
-
-	assert.Equal(t, http.StatusOK, res.Code, "expected %d ins.service.atus response, got %d", http.StatusOK, res.Code)
+	assert.Equal(t, http.StatusOK, s.res.Code, "expected response status to be %d, got %d", http.StatusOK, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -141,19 +136,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ListHandler(s.res, s.req)
 
-	s.service.ListHandler(res, req)
-
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -175,21 +160,11 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}), http.StatusCreated)
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.req = s.req.WithContext(context.WithValue(s.req.Context(), createMiddlewareCtxKey, exampleInput))
 
-	req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
+	s.service.CreateHandler(s.res, s.req)
 
-	s.service.CreateHandler(res, req)
-
-	assert.Equal(t, http.StatusCreated, res.Code)
+	assert.Equal(t, http.StatusCreated, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, mc, ed)
 }
@@ -201,19 +176,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.CreateHandler(s.res, s.req)
 
-	s.service.CreateHandler(res, req)
-
-	assert.Equal(t, http.StatusBadRequest, res.Code)
+	assert.Equal(t, http.StatusBadRequest, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, ed)
 }
@@ -231,21 +196,11 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.req = s.req.WithContext(context.WithValue(s.req.Context(), createMiddlewareCtxKey, exampleInput))
 
-	req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
+	s.service.CreateHandler(s.res, s.req)
 
-	s.service.CreateHandler(res, req)
-
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -261,19 +216,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ReadHandler(s.res, s.req)
 
-	s.service.ReadHandler(res, req)
-
-	assert.Equal(t, http.StatusOK, res.Code, "expected %d ins.service.atus response, got %d", http.StatusOK, res.Code)
+	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d ins.service.atus response, got %d", http.StatusOK, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -289,19 +234,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ReadHandler(s.res, s.req)
 
-	s.service.ReadHandler(res, req)
-
-	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, http.StatusNotFound, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -317,19 +252,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ReadHandler(s.res, s.req)
 
-	s.service.ReadHandler(res, req)
-
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -348,21 +273,11 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountSubscriptionPlan{}))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+	s.service.UpdateHandler(s.res, s.req)
 
-	s.service.UpdateHandler(res, req)
-
-	assert.Equal(t, http.StatusOK, res.Code, "expected %d ins.service.atus response, got %d", http.StatusOK, res.Code)
+	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d ins.service.atus response, got %d", http.StatusOK, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -374,19 +289,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.UpdateHandler(s.res, s.req)
 
-	s.service.UpdateHandler(res, req)
-
-	assert.Equal(t, http.StatusBadRequest, res.Code)
+	assert.Equal(t, http.StatusBadRequest, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, ed)
 }
@@ -404,21 +309,11 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+	s.service.UpdateHandler(s.res, s.req)
 
-	s.service.UpdateHandler(res, req)
-
-	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, http.StatusNotFound, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -436,21 +331,11 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+	s.service.UpdateHandler(s.res, s.req)
 
-	s.service.UpdateHandler(res, req)
-
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -469,21 +354,11 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
+	s.service.UpdateHandler(s.res, s.req)
 
-	s.service.UpdateHandler(res, req)
-
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -499,19 +374,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
 	s.service.planCounter = mc
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ArchiveHandler(s.res, s.req)
 
-	s.service.ArchiveHandler(res, req)
-
-	assert.Equal(t, http.StatusNoContent, res.Code)
+	assert.Equal(t, http.StatusNoContent, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, mc)
 }
@@ -527,19 +392,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ArchiveHandler(s.res, s.req)
 
-	s.service.ArchiveHandler(res, req)
-
-	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, http.StatusNotFound, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }
@@ -555,19 +410,9 @@ func (s *accountSubscriptionPlansServiceHTTPRoutesTestSuite) TestAccountSubscrip
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 	s.service.encoderDecoder = ed
 
-	res := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, req)
-	require.NoError(t, err)
+	s.service.ArchiveHandler(s.res, s.req)
 
-	s.service.ArchiveHandler(res, req)
-
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, ed)
 }

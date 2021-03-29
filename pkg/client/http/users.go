@@ -82,7 +82,7 @@ func (c *Client) SearchForUsersByUsername(ctx context.Context, username string) 
 }
 
 // CreateUser creates a new user.
-func (c *Client) CreateUser(ctx context.Context, input *types.NewUserCreationInput) (*types.UserCreationResponse, error) {
+func (c *Client) CreateUser(ctx context.Context, input *types.UserCreationInput) (*types.UserCreationResponse, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

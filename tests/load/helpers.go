@@ -104,7 +104,7 @@ func createClientForTest(ctx context.Context, name string) (*httpclient.Client, 
 		return nil, nil, err
 	}
 
-	apiClient, err := cookieClient.CreateAPIClient(ctx, cookie, &types.APICientCreationInput{
+	apiClient, err := cookieClient.CreateAPIClient(ctx, cookie, &types.APIClientCreationInput{
 		Name: name,
 		UserLoginInput: types.UserLoginInput{
 			Username:  user.Username,

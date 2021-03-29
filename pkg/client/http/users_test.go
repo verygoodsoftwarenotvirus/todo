@@ -26,7 +26,7 @@ type usersBaseSuite struct {
 
 	ctx             context.Context
 	exampleUser     *types.User
-	exampleInput    *types.NewUserCreationInput
+	exampleInput    *types.UserCreationInput
 	exampleUserList *types.UserList
 }
 
@@ -152,7 +152,7 @@ func (s *usersTestSuite) TestV1Client_CreateUser() {
 		t := s.T()
 
 		expected := fakes.BuildUserCreationResponseFromUser(s.exampleUser)
-		c := buildTestClientWithRequestBodyValidation(t, spec, &types.NewUserCreationInput{}, s.exampleInput, expected)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.UserCreationInput{}, s.exampleInput, expected)
 
 		actual, err := c.CreateUser(s.ctx, s.exampleInput)
 

@@ -27,7 +27,7 @@ type usersTestSuite struct {
 	ctx             context.Context
 	builder         *Builder
 	exampleUser     *types.User
-	exampleInput    *types.NewUserCreationInput
+	exampleInput    *types.UserCreationInput
 	exampleUserList *types.UserList
 }
 

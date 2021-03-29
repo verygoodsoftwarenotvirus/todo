@@ -119,7 +119,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch parsed input from request context.
-	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*types.NewUserCreationInput)
+	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*types.UserCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to UsersService CreateHandler request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)

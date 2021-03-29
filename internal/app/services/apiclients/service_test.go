@@ -43,7 +43,7 @@ func TestProvideAPIClientsService(T *testing.T) {
 		mockAPIClientDataManager := &mocktypes.APIClientDataManager{}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.Anything, APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On("BuildRouteParamIDFetcher", mock.IsType(logging.NewNonOperationalLogger()), APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideAPIClientsService(
 			logging.NewNonOperationalLogger(),

@@ -240,7 +240,7 @@ func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID uint64, filter *t
 }
 
 // CreateAPIClient creates an API client.
-func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APICientCreationInput, createdByUser uint64) (*types.APIClient, error) {
+func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClientCreationInput, createdByUser uint64) (*types.APIClient, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 

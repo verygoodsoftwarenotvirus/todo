@@ -67,7 +67,7 @@ func (b *Builder) BuildSearchForUsersByUsernameRequest(ctx context.Context, user
 }
 
 // BuildCreateUserRequest builds an HTTP request for creating a user.
-func (b *Builder) BuildCreateUserRequest(ctx context.Context, input *types.NewUserCreationInput) (*http.Request, error) {
+func (b *Builder) BuildCreateUserRequest(ctx context.Context, input *types.UserCreationInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

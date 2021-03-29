@@ -62,7 +62,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			examplePassword,
 			exampleUser.TwoFactorSecret,
@@ -155,7 +155,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			examplePassword,
 			exampleUser.TwoFactorSecret,
@@ -194,7 +194,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			examplePassword,
 			exampleUser.TwoFactorSecret,
@@ -228,7 +228,7 @@ func TestService_ListHandler(T *testing.T) {
 		exampleUserList := fakes.BuildFakeUserList()
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUsers", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleUserList, nil)
+		mockDB.UserDataManager.On("GetUsers", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return(exampleUserList, nil)
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -249,7 +249,7 @@ func TestService_ListHandler(T *testing.T) {
 		s := buildTestService(t)
 
 		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On("GetUsers", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return((*types.UserList)(nil), errors.New("blah"))
+		mockDB.UserDataManager.On("GetUsers", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.UserList)(nil), errors.New("blah"))
 		s.userDataManager = mockDB
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -381,8 +381,8 @@ func TestService_CreateHandler(T *testing.T) {
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
 			"EncodeErrorResponse",
-			mock.Anything,
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"user creation is disabled",
 			http.StatusForbidden,
 		)
@@ -682,7 +682,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -776,7 +776,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -824,7 +824,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -880,7 +880,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -1016,8 +1016,8 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
 			"EncodeErrorResponse",
-			mock.Anything,
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"TOTP secret already verified",
 			http.StatusAlreadyReported,
 		)
@@ -1128,13 +1128,13 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType("string")).Return(nil)
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -1221,13 +1221,13 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType("string")).Return(nil)
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -1269,13 +1269,13 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.AnythingOfType("string")).Return(nil)
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType("string")).Return(nil)
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -1322,13 +1322,13 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
-		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.AnythingOfType("string")).Return(errors.New("blah"))
+		mockDB.UserDataManager.On("UpdateUserPassword", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, mock.IsType("string")).Return(errors.New("blah"))
 		s.userDataManager = mockDB
 
 		auth := &mockauth.Authenticator{}
 		auth.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleInput.CurrentPassword,
 			exampleUser.TwoFactorSecret,
@@ -1375,7 +1375,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		returnImage := &images.Image{}
 		ip := &images.MockImageUploadProcessor{}
-		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.AnythingOfType("*http.Request"), "avatar").Return(returnImage, nil)
+		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&http.Request{}), "avatar").Return(returnImage, nil)
 		s.imageUploadProcessor = ip
 
 		um := &mockuploads.UploadManager{}
@@ -1457,7 +1457,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		s.userDataManager = mockDB
 
 		ip := &images.MockImageUploadProcessor{}
-		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.AnythingOfType("*http.Request"), "avatar").Return((*images.Image)(nil), errors.New("blah"))
+		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&http.Request{}), "avatar").Return((*images.Image)(nil), errors.New("blah"))
 		s.imageUploadProcessor = ip
 
 		ed := mockencoding.NewMockEncoderDecoder()
@@ -1492,7 +1492,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		returnImage := &images.Image{}
 		ip := &images.MockImageUploadProcessor{}
-		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.AnythingOfType("*http.Request"), "avatar").Return(returnImage, nil)
+		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&http.Request{}), "avatar").Return(returnImage, nil)
 		s.imageUploadProcessor = ip
 
 		um := &mockuploads.UploadManager{}
@@ -1532,7 +1532,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		returnImage := &images.Image{}
 		ip := &images.MockImageUploadProcessor{}
-		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.AnythingOfType("*http.Request"), "avatar").Return(returnImage, nil)
+		ip.On("Process", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&http.Request{}), "avatar").Return(returnImage, nil)
 		s.imageUploadProcessor = ip
 
 		um := &mockuploads.UploadManager{}

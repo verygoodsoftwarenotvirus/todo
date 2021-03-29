@@ -73,7 +73,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// fetch creation input from request context.
-	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.APICientCreationInput)
+	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.APIClientCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)

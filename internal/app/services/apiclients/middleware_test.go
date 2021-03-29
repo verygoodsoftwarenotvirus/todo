@@ -31,18 +31,14 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
 			"DecodeRequest",
-			mock.Anything,
-			mock.AnythingOfType("*http.Request"),
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.IsType(&http.Request{}),
+			mock.IsType(&types.APIClientCreationInput{}),
 		).Return(nil)
 		s.encoderDecoder = ed
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On(
-			"ServeHTTP",
-			mock.Anything,
-			mock.Anything,
-		)
+		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{}))
 
 		h := s.CreationInputMiddleware(mh)
 		req := buildRequest(t)
@@ -66,13 +62,15 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On(
-			"DecodeRequest", mock.Anything,
-			mock.AnythingOfType("*http.Request"),
-			mock.Anything,
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.IsType(&http.Request{}),
+			mock.IsType(&types.APIClientCreationInput{}),
 		).Return(errors.New("blah"))
 		ed.On(
-			"EncodeErrorResponse", mock.Anything,
-			mock.Anything,
+			"EncodeErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)

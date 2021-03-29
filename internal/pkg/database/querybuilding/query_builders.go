@@ -53,7 +53,7 @@ type (
 		BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{})
 		BuildGetAllAPIClientsCountQuery(ctx context.Context) string
 		BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{})
-		BuildCreateAPIClientQuery(ctx context.Context, input *types.APICientCreationInput) (query string, args []interface{})
+		BuildCreateAPIClientQuery(ctx context.Context, input *types.APIClientCreationInput) (query string, args []interface{})
 		BuildUpdateAPIClientQuery(ctx context.Context, input *types.APIClient) (query string, args []interface{})
 		BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID uint64) (query string, args []interface{})

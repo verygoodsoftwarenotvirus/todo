@@ -57,7 +57,7 @@ func (c *Client) GetAPIClients(ctx context.Context, filter *types.QueryFilter) (
 }
 
 // CreateAPIClient creates an API client.
-func (c *Client) CreateAPIClient(ctx context.Context, cookie *http.Cookie, input *types.APICientCreationInput) (*types.APIClientCreationResponse, error) {
+func (c *Client) CreateAPIClient(ctx context.Context, cookie *http.Cookie, input *types.APIClientCreationInput) (*types.APIClientCreationResponse, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

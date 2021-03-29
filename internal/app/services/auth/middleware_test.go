@@ -36,15 +36,15 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleUser, nil)
+		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
 		s.userDataManager = md
 
 		audm := &mocktypes.AccountUserMembershipDataManager{}
-		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, examplePerms, nil)
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = audm
 
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestService_CookieAuthenticationMiddleware(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 
 		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return((*types.User)(nil), nil)
+		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return((*types.User)(nil), nil)
 		s.userDataManager = md
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -132,7 +132,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
@@ -154,7 +154,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		s.userDataManager = mockDB
 
 		audm := &mocktypes.AccountUserMembershipDataManager{}
-		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, examplePerms, nil)
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = audm
 
 		res := httptest.NewRecorder()
@@ -165,7 +165,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		_, req = attachCookieToRequestForTest(t, s, req, exampleUser)
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		s.UserAttributionMiddleware(h).ServeHTTP(res, req)
 
@@ -213,7 +213,7 @@ func TestService_UserAttributionMiddleware(T *testing.T) {
 		s.userDataManager = mockDB
 
 		audm := &mocktypes.AccountUserMembershipDataManager{}
-		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), mock.Anything).Return(exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions(nil), errors.New("blah"))
+		audm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions(nil), errors.New("blah"))
 		s.accountMembershipManager = audm
 
 		res := httptest.NewRecorder()
@@ -250,7 +250,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		s.userDataManager = mockUserDataManager
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -283,7 +283,7 @@ func TestService_AuthorizationMiddleware(T *testing.T) {
 		s.userDataManager = mockUserDataManager
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
@@ -375,7 +375,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		h := s.UserLoginInputMiddleware(ms)
 		h.ServeHTTP(res, req)
@@ -400,7 +400,7 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.UserLoginInput{})).Return(errors.New("blah"))
 		ed.On("EncodeErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), "attached input is invalid", http.StatusBadRequest)
 		s.encoderDecoder = ed
 
@@ -438,11 +438,11 @@ func TestService_UserLoginInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.UserLoginInput{})).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		h := s.UserLoginInputMiddleware(ms)
 		h.ServeHTTP(res, req)
@@ -473,7 +473,7 @@ func TestService_AdminMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		h := s.AdminMiddleware(ms)
 		h.ServeHTTP(res, req)

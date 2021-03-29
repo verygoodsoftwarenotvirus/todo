@@ -32,8 +32,8 @@ type (
 		Pagination
 	}
 
-	// APICientCreationInput is a struct for use when creating API clients.
-	APICientCreationInput struct {
+	// APIClientCreationInput is a struct for use when creating API clients.
+	APIClientCreationInput struct {
 		UserLoginInput
 		Name          string `json:"name"`
 		ClientID      string `json:"-"`
@@ -55,7 +55,7 @@ type (
 		GetAllAPIClients(ctx context.Context, resultChannel chan []*APIClient, bucketSize uint16) error
 		GetTotalAPIClientCount(ctx context.Context) (uint64, error)
 		GetAPIClients(ctx context.Context, ownerUserID uint64, filter *QueryFilter) (*APIClientList, error)
-		CreateAPIClient(ctx context.Context, input *APICientCreationInput, createdByUser uint64) (*APIClient, error)
+		CreateAPIClient(ctx context.Context, input *APIClientCreationInput, createdByUser uint64) (*APIClient, error)
 		ArchiveAPIClient(ctx context.Context, clientID, ownerUserID, archivedByUser uint64) error
 		GetAuditLogEntriesForAPIClient(ctx context.Context, clientID uint64) ([]*AuditLogEntry, error)
 	}
@@ -73,7 +73,7 @@ type (
 )
 
 // Validate validates a ItemCreationInput.
-func (x *APICientCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+func (x *APIClientCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
 	if err := x.UserLoginInput.Validate(ctx, minUsernameLength, minPasswordLength); err != nil {
 		return err
 	}

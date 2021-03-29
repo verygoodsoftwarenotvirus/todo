@@ -36,7 +36,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
@@ -80,11 +80,11 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 
 		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.Anything).Return(errors.New("blah"))
+		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.UserReputationUpdateInput{})).Return(errors.New("blah"))
 		ed.On(
 			"EncodeErrorResponse",
-			mock.Anything,
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)

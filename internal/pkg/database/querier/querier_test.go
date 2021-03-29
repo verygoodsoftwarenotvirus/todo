@@ -158,7 +158,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		migrationFuncCalled := false
 
 		// expect BuildMigrationFunc to be called
-		mockQueryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).
+		mockQueryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).
 			Return(func() {
 				migrationFuncCalled = true
 			})
@@ -258,7 +258,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		// expect BuildMigrationFunc to be called
-		mockQueryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).
+		mockQueryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).
 			Return(func() {})
 
 		// expect TestUser to be created
@@ -334,7 +334,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		require.NoError(t, err)
 
 		queryBuilder := database.BuildMockSQLQueryBuilder()
-		queryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).Return(fakeMigrationFunc)
+		queryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).Return(fakeMigrationFunc)
 
 		mockDB.ExpectPing().WillDelayFor(0)
 
@@ -365,7 +365,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		require.NoError(t, err)
 
 		queryBuilder := database.BuildMockSQLQueryBuilder()
-		queryBuilder.On("BuildMigrationFunc", mock.AnythingOfType("*sql.DB")).Return(fakeMigrationFunc)
+		queryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).Return(fakeMigrationFunc)
 
 		mockDB.ExpectPing().WillDelayFor(0)
 

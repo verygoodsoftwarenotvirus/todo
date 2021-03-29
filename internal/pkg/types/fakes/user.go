@@ -69,11 +69,11 @@ func BuildFakeUserList() *types.UserList {
 	}
 }
 
-// BuildFakeUserCreationInput builds a faked NewUserCreationInput.
-func BuildFakeUserCreationInput() *types.NewUserCreationInput {
+// BuildFakeUserCreationInput builds a faked UserCreationInput.
+func BuildFakeUserCreationInput() *types.UserCreationInput {
 	exampleUser := BuildFakeUser()
 
-	return &types.NewUserCreationInput{
+	return &types.UserCreationInput{
 		Username: exampleUser.Username,
 		Password: fake.Password(true, true, true, true, true, 32),
 	}
@@ -91,9 +91,9 @@ func BuildTestUserCreationConfig() *types.TestUserCreationConfig {
 	}
 }
 
-// BuildFakeUserCreationInputFromUser builds a faked NewUserCreationInput.
-func BuildFakeUserCreationInputFromUser(user *types.User) *types.NewUserCreationInput {
-	return &types.NewUserCreationInput{
+// BuildFakeUserCreationInputFromUser builds a faked UserCreationInput.
+func BuildFakeUserCreationInputFromUser(user *types.User) *types.UserCreationInput {
+	return &types.UserCreationInput{
 		Username: user.Username,
 		Password: fake.Password(true, true, true, true, true, 32),
 	}

@@ -44,7 +44,7 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		return nil, fmt.Errorf("initializing client: %w", err)
 	}
 
-	in := &types.NewUserCreationInput{
+	in := &types.UserCreationInput{
 		Username: username,
 		Password: gofakeit.Password(true, true, true, true, true, 64),
 	}

@@ -25,7 +25,7 @@ type apiClientsTestSuite struct {
 
 	ctx                  context.Context
 	exampleAPIClient     *types.APIClient
-	exampleInput         *types.APICientCreationInput
+	exampleInput         *types.APIClientCreationInput
 	exampleAPIClientList *types.APIClientList
 }
 

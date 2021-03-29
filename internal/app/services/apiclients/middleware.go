@@ -13,7 +13,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
-		x := new(types.APICientCreationInput)
+		x := new(types.APIClientCreationInput)
 
 		logger := s.logger.WithRequest(req)
 

@@ -45,7 +45,7 @@ func (b *Builder) BuildGetAPIClientsRequest(ctx context.Context, filter *types.Q
 }
 
 // BuildCreateAPIClientRequest builds an HTTP request for creating an API client.
-func (b *Builder) BuildCreateAPIClientRequest(ctx context.Context, cookie *http.Cookie, input *types.APICientCreationInput) (*http.Request, error) {
+func (b *Builder) BuildCreateAPIClientRequest(ctx context.Context, cookie *http.Cookie, input *types.APIClientCreationInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

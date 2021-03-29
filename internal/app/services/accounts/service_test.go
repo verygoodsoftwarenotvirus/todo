@@ -36,9 +36,11 @@ func TestProvideAccountsService(t *testing.T) {
 		return &mockmetrics.UnitCounter{}
 	}
 
+	l := logging.NewNonOperationalLogger()
+
 	rpm := mockrouting.NewRouteParamManager()
-	rpm.On("BuildRouteParamIDFetcher", mock.Anything, AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
-	rpm.On("BuildRouteParamIDFetcher", mock.Anything, UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+	rpm.On("BuildRouteParamIDFetcher", mock.IsType(l), AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
+	rpm.On("BuildRouteParamIDFetcher", mock.IsType(l), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 	s := ProvideService(
 		logging.NewNonOperationalLogger(),

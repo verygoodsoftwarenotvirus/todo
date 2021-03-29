@@ -99,7 +99,7 @@ func (b *MariaDB) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, fi
 }
 
 // BuildCreateAPIClientQuery returns a SQL query (and args) that will create the given APIClient in the database.
-func (b *MariaDB) BuildCreateAPIClientQuery(ctx context.Context, input *types.APICientCreationInput) (query string, args []interface{}) {
+func (b *MariaDB) BuildCreateAPIClientQuery(ctx context.Context, input *types.APIClientCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

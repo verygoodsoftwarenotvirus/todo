@@ -155,7 +155,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
@@ -205,7 +205,7 @@ func TestService_fetchUserFromCookie(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return((*types.User)(nil), expectedError)
 		s.userDataManager = udb
@@ -321,7 +321,7 @@ func TestService_LoginHandler(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return((*types.User)(nil), errors.New("blah"))
 		s.userDataManager = udb
@@ -364,7 +364,7 @@ func TestService_LoginHandler(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
@@ -405,7 +405,7 @@ func TestService_LoginHandler(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
@@ -413,7 +413,7 @@ func TestService_LoginHandler(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -458,7 +458,7 @@ func TestService_LoginHandler(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
@@ -466,7 +466,7 @@ func TestService_LoginHandler(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -509,14 +509,14 @@ func TestService_LoginHandler(T *testing.T) {
 			"Encode",
 
 			s.config.Cookies.Name,
-			mock.AnythingOfType("string"),
+			mock.IsType("string"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
@@ -524,7 +524,7 @@ func TestService_LoginHandler(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -536,7 +536,7 @@ func TestService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetMembershipsForUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
@@ -574,14 +574,14 @@ func TestService_LoginHandler(T *testing.T) {
 		cb.On(
 			"Encode",
 			s.config.Cookies.Name,
-			mock.AnythingOfType("string"),
+			mock.IsType("string"),
 		).Return("", errors.New("blah"))
 		s.cookieManager = cb
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUserByUsername",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.Username,
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
@@ -589,7 +589,7 @@ func TestService_LoginHandler(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -601,7 +601,7 @@ func TestService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetMembershipsForUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleAccount.ID, examplePerms, nil)
 		s.accountMembershipManager = membershipDB
@@ -738,7 +738,7 @@ func TestService_validateLogin(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -771,7 +771,7 @@ func TestService_validateLogin(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -782,14 +782,14 @@ func TestService_validateLogin(T *testing.T) {
 
 		authr.On(
 			"HashPassword",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleLoginData.Password,
 		).Return("blah", nil)
 
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"UpdateUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.User{}),
 		).Return(nil)
 		s.userDataManager = udb
@@ -820,7 +820,7 @@ func TestService_validateLogin(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -830,7 +830,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		authr.On(
 			"HashPassword",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleLoginData.Password,
 		).Return("", expectedErr)
 		s.authenticator = authr
@@ -861,7 +861,7 @@ func TestService_validateLogin(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -871,7 +871,7 @@ func TestService_validateLogin(T *testing.T) {
 
 		authr.On(
 			"HashPassword",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleLoginData.Password,
 		).Return("blah", nil)
 		s.authenticator = authr
@@ -879,7 +879,7 @@ func TestService_validateLogin(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"UpdateUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.User{}),
 		).Return(expectedErr)
 		s.userDataManager = udb
@@ -910,7 +910,7 @@ func TestService_validateLogin(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -943,7 +943,7 @@ func TestService_validateLogin(T *testing.T) {
 		authr := &mockauth.Authenticator{}
 		authr.On(
 			"ValidateLogin",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.HashedPassword,
 			exampleLoginData.Password,
 			exampleUser.TwoFactorSecret,
@@ -986,7 +986,7 @@ func TestService_StatusHandler(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return(exampleUser, nil)
 		s.userDataManager = udb
@@ -1020,7 +1020,7 @@ func TestService_StatusHandler(T *testing.T) {
 		udb := &mocktypes.UserDataManager{}
 		udb.On(
 			"GetUser",
-			mock.Anything,
+			mock.MatchedBy(testutil.ContextMatcher),
 			exampleUser.ID,
 		).Return((*types.User)(nil), errors.New("blah"))
 		s.userDataManager = udb

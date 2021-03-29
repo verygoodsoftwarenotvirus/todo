@@ -12,6 +12,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 )
 
@@ -120,24 +121,9 @@ func (s *TestSuite) checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats 
 	}
 }
 
-func (s *TestSuite) checkTestRunsForAppropriateRunCount(stats *suite.SuiteInformation) {
-	/*
-		Acknowledged that this:
-			1. a corny thing to do
-			2. an annoying thing to have to update when you add new tests
-			3. the source of a false negative when debugging a singular test
-
-		That said, in the event someone boo-boos and leaves something in globalClientExceptions, this part will fail,
-		which is worth it.
-	*/
+func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
 	const totalExpectedTestCount = 81
 
-	if stats.Passed() {
-		require.Equal(s.T(), totalExpectedTestCount, len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))
-	}
-}
-
-func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
 	s.checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats)
-	s.checkTestRunsForAppropriateRunCount(stats)
+	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
 }

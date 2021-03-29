@@ -24,11 +24,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func TestAccountsService(t *testing.T) {
-	suite.Run(t, new(accountsServiceTestSuite))
+func TestAccountsServiceHTTPRoutes(t *testing.T) {
+	suite.Run(t, new(accountsServiceHTTPRoutesTestSuite))
 }
 
-type accountsServiceTestSuite struct {
+type accountsServiceHTTPRoutesTestSuite struct {
 	suite.Suite
 
 	ctx            context.Context
@@ -37,9 +37,9 @@ type accountsServiceTestSuite struct {
 	exampleAccount *types.Account
 }
 
-var _ suite.SetupTestSuite = (*accountsServiceTestSuite)(nil)
+var _ suite.SetupTestSuite = (*accountsServiceHTTPRoutesTestSuite)(nil)
 
-func (s *accountsServiceTestSuite) SetupTest() {
+func (s *accountsServiceHTTPRoutesTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.service = buildTestService()
 	s.exampleUser = fakes.BuildFakeUser()
@@ -59,7 +59,15 @@ func (s *accountsServiceTestSuite) SetupTest() {
 	}
 }
 
-func (s *accountsServiceTestSuite) TestService_ListHandler() {
+var _ suite.WithStats = (*accountsServiceHTTPRoutesTestSuite)(nil)
+
+func (s *accountsServiceHTTPRoutesTestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
+	const totalExpectedTestCount = 17
+
+	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
+}
+
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ListHandler() {
 	t := s.T()
 
 	exampleAccountList := fakes.BuildFakeAccountList()
@@ -89,7 +97,7 @@ func (s *accountsServiceTestSuite) TestService_ListHandler() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestListHandlerWithNoRowsReturned() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ListHandler_WithNoRowsReturned() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
@@ -117,7 +125,7 @@ func (s *accountsServiceTestSuite) TestListHandlerWithNoRowsReturned() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestListHandlerWithErrorFetchingAccountsFromDatabase() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ListHandler_WithErrorFetchingAccountsFromDatabase() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
@@ -145,7 +153,7 @@ func (s *accountsServiceTestSuite) TestListHandlerWithErrorFetchingAccountsFromD
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestCreateHandler() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_CreateHandler() {
 	t := s.T()
 
 	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
@@ -181,7 +189,7 @@ func (s *accountsServiceTestSuite) TestCreateHandler() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, mc, ed)
 }
 
-func (s *accountsServiceTestSuite) TestCreateHandlerWithoutInputAttachedToRequest() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_CreateHandler_WithoutInputAttachedToRequest() {
 	t := s.T()
 
 	ed := mockencoding.NewMockEncoderDecoder()
@@ -205,7 +213,7 @@ func (s *accountsServiceTestSuite) TestCreateHandlerWithoutInputAttachedToReques
 	mock.AssertExpectationsForObjects(t, ed)
 }
 
-func (s *accountsServiceTestSuite) TestCreateHandlerWithErrorCreatingAccount() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_CreateHandler_WithErrorCreatingAccount() {
 	t := s.T()
 
 	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
@@ -237,7 +245,7 @@ func (s *accountsServiceTestSuite) TestCreateHandlerWithErrorCreatingAccount() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestReadHandler() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ReadHandler() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
@@ -265,7 +273,7 @@ func (s *accountsServiceTestSuite) TestReadHandler() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestReadHandlerWithNoAccountInDatabase() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ReadHandler_WithNoAccountInDatabase() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
@@ -293,7 +301,7 @@ func (s *accountsServiceTestSuite) TestReadHandlerWithNoAccountInDatabase() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestReadHandlerWithErrorReadingFromDatabase() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ReadHandler_WithErrorReadingFromDatabase() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
@@ -321,7 +329,7 @@ func (s *accountsServiceTestSuite) TestReadHandlerWithErrorReadingFromDatabase()
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestUpdateHandler() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler() {
 	t := s.T()
 
 	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
@@ -354,7 +362,7 @@ func (s *accountsServiceTestSuite) TestUpdateHandler() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, s.service.accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestUpdateHandlerWithoutUpdateInputAttachedToRequest() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithoutUpdateInputAttachedToRequest() {
 	t := s.T()
 
 	ed := mockencoding.NewMockEncoderDecoder()
@@ -378,7 +386,7 @@ func (s *accountsServiceTestSuite) TestUpdateHandlerWithoutUpdateInputAttachedTo
 	mock.AssertExpectationsForObjects(t, ed)
 }
 
-func (s *accountsServiceTestSuite) TestUpdateHandlerWithNoRows() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithNoRows() {
 	t := s.T()
 
 	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
@@ -410,7 +418,7 @@ func (s *accountsServiceTestSuite) TestUpdateHandlerWithNoRows() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestUpdateHandlerWithErrorQueryingForAccount() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithErrorQueryingForAccount() {
 	t := s.T()
 
 	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
@@ -442,7 +450,7 @@ func (s *accountsServiceTestSuite) TestUpdateHandlerWithErrorQueryingForAccount(
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestUpdateHandlerWithErrorUpdatingAccount() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithErrorUpdatingAccount() {
 	t := s.T()
 
 	s.exampleAccount = fakes.BuildFakeAccount()
@@ -477,7 +485,7 @@ func (s *accountsServiceTestSuite) TestUpdateHandlerWithErrorUpdatingAccount() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestArchiveHandler() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ArchiveHandler() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
@@ -505,7 +513,7 @@ func (s *accountsServiceTestSuite) TestArchiveHandler() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, mc)
 }
 
-func (s *accountsServiceTestSuite) TestArchiveHandlerWithNoAccountInDatabase() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ArchiveHandler_WithNoAccountInDatabase() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
@@ -533,7 +541,7 @@ func (s *accountsServiceTestSuite) TestArchiveHandlerWithNoAccountInDatabase() {
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceTestSuite) TestArchiveHandlerWithErrorWritingToDatabase() {
+func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ArchiveHandler_WithErrorWritingToDatabase() {
 	t := s.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}

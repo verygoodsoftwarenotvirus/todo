@@ -18,8 +18,6 @@ import (
 )
 
 func buildTestService(t *testing.T) *service {
-	t.Helper()
-
 	logger := logging.NewNonOperationalLogger()
 
 	rpm := mockrouting.NewRouteParamManager()

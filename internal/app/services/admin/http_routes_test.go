@@ -8,6 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -19,346 +24,288 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestService_UserAccountStatusChangeHandler(T *testing.T) {
-	T.Parallel()
+func TestAdminServiceHTTPRoutesTestSuite(t *testing.T) {
+	suite.Run(t, new(adminServiceHTTPRoutesTestSuite))
+}
 
-	T.Run("banning users happy path", func(t *testing.T) {
-		t.Parallel()
+type adminServiceHTTPRoutesTestSuite struct {
+	suite.Suite
 
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
+	ctx            context.Context
+	service        *service
+	exampleUser    *types.User
+	exampleAccount *types.Account
+}
 
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
-				},
-			}, nil
-		}
+var _ suite.SetupTestSuite = (*adminServiceHTTPRoutesTestSuite)(nil)
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
+func (s *adminServiceHTTPRoutesTestSuite) SetupTest() {
+	t := s.T()
 
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.BannedAccountStatus
+	s.service = buildTestService(t)
+	s.exampleUser = fakes.BuildFakeUser()
+	s.exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
+	s.exampleAccount = fakes.BuildFakeAccount()
 
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+	var err error
+	s.ctx, err = s.service.sessionManager.Load(context.Background(), "")
+	require.NoError(t, err)
 
-		udb := &mocktypes.AdminUserDataManager{}
-		udb.On(
-			"UpdateUserAccountStatus",
-			mock.Anything,
-			exampleInput.TargetUserID,
-			*exampleInput,
-		).Return(nil)
-		s.userDB = udb
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
-		s.auditLog = auditLog
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusAccepted, res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb, auditLog)
+	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
+		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	})
+	require.NoError(s.T(), err)
+
+	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	s.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+		return reqCtx, nil
+	}
+	s.service.userIDFetcher = func(req *http.Request) uint64 {
+		return s.exampleUser.ID
+	}
+}
+
+var _ suite.WithStats = (*adminServiceHTTPRoutesTestSuite)(nil)
 
-	T.Run("terminating accounts happy path", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
-				},
-			}, nil
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.TerminatedAccountStatus
-
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
-
-		udb := &mocktypes.AdminUserDataManager{}
-		udb.On(
-			"UpdateUserAccountStatus",
-			mock.Anything,
-			exampleInput.TargetUserID,
-			*exampleInput,
-		).Return(nil)
-		s.userDB = udb
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogAccountTerminationEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
-		s.auditLog = auditLog
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusAccepted, res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb, auditLog)
-	})
-
-	T.Run("with missing input", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
-				},
-			}, nil
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.UserAccountStatusChangeHandler(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-	})
-
-	T.Run("with error fetching session", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return nil, errors.New("blah")
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.BannedAccountStatus
-
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-	})
-
-	T.Run("with non-admin user", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildNoAdminPerms(),
-				},
-			}, nil
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.BannedAccountStatus
-
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusUnauthorized, res.Code)
-	})
-
-	T.Run("with admin user that does not have the right permissions", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildNoAdminPerms() + 1,
-				},
-			}, nil
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.BannedAccountStatus
-
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusForbidden, res.Code)
-	})
-
-	T.Run("returns 404 when user does not exist", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
-				},
-			}, nil
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.BannedAccountStatus
-
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
-
-		udb := &mocktypes.AdminUserDataManager{}
-		udb.On(
-			"UpdateUserAccountStatus",
-			mock.Anything,
-			exampleInput.TargetUserID,
-			*exampleInput,
-		).Return(sql.ErrNoRows)
-		s.userDB = udb
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusNotFound, res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb)
-	})
-
-	T.Run("with error banning user", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
-				},
-			}, nil
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.BannedAccountStatus
-
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
-
-		udb := &mocktypes.AdminUserDataManager{}
-		udb.On(
-			"UpdateUserAccountStatus",
-			mock.Anything,
-			exampleInput.TargetUserID,
-			*exampleInput,
-		).Return(errors.New("blah"))
-		s.userDB = udb
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb)
-	})
-
-	T.Run("with error destroying session", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-		ctx, err := s.sessionManager.Load(context.Background(), "")
-		require.NoError(t, err)
-
-		ms := &mockstore.MockStore{}
-		ms.ExpectDelete("", errors.New("blah"))
-		s.sessionManager.Store = ms
-
-		exampleUser := fakes.BuildFakeUser()
-		s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-			return &types.RequestContext{
-				User: types.UserRequestContext{
-					ID:                      exampleUser.ID,
-					ServiceAdminPermissions: testutil.BuildMaxServiceAdminPerms(),
-				},
-			}, nil
-		}
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://blah.com", nil)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
-		exampleInput.NewReputation = types.BannedAccountStatus
-
-		req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
-		s.auditLog = auditLog
-
-		udb := &mocktypes.AdminUserDataManager{}
-		udb.On(
-			"UpdateUserAccountStatus",
-			mock.Anything,
-			exampleInput.TargetUserID,
-			*exampleInput,
-		).Return(nil)
-		s.userDB = udb
-
-		s.UserAccountStatusChangeHandler(res, req)
-		assert.Equal(t, http.StatusAccepted, res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb)
-	})
+func (s *adminServiceHTTPRoutesTestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
+	const totalExpectedTestCount = 9
+
+	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) neuterAdminUser() {
+	s.exampleUser.ServiceAdminPermissions = 0
+	s.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
+		return types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
+			s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
+		})
+	}
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_BanningAccounts() {
+	t := s.T()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.BannedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	udb := &mocktypes.AdminUserDataManager{}
+	udb.On(
+		"UpdateUserAccountStatus",
+		mock.Anything,
+		exampleInput.TargetUserID,
+		*exampleInput,
+	).Return(nil)
+	s.service.userDB = udb
+
+	auditLog := &mocktypes.AuditLogEntryDataManager{}
+	auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
+	s.service.auditLog = auditLog
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusAccepted, res.Code)
+
+	mock.AssertExpectationsForObjects(t, udb, auditLog)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_TerminatingAccounts() {
+	t := s.T()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.TerminatedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	udb := &mocktypes.AdminUserDataManager{}
+	udb.On(
+		"UpdateUserAccountStatus",
+		mock.Anything,
+		exampleInput.TargetUserID,
+		*exampleInput,
+	).Return(nil)
+	s.service.userDB = udb
+
+	auditLog := &mocktypes.AuditLogEntryDataManager{}
+	auditLog.On("LogAccountTerminationEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
+	s.service.auditLog = auditLog
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusAccepted, res.Code)
+
+	mock.AssertExpectationsForObjects(t, udb, auditLog)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithMissingInput() {
+	t := s.T()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithErrorFetchingSession() {
+	t := s.T()
+
+	s.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
+		return nil, errors.New("blah")
+	}
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.BannedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithNonAdminUser() {
+	t := s.T()
+
+	s.neuterAdminUser()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.BannedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusForbidden, res.Code)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithAdminThatHasInadequatePermissions() {
+	t := s.T()
+
+	s.neuterAdminUser()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.BannedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusForbidden, res.Code)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithNonexistentUser() {
+	t := s.T()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.BannedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	udb := &mocktypes.AdminUserDataManager{}
+	udb.On(
+		"UpdateUserAccountStatus",
+		mock.Anything,
+		exampleInput.TargetUserID,
+		*exampleInput,
+	).Return(sql.ErrNoRows)
+	s.service.userDB = udb
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusNotFound, res.Code)
+
+	mock.AssertExpectationsForObjects(t, udb)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithErrorPerformingReputationUpdate() {
+	t := s.T()
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.BannedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	udb := &mocktypes.AdminUserDataManager{}
+	udb.On(
+		"UpdateUserAccountStatus",
+		mock.Anything,
+		exampleInput.TargetUserID,
+		*exampleInput,
+	).Return(errors.New("blah"))
+	s.service.userDB = udb
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusInternalServerError, res.Code)
+
+	mock.AssertExpectationsForObjects(t, udb)
+}
+
+func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithErrorDestroyingSession() {
+	t := s.T()
+
+	ms := &mockstore.MockStore{}
+	ms.ExpectDelete("", errors.New("blah"))
+	s.service.sessionManager.Store = ms
+
+	res := httptest.NewRecorder()
+	req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://blah.com", nil)
+	require.NotNil(t, req)
+	require.NoError(t, err)
+
+	exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+	exampleInput.NewReputation = types.BannedAccountStatus
+
+	req = req.WithContext(context.WithValue(req.Context(), accountStatusUpdateMiddlewareCtxKey, exampleInput))
+
+	auditLog := &mocktypes.AuditLogEntryDataManager{}
+	auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, exampleInput.TargetUserID, exampleInput.Reason).Return()
+	s.service.auditLog = auditLog
+
+	udb := &mocktypes.AdminUserDataManager{}
+	udb.On(
+		"UpdateUserAccountStatus",
+		mock.Anything,
+		exampleInput.TargetUserID,
+		*exampleInput,
+	).Return(nil)
+	s.service.userDB = udb
+
+	s.service.UserAccountStatusChangeHandler(res, req)
+	assert.Equal(t, http.StatusAccepted, res.Code)
+
+	mock.AssertExpectationsForObjects(t, udb)
 }

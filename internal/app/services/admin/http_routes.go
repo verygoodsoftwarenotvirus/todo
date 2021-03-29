@@ -42,7 +42,8 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	if !reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() {
-		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+		// this should never happen in production
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "inadequate permissions for route", http.StatusForbidden)
 		return
 	}
 

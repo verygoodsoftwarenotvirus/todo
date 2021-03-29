@@ -48,25 +48,25 @@ func (c *Config) SetupJaeger() (func(), error) {
 
 // Tracer describes a tracer.
 type Tracer interface {
-	StartSpan(ctx context.Context) (context.Context, trace.Span)
-	StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span)
+	StartSpan(ctx context.Context) (context.Context, Span)
+	StartCustomSpan(ctx context.Context, name string) (context.Context, Span)
 }
 
-var _ Tracer = (*otSpanManager)(nil)
+var _ Tracer = (*otelSpanManager)(nil)
 
-type otSpanManager struct {
+type otelSpanManager struct {
 	tracer trace.Tracer
 }
 
 // NewTracer creates a Tracer.
 func NewTracer(name string) Tracer {
-	return &otSpanManager{
+	return &otelSpanManager{
 		tracer: otel.Tracer(name),
 	}
 }
 
 // StartSpan wraps tracer.Start.
-func (t *otSpanManager) StartSpan(ctx context.Context) (context.Context, trace.Span) {
+func (t *otelSpanManager) StartSpan(ctx context.Context) (context.Context, Span) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -75,7 +75,7 @@ func (t *otSpanManager) StartSpan(ctx context.Context) (context.Context, trace.S
 }
 
 // StartCustomSpan wraps tracer.Start.
-func (t *otSpanManager) StartCustomSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+func (t *otelSpanManager) StartCustomSpan(ctx context.Context, name string) (context.Context, Span) {
 	if ctx == nil {
 		ctx = context.Background()
 	}

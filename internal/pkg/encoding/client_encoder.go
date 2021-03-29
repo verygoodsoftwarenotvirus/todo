@@ -34,16 +34,17 @@ func (e *clientEncoder) Unmarshal(ctx context.Context, data []byte, v interface{
 	defer span.End()
 
 	logger := e.logger.WithValue("data_length", len(data))
+	var unmarshalFunc func(data []byte, v interface{}) error
 
 	switch e.contentType {
 	case ContentTypeXML:
-		if err := xml.Unmarshal(data, v); err != nil {
-			return observability.PrepareError(err, logger, span, "unmarshalling XML content")
-		}
+		unmarshalFunc = xml.Unmarshal
 	default:
-		if err := json.Unmarshal(data, v); err != nil {
-			return observability.PrepareError(err, logger, span, "unmarshalling JSON content")
-		}
+		unmarshalFunc = json.Unmarshal
+	}
+
+	if err := unmarshalFunc(data, v); err != nil {
+		return observability.PrepareError(err, logger, span, "unmarshalling JSON content")
 	}
 
 	return nil
@@ -74,22 +75,21 @@ func (e *clientEncoder) EncodeReader(ctx context.Context, data interface{}) (io.
 	_, span := e.tracer.StartSpan(ctx)
 	defer span.End()
 
+	var marshalFunc func(v interface{}) ([]byte, error)
+
 	switch e.contentType {
 	case ContentTypeXML:
-		out, err := xml.Marshal(data)
-		if err != nil {
-			return nil, observability.PrepareError(err, e.logger, span, "marshaling to XML")
-		}
-
-		return bytes.NewReader(out), nil
+		marshalFunc = xml.Marshal
 	default:
-		out, err := json.Marshal(data)
-		if err != nil {
-			return nil, observability.PrepareError(err, e.logger, span, "marshaling to JSON")
-		}
-
-		return bytes.NewReader(out), nil
+		marshalFunc = json.Marshal
 	}
+
+	out, err := marshalFunc(data)
+	if err != nil {
+		return nil, observability.PrepareError(err, e.logger, span, "marshaling to XML")
+	}
+
+	return bytes.NewReader(out), nil
 }
 
 // ProvideClientEncoder provides a ClientEncoder.

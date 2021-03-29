@@ -21,337 +21,337 @@ import (
 )
 
 func TestAccountsServiceHTTPRoutes(t *testing.T) {
-	suite.Run(t, new(accountsServiceHTTPRoutesTestSuite))
+	suite.Run(t, new(accountsServiceHTTPRoutesTestHelper))
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ListHandler() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ListHandler() {
+	t := helper.T()
 
 	exampleAccountList := fakes.BuildFakeAccountList()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleAccountList, nil)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return(exampleAccountList, nil)
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ListHandler(s.res, s.req)
+	helper.service.ListHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ListHandler_WithNoRowsReturned() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ListHandler_WithNoRowsReturned() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), sql.ErrNoRows)
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AccountList{}))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ListHandler(s.res, s.req)
+	helper.service.ListHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ListHandler_WithErrorFetchingAccountsFromDatabase() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ListHandler_WithErrorFetchingAccountsFromDatabase() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccounts", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID, mock.IsType(&types.QueryFilter{})).Return((*types.AccountList)(nil), errors.New("blah"))
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ListHandler(s.res, s.req)
+	helper.service.ListHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_CreateHandler() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_CreateHandler() {
+	t := helper.T()
 
-	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
+	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(helper.exampleAccount)
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), s.exampleUser.ID).Return(s.exampleAccount, nil)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), helper.exampleUser.ID).Return(helper.exampleAccount, nil)
+	helper.service.accountDataManager = accountDataManager
 
 	mc := &mockmetrics.UnitCounter{}
 	mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher))
-	s.service.accountCounter = mc
+	helper.service.accountCounter = mc
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}), http.StatusCreated)
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.req = s.req.WithContext(context.WithValue(s.req.Context(), createMiddlewareCtxKey, exampleInput))
+	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), createMiddlewareCtxKey, exampleInput))
 
-	s.service.CreateHandler(s.res, s.req)
+	helper.service.CreateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusCreated, s.res.Code)
+	assert.Equal(t, http.StatusCreated, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, mc, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_CreateHandler_WithoutInputAttachedToRequest() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_CreateHandler_WithoutInputAttachedToRequest() {
+	t := helper.T()
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
+	helper.service.CreateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusBadRequest, s.res.Code)
+	assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_CreateHandler_WithErrorCreatingAccount() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_CreateHandler_WithErrorCreatingAccount() {
+	t := helper.T()
 
-	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
+	exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(helper.exampleAccount)
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), s.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("CreateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AccountCreationInput{}), helper.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.req = s.req.WithContext(context.WithValue(s.req.Context(), createMiddlewareCtxKey, exampleInput))
+	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), createMiddlewareCtxKey, exampleInput))
 
-	s.service.CreateHandler(s.res, s.req)
+	helper.service.CreateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ReadHandler() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ReadHandler() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return(s.exampleAccount, nil)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID).Return(helper.exampleAccount, nil)
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ReadHandler(s.res, s.req)
+	helper.service.ReadHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ReadHandler_WithNoAccountInDatabase() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ReadHandler_WithNoAccountInDatabase() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ReadHandler(s.res, s.req)
+	helper.service.ReadHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusNotFound, s.res.Code)
+	assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ReadHandler_WithErrorReadingFromDatabase() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ReadHandler_WithErrorReadingFromDatabase() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ReadHandler(s.res, s.req)
+	helper.service.ReadHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_UpdateHandler() {
+	t := helper.T()
 
-	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(helper.exampleAccount)
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return(s.exampleAccount, nil)
-	accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), s.exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(nil)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID).Return(helper.exampleAccount, nil)
+	accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), helper.exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(nil)
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Account{}))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
+	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	s.service.UpdateHandler(s.res, s.req)
+	helper.service.UpdateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-	mock.AssertExpectationsForObjects(t, accountDataManager, s.service.accountDataManager, ed)
+	mock.AssertExpectationsForObjects(t, accountDataManager, helper.service.accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithoutUpdateInputAttachedToRequest() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_UpdateHandler_WithoutUpdateInputAttachedToRequest() {
+	t := helper.T()
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.UpdateHandler(s.res, s.req)
+	helper.service.UpdateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusBadRequest, s.res.Code)
+	assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithNoRows() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_UpdateHandler_WithNoRows() {
+	t := helper.T()
 
-	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(helper.exampleAccount)
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID).Return((*types.Account)(nil), sql.ErrNoRows)
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
+	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	s.service.UpdateHandler(s.res, s.req)
+	helper.service.UpdateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusNotFound, s.res.Code)
+	assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithErrorQueryingForAccount() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_UpdateHandler_WithErrorQueryingForAccount() {
+	t := helper.T()
 
-	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(helper.exampleAccount)
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID).Return((*types.Account)(nil), errors.New("blah"))
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
+	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	s.service.UpdateHandler(s.res, s.req)
+	helper.service.UpdateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_UpdateHandler_WithErrorUpdatingAccount() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_UpdateHandler_WithErrorUpdatingAccount() {
+	t := helper.T()
 
-	s.exampleAccount = fakes.BuildFakeAccount()
-	s.exampleAccount.BelongsToUser = s.exampleUser.ID
-	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(s.exampleAccount)
+	helper.exampleAccount = fakes.BuildFakeAccount()
+	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
+	exampleInput := fakes.BuildFakeAccountUpdateInputFromAccount(helper.exampleAccount)
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID).Return(s.exampleAccount, nil)
-	accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), s.exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(errors.New("blah"))
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("GetAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID).Return(helper.exampleAccount, nil)
+	accountDataManager.On("UpdateAccount", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.Account{}), helper.exampleUser.ID, mock.IsType([]*types.FieldChangeSummary{})).Return(errors.New("blah"))
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.req = s.req.WithContext(context.WithValue(s.req.Context(), updateMiddlewareCtxKey, exampleInput))
+	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
 
-	s.service.UpdateHandler(s.res, s.req)
+	helper.service.UpdateHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ArchiveHandler() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ArchiveHandler() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID, s.exampleUser.ID).Return(nil)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID).Return(nil)
+	helper.service.accountDataManager = accountDataManager
 
 	mc := &mockmetrics.UnitCounter{}
 	mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
-	s.service.accountCounter = mc
+	helper.service.accountCounter = mc
 
-	s.service.ArchiveHandler(s.res, s.req)
+	helper.service.ArchiveHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusNoContent, s.res.Code)
+	assert.Equal(t, http.StatusNoContent, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, mc)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ArchiveHandler_WithNoAccountInDatabase() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ArchiveHandler_WithNoAccountInDatabase() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID, s.exampleUser.ID).Return(sql.ErrNoRows)
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID).Return(sql.ErrNoRows)
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ArchiveHandler(s.res, s.req)
+	helper.service.ArchiveHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusNotFound, s.res.Code)
+	assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }
 
-func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ArchiveHandler_WithErrorWritingToDatabase() {
-	t := s.T()
+func (helper *accountsServiceHTTPRoutesTestHelper) TestAccountsService_ArchiveHandler_WithErrorWritingToDatabase() {
+	t := helper.T()
 
 	accountDataManager := &mocktypes.AccountDataManager{}
-	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), s.exampleAccount.ID, s.exampleUser.ID, s.exampleUser.ID).Return(errors.New("blah"))
-	s.service.accountDataManager = accountDataManager
+	accountDataManager.On("ArchiveAccount", mock.MatchedBy(testutil.ContextMatcher), helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID).Return(errors.New("blah"))
+	helper.service.accountDataManager = accountDataManager
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ArchiveHandler(s.res, s.req)
+	helper.service.ArchiveHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, accountDataManager, ed)
 }

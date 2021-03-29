@@ -20,11 +20,11 @@ import (
 )
 
 func TestAPIClientsServiceHTTPRoutes(t *testing.T) {
-	suite.Run(t, new(apiClientsServiceHTTPRoutesTestSuite))
+	suite.Run(t, new(apiClientsServiceHTTPRoutesTestHelper))
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_ListHandler() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_ListHandler() {
+	t := helper.T()
 
 	exampleAPIClientList := fakes.BuildFakeAPIClientList()
 
@@ -32,377 +32,377 @@ func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_ListHandler
 	mockDB.APIClientDataManager.On(
 		"GetAPIClients",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 		mock.IsType(&types.QueryFilter{}),
 	).Return(exampleAPIClientList, nil)
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ListHandler(s.res, s.req)
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	helper.service.ListHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_ListHandler_WithNoRowsReturned() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_ListHandler_WithNoRowsReturned() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 	mockDB.APIClientDataManager.On(
 		"GetAPIClients",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 		mock.IsType(&types.QueryFilter{}),
 	).Return((*types.APIClientList)(nil), sql.ErrNoRows)
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ListHandler(s.res, s.req)
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	helper.service.ListHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_ListHandler_WithErrorRetrievingFromDatabase() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_ListHandler_WithErrorRetrievingFromDatabase() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 	mockDB.APIClientDataManager.On(
 		"GetAPIClients",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 		mock.IsType(&types.QueryFilter{}),
 	).Return((*types.APIClientList)(nil), errors.New("blah"))
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.ListHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.ListHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 
 	mockDB.UserDataManager.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
 
 	a := &mockauth.Authenticator{}
 	a.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = a
+	helper.service.authenticator = a
 
 	sg := &mockSecretGenerator{}
-	sg.On("GenerateClientID").Return(s.exampleAPIClient.ClientID, nil)
-	sg.On("GenerateClientSecret").Return(s.exampleAPIClient.ClientSecret, nil)
-	s.service.secretGenerator = sg
+	sg.On("GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
+	sg.On("GenerateClientSecret").Return(helper.exampleAPIClient.ClientSecret, nil)
+	helper.service.secretGenerator = sg
 
 	mockDB.APIClientDataManager.On(
 		"CreateAPIClient",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleInput,
-		s.exampleUser.ID,
-	).Return(s.exampleAPIClient, nil)
+		helper.exampleInput,
+		helper.exampleUser.ID,
+	).Return(helper.exampleAPIClient, nil)
 
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	uc := &mockmetrics.UnitCounter{}
 	uc.On("Increment", mock.MatchedBy(testutil.ContextMatcher)).Return()
-	s.service.apiClientCounter = uc
+	helper.service.apiClientCounter = uc
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientCreationResponse{}), http.StatusCreated)
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusCreated, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusCreated, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, a, sg, uc, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithMissingInput() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler_WithMissingInput() {
+	t := helper.T()
 
-	s.req = testutil.BuildTestRequest(t)
+	helper.req = testutil.BuildTestRequest(t)
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusBadRequest, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithErrorRetrievingUser() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler_WithErrorRetrievingUser() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 	).Return((*types.User)(nil), errors.New("blah"))
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithInvalidCredentials() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler_WithInvalidCredentials() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
 	mockDB.APIClientDataManager.On(
 		"CreateAPIClient",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleInput,
-		s.exampleUser.ID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+		helper.exampleInput,
+		helper.exampleUser.ID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	a := &mockauth.Authenticator{}
 	a.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(false, nil)
-	s.service.authenticator = a
+	helper.service.authenticator = a
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, a, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithInvalidPassword() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler_WithInvalidPassword() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 
 	mockDB.UserDataManager.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
 	mockDB.APIClientDataManager.On(
 		"CreateAPIClient",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleInput,
-		s.exampleUser.ID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+		helper.exampleInput,
+		helper.exampleUser.ID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	a := &mockauth.Authenticator{}
 	a.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, errors.New("blah"))
-	s.service.authenticator = a
+	helper.service.authenticator = a
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, a, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithErrorGeneratingClientID() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler_WithErrorGeneratingClientID() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 
 	mockDB.UserDataManager.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
 
 	a := &mockauth.Authenticator{}
 	a.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = a
+	helper.service.authenticator = a
 
 	sg := &mockSecretGenerator{}
 	sg.On("GenerateClientID").Return("", errors.New("blah"))
-	s.service.secretGenerator = sg
+	helper.service.secretGenerator = sg
 
 	mockDB.APIClientDataManager.On(
 		"CreateAPIClient",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleInput,
-		s.exampleUser.ID,
-	).Return(s.exampleAPIClient, nil)
+		helper.exampleInput,
+		helper.exampleUser.ID,
+	).Return(helper.exampleAPIClient, nil)
 
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithErrorGeneratingClientSecret() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler_WithErrorGeneratingClientSecret() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 
 	mockDB.UserDataManager.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
 
 	a := &mockauth.Authenticator{}
 	a.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = a
+	helper.service.authenticator = a
 
 	sg := &mockSecretGenerator{}
-	sg.On("GenerateClientID").Return(s.exampleAPIClient.ClientID, nil)
+	sg.On("GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
 	sg.On("GenerateClientSecret").Return([]byte(nil), errors.New("blah"))
-	s.service.secretGenerator = sg
+	helper.service.secretGenerator = sg
 
 	mockDB.APIClientDataManager.On(
 		"CreateAPIClient",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleInput,
-		s.exampleUser.ID,
-	).Return(s.exampleAPIClient, nil)
+		helper.exampleInput,
+		helper.exampleUser.ID,
+	).Return(helper.exampleAPIClient, nil)
 
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
 }
 
-func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithErrorCreatingAPIClientInDataStore() {
-	t := s.T()
+func (helper *apiClientsServiceHTTPRoutesTestHelper) TestAPIClientsService_CreateHandler_WithErrorCreatingAPIClientInDataStore() {
+	t := helper.T()
 
 	mockDB := database.BuildMockDatabase()
 
 	mockDB.UserDataManager.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
 
 	a := &mockauth.Authenticator{}
 	a.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = a
+	helper.service.authenticator = a
 
 	sg := &mockSecretGenerator{}
-	sg.On("GenerateClientID").Return(s.exampleAPIClient.ClientID, nil)
-	sg.On("GenerateClientSecret").Return(s.exampleAPIClient.ClientSecret, nil)
-	s.service.secretGenerator = sg
+	sg.On("GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
+	sg.On("GenerateClientSecret").Return(helper.exampleAPIClient.ClientSecret, nil)
+	helper.service.secretGenerator = sg
 
 	mockDB.APIClientDataManager.On(
 		"CreateAPIClient",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleInput,
-		s.exampleUser.ID,
+		helper.exampleInput,
+		helper.exampleUser.ID,
 	).Return((*types.APIClient)(nil), errors.New("blah"))
 
-	s.service.apiClientDataManager = mockDB
-	s.service.userDataManager = mockDB
+	helper.service.apiClientDataManager = mockDB
+	helper.service.userDataManager = mockDB
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-	s.service.encoderDecoder = ed
+	helper.service.encoderDecoder = ed
 
-	s.service.CreateHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.CreateHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
 }

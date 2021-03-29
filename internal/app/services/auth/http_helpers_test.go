@@ -43,7 +43,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	return ctx, req.WithContext(ctx)
 }
 
-type authServiceHTTPRoutesTestSuite struct {
+type authServiceHTTPRoutesTestHelper struct {
 	suite.Suite
 
 	ctx               context.Context
@@ -57,54 +57,54 @@ type authServiceHTTPRoutesTestSuite struct {
 	exampleLoginInput *types.UserLoginInput
 }
 
-func (s *authServiceHTTPRoutesTestSuite) setContextFetcher() {
-	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, s.examplePerms)
-	require.NoError(s.T(), err)
+func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher() {
+	reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+	require.NoError(helper.T(), err)
 
-	s.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
+	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
 		return reqCtx, nil
 	}
 }
 
-var _ suite.SetupTestSuite = (*authServiceHTTPRoutesTestSuite)(nil)
+var _ suite.SetupTestSuite = (*authServiceHTTPRoutesTestHelper)(nil)
 
-func (s *authServiceHTTPRoutesTestSuite) SetupTest() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) SetupTest() {
+	t := helper.T()
 
-	s.ctx = context.Background()
-	s.service = buildTestService(t)
-	s.exampleUser = fakes.BuildFakeUser()
-	s.exampleAccount = fakes.BuildFakeAccount()
-	s.exampleAccount.BelongsToUser = s.exampleUser.ID
-	s.exampleAPIClient = fakes.BuildFakeAPIClient()
-	s.exampleAPIClient.BelongsToUser = s.exampleUser.ID
-	s.exampleLoginInput = fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
+	helper.ctx = context.Background()
+	helper.service = buildTestService(t)
+	helper.exampleUser = fakes.BuildFakeUser()
+	helper.exampleAccount = fakes.BuildFakeAccount()
+	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
+	helper.exampleAPIClient = fakes.BuildFakeAPIClient()
+	helper.exampleAPIClient.BelongsToUser = helper.exampleUser.ID
+	helper.exampleLoginInput = fakes.BuildFakeUserLoginInputFromUser(helper.exampleUser)
 
-	s.examplePerms = map[uint64]permissions.ServiceUserPermissions{
-		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
+	helper.examplePerms = map[uint64]permissions.ServiceUserPermissions{
+		helper.exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	}
 
-	s.setContextFetcher()
+	helper.setContextFetcher()
 
-	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 	var err error
 
-	s.res = httptest.NewRecorder()
-	s.req, err = http.NewRequestWithContext(
-		s.ctx,
+	helper.res = httptest.NewRecorder()
+	helper.req, err = http.NewRequestWithContext(
+		helper.ctx,
 		http.MethodGet,
 		"http://todo.verygoodsoftwarenotvirus.ru",
 		nil,
 	)
-	require.NotNil(t, s.req)
+	require.NotNil(t, helper.req)
 	require.NoError(t, err)
 }
 
-var _ suite.WithStats = (*authServiceHTTPRoutesTestSuite)(nil)
+var _ suite.WithStats = (*authServiceHTTPRoutesTestHelper)(nil)
 
-func (s *authServiceHTTPRoutesTestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
+func (helper *authServiceHTTPRoutesTestHelper) HandleStats(_ string, stats *suite.SuiteInformation) {
 	const totalExpectedTestCount = 55
 
-	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
+	testutil.AssertAppropriateNumberOfTestsRan(helper.T(), totalExpectedTestCount, stats)
 }

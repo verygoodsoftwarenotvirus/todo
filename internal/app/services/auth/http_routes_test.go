@@ -32,479 +32,469 @@ import (
 )
 
 func TestAuthService(t *testing.T) {
-	suite.Run(t, new(authServiceHTTPRoutesTestSuite))
+	suite.Run(t, new(authServiceHTTPRoutesTestHelper))
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_DecodeCookieFromRequest() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_DecodeCookieFromRequest() {
+	t := helper.T()
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
-	_, userID, err := s.service.getUserIDFromCookie(s.ctx, s.req)
+	_, userID, err := helper.service.getUserIDFromCookie(helper.ctx, helper.req)
 	assert.NoError(t, err)
-	assert.Equal(t, s.exampleUser.ID, userID)
+	assert.Equal(t, helper.exampleUser.ID, userID)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_DecodeCookieFromRequest_WithInvalidCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_DecodeCookieFromRequest_WithInvalidCookie() {
+	t := helper.T()
 
 	// begin building bad cookie.
 	// NOTE: any code here is duplicated from service.buildAuthCookie
 	// any changes made there might need to be reflected here.
 	c := &http.Cookie{
-		Name:     s.service.config.Cookies.Name,
+		Name:     helper.service.config.Cookies.Name,
 		Value:    "blah blah blah this is not a real cookie",
 		Path:     "/",
 		HttpOnly: true,
 	}
 	// end building bad cookie.
-	s.req.AddCookie(c)
+	helper.req.AddCookie(c)
 
-	_, userID, err := s.service.getUserIDFromCookie(s.req.Context(), s.req)
+	_, userID, err := helper.service.getUserIDFromCookie(helper.req.Context(), helper.req)
 	assert.Error(t, err)
 	assert.Zero(t, userID)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_DecodeCookieFromRequest_WithoutCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_DecodeCookieFromRequest_WithoutCookie() {
+	t := helper.T()
 
-	_, userID, err := s.service.getUserIDFromCookie(s.req.Context(), s.req)
+	_, userID, err := helper.service.getUserIDFromCookie(helper.req.Context(), helper.req)
 	assert.Error(t, err)
 	assert.Equal(t, err, http.ErrNoCookie)
 	assert.Zero(t, userID)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_determineUserFromRequestCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_determineUserFromRequestCookie() {
+	t := helper.T()
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
-	actualUser, err := s.service.determineUserFromRequestCookie(s.ctx, s.req)
-	assert.Equal(t, s.exampleUser, actualUser)
+	actualUser, err := helper.service.determineUserFromRequestCookie(helper.ctx, helper.req)
+	assert.Equal(t, helper.exampleUser, actualUser)
 	assert.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_determineUserFromRequestCookie_WithoutCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_determineUserFromRequestCookie_WithoutCookie() {
+	t := helper.T()
 
-	actualUser, err := s.service.determineUserFromRequestCookie(s.req.Context(), s.req)
+	actualUser, err := helper.service.determineUserFromRequestCookie(helper.req.Context(), helper.req)
 	assert.Nil(t, actualUser)
 	assert.Error(t, err)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_determineUserFromRequestCookie_WithErrorFetchingUser() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_determineUserFromRequestCookie_WithErrorFetchingUser() {
+	t := helper.T()
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 	expectedError := errors.New("blah")
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 	).Return((*types.User)(nil), expectedError)
-	s.service.userDataManager = udb
+	helper.service.userDataManager = udb
 
-	actualUser, err := s.service.determineUserFromRequestCookie(s.req.Context(), s.req)
+	actualUser, err := helper.service.determineUserFromRequestCookie(helper.req.Context(), helper.req)
 	assert.Nil(t, actualUser)
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler() {
+	t := helper.T()
 
-	s.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, s.exampleLoginInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUserByUsername",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.Username,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.Username,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
 	membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 	membershipDB.On(
 		"GetMembershipsForUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleAccount.ID, s.examplePerms, nil)
-	s.service.accountMembershipManager = membershipDB
+		helper.exampleUser.ID,
+	).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+	helper.service.accountMembershipManager = membershipDB
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
 	auditLog.On(
 		"LogSuccessfulLoginEvent",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 	)
-	s.service.auditLog = auditLog
+	helper.service.auditLog = auditLog
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusAccepted, s.res.Code)
-	assert.NotEmpty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusAccepted, helper.res.Code)
+	assert.NotEmpty(t, helper.res.Header().Get("Set-Cookie"))
 
 	mock.AssertExpectationsForObjects(t, udb, authr, auditLog, membershipDB)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler_WithErrorGettingLoginDataFromRequest() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler_WithErrorGettingLoginDataFromRequest() {
+	t := helper.T()
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
-	assert.Empty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+	assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler_WithErrorRetrievingUser() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler_WithErrorRetrievingUser() {
+	t := helper.T()
 
-	s.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, s.exampleLoginInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUserByUsername",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.Username,
+		helper.exampleUser.Username,
 	).Return((*types.User)(nil), errors.New("blah"))
-	s.service.userDataManager = udb
+	helper.service.userDataManager = udb
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
-	assert.Empty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+	assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 	mock.AssertExpectationsForObjects(t, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler_WithBannedUser() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler_WithBannedUser() {
+	t := helper.T()
 
-	s.exampleUser.Reputation = types.BannedAccountStatus
-	s.exampleUser.ReputationExplanation = "bad behavior"
+	helper.exampleUser.Reputation = types.BannedAccountStatus
+	helper.exampleUser.ReputationExplanation = "bad behavior"
 
-	//s.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-	//	reqCtx, _ := types.RequestContextFromUser(
-	//		s.exampleUser,
-	//		s.exampleAccount.ID,
-	//		map[uint64]permissions.ServiceUserPermissions{},
-	//	)
-	//
-	//	return reqCtx, nil
-	//}
-
-	s.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, s.exampleLoginInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUserByUsername",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.Username,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.Username,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
-	auditLog.On("LogBannedUserLoginAttemptEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID)
-	s.service.auditLog = auditLog
+	auditLog.On("LogBannedUserLoginAttemptEvent", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID)
+	helper.service.auditLog = auditLog
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusForbidden, s.res.Code)
-	assert.Empty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusForbidden, helper.res.Code)
+	assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 	mock.AssertExpectationsForObjects(t, udb, auditLog)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler_WithInvalidLogin() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler_WithInvalidLogin() {
+	t := helper.T()
 
-	s.ctx = context.WithValue(s.ctx, userLoginInputMiddlewareCtxKey, s.exampleLoginInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUserByUsername",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.Username,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.Username,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(false, nil)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
-	auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID)
-	s.service.auditLog = auditLog
+	auditLog.On("LogUnsuccessfulLoginBadPasswordEvent", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID)
+	helper.service.auditLog = auditLog
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
-	assert.Empty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+	assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 	mock.AssertExpectationsForObjects(t, udb, authr, auditLog)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler_WithErrorValidatingLogin() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler_WithErrorValidatingLogin() {
+	t := helper.T()
 
-	s.ctx = context.WithValue(s.ctx, userLoginInputMiddlewareCtxKey, s.exampleLoginInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUserByUsername",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.Username,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.Username,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, errors.New("blah"))
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
-	assert.Empty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+	assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 	mock.AssertExpectationsForObjects(t, udb, authr)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler_WithErrorBuildingCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler_WithErrorBuildingCookie() {
+	t := helper.T()
 
-	s.ctx = context.WithValue(s.ctx, userLoginInputMiddlewareCtxKey, s.exampleLoginInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	cb := &mockCookieEncoderDecoder{}
 	cb.On(
 		"Encode",
 
-		s.service.config.Cookies.Name,
+		helper.service.config.Cookies.Name,
 		mock.IsType("string"),
 	).Return("", errors.New("blah"))
-	s.service.cookieManager = cb
+	helper.service.cookieManager = cb
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUserByUsername",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.Username,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.Username,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
 	membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 	membershipDB.On(
 		"GetMembershipsForUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleAccount.ID, s.examplePerms, nil)
-	s.service.accountMembershipManager = membershipDB
+		helper.exampleUser.ID,
+	).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+	helper.service.accountMembershipManager = membershipDB
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
-	assert.Empty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+	assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 	mock.AssertExpectationsForObjects(t, cb, udb, authr, membershipDB)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LoginHandler_WithErrorBuildingCookieAndErrorEncodingCookieResponse() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LoginHandler_WithErrorBuildingCookieAndErrorEncodingCookieResponse() {
+	t := helper.T()
 
-	s.ctx = context.WithValue(s.ctx, userLoginInputMiddlewareCtxKey, s.exampleLoginInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	cb := &mockCookieEncoderDecoder{}
 	cb.On(
 		"Encode",
-		s.service.config.Cookies.Name,
+		helper.service.config.Cookies.Name,
 		mock.IsType("string"),
 	).Return("", errors.New("blah"))
-	s.service.cookieManager = cb
+	helper.service.cookieManager = cb
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUserByUsername",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.Username,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.Username,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
 	membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 	membershipDB.On(
 		"GetMembershipsForUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleAccount.ID, s.examplePerms, nil)
-	s.service.accountMembershipManager = membershipDB
+		helper.exampleUser.ID,
+	).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+	helper.service.accountMembershipManager = membershipDB
 
-	s.service.LoginHandler(s.res, s.req)
+	helper.service.LoginHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
-	assert.Empty(t, s.res.Header().Get("Set-Cookie"))
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+	assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 	mock.AssertExpectationsForObjects(t, cb, udb, authr, membershipDB)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LogoutHandler() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LogoutHandler() {
+	t := helper.T()
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
-	auditLog.On("LogLogoutEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID)
-	s.service.auditLog = auditLog
+	auditLog.On("LogLogoutEvent", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID)
+	helper.service.auditLog = auditLog
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
-	s.service.LogoutHandler(s.res, s.req)
+	helper.service.LogoutHandler(helper.res, helper.req)
 
-	actualCookie := s.res.Header().Get("Set-Cookie")
+	actualCookie := helper.res.Header().Get("Set-Cookie")
 	assert.Contains(t, actualCookie, "Max-Age=0")
 
 	mock.AssertExpectationsForObjects(t, auditLog)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LogoutHandler_WithoutCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LogoutHandler_WithoutCookie() {
+	t := helper.T()
 
 	var err error
-	s.ctx, err = s.service.sessionManager.Load(s.ctx, "")
+	helper.ctx, err = helper.service.sessionManager.Load(helper.ctx, "")
 	require.NoError(t, err)
-	require.NoError(t, s.service.sessionManager.RenewToken(s.ctx))
+	require.NoError(t, helper.service.sessionManager.RenewToken(helper.ctx))
 
 	// Then make the privilege-level change.
-	s.service.sessionManager.Put(s.ctx, userIDContextKey, s.exampleUser.ID)
-	s.service.sessionManager.Put(s.ctx, accountIDContextKey, s.exampleAccount.ID)
+	helper.service.sessionManager.Put(helper.ctx, userIDContextKey, helper.exampleUser.ID)
+	helper.service.sessionManager.Put(helper.ctx, accountIDContextKey, helper.exampleAccount.ID)
 
-	s.service.LogoutHandler(s.res, s.req)
+	helper.service.LogoutHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_LogoutHandler_WithErrorBuildingCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_LogoutHandler_WithErrorBuildingCookie() {
+	t := helper.T()
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
-	s.service.cookieManager = securecookie.New(
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
+	helper.service.cookieManager = securecookie.New(
 		securecookie.GenerateRandomKey(0),
 		[]byte(""),
 	)
 
-	s.service.LogoutHandler(s.res, s.req)
+	helper.service.LogoutHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_validateLogin() {
+	t := helper.T()
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, nil)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
-	actual, err := s.service.validateLogin(s.ctx, s.exampleUser, s.exampleLoginInput)
+	actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
 	assert.True(t, actual)
 	assert.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, authr)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithTooWeakPasswordHash() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_validateLogin_WithTooWeakPasswordHash() {
+	t := helper.T()
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, authentication.ErrPasswordHashTooWeak)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
 	authr.On(
 		"HashPassword",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleLoginInput.Password,
+		helper.exampleLoginInput.Password,
 	).Return("blah", nil)
 
 	udb := &mocktypes.UserDataManager{}
@@ -513,17 +503,17 @@ func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithTooWe
 		mock.MatchedBy(testutil.ContextMatcher),
 		mock.IsType(&types.User{}),
 	).Return(nil)
-	s.service.userDataManager = udb
+	helper.service.userDataManager = udb
 
-	actual, err := s.service.validateLogin(s.ctx, s.exampleUser, s.exampleLoginInput)
+	actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
 	assert.True(t, actual)
 	assert.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, authr, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithTooWeakPasswordHashAndErrorValidatingThePassword() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_validateLogin_WithTooWeakPasswordHashAndErrorValidatingThePassword() {
+	t := helper.T()
 
 	expectedErr := errors.New("arbitrary")
 
@@ -531,29 +521,29 @@ func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithTooWe
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, authentication.ErrPasswordHashTooWeak)
 
 	authr.On(
 		"HashPassword",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleLoginInput.Password,
+		helper.exampleLoginInput.Password,
 	).Return("", expectedErr)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
-	actual, err := s.service.validateLogin(s.ctx, s.exampleUser, s.exampleLoginInput)
+	actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
 	assert.False(t, actual)
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, authr)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithTooWeakAPasswordHashAndErrorUpdatingUser() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_validateLogin_WithTooWeakAPasswordHashAndErrorUpdatingUser() {
+	t := helper.T()
 
 	expectedErr := errors.New("arbitrary")
 
@@ -561,19 +551,19 @@ func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithTooWe
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(true, bcrypt.ErrCostTooLow)
 
 	authr.On(
 		"HashPassword",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleLoginInput.Password,
+		helper.exampleLoginInput.Password,
 	).Return("blah", nil)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
@@ -581,17 +571,17 @@ func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithTooWe
 		mock.MatchedBy(testutil.ContextMatcher),
 		mock.IsType(&types.User{}),
 	).Return(expectedErr)
-	s.service.userDataManager = udb
+	helper.service.userDataManager = udb
 
-	actual, err := s.service.validateLogin(s.ctx, s.exampleUser, s.exampleLoginInput)
+	actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
 	assert.False(t, actual)
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, authr, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithErrorValidatingLogin() { // TODO: better name
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_validateLogin_WithErrorReturnedFromValidator() {
+	t := helper.T()
 
 	expectedErr := errors.New("arbitrary")
 
@@ -599,233 +589,233 @@ func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithError
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(false, expectedErr)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
-	actual, err := s.service.validateLogin(s.ctx, s.exampleUser, s.exampleLoginInput)
+	actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
 	assert.False(t, actual)
 	assert.Error(t, err)
 
 	mock.AssertExpectationsForObjects(t, authr)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_validateLogin_WithInvalidLogin() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_validateLogin_WithInvalidLogin() {
+	t := helper.T()
 
 	authr := &mockauth.Authenticator{}
 	authr.On(
 		"ValidateLogin",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.HashedPassword,
-		s.exampleLoginInput.Password,
-		s.exampleUser.TwoFactorSecret,
-		s.exampleLoginInput.TOTPToken,
-		s.exampleUser.Salt,
+		helper.exampleUser.HashedPassword,
+		helper.exampleLoginInput.Password,
+		helper.exampleUser.TwoFactorSecret,
+		helper.exampleLoginInput.TOTPToken,
+		helper.exampleUser.Salt,
 	).Return(false, nil)
-	s.service.authenticator = authr
+	helper.service.authenticator = authr
 
-	actual, err := s.service.validateLogin(s.ctx, s.exampleUser, s.exampleLoginInput)
+	actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
 	assert.False(t, actual)
 	assert.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, authr)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_StatusHandler() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_StatusHandler() {
+	t := helper.T()
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
-	s.service.StatusHandler(s.res, s.req)
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	helper.service.StatusHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_StatusHandler_WithErrorFetchingUser() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_StatusHandler_WithErrorFetchingUser() {
+	t := helper.T()
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 	).Return((*types.User)(nil), errors.New("blah"))
-	s.service.userDataManager = udb
+	helper.service.userDataManager = udb
 
-	s.service.StatusHandler(s.res, s.req)
-	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	helper.service.StatusHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_CycleSecretHandler() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_CycleSecretHandler() {
+	t := helper.T()
 
-	s.exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
-	s.setContextFetcher()
+	helper.exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
+	helper.setContextFetcher()
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
-	auditLog.On("LogCycleCookieSecretEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID)
-	s.service.auditLog = auditLog
+	auditLog.On("LogCycleCookieSecretEvent", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID)
+	helper.service.auditLog = auditLog
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
-	c := s.req.Cookies()[0]
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
+	c := helper.req.Cookies()[0]
 
 	var token string
-	assert.NoError(t, s.service.cookieManager.Decode(s.service.config.Cookies.Name, c.Value, &token))
+	assert.NoError(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, c.Value, &token))
 
-	s.service.CycleCookieSecretHandler(s.res, s.req)
+	helper.service.CycleCookieSecretHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusAccepted, s.res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, s.res.Code)
-	assert.Error(t, s.service.cookieManager.Decode(s.service.config.Cookies.Name, c.Value, &token))
+	assert.Equal(t, http.StatusAccepted, helper.res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, helper.res.Code)
+	assert.Error(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, c.Value, &token))
 
 	mock.AssertExpectationsForObjects(t, auditLog)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_CycleSecretHandler_WithErrorGettingRequestContext() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_CycleSecretHandler_WithErrorGettingRequestContext() {
+	t := helper.T()
 
-	s.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
+	helper.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
 		return nil, errors.New("blah")
 	}
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
-	c := s.req.Cookies()[0]
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
+	c := helper.req.Cookies()[0]
 
 	var token string
-	assert.NoError(t, s.service.cookieManager.Decode(s.service.config.Cookies.Name, c.Value, &token))
+	assert.NoError(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, c.Value, &token))
 
-	s.service.CycleCookieSecretHandler(s.res, s.req)
+	helper.service.CycleCookieSecretHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, s.res.Code)
-	assert.NoError(t, s.service.cookieManager.Decode(s.service.config.Cookies.Name, c.Value, &token))
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, helper.res.Code)
+	assert.NoError(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, c.Value, &token))
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_CycleSecretHandler_WithInvalidPermissions() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_CycleSecretHandler_WithInvalidPermissions() {
+	t := helper.T()
 
-	s.ctx, s.req = attachCookieToRequestForTest(t, s.service, s.req, s.exampleUser)
-	c := s.req.Cookies()[0]
+	helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
+	c := helper.req.Cookies()[0]
 
 	var token string
-	assert.NoError(t, s.service.cookieManager.Decode(s.service.config.Cookies.Name, c.Value, &token))
+	assert.NoError(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, c.Value, &token))
 
-	s.service.CycleCookieSecretHandler(s.res, s.req)
+	helper.service.CycleCookieSecretHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusForbidden, s.res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, s.res.Code)
-	assert.NoError(t, s.service.cookieManager.Decode(s.service.config.Cookies.Name, c.Value, &token))
+	assert.Equal(t, http.StatusForbidden, helper.res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, helper.res.Code)
+	assert.NoError(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, c.Value, &token))
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_buildCookie() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_buildCookie() {
+	t := helper.T()
 
-	cookie, err := s.service.buildCookie("example", time.Now().Add(s.service.config.Cookies.Lifetime))
+	cookie, err := helper.service.buildCookie("example", time.Now().Add(helper.service.config.Cookies.Lifetime))
 	assert.NotNil(t, cookie)
 	assert.NoError(t, err)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_buildCookie_WithInvalidCookieBuilder() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_buildCookie_WithInvalidCookieBuilder() {
+	t := helper.T()
 
-	s.service.cookieManager = securecookie.New(
+	helper.service.cookieManager = securecookie.New(
 		securecookie.GenerateRandomKey(0),
 		[]byte(""),
 	)
 
-	cookie, err := s.service.buildCookie("example", time.Now().Add(s.service.config.Cookies.Lifetime))
+	cookie, err := helper.service.buildCookie("example", time.Now().Add(helper.service.config.Cookies.Lifetime))
 	assert.Nil(t, cookie)
 	assert.Error(t, err)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
-	s.service.config.PASETO.Lifetime = time.Minute
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.Lifetime = time.Minute
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
 	expectedOutput := &types.RequestContext{
 		User: types.UserRequestContext{
-			ID:                      s.exampleUser.ID,
-			Status:                  s.exampleUser.Reputation,
-			ServiceAdminPermissions: s.exampleUser.ServiceAdminPermissions,
+			ID:                      helper.exampleUser.ID,
+			Status:                  helper.exampleUser.Reputation,
+			ServiceAdminPermissions: helper.exampleUser.ServiceAdminPermissions,
 		},
-		ActiveAccountID:       s.exampleAccount.ID,
-		AccountPermissionsMap: s.examplePerms,
+		ActiveAccountID:       helper.exampleAccount.ID,
+		AccountPermissionsMap: helper.examplePerms,
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	dcm := &mocktypes.APIClientDataManager{}
 	dcm.On(
 		"GetAPIClientByClientID",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleAPIClient.ClientID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientManager = dcm
+		helper.exampleAPIClient.ClientID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientManager = dcm
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 	membershipDB.On(
 		"GetMembershipsForUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleAccount.ID, s.examplePerms, nil)
-	s.service.accountMembershipManager = membershipDB
+		helper.exampleUser.ID,
+	).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+	helper.service.accountMembershipManager = membershipDB
 
 	var bodyBytes bytes.Buffer
 	marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
 	require.NoError(t, marshalErr)
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write(bodyBytes.Bytes())
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusAccepted, s.res.Code)
+	assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 	// validate results
 
 	var result *types.PASETOResponse
-	require.NoError(t, json.NewDecoder(s.res.Body).Decode(&result))
+	require.NoError(t, json.NewDecoder(helper.res.Body).Decode(&result))
 
 	assert.NotEmpty(t, result.Token)
 
 	var targetPayload paseto.JSONToken
-	require.NoError(t, paseto.NewV2().Decrypt(result.Token, s.service.config.PASETO.LocalModeKey, &targetPayload, nil))
+	require.NoError(t, paseto.NewV2().Decrypt(result.Token, helper.service.config.PASETO.LocalModeKey, &targetPayload, nil))
 
 	assert.True(t, targetPayload.Expiration.After(time.Now().UTC()))
 
@@ -842,79 +832,79 @@ func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler() {
 	mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_DoesNotIssueTokenWithLongerLifetimeThanPackageMaximum() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_DoesNotIssueTokenWithLongerLifetimeThanPackageMaximum() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
-	s.service.config.PASETO.Lifetime = 24 * time.Hour * 365 // one year
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.Lifetime = 24 * time.Hour * 365 // one year
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
 	expectedOutput := &types.RequestContext{
 		User: types.UserRequestContext{
-			ID:                      s.exampleUser.ID,
-			Status:                  s.exampleUser.Reputation,
-			ServiceAdminPermissions: s.exampleUser.ServiceAdminPermissions,
+			ID:                      helper.exampleUser.ID,
+			Status:                  helper.exampleUser.Reputation,
+			ServiceAdminPermissions: helper.exampleUser.ServiceAdminPermissions,
 		},
-		ActiveAccountID:       s.exampleAccount.ID,
-		AccountPermissionsMap: s.examplePerms,
+		ActiveAccountID:       helper.exampleAccount.ID,
+		AccountPermissionsMap: helper.examplePerms,
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	dcm := &mocktypes.APIClientDataManager{}
 	dcm.On(
 		"GetAPIClientByClientID",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleAPIClient.ClientID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientManager = dcm
+		helper.exampleAPIClient.ClientID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientManager = dcm
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 	membershipDB.On(
 		"GetMembershipsForUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleAccount.ID, s.examplePerms, nil)
-	s.service.accountMembershipManager = membershipDB
+		helper.exampleUser.ID,
+	).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+	helper.service.accountMembershipManager = membershipDB
 
 	var bodyBytes bytes.Buffer
 	marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
 	require.NoError(t, marshalErr)
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write(bodyBytes.Bytes())
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusAccepted, s.res.Code)
+	assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 	// validate results
 
 	var result *types.PASETOResponse
-	require.NoError(t, json.NewDecoder(s.res.Body).Decode(&result))
+	require.NoError(t, json.NewDecoder(helper.res.Body).Decode(&result))
 
 	assert.NotEmpty(t, result.Token)
 
 	var targetPayload paseto.JSONToken
-	require.NoError(t, paseto.NewV2().Decrypt(result.Token, s.service.config.PASETO.LocalModeKey, &targetPayload, nil))
+	require.NoError(t, paseto.NewV2().Decrypt(result.Token, helper.service.config.PASETO.LocalModeKey, &targetPayload, nil))
 
 	assert.True(t, targetPayload.Expiration.Before(time.Now().UTC().Add(maxPASETOLifetime)))
 
@@ -931,296 +921,296 @@ func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_DoesNotIs
 	mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithMissingInput() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithMissingInput() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithInvalidRequestTime() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithInvalidRequestTime() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: 1,
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithErrorDecodingSignatureHeader() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithErrorDecodingSignatureHeader() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	var bodyBytes bytes.Buffer
 	marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
 	require.NoError(t, marshalErr)
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write(bodyBytes.Bytes())
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base32.HexEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithErrorFetchingAPIClient() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithErrorFetchingAPIClient() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	dcm := &mocktypes.APIClientDataManager{}
 	dcm.On(
 		"GetAPIClientByClientID",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleAPIClient.ClientID,
+		helper.exampleAPIClient.ClientID,
 	).Return((*types.APIClient)(nil), errors.New("blah"))
-	s.service.apiClientManager = dcm
+	helper.service.apiClientManager = dcm
 
 	var bodyBytes bytes.Buffer
 	marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
 	require.NoError(t, marshalErr)
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write(bodyBytes.Bytes())
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, dcm)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithErrorFetchingUser() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithErrorFetchingUser() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	dcm := &mocktypes.APIClientDataManager{}
 	dcm.On(
 		"GetAPIClientByClientID",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleAPIClient.ClientID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientManager = dcm
+		helper.exampleAPIClient.ClientID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientManager = dcm
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 	).Return((*types.User)(nil), errors.New("blah"))
-	s.service.userDataManager = udb
+	helper.service.userDataManager = udb
 
 	var bodyBytes bytes.Buffer
 	marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
 	require.NoError(t, marshalErr)
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write(bodyBytes.Bytes())
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, dcm, udb)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithErrorFetchingAccountMemberships() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithErrorFetchingAccountMemberships() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	dcm := &mocktypes.APIClientDataManager{}
 	dcm.On(
 		"GetAPIClientByClientID",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleAPIClient.ClientID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientManager = dcm
+		helper.exampleAPIClient.ClientID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientManager = dcm
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 	membershipDB.On(
 		"GetMembershipsForUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
+		helper.exampleUser.ID,
 	).Return(uint64(0), map[uint64]permissions.ServiceUserPermissions(nil), errors.New("blah"))
-	s.service.accountMembershipManager = membershipDB
+	helper.service.accountMembershipManager = membershipDB
 
 	var bodyBytes bytes.Buffer
 	marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
 	require.NoError(t, marshalErr)
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write(bodyBytes.Bytes())
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithInvalidChecksum() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithInvalidChecksum() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+	helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	dcm := &mocktypes.APIClientDataManager{}
 	dcm.On(
 		"GetAPIClientByClientID",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleAPIClient.ClientID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientManager = dcm
+		helper.exampleAPIClient.ClientID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientManager = dcm
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write([]byte("lol"))
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusUnauthorized, s.res.Code)
+	assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, dcm)
 }
 
-func (s *authServiceHTTPRoutesTestSuite) TestAuthService_PASETOHandler_WithTokenEncryptionError() {
-	t := s.T()
+func (helper *authServiceHTTPRoutesTestHelper) TestAuthService_PASETOHandler_WithTokenEncryptionError() {
+	t := helper.T()
 
-	s.service.config.PASETO.LocalModeKey = nil
+	helper.service.config.PASETO.LocalModeKey = nil
 
 	exampleInput := &types.PASETOCreationInput{
-		ClientID:    s.exampleAPIClient.ClientID,
+		ClientID:    helper.exampleAPIClient.ClientID,
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	s.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-	s.req = s.req.WithContext(s.ctx)
+	helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
+	helper.req = helper.req.WithContext(helper.ctx)
 
 	dcm := &mocktypes.APIClientDataManager{}
 	dcm.On(
 		"GetAPIClientByClientID",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleAPIClient.ClientID,
-	).Return(s.exampleAPIClient, nil)
-	s.service.apiClientManager = dcm
+		helper.exampleAPIClient.ClientID,
+	).Return(helper.exampleAPIClient, nil)
+	helper.service.apiClientManager = dcm
 
 	udb := &mocktypes.UserDataManager{}
 	udb.On(
 		"GetUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleUser, nil)
-	s.service.userDataManager = udb
+		helper.exampleUser.ID,
+	).Return(helper.exampleUser, nil)
+	helper.service.userDataManager = udb
 
 	membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 	membershipDB.On(
 		"GetMembershipsForUser",
 		mock.MatchedBy(testutil.ContextMatcher),
-		s.exampleUser.ID,
-	).Return(s.exampleAccount.ID, s.examplePerms, nil)
-	s.service.accountMembershipManager = membershipDB
+		helper.exampleUser.ID,
+	).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+	helper.service.accountMembershipManager = membershipDB
 
 	var bodyBytes bytes.Buffer
 	marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
 	require.NoError(t, marshalErr)
 
 	// set HMAC signature
-	mac := hmac.New(sha256.New, s.exampleAPIClient.ClientSecret)
+	mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
 	_, macWriteErr := mac.Write(bodyBytes.Bytes())
 	require.NoError(t, macWriteErr)
 
 	sigHeader := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	s.req.Header.Set(signatureHeaderKey, sigHeader)
+	helper.req.Header.Set(signatureHeaderKey, sigHeader)
 
-	s.service.PASETOHandler(s.res, s.req)
+	helper.service.PASETOHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, dcm, udb, membershipDB)
 }

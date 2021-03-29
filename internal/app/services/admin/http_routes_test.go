@@ -19,143 +19,143 @@ import (
 )
 
 func TestAdminServiceHTTPRoutesTestSuite(t *testing.T) {
-	suite.Run(t, new(adminServiceHTTPRoutesTestSuite))
+	suite.Run(t, new(adminServiceHTTPRoutesTestHelper))
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_BanningAccounts() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_BanningAccounts() {
+	t := helper.T()
 
-	s.exampleInput.NewReputation = types.BannedAccountStatus
+	helper.exampleInput.NewReputation = types.BannedAccountStatus
 
 	udb := &mocktypes.AdminUserDataManager{}
-	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), s.exampleInput.TargetUserID, *s.exampleInput).Return(nil)
-	s.service.userDB = udb
+	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
+	helper.service.userDB = udb
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
-	auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, s.exampleInput.TargetUserID, s.exampleInput.Reason).Return()
-	s.service.auditLog = auditLog
+	auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason).Return()
+	helper.service.auditLog = auditLog
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusAccepted, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, udb, auditLog)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_TerminatingAccounts() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_TerminatingAccounts() {
+	t := helper.T()
 
-	s.exampleInput.NewReputation = types.TerminatedAccountStatus
+	helper.exampleInput.NewReputation = types.TerminatedAccountStatus
 
 	udb := &mocktypes.AdminUserDataManager{}
-	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), s.exampleInput.TargetUserID, *s.exampleInput).Return(nil)
-	s.service.userDB = udb
+	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
+	helper.service.userDB = udb
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
-	auditLog.On("LogAccountTerminationEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, s.exampleInput.TargetUserID, s.exampleInput.Reason).Return()
-	s.service.auditLog = auditLog
+	auditLog.On("LogAccountTerminationEvent", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason).Return()
+	helper.service.auditLog = auditLog
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusAccepted, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, udb, auditLog)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithMissingInput() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_WithMissingInput() {
+	t := helper.T()
 
 	var err error
-	s.req, err = http.NewRequest(http.MethodGet, "/blah", nil)
+	helper.req, err = http.NewRequest(http.MethodGet, "/blah", nil)
 	require.NoError(t, err)
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 
-	assert.Equal(t, http.StatusBadRequest, s.res.Code)
+	assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithErrorFetchingSession() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_WithErrorFetchingSession() {
+	t := helper.T()
 
-	s.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
+	helper.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
 		return nil, errors.New("blah")
 	}
 
-	s.exampleInput.NewReputation = types.BannedAccountStatus
+	helper.exampleInput.NewReputation = types.BannedAccountStatus
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithNonAdminUser() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_WithNonAdminUser() {
+	t := helper.T()
 
-	s.neuterAdminUser()
+	helper.neuterAdminUser()
 
-	s.exampleInput.NewReputation = types.BannedAccountStatus
+	helper.exampleInput.NewReputation = types.BannedAccountStatus
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusForbidden, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusForbidden, helper.res.Code)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithAdminThatHasInadequatePermissions() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_WithAdminThatHasInadequatePermissions() {
+	t := helper.T()
 
-	s.neuterAdminUser()
+	helper.neuterAdminUser()
 
-	s.exampleInput.NewReputation = types.BannedAccountStatus
+	helper.exampleInput.NewReputation = types.BannedAccountStatus
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusForbidden, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusForbidden, helper.res.Code)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithNonexistentUser() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_WithNonexistentUser() {
+	t := helper.T()
 
-	s.exampleInput.NewReputation = types.BannedAccountStatus
+	helper.exampleInput.NewReputation = types.BannedAccountStatus
 
 	udb := &mocktypes.AdminUserDataManager{}
-	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), s.exampleInput.TargetUserID, *s.exampleInput).Return(sql.ErrNoRows)
-	s.service.userDB = udb
+	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(sql.ErrNoRows)
+	helper.service.userDB = udb
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusNotFound, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, udb)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithErrorPerformingReputationUpdate() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_WithErrorPerformingReputationUpdate() {
+	t := helper.T()
 
-	s.exampleInput.NewReputation = types.BannedAccountStatus
+	helper.exampleInput.NewReputation = types.BannedAccountStatus
 
 	udb := &mocktypes.AdminUserDataManager{}
-	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), s.exampleInput.TargetUserID, *s.exampleInput).Return(errors.New("blah"))
-	s.service.userDB = udb
+	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(errors.New("blah"))
+	helper.service.userDB = udb
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, udb)
 }
 
-func (s *adminServiceHTTPRoutesTestSuite) TestAdminService_UserAccountStatusChangeHandler_WithErrorDestroyingSession() {
-	t := s.T()
+func (helper *adminServiceHTTPRoutesTestHelper) TestAdminService_UserAccountStatusChangeHandler_WithErrorDestroyingSession() {
+	t := helper.T()
 
 	ms := &mockstore.MockStore{}
 	ms.ExpectDelete("", errors.New("blah"))
-	s.service.sessionManager.Store = ms
+	helper.service.sessionManager.Store = ms
 
-	s.exampleInput.NewReputation = types.BannedAccountStatus
+	helper.exampleInput.NewReputation = types.BannedAccountStatus
 
 	auditLog := &mocktypes.AuditLogEntryDataManager{}
-	auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), s.exampleUser.ID, s.exampleInput.TargetUserID, s.exampleInput.Reason).Return()
-	s.service.auditLog = auditLog
+	auditLog.On("LogUserBanEvent", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason).Return()
+	helper.service.auditLog = auditLog
 
 	udb := &mocktypes.AdminUserDataManager{}
-	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), s.exampleInput.TargetUserID, *s.exampleInput).Return(nil)
-	s.service.userDB = udb
+	udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
+	helper.service.userDB = udb
 
-	s.service.UserAccountStatusChangeHandler(s.res, s.req)
-	assert.Equal(t, http.StatusAccepted, s.res.Code)
+	helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+	assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 	mock.AssertExpectationsForObjects(t, udb)
 }

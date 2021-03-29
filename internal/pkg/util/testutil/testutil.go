@@ -210,7 +210,7 @@ func AssertAppropriateNumberOfTestsRan(t *testing.T, totalExpectedTestCount uint
 	}
 }
 
-// BuildTestRequest builds an arbitrary *http.Request
+// BuildTestRequest builds an arbitrary *http.Request.
 func BuildTestRequest(t *testing.T) *http.Request {
 	t.Helper()
 

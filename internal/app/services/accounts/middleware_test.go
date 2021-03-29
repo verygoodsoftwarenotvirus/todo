@@ -45,9 +45,11 @@ func (s *accountsServiceMiddlewareTestSuite) SetupTest() {
 	s.exampleUser = fakes.BuildFakeUser()
 	s.exampleAccount = fakes.BuildFakeAccount()
 
-	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
-		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
-	})
+	reqCtx, err := types.RequestContextFromUser(
+		s.exampleUser,
+		s.exampleAccount.ID,
+		map[uint64]permissions.ServiceUserPermissions{s.exampleAccount.ID: testutil.BuildMaxUserPerms()},
+	)
 	require.NoError(s.T(), err)
 
 	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)

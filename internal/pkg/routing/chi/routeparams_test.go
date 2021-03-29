@@ -3,33 +3,16 @@ package chi
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func buildRequest(t *testing.T) *http.Request {
-	t.Helper()
-
-	req, err := http.NewRequestWithContext(
-		context.Background(),
-		http.MethodGet,
-		"https://verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-
-	require.NotNil(t, req)
-	assert.NoError(t, err)
-
-	return req
-}
 
 func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 	T.Parallel()
@@ -42,7 +25,7 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(req.Context(), types.RequestContextKey, expected),
 		)
@@ -58,7 +41,7 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		actual, err := r.FetchContextFromRequest(req)
 
 		assert.Error(t, err)
@@ -78,7 +61,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 		exampleKey := "blah"
 		fn := r.BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
 		expected := uint64(123)
-		req := buildRequest(t).WithContext(
+		req := testutil.BuildTestRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				chi.RouteCtxKey,
@@ -106,7 +89,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 		fn := r.BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
 		expected := uint64(0)
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				ctx,

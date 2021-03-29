@@ -94,10 +94,13 @@ func (s *accountsServiceMiddlewareTestSuite) TestServiceCreationInputMiddlewareW
 	require.NoError(t, err)
 	require.NotNil(t, req)
 
-	actual := s.service.CreationInputMiddleware(&testutil.MockHTTPHandler{})
+	mh := &testutil.MockHTTPHandler{}
+	actual := s.service.CreationInputMiddleware(mh)
 	actual.ServeHTTP(res, req)
 
 	assert.Equal(t, http.StatusBadRequest, res.Code)
+
+	mock.AssertExpectationsForObjects(t, mh)
 }
 
 func (s *accountsServiceMiddlewareTestSuite) TestServiceCreationInputMiddlewareWithErrorDecodingRequest() {

@@ -25,23 +25,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func buildRequest(t *testing.T) *http.Request {
-	t.Helper()
-
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-
-	require.NotNil(t, req)
-	assert.NoError(t, err)
-
-	return req
-}
-
 func TestService_validateCredentialChangeRequest(T *testing.T) {
 	T.Parallel()
 
@@ -235,7 +218,7 @@ func TestService_ListHandler(T *testing.T) {
 		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.UserList{}))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
@@ -256,7 +239,7 @@ func TestService_ListHandler(T *testing.T) {
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.ListHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -284,7 +267,7 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType([]*types.User{}))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		v := req.URL.Query()
 		v.Set(types.SearchQueryKey, exampleUsername)
 		req.URL.RawQuery = v.Encode()
@@ -310,7 +293,7 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		v := req.URL.Query()
 		v.Set(types.SearchQueryKey, exampleUsername)
 		req.URL.RawQuery = v.Encode()
@@ -356,7 +339,7 @@ func TestService_CreateHandler(T *testing.T) {
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.UserCreationResponse{}), http.StatusCreated)
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -388,7 +371,7 @@ func TestService_CreateHandler(T *testing.T) {
 		)
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.authSettings.EnableUserSignup = false
 		s.CreateHandler(res, req)
 
@@ -404,7 +387,7 @@ func TestService_CreateHandler(T *testing.T) {
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.authSettings.EnableUserSignup = true
 		s.CreateHandler(res, req)
 
@@ -427,7 +410,7 @@ func TestService_CreateHandler(T *testing.T) {
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -468,7 +451,7 @@ func TestService_CreateHandler(T *testing.T) {
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -510,7 +493,7 @@ func TestService_CreateHandler(T *testing.T) {
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -547,7 +530,7 @@ func TestService_CreateHandler(T *testing.T) {
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -586,7 +569,7 @@ func TestService_ReadHandler(T *testing.T) {
 		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.User{}))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
@@ -612,7 +595,7 @@ func TestService_ReadHandler(T *testing.T) {
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusNotFound, res.Code)
@@ -638,7 +621,7 @@ func TestService_ReadHandler(T *testing.T) {
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.ReadHandler(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
@@ -658,7 +641,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -711,7 +694,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.NewTOTPSecretHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -728,7 +711,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -752,7 +735,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -800,7 +783,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -856,7 +839,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -913,7 +896,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -942,7 +925,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("GetUserWithUnverifiedTwoFactorSecret", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(exampleUser, nil)
@@ -968,7 +951,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1002,7 +985,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1044,7 +1027,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 		exampleInput.TOTPToken = "INVALID"
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1073,7 +1056,7 @@ func TestService_TOTPSecretValidationHandler(T *testing.T) {
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(exampleUser)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1107,7 +1090,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
@@ -1160,7 +1143,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.UpdatePasswordHandler(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -1179,7 +1162,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1203,7 +1186,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1251,7 +1234,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1304,7 +1287,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -1360,7 +1343,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1401,7 +1384,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher())).Return()
 		s.encoderDecoder = ed
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		s.AvatarUploadHandler(res, req)
 
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
@@ -1413,7 +1396,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1442,7 +1425,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1476,7 +1459,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1515,7 +1498,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 
 		s := buildTestService(t)
 
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
 
 		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
@@ -1563,7 +1546,7 @@ func TestService_Archive(T *testing.T) {
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return exampleUser.ID
 		}
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("ArchiveUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(nil)
@@ -1589,7 +1572,7 @@ func TestService_Archive(T *testing.T) {
 		s.userIDFetcher = func(req *http.Request) uint64 {
 			return exampleUser.ID
 		}
-		res, req := httptest.NewRecorder(), buildRequest(t)
+		res, req := httptest.NewRecorder(), testutil.BuildTestRequest(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On("ArchiveUser", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID).Return(errors.New("blah"))

@@ -1,12 +1,12 @@
 package audit
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -16,230 +16,112 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
-func TestAuditLogEntriesService_ListHandler(T *testing.T) {
-	T.Parallel()
-
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(T, err)
-		return reqCtx, nil
-	}
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
-
-		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return(exampleAuditLogEntryList, nil)
-		s.auditLog = auditLogEntryManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
-	})
-
-	T.Run("with no rows returned", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
-		s.auditLog = auditLogEntryManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
-	})
-
-	T.Run("with error fetching entries from database", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
-
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
-		s.auditLog = auditLogEntryManager
-
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
-
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
-	})
+func TestAccountsServiceHTTPRoutes(t *testing.T) {
+	suite.Run(t, new(auditServiceHTTPRoutesTestSuite))
 }
 
-func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
-	T.Parallel()
+func (s *auditServiceHTTPRoutesTestSuite) TestAuditLogEntriesService_ListHandler() {
+	t := s.T()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(T, err)
-		return reqCtx, nil
-	}
+	exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
+	auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return(exampleAuditLogEntryList, nil)
+	s.service.auditLog = auditLogEntryManager
 
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
+	s.service.encoderDecoder = ed
 
-		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
-			return exampleAuditLogEntry.ID
-		}
+	s.service.ListHandler(s.res, s.req)
 
-		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), exampleAuditLogEntry.ID).Return(exampleAuditLogEntry, nil)
-		s.auditLog = auditLogEntryManager
+	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
+}
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntry{}))
-		s.encoderDecoder = ed
+func (s *auditServiceHTTPRoutesTestSuite) TestAuditLogEntriesService_ListHandler_WithNoRowsReturned() {
+	t := s.T()
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
+	auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
+	auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
+	s.service.auditLog = auditLogEntryManager
 
-		s.ReadHandler(res, req)
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntryList{}))
+	s.service.encoderDecoder = ed
 
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
-		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
-	})
+	s.service.ListHandler(s.res, s.req)
 
-	T.Run("with no such entry in database", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
+}
 
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+func (s *auditServiceHTTPRoutesTestSuite) TestAuditLogEntriesService_ListHandler_WithErrorFetchingEntriesFromDatabase() {
+	t := s.T()
 
-		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
-			return exampleAuditLogEntry.ID
-		}
+	auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
+	auditLogEntryManager.On("GetAuditLogEntries", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.QueryFilter{})).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
+	s.service.auditLog = auditLogEntryManager
 
-		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
-		s.auditLog = auditLogEntryManager
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+	s.service.ListHandler(s.res, s.req)
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
+}
 
-		s.ReadHandler(res, req)
+func (s *auditServiceHTTPRoutesTestSuite) TestAuditLogEntriesService_ReadHandler() {
+	t := s.T()
 
-		assert.Equal(t, http.StatusNotFound, res.Code)
-		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
-	})
+	auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
+	auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), s.exampleAuditLogEntry.ID).Return(s.exampleAuditLogEntry, nil)
+	s.service.auditLog = auditLogEntryManager
 
-	T.Run("with error fetching entry from database", func(t *testing.T) {
-		t.Parallel()
-		ctx := context.Background()
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.AuditLogEntry{}))
+	s.service.encoderDecoder = ed
 
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+	s.service.ReadHandler(s.res, s.req)
 
-		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
-		s.auditLogEntryIDFetcher = func(req *http.Request) uint64 {
-			return exampleAuditLogEntry.ID
-		}
+	assert.Equal(t, http.StatusOK, s.res.Code, "expected %d in status response, got %d", http.StatusOK, s.res.Code)
+	mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
+}
 
-		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
-		auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
-		s.auditLog = auditLogEntryManager
+func (s *auditServiceHTTPRoutesTestSuite) TestAuditLogEntriesService_ReadHandler_WithNoMatchInDatabase() {
+	t := s.T()
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+	auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
+	auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), s.exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
+	s.service.auditLog = auditLogEntryManager
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
 
-		s.ReadHandler(res, req)
+	s.service.ReadHandler(s.res, s.req)
 
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-		mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
-	})
+	assert.Equal(t, http.StatusNotFound, s.res.Code)
+	mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
+}
+
+func (s *auditServiceHTTPRoutesTestSuite) TestAuditLogEntriesService_ReadHandler_WithErrorReadingFromDatabase() {
+	t := s.T()
+
+	auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
+	auditLogEntryManager.On("GetAuditLogEntry", mock.MatchedBy(testutil.ContextMatcher), s.exampleAuditLogEntry.ID).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
+	s.service.auditLog = auditLogEntryManager
+
+	ed := mockencoding.NewMockEncoderDecoder()
+	ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
+	s.service.encoderDecoder = ed
+
+	s.service.ReadHandler(s.res, s.req)
+
+	assert.Equal(t, http.StatusInternalServerError, s.res.Code)
+	mock.AssertExpectationsForObjects(t, auditLogEntryManager, ed)
 }

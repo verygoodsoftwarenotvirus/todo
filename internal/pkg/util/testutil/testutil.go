@@ -23,6 +23,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -207,4 +208,22 @@ func AssertAppropriateNumberOfTestsRan(t *testing.T, totalExpectedTestCount uint
 	if stats.Passed() {
 		require.Equal(t, int(totalExpectedTestCount), len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))
 	}
+}
+
+// BuildTestRequest builds an arbitrary *http.Request
+func BuildTestRequest(t *testing.T) *http.Request {
+	t.Helper()
+
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodOptions,
+		"https://todo.verygoodsoftwarenotvirus.ru",
+		nil,
+	)
+
+	require.NotNil(t, req)
+	assert.NoError(t, err)
+
+	return req
 }

@@ -41,7 +41,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{}))
 
 		h := s.CreationInputMiddleware(mh)
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
 
 		expected := fakes.BuildFakeAPIClientCreationInput()
@@ -78,7 +78,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		mh := &testutil.MockHTTPHandler{}
 		h := s.CreationInputMiddleware(mh)
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
 
 		h.ServeHTTP(res, req)
@@ -99,7 +99,7 @@ func TestService_fetchAPIClientFromRequest(T *testing.T) {
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		req := buildRequest(t).WithContext(
+		req := testutil.BuildTestRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				types.APIClientKey,
@@ -116,7 +116,7 @@ func TestService_fetchAPIClientFromRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		assert.Nil(t, s.fetchAPIClientFromRequest(buildRequest(t)))
+		assert.Nil(t, s.fetchAPIClientFromRequest(testutil.BuildTestRequest(t)))
 	})
 }
 
@@ -130,7 +130,7 @@ func TestService_fetchAPIClientIDFromRequest(T *testing.T) {
 		s := buildTestService(t)
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		req := buildRequest(t).WithContext(
+		req := testutil.BuildTestRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				clientIDKey,
@@ -147,6 +147,6 @@ func TestService_fetchAPIClientIDFromRequest(T *testing.T) {
 
 		s := buildTestService(t)
 
-		assert.Empty(t, s.fetchAPIClientIDFromRequest(buildRequest(t)))
+		assert.Empty(t, s.fetchAPIClientIDFromRequest(testutil.BuildTestRequest(t)))
 	})
 }

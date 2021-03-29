@@ -29,7 +29,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeUserCreationInput())
 
@@ -56,7 +56,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		)
 		s.encoderDecoder = ed
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
 
 		mh := &testutil.MockHTTPHandler{}
@@ -81,7 +81,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakePasswordUpdateInput())
 		res := httptest.NewRecorder()
 
@@ -108,7 +108,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		)
 		s.encoderDecoder = ed
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
 
 		mh := &testutil.MockHTTPHandler{}
@@ -133,7 +133,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeTOTPSecretVerificationInput())
 		res := httptest.NewRecorder()
 
@@ -160,7 +160,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.TOTPSecretVerificationInput{})).Return(errors.New("blah"))
 		s.encoderDecoder = ed
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
 
 		mh := &testutil.MockHTTPHandler{}
@@ -185,7 +185,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeTOTPSecretRefreshInput())
 		res := httptest.NewRecorder()
 
@@ -212,7 +212,7 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		)
 		s.encoderDecoder = ed
 
-		req := buildRequest(t)
+		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
 
 		mh := &testutil.MockHTTPHandler{}

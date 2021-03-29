@@ -5,14 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
+	"github.com/stretchr/testify/suite"
+
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -20,66 +18,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 func TestAccountsServiceHTTPRoutes(t *testing.T) {
 	suite.Run(t, new(accountsServiceHTTPRoutesTestSuite))
-}
-
-type accountsServiceHTTPRoutesTestSuite struct {
-	suite.Suite
-
-	ctx            context.Context
-	req            *http.Request
-	res            *httptest.ResponseRecorder
-	service        *service
-	exampleUser    *types.User
-	exampleAccount *types.Account
-}
-
-var _ suite.SetupTestSuite = (*accountsServiceHTTPRoutesTestSuite)(nil)
-
-func (s *accountsServiceHTTPRoutesTestSuite) SetupTest() {
-	t := s.T()
-
-	s.ctx = context.Background()
-	s.service = buildTestService()
-	s.exampleUser = fakes.BuildFakeUser()
-	s.exampleAccount = fakes.BuildFakeAccount()
-	s.exampleAccount.BelongsToUser = s.exampleUser.ID
-
-	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
-		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
-	})
-	require.NoError(s.T(), err)
-
-	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	s.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-		return reqCtx, nil
-	}
-	s.service.accountIDFetcher = func(req *http.Request) uint64 {
-		return s.exampleAccount.ID
-	}
-
-	s.res = httptest.NewRecorder()
-	s.req, err = http.NewRequestWithContext(
-		s.ctx,
-		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-	require.NotNil(t, s.req)
-	require.NoError(t, err)
-}
-
-var _ suite.WithStats = (*accountsServiceHTTPRoutesTestSuite)(nil)
-
-func (s *accountsServiceHTTPRoutesTestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 17
-
-	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
 }
 
 func (s *accountsServiceHTTPRoutesTestSuite) TestAccountsService_ListHandler() {

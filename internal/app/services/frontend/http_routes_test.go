@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -9,27 +8,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func buildRequest(t *testing.T) *http.Request {
-	t.Helper()
-
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-
-	require.NotNil(t, req)
-	assert.NoError(t, err)
-
-	return req
-}
 
 func TestService_StaticDir(T *testing.T) {
 	T.Parallel()
@@ -48,7 +31,7 @@ func TestService_StaticDir(T *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, hf)
 
-		req, res := buildRequest(t), httptest.NewRecorder()
+		req, res := testutil.BuildTestRequest(t), httptest.NewRecorder()
 		req.URL.Path = "/http_routes_test.go"
 		hf(res, req)
 
@@ -68,7 +51,7 @@ func TestService_StaticDir(T *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, hf)
 
-		req, res := buildRequest(t), httptest.NewRecorder()
+		req, res := testutil.BuildTestRequest(t), httptest.NewRecorder()
 		req.URL.Path = "/auth/login"
 		hf(res, req)
 

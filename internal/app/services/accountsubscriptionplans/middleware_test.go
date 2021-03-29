@@ -67,10 +67,13 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		actual := s.CreationInputMiddleware(&testutil.MockHTTPHandler{})
+		mh := &testutil.MockHTTPHandler{}
+		actual := s.CreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {

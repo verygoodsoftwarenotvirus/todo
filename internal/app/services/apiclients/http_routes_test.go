@@ -1,101 +1,26 @@
 package apiclients
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 )
 
-func buildRequest(t *testing.T) *http.Request {
-	t.Helper()
-
-	ctx := context.Background()
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		"https://verygoodsoftwarenotvirus.ru",
-		nil,
-	)
-
-	require.NotNil(t, req)
-	assert.NoError(t, err)
-	return req
-}
-
 func TestAPIClientsServiceHTTPRoutes(t *testing.T) {
 	suite.Run(t, new(apiClientsServiceHTTPRoutesTestSuite))
-}
-
-type apiClientsServiceHTTPRoutesTestSuite struct {
-	suite.Suite
-
-	ctx              context.Context
-	req              *http.Request
-	res              *httptest.ResponseRecorder
-	service          *service
-	exampleUser      *types.User
-	exampleAccount   *types.Account
-	exampleAPIClient *types.APIClient
-	exampleInput     *types.APIClientCreationInput
-}
-
-var _ suite.SetupTestSuite = (*apiClientsServiceHTTPRoutesTestSuite)(nil)
-
-func (s *apiClientsServiceHTTPRoutesTestSuite) SetupTest() {
-	t := s.T()
-
-	s.ctx = context.Background()
-	s.service = buildTestService(t)
-	s.exampleUser = fakes.BuildFakeUser()
-	s.exampleAccount = fakes.BuildFakeAccount()
-	s.exampleAccount.BelongsToUser = s.exampleUser.ID
-	s.exampleAPIClient = fakes.BuildFakeAPIClient()
-	s.exampleAPIClient.BelongsToUser = s.exampleUser.ID
-	s.exampleInput = fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
-
-	reqCtx, err := types.RequestContextFromUser(s.exampleUser, s.exampleAccount.ID, map[uint64]permissions.ServiceUserPermissions{
-		s.exampleAccount.ID: testutil.BuildMaxUserPerms(),
-	})
-	require.NoError(s.T(), err)
-
-	s.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	s.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-		return reqCtx, nil
-	}
-
-	req := buildRequest(t)
-
-	s.req = req.WithContext(context.WithValue(req.Context(), types.RequestContextKey, reqCtx))
-	s.req = s.req.WithContext(context.WithValue(s.req.Context(), creationMiddlewareCtxKey, s.exampleInput))
-
-	s.res = httptest.NewRecorder()
-}
-
-var _ suite.WithStats = (*apiClientsServiceHTTPRoutesTestSuite)(nil)
-
-func (s *apiClientsServiceHTTPRoutesTestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 11
-
-	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
 }
 
 func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_ListHandler() {
@@ -224,7 +149,7 @@ func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandl
 func (s *apiClientsServiceHTTPRoutesTestSuite) TestAPIClientsService_CreateHandler_WithMissingInput() {
 	t := s.T()
 
-	s.req = buildRequest(t)
+	s.req = testutil.BuildTestRequest(t)
 
 	ed := mockencoding.NewMockEncoderDecoder()
 	ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))

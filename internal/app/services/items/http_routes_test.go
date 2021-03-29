@@ -86,17 +86,17 @@ func TestItemsService_ListHandler(T *testing.T) {
 func TestItemsService_SearchHandler(T *testing.T) {
 	T.Parallel()
 
+	exampleQuery := "whatever"
+	exampleLimit := uint8(123)
+	exampleItemList := fakes.BuildFakeItemList()
+	exampleItemIDs := []uint64{}
+	for _, x := range exampleItemList.Items {
+		exampleItemIDs = append(exampleItemIDs, x.ID)
+	}
+
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		helper := newTestHelper(t)
-
-		exampleQuery := "whatever"
-		exampleLimit := uint8(123)
-		exampleItemList := fakes.BuildFakeItemList()
-		exampleItemIDs := []uint64{}
-		for _, x := range exampleItemList.Items {
-			exampleItemIDs = append(exampleItemIDs, x.ID)
-		}
 
 		helper.req.URL.RawQuery = url.Values{"q": []string{exampleQuery}, "limit": []string{strconv.Itoa(int(exampleLimit))}}.Encode()
 
@@ -123,8 +123,6 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		t.Parallel()
 		helper := newTestHelper(t)
 
-		exampleQuery := "whatever"
-
 		helper.req.URL.RawQuery = url.Values{"q": []string{exampleQuery}}.Encode()
 
 		indexManager := &mocksearch.IndexManager{}
@@ -145,14 +143,6 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
 		helper := newTestHelper(t)
-
-		exampleQuery := "whatever"
-		exampleLimit := uint8(123)
-		exampleItemList := fakes.BuildFakeItemList()
-		exampleItemIDs := []uint64{}
-		for _, x := range exampleItemList.Items {
-			exampleItemIDs = append(exampleItemIDs, x.ID)
-		}
 
 		helper.req.URL.RawQuery = url.Values{"q": []string{exampleQuery}, "limit": []string{strconv.Itoa(int(exampleLimit))}}.Encode()
 
@@ -178,14 +168,6 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	T.Run("with error retrieving from database", func(t *testing.T) {
 		t.Parallel()
 		helper := newTestHelper(t)
-
-		exampleQuery := "whatever"
-		exampleLimit := uint8(123)
-		exampleItemList := fakes.BuildFakeItemList()
-		exampleItemIDs := []uint64{}
-		for _, x := range exampleItemList.Items {
-			exampleItemIDs = append(exampleItemIDs, x.ID)
-		}
 
 		helper.req.URL.RawQuery = url.Values{"q": []string{exampleQuery}, "limit": []string{strconv.Itoa(int(exampleLimit))}}.Encode()
 

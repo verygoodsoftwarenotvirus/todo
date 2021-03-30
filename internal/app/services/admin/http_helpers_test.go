@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -13,12 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type adminServiceHTTPRoutesTestHelper struct {
-	suite.Suite
-
 	ctx            context.Context
 	service        *service
 	exampleUser    *types.User
@@ -38,10 +36,10 @@ func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
 	}
 }
 
-var _ suite.SetupTestSuite = (*adminServiceHTTPRoutesTestHelper)(nil)
+func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
+	t.Helper()
 
-func (helper *adminServiceHTTPRoutesTestHelper) SetupTest() {
-	t := helper.T()
+	helper := &adminServiceHTTPRoutesTestHelper{}
 
 	helper.service = buildTestService(t)
 
@@ -67,7 +65,7 @@ func (helper *adminServiceHTTPRoutesTestHelper) SetupTest() {
 		helper.exampleAccount.ID,
 		map[uint64]permissions.ServiceUserPermissions{helper.exampleAccount.ID: testutil.BuildMaxUserPerms()},
 	)
-	require.NoError(helper.T(), err)
+	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
@@ -76,12 +74,6 @@ func (helper *adminServiceHTTPRoutesTestHelper) SetupTest() {
 	helper.service.userIDFetcher = func(req *http.Request) uint64 {
 		return helper.exampleUser.ID
 	}
-}
 
-var _ suite.WithStats = (*adminServiceHTTPRoutesTestHelper)(nil)
-
-func (helper *adminServiceHTTPRoutesTestHelper) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 9
-
-	testutil.AssertAppropriateNumberOfTestsRan(helper.T(), totalExpectedTestCount, stats)
+	return helper
 }

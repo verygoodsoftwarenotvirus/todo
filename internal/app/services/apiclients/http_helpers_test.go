@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -13,12 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type apiClientsServiceHTTPRoutesTestHelper struct {
-	suite.Suite
-
 	ctx              context.Context
 	req              *http.Request
 	res              *httptest.ResponseRecorder
@@ -29,10 +27,10 @@ type apiClientsServiceHTTPRoutesTestHelper struct {
 	exampleInput     *types.APIClientCreationInput
 }
 
-var _ suite.SetupTestSuite = (*apiClientsServiceHTTPRoutesTestHelper)(nil)
+func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
+	t.Helper()
 
-func (helper *apiClientsServiceHTTPRoutesTestHelper) SetupTest() {
-	t := helper.T()
+	helper := &apiClientsServiceHTTPRoutesTestHelper{}
 
 	helper.ctx = context.Background()
 	helper.service = buildTestService(t)
@@ -48,7 +46,7 @@ func (helper *apiClientsServiceHTTPRoutesTestHelper) SetupTest() {
 		helper.exampleAccount.ID,
 		map[uint64]permissions.ServiceUserPermissions{helper.exampleAccount.ID: testutil.BuildMaxUserPerms()},
 	)
-	require.NoError(helper.T(), err)
+	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
@@ -61,12 +59,6 @@ func (helper *apiClientsServiceHTTPRoutesTestHelper) SetupTest() {
 	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), creationMiddlewareCtxKey, helper.exampleInput))
 
 	helper.res = httptest.NewRecorder()
-}
 
-var _ suite.WithStats = (*apiClientsServiceHTTPRoutesTestHelper)(nil)
-
-func (helper *apiClientsServiceHTTPRoutesTestHelper) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 11
-
-	testutil.AssertAppropriateNumberOfTestsRan(helper.T(), totalExpectedTestCount, stats)
+	return helper
 }

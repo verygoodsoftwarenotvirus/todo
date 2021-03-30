@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -13,12 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type auditServiceHTTPRoutesTestHelper struct {
-	suite.Suite
-
 	ctx                  context.Context
 	req                  *http.Request
 	res                  *httptest.ResponseRecorder
@@ -28,10 +26,10 @@ type auditServiceHTTPRoutesTestHelper struct {
 	exampleAuditLogEntry *types.AuditLogEntry
 }
 
-var _ suite.SetupTestSuite = (*auditServiceHTTPRoutesTestHelper)(nil)
+func buildTestHelper(t *testing.T) *auditServiceHTTPRoutesTestHelper {
+	t.Helper()
 
-func (helper *auditServiceHTTPRoutesTestHelper) SetupTest() {
-	t := helper.T()
+	helper := &auditServiceHTTPRoutesTestHelper{}
 
 	helper.ctx = context.Background()
 	helper.service = buildTestService()
@@ -45,7 +43,7 @@ func (helper *auditServiceHTTPRoutesTestHelper) SetupTest() {
 		helper.exampleAccount.ID,
 		map[uint64]permissions.ServiceUserPermissions{helper.exampleAccount.ID: testutil.BuildMaxUserPerms()},
 	)
-	require.NoError(helper.T(), err)
+	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
@@ -64,12 +62,6 @@ func (helper *auditServiceHTTPRoutesTestHelper) SetupTest() {
 	)
 	require.NotNil(t, helper.req)
 	require.NoError(t, err)
-}
 
-var _ suite.WithStats = (*auditServiceHTTPRoutesTestHelper)(nil)
-
-func (helper *auditServiceHTTPRoutesTestHelper) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 6
-
-	testutil.AssertAppropriateNumberOfTestsRan(helper.T(), totalExpectedTestCount, stats)
+	return helper
 }

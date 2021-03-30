@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
@@ -16,8 +14,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request) {
@@ -44,8 +42,6 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 }
 
 type authServiceHTTPRoutesTestHelper struct {
-	suite.Suite
-
 	ctx               context.Context
 	req               *http.Request
 	res               *httptest.ResponseRecorder
@@ -57,19 +53,21 @@ type authServiceHTTPRoutesTestHelper struct {
 	exampleLoginInput *types.UserLoginInput
 }
 
-func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher() {
+func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher(t *testing.T) {
+	t.Helper()
+
 	reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
-	require.NoError(helper.T(), err)
+	require.NoError(t, err)
 
 	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
 		return reqCtx, nil
 	}
 }
 
-var _ suite.SetupTestSuite = (*authServiceHTTPRoutesTestHelper)(nil)
+func buildTestHelper(t *testing.T) *authServiceHTTPRoutesTestHelper {
+	t.Helper()
 
-func (helper *authServiceHTTPRoutesTestHelper) SetupTest() {
-	t := helper.T()
+	helper := &authServiceHTTPRoutesTestHelper{}
 
 	helper.ctx = context.Background()
 	helper.service = buildTestService(t)
@@ -84,7 +82,7 @@ func (helper *authServiceHTTPRoutesTestHelper) SetupTest() {
 		helper.exampleAccount.ID: testutil.BuildMaxUserPerms(),
 	}
 
-	helper.setContextFetcher()
+	helper.setContextFetcher(t)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
@@ -99,12 +97,6 @@ func (helper *authServiceHTTPRoutesTestHelper) SetupTest() {
 	)
 	require.NotNil(t, helper.req)
 	require.NoError(t, err)
-}
 
-var _ suite.WithStats = (*authServiceHTTPRoutesTestHelper)(nil)
-
-func (helper *authServiceHTTPRoutesTestHelper) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 55
-
-	testutil.AssertAppropriateNumberOfTestsRan(helper.T(), totalExpectedTestCount, stats)
+	return helper
 }

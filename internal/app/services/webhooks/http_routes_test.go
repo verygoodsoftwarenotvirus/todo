@@ -1,11 +1,9 @@
 package webhooks
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
@@ -17,25 +15,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestWebhooksService_List(T *testing.T) {
 	T.Parallel()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(T, err)
-		return reqCtx, nil
-	}
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+		helper := newTestHelper(t)
 
 		exampleWebhookList := fakes.BuildFakeWebhookList()
 
@@ -43,27 +31,17 @@ func TestWebhooksService_List(T *testing.T) {
 		wd.On(
 			"GetWebhooks",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleAccount.ID,
+			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleWebhookList, nil)
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+		helper.service.ListHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -71,35 +49,23 @@ func TestWebhooksService_List(T *testing.T) {
 	T.Run("with no rows returned", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleAccount.ID,
+			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), sql.ErrNoRows)
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.WebhookList{}))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+		helper.service.ListHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -107,35 +73,23 @@ func TestWebhooksService_List(T *testing.T) {
 	T.Run("with error fetching webhooks from database", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleAccount.ID,
+			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), errors.New("blah"))
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ListHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		helper.service.ListHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -144,55 +98,30 @@ func TestWebhooksService_List(T *testing.T) {
 func TestWebhooksService_Create(T *testing.T) {
 	T.Parallel()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(T, err)
-		return reqCtx, nil
-	}
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		helper := newTestHelper(t)
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Increment", mock.MatchedBy(testutil.ContextMatcher))
-		s.webhookCounter = mc
+		helper.service.webhookCounter = mc
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.WebhookCreationInput{}),
-			exampleUser.ID,
-		).Return(exampleWebhook, nil)
-		s.webhookDataManager = wd
+			helper.exampleUser.ID,
+		).Return(helper.exampleWebhook, nil)
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}), http.StatusCreated)
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
-
-		s.CreateHandler(res, req)
-		assert.Equal(t, http.StatusCreated, res.Code)
+		helper.service.CreateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusCreated, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mc, wd, ed)
 	})
@@ -200,26 +129,15 @@ func TestWebhooksService_Create(T *testing.T) {
 	T.Run("without input attached", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+		helper := newTestHelper(t)
+		helper.req = testutil.BuildTestRequest(t)
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.CreateHandler(res, req)
-		assert.Equal(t, http.StatusBadRequest, res.Code)
+		helper.service.CreateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, ed)
 	})
@@ -227,41 +145,23 @@ func TestWebhooksService_Create(T *testing.T) {
 	T.Run("with error creating webhook", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.WebhookCreationInput{}),
-			exampleUser.ID,
+			helper.exampleUser.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), createMiddlewareCtxKey, exampleInput))
-
-		s.CreateHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		helper.service.CreateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -270,52 +170,26 @@ func TestWebhooksService_Create(T *testing.T) {
 func TestWebhooksService_Read(T *testing.T) {
 	T.Parallel()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(T, err)
-		return reqCtx, nil
-	}
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
-		).Return(exampleWebhook, nil)
-		s.webhookDataManager = wd
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+		).Return(helper.exampleWebhook, nil)
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ReadHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+		helper.service.ReadHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -323,42 +197,23 @@ func TestWebhooksService_Read(T *testing.T) {
 	T.Run("with no such webhook in database", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ReadHandler(res, req)
-		assert.Equal(t, http.StatusNotFound, res.Code)
+		helper.service.ReadHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -366,42 +221,23 @@ func TestWebhooksService_Read(T *testing.T) {
 	T.Run("with error fetching webhook from database", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ReadHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		helper.service.ReadHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -410,63 +246,34 @@ func TestWebhooksService_Read(T *testing.T) {
 func TestWebhooksService_Update(T *testing.T) {
 	T.Parallel()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(T, err)
-		return reqCtx, nil
-	}
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
-		).Return(exampleWebhook, nil)
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+		).Return(helper.exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.Webhook{}),
-			exampleUser.ID,
+			helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.Webhook{}))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+		helper.service.UpdateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -474,26 +281,15 @@ func TestWebhooksService_Update(T *testing.T) {
 	T.Run("without update input", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
+		helper := newTestHelper(t)
+		helper.req = testutil.BuildTestRequest(t)
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.UpdateHandler(res, req)
-		assert.Equal(t, http.StatusBadRequest, res.Code)
+		helper.service.UpdateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, ed)
 	})
@@ -501,45 +297,23 @@ func TestWebhooksService_Update(T *testing.T) {
 	T.Run("with no rows fetching webhook", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-		assert.Equal(t, http.StatusNotFound, res.Code)
+		helper.service.UpdateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -547,45 +321,23 @@ func TestWebhooksService_Update(T *testing.T) {
 	T.Run("with error fetching webhook", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		helper.service.UpdateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -593,53 +345,31 @@ func TestWebhooksService_Update(T *testing.T) {
 	T.Run("with error updating webhook", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
-		).Return(exampleWebhook, nil)
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+		).Return(helper.exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&types.Webhook{}),
-			exampleUser.ID,
+			helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		req = req.WithContext(context.WithValue(req.Context(), updateMiddlewareCtxKey, exampleInput))
-
-		s.UpdateHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		helper.service.UpdateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -648,53 +378,27 @@ func TestWebhooksService_Update(T *testing.T) {
 func TestWebhooksService_Archive(T *testing.T) {
 	T.Parallel()
 
-	exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-	requestContextFetcher := func(_ *http.Request) (*types.RequestContext, error) {
-		reqCtx, err := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
-		require.NoError(T, err)
-		return reqCtx, nil
-	}
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
+		helper := newTestHelper(t)
 
 		mc := &mockmetrics.UnitCounter{}
 		mc.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
-		s.webhookCounter = mc
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper.service.webhookCounter = mc
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
-			exampleUser.ID,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(nil)
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ArchiveHandler(res, req)
-		assert.Equal(t, http.StatusNoContent, res.Code)
+		helper.service.ArchiveHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusNoContent, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mc, wd)
 	})
@@ -702,43 +406,24 @@ func TestWebhooksService_Archive(T *testing.T) {
 	T.Run("with no webhook in database", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
-			exampleUser.ID,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeNotFoundResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ArchiveHandler(res, req)
-		assert.Equal(t, http.StatusNotFound, res.Code)
+		helper.service.ArchiveHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})
@@ -746,43 +431,24 @@ func TestWebhooksService_Archive(T *testing.T) {
 	T.Run("with error reading from database", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		s := buildTestService()
-		s.requestContextFetcher = requestContextFetcher
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhook.BelongsToAccount = exampleUser.ID
-
-		s.webhookIDFetcher = func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		}
+		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
 			mock.MatchedBy(testutil.ContextMatcher),
-			exampleWebhook.ID,
-			exampleAccount.ID,
-			exampleUser.ID,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
-		s.webhookDataManager = wd
+		helper.service.webhookDataManager = wd
 
 		ed := mockencoding.NewMockEncoderDecoder()
 		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		s.encoderDecoder = ed
+		helper.service.encoderDecoder = ed
 
-		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(
-			ctx,
-			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
-			nil,
-		)
-		require.NotNil(t, req)
-		require.NoError(t, err)
-
-		s.ArchiveHandler(res, req)
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
+		helper.service.ArchiveHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, ed)
 	})

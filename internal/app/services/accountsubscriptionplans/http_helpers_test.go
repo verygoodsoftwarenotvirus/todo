@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -13,12 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type accountSubscriptionPlansServiceHTTPRoutesTestHelper struct {
-	suite.Suite
-
 	ctx                            context.Context
 	req                            *http.Request
 	res                            *httptest.ResponseRecorder
@@ -29,10 +27,10 @@ type accountSubscriptionPlansServiceHTTPRoutesTestHelper struct {
 	exampleInput                   *types.AccountSubscriptionPlanCreationInput
 }
 
-var _ suite.SetupTestSuite = (*accountSubscriptionPlansServiceHTTPRoutesTestHelper)(nil)
+func buildTestHelper(t *testing.T) *accountSubscriptionPlansServiceHTTPRoutesTestHelper {
+	t.Helper()
 
-func (helper *accountSubscriptionPlansServiceHTTPRoutesTestHelper) SetupTest() {
-	t := helper.T()
+	helper := &accountSubscriptionPlansServiceHTTPRoutesTestHelper{}
 
 	helper.ctx = context.Background()
 	helper.service = buildTestService()
@@ -66,12 +64,6 @@ func (helper *accountSubscriptionPlansServiceHTTPRoutesTestHelper) SetupTest() {
 	)
 	require.NoError(t, err)
 	require.NotNil(t, helper.req)
-}
 
-var _ suite.WithStats = (*accountSubscriptionPlansServiceHTTPRoutesTestHelper)(nil)
-
-func (helper *accountSubscriptionPlansServiceHTTPRoutesTestHelper) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 17
-
-	testutil.AssertAppropriateNumberOfTestsRan(helper.T(), totalExpectedTestCount, stats)
+	return helper
 }

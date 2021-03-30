@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -13,12 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type accountsServiceHTTPRoutesTestHelper struct {
-	suite.Suite
-
 	ctx            context.Context
 	req            *http.Request
 	res            *httptest.ResponseRecorder
@@ -27,10 +25,10 @@ type accountsServiceHTTPRoutesTestHelper struct {
 	exampleAccount *types.Account
 }
 
-var _ suite.SetupTestSuite = (*accountsServiceHTTPRoutesTestHelper)(nil)
+func buildTestHelper(t *testing.T) *accountsServiceHTTPRoutesTestHelper {
+	t.Helper()
 
-func (helper *accountsServiceHTTPRoutesTestHelper) SetupTest() {
-	t := helper.T()
+	helper := &accountsServiceHTTPRoutesTestHelper{}
 
 	helper.ctx = context.Background()
 	helper.service = buildTestService()
@@ -43,7 +41,7 @@ func (helper *accountsServiceHTTPRoutesTestHelper) SetupTest() {
 		helper.exampleAccount.ID,
 		map[uint64]permissions.ServiceUserPermissions{helper.exampleAccount.ID: testutil.BuildMaxUserPerms()},
 	)
-	require.NoError(helper.T(), err)
+	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
@@ -62,12 +60,6 @@ func (helper *accountsServiceHTTPRoutesTestHelper) SetupTest() {
 	)
 	require.NotNil(t, helper.req)
 	require.NoError(t, err)
-}
 
-var _ suite.WithStats = (*accountsServiceHTTPRoutesTestHelper)(nil)
-
-func (helper *accountsServiceHTTPRoutesTestHelper) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 17
-
-	testutil.AssertAppropriateNumberOfTestsRan(helper.T(), totalExpectedTestCount, stats)
+	return helper
 }

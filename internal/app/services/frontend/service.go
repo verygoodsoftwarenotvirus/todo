@@ -20,13 +20,15 @@ type (
 	}
 )
 
-// ProvideService provides the frontend service to dependency injection.
-func ProvideService(logger logging.Logger, cfg Config) types.FrontendService {
-	svc := &service{
+func buildService(logger logging.Logger, cfg Config) *service {
+	return &service{
 		config: cfg,
 		logger: logging.EnsureLogger(logger).WithName(serviceName),
 		tracer: tracing.NewTracer(serviceName),
 	}
+}
 
-	return svc
+// ProvideService provides the frontend service to dependency injection.
+func ProvideService(logger logging.Logger, cfg Config) types.FrontendService {
+	return buildService(logger, cfg)
 }

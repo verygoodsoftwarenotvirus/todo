@@ -30,7 +30,7 @@ type (
 
 	// FrontendService serves static frontend files.
 	FrontendService interface {
-		StaticDir(staticFilesDirectory string) (http.HandlerFunc, error)
+		StaticDir(ctx context.Context, staticFilesDirectory string) (http.HandlerFunc, error)
 	}
 )
 

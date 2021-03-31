@@ -72,48 +72,40 @@ frontend-format-check:
 
 integration_tests_postgres:
   stage: integration-testing
-  image: docker:latest
+  image: docker/compose:latest
   services:
     - docker:dind
   variables:
     GOPATH: "/go"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-    - pip install docker-compose
     - make integration_tests_postgres
 
 integration_tests_mariadb:
   stage: integration-testing
-  image: docker:latest
+  image: docker/compose:latest
   services:
     - docker:dind
   variables:
     GOPATH: "/go"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-    - pip install docker-compose
     - make integration_tests_mariadb
 
 integration_tests_sqlite:
   stage: integration-testing
-  image: docker:latest
+  image: docker/compose:latest
   services:
     - docker:dind
   variables:
     GOPATH: "/go"
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-    - pip install docker-compose
     - make integration_tests_sqlite
 
 frontend-selenium-tests:
   stage: integration-testing
-  image: docker:latest
+  image: docker/compose:latest
   services:
     - docker:dind
   script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-    - pip install docker-compose
     - make frontend_tests
 
 ## load tests

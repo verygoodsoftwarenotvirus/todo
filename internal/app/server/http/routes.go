@@ -27,11 +27,11 @@ const (
 )
 
 func buildNumericIDURLChunk(key string) string {
-	return fmt.Sprintf("/"+numericIDPattern, key)
+	return fmt.Sprintf(root+numericIDPattern, key)
 }
 
 func (s *Server) setupRouter(ctx context.Context, router routing.Router, frontendSettings frontendservice.Config, _ metrics.Config, metricsHandler metrics.Handler) {
-	_, span := s.tracer.StartSpan(ctx)
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	router.Route("/_meta_", func(metaRouter routing.Router) {
@@ -49,7 +49,8 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, fronten
 
 	// Frontend routes.
 	if sfd := frontendSettings.StaticFilesDirectory; sfd != "" {
-		staticFileServer, err := s.frontendService.StaticDir(sfd)
+		s.logger.Debug("setting up static file server")
+		staticFileServer, err := s.frontendService.StaticDir(ctx, sfd)
 		if err != nil {
 			s.logger.Error(err, "establishing static file server")
 		}

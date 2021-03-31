@@ -1,13 +1,12 @@
 package frontend
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
@@ -19,15 +18,13 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-		s := &service{
-			logger: logging.NewNonOperationalLogger(),
-			tracer: tracing.NewTracer("test"),
-		}
+		s := buildService(nil, Config{CacheStaticFiles: true})
 
+		ctx := context.Background()
 		cwd, err := os.Getwd()
 		require.NoError(t, err)
 
-		hf, err := s.StaticDir(cwd)
+		hf, err := s.StaticDir(ctx, cwd)
 		assert.NoError(t, err)
 		assert.NotNil(t, hf)
 
@@ -40,14 +37,12 @@ func TestService_StaticDir(T *testing.T) {
 
 	T.Run("with frontend routing path", func(t *testing.T) {
 		t.Parallel()
-		s := &service{
-			logger: logging.NewNonOperationalLogger(),
-			tracer: tracing.NewTracer("test"),
-		}
+		s := buildService(nil, Config{CacheStaticFiles: true})
 
+		ctx := context.Background()
 		exampleDir := "."
 
-		hf, err := s.StaticDir(exampleDir)
+		hf, err := s.StaticDir(ctx, exampleDir)
 		assert.NoError(t, err)
 		assert.NotNil(t, hf)
 
@@ -64,15 +59,14 @@ func TestService_buildStaticFileServer(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-		s := &service{
-			config: Config{
-				CacheStaticFiles: true,
-			},
-		}
+
+		ctx := context.Background()
+		s := buildService(nil, Config{CacheStaticFiles: true})
+
 		cwd, err := os.Getwd()
 		require.NoError(t, err)
 
-		actual, err := s.buildStaticFileServer(cwd)
+		actual, err := s.buildStaticFileServer(ctx, cwd)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})

@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 	"regexp"
 
 	"github.com/spf13/afero"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 )
 
 const (
@@ -66,15 +69,16 @@ var (
 	}
 )
 
-func (s *service) cacheFile(afs afero.Fs, fileDir string, file os.FileInfo) error {
-	fp := filepath.Join(fileDir, file.Name())
+func (s *service) cacheFile(ctx context.Context, afs afero.Fs, filePath string) error {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
 
-	f, err := afs.Create(fp)
+	f, err := afs.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("creating static file in memory: %w", err)
 	}
 
-	bs, err := ioutil.ReadFile(fp)
+	bs, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("reading static file from directory: %w", err)
 	}
@@ -90,12 +94,15 @@ func (s *service) cacheFile(afs afero.Fs, fileDir string, file os.FileInfo) erro
 	return nil
 }
 
-func (s *service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
+func (s *service) buildStaticFileServer(ctx context.Context, fileDir string) (*afero.HttpFs, error) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
 	var afs afero.Fs
 	if s.config.CacheStaticFiles {
 		afs = afero.NewMemMapFs()
 
-		files, err := ioutil.ReadDir(fileDir)
+		files, err := os.ReadDir(fileDir)
 		if err != nil {
 			return nil, fmt.Errorf("reading directory for frontend files: %w", err)
 		}
@@ -105,13 +112,18 @@ func (s *service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 				continue
 			}
 
-			if err = s.cacheFile(afs, fileDir, file); err != nil {
-				s.logger.Error(err, "closing file while setting up static dir")
+			path := file.Name()
+			logger := s.logger.WithValue("path", path)
+
+			if err = s.cacheFile(ctx, afs, filepath.Join(fileDir, path)); err != nil {
+				return nil, observability.PrepareError(err, logger, span, "caching file while setting up static dir")
 			}
 		}
 
+		s.logger.Debug("returning read-only static file server")
 		afs = afero.NewReadOnlyFs(afs)
 	} else {
+		s.logger.Debug("returning standard static file server")
 		afs = afero.NewOsFs()
 	}
 
@@ -119,18 +131,20 @@ func (s *service) buildStaticFileServer(fileDir string) (*afero.HttpFs, error) {
 }
 
 // StaticDir builds a static directory handler.
-func (s *service) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
+func (s *service) StaticDir(ctx context.Context, staticFilesDirectory string) (http.HandlerFunc, error) {
+	ctx, rootSpan := s.tracer.StartSpan(ctx)
+	defer rootSpan.End()
+
 	fileDir, err := filepath.Abs(staticFilesDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("determining absolute path of static files directory: %w", err)
 	}
 
-	httpFs, err := s.buildStaticFileServer(fileDir)
+	httpFs, err := s.buildStaticFileServer(ctx, fileDir)
 	if err != nil {
 		return nil, fmt.Errorf("establishing static server filesystem: %w", err)
 	}
 
-	s.logger.WithValue("static_dir", fileDir).Debug("setting static file server")
 	fs := http.StripPrefix("/", http.FileServer(httpFs.Dir(fileDir)))
 
 	return func(res http.ResponseWriter, req *http.Request) {

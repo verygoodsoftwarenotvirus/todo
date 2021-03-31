@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"context"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -16,7 +17,7 @@ type FrontendService struct {
 }
 
 // StaticDir implements our FrontendService interface.
-func (m *FrontendService) StaticDir(staticFilesDirectory string) (http.HandlerFunc, error) {
+func (m *FrontendService) StaticDir(ctx context.Context, staticFilesDirectory string) (http.HandlerFunc, error) {
 	args := m.Called(staticFilesDirectory)
 
 	return args.Get(0).(http.HandlerFunc), args.Error(1)

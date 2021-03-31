@@ -69,28 +69,6 @@ frontend-format-check:
   script:
     - pnpm run format:check
 
-integration_tests_postgres:
-  stage: integration-testing
-  image: docker/compose:latest
-  services:
-    - docker:dind
-  variables:
-    GOPATH: "/go"
-  script:
-    - apk add --update make
-    - make integration-tests-postgres
-
-integration_tests_mariadb:
-  stage: integration-testing
-  image: docker/compose:latest
-  services:
-    - docker:dind
-  variables:
-    GOPATH: "/go"
-  script:
-    - apk add --update make
-    - make integration-tests-mariadb
-
 integration_tests_sqlite:
   stage: integration-testing
   image: docker/compose:latest
@@ -101,6 +79,28 @@ integration_tests_sqlite:
   script:
     - apk add --update make
     - make integration-tests-sqlite
+
+#integration_tests_postgres:
+#  stage: integration-testing
+#  image: docker/compose:latest
+#  services:
+#    - docker:dind
+#  variables:
+#    GOPATH: "/go"
+#  script:
+#    - apk add --update make
+#    - make integration-tests-postgres
+#
+#integration_tests_mariadb:
+#  stage: integration-testing
+#  image: docker/compose:latest
+#  services:
+#    - docker:dind
+#  variables:
+#    GOPATH: "/go"
+#  script:
+#    - apk add --update make
+#    - make integration-tests-mariadb
 
 frontend-selenium-tests:
   stage: integration-testing

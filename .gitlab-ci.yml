@@ -54,19 +54,21 @@ frontend-build:
   stage: quality
   image: node:lts-stretch
   before_script:
+    - npm install --global pnpm
     - cd frontend/
-    - npm install
+    - pnpm install
   script:
-    - npm run build
+    - pnpm run build
 
 frontend-format-check:
   stage: quality
   image: node:lts-stretch
   before_script:
+    - npm install --global pnpm
     - cd frontend/
-    - npm install
+    - pnpm install
   script:
-    - npm run format:check
+    - pnpm run format:check
 
 integration_tests_postgres:
   stage: integration-testing

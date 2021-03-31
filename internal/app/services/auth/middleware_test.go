@@ -77,7 +77,6 @@ func TestAuthService_CookieAuthenticationMiddleware(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, ms)
 	})
-
 }
 
 func TestAuthService_UserAttributionMiddleware(T *testing.T) {

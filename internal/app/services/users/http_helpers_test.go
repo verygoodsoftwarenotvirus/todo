@@ -17,15 +17,12 @@ import (
 )
 
 type usersServiceHTTPRoutesTestHelper struct {
-	ctx                  context.Context
-	req                  *http.Request
-	res                  *httptest.ResponseRecorder
-	service              *service
-	exampleUser          *types.User
-	exampleAccount       *types.Account
-	exampleWebhook       *types.Webhook
-	exampleCreationInput *types.WebhookCreationInput
-	exampleUpdateInput   *types.WebhookUpdateInput
+	ctx            context.Context
+	req            *http.Request
+	res            *httptest.ResponseRecorder
+	service        *service
+	exampleUser    *types.User
+	exampleAccount *types.Account
 }
 
 func newTestHelper(t *testing.T) *usersServiceHTTPRoutesTestHelper {

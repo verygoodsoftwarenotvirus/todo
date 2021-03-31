@@ -10,7 +10,7 @@ export function cycleCookieSecret(): Promise<AxiosResponse> {
   return axios
     .post(uri, {}, { validateStatus: () => true })
     .then((res: AxiosResponse) => {
-      if (res.status === statusCodes.UNAUTHORIZED) {
+      if (res?.status === statusCodes.UNAUTHORIZED) {
         throw new Error('unauthorized for cycling cookie secrets');
       }
       return res;

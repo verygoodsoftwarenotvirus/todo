@@ -103,7 +103,7 @@ function promptDelete(id: number) {
     } else {
       V1APIClient.deleteWebhook(id)
         .then((response: AxiosResponse<Webhook>) => {
-          if (response.status === statusCodes.NO_CONTENT) {
+          if (response?.status === statusCodes.NO_CONTENT) {
             fetchWebhooks();
           }
         })

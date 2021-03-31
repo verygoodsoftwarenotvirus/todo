@@ -68,14 +68,12 @@ async function login() {
         }
       })
       .catch((reason: AxiosError) => {
-        if (reason.response) {
-          if (reason.response.status === 401) {
+        if (reason?.response?.status === 401) {
             loginError = 'invalid credentials: please try again';
           } else {
             loginError = reason.response.toString();
             logger.error(JSON.stringify(reason.response));
           }
-        }
       });
   }
 }

@@ -230,7 +230,7 @@ function deleteWebhook(): void {
   } else {
     V1APIClient.deleteWebhook(webhookID)
       .then((response: AxiosResponse<Webhook>) => {
-        if (response.status === statusCodes.NO_CONTENT) {
+        if (response?.status === statusCodes.NO_CONTENT) {
           logger.debug(
             `navigating to ${frontendRoutes.USER_LIST_WEBHOOKS} because via deletion promise resolution`,
           );

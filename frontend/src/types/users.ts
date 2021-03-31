@@ -24,7 +24,7 @@ export class User {
   isAdmin: boolean;
   requiresPasswordChange: boolean;
   passwordLastChangedOn?: number;
-  accountStatus: string;
+  reputation: string;
   accountStatusExplanation: string;
   adminPermissions: AdminPermissionSummary;
   createdOn: number;
@@ -37,7 +37,7 @@ export class User {
     isAdmin: boolean = false,
     requiresPasswordChange: boolean = false,
     passwordLastChangedOn: number = 0,
-    accountStatus: string = '',
+    reputation: string = '',
     accountStatusExplanation: string = '',
     adminPermissions: AdminPermissionSummary = new AdminPermissionSummary(),
     createdOn: number = 0,
@@ -49,7 +49,7 @@ export class User {
     this.isAdmin = isAdmin;
     this.requiresPasswordChange = requiresPasswordChange;
     this.passwordLastChangedOn = passwordLastChangedOn;
-    this.accountStatus = accountStatus;
+    this.reputation = reputation;
     this.accountStatusExplanation = accountStatusExplanation;
     this.adminPermissions = adminPermissions;
     this.createdOn = createdOn;
@@ -128,7 +128,7 @@ export const fakeUserFactory = Factory.Sync.makeFactory<User>({
   isAdmin: Factory.Sync.each(() => faker.random.boolean()),
   requiresPasswordChange: Factory.Sync.each(() => faker.random.boolean()),
   passwordLastChangedOn: Factory.Sync.each(() => faker.random.number()),
-  accountStatus: Factory.Sync.each(() => faker.random.word()),
+  reputation: Factory.Sync.each(() => faker.random.word()),
   accountStatusExplanation: Factory.Sync.each(() => faker.random.words(10)),
   adminPermissions: Factory.Sync.each(() => new AdminPermissionSummary()),
   ...defaultFactories,

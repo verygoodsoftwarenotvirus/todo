@@ -8,7 +8,7 @@ export type itemModelTranslations = {
     details: string;
     createdOn: string;
     lastUpdatedOn: string;
-    belongsToUser: string;
+    belongsToAccount: string;
   };
   labels: {
     name: string;
@@ -74,7 +74,7 @@ export type webhookModelTranslations = {
     topics: string;
     createdOn: string;
     lastUpdatedOn: string;
-    belongsToUser: string;
+    belongsToAccount: string;
   };
   labels: {
     name: string;

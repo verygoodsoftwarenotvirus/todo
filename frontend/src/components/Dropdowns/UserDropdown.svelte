@@ -51,7 +51,7 @@ function goToSettings() {
 
 function logout() {
   V1APIClient.logout().then((response: AxiosResponse) => {
-    if (response.status === statusCodes.OK) {
+    if (response?.status === statusCodes.OK) {
       logger.debug(
         `navigating to ${frontendRoutes.LOGIN} via logout promise resolution`,
       );

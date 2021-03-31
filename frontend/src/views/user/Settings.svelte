@@ -1,9 +1,8 @@
 <script lang="typescript">
-import { onDestroy, onMount } from 'svelte';
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import { onMount } from 'svelte';
+import { AxiosError, AxiosResponse } from 'axios';
 import { navigate } from 'svelte-routing';
 
-import { userStatusStore } from '../../stores';
 import {
   User,
   UserStatus,
@@ -71,7 +70,7 @@ function submitChangePasswordRequest() {
   }
 }
 
-function chooseIconForStatus(status: string): string {
+function chooseIconForStatus(status: string=''): string {
   switch( status.toLowerCase().trim()) {
     case "good":
       return "fa-user-check"
@@ -109,7 +108,7 @@ onMount(() => {
           <h6 class="text-gray-800 text-xl font-bold">
             {user.username}
           </h6>
-          <span class="fa {chooseIconForStatus(user.accountStatus)}" title="{translationsToUse.hovertexts.accountStatus} {user.accountStatus}"></span>
+          <span class="fa {chooseIconForStatus(user.reputation)}" title="{translationsToUse.hovertexts.reputation} {user.reputation}"></span>
         </div>
       </div>
 

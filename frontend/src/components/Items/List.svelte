@@ -114,7 +114,7 @@ function promptDelete(id: number) {
     } else {
       V1APIClient.deleteItem(id)
         .then((response: AxiosResponse<Item>) => {
-          if (response.status === statusCodes.NO_CONTENT) {
+          if (response?.status === statusCodes.NO_CONTENT) {
             fetchItems();
           }
         })

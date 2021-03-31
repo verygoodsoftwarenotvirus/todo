@@ -95,10 +95,10 @@ export type userSettingsPageTranslations = {
     password: string;
   };
   valueLabels: {
-    accountStatus: string;
+    reputation: string;
   };
   hovertexts: {
-    accountStatus: string;
+    reputation: string;
   };
   inputLabels: {
     username: string;

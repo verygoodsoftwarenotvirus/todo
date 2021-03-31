@@ -23,20 +23,20 @@ export class Item {
   createdOn: number;
   lastUpdatedOn?: number;
   archivedOn?: number;
-  belongsToUser: number;
+  belongsToAccount: number;
 
   constructor(
     id: number = 0,
     name: string = '',
     details: string = '',
     createdOn: number = 0,
-    belongsToUser: number = 0,
+    belongsToAccount: number = 0,
   ) {
     this.id = id;
     this.name = name;
     this.details = details;
     this.createdOn = createdOn;
-    this.belongsToUser = belongsToUser;
+    this.belongsToAccount = belongsToAccount;
   }
 
   static areEqual = function (x: Item, y: Item): boolean {
@@ -54,7 +54,7 @@ export class Item {
       { content: columns.details, requiresAdminMode: false },
       { content: columns.createdOn, requiresAdminMode: false },
       { content: columns.lastUpdatedOn, requiresAdminMode: false },
-      { content: columns.belongsToUser, requiresAdminMode: true },
+      { content: columns.belongsToAccount, requiresAdminMode: true },
     ];
   };
 
@@ -82,8 +82,8 @@ export class Item {
         content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
-        fieldName: 'belongsToUser',
-        content: x.belongsToUser.toString(),
+        fieldName: 'belongsToAccount',
+        content: x.belongsToAccount.toString(),
         requiresAdmin: true,
       }),
     ];
@@ -103,6 +103,6 @@ export class ItemCreationInput {
 export const fakeItemFactory = Factory.Sync.makeFactory<Item>({
   name: Factory.Sync.each(() => faker.random.word()),
   details: Factory.Sync.each(() => faker.random.word()),
-  belongsToUser: Factory.Sync.each(() => faker.random.number()),
+  belongsToAccount: Factory.Sync.each(() => faker.random.number()),
   ...defaultFactories,
 });

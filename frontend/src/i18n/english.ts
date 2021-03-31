@@ -9,6 +9,7 @@ const _id = 'ID',
   _password = 'Password',
   _lastUpdatedOn = 'Last Updated On',
   _belongsToUser = 'Belongs to User',
+  _belongsToAccount = 'Belongs to Account',
   _serviceName = 'Todo',
   _settings = 'Settings',
   _copyright = 'Copyright ©',
@@ -30,7 +31,7 @@ const webhook: webhookModelTranslations = {
     topics: 'Topics',
     createdOn: _createdOn,
     lastUpdatedOn: _lastUpdatedOn,
-    belongsToUser: _belongsToUser,
+    belongsToAccount: _belongsToAccount,
   },
   labels: {
     name: _name,
@@ -205,10 +206,10 @@ export const englishTranslations: SiteTranslationMap = {
         twoFactorToken: '2FA Token',
       },
       valueLabels: {
-        accountStatus: 'Account Status',
+        reputation: 'Account Status',
       },
       hovertexts: {
-        accountStatus: 'account status: ',
+        reputation: 'account status: ',
       },
       inputPlaceholders: {
         email: "we don't want your stinkin' email!",
@@ -309,7 +310,7 @@ export const englishTranslations: SiteTranslationMap = {
         details: 'Details',
         createdOn: _createdOn,
         lastUpdatedOn: _lastUpdatedOn,
-        belongsToUser: _belongsToUser,
+        belongsToAccount: _belongsToAccount,
       },
       labels: {
         name: _name,

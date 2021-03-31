@@ -119,7 +119,7 @@ function deleteItem(): void {
   } else {
     V1APIClient.deleteItem(itemID)
       .then((response: AxiosResponse<Item>) => {
-        if (response.status === statusCodes.NO_CONTENT) {
+        if (response?.status === statusCodes.NO_CONTENT) {
           logger.debug(
             `navigating to ${frontendRoutes.LIST_ITEMS} via deletion promise resolution`,
           );

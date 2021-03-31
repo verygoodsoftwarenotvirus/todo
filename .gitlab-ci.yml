@@ -78,7 +78,7 @@ integration_tests_postgres:
     GOPATH: "/go"
   script:
     - apk add --update make
-    - make integration_tests_postgres
+    - make integration-tests-postgres
 
 integration_tests_mariadb:
   stage: integration-testing
@@ -89,7 +89,7 @@ integration_tests_mariadb:
     GOPATH: "/go"
   script:
     - apk add --update make
-    - make integration_tests_mariadb
+    - make integration-tests-mariadb
 
 integration_tests_sqlite:
   stage: integration-testing
@@ -100,7 +100,7 @@ integration_tests_sqlite:
     GOPATH: "/go"
   script:
     - apk add --update make
-    - make integration_tests_sqlite
+    - make integration-tests-sqlite
 
 frontend-selenium-tests:
   stage: integration-testing
@@ -109,7 +109,7 @@ frontend-selenium-tests:
     - docker:dind
   script:
     - apk add --update make
-    - make frontend_tests
+    - make frontend-tests
 
 ## load tests
 #load_tests_postgres:

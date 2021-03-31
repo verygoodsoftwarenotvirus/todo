@@ -9,7 +9,6 @@ before_script:
   - mkdir -p /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cp -rf /builds/verygoodsoftwarenotvirus/todo /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
-  - apt-get update -y && apt-get install -y make git gcc musl-dev
 
 ## doesn't work :'(
 #docker-security-lint:
@@ -78,6 +77,7 @@ integration_tests_postgres:
   variables:
     GOPATH: "/go"
   script:
+    - apk add --update make
     - make integration_tests_postgres
 
 integration_tests_mariadb:
@@ -88,6 +88,7 @@ integration_tests_mariadb:
   variables:
     GOPATH: "/go"
   script:
+    - apk add --update make
     - make integration_tests_mariadb
 
 integration_tests_sqlite:
@@ -98,6 +99,7 @@ integration_tests_sqlite:
   variables:
     GOPATH: "/go"
   script:
+    - apk add --update make
     - make integration_tests_sqlite
 
 frontend-selenium-tests:
@@ -106,6 +108,7 @@ frontend-selenium-tests:
   services:
     - docker:dind
   script:
+    - apk add --update make
     - make frontend_tests
 
 ## load tests

@@ -131,8 +131,8 @@ func (s *service) buildStaticFileServer(ctx context.Context, fileDir string) (*a
 }
 
 // StaticDir builds a static directory handler.
-func (s *service) StaticDir(ctx context.Context, staticFilesDirectory string) (http.HandlerFunc, error) {
-	ctx, rootSpan := s.tracer.StartSpan(ctx)
+func (s *service) StaticDir(_ctx context.Context, staticFilesDirectory string) (http.HandlerFunc, error) {
+	rootCtx, rootSpan := s.tracer.StartSpan(_ctx)
 	defer rootSpan.End()
 
 	fileDir, err := filepath.Abs(staticFilesDirectory)
@@ -140,17 +140,17 @@ func (s *service) StaticDir(ctx context.Context, staticFilesDirectory string) (h
 		return nil, fmt.Errorf("determining absolute path of static files directory: %w", err)
 	}
 
-	httpFs, err := s.buildStaticFileServer(ctx, fileDir)
+	logger := s.logger.WithValue("static_dir", fileDir)
+
+	httpFs, err := s.buildStaticFileServer(rootCtx, fileDir)
 	if err != nil {
 		return nil, fmt.Errorf("establishing static server filesystem: %w", err)
 	}
 
+	logger.Debug("setting static file server")
 	fs := http.StripPrefix("/", http.FileServer(httpFs.Dir(fileDir)))
 
 	return func(res http.ResponseWriter, req *http.Request) {
-		_, span := s.tracer.StartSpan(req.Context())
-		defer span.End()
-
 		rl := s.logger.WithRequest(req)
 
 		if s.config.LogStaticFiles {
@@ -158,18 +158,6 @@ func (s *service) StaticDir(ctx context.Context, staticFilesDirectory string) (h
 		}
 
 		if _, routeValid := validRoutes[req.URL.Path]; routeValid {
-			req.URL.Path = "/"
-		} else if dest, ok := redirections[req.URL.Path]; ok {
-			req.URL.Path = dest
-		} else if itemsFrontendPathRegex.MatchString(req.URL.Path) ||
-			itemsAdminFrontendPathRegex.MatchString(req.URL.Path) ||
-			usersAdminFrontendPathRegex.MatchString(req.URL.Path) ||
-			webhooksAdminFrontendPathRegex.MatchString(req.URL.Path) ||
-			webhooksUserFrontendPathRegex.MatchString(req.URL.Path) {
-			if s.config.LogStaticFiles {
-				rl.Debug("rerouting request")
-			}
-
 			req.URL.Path = "/"
 		}
 

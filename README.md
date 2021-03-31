@@ -39,7 +39,7 @@ It's a good idea to run `make quicktest lintegration-tests` before commits. You 
 
 1. clone this repository
 2. run `make dev`
-3. [http://localhost](http://localhost)
+3. [http://localhost:8888/](http://localhost:8888/)
 
 ## working on the frontend
 

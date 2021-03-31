@@ -15,14 +15,14 @@ services:
             CONFIGURATION_FILEPATH: '/etc/config.toml'
             JAEGER_DISABLED: 'false'
         ports:
-            - 80:8888
+            - 8888:8888
         links:
             - tracing-server
             - database
             - prometheus
         volumes:
-            - source: '../../frontend/dist'
-              target: '/frontend'
+            - source: '../../frontend/dist/'
+              target: '/frontend/'
               type: 'bind'
             - source: '../../artifacts/search_indices'
               target: '/search_indices'

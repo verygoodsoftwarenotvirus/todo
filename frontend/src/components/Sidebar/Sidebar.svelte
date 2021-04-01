@@ -26,8 +26,6 @@ let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().components
   .sidebars.primary;
 
-
-
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
@@ -98,25 +96,136 @@ s
         </ul>
       </div>
 
+      <hr class="my-4 md:min-w-full" />
+      <div>
+        <h6
+          class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
+        >
+          <i class="fa fa-cog"></i>&nbsp;&nbsp;{translationsToUse.accountSettings}
+        </h6>
+
+        <!-- WEBHOOKS -->
+
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="{frontendRoutes.USER_LIST_WEBHOOKS}"
+            >
+              <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
+              {translationsToUse.webhooks}
+            </a>
+          </li>
+        </ul>
+
+        <!-- SETTINGS -->
+
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="{frontendRoutes.USER_SETTINGS}"
+            >
+              <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
+              {translationsToUse.settings}
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <hr class="my-4 md:min-w-full" />
+      <div>
+        <h6
+          class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
+        >
+          <i class="fa fa-user-cog"></i>&nbsp;&nbsp;{translationsToUse.userSettings}
+        </h6>
+
+        <!-- API Clients -->
+
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="{frontendRoutes.USER_LIST_API_CLIENTS}"
+            >
+              <i class="fas fa-robot text-gray-400 mr-2 text-sm"></i>
+              {translationsToUse.apiClients}
+            </a>
+          </li>
+        </ul>
+
+        <!-- SETTINGS -->
+
+        <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+          <li class="items-center">
+            <a
+              use:link
+              class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+              href="{frontendRoutes.USER_SETTINGS}"
+            >
+              <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
+              {translationsToUse.settings}
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      {#if currentAuthStatus.adminPermissions !== null}
+
+
         <hr class="my-4 md:min-w-full" />
         <div>
           <h6
             class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
           >
-            <i class="fa fa-cog"></i>&nbsp;&nbsp;{translationsToUse.settings}
+            <i class="fa fa-cogs"></i>&nbsp;&nbsp;{translationsToUse.admin}
           </h6>
 
-          <!-- WEBHOOKS -->
+          <!-- ACCOUNTS -->
 
           <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
             <li class="items-center">
               <a
                 use:link
                 class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                href="{frontendRoutes.USER_LIST_WEBHOOKS}"
-               >
-                <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
-                {translationsToUse.webhooks}
+                href="{frontendRoutes.ADMIN_ACCOUNTS}"
+              >
+                <i class="fas fa-briefcase text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.accounts}
+              </a>
+            </li>
+          </ul>
+
+          <!-- USERS -->
+
+          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+            <li class="items-center">
+              <a
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="{frontendRoutes.ADMIN_USERS}"
+              >
+                <i class="fas fa-briefcase text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.users}
+              </a>
+            </li>
+          </ul>
+
+          <!-- AUDIT LOGs -->
+
+          <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
+            <li class="items-center">
+              <a
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="{frontendRoutes.ADMIN_AUDIT_LOGS}"
+              >
+                <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
+                {translationsToUse.auditLog}
               </a>
             </li>
           </ul>
@@ -126,69 +235,17 @@ s
           <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
             <li class="items-center">
               <a
-                      use:link
-                      class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                      href="{frontendRoutes.USER_SETTINGS}"
+                use:link
+                class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
+                href="{frontendRoutes.SERVER_SETTINGS}"
               >
                 <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
-                {translationsToUse.userSettings}
+                {translationsToUse.serverSettings}
               </a>
             </li>
           </ul>
-
-          {#if currentAuthStatus.isAdmin}
-            <h6
-                    class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
-            >
-              <i class="fa fa-cogs"></i>&nbsp;&nbsp;{translationsToUse.admin}
-            </h6>
-
-            <!-- USERS -->
-
-            <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-              <li class="items-center">
-                <a
-                        use:link
-                        class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                        href="{frontendRoutes.ADMIN_USERS}"
-                >
-                  <i class="fas fa-users text-gray-400 mr-2 text-sm"></i>
-                  {translationsToUse.users}
-                </a>
-              </li>
-            </ul>
-
-            <!-- AUDIT LOG -->
-
-            <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-              <li class="items-center">
-                <a
-                  use:link
-                  class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                  href="{frontendRoutes.ADMIN_AUDIT_LOGS}"
-                >
-                  <i class="fas fa-record-vinyl text-gray-400 mr-2 text-sm"></i>
-                  {translationsToUse.auditLog}
-                </a>
-              </li>
-            </ul>
-
-            <!-- SERVER SETTINGS -->
-
-            <ul class="md:flex-col md:min-w-full flex flex-col list-none md:mb-4">
-              <li class="items-center">
-                <a
-                  use:link
-                  class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                  href="{frontendRoutes.ADMIN_SETTINGS}"
-                >
-                  <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
-                  {translationsToUse.serverSettings}
-                </a>
-              </li>
-            </ul>
-          {/if}
         </div>
+      {/if}
+      </div>
     </div>
-  </div>
 </nav>

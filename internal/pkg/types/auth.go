@@ -35,17 +35,19 @@ type (
 
 	// UserRequestContext contains data relevant to the user making a request.
 	UserRequestContext struct {
-		Status                  userReputation                      `json:"-"`
+		Reputation              userReputation                      `json:"-"`
+		ReputationExplanation   string                              `json:"-"`
 		ID                      uint64                              `json:"-"`
 		ServiceAdminPermissions permissions.ServiceAdminPermissions `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		ServiceAdminPermissions  *permissions.ServiceAdminPermissionsSummary `json:"permissions,omitempty"`
-		UserAccountStatus        userReputation                              `json:"accountStatus,omitempty"`
-		AccountStatusExplanation string                                      `json:"statusExplanation,omitempty"`
-		UserIsAuthenticated      bool                                        `json:"isAuthenticated"`
+		PermissionsSummary        map[uint64]permissions.ServiceUserPermissionsSummary `json:"permissions,omitempty"`
+		ServiceAdminPermissions   *permissions.ServiceAdminPermissionsSummary          `json:"adminPermissions,omitempty"`
+		UserReputation            userReputation                                       `json:"userReputation,omitempty"`
+		UserReputationExplanation string                                               `json:"reputationExplanation"`
+		UserIsAuthenticated       bool                                                 `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -146,7 +148,8 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 	reqCtx := &RequestContext{
 		User: UserRequestContext{
 			ID:                      user.ID,
-			Status:                  user.Reputation,
+			Reputation:              user.Reputation,
+			ReputationExplanation:   user.ReputationExplanation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
 		AccountPermissionsMap: accountPermissionsMap,

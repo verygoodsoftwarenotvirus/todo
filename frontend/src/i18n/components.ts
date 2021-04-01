@@ -48,11 +48,14 @@ export type primarySidebarTranslations = {
   things: string;
   admin: string;
   settings: string;
+  userSettings: string;
+  accountSettings: string;
+  serverSettings: string;
+  accounts: string;
   users: string;
   webhooks: string;
+  apiClients: string;
   auditLog: string;
-  userSettings: string;
-  serverSettings: string;
   items: string;
 };
 

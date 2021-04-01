@@ -168,27 +168,58 @@ export const fakeUserRegistrationResponseFactory = Factory.Sync.makeFactory<User
   },
 );
 
-export class AdminPermissionSummary {
-  canCycleCookieSecrets: boolean;
+export class UserPermissionSummary {
+  canManageWebhooks: boolean
+  canManageAPIClients: boolean
+  
+  constructor(
+    canManageWebhooks: boolean = false,
+    canManageAPIClients: boolean = false,
+  ) {
+    this.canManageWebhooks = canManageWebhooks;
+    this.canManageAPIClients = canManageAPIClients;
+  }
+}
 
-  constructor(canCycleCookieSecrets: boolean = false) {
-    this.canCycleCookieSecrets = canCycleCookieSecrets;
+export class AdminPermissionSummary {
+  canCycleCookieSecret: boolean;
+  canBanUsers: boolean;
+  canTerminateAccounts: boolean;
+  
+  constructor(
+    canCycleCookieSecret = false,
+    canBanUsers = false,
+    canTerminateAccounts = false,
+  ) {
+    this.canCycleCookieSecret = canCycleCookieSecret;
+    this.canBanUsers = canBanUsers;
+    this.canTerminateAccounts = canTerminateAccounts;
   }
 }
 
 export class UserStatus {
   isAuthenticated: boolean;
-  isAdmin: boolean;
+  userReputation: string;
+  reputationExplanation: string;
+  userPermissions?: Map<number, UserPermissionSummary>;
   adminPermissions?: AdminPermissionSummary;
-
+  isAdmin: boolean;
+  
   constructor(
+    userReputation: string = '',
+    reputationExplanation: string = '',
     isAuthenticated: boolean = false,
-    isAdmin: boolean = false,
+    userPermissions?: Map<number, UserPermissionSummary>,
     adminPermissions?: AdminPermissionSummary,
   ) {
+    this.userReputation = userReputation;
+    this.reputationExplanation = reputationExplanation;
     this.isAuthenticated = isAuthenticated;
-    this.isAdmin = isAdmin;
+    this.userPermissions = userPermissions;
     this.adminPermissions = adminPermissions;
+    
+    // DEPRECATEME
+    this.isAdmin = !!adminPermissions;
   }
 }
 

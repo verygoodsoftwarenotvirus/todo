@@ -33,7 +33,7 @@ func (r chirouteParamManager) UserIDFetcherFromRequestContext(req *http.Request)
 	return 0
 }
 
-// requestContextFetcherFromRequestContext fetches a RequestContext from a request.
+// FetchContextFromRequest fetches a RequestContext from a request.
 func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
 	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
 		return reqCtx, nil

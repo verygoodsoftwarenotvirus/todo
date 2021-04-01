@@ -60,7 +60,7 @@ let logger = new Logger().withDebugValue(
 
 // set up translations
 let adminMode: boolean = false;
-let currentUserStatus = new UserStatus();
+let currentAuthStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().pages.webhookCreationPage;
 const superstore = new Superstore({
@@ -72,7 +72,7 @@ const superstore = new Superstore({
     translationsToUse = currentSessionSettings.getTranslations().pages.webhookCreationPage;
   },
   userStatusStoreUpdateFunc: (value: UserStatus) => {
-    currentUserStatus = value;
+    currentAuthStatus = value;
   },
 });
 
@@ -388,7 +388,7 @@ function fetchAuditLogEntries(): void {
     </div>
   </div>
 
-  {#if currentUserStatus.isAdmin}
+  {#if currentAuthStatus.isAdmin}
     <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

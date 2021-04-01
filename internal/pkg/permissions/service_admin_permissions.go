@@ -55,7 +55,7 @@ func NewServiceAdminPermissions(x uint32) ServiceAdminPermissions {
 }
 
 // ServiceAdminPermissionsSummary produces a ServiceAdminPermissionsSummary.
-func (p ServiceAdminPermissions) ServiceAdminPermissionsSummary() *ServiceAdminPermissionsSummary {
+func (p ServiceAdminPermissions) Summary() *ServiceAdminPermissionsSummary {
 	if p == 0 {
 		return nil
 	}

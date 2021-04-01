@@ -19,6 +19,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
@@ -259,8 +260,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
 	http.SetCookie(res, cookie)
 
-	statusResponse := user.ToStatusResponse()
-	statusResponse.UserIsAuthenticated = true
+	statusResponse := user.ToStatusResponse(true)
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
 }
@@ -389,11 +389,27 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	statusResponse := &types.UserStatusResponse{}
+	logger := s.logger.WithRequest(req)
+	var statusResponse *types.UserStatusResponse
 
-	if user, err := s.determineUserFromRequestCookie(ctx, req); err == nil {
-		statusResponse = user.ToStatusResponse()
-		statusResponse.UserIsAuthenticated = true
+	reqCtx, err := s.requestContextFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "fetching request context")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	} else {
+		permSummary := map[uint64]permissions.ServiceUserPermissionsSummary{}
+		for id, perm := range reqCtx.AccountPermissionsMap {
+			permSummary[id] = perm.Summary()
+		}
+
+		statusResponse = &types.UserStatusResponse{
+			PermissionsSummary:        permSummary,
+			ServiceAdminPermissions:   reqCtx.User.ServiceAdminPermissions.Summary(),
+			UserReputation:            reqCtx.User.Reputation,
+			UserReputationExplanation: reqCtx.User.ReputationExplanation,
+			UserIsAuthenticated:       true,
+		}
 	}
 
 	s.encoderDecoder.RespondWithData(ctx, res, statusResponse)
@@ -412,7 +428,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	pasetoRequest, ok := ctx.Value(pasetoCreationInputMiddlewareCtxKey).(*types.PASETOCreationInput)
 	if !ok || pasetoRequest == nil {
-		logger.Error(nil, "no input found for PASETO request")
+		logger.Info("no input found for PASETO request")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -506,7 +522,8 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	reqCtx := &types.RequestContext{
 		User: types.UserRequestContext{
 			ID:                      user.ID,
-			Status:                  user.Reputation,
+			Reputation:              user.Reputation,
+			ReputationExplanation:   user.ReputationExplanation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
 		ActiveAccountID:       requestedAccountID,

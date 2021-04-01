@@ -14,7 +14,6 @@ import (
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -22,14 +21,13 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:                logging.NewNonOperationalLogger(),
-		itemCounter:           &mockmetrics.UnitCounter{},
-		itemDataManager:       &mocktypes.ItemDataManager{},
-		itemIDFetcher:         func(req *http.Request) uint64 { return 0 },
-		requestContextFetcher: func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
-		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
-		search:                &mocksearch.IndexManager{},
-		tracer:                tracing.NewTracer("test"),
+		logger:          logging.NewNonOperationalLogger(),
+		itemCounter:     &mockmetrics.UnitCounter{},
+		itemDataManager: &mocktypes.ItemDataManager{},
+		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		encoderDecoder:  mockencoding.NewMockEncoderDecoder(),
+		search:          &mocksearch.IndexManager{},
+		tracer:          tracing.NewTracer("test"),
 	}
 }
 

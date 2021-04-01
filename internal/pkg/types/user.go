@@ -195,11 +195,12 @@ func (u *User) Update(input *User) {
 }
 
 // ToStatusResponse produces a UserStatusResponse object from a User's data.
-func (u *User) ToStatusResponse() *UserStatusResponse {
+func (u *User) ToStatusResponse(isAuthenticated bool) *UserStatusResponse {
 	return &UserStatusResponse{
-		UserAccountStatus:        u.Reputation,
-		AccountStatusExplanation: u.ReputationExplanation,
-		ServiceAdminPermissions:  u.ServiceAdminPermissions.ServiceAdminPermissionsSummary(),
+		UserIsAuthenticated:       isAuthenticated,
+		UserReputation:            u.Reputation,
+		UserReputationExplanation: u.ReputationExplanation,
+		ServiceAdminPermissions:   u.ServiceAdminPermissions.Summary(),
 	}
 }
 

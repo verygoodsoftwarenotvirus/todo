@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +20,6 @@ func buildTestService() *service {
 		logger:                 logging.NewNonOperationalLogger(),
 		auditLog:               &mocktypes.AuditLogEntryDataManager{},
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },
-		requestContextFetcher:  func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
 		encoderDecoder:         mockencoding.NewMockEncoderDecoder(),
 		tracer:                 tracing.NewTracer("test"),
 	}

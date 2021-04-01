@@ -1,6 +1,6 @@
 <!-- App.svelte -->
 <script lang="typescript">
-import { Router, Route } from 'svelte-routing';
+import { Router, Route, navigate } from 'svelte-routing';
 
 import { Logger } from '@/logger';
 
@@ -15,10 +15,34 @@ import Things from './layouts/Things.svelte';
 
 // No Layout Pages
 import Index from './views/Index.svelte';
+import { UserSiteSettings, UserStatus } from '@/types';
+import { Superstore } from '@/stores';
+import { frontendRoutes } from '@/constants';
 
 export let url: string = '';
 
 let logger = new Logger().withDebugValue('source', 'src/App.svelte');
+
+let currentAuthStatus = new UserStatus();
+let currentSessionSettings = new UserSiteSettings();
+let translationsToUse = currentSessionSettings.getTranslations().components
+  .sidebars.primary;
+
+let superstore = new Superstore({
+  userStatusStoreUpdateFunc: (value: UserStatus) => {
+    currentAuthStatus = value;
+    if (!currentAuthStatus.isAuthenticated) {
+      if (window.location.pathname !== '/') {
+        navigate(frontendRoutes.LOGIN)
+      }
+    }
+  },
+  sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
+    currentSessionSettings = value;
+    translationsToUse = currentSessionSettings.getTranslations().components
+      .sidebars.primary;
+  },
+});
 </script>
 
 <Router url="{url}">

@@ -173,10 +173,10 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		assert.NoError(t, err)
 
 		expected := &types.UserStatusResponse{
-			UserIsAuthenticated:      true,
-			UserAccountStatus:        types.GoodStandingAccountStatus,
-			AccountStatusExplanation: "",
-			ServiceAdminPermissions:  nil,
+			UserIsAuthenticated:       true,
+			UserReputation:            types.GoodStandingAccountStatus,
+			UserReputationExplanation: "",
+			ServiceAdminPermissions:   nil,
 		}
 
 		assert.Equal(t, expected, actual)

@@ -671,40 +671,20 @@ func TestAuthService_StatusHandler(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
-
-		udb := &mocktypes.UserDataManager{}
-		udb.On(
-			"GetUser",
-			mock.MatchedBy(testutil.ContextMatcher),
-			helper.exampleUser.ID,
-		).Return(helper.exampleUser, nil)
-		helper.service.userDataManager = udb
-
 		helper.service.StatusHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb)
 	})
 
-	T.Run("with error retrieving user from datastore", func(t *testing.T) {
+	T.Run("with problem fetching request context", func(t *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
-
-		udb := &mocktypes.UserDataManager{}
-		udb.On(
-			"GetUser",
-			mock.MatchedBy(testutil.ContextMatcher),
-			helper.exampleUser.ID,
-		).Return((*types.User)(nil), errors.New("blah"))
-		helper.service.userDataManager = udb
+		helper.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
+			return nil, errors.New("blah")
+		}
 
 		helper.service.StatusHandler(helper.res, helper.req)
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, udb)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 	})
 }
 
@@ -818,7 +798,8 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		expectedOutput := &types.RequestContext{
 			User: types.UserRequestContext{
 				ID:                      helper.exampleUser.ID,
-				Status:                  helper.exampleUser.Reputation,
+				Reputation:              helper.exampleUser.Reputation,
+				ReputationExplanation:   helper.exampleUser.ReputationExplanation,
 				ServiceAdminPermissions: helper.exampleUser.ServiceAdminPermissions,
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,
@@ -908,7 +889,8 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		expectedOutput := &types.RequestContext{
 			User: types.UserRequestContext{
 				ID:                      helper.exampleUser.ID,
-				Status:                  helper.exampleUser.Reputation,
+				Reputation:              helper.exampleUser.Reputation,
+				ReputationExplanation:   helper.exampleUser.ReputationExplanation,
 				ServiceAdminPermissions: helper.exampleUser.ServiceAdminPermissions,
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,

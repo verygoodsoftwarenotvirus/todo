@@ -47,6 +47,12 @@ func init() {
 	gob.Register(ServiceUserPermissions(0))
 }
 
+// ServiceUserPermissionsSummary summarizes a user's permissions.
+type ServiceUserPermissionsSummary struct {
+	CanManageWebhooks   bool `json:"canManageWebhooks"`
+	CanManageAPIClients bool `json:"canManageAPIClients"`
+}
+
 // ServiceUserPermissions is a bitmask for keeping track of admin user permissions.
 type ServiceUserPermissions uint32
 
@@ -58,6 +64,14 @@ func NewServiceUserPermissions(x uint32) ServiceUserPermissions {
 // NewServiceUserPermissionChecker builds a new ServiceUserPermissionChecker.
 func NewServiceUserPermissionChecker(x uint32) ServiceUserPermissionChecker {
 	return NewServiceUserPermissions(x)
+}
+
+// Summary implements the driver.Valuer interface.
+func (p ServiceUserPermissions) Summary() ServiceUserPermissionsSummary {
+	return ServiceUserPermissionsSummary{
+		CanManageWebhooks:   p.CanManageWebhooks(),
+		CanManageAPIClients: p.CanManageAPIClients(),
+	}
 }
 
 // Value implements the driver.Valuer interface.

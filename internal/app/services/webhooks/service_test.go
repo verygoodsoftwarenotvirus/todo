@@ -12,7 +12,6 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -20,13 +19,12 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:                logging.NewNonOperationalLogger(),
-		webhookCounter:        &mockmetrics.UnitCounter{},
-		webhookDataManager:    &mocktypes.WebhookDataManager{},
-		requestContextFetcher: func(req *http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
-		webhookIDFetcher:      func(req *http.Request) uint64 { return 0 },
-		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
-		tracer:                tracing.NewTracer("test"),
+		logger:             logging.NewNonOperationalLogger(),
+		webhookCounter:     &mockmetrics.UnitCounter{},
+		webhookDataManager: &mocktypes.WebhookDataManager{},
+		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		encoderDecoder:     mockencoding.NewMockEncoderDecoder(),
+		tracer:             tracing.NewTracer("test"),
 	}
 }
 

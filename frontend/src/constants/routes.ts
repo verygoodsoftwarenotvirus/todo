@@ -41,6 +41,7 @@ export enum frontendRoutes {
   // Admin Pages
   ADMIN_DASHBOARD = '/admin/dashboard',
   ADMIN_USERS = '/admin/users',
+  ADMIN_ACCOUNTS = '/admin/accounts',
   ADMIN_AUDIT_LOGS = '/admin/audit_log',
   ADMIN_SETTINGS = '/admin/settings',
 
@@ -50,6 +51,8 @@ export enum frontendRoutes {
 
   // User routes
   USER_SETTINGS = '/user/settings',
+  USER_LIST_API_CLIENTS = '/user/api_clients',
+  INDIVIDUAL_API_CLIENT = '/user/api_clients/{}',
   USER_LIST_WEBHOOKS = '/user/webhooks',
   INDIVIDUAL_WEBHOOK = '/user/webhooks/{}',
 

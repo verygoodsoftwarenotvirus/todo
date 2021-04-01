@@ -1,21 +1,9 @@
-# frontend-build-stage
-FROM node:latest AS frontend-build-stage
-
-WORKDIR /app
-
-ADD frontend/ .
-
-RUN npm install -g pnpm
-RUN pnpm install
-RUN pnpm run build
-
 # build stage
 FROM golang:stretch AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 COPY . .
-COPY --from=frontend-build-stage /app/dist /frontend
 
 RUN go build -trimpath -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 

@@ -120,7 +120,8 @@ func (q *SQLQuerier) GetRequestContextForUser(ctx context.Context, userID uint64
 	reqCtx = &types.RequestContext{
 		User: types.UserRequestContext{
 			ID:                      user.ID,
-			Status:                  user.Reputation,
+			Reputation:              user.Reputation,
+			ReputationExplanation:   user.ReputationExplanation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
 		AccountPermissionsMap: accountPermissionsMap,

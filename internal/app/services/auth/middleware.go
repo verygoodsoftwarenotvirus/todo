@@ -197,7 +197,7 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		// UserAttributionMiddleware should be called before this middleware.
 		if reqCtx, err := s.requestContextFetcher(req); err == nil && reqCtx != nil {
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if reqCtx.User.Status == types.BannedAccountStatus {
+			if reqCtx.User.Reputation == types.BannedAccountStatus {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return

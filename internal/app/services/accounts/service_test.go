@@ -12,7 +12,6 @@ import (
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -25,7 +24,6 @@ func buildTestService() *service {
 		accountDataManager:           &mocktypes.AccountDataManager{},
 		accountMembershipDataManager: &mocktypes.AccountUserMembershipDataManager{},
 		accountIDFetcher:             func(req *http.Request) uint64 { return 0 },
-		requestContextFetcher:        func(*http.Request) (*types.RequestContext, error) { return &types.RequestContext{}, nil },
 		encoderDecoder:               mockencoding.NewMockEncoderDecoder(),
 		tracer:                       tracing.NewTracer("test"),
 	}

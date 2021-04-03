@@ -2,7 +2,7 @@
 import { navigate } from 'svelte-routing';
 import Select from 'svelte-select';
 import { onMount } from 'svelte';
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 
@@ -19,16 +19,16 @@ import { contentTypes, frontendRoutes, methods, statusCodes } from '../../consta
 import { Superstore } from '../../stores';
 import { Logger } from '../../logger';
 
-declare interface SelectOption {
+interface SelectOption {
   value: string;
   label: string;
 }
 
-declare interface SelectedValue {
+interface SelectedValue {
   detail: SelectOption
 }
 
-declare interface SelectedValues {
+interface SelectedValues {
   detail: SelectOption[]
 }
 
@@ -226,15 +226,15 @@ function deleteWebhook(): void {
   }
 
   if (superstore.frontendOnlyMode) {
-    navigate(frontendRoutes.USER_LIST_WEBHOOKS, { state: {}, replace: true });
+    navigate(frontendRoutes.ACCOUNT_LIST_WEBHOOKS, { state: {}, replace: true });
   } else {
     V1APIClient.deleteWebhook(webhookID)
       .then((response: AxiosResponse<Webhook>) => {
         if (response?.status === statusCodes.NO_CONTENT) {
           logger.debug(
-            `navigating to ${frontendRoutes.USER_LIST_WEBHOOKS} because via deletion promise resolution`,
+            `navigating to ${frontendRoutes.ACCOUNT_LIST_WEBHOOKS} because via deletion promise resolution`,
           );
-          navigate(frontendRoutes.USER_LIST_WEBHOOKS, { state: {}, replace: true });
+          navigate(frontendRoutes.ACCOUNT_LIST_WEBHOOKS, { state: {}, replace: true });
         }
       })
       .catch((error: AxiosError) => {
@@ -388,7 +388,7 @@ function fetchAuditLogEntries(): void {
     </div>
   </div>
 
-  {#if currentAuthStatus.isAdmin}
+  {#if currentAuthStatus.isAdmin()}
     <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

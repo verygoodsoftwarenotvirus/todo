@@ -23,9 +23,9 @@ export function searchForItems(
   }
   outboundURLParams.set('q', query);
 
-  const uri = `${backendRoutes.SEARCH_ITEMS}?${outboundURLParams.toString()}`;
-
-  return axios.get(uri);
+  return axios.get(
+    `${backendRoutes.SEARCH_ITEMS}?${outboundURLParams.toString()}`,
+  );
 }
 
 export function fetchListOfItems(
@@ -38,8 +38,9 @@ export function fetchListOfItems(
     outboundURLParams.set('admin', 'true');
   }
 
-  const uri = `${backendRoutes.GET_ITEMS}?${outboundURLParams.toString()}`;
-  return axios.get(uri);
+  return axios.get(
+    `${backendRoutes.GET_ITEMS}?${outboundURLParams.toString()}`,
+  );
 }
 
 export function createItem(
@@ -49,23 +50,24 @@ export function createItem(
 }
 
 export function fetchItem(id: number): Promise<AxiosResponse<Item>> {
-  const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
-  return axios.get(uri);
+  return axios.get(format(backendRoutes.INDIVIDUAL_ITEM, id.toString()));
 }
 
 export function saveItem(item: Item): Promise<AxiosResponse<Item>> {
-  const uri = format(backendRoutes.INDIVIDUAL_ITEM, item.id.toString());
-  return axios.put(uri, item);
+  return axios.put(
+    format(backendRoutes.INDIVIDUAL_ITEM, item.id.toString()),
+    item,
+  );
 }
 
 export function deleteItem(id: number): Promise<AxiosResponse> {
-  const uri = format(backendRoutes.INDIVIDUAL_ITEM, id.toString());
-  return axios.delete(uri);
+  return axios.delete(format(backendRoutes.INDIVIDUAL_ITEM, id.toString()));
 }
 
 export function fetchAuditLogEntriesForItem(
   id: number,
 ): Promise<AxiosResponse<AuditLogEntry[]>> {
-  const uri = format(backendRoutes.INDIVIDUAL_ITEM_AUDIT_LOG, id.toString());
-  return axios.get(uri);
+  return axios.get(
+    format(backendRoutes.INDIVIDUAL_ITEM_AUDIT_LOG, id.toString()),
+  );
 }

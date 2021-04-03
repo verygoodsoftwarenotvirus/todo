@@ -1,6 +1,5 @@
 <script lang="typescript">
-// core components
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import {
   ErrorResponse,
@@ -108,10 +107,8 @@ function promptDelete(id: number) {
           }
         })
         .catch((error: AxiosError<ErrorResponse>) => {
-          if (error.response) {
-            if (error.response.data) {
-              userRetrievalError = error.response.data.message;
-            }
+          if (error?.response?.data) {
+            userRetrievalError = error.response.data.message;
           }
         });
     }

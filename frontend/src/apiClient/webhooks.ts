@@ -22,34 +22,36 @@ export function fetchListOfWebhooks(
     outboundURLParams.set('admin', 'true');
   }
 
-  const uri = `${backendRoutes.GET_WEBHOOKS}?${outboundURLParams.toString()}`;
-  return axios.get(uri);
+  return axios.get(
+    `${backendRoutes.GET_WEBHOOKS}?${outboundURLParams.toString()}`,
+  );
 }
 
 export function createWebhook(
-  item: WebhookCreationInput,
+  input: WebhookCreationInput,
 ): Promise<AxiosResponse<Webhook>> {
-  return axios.post(backendRoutes.CREATE_WEBHOOK, item);
+  return axios.post(backendRoutes.CREATE_WEBHOOK, input);
 }
 
 export function fetchWebhook(id: number): Promise<AxiosResponse<Webhook>> {
-  const uri = format(backendRoutes.INDIVIDUAL_WEBHOOK, id.toString());
-  return axios.get(uri);
+  return axios.get(format(backendRoutes.INDIVIDUAL_WEBHOOK, id.toString()));
 }
 
-export function saveWebhook(item: Webhook): Promise<AxiosResponse<Webhook>> {
-  const uri = format(backendRoutes.INDIVIDUAL_WEBHOOK, item.id.toString());
-  return axios.put(uri, item);
+export function saveWebhook(webhook: Webhook): Promise<AxiosResponse<Webhook>> {
+  return axios.put(
+    format(backendRoutes.INDIVIDUAL_WEBHOOK, webhook.id.toString()),
+    webhook,
+  );
 }
 
 export function deleteWebhook(id: number): Promise<AxiosResponse> {
-  const uri = format(backendRoutes.INDIVIDUAL_WEBHOOK, id.toString());
-  return axios.delete(uri);
+  return axios.delete(format(backendRoutes.INDIVIDUAL_WEBHOOK, id.toString()));
 }
 
 export function fetchAuditLogEntriesForWebhook(
   id: number,
 ): Promise<AxiosResponse<AuditLogEntry[]>> {
-  const uri = format(backendRoutes.INDIVIDUAL_WEBHOOK_AUDIT_LOG, id.toString());
-  return axios.get(uri);
+  return axios.get(
+    format(backendRoutes.INDIVIDUAL_WEBHOOK_AUDIT_LOG, id.toString()),
+  );
 }

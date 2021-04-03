@@ -20,12 +20,13 @@ export class UserList extends Pagination {
 
 export class User {
   id: number;
+  externalID: string;
   username: string;
-  isAdmin: boolean;
+  serviceAdminPermissions: number; // TODO: implement permission bitmask
   requiresPasswordChange: boolean;
   passwordLastChangedOn?: number;
   reputation: string;
-  accountStatusExplanation: string;
+  reputationExplanation: string;
   adminPermissions: AdminPermissionSummary;
   createdOn: number;
   lastUpdatedOn: number;
@@ -33,24 +34,26 @@ export class User {
 
   constructor(
     id: number = 0,
+    externalID: string = '',
     username: string = '',
-    isAdmin: boolean = false,
     requiresPasswordChange: boolean = false,
     passwordLastChangedOn: number = 0,
     reputation: string = '',
-    accountStatusExplanation: string = '',
+    reputationExplanation: string = '',
+    serviceAdminPermissions: number = 0,
     adminPermissions: AdminPermissionSummary = new AdminPermissionSummary(),
     createdOn: number = 0,
     lastUpdatedOn: number = 0,
     archivedOn?: number,
   ) {
     this.id = id;
+    this.externalID = externalID;
     this.username = username;
-    this.isAdmin = isAdmin;
+    this.serviceAdminPermissions = serviceAdminPermissions;
     this.requiresPasswordChange = requiresPasswordChange;
     this.passwordLastChangedOn = passwordLastChangedOn;
     this.reputation = reputation;
-    this.accountStatusExplanation = accountStatusExplanation;
+    this.reputationExplanation = reputationExplanation;
     this.adminPermissions = adminPermissions;
     this.createdOn = createdOn;
     this.lastUpdatedOn = lastUpdatedOn;
@@ -61,7 +64,7 @@ export class User {
     return (
       x.id === y.id &&
       x.username === y.username &&
-      x.isAdmin === y.isAdmin &&
+      x.serviceAdminPermissions === y.serviceAdminPermissions &&
       x.requiresPasswordChange === y.requiresPasswordChange
     );
   };
@@ -72,14 +75,17 @@ export class User {
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdminMode: false },
-      { content: columns.username, requiresAdminMode: false },
-      { content: columns.isAdmin, requiresAdminMode: false },
-      { content: columns.requiresPasswordChange, requiresAdminMode: false },
-      { content: columns.passwordLastChangedOn, requiresAdminMode: false },
-      { content: columns.createdOn, requiresAdminMode: false },
-      { content: columns.lastUpdatedOn, requiresAdminMode: false },
-      { content: columns.archivedOn, requiresAdminMode: false },
+      { content: columns.id, requiresAdmin: false },
+      { content: columns.username, requiresAdmin: false },
+      { content: columns.reputation, requiresAdmin: false },
+      { content: columns.reputationExplanation, requiresAdmin: false },
+      { content: columns.serviceAdminPermissions, requiresAdmin: false },
+      { content: columns.requiresPasswordChange, requiresAdmin: false },
+      { content: columns.passwordLastChangedOn, requiresAdmin: false },
+      { content: columns.externalID, requiresAdmin: true },
+      { content: columns.createdOn, requiresAdmin: true },
+      { content: columns.lastUpdatedOn, requiresAdmin: true },
+      { content: columns.archivedOn, requiresAdmin: true },
     ];
   };
 
@@ -95,8 +101,16 @@ export class User {
         content: x.username,
       }),
       new APITableCell({
-        fieldName: 'isAdmin',
-        content: x.isAdmin.toString(),
+        fieldName: 'reputation',
+        content: x.reputation,
+      }),
+      new APITableCell({
+        fieldName: 'reputationExplanation',
+        content: x.reputationExplanation,
+      }),
+      new APITableCell({
+        fieldName: 'serviceAdminPermissions',
+        content: x.serviceAdminPermissions.toString(),
       }),
       new APITableCell({
         fieldName: 'requiresPasswordChange',
@@ -105,6 +119,10 @@ export class User {
       new APITableCell({
         fieldName: 'passwordLastChangedOn',
         content: (x.passwordLastChangedOn || 'never').toString(),
+      }),
+      new APITableCell({
+        fieldName: 'externalID',
+        content: x.externalID,
       }),
       new APITableCell({
         fieldName: 'createdOn',
@@ -123,13 +141,18 @@ export class User {
   };
 }
 
+const maximumPossiblePermissions: number = 4294967295;
+
 export const fakeUserFactory = Factory.Sync.makeFactory<User>({
+  externalID: Factory.Sync.each(() => faker.random.uuid()),
   username: Factory.Sync.each(() => faker.random.word()),
-  isAdmin: Factory.Sync.each(() => faker.random.boolean()),
+  serviceAdminPermissions: Factory.Sync.each(() =>
+    faker.random.number(maximumPossiblePermissions),
+  ),
   requiresPasswordChange: Factory.Sync.each(() => faker.random.boolean()),
   passwordLastChangedOn: Factory.Sync.each(() => faker.random.number()),
   reputation: Factory.Sync.each(() => faker.random.word()),
-  accountStatusExplanation: Factory.Sync.each(() => faker.random.words(10)),
+  reputationExplanation: Factory.Sync.each(() => faker.random.words(10)),
   adminPermissions: Factory.Sync.each(() => new AdminPermissionSummary()),
   ...defaultFactories,
 });
@@ -137,7 +160,6 @@ export const fakeUserFactory = Factory.Sync.makeFactory<User>({
 export class UserRegistrationResponse {
   id: number;
   username: string;
-  isAdmin: boolean;
   qrCode: string;
   createdOn: number;
 
@@ -150,7 +172,6 @@ export class UserRegistrationResponse {
   ) {
     this.id = id;
     this.username = username;
-    this.isAdmin = isAdmin;
     this.qrCode = qrCode;
     this.createdOn = createdOn;
   }
@@ -162,16 +183,15 @@ const fakeTwoFactorQRCode = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAA
 export const fakeUserRegistrationResponseFactory = Factory.Sync.makeFactory<UserRegistrationResponse>(
   {
     username: Factory.Sync.each(() => faker.random.word()),
-    isAdmin: Factory.Sync.each(() => faker.random.boolean()),
     qrCode: fakeTwoFactorQRCode,
     ...defaultFactories,
   },
 );
 
 export class UserPermissionSummary {
-  canManageWebhooks: boolean
-  canManageAPIClients: boolean
-  
+  canManageWebhooks: boolean;
+  canManageAPIClients: boolean;
+
   constructor(
     canManageWebhooks: boolean = false,
     canManageAPIClients: boolean = false,
@@ -185,7 +205,7 @@ export class AdminPermissionSummary {
   canCycleCookieSecret: boolean;
   canBanUsers: boolean;
   canTerminateAccounts: boolean;
-  
+
   constructor(
     canCycleCookieSecret = false,
     canBanUsers = false,
@@ -203,8 +223,7 @@ export class UserStatus {
   reputationExplanation: string;
   userPermissions?: Map<number, UserPermissionSummary>;
   adminPermissions?: AdminPermissionSummary;
-  isAdmin: boolean;
-  
+
   constructor(
     userReputation: string = '',
     reputationExplanation: string = '',
@@ -217,9 +236,10 @@ export class UserStatus {
     this.isAuthenticated = isAuthenticated;
     this.userPermissions = userPermissions;
     this.adminPermissions = adminPermissions;
-    
-    // DEPRECATEME
-    this.isAdmin = !!adminPermissions;
+  }
+
+  isAdmin(): boolean {
+    return !!this.adminPermissions;
   }
 }
 

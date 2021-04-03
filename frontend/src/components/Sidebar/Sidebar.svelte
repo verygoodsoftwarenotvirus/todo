@@ -74,6 +74,9 @@ s
     <div
       class="md:flex md:flex-col md:items-stretch md:opacity-100 md:relative md:mt-4 md:shadow-none shadow absolute top-0 left-0 right-0 z-40 overflow-y-auto overflow-x-hidden h-auto items-center flex-1 rounded {collapseShow}"
     >
+
+      <!-- THINGS -->
+
       <div>
         <h6
           class="md:min-w-full text-gray-600 text-xs uppercase font-bold block pt-1 pb-4 no-underline"
@@ -96,6 +99,8 @@ s
         </ul>
       </div>
 
+      <!-- ACCOUNT -->
+
       <hr class="my-4 md:min-w-full" />
       <div>
         <h6
@@ -111,7 +116,7 @@ s
             <a
               use:link
               class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="{frontendRoutes.USER_LIST_WEBHOOKS}"
+              href="{frontendRoutes.ACCOUNT_LIST_WEBHOOKS}"
             >
               <i class="fas fa-network-wired text-gray-400 mr-2 text-sm"></i>
               {translationsToUse.webhooks}
@@ -126,7 +131,7 @@ s
             <a
               use:link
               class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-              href="{frontendRoutes.USER_SETTINGS}"
+              href="{frontendRoutes.ACCOUNT_SETTINGS}"
             >
               <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
               {translationsToUse.settings}
@@ -134,6 +139,8 @@ s
           </li>
         </ul>
       </div>
+
+      <!-- USER -->
 
       <hr class="my-4 md:min-w-full" />
       <div>
@@ -174,8 +181,9 @@ s
         </ul>
       </div>
 
-      {#if currentAuthStatus.adminPermissions !== null}
+      <!-- ADMIN -->
 
+      {#if currentAuthStatus.adminPermissions !== null}
 
         <hr class="my-4 md:min-w-full" />
         <div>
@@ -237,7 +245,7 @@ s
               <a
                 use:link
                 class="text-gray-800 hover:text-gray-600 text-xs uppercase py-3 font-bold block"
-                href="{frontendRoutes.SERVER_SETTINGS}"
+                href="{frontendRoutes.ADMIN_SETTINGS}"
               >
                 <i class="fas fa-cog text-gray-400 mr-2 text-sm"></i>
                 {translationsToUse.serverSettings}

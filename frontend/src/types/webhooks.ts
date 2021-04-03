@@ -18,6 +18,7 @@ export class WebhookList extends Pagination {
 
 export class Webhook {
   id: number;
+  externalID: string;
   name: string;
   contentType: string;
   url: string;
@@ -28,19 +29,36 @@ export class Webhook {
   createdOn: number;
   lastUpdatedOn?: number;
   archivedOn?: number;
-  belongsToUser: number;
+  belongsToAccount: number;
 
-  constructor() {
-    this.id = 0;
-    this.name = '';
-    this.contentType = '';
-    this.url = '';
-    this.method = '';
-    this.events = [];
-    this.dataTypes = [];
-    this.topics = [];
-    this.createdOn = 0;
-    this.belongsToUser = 0;
+  constructor(
+    id: number = 0,
+    externalID: string = '',
+    name: string = '',
+    contentType: string = '',
+    url: string = '',
+    method: string = '',
+    events: string[] = [],
+    dataTypes: string[] = [],
+    topics: string[] = [],
+    createdOn: number = 0,
+    lastUpdatedOn?: number,
+    archivedOn?: number,
+    belongsToAccount: number = 0,
+  ) {
+    this.id = id;
+    this.externalID = externalID;
+    this.name = name;
+    this.contentType = contentType;
+    this.url = url;
+    this.method = method;
+    this.events = events;
+    this.dataTypes = dataTypes;
+    this.topics = topics;
+    this.createdOn = createdOn;
+    this.lastUpdatedOn = lastUpdatedOn;
+    this.archivedOn = archivedOn;
+    this.belongsToAccount = belongsToAccount;
   }
 
   static areEqual = function (x: Webhook, y: Webhook): boolean {
@@ -62,17 +80,17 @@ export class Webhook {
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdminMode: false },
-      { content: columns.name, requiresAdminMode: false },
-      { content: columns.contentType, requiresAdminMode: false },
-      { content: columns.url, requiresAdminMode: false },
-      { content: columns.method, requiresAdminMode: false },
-      { content: columns.events, requiresAdminMode: false },
-      { content: columns.dataTypes, requiresAdminMode: false },
-      { content: columns.topics, requiresAdminMode: false },
-      { content: columns.createdOn, requiresAdminMode: false },
-      { content: columns.lastUpdatedOn, requiresAdminMode: false },
-      { content: columns.belongsToUser, requiresAdminMode: true },
+      { content: columns.id, requiresAdmin: false },
+      { content: columns.name, requiresAdmin: false },
+      { content: columns.contentType, requiresAdmin: false },
+      { content: columns.url, requiresAdmin: false },
+      { content: columns.method, requiresAdmin: false },
+      { content: columns.events, requiresAdmin: false },
+      { content: columns.dataTypes, requiresAdmin: false },
+      { content: columns.topics, requiresAdmin: false },
+      { content: columns.externalID, requiresAdmin: true },
+      { content: columns.createdOn, requiresAdmin: true },
+      { content: columns.lastUpdatedOn, requiresAdmin: true },
     ];
   };
 
@@ -109,6 +127,10 @@ export class Webhook {
         content: (x.topics || []).toString(),
       }),
       new APITableCell({
+        fieldName: 'externalID',
+        content: x.externalID,
+      }),
+      new APITableCell({
         fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
       }),
@@ -117,22 +139,23 @@ export class Webhook {
         content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
-        fieldName: 'belongsToUser',
-        content: x.belongsToUser.toString(),
+        fieldName: 'belongsToAccount',
+        content: x.belongsToAccount.toString(),
       }),
     ];
   };
 }
 
 export const fakeWebhookFactory = Factory.Sync.makeFactory<Webhook>({
+  externalID: Factory.Sync.each(() => faker.random.word()),
   name: Factory.Sync.each(() => faker.random.word()),
-  url: Factory.Sync.each(() => faker.internet.url()),
-  method: Factory.Sync.each(() => faker.hacker.verb()),
-  contentType: 'application/fake',
-  events: ['things', 'and', 'stuff'],
-  dataTypes: ['stuff', 'and', 'things'],
-  topics: ['blah', 'blarg', 'blorp'],
-  belongsToUser: Factory.Sync.each(() => faker.random.number()),
+  contentType: Factory.Sync.each(() => faker.random.word()),
+  url: Factory.Sync.each(() => faker.random.word()),
+  method: Factory.Sync.each(() => faker.random.word()),
+  events: Factory.Sync.each(() => faker.random.words().split(' ')),
+  dataTypes: Factory.Sync.each(() => faker.random.words().split(' ')),
+  topics: Factory.Sync.each(() => faker.random.words().split(' ')),
+  belongsToAccount: Factory.Sync.each(() => faker.random.number()),
   ...defaultFactories,
 });
 

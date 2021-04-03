@@ -37,8 +37,8 @@ let superstore = new Superstore({
       <Router url="things">
         <!--     ITEMS     -->
         <Route path="items" component="{ItemsList}" />
-        <Route path="items/:id" let:itemParams>
-          <ItemEditor itemID="{itemParams.id}" />
+        <Route path="items/:id" let:params>
+          <ItemEditor itemID="{params.id}" />
         </Route>
         <Route path="items/new" component="{ItemCreator}" />
       </Router>

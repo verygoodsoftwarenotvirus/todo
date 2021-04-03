@@ -1,17 +1,17 @@
 <script lang="typescript">
 // core components
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 import { onMount } from 'svelte';
 
 import {
   ErrorResponse,
-  Webhook,
-  WebhookList,
+  APIClient,
+  APIClientList,
   QueryFilter,
   UserSiteSettings,
   UserStatus,
   fakeUserFactory,
-  fakeWebhookFactory,
+  fakeAPIClientFactory,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -22,13 +22,13 @@ import { Superstore } from '../../stores';
 
 export let location;
 
-let webhookRetrievalError = '';
-let webhooks: Webhook[] = [];
+let apiClientRetrievalError = '';
+let apiClients: APIClient[] = [];
 
 let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+let translationsToUse = currentSessionSettings.getTranslations().models.apiClient;
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
@@ -36,7 +36,7 @@ let superstore = new Superstore({
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+    translationsToUse = currentSessionSettings.getTranslations().models.apiClient;
   },
   adminModeUpdateFunc: (value: boolean) => {
     adminMode = value;
@@ -45,10 +45,10 @@ let superstore = new Superstore({
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/views/admin/Webhooks.svelte',
+  'src/views/admin/APIClients.svelte',
 );
 
-onMount(fetchWebhooks);
+onMount(fetchAPIClients);
 
 // begin experimental API table code
 
@@ -58,15 +58,15 @@ let apiTableIncrementDisabled: boolean = false;
 let apiTableDecrementDisabled: boolean = false;
 let apiTableSearchQuery: string = '';
 
-function searchWebhooks() {
-  logger.debug('searchWebhooks called');
+function searchAPIClients() {
+  logger.debug('searchAPIClients called');
 }
 
 function incrementPage() {
   if (!apiTableIncrementDisabled) {
     logger.debug(`incrementPage called`);
     queryFilter.page += 1;
-    fetchWebhooks();
+    fetchAPIClients();
   }
 }
 
@@ -74,26 +74,26 @@ function decrementPage() {
   if (!apiTableDecrementDisabled) {
     logger.debug(`decrementPage called`);
     queryFilter.page -= 1;
-    fetchWebhooks();
+    fetchAPIClients();
   }
 }
 
-function fetchWebhooks() {
-  logger.debug('fetchWebhooks called');
+function fetchAPIClients() {
+  logger.debug('fetchAPIClients called');
 
   if (superstore.frontendOnlyMode) {
-    webhooks = fakeWebhookFactory.buildList(queryFilter.limit);
+    apiClients = fakeAPIClientFactory.buildList(queryFilter.limit);
   } else {
-    V1APIClient.fetchListOfWebhooks(queryFilter, adminMode)
-      .then((response: AxiosResponse<WebhookList>) => {
-        webhooks = response.data.webhooks || [];
+    V1APIClient.fetchListOfAPIClients(queryFilter, adminMode)
+      .then((response: AxiosResponse<APIClientList>) => {
+        apiClients = response.data.apiClients || [];
 
         queryFilter.page = response.data.page;
-        apiTableIncrementDisabled = webhooks.length === 0;
+        apiTableIncrementDisabled = apiClients.length === 0;
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
-        webhookRetrievalError = error.response?.data;
+        apiClientRetrievalError = error.response?.data;
       });
   }
 }
@@ -101,18 +101,18 @@ function fetchWebhooks() {
 function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
-  if (confirm(`are you sure you want to delete webhook #${id}?`)) {
+  if (confirm(`are you sure you want to delete apiClient #${id}?`)) {
     if (superstore.frontendOnlyMode) {
-      fetchWebhooks();
+      fetchAPIClients();
     } else {
-      V1APIClient.deleteWebhook(id)
-        .then((response: AxiosResponse<Webhook>) => {
+      V1APIClient.deleteAPIClient(id)
+        .then((response: AxiosResponse<APIClient>) => {
           if (response?.status === statusCodes.NO_CONTENT) {
-            fetchWebhooks();
+            fetchAPIClients();
           }
         })
         .catch((error: AxiosError<ErrorResponse>) => {
-          webhookRetrievalError = error.response?.data?.message;
+          apiClientRetrievalError = error.response?.data?.message || '';
         });
     }
   }
@@ -122,19 +122,19 @@ function promptDelete(id: number) {
 <div class="flex flex-wrap mt-4">
   <div class="w-full mb-12 px-4">
     <APITable
-      title="Webhooks"
-      headers="{Webhook.headers(translationsToUse)}"
-      rows="{webhooks}"
-      individualPageLink="/admin/webhooks"
-      dataRetrievalError="{webhookRetrievalError}"
-      searchFunction="{searchWebhooks}"
+      title="APIClients"
+      headers="{APIClient.headers(translationsToUse)}"
+      rows="{apiClients}"
+      individualPageLink="/user/api_clients"
+      dataRetrievalError="{apiClientRetrievalError}"
+      searchFunction="{searchAPIClients}"
       incrementDisabled="{apiTableIncrementDisabled}"
       decrementDisabled="{apiTableDecrementDisabled}"
       incrementPageFunction="{incrementPage}"
       decrementPageFunction="{decrementPage}"
-      fetchFunction="{fetchWebhooks}"
+      fetchFunction="{fetchAPIClients}"
       deleteFunction="{promptDelete}"
-      rowRenderFunction="{Webhook.asRow}"
+      rowRenderFunction="{APIClient.asRow}"
     />
   </div>
 </div>

@@ -16,24 +16,23 @@ export function fetchListOfUsers(
     outboundURLParams.set('admin', 'true');
   }
 
-  const uri = `/api/v1/users?${outboundURLParams.toString()}`;
-
-  return axios.get(uri, { withCredentials: true });
+  return axios.get(`/api/v1/users?${outboundURLParams.toString()}`, {
+    withCredentials: true,
+  });
 }
 
 export function fetchUser(userID: number): Promise<AxiosResponse<User>> {
-  const uri = format(backendRoutes.INDIVIDUAL_USER, userID.toString());
-  return axios.get(uri);
+  return axios.get(format(backendRoutes.INDIVIDUAL_USER, userID.toString()));
 }
 
 export function deleteUser(id: number): Promise<AxiosResponse> {
-  const uri = format(backendRoutes.INDIVIDUAL_USER, id.toString());
-  return axios.delete(uri);
+  return axios.delete(format(backendRoutes.INDIVIDUAL_USER, id.toString()));
 }
 
 export function fetchAuditLogEntriesForUser(
   id: number,
 ): Promise<AxiosResponse<AuditLogEntry[]>> {
-  const uri = format(backendRoutes.INDIVIDUAL_USER_AUDIT_LOG, id.toString());
-  return axios.get(uri);
+  return axios.get(
+    format(backendRoutes.INDIVIDUAL_USER_AUDIT_LOG, id.toString()),
+  );
 }

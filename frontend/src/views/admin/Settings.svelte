@@ -3,11 +3,9 @@ import { navigate } from 'svelte-routing';
 
 import { Logger } from '../../logger';
 import { ErrorResponse, UserSiteSettings } from '../../types';
-import { translations } from '../../i18n';
-import { sessionSettingsStore } from '../../stores';
 import { V1APIClient } from '../../apiClient';
 import { frontendRoutes } from '../../constants';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { Superstore } from '../../stores';
 
 export let location: Location;

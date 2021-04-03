@@ -1,6 +1,6 @@
 <script lang="typescript">
 // core components
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import {
   ErrorResponse,
@@ -12,7 +12,7 @@ import {
   UserStatus,
 } from '../../types';
 import { Logger } from '../../logger';
-import { statusCodes } from '../../constants';
+import { frontendRoutes, statusCodes } from '../../constants';
 import { V1APIClient } from '../../apiClient';
 
 import APITable from '../APITable/APITable.svelte';
@@ -119,10 +119,8 @@ function promptDelete(id: number) {
           }
         })
         .catch((error: AxiosError<ErrorResponse>) => {
-          if (error.response) {
-            if (error.response.data) {
-              itemRetrievalError = error.response.data.message;
-            }
+          if (error?.response?.data) {
+            itemRetrievalError = error.response.data.message;
           }
         });
     }
@@ -136,8 +134,8 @@ function promptDelete(id: number) {
       title="Items"
       headers="{Item.headers(translationsToUse)}"
       rows="{items}"
-      individualPageLink="/things/items"
-      creationLink="/things/items/new"
+      individualPageLink={frontendRoutes.LIST_ITEMS}
+      creationLink='/things/item'
       dataRetrievalError="{itemRetrievalError}"
       searchEnabled="{true}"
       searchFunction="{searchItems}"

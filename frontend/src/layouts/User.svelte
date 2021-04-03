@@ -5,16 +5,16 @@ import { Route, Router } from 'svelte-routing';
 import AdminNavbar from '../components/Navbars/AdminNavbar.svelte';
 import Sidebar from '../components/Sidebar/Sidebar.svelte';
 import AdminFooter from '../components/Footers/AdminFooter.svelte';
-import WebhookEditor from '../components/Webhooks/Editor.svelte';
-import WebhookCreator from '../components/Webhooks/Creator.svelte';
 
 // pages for this layout
-import Webhooks from '../views/user/Webhooks.svelte';
+import APIClients from '../views/user/APIClients.svelte';
+import APIClientCreator from '../components/APIClients/Creator.svelte';
+import APIClientEditor from '../components/APIClients/Editor.svelte';
 import UserSettings from '../views/user/Settings.svelte';
 
 import { Logger } from '../logger';
 
-let logger = new Logger().withDebugValue('source', 'src/layouts/User.svelte');
+let logger = new Logger().withDebugValue('source', 'src/layouts/Account.svelte');
 
 export let location: Location;
 </script>
@@ -25,11 +25,10 @@ export let location: Location;
     <AdminNavbar />
     <div class="px-4 md:px-10 mx-auto w-full -m-24">
       <Router url="user">
-        <Route path="webhooks" component="{Webhooks}" />
-        <Route path="webhooks/new" component="{WebhookCreator}" />
-        <Route path="webhooks/nu" component="{WebhookEditor}" />
-        <Route path="webhooks/:id" let:params>
-          <WebhookEditor webhookID="{params.id}" />
+        <Route path="api_clients" component="{APIClients}" />
+        <Route path="api_clients/new" component="{APIClientCreator}" />
+        <Route path="api_clients/:id" let:params>
+          <APIClientEditor apiClientID="{params.id}" />
         </Route>
         <Route path="settings" component="{UserSettings}" />
       </Router>

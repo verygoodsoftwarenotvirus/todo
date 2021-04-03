@@ -84,6 +84,24 @@ export type userAdminPageTranslations = {
   };
 };
 
+export type accountSettingsPageTranslations = {
+  title: string;
+  sectionLabels: {
+    info: string;
+    members: string;
+  };
+  buttons: {
+    saveMembers: string;
+  };
+  inputLabels: {
+    name: string;
+    members: string;
+  };
+  inputPlaceholders: {
+    name: string;
+  };
+};
+
 export type userSettingsPageTranslations = {
   title: string;
   buttons: {

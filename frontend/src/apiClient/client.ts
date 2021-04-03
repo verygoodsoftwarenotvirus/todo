@@ -1,7 +1,21 @@
-import { createWebhook } from '@/apiClient/webhooks';
 import { Logger } from '@/logger';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import {
+  createAccount,
+  deleteAccount,
+  fetchAccount,
+  fetchAuditLogEntriesForAccount,
+  fetchListOfAccounts,
+  saveAccount,
+} from './accounts';
 import { cycleCookieSecret } from './admin';
+import {
+  createAPIClient,
+  deleteAPIClient,
+  fetchAPIClient,
+  fetchAuditLogEntriesForAPIClient,
+  fetchListOfAPIClients,
+} from './apiClients';
 import {
   fetchAuditLogEntry,
   fetchListOfAuditLogEntries,
@@ -32,6 +46,7 @@ import {
   fetchUser,
 } from './users';
 import {
+  createWebhook,
   deleteWebhook,
   fetchAuditLogEntriesForWebhook,
   fetchListOfWebhooks,
@@ -91,6 +106,21 @@ export class V1APIClient {
   // audit log entries
   static fetchListOfAuditLogEntries = fetchListOfAuditLogEntries;
   static fetchAuditLogEntry = fetchAuditLogEntry;
+
+  // accounts stuff
+  static createAccount = createAccount;
+  static fetchAccount = fetchAccount;
+  static saveAccount = saveAccount;
+  static deleteAccount = deleteAccount;
+  static fetchListOfAccounts = fetchListOfAccounts;
+  static fetchAuditLogEntriesForAccount = fetchAuditLogEntriesForAccount;
+
+  // API clients stuff
+  static createAPIClient = createAPIClient;
+  static fetchAPIClient = fetchAPIClient;
+  static deleteAPIClient = deleteAPIClient;
+  static fetchListOfAPIClients = fetchListOfAPIClients;
+  static fetchAuditLogEntriesForAPIClient = fetchAuditLogEntriesForAPIClient;
 
   // webhooks stuff
   static createWebhook = createWebhook;

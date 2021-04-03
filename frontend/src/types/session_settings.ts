@@ -13,12 +13,14 @@ export class UserSiteSettings {
   darkMode: boolean;
 
   constructor(language?: supportedLanguage, darkMode: boolean = false) {
+    this.darkMode = darkMode;
+
     if (!language) {
       switch (window.navigator.language) {
-        case 'es-MX':
-        case 'es-419':
-          language = 'es-MX';
-          break;
+        // case 'es-MX':
+        // case 'es-419':
+        //   language = 'es-MX';
+        //   break;
         default:
           language = defaultLanguage;
           break;
@@ -26,7 +28,6 @@ export class UserSiteSettings {
     }
 
     this.language = fetchLanguage(language);
-    this.darkMode = darkMode;
   }
 
   getTranslations(): Readonly<SiteTranslationMap> {

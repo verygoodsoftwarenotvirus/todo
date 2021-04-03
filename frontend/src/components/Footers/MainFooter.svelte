@@ -1,8 +1,5 @@
 <script lang="typescript">
-import { onDestroy } from 'svelte';
-
 import { UserSiteSettings } from '../../types';
-import { translations } from '../../i18n';
 import { sessionSettingsStore } from '../../stores';
 
 let currentSessionSettings = new UserSiteSettings();

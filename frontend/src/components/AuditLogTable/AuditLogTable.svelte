@@ -1,5 +1,5 @@
 <script lang="typescript">
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 import { onMount } from 'svelte';
 import JSONTree from 'svelte-json-tree';
 
@@ -14,7 +14,7 @@ import { Logger } from '../../logger';
 import { Superstore } from '../../stores';
 
 let entries: AuditLogEntry[] = [];
-export let entryFetchFunc: Promise<AxiosResponse<AuditLogEntry[]>>;
+export let entryFetchFunc: () => void;
 
 let searchQuery: string = '';
 let retrievalError: string = '';

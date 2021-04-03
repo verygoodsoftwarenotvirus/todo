@@ -3,7 +3,7 @@ import { navigate } from 'svelte-routing';
 import * as faker from 'faker';
 import format from 'string-format';
 import Select from 'svelte-select';
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import { UserSiteSettings, Webhook, WebhookCreationInput } from '../../types';
 import { Logger } from '../../logger';
@@ -137,7 +137,7 @@ function createWebhook(): void {
 
   if (superstore.frontendOnlyMode) {
     navigate(
-      format(frontendRoutes.INDIVIDUAL_WEBHOOK, faker.random.number().toString()),
+      format(frontendRoutes.INDIVIDUAL_WEBHOOK, faker.random.number().toLocaleString()),
       {
         state: {},
         replace: true,
@@ -151,7 +151,7 @@ function createWebhook(): void {
           .withValue('new_webhook_id', newWebhook.id)
           .debug(`navigating to webhook page via creation promise resolution`);
         navigate(
-          format(frontendRoutes.INDIVIDUAL_WEBHOOK, newWebhook.id.toString()),
+          format(frontendRoutes.INDIVIDUAL_WEBHOOK, newWebhook.id.toLocaleString()),
           {
             state: {},
             replace: true,

@@ -46,6 +46,8 @@ export class Superstore {
     }
   }
 
+  static frontendOnlyMode: boolean = frontendOnlyMode;
+
   setUserStatus(x: UserStatus) {
     userStatusStore.setUserStatus(x);
   }

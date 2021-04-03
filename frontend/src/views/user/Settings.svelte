@@ -1,6 +1,6 @@
 <script lang="typescript">
 import { onMount } from 'svelte';
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 import { navigate } from 'svelte-routing';
 
 import {
@@ -43,12 +43,8 @@ let superstore = new Superstore({
 let ogUser: User = new User();
 let user: User = new User();
 let passwordUpdate = new UserPasswordUpdateRequest();
-let twoFactorSecretUpdate = new UserTwoFactorSecretUpdateRequest();
-
-let userInfoCanBeSaved: boolean = false;
 let userFetchError: string = '';
 let updatePasswordError: string = '';
-let twoFactorSecretUpdateError: string = '';
 
 function submitChangePasswordRequest() {
   logger.debug(`submitChangePasswordRequest invoked`);
@@ -106,7 +102,7 @@ onMount(() => {
       <div class="rounded-t bg-white mb-0 px-6 py-6">
         <div class="text-center flex justify-between">
           <h6 class="text-gray-800 text-xl font-bold">
-            {user.username}
+            {translationsToUse.title}
           </h6>
           <span class="fa {chooseIconForStatus(user.reputation)}" title="{translationsToUse.hovertexts.reputation} {user.reputation}"></span>
         </div>

@@ -2,7 +2,9 @@ import type { SiteTranslationMap } from '@/i18n/definitions';
 import type { webhookModelTranslations } from '@/i18n/types';
 
 const _id = 'ID',
+  _externalID = 'External ID',
   _createdOn = 'Created On',
+  _archivedOn = 'Archived On',
   _login = 'Login',
   _name = 'Name',
   _username = 'Username',
@@ -22,6 +24,7 @@ const webhook: webhookModelTranslations = {
   },
   columns: {
     id: _id,
+    externalID: _externalID,
     name: _name,
     contentType: 'Content-Type',
     url: 'URL',
@@ -32,6 +35,7 @@ const webhook: webhookModelTranslations = {
     createdOn: _createdOn,
     lastUpdatedOn: _lastUpdatedOn,
     belongsToAccount: _belongsToAccount,
+    archivedOn: _archivedOn,
   },
   labels: {
     name: _name,
@@ -191,8 +195,25 @@ export const englishTranslations: SiteTranslationMap = {
           "Enter an example generated code to verify you've completed the above step:",
       },
     },
+    accountSettings: {
+      title: 'Account Settings',
+      sectionLabels: {
+        info: 'Info',
+        members: 'Members',
+      },
+      buttons: {
+        saveMembers: 'Save Members',
+      },
+      inputLabels: {
+        name: 'Name',
+        members: 'Members',
+      },
+      inputPlaceholders: {
+        name: 'name',
+      },
+    },
     userSettings: {
-      title: 'My account',
+      title: 'User Settings',
       buttons: {
         updateUserInfo: 'Update',
         changePassword: 'Change Password',
@@ -273,13 +294,16 @@ export const englishTranslations: SiteTranslationMap = {
       },
       columns: {
         id: 'ID',
+        externalID: 'External ID',
         username: _username,
-        isAdmin: 'Admin',
+        reputation: 'Reputation',
+        reputationExplanation: 'Reputation Explanation',
+        serviceAdminPermissions: 'Service Admin Permissions',
         requiresPasswordChange: 'Requires Password Change',
         passwordLastChangedOn: 'Password Last Changed On',
         createdOn: 'Created On',
         lastUpdatedOn: 'Last Updated On',
-        archivedOn: 'Archived On',
+        archivedOn: _archivedOn,
       },
       labels: {
         id: 'ID',
@@ -289,6 +313,7 @@ export const englishTranslations: SiteTranslationMap = {
         passwordLastChangedOn: 'Password Last Changed',
         createdOn: _createdOn,
         lastUpdatedOn: _lastUpdatedOn,
+        archivedOn: _archivedOn,
       },
       inputPlaceholders: {
         username: 'new username',
@@ -303,17 +328,65 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     webhook: webhook,
+    apiClient: {
+      actions: {
+        create: 'Create Account',
+      },
+      columns: {
+        id: _id,
+        externalID: _externalID,
+        name: _name,
+        clientID: 'Client ID',
+        createdOn: _createdOn,
+        lastUpdatedOn: _lastUpdatedOn,
+        belongsToAccount: _belongsToAccount,
+        archivedOn: _archivedOn,
+      },
+      labels: {
+        name: _name,
+        clientID: 'Client ID',
+      },
+      inputPlaceholders: {
+        name: 'name',
+        clientID: 'Client ID',
+      },
+    },
+    account: {
+      actions: {
+        create: 'Create Account',
+      },
+      columns: {
+        id: _id,
+        externalID: _externalID,
+        name: _name,
+        accountSubscriptionPlanID: 'Plan ID',
+        createdOn: _createdOn,
+        lastUpdatedOn: _lastUpdatedOn,
+        belongsToAccount: _belongsToAccount,
+        archivedOn: _archivedOn,
+      },
+      labels: {
+        name: _name,
+        accountSubscriptionPlanID: 'Plan ID',
+      },
+      inputPlaceholders: {
+        name: 'name',
+        accountSubscriptionPlanID: 'Plan ID',
+      },
+    },
     item: {
       actions: {
         create: 'Create Item',
       },
       columns: {
         id: _id,
+        externalID: _externalID,
         name: _name,
         details: 'Details',
         createdOn: _createdOn,
         lastUpdatedOn: _lastUpdatedOn,
         belongsToAccount: _belongsToAccount,
+        archivedOn: _archivedOn,
       },
       labels: {
         name: _name,

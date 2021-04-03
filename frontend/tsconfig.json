@@ -3,8 +3,16 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "typeRoots": ["src/types/external"],
+    "allowJs": false,
+    "typeRoots": ["./src/types/external"],
     "strict": true,
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
     "importHelpers": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
@@ -12,7 +20,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": ["node", "jest", "webpack-env"],
+    "types": ["node", "webpack-env"],
     "paths": {
       "@/*": ["src/*"]
     },

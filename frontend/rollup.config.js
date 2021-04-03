@@ -58,7 +58,7 @@ export default {
     }),
 
     replace({
-      'process.env.FRONTEND_ONLY_MODE': `'${frontendOnlyMode.toString()}'`,
+      'process.env.FRONTEND_ONLY_MODE': `'${frontendOnlyMode.toLocaleString()}'`,
     }),
 
     // If you have external dependencies installed from

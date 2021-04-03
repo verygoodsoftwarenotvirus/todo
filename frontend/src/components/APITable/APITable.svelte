@@ -5,11 +5,16 @@ import JSONTree from 'svelte-json-tree';
 import { Logger } from '../../logger';
 import { QueryFilter, UserSiteSettings, UserStatus } from '../../types';
 import { Superstore } from '../../stores';
+import type { APITableCell, APITableHeader } from './types';
 
 let logger = new Logger().withDebugValue(
   'source',
   'src/components/APITable/APITable.svelte',
 );
+
+interface DatabaseRecord {
+  id: number;
+}
 
 // local state
 let searchQuery: string = '';
@@ -17,8 +22,8 @@ let currentPage: number = 0;
 export let dataRetrievalError: string = '';
 
 export let title: string = '';
-export let headers: string[] = [];
-export let rows: string[][] = [[]];
+export let headers: APITableHeader[] = [];
+export let rows: DatabaseRecord[] = [];
 
 export let queryFilter: QueryFilter = new QueryFilter();
 
@@ -26,7 +31,7 @@ export let creationLink: string = '';
 export let individualPageLink: string = '';
 
 export let searchEnabled: boolean = true;
-export let searchFunction: () => void;
+export let searchFunction: (((query: string) => void) | null);
 
 export let deleteEnabled: boolean = true;
 export let deleteFunction: (id: number) => void;
@@ -38,7 +43,7 @@ export let decrementDisabled: boolean = true;
 export let decrementPageFunction: () => void;
 
 export let fetchFunction: () => void;
-export let rowRenderFunction: (rowContent: string[]) => void;
+export let rowRenderFunction: (rowContent: any) => APITableCell[];
 
 let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
@@ -48,13 +53,12 @@ let translationsToUse = currentSessionSettings.getTranslations().components
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
-    logger.withDebugValue("value", value).debug(`new UserStatus received in APITable; isAdmin: ${value.isAdmin}`)
+    logger.withDebugValue("value", value).debug(`new UserStatus received in APITable`)
     currentAuthStatus = value;
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().components
-      .apiTable;
+    translationsToUse = currentSessionSettings.getTranslations().components.apiTable;
   },
   adminModeUpdateFunc: (value: boolean) => {
     adminMode = value;
@@ -64,8 +68,10 @@ let superstore = new Superstore({
 
 function search(): void {
   if (searchQuery.length >= 3) {
-    logger.debug(`searching for items: ${searchQuery}`);
-    searchFunction();
+    logger.debug(`searching for: ${searchQuery}`);
+    if (searchEnabled && searchFunction !== null) {
+      searchFunction(searchQuery);
+    }
   }
 }
 
@@ -75,9 +81,7 @@ function goToNewPage() {
 }
 </script>
 
-<div
-  class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white"
->
+<div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded bg-white">
   <div class="rounded-t mb-0 px-4 py-3 border-0">
     <div class="flex flex-wrap items-center">
       <div class="relative w-full px-4 max-w-full flex-grow flex-1">
@@ -166,7 +170,7 @@ function goToNewPage() {
         <tr>
           {#each headers as header}
             {#if header.requiresAdmin}
-              {#if currentAuthStatus.isAdmin && adminMode}
+              {#if currentAuthStatus.isAdmin() && adminMode}
                 <th
                   class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200"
                 >
@@ -194,7 +198,7 @@ function goToNewPage() {
         {#each rows as row}
           <tr>
             {#each rowRenderFunction(row) as cell}
-              {#if cell.fieldName === 'id' && individualPageLink !== ''}
+              {#if cell.fieldName.toLocaleLowerCase() === 'id' && individualPageLink !== ''}
                 <a use:link href="{individualPageLink}/{row.id}">
                   <th
                     class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center"
@@ -205,7 +209,7 @@ function goToNewPage() {
                   </th>
                 </a>
               {:else if cell.requiresAdmin}
-                {#if currentAuthStatus.isAdmin && adminMode}
+                {#if currentAuthStatus.isAdmin() && adminMode}
                   {#if cell.isJSON}
                     <JSONTree value="{JSON.parse(cell.content)}" />
                   {:else}
@@ -237,7 +241,7 @@ function goToNewPage() {
           </tr>
         {/each}
 
-        <!--{#if currentAuthStatus.isAdmin && adminMode}-->
+        <!--{#if currentAuthStatus.isAdmin() && adminMode}-->
         <!--  <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4">-->
         <!--    {item.belongsToUser}-->
         <!--  </td>-->

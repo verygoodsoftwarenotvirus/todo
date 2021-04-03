@@ -1,33 +1,34 @@
 <script lang="typescript">
 // core components
-import { AxiosError, AxiosResponse } from 'axios';
-import { onMount } from 'svelte';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import {
   ErrorResponse,
-  Webhook,
-  WebhookList,
+  fakeAccountFactory,
+  Account,
+  AccountList,
   QueryFilter,
   UserSiteSettings,
   UserStatus,
-  fakeUserFactory,
-  fakeWebhookFactory,
 } from '../../types';
 import { Logger } from '../../logger';
+import { frontendRoutes, statusCodes } from '../../constants';
 import { V1APIClient } from '../../apiClient';
 
-import APITable from '../../components/APITable/APITable.svelte';
-import { statusCodes } from '../../constants';
+import APITable from '../APITable/APITable.svelte';
 import { Superstore } from '../../stores';
 
 export let location;
 
-let webhookRetrievalError = '';
-let webhooks: Webhook[] = [];
+let queryFilter = QueryFilter.fromURLSearchParams();
 
+let accountRetrievalError = '';
+let accounts: Account[] = [];
+
+let adminMode: boolean = false;
 let currentAuthStatus: UserStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+let translationsToUse = currentSessionSettings.getTranslations().models.account;
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
@@ -35,34 +36,27 @@ let superstore = new Superstore({
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().models.webhook;
+    translationsToUse = currentSessionSettings.getTranslations().models.account;
+  },
+  adminModeUpdateFunc: (value: boolean) => {
+    adminMode = value;
   },
 });
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/views/admin/Webhooks.svelte',
+  'src/views/Accounts.svelte',
 );
-
-onMount(fetchWebhooks);
-
-// begin experimental API table code
-
-let queryFilter = QueryFilter.fromURLSearchParams();
 
 let apiTableIncrementDisabled: boolean = false;
 let apiTableDecrementDisabled: boolean = false;
 let apiTableSearchQuery: string = '';
 
-function searchWebhooks() {
-  logger.debug('searchWebhooks called');
-}
-
 function incrementPage() {
   if (!apiTableIncrementDisabled) {
     logger.debug(`incrementPage called`);
     queryFilter.page += 1;
-    fetchWebhooks();
+    fetchAccounts();
   }
 }
 
@@ -70,26 +64,26 @@ function decrementPage() {
   if (!apiTableDecrementDisabled) {
     logger.debug(`decrementPage called`);
     queryFilter.page -= 1;
-    fetchWebhooks();
+    fetchAccounts();
   }
 }
 
-function fetchWebhooks() {
-  logger.debug('fetchWebhooks called');
+function fetchAccounts() {
+  logger.debug('fetchAccounts called');
 
   if (superstore.frontendOnlyMode) {
-    webhooks = fakeWebhookFactory.buildList(queryFilter.limit);
+    accounts = fakeAccountFactory.buildList(queryFilter.limit);
   } else {
-    V1APIClient.fetchListOfWebhooks(queryFilter, false)
-      .then((response: AxiosResponse<WebhookList>) => {
-        webhooks = response.data.webhooks || [];
+    V1APIClient.fetchListOfAccounts(queryFilter, adminMode)
+      .then((response: AxiosResponse<AccountList>) => {
+        accounts = response.data.accounts || [];
 
         queryFilter.page = response.data.page;
-        apiTableIncrementDisabled = webhooks.length === 0;
+        apiTableIncrementDisabled = accounts.length === 0;
         apiTableDecrementDisabled = queryFilter.page === 1;
       })
       .catch((error: AxiosError) => {
-        webhookRetrievalError = error.response?.data;
+        accountRetrievalError = error.response?.data;
       });
   }
 }
@@ -97,18 +91,20 @@ function fetchWebhooks() {
 function promptDelete(id: number) {
   logger.debug('promptDelete called');
 
-  if (confirm(`are you sure you want to delete webhook #${id}?`)) {
+  if (confirm(`are you sure you want to delete account #${id}?`)) {
     if (superstore.frontendOnlyMode) {
-      fetchWebhooks();
+      fetchAccounts();
     } else {
-      V1APIClient.deleteWebhook(id)
-        .then((response: AxiosResponse<Webhook>) => {
+      V1APIClient.deleteAccount(id)
+        .then((response: AxiosResponse<Account>) => {
           if (response?.status === statusCodes.NO_CONTENT) {
-            fetchWebhooks();
+            fetchAccounts();
           }
         })
         .catch((error: AxiosError<ErrorResponse>) => {
-          webhookRetrievalError = error.response?.data?.message;
+          if (error?.response?.data) {
+            accountRetrievalError = error.response.data.message;
+          }
         });
     }
   }
@@ -118,20 +114,22 @@ function promptDelete(id: number) {
 <div class="flex flex-wrap mt-4">
   <div class="w-full mb-12 px-4">
     <APITable
-      title="Webhooks"
-      headers="{Webhook.headers(translationsToUse)}"
-      rows="{webhooks}"
-      creationLink="/user/webhooks/new"
-      individualPageLink="/user/webhooks"
-      dataRetrievalError="{webhookRetrievalError}"
-      searchFunction="{searchWebhooks}"
+      title="Accounts"
+      headers="{Account.headers(translationsToUse)}"
+      rows="{accounts}"
+      individualPageLink={frontendRoutes.LIST_ITEMS}
+      creationLink={frontendRoutes.INDIVIDUAL_ITEM}
+      dataRetrievalError="{accountRetrievalError}"
+      searchEnabled="{false}"
+      searchFunction={null}
       incrementDisabled="{apiTableIncrementDisabled}"
       decrementDisabled="{apiTableDecrementDisabled}"
       incrementPageFunction="{incrementPage}"
       decrementPageFunction="{decrementPage}"
-      fetchFunction="{fetchWebhooks}"
+      fetchFunction="{fetchAccounts}"
+      deleteEnabled="{true}"
       deleteFunction="{promptDelete}"
-      rowRenderFunction="{Webhook.asRow}"
+      rowRenderFunction="{Account.asRow}"
     />
   </div>
 </div>

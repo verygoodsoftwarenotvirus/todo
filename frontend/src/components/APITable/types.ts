@@ -1,6 +1,6 @@
 export interface APITableHeader {
   content: string;
-  requiresAdminMode: boolean;
+  requiresAdmin?: boolean;
 }
 
 interface APITableCellParams {

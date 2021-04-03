@@ -46,10 +46,10 @@ export class AuditLogEntry {
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdminMode: false },
-      { content: columns.eventType, requiresAdminMode: false },
-      { content: columns.context, requiresAdminMode: false },
-      { content: columns.createdOn, requiresAdminMode: false },
+      { content: columns.id, requiresAdmin: false },
+      { content: columns.eventType, requiresAdmin: false },
+      { content: columns.context, requiresAdmin: false },
+      { content: columns.createdOn, requiresAdmin: false },
     ];
   };
 

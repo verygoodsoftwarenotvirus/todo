@@ -71,7 +71,7 @@ async function login() {
         if (reason?.response?.status === 401) {
             loginError = 'invalid credentials: please try again';
           } else {
-            loginError = reason.response.toString();
+            loginError = reason.response.toLocaleString();
             logger.error(JSON.stringify(reason.response));
           }
       });

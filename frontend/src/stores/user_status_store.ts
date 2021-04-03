@@ -1,6 +1,11 @@
 import { V1APIClient } from '@/apiClient';
 import { Logger } from '@/logger';
-import { AdminPermissionSummary, ErrorResponse, UserPermissionSummary, UserStatus } from '@/types';
+import {
+  AdminPermissionSummary,
+  ErrorResponse,
+  UserPermissionSummary,
+  UserStatus,
+} from '@/types';
 import type { AxiosError, AxiosResponse } from 'axios';
 import { writable } from 'svelte/store';
 
@@ -23,7 +28,9 @@ function buildUserStatusStore() {
     subscribe,
     setUserStatus: (x: UserStatus) => {
       set(x);
-      logger.withDebugValue('userStatus', x as UserStatus).debug('user status set');
+      logger
+        .withDebugValue('userStatus', x as UserStatus)
+        .debug('user status set');
     },
     logout: () => set(new UserStatus()),
   };
@@ -35,7 +42,13 @@ function buildUserStatusStore() {
   if (frontendOnlyMode) {
     const permMap = new Map<number, UserPermissionSummary>();
     userStatusStore.setUserStatus(
-      new UserStatus("good", "testing", true, permMap, new AdminPermissionSummary(true))
+      new UserStatus(
+        'good',
+        'testing',
+        true,
+        permMap,
+        new AdminPermissionSummary(true),
+      ),
     );
   } else {
     V1APIClient.checkAuthStatusRequest()

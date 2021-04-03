@@ -19,15 +19,15 @@ export function fetchListOfAuditLogEntries(
     outboundURLParams.set('admin', 'true');
   }
 
-  const uri = `${
-    backendRoutes.GET_AUDIT_LOG_ENTRIES
-  }?${outboundURLParams.toString()}`;
-  return axios.get(uri);
+  return axios.get(
+    `${backendRoutes.GET_AUDIT_LOG_ENTRIES}?${outboundURLParams.toString()}`,
+  );
 }
 
 export function fetchAuditLogEntry(
   id: number,
 ): Promise<AxiosResponse<AuditLogEntry>> {
-  const uri = format(backendRoutes.INDIVIDUAL_AUDIT_LOG_ENTRY, id.toString());
-  return axios.get(uri);
+  return axios.get(
+    format(backendRoutes.INDIVIDUAL_AUDIT_LOG_ENTRY, id.toString()),
+  );
 }

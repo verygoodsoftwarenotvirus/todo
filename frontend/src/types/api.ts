@@ -1,3 +1,7 @@
+export interface DatabaseRecord {
+  id: number;
+}
+
 export class Pagination {
   page: number;
   limit: number;

@@ -1,6 +1,9 @@
 import type {
+  accountModelTranslations,
+  accountSettingsPageTranslations,
   adminFooterTranslations,
   adminNavbarTranslations,
+  apiClientModelTranslations,
   apiTableTranslations,
   auditLogEntryTableTranslations,
   auditLogEntryTranslations,
@@ -25,7 +28,7 @@ import { LanguageTag, languageTag, translate } from 'typed-intl';
 
 const english = 'en-US';
 const mexicanSpanish = 'es-MX';
-export type supportedLanguage = 'en-US' | 'es-MX';
+export type supportedLanguage = 'en-US'; // | 'es-MX';
 
 const defaultLanguage = english;
 
@@ -62,6 +65,7 @@ export type SiteTranslationMap = {
     home: homePageTranslations;
     login: loginPageTranslations;
     registration: registrationPageTranslations;
+    accountSettings: accountSettingsPageTranslations;
     userSettings: userSettingsPageTranslations;
     siteSettings: siteSettingsPageTranslations;
     webhookCreationPage: webhookCreationPageTranslations;
@@ -69,6 +73,8 @@ export type SiteTranslationMap = {
   };
   models: {
     item: itemModelTranslations;
+    account: accountModelTranslations;
+    apiClient: apiClientModelTranslations;
     user: userModelTranslations;
     auditLogEntry: auditLogEntryTranslations;
     webhook: webhookModelTranslations;

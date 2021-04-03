@@ -18,6 +18,7 @@ export class ItemList extends Pagination {
 
 export class Item {
   id: number;
+  externalID: string;
   name: string;
   details: string;
   createdOn: number;
@@ -27,6 +28,7 @@ export class Item {
 
   constructor(
     id: number = 0,
+    externalID: string = '',
     name: string = '',
     details: string = '',
     createdOn: number = 0,
@@ -34,13 +36,19 @@ export class Item {
   ) {
     this.id = id;
     this.name = name;
+    this.externalID = externalID;
     this.details = details;
     this.createdOn = createdOn;
     this.belongsToAccount = belongsToAccount;
   }
 
   static areEqual = function (x: Item, y: Item): boolean {
-    return x.id === y.id && x.name === y.name && x.details === y.details;
+    return (
+      x.id === y.id &&
+      x.externalID === y.externalID &&
+      x.name === y.name &&
+      x.details === y.details
+    );
   };
 
   // this function should return everything there are no presumed fields
@@ -49,12 +57,14 @@ export class Item {
   ): APITableHeader[] => {
     const columns = translations.columns;
     return [
-      { content: columns.id, requiresAdminMode: false },
-      { content: columns.name, requiresAdminMode: false },
-      { content: columns.details, requiresAdminMode: false },
-      { content: columns.createdOn, requiresAdminMode: false },
-      { content: columns.lastUpdatedOn, requiresAdminMode: false },
-      { content: columns.belongsToAccount, requiresAdminMode: true },
+      { content: columns.id, requiresAdmin: false },
+      { content: columns.name, requiresAdmin: false },
+      { content: columns.details, requiresAdmin: false },
+      { content: columns.externalID, requiresAdmin: true },
+      { content: columns.createdOn, requiresAdmin: true },
+      { content: columns.lastUpdatedOn, requiresAdmin: true },
+      { content: columns.archivedOn, requiresAdmin: true },
+      { content: columns.belongsToAccount, requiresAdmin: true },
     ];
   };
 
@@ -72,6 +82,10 @@ export class Item {
       new APITableCell({
         fieldName: 'details',
         content: x.details,
+      }),
+      new APITableCell({
+        fieldName: 'externalID',
+        content: x.externalID,
       }),
       new APITableCell({
         fieldName: 'createdOn',
@@ -102,6 +116,7 @@ export class ItemCreationInput {
 
 export const fakeItemFactory = Factory.Sync.makeFactory<Item>({
   name: Factory.Sync.each(() => faker.random.word()),
+  externalID: Factory.Sync.each(() => faker.random.uuid()),
   details: Factory.Sync.each(() => faker.random.word()),
   belongsToAccount: Factory.Sync.each(() => faker.random.number()),
   ...defaultFactories,

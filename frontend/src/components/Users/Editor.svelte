@@ -1,6 +1,6 @@
 <script lang="typescript">
 import { onMount } from 'svelte';
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import {
   UserSiteSettings,
@@ -16,18 +16,16 @@ import AuditLogTable from '../AuditLogTable/AuditLogTable.svelte';
 import { Superstore } from '../../stores';
 import { renderUnixTime } from '../../utils';
 
-export let location: Location;
+export let location?: Location;
 export let userID: number = 0;
 
 // local state
 let originalUser: User = new User();
 let user: User = new User();
-let auditLogEntries: AuditLogEntry[] = [];
 
 let needsToBeSaved: boolean = false;
 
 let userRetrievalError: string = '';
-let auditLogEntriesRetrievalError: string = '';
 
 function evaluateChanges() {
   needsToBeSaved = !User.areEqual(user, originalUser);
@@ -35,7 +33,7 @@ function evaluateChanges() {
 
 let logger = new Logger().withDebugValue(
   'source',
-  'src/components/Editors/User.svelte',
+  'src/components/Editors/Account.svelte',
 );
 
 let adminMode: boolean = false;
@@ -85,14 +83,14 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
   }
 
   if (!adminMode) {
-    return;
+    return new Promise<AxiosResponse<AuditLogEntry[]>>((resolve) => {
+      resolve({ data: [] } as AxiosResponse);
+    });
   }
 
   if (superstore.frontendOnlyMode) {
     return new Promise<AxiosResponse<AuditLogEntry[]>>((resolve) => {
-      resolve({
-        data: fakeAuditLogEntryFactory.buildList(10),
-      });
+      resolve({ data: fakeAuditLogEntryFactory.buildList(10) } as AxiosResponse);
     });
   } else {
     return V1APIClient.fetchAuditLogEntriesForUser(userID);
@@ -143,7 +141,7 @@ onMount(fetchUser);
           >
             {translationsToUse.labels.isAdmin}: &nbsp;
           </label>
-          <div id="grid-is-admin">{user.isAdmin ? 'yes' : 'no'}</div>
+          <div id="grid-is-admin">{user.serviceAdminPermissions !== 0 ? 'yes' : 'no'}</div>
         </div>
 
         <div></div>
@@ -185,7 +183,7 @@ onMount(fetchUser);
         </div>
       </div>
 
-      {#if currentAuthStatus.isAdmin && adminMode}
+      {#if currentAuthStatus.isAdmin() && adminMode}
         <div
           class="flex w-full mr-3 mt-4 max-w-full flex-grow justify-end flex-1"
         >
@@ -198,7 +196,7 @@ onMount(fetchUser);
     </div>
   </div>
 
-  {#if currentAuthStatus.isAdmin && adminMode}
+  {#if currentAuthStatus.isAdmin() && adminMode}
     <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

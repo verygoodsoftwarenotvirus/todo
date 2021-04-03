@@ -1,31 +1,33 @@
-export type itemModelTranslations = {
-  actions: {
-    create: string;
-  };
-  columns: {
-    id: string;
-    name: string;
-    details: string;
-    createdOn: string;
-    lastUpdatedOn: string;
-    belongsToAccount: string;
-  };
-  labels: {
-    name: string;
-    details: string;
-  };
-  inputPlaceholders: {
-    name: string;
-    details: string;
-  };
-};
-
 export type auditLogEntryTranslations = {
   columns: {
     id: string;
     eventType: string;
     context: string;
     createdOn: string;
+  };
+};
+
+export type accountModelTranslations = {
+  actions: {
+    create: string;
+  };
+  columns: {
+    id: string;
+    externalID: string;
+    name: string;
+    accountSubscriptionPlanID: string;
+    createdOn: string;
+    lastUpdatedOn: string;
+    belongsToAccount: string;
+    archivedOn: string;
+  };
+  labels: {
+    name: string;
+    accountSubscriptionPlanID: string;
+  };
+  inputPlaceholders: {
+    name: string;
+    accountSubscriptionPlanID: string;
   };
 };
 
@@ -36,8 +38,11 @@ export type userModelTranslations = {
   };
   columns: {
     id: string;
+    externalID: string;
     username: string;
-    isAdmin: string;
+    reputation: string;
+    reputationExplanation: string;
+    serviceAdminPermissions: string;
     requiresPasswordChange: string;
     passwordLastChangedOn: string;
     createdOn: string;
@@ -52,6 +57,7 @@ export type userModelTranslations = {
     passwordLastChangedOn: string;
     createdOn: string;
     lastUpdatedOn: string;
+    archivedOn: string;
   };
   inputPlaceholders: {
     username: string;
@@ -65,6 +71,7 @@ export type webhookModelTranslations = {
   };
   columns: {
     id: string;
+    externalID: string;
     name: string;
     contentType: string;
     url: string;
@@ -75,6 +82,7 @@ export type webhookModelTranslations = {
     createdOn: string;
     lastUpdatedOn: string;
     belongsToAccount: string;
+    archivedOn: string;
   };
   labels: {
     name: string;
@@ -91,5 +99,53 @@ export type webhookModelTranslations = {
     contentType: string;
     url: string;
     method: string;
+  };
+};
+
+export type apiClientModelTranslations = {
+  actions: {
+    create: string;
+  };
+  columns: {
+    id: string;
+    externalID: string;
+    name: string;
+    clientID: string;
+    createdOn: string;
+    lastUpdatedOn: string;
+    belongsToAccount: string;
+    archivedOn: string;
+  };
+  labels: {
+    name: string;
+    clientID: string;
+  };
+  inputPlaceholders: {
+    name: string;
+    clientID: string;
+  };
+};
+
+export type itemModelTranslations = {
+  actions: {
+    create: string;
+  };
+  columns: {
+    id: string;
+    externalID: string;
+    name: string;
+    details: string;
+    createdOn: string;
+    lastUpdatedOn: string;
+    archivedOn: string;
+    belongsToAccount: string;
+  };
+  labels: {
+    name: string;
+    details: string;
+  };
+  inputPlaceholders: {
+    name: string;
+    details: string;
   };
 };

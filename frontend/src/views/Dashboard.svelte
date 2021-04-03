@@ -1,5 +1,5 @@
 <script lang="typescript">
-import { Logger } from '../../logger';
+import { Logger } from '../logger';
 
 export let location: Location;
 

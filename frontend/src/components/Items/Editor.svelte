@@ -1,7 +1,7 @@
 <script lang="typescript">
 import { navigate } from 'svelte-routing';
 import { onMount } from 'svelte';
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 import {
   Item,
@@ -25,7 +25,6 @@ let item: Item = new Item();
 let itemRetrievalError: string = '';
 let auditLogEntriesRetrievalError: string = '';
 let needsToBeSaved: boolean = false;
-let auditLogEntries: AuditLogEntry[] = [];
 
 function evaluateChanges() {
   needsToBeSaved = !Item.areEqual(item, originalItem);
@@ -140,14 +139,14 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
   }
 
   if (!adminMode) {
-    return;
+    return new Promise<AxiosResponse<AuditLogEntry[]>>((resolve) => {
+      resolve({ data: [] } as AxiosResponse);
+    });
   }
 
   if (superstore.frontendOnlyMode) {
     return new Promise<AxiosResponse<AuditLogEntry[]>>((resolve) => {
-      resolve({
-        data: fakeAuditLogEntryFactory.buildList(10),
-      });
+      resolve({ data: fakeAuditLogEntryFactory.buildList(10) } as AxiosResponse);
     });
   } else {
     return V1APIClient.fetchAuditLogEntriesForItem(itemID);
@@ -224,7 +223,7 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
     </div>
   </div>
 
-  {#if currentAuthStatus.isAdmin && adminMode}
+  {#if currentAuthStatus.isAdmin() && adminMode}
     <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

@@ -1,4 +1,4 @@
-import { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
 import type { itemModelTranslations } from '@/i18n';
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
@@ -61,7 +61,7 @@ export class Item {
       { content: columns.name, requiresAdmin: false },
       { content: columns.details, requiresAdmin: false },
       { content: columns.externalID, requiresAdmin: true },
-      { content: columns.createdOn, requiresAdmin: true },
+      { content: columns.createdOn, requiresAdmin: false },
       { content: columns.lastUpdatedOn, requiresAdmin: true },
       { content: columns.archivedOn, requiresAdmin: true },
       { content: columns.belongsToAccount, requiresAdmin: true },
@@ -86,6 +86,7 @@ export class Item {
       new APITableCell({
         fieldName: 'externalID',
         content: x.externalID,
+        requiresAdmin: true,
       }),
       new APITableCell({
         fieldName: 'createdOn',
@@ -94,6 +95,7 @@ export class Item {
       new APITableCell({
         fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.lastUpdatedOn),
+        requiresAdmin: true,
       }),
       new APITableCell({
         fieldName: 'belongsToAccount',

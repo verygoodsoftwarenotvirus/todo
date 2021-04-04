@@ -20,7 +20,7 @@ var (
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
-func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
+func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -49,49 +49,43 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 	}
 
 	if includeCounts {
-		targetVars = append(targetVars, &filteredCount, &totalCount)
+		targetVars = append(targetVars, &filteredCount)
 	}
 
 	if err = scan.Scan(targetVars...); err != nil {
-		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning user")
+		return nil, 0, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
 	user.ServiceAdminPermissions = permissions.NewServiceAdminPermissions(perms)
 
-	return user, filteredCount, totalCount, nil
+	return user, filteredCount, nil
 }
 
 // scanUsers takes database rows and loads them into a slice of User structs.
-func (q *SQLQuerier) scanUsers(ctx context.Context, rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
+func (q *SQLQuerier) scanUsers(ctx context.Context, rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger.WithValue("include_counts", includeCounts)
 
 	for rows.Next() {
-		user, fc, tc, scanErr := q.scanUser(ctx, rows, includeCounts)
+		user, fc, scanErr := q.scanUser(ctx, rows, includeCounts)
 		if scanErr != nil {
-			return nil, 0, 0, observability.PrepareError(scanErr, logger, span, "scanning user result")
+			return nil, 0, observability.PrepareError(scanErr, logger, span, "scanning user result")
 		}
 
-		if includeCounts {
-			if filteredCount == 0 {
-				filteredCount = fc
-			}
-
-			if totalCount == 0 {
-				totalCount = tc
-			}
+		if includeCounts && filteredCount == 0 {
+			filteredCount = fc
 		}
 
 		users = append(users, user)
 	}
 
 	if err = q.checkRowsForErrorAndClose(ctx, rows); err != nil {
-		return nil, 0, 0, observability.PrepareError(err, logger, span, "handling rows")
+		return nil, 0, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
-	return users, filteredCount, totalCount, nil
+	return users, filteredCount, nil
 }
 
 // getUser fetches a user.
@@ -119,7 +113,7 @@ func (q *SQLQuerier) getUser(ctx context.Context, userID uint64, withVerifiedTOT
 
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := q.scanUser(ctx, row, false)
+	u, _, err := q.scanUser(ctx, row, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
@@ -192,7 +186,7 @@ func (q *SQLQuerier) GetUserByUsername(ctx context.Context, username string) (*t
 	query, args := q.sqlQueryBuilder.BuildGetUserByUsernameQuery(ctx, username)
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	u, _, _, err := q.scanUser(ctx, row, false)
+	u, _, err := q.scanUser(ctx, row, false)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -218,7 +212,7 @@ func (q *SQLQuerier) SearchForUsersByUsername(ctx context.Context, usernameQuery
 
 	query, args := q.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(ctx, usernameQuery)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "user search by username", query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -227,7 +221,7 @@ func (q *SQLQuerier) SearchForUsersByUsername(ctx context.Context, usernameQuery
 		return nil, observability.PrepareError(err, logger, span, "querying database for users")
 	}
 
-	u, _, _, err := q.scanUsers(ctx, rows, false)
+	u, _, err := q.scanUsers(ctx, rows, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
@@ -266,12 +260,12 @@ func (q *SQLQuerier) GetUsers(ctx context.Context, filter *types.QueryFilter) (x
 
 	query, args := q.sqlQueryBuilder.BuildGetUsersQuery(ctx, filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "users", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
-	if x.Users, x.FilteredCount, x.TotalCount, err = q.scanUsers(ctx, rows, true); err != nil {
+	if x.Users, x.FilteredCount, err = q.scanUsers(ctx, rows, true); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "loading response from database")
 	}
 
@@ -594,7 +588,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForUser(ctx context.Context, userID uint6
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(ctx, userID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "audit log entries for user", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

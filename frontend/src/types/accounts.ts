@@ -1,4 +1,4 @@
-import { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
 import type { accountModelTranslations } from '@/i18n';
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
@@ -24,7 +24,7 @@ export class Account {
   createdOn: number;
   lastUpdatedOn?: number;
   archivedOn?: number;
-  belongsToAccount: number;
+  belongsToUser: number;
 
   constructor(
     id: number = 0,
@@ -32,14 +32,14 @@ export class Account {
     externalID: string = '',
     accountSubscriptionPlanID?: number,
     createdOn: number = 0,
-    belongsToAccount: number = 0,
+    belongsToUser: number = 0,
   ) {
     this.id = id;
     this.name = name;
     this.externalID = externalID;
     this.accountSubscriptionPlanID = accountSubscriptionPlanID;
     this.createdOn = createdOn;
-    this.belongsToAccount = belongsToAccount;
+    this.belongsToUser = belongsToUser;
   }
 
   static areEqual = function (x: Account, y: Account): boolean {
@@ -58,7 +58,7 @@ export class Account {
       { content: columns.accountSubscriptionPlanID, requiresAdmin: false },
       { content: columns.createdOn, requiresAdmin: false },
       { content: columns.lastUpdatedOn, requiresAdmin: false },
-      { content: columns.belongsToAccount, requiresAdmin: true },
+      { content: columns.belongsToUser, requiresAdmin: true },
     ];
   };
 
@@ -86,8 +86,8 @@ export class Account {
         content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
-        fieldName: 'belongsToAccount',
-        content: x.belongsToAccount.toString(),
+        fieldName: 'belongsToUser',
+        content: x.belongsToUser.toString(),
         requiresAdmin: true,
       }),
     ];
@@ -108,6 +108,6 @@ export const fakeAccountFactory = Factory.Sync.makeFactory<Account>({
   name: Factory.Sync.each(() => faker.random.word()),
   externalID: Factory.Sync.each(() => faker.random.uuid()),
   accountSubscriptionPlanID: Factory.Sync.each(() => faker.random.number()),
-  belongsToAccount: Factory.Sync.each(() => faker.random.number()),
+  belongsToUser: Factory.Sync.each(() => faker.random.number()),
   ...defaultFactories,
 });

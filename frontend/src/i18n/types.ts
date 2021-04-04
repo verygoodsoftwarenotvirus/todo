@@ -18,7 +18,7 @@ export type accountModelTranslations = {
     accountSubscriptionPlanID: string;
     createdOn: string;
     lastUpdatedOn: string;
-    belongsToAccount: string;
+    belongsToUser: string;
     archivedOn: string;
   };
   labels: {

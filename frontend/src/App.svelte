@@ -5,18 +5,18 @@ import { Router, Route, navigate } from 'svelte-routing';
 import { Logger } from '@/logger';
 
 // Admin Layout
-import Admin from './layouts/Root.svelte';
+import Admin from './layouts/dashboard.svelte';
 // Auth Layout
-import Auth from './layouts/Auth.svelte';
+import Auth from './layouts/auth.svelte';
 // User Layout
-import User from './layouts/User.svelte';
+import User from './layouts/user.svelte';
 // Account Layout
-import Account from './layouts/Account.svelte';
+import Account from './layouts/account.svelte';
 // Things Layout
-import Things from './layouts/Things.svelte';
+import Things from './layouts/things.svelte';
 
 // No Layout Pages
-import Dashboard from './views/Dashboard.svelte';
+import Dashboard from './views/dashboard.svelte';
 import { UserSiteSettings, UserStatus } from '@/types';
 import { Superstore } from '@/stores';
 import { frontendRoutes } from '@/constants';

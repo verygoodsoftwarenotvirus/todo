@@ -19,7 +19,7 @@ import {
 import {
   fetchAuditLogEntry,
   fetchListOfAuditLogEntries,
-} from './audit_log_entries';
+} from './auditLogEntries';
 import {
   checkAuthStatusRequest,
   login,

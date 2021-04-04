@@ -223,7 +223,7 @@ func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID uint64, filter *t
 
 	query, args := q.sqlQueryBuilder.BuildGetAPIClientsQuery(ctx, userID, filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "API clients", query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -347,7 +347,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForAPIClient(ctx context.Context, clientI
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAPIClientQuery(ctx, clientID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "audit log entries for API client", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

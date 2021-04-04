@@ -1,4 +1,4 @@
-import { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
 import type { webhookModelTranslations } from '@/i18n';
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';

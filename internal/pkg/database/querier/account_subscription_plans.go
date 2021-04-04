@@ -142,7 +142,7 @@ func (q *SQLQuerier) GetAccountSubscriptionPlans(ctx context.Context, filter *ty
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountSubscriptionPlansQuery(ctx, filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "account subscription plan", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying for account subscription plans")
 	}
@@ -290,7 +290,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForAccountSubscriptionPlan(ctx context.Co
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(ctx, accountSubscriptionPlanID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "audit log entries for account subscription plan", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

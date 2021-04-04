@@ -1,4 +1,4 @@
-import { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
 import type { apiClientModelTranslations } from '@/i18n';
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
@@ -64,7 +64,7 @@ export class APIClient {
       { content: columns.id, requiresAdmin: false },
       { content: columns.externalID, requiresAdmin: false },
       { content: columns.name, requiresAdmin: false },
-      { content: columns.details, requiresAdmin: false },
+      { content: columns.clientID, requiresAdmin: false },
       { content: columns.createdOn, requiresAdmin: false },
       { content: columns.lastUpdatedOn, requiresAdmin: false },
       { content: columns.belongsToAccount, requiresAdmin: true },
@@ -76,7 +76,7 @@ export class APIClient {
     return [
       new APITableCell({
         fieldName: 'id',
-        content: x.id.toLocaleString(),
+        content: x.id.toString(),
       }),
       new APITableCell({
         fieldName: 'externalID',
@@ -91,10 +91,6 @@ export class APIClient {
         content: x.clientID,
       }),
       new APITableCell({
-        fieldName: 'clientSecret',
-        content: x.clientSecret,
-      }),
-      new APITableCell({
         fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
       }),
@@ -104,7 +100,7 @@ export class APIClient {
       }),
       new APITableCell({
         fieldName: 'belongsToAccount',
-        content: x.belongsToAccount.toLocaleString(),
+        content: x.belongsToAccount.toString(),
         requiresAdmin: true,
       }),
     ];
@@ -113,11 +109,9 @@ export class APIClient {
 
 export class APIClientCreationInput {
   name: string;
-  details: string;
 
-  constructor(name: string = '', details: string = '') {
+  constructor(name: string = '') {
     this.name = name;
-    this.details = details;
   }
 }
 

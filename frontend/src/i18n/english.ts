@@ -196,7 +196,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     accountSettings: {
-      title: 'Account Settings',
+      title: 'Account settings',
       sectionLabels: {
         info: 'Info',
         members: 'Members',
@@ -213,7 +213,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     userSettings: {
-      title: 'User Settings',
+      title: 'User settings',
       buttons: {
         updateUserInfo: 'Update',
         changePassword: 'Change Password',
@@ -243,7 +243,7 @@ export const englishTranslations: SiteTranslationMap = {
       },
     },
     siteSettings: {
-      title: 'Site Settings',
+      title: 'Site settings',
       buttons: {
         cycleCookieSecret: 'Cycle Cookie Secret',
       },
@@ -362,7 +362,7 @@ export const englishTranslations: SiteTranslationMap = {
         accountSubscriptionPlanID: 'Plan ID',
         createdOn: _createdOn,
         lastUpdatedOn: _lastUpdatedOn,
-        belongsToAccount: _belongsToAccount,
+        belongsToUser: _belongsToUser,
         archivedOn: _archivedOn,
       },
       labels: {

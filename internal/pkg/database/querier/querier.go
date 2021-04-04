@@ -217,11 +217,26 @@ func (q *SQLQuerier) getIDFromResult(ctx context.Context, res sql.Result) uint64
 	return uint64(id)
 }
 
+func (q *SQLQuerier) performReadQuery(ctx context.Context, queryDescription, query string, args ...interface{}) (*sql.Rows, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := q.logger
+	tracing.AttachDatabaseQueryToSpan(span, queryDescription, query, args)
+
+	rows, err := q.performReadQuery(ctx, fmt.Sprintf("%s fetch query", queryDescription), query, args...)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "scanning user")
+	}
+
+	return rows, nil
+}
+
 func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.Querier, query, queryDesc string) (count uint64, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	tracing.AttachDatabaseQueryToSpan(span, query, fmt.Sprintf("%s count query", queryDesc), nil)
+	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s count query", queryDesc), query, nil)
 
 	if err = querier.QueryRowContext(ctx, query).Scan(&count); err != nil {
 		return 0, observability.PrepareError(err, q.logger, span, "executing count query")
@@ -235,7 +250,7 @@ func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.Q
 	defer span.End()
 
 	logger := q.logger.WithValue(keys.DatabaseQueryKey, query)
-	tracing.AttachDatabaseQueryToSpan(span, query, "boolean query", args)
+	tracing.AttachDatabaseQueryToSpan(span, "boolean query", query, args)
 
 	if err = querier.QueryRowContext(ctx, query, args...).Scan(&exists); errors.Is(err, sql.ErrNoRows) {
 		return false, nil
@@ -257,7 +272,7 @@ func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Que
 	defer span.End()
 
 	logger := q.logger.WithValue("query", query).WithValue("description", queryDescription).WithValue("args", args)
-	tracing.AttachDatabaseQueryToSpan(span, query, queryDescription, args)
+	tracing.AttachDatabaseQueryToSpan(span, queryDescription, query, args)
 
 	if q.idStrategy == ReturningStatementIDRetrievalStrategy && !ignoreReturn {
 		var id uint64

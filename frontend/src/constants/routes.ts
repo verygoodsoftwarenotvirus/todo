@@ -45,7 +45,7 @@ export enum frontendRoutes {
   LANDING = '/',
 
   // Admin Pages
-  ADMIN_DASHBOARD = '/dashboard',
+  ADMIN_DASHBOARD = '/admin/dashboard',
   ADMIN_USERS = '/admin/users',
   ADMIN_ACCOUNTS = '/admin/accounts',
   ADMIN_AUDIT_LOGS = '/admin/audit_log',
@@ -70,5 +70,6 @@ export enum frontendRoutes {
 
   // Items
   LIST_ITEMS = '/things/items',
+  CREATE_ITEMS = '/things/items/new',
   INDIVIDUAL_ITEM = '/things/items/{}',
 }

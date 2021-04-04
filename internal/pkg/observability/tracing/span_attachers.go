@@ -178,12 +178,12 @@ func AttachErrorToSpan(span trace.Span, description string, err error) {
 }
 
 // AttachDatabaseQueryToSpan attaches a given search query to a span.
-func AttachDatabaseQueryToSpan(span trace.Span, query, queryDescription string, args []interface{}) {
+func AttachDatabaseQueryToSpan(span trace.Span, queryDescription, query string, args []interface{}) {
 	attachStringToSpan(span, keys.DatabaseQueryKey, query)
 	attachStringToSpan(span, "query_description", queryDescription)
 
-	if args != nil {
-		span.SetAttributes(attribute.Any("query_args", args))
+	for i, arg := range args {
+		span.SetAttributes(attribute.Any(fmt.Sprintf("query_args_%d", i), arg))
 	}
 }
 

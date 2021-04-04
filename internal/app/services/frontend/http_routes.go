@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/afero"
 
@@ -52,15 +53,17 @@ var (
 		"/admin/audit_log": {},
 		"/admin/settings":  {},
 		// user routes
-		"/items":             {},
-		"/items/new":         {},
-		"/things/items":      {},
-		"/things/items/new":  {},
-		"/dashboard":         {},
-		"/user/webhooks":     {},
-		"/user/webhooks/nu":  {},
-		"/user/webhooks/new": {},
-		"/user/settings":     {},
+		"/items":                {},
+		"/items/new":            {},
+		"/things/items":         {},
+		"/things/items/new":     {},
+		"/dashboard":            {},
+		"/account/webhooks":     {},
+		"/account/webhooks/new": {},
+		"/account/settings":     {},
+		"/user/api_clients":     {},
+		"/user/api_clients/new": {},
+		"/user/settings":        {},
 	}
 
 	redirections = map[string]string{
@@ -68,6 +71,16 @@ var (
 		"/register": registrationRoute,
 	}
 )
+
+func shouldRedirectToHome(path string) bool {
+	for rt := range validRoutes {
+		if strings.HasPrefix(path, rt) {
+			return true
+		}
+	}
+
+	return false
+}
 
 func (s *service) cacheFile(ctx context.Context, afs afero.Fs, filePath string) error {
 	_, span := s.tracer.StartSpan(ctx)
@@ -157,10 +170,37 @@ func (s *service) StaticDir(_ctx context.Context, staticFilesDirectory string) (
 			rl.Debug("static file requested")
 		}
 
-		if _, routeValid := validRoutes[req.URL.Path]; routeValid {
+		if shouldRedirectToHome(req.URL.Path) {
 			req.URL.Path = "/"
 		}
 
-		fs.ServeHTTP(res, req)
+		w := &reseponseWrapper{ResponseWriter: res}
+
+		fs.ServeHTTP(w, req)
+
+		if w.status == http.StatusNotFound {
+			// we could redirect to a common 404 page here
+			logger.Debug("resource was NOT found")
+		}
 	}, nil
+}
+
+type reseponseWrapper struct {
+	http.ResponseWriter
+	status int
+	length int
+}
+
+func (w *reseponseWrapper) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *reseponseWrapper) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = 200
+	}
+	n, err := w.ResponseWriter.Write(b)
+	w.length += n
+	return n, err
 }

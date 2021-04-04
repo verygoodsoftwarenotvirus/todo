@@ -90,7 +90,7 @@ func (q *SQLQuerier) GetRequestContextForUser(ctx context.Context, userID uint64
 
 	getAccountMembershipsQuery, getAccountMembershipsArgs := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(ctx, userID)
 
-	membershipRows, err := q.db.QueryContext(ctx, getAccountMembershipsQuery, getAccountMembershipsArgs...)
+	membershipRows, err := q.performReadQuery(ctx, "account memberships for user", getAccountMembershipsQuery, getAccountMembershipsArgs...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "fetching user's memberships from database")
 	}
@@ -145,7 +145,7 @@ func (q *SQLQuerier) GetMembershipsForUser(ctx context.Context, userID uint64) (
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(ctx, userID)
 
-	membershipRows, err := q.db.QueryContext(ctx, query, args...)
+	membershipRows, err := q.performReadQuery(ctx, "account memberships for user", query, args...)
 	if err != nil {
 		return 0, nil, observability.PrepareError(err, logger, span, "fetching memberships from database")
 	}

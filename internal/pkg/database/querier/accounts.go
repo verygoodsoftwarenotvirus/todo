@@ -196,7 +196,7 @@ func (q *SQLQuerier) GetAccounts(ctx context.Context, userID uint64, filter *typ
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, userID, false, filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "accounts", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "executing accounts list retrieval query")
 	}
@@ -223,7 +223,7 @@ func (q *SQLQuerier) GetAccountsForAdmin(ctx context.Context, filter *types.Quer
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, 0, true, filter)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "accounts for admin", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for accounts")
 	}
@@ -399,7 +399,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForAccount(ctx context.Context, accountID
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountQuery(ctx, accountID)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.performReadQuery(ctx, "audit log entries for account", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

@@ -1,4 +1,4 @@
-import { APITableCell, APITableHeader } from '@/components/APITable/types';
+import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
 import type { userModelTranslations } from '@/i18n';
 import { Pagination } from '@/types/api';
 import { defaultFactories } from '@/types/fakes';
@@ -238,7 +238,7 @@ export class UserStatus {
     this.adminPermissions = adminPermissions;
   }
 
-  isAdmin(): boolean {
+  public isAdmin(): boolean {
     return !!this.adminPermissions;
   }
 }

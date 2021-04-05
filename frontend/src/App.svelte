@@ -3,6 +3,7 @@
 import { Router, Route, navigate } from 'svelte-routing';
 
 import { Logger } from '@/logger';
+import { tracer } from '@/tracing';
 
 // Admin Layout
 import Admin from './layouts/dashboard.svelte';
@@ -29,6 +30,10 @@ let currentAuthStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().components
   .sidebars.primary;
+
+const span = tracer.startSpan('fart')
+span.addEvent("buttts");
+span.end();
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {

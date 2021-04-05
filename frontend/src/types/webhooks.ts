@@ -89,8 +89,9 @@ export class Webhook {
       { content: columns.dataTypes, requiresAdmin: false },
       { content: columns.topics, requiresAdmin: false },
       { content: columns.externalID, requiresAdmin: true },
-      { content: columns.createdOn, requiresAdmin: true },
+      { content: columns.createdOn, requiresAdmin: false },
       { content: columns.lastUpdatedOn, requiresAdmin: true },
+      { content: columns.belongsToAccount, requiresAdmin: true },
     ];
   };
 
@@ -129,6 +130,7 @@ export class Webhook {
       new APITableCell({
         fieldName: 'externalID',
         content: x.externalID,
+        requiresAdmin: true,
       }),
       new APITableCell({
         fieldName: 'createdOn',
@@ -137,10 +139,12 @@ export class Webhook {
       new APITableCell({
         fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.lastUpdatedOn),
+        requiresAdmin: true,
       }),
       new APITableCell({
         fieldName: 'belongsToAccount',
         content: x.belongsToAccount.toString(),
+        requiresAdmin: true,
       }),
     ];
   };

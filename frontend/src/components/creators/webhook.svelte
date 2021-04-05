@@ -107,6 +107,20 @@ function clearDataTypes() {
   evaluateInputValidity();
 }
 
+
+// Data Types
+const validTopics: SelectOption[] = buildSelectOptionsFromStrings(...translationsToUse.validInputs.topics)
+
+function selectTopic(value: SelectedValues) {
+  webhook.topics = value.detail.map((value) => { return value.label });
+  evaluateInputValidity();
+}
+
+function clearTopics() {
+  webhook.topics = [];
+  evaluateInputValidity();
+}
+
 // URL
 let urlIsValid: boolean = false;
 function validateURL(): void {
@@ -124,11 +138,12 @@ function validateURL(): void {
 let webhookInputIsValid: boolean = false;
 function evaluateInputValidity(): void {
   webhookInputIsValid = urlIsValid &&
-                webhook.name != "" &&
-                webhook.method != "" &&
-                webhook.contentType != "" &&
-                webhook.events.length !== 0 &&
-                webhook.dataTypes.length !== 0;
+                        webhook.name != "" &&
+                        webhook.method != "" &&
+                        webhook.contentType != "" &&
+                        webhook.events.length !== 0 &&
+                        webhook.dataTypes.length !== 0 &&
+                        webhook.topics.length !== 0;
 }
 
 function createWebhook(): void {
@@ -271,13 +286,10 @@ function createWebhook(): void {
         >
           {translationsToUse.model.labels.topics}
         </label>
-        <input
-          class="appearance-none block w-full text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-          id="grid-topics"
-          type="text"
-          disabled
-          bind:value="{webhook.topics}"
-        />
+
+        <div  id="grid-topics">
+          <Select items={validTopics} isMulti={true} on:select={selectTopic} on:clear={clearTopics} />
+        </div>
       </div>
     </div>
   </div>

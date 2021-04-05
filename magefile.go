@@ -3,12 +3,9 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -45,49 +42,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func pipe(fromCmd string, fromArgs []string, toCmd string, toArgs []string) (string, error) {
-	from := exec.Command(fromCmd, fromArgs...)
-	to := exec.Command(toCmd, toArgs...)
-
-	r, w := io.Pipe()
-	from.Stdout = w
-	to.Stdin = r
-
-	var b2 bytes.Buffer
-	to.Stdout = &b2
-
-	if err := from.Start(); err != nil {
-		return "", err
-	}
-
-	if err := to.Start(); err != nil {
-		return "", err
-	}
-
-	if err := from.Wait(); err != nil {
-		return "", err
-	}
-
-	if err := w.Close(); err != nil {
-		return "", err
-	}
-
-	if err := to.Wait(); err != nil {
-		return "", err
-	}
-
-	if _, err := io.Copy(os.Stdout, &b2); err != nil {
-		return "", err
-	}
-
-	out, err := to.Output()
-	if err != nil {
-		return "", err
-	}
-
-	return string(out), nil
 }
 
 func doesNotMatch(input string, matcher func(string, string) bool, exclusions ...string) bool {
@@ -176,53 +130,47 @@ func Quicktest() error {
 	return nil
 }
 
-func runContainer(containerArgs []string, imageName string, imageArgs ...string) error {
-	containerRunArgs := append([]string{"run"}, containerArgs...)
-	containerRunArgs = append(containerRunArgs, imageName)
-	containerRunArgs = append(containerRunArgs, imageArgs...)
+type containerRunSpec struct {
+	imageName,
+	imageVersion string
+	imageArgs []string
+	runArgs   []string
+}
+
+func runContainer(runSpec containerRunSpec) error {
+	containerRunArgs := append([]string{"run"}, runSpec.args...)
+	containerRunArgs = append(containerRunArgs, fmt.Sprintf("%s:%s", runspec.imageName, runSpec.imageVersion))
+	containerRunArgs = append(containerRunArgs, runspec.imageArgs...)
 
 	return sh.Run(containerRunner, containerRunArgs...)
 }
 
-const lintImage = "golangci/golangci-lint:latest"
+const (
+	lintImage        = "golangci/golangci-lint"
+	lintImageVersion = "latest"
+)
 
 func Lint() error {
 	if err := sh.Run(containerRunner, "pull", lintImage); err != nil {
 		return err
 	}
 
-	if err := runContainer(
-		[]string{
+	lintCmd := containerRunSpec{
+		runArgs: []string{
 			"--rm",
 			"--volume",
 			fmt.Sprintf("%s:%s", cwd, cwd),
 			fmt.Sprintf("--workdir=%s", cwd),
 		},
-		lintImage,
-		"golangci-lint",
-		"run",
-		"--config=.golangci.yml",
-		"./...",
-	); err != nil {
-		return err
+		imageName:   lintImage,
+		imageVerion: lintImageVersion,
+		imageArgs: []string{
+			"golangci-lint",
+			"run",
+			"--config=.golangci.yml",
+			"./...",
+		},
 	}
 
-	//if err := sh.Run(
-	//	containerRunner,
-	//	"run",
-	//	"--rm",
-	//	"--volume",
-	//	fmt.Sprintf("%s:%s", cwd, cwd),
-	//	fmt.Sprintf("--workdir=%s", cwd),
-	//	"--env=GO111MODULE=on",
-	//	lintImage,
-	//	"golangci-lint",
-	//	"run",
-	//	"--config=.golangci.yml",
-	//	"./...",
-	//); err != nil {
-	//	return err
-	//}
-
-	return nil
+	return runContainer(lintCmd)
 }

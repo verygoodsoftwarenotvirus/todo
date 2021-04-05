@@ -260,6 +260,7 @@ export const englishTranslations: SiteTranslationMap = {
       validInputs: {
         events: ['All', 'Create', 'Update', 'Delete'],
         types: ['All', 'Item'],
+        topics: ['All'],
       },
     },
     userAdminPage: {

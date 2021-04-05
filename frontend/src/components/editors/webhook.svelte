@@ -243,36 +243,27 @@ function deleteWebhook(): void {
   }
 }
 
-function fetchAuditLogEntries(): void {
+function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
   logger.debug(`fetchAuditLogEntries called`);
 
   if (webhookID === 0) {
-    throw new Error('webhookID cannot be zero!');
-  }
-
-  if (!adminMode) {
-    return;
+    throw new Error('id cannot be zero!');
   }
 
   if (superstore.frontendOnlyMode) {
-    auditLogEntries = fakeAuditLogEntryFactory.buildList(10);
+    logger.debug("returning frontend-only mode from webhook audit log fetch function");
+    return new Promise<AxiosResponse<AuditLogEntry[]>>((resolve) => {
+      resolve({ data: fakeAuditLogEntryFactory.buildList(10) } as AxiosResponse);
+    });
   } else {
-    V1APIClient.fetchAuditLogEntriesForWebhook(webhookID)
-      .then((response: AxiosResponse<AuditLogEntry[]>) => {
-        auditLogEntries = response.data;
-        logger.withValue('entries', auditLogEntries).debug('entries fetched');
-      })
-      .catch((error: AxiosError) => {
-        auditLogEntriesRetrievalError = error.response?.data;
-      });
+    logger.debug("returning from webhook audit log fetch function");
+    return V1APIClient.fetchAuditLogEntriesForWebhook(webhookID);
   }
 }
 </script>
 
 <div>
-  <div
-    class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded"
-  >
+  <div class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded">
     <div class="rounded-t mb-0 px-4 py-3 bg-transparent justify-between ">
       <div class="flex flex-wrap webhooks-center">
         <div class="relative w-full max-w-full flex-grow flex-1">
@@ -381,7 +372,7 @@ function fetchAuditLogEntries(): void {
           </label>
 
           <div  id="grid-topics">
-            <Select disabled={true} items={validDataTypes} selectedValue={webhook.topics} isMulti={true} on:select={selectTopic} on:clear={clearTopics} />
+            <Select items={validTopics} selectedValue={webhook.topics} isMulti={true} on:select={selectTopic} on:clear={clearTopics} />
           </div>
         </div>
       </div>
@@ -389,6 +380,6 @@ function fetchAuditLogEntries(): void {
   </div>
 
   {#if currentAuthStatus.adminPermissions !== null}
-    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
+    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries()}" />
   {/if}
 </div>

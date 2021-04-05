@@ -225,6 +225,6 @@ function fetchAuditLogEntries(): Promise<AxiosResponse<AuditLogEntry[]>> {
   </div>
 
   {#if currentAuthStatus.adminPermissions !== null && adminMode}
-    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries()}" />
+    <AuditLogTable entryFetchFunc="{fetchAuditLogEntries}" />
   {/if}
 </div>

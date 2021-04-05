@@ -9,7 +9,7 @@ import { WebTracerProvider } from '@opentelemetry/web';
 // Create a provider for activating and tracking spans
 const tracerProvider = new WebTracerProvider();
 
-let tracer: Tracer;
+export let tracer: Tracer;
 
 export default (): Tracer => {
   if (tracer) {

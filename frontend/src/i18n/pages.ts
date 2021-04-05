@@ -151,5 +151,6 @@ export type webhookCreationPageTranslations = {
   validInputs: {
     events: string[];
     types: string[];
+    topics: string[];
   };
 };

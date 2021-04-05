@@ -29,13 +29,11 @@ let logger = new Logger().withDebugValue(
 
 // set up translations
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().components
-  .auditLogEntryTable;
+let translationsToUse = currentSessionSettings.getTranslations().components.auditLogEntryTable;
 const superstore = new Superstore({
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().components
-      .auditLogEntryTable;
+    translationsToUse = currentSessionSettings.getTranslations().components.auditLogEntryTable;
   },
 });
 

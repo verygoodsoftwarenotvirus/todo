@@ -28,6 +28,7 @@ let logger = new Logger().withDebugValue(
 
 const loginRequest = new LoginRequest();
 let canLogin: boolean = false;
+let canPressLoginButton: boolean = canLogin;
 let loginError: string = '';
 
 function evaluateInputs(): void {
@@ -36,6 +37,7 @@ function evaluateInputs(): void {
     loginRequest.password !== '' &&
     loginRequest.totpToken.length > 0 &&
     loginRequest.totpToken.length <= 6;
+  canPressLoginButton = canLogin
 }
 
 async function login() {
@@ -45,6 +47,8 @@ async function login() {
   if (!canLogin) {
     throw new Error('invalid input!');
   }
+
+  canPressLoginButton = false;
 
   if (superstore.frontendOnlyMode) {
     navigate(frontendRoutes.ADMIN_DASHBOARD, {
@@ -62,9 +66,11 @@ async function login() {
       .catch((reason: AxiosError) => {
         if (reason?.response?.status === 401) {
             loginError = 'invalid credentials: please try again';
+            canPressLoginButton = true;
           } else {
             loginError = reason.response.toString();
             logger.error(JSON.stringify(reason.response));
+            canPressLoginButton = true;
           }
       });
   }
@@ -140,7 +146,7 @@ async function login() {
             <div class="text-center mt-6">
               <button
                 on:mouseup="{login}"
-                disabled='{!canLogin}'
+                  disabled={!canPressLoginButton}
                 type="submit"
                 id="loginButton"
                 class="{canLogin ? 'bg-gray-900 active:bg-gray-700 text-white' : 'bg-gray-300 text-black'} active:bg-gray-700 text-sm font-bold uppercase px-6 py-3 border border-white rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 w-full ease-linear transition-all duration-150"

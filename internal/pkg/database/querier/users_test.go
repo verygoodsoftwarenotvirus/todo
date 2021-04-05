@@ -74,7 +74,7 @@ func TestQuerier_ScanUsers(T *testing.T) {
 		mockRows.On("Err").
 			Return(errors.New("blah"))
 
-		_, _, err := q.scanUsers(ctx, mockRows, false)
+		_, _, _, err := q.scanUsers(ctx, mockRows, false)
 		assert.Error(t, err)
 	})
 
@@ -92,7 +92,7 @@ func TestQuerier_ScanUsers(T *testing.T) {
 		mockRows.On("Close").
 			Return(errors.New("blah"))
 
-		_, _, err := q.scanUsers(ctx, mockRows, false)
+		_, _, _, err := q.scanUsers(ctx, mockRows, false)
 		assert.Error(t, err)
 	})
 }

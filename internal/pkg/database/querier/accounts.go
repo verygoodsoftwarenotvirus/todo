@@ -100,7 +100,7 @@ func (q *SQLQuerier) GetAccount(ctx context.Context, accountID, userID uint64) (
 	})
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountQuery(ctx, accountID, userID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+	row := q.getOneRow(ctx, "account", query, args...)
 
 	account, _, _, err := q.scanAccount(ctx, row, false)
 	if err != nil {

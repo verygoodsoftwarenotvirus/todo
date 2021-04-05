@@ -131,7 +131,7 @@ func (q *SQLQuerier) GetWebhook(ctx context.Context, webhookID, accountID uint64
 	})
 
 	query, args := q.sqlQueryBuilder.BuildGetWebhookQuery(ctx, webhookID, accountID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+	row := q.getOneRow(ctx, "webhook", query, args...)
 
 	webhook, _, _, err := q.scanWebhook(ctx, row, false)
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/afero"
@@ -21,26 +20,6 @@ const (
 )
 
 var (
-	// Here is where you should put route regexes that need to be ignored by the static file server.
-	// For instance, if you allow someone to see an event in the frontend via a url that contains dynamic.
-	// information, such as `/event/123`, you would want to put something like this below:
-	// 		eventsFrontendPathRegex = regexp.MustCompile(`/event/\d+`)
-
-	// usersAdminFrontendPathRegex matches URLs for specific user routes.
-	usersAdminFrontendPathRegex = regexp.MustCompile(`/admin/users/\d+`)
-
-	// webhooksAdminFrontendPathRegex matches URLs for specific webhook routes.
-	webhooksAdminFrontendPathRegex = regexp.MustCompile(`/admin/webhooks/\d+`)
-
-	// webhooksUserFrontendPathRegex matches URLs for specific webhook routes.
-	webhooksUserFrontendPathRegex = regexp.MustCompile(`/user/webhooks/\d+`)
-
-	// itemsFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
-	itemsFrontendPathRegex = regexp.MustCompile(`/things/items/\d+`)
-
-	// itemsAdminFrontendPathRegex matches URLs against our frontend router's specification for specific item routes.
-	itemsAdminFrontendPathRegex = regexp.MustCompile(`/admin/things/items/\d+`)
-
 	validRoutes = map[string]struct{}{
 		// entry routes
 		loginRoute:        {},
@@ -64,11 +43,6 @@ var (
 		"/user/api_clients":     {},
 		"/user/api_clients/new": {},
 		"/user/settings":        {},
-	}
-
-	redirections = map[string]string{
-		"/login":    loginRoute,
-		"/register": registrationRoute,
 	}
 )
 

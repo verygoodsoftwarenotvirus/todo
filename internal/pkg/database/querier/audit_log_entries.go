@@ -85,7 +85,7 @@ func (q *SQLQuerier) GetAuditLogEntry(ctx context.Context, entryID uint64) (*typ
 	logger := q.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntryQuery(ctx, entryID)
-	row := q.db.QueryRowContext(ctx, query, args...)
+	row := q.getOneRow(ctx, "audit log entry", query, args...)
 
 	entry, _, err := q.scanAuditLogEntry(ctx, row, false)
 	if err != nil {

@@ -397,19 +397,19 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 		observability.AcknowledgeError(err, logger, span, "fetching request context")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
-	} else {
-		permSummary := map[uint64]permissions.ServiceUserPermissionsSummary{}
-		for id, perm := range reqCtx.AccountPermissionsMap {
-			permSummary[id] = perm.Summary()
-		}
+	}
 
-		statusResponse = &types.UserStatusResponse{
-			PermissionsSummary:        permSummary,
-			ServiceAdminPermissions:   reqCtx.User.ServiceAdminPermissions.Summary(),
-			UserReputation:            reqCtx.User.Reputation,
-			UserReputationExplanation: reqCtx.User.ReputationExplanation,
-			UserIsAuthenticated:       true,
-		}
+	permSummary := map[uint64]permissions.ServiceUserPermissionsSummary{}
+	for id, perm := range reqCtx.AccountPermissionsMap {
+		permSummary[id] = perm.Summary()
+	}
+
+	statusResponse = &types.UserStatusResponse{
+		PermissionsSummary:        permSummary,
+		ServiceAdminPermissions:   reqCtx.User.ServiceAdminPermissions.Summary(),
+		UserReputation:            reqCtx.User.Reputation,
+		UserReputationExplanation: reqCtx.User.ReputationExplanation,
+		UserIsAuthenticated:       true,
 	}
 
 	s.encoderDecoder.RespondWithData(ctx, res, statusResponse)

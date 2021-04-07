@@ -95,7 +95,7 @@ func (q *SQLQuerier) GetAPIClientByClientID(ctx context.Context, clientID string
 	logger := q.logger.WithValue(keys.APIClientClientIDKey, clientID)
 
 	query, args := q.sqlQueryBuilder.BuildGetAPIClientByClientIDQuery(ctx, clientID)
-	row := q.getOneRow(ctx, "API client", query, args...)
+	row := q.getOneRow(ctx, q.db, "API client", query, args...)
 
 	client, _, _, err := q.scanAPIClient(ctx, row, false)
 	if err != nil {
@@ -127,7 +127,7 @@ func (q *SQLQuerier) GetAPIClientByDatabaseID(ctx context.Context, clientID, use
 	})
 
 	query, args := q.sqlQueryBuilder.BuildGetAPIClientByDatabaseIDQuery(ctx, clientID, userID)
-	row := q.getOneRow(ctx, "API client", query, args...)
+	row := q.getOneRow(ctx, q.db, "API client", query, args...)
 
 	client, _, _, err := q.scanAPIClient(ctx, row, false)
 	if err != nil {

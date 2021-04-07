@@ -2,13 +2,14 @@ dependencies:
   '@fortawesome/fontawesome-free': 5.14.0
   '@opentelemetry/api': 0.12.0
   '@opentelemetry/exporter-jaeger': 0.12.0
+  '@opentelemetry/plugin-document-load': 0.13.1
   '@opentelemetry/tracing': 0.12.0
   '@opentelemetry/web': 0.12.0
   '@popperjs/core': 2.5.1
   '@tailwindcss/custom-forms': 0.2.1_tailwindcss@1.8.10
   '@types/chart.js': 2.9.28
   '@types/faker': 5.1.5
-  axios: 0.20.0
+  axios: 0.21.1
   chart.js: 2.9.3
   dayjs: 1.9.6
   factory.ts: 0.5.1
@@ -81,6 +82,14 @@ packages:
       purgecss: 2.3.0
     resolution:
       integrity: sha512-qnKm5dIOyPGJ70kPZ5jiz0I9foVOic0j+cOzNDoo8KoCf6HjicIZ99UfO2OmE7vCYSKAAepEwJtNzpiiZAh9xw==
+  /@opentelemetry/api-metrics/0.15.0:
+    dependencies:
+      '@opentelemetry/api': 0.15.0
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-leC14QKqusuZxq67suspqfe4Qjj3GEww0X9c964vWvE8zjii4itW8TucaEAC6s4gQ4y8z+arFkvX/dlItRVGoQ==
   /@opentelemetry/api/0.12.0:
     dependencies:
       '@opentelemetry/context-base': 0.12.0
@@ -89,12 +98,26 @@ packages:
       node: '>=8.0.0'
     resolution:
       integrity: sha512-Dn4vU5GlaBrIWzLpsM6xbJwKHdlpwBQ4Bd+cL9ofJP3hKT8jBXpBpribmyaqAzrajzzl2Yt8uTa9rFVLfjDAvw==
+  /@opentelemetry/api/0.15.0:
+    dependencies:
+      '@opentelemetry/context-base': 0.15.0
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-tPyzyO8P33wWUlUdo8+NawX2qnn8HyVUAilANWLxrT9C6g4JbN6eatSQrx3G0NzohnobT3fiwrbVFNeacWS9gg==
   /@opentelemetry/context-base/0.12.0:
     dev: false
     engines:
       node: '>=8.0.0'
     resolution:
       integrity: sha512-UXwSsXo3F3yZ1dIBOG9ID8v2r9e+bqLWoizCtTb8rXtwF+N5TM7hzzvQz72o3nBU+zrI/D5e+OqAYK8ZgDd3DA==
+  /@opentelemetry/context-base/0.15.0:
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-J8AKI035Mf84bcD+0Ok69Oo3nKoa+HLCj54/ZKcTPJPfx3MywZOEildDPej2fV3tA0d0G9BID8b6o+BGpbwmig==
   /@opentelemetry/core/0.12.0:
     dependencies:
       '@opentelemetry/api': 0.12.0
@@ -105,6 +128,16 @@ packages:
       node: '>=8.5.0'
     resolution:
       integrity: sha512-oLZIkmTNWTJXzo1eA4dGu/S7wOVtylsgnEsCmhSJGhrJVDXm1eW/aGuNs3DVBeuxp0ZvQLAul3/PThsC3YrnzA==
+  /@opentelemetry/core/0.15.0:
+    dependencies:
+      '@opentelemetry/api': 0.15.0
+      '@opentelemetry/context-base': 0.15.0
+      semver: 7.3.4
+    dev: false
+    engines:
+      node: '>=8.5.0'
+    resolution:
+      integrity: sha512-4LLBoayeT0L+BpO+RYzoDsLByn1FMDqpQLto7M8P2DXOtxI//TWSo13KCMbv+pprOyweMWcsxL8jj+qv9ktSAg==
   /@opentelemetry/exporter-jaeger/0.12.0:
     dependencies:
       '@opentelemetry/api': 0.12.0
@@ -116,6 +149,28 @@ packages:
       node: '>=8.0.0'
     resolution:
       integrity: sha512-4iQWOzPGvUPk8Q2gRnnm4o0fy/KChAL1pbbRKwgrie5BeLzJmwf4ZkAHpJYHIaXKFPAQ8ZbIYDBuel3EUgOnNg==
+  /@opentelemetry/instrumentation/0.15.0:
+    dependencies:
+      '@opentelemetry/api': 0.15.0
+      '@opentelemetry/api-metrics': 0.15.0
+      require-in-the-middle: 5.1.0
+      semver: 7.3.4
+      shimmer: 1.2.1
+    dev: false
+    resolution:
+      integrity: sha512-jzgUlskOUalyM2Wjq1sHnTDfvpDeGC6uGQ6jBesLI5XRX8+5ShQiy07YqZrNea95i1O8wlZBBraIB1dRrxQ/6w==
+  /@opentelemetry/plugin-document-load/0.13.1:
+    dependencies:
+      '@opentelemetry/api': 0.15.0
+      '@opentelemetry/core': 0.15.0
+      '@opentelemetry/semantic-conventions': 0.15.0
+      '@opentelemetry/tracing': 0.15.0
+      '@opentelemetry/web': 0.15.0
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-DlSuslUEkA9EfCu4me1Xlyi55uYgLFRyqGUOisR6gJejD9zeULkHrgHPAOBPeeGiF8GcYVQpqEfaxM0KJT18yQ==
   /@opentelemetry/resources/0.12.0:
     dependencies:
       '@opentelemetry/api': 0.12.0
@@ -125,12 +180,27 @@ packages:
       node: '>=8.0.0'
     resolution:
       integrity: sha512-8cYvIKB68cyupc7D6SWzkLtt13mbjgxMahL4JKCM6hWPyiGSJlPFEAey4XFXI5LLpPZRYTPHLVoLqI/xwCFZZA==
+  /@opentelemetry/resources/0.15.0:
+    dependencies:
+      '@opentelemetry/api': 0.15.0
+      '@opentelemetry/core': 0.15.0
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-0PK6d6NEVwchfBXqjoMWMudRsP4z9IUdY6qSlBPXL9ikOcbLzLp8Ngc0rY2BrnZa58CttsRRceA1ul/1ipp+1w==
   /@opentelemetry/semantic-conventions/0.12.0:
     dev: false
     engines:
       node: '>=8.0.0'
     resolution:
       integrity: sha512-BuCcDW0uLNYYTns0/LwXkJ8lp8aDm7kpS+WunEmPAPRSCe6ciOYRvzn5reqJfX93rf+6A3U2SgrBnCTH+0qoQQ==
+  /@opentelemetry/semantic-conventions/0.15.0:
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-JYHR5zZv2+1bg//mx6YE6b/gQPs0zGqjD0/4dDwa9x1Jpo9T18h480izqMJIlu3JZbXwlGm9a7PQhMKsLis63Q==
   /@opentelemetry/tracing/0.12.0:
     dependencies:
       '@opentelemetry/api': 0.12.0
@@ -143,6 +213,19 @@ packages:
       node: '>=8.0.0'
     resolution:
       integrity: sha512-2TUGhTGkhgnxTciHCNAILPSeyXageJewRqfP9wOrx65sKd/jgvNYoY8nYf4EVWVMirDOxKDsmYgUkjdQrwb2dg==
+  /@opentelemetry/tracing/0.15.0:
+    dependencies:
+      '@opentelemetry/api': 0.15.0
+      '@opentelemetry/context-base': 0.15.0
+      '@opentelemetry/core': 0.15.0
+      '@opentelemetry/resources': 0.15.0
+      '@opentelemetry/semantic-conventions': 0.15.0
+      lodash.merge: 4.6.2
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-BpHanNBmVY3ABMMIHCnv2dk3OrBdpb4WZWUw4UmtnLB2q8DQejiqDQgoNFO8CNSRaPW09Tf78W73VFIfwd+dEQ==
   /@opentelemetry/web/0.12.0:
     dependencies:
       '@opentelemetry/api': 0.12.0
@@ -155,6 +238,19 @@ packages:
       node: '>=8.0.0'
     resolution:
       integrity: sha512-dClftM0ZKLUHi/zsU0r43DC1fCfVTUgc9CC+J/kvvpW33SaruvjksFqhW2NdicivtxTN+OjwVUEJLBQUTL4UUA==
+  /@opentelemetry/web/0.15.0:
+    dependencies:
+      '@opentelemetry/api': 0.15.0
+      '@opentelemetry/context-base': 0.15.0
+      '@opentelemetry/core': 0.15.0
+      '@opentelemetry/instrumentation': 0.15.0
+      '@opentelemetry/semantic-conventions': 0.15.0
+      '@opentelemetry/tracing': 0.15.0
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    resolution:
+      integrity: sha512-ZbN/Iid3RwXjoD0Z9MnO+QFh1b7/tjZHsF4Xj4CyeqpCttal8Z8A3PufxieCWQuy22u+mCUYVefl/eHGFrp4ww==
   /@polka/url/1.0.0-next.11:
     dev: false
     resolution:
@@ -362,12 +458,12 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-XrvP4VVHdRBCdX1S3WXVD8+RyG9qeb1D5Sn1DeLiG2xfSpzellk5k54xbUERJ3M5DggQxes39UGOTP8CFrEGbg==
-  /axios/0.20.0:
+  /axios/0.21.1:
     dependencies:
       follow-redirects: 1.13.0
     dev: false
     resolution:
-      integrity: sha512-ANA4rr2BDcmmAQLOKft2fufrtuvlqR+cXNNinUmvfeSNCOF98PZL+7M/v1zIdGo7OLjEA9J2gXJL+j4zGsl0bA==
+      integrity: sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
   /balanced-match/1.0.0:
     resolution:
       integrity: sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
@@ -561,7 +657,7 @@ packages:
     resolution:
       integrity: sha512-pMD+MVR538ipqkG5JXeOEbKWS5um1H4LUUccUQG68qpeqBYbzYy79Gh55jkd2TtPdRfUaLWdv6LPP//5Zt0aPQ==
   /core-js/2.6.12:
-    deprecated: 'core-js@<3 is no longer maintained and not recommended for usage due to the number of issues. Please, upgrade your dependencies to the actual version of core-js@3.'
+    deprecated: core-js@<3 is no longer maintained and not recommended for usage due to the number of issues. Please, upgrade your dependencies to the actual version of core-js@3.
     dev: false
     requiresBuild: true
     resolution:
@@ -600,6 +696,19 @@ packages:
     dev: false
     resolution:
       integrity: sha512-HngNLtPEBWRo8EFVmHFmSXAjtCX8rGNqeXQI0Gh7wCTSqwaKgPIDqu9m07wABVopNwzvOeCb+2711vQhDlcIXw==
+  /debug/4.3.1:
+    dependencies:
+      ms: 2.1.2
+    dev: false
+    engines:
+      node: '>=6.0'
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    resolution:
+      integrity: sha512-doEwdvm4PCeK4K3RQN2ZC2BYUBaxwLARCqZmMjtF8a51J2Rb0xpVloFRnCODwqjpwnAoao4pelN8l3RJdv3gRQ==
   /deep-freeze/0.0.1:
     dev: true
     resolution:
@@ -950,6 +1059,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-rlrc3yU3+JNOpZ9zj5pQtxnx2THmvRykwL4Xlxoa8I9lHBlVbbyPhgyPMioxVZ4NqyxaVVtaJnzsyOidQIhyyQ==
+  /lodash.merge/4.6.2:
+    dev: false
+    resolution:
+      integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==
   /lodash.toarray/4.4.0:
     resolution:
       integrity: sha1-JMS/zWsvuji/0FlNsRedjptlZWE=
@@ -1005,6 +1118,10 @@ packages:
   /minimist/1.2.5:
     resolution:
       integrity: sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==
+  /module-details-from-path/1.0.3:
+    dev: false
+    resolution:
+      integrity: sha1-EUyUlnPiqKNenTV4hSeqN7Z52is=
   /moment/2.29.1:
     dev: false
     resolution:
@@ -1015,6 +1132,10 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-oi1b3MfbyGa7FJMP9GmLTttni5JoICpYBRlq+x5V16fZbLsnL9N3wFqqIm/nIG43FjUFkFh9Epzp/kzUGUnJxQ==
+  /ms/2.1.2:
+    dev: false
+    resolution:
+      integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
   /node-emoji/1.10.0:
     dependencies:
       lodash.toarray: 4.4.0
@@ -1212,7 +1333,7 @@ packages:
       svelte: ^3.2.0
     resolution:
       integrity: sha512-6y0m37Xw01GRf/WIHau+Kp3uXj2JB1agtEmNVKb9opMy34A6OMOYhfneVpNIlrghQSw/jIV+t3e5Ngt4up2CMA==
-  /prettier-plugin-svelte/1.4.2_prettier@2.2.1+svelte@3.31.0:
+  /prettier-plugin-svelte/2.2.0_prettier@2.2.1+svelte@3.31.0:
     dependencies:
       prettier: 2.2.1
       svelte: 3.31.0
@@ -1221,11 +1342,11 @@ packages:
       prettier: ^1.16.4 || ^2.0.0
       svelte: ^3.2.0
     resolution:
-      integrity: sha512-O9VsNwII+raTG8QPoQWouk5ABQy/hmLm4dZ2eqJ7DPnbO35A+BxMSjlfqkw0cNP+UcbykHFYU8zNXm93ytWP9g==
+      integrity: sha512-Xdmqgr71tAuMqqzNCK52/v94g/Yv7V7lz+nmbO9NEA+9ol15VV3uUHOfydMNOo3SWvFaVlBcp947ebEaMWqVfQ==
   /prettier-plugin-tailwind/2.2.2_svelte@3.31.0:
     dependencies:
       prettier: 2.2.1
-      svelte-prettier-plugin: /prettier-plugin-svelte/1.4.2_prettier@2.2.1+svelte@3.31.0
+      svelte-prettier-plugin: /prettier-plugin-svelte/2.2.0_prettier@2.2.1+svelte@3.31.0
       tailwind-classes-sorter: 0.2.5
       tailwindcss: 1.9.6
     dev: true
@@ -1280,6 +1401,14 @@ packages:
       postcss-value-parser: 3.3.1
     resolution:
       integrity: sha512-fDnlZ+AybAS3C7Q9xDq5y8A2z+lT63zLbynew/lur/IR24OQF5x98tfNwf79mzEdfywZ0a2wpM860FhFfMxZlA==
+  /require-in-the-middle/5.1.0:
+    dependencies:
+      debug: 4.3.1
+      module-details-from-path: 1.0.3
+      resolve: 1.19.0
+    dev: false
+    resolution:
+      integrity: sha512-M2rLKVupQfJ5lf9OvqFGIT+9iVLnTmjgbOmpil12hiSQNn5zJTKGPoIisETNjfK+09vP3rpm1zJajmErpr2sEQ==
   /require-relative/0.8.7:
     dev: true
     resolution:
@@ -1405,6 +1534,10 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
+  /shimmer/1.2.1:
+    dev: false
+    resolution:
+      integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==
   /simple-swizzle/0.2.2:
     dependencies:
       is-arrayish: 0.3.2
@@ -1805,6 +1938,7 @@ specifiers:
   '@fortawesome/fontawesome-free': 5.14.0
   '@opentelemetry/api': ^0.12.0
   '@opentelemetry/exporter-jaeger': ^0.12.0
+  '@opentelemetry/plugin-document-load': ^0.13.1
   '@opentelemetry/tracing': ^0.12.0
   '@opentelemetry/web': ^0.12.0
   '@popperjs/core': 2.5.1
@@ -1819,7 +1953,7 @@ specifiers:
   '@types/string-format': ^2.0.0
   '@types/valid-url': ^1.0.3
   '@types/yup': ^0.29.10
-  axios: ^0.20.0
+  axios: ^0.21.1
   chart.js: 2.9.3
   cross-env: ^7.0.2
   dayjs: ^1.9.1

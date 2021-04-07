@@ -92,9 +92,9 @@ func AttachChangeSummarySpan(span trace.Span, typeName string, changes []*types.
 // AttachRequestContextToSpan provides a consistent way to attach a RequestContext object to a span.
 func AttachRequestContextToSpan(span trace.Span, reqCtx *types.RequestContext) {
 	if reqCtx != nil {
-		attachUint64ToSpan(span, keys.RequesterKey, reqCtx.User.ID)
+		attachUint64ToSpan(span, keys.RequesterKey, reqCtx.Requester.ID)
 		attachUint64ToSpan(span, keys.ActiveAccountIDKey, reqCtx.ActiveAccountID)
-		attachBooleanToSpan(span, keys.UserIsAdminKey, reqCtx.User.ServiceAdminPermissions.IsServiceAdmin())
+		attachBooleanToSpan(span, keys.UserIsAdminKey, reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin())
 	}
 }
 

@@ -50,11 +50,11 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 	input.BelongsToAccount = reqCtx.ActiveAccountID
 
 	// create item in database.
-	item, err := s.itemDataManager.CreateItem(ctx, input, reqCtx.User.ID)
+	item, err := s.itemDataManager.CreateItem(ctx, input, reqCtx.Requester.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "creating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -89,7 +89,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -127,7 +127,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -167,16 +167,16 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var items *types.ItemList
 
-	if reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
+	if reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
 	} else {
 		items, err = s.itemDataManager.GetItems(ctx, reqCtx.ActiveAccountID, filter)
@@ -219,12 +219,12 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		relevantIDs []uint64
@@ -287,7 +287,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 	input.BelongsToAccount = reqCtx.ActiveAccountID
 
 	// determine item ID.
@@ -311,7 +311,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachChangeSummarySpan(span, "item", changeReport)
 
 	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, x, reqCtx.User.ID, changeReport); err != nil {
+	if err = s.itemDataManager.UpdateItem(ctx, x, reqCtx.Requester.ID, changeReport); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -342,7 +342,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID).WithValue(keys.AccountIDKey, reqCtx.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -350,7 +350,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err = s.itemDataManager.ArchiveItem(ctx, itemID, reqCtx.ActiveAccountID, reqCtx.User.ID)
+	err = s.itemDataManager.ArchiveItem(ctx, itemID, reqCtx.ActiveAccountID, reqCtx.Requester.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -387,7 +387,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)

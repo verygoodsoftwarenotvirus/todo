@@ -71,8 +71,8 @@ func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows databa
 	return memberships, nil
 }
 
-// GetRequestContextForUser does a thing.
-func (q *SQLQuerier) GetRequestContextForUser(ctx context.Context, userID uint64) (reqCtx *types.RequestContext, err error) {
+// BuildRequestContextForUser does .
+func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint64) (*types.RequestContext, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -101,11 +101,14 @@ func (q *SQLQuerier) GetRequestContextForUser(ctx context.Context, userID uint64
 	}
 
 	activeAccountID := uint64(0)
-	accountPermissionsMap := map[uint64]permissions.ServiceUserPermissions{}
+	accountPermissionsMap := map[uint64]types.UserAccountMembershipInfo{}
 
 	for _, membership := range memberships {
 		if membership.BelongsToAccount != 0 {
-			accountPermissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
+			accountPermissionsMap[membership.BelongsToAccount] = types.UserAccountMembershipInfo{
+				//AccountName: membership. //TODO
+				Permissions: membership.UserAccountPermissions,
+			}
 
 			if membership.DefaultAccount && activeAccountID == 0 {
 				activeAccountID = membership.BelongsToAccount
@@ -117,8 +120,8 @@ func (q *SQLQuerier) GetRequestContextForUser(ctx context.Context, userID uint64
 		return nil, observability.PrepareError(errDefaultAccountNotFoundForUser, logger, span, "default account not found for user #%d", userID)
 	}
 
-	reqCtx = &types.RequestContext{
-		User: types.UserRequestContext{
+	reqCtx := &types.RequestContext{
+		Requester: types.RequesterInfo{
 			ID:                      user.ID,
 			Reputation:              user.Reputation,
 			ReputationExplanation:   user.ReputationExplanation,
@@ -131,7 +134,27 @@ func (q *SQLQuerier) GetRequestContextForUser(ctx context.Context, userID uint64
 	return reqCtx, nil
 }
 
-// GetMembershipsForUser does a thing.
+// GetDefaultAccountIDForUser does .
+func (q *SQLQuerier) GetDefaultAccountIDForUser(ctx context.Context, userID uint64) (uint64, error) {
+	ctx, span := q.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if userID == 0 {
+		return 0, ErrInvalidIDProvided
+	}
+
+	logger := q.logger.WithValue(keys.UserIDKey, userID)
+	query, args := q.sqlQueryBuilder.BuildGetDefaultAccountIDForUserQuery(ctx, userID)
+
+	var id uint64
+	if err := q.getOneRow(ctx, q.db, "default account ID query", query, args...).Scan(&id); err != nil {
+		return 0, observability.PrepareError(err, logger, span, "executing id query")
+	}
+
+	return id, nil
+}
+
+// GetMembershipsForUser does a thing. TODO: deprecate me.
 func (q *SQLQuerier) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()

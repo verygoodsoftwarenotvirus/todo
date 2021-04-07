@@ -19,7 +19,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
@@ -219,7 +218,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defaultAccountID, _, err := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+	defaultAccountID, err := s.accountMembershipManager.GetDefaultAccountIDForUser(ctx, user.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching user memberships")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
@@ -289,16 +288,16 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	logger = logger.WithValue("user_id", reqCtx.User.ID)
+	logger = logger.WithValue("user_id", reqCtx.Requester.ID)
 
-	_, perms, err := s.accountMembershipManager.GetMembershipsForUser(ctx, reqCtx.User.ID)
+	authorizedForAccount, err := s.accountMembershipManager.UserIsMemberOfAccount(ctx, reqCtx.Requester.ID, input.AccountID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "checking permissions")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 
-	if _, authorizedForAccount := perms[input.AccountID]; !authorizedForAccount {
+	if !authorizedForAccount {
 		logger.Debug("invalid account ID requested for activation")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
@@ -371,7 +370,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
-			s.auditLog.LogLogoutEvent(ctx, reqCtx.User.ID)
+			s.auditLog.LogLogoutEvent(ctx, reqCtx.Requester.ID)
 		} else {
 			observability.AcknowledgeError(err, logger, span, "building cookie")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
@@ -399,16 +398,12 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	permSummary := map[uint64]permissions.ServiceUserPermissionsSummary{}
-	for id, perm := range reqCtx.AccountPermissionsMap {
-		permSummary[id] = perm.Summary()
-	}
-
 	statusResponse = &types.UserStatusResponse{
-		PermissionsSummary:        permSummary,
-		ServiceAdminPermissions:   reqCtx.User.ServiceAdminPermissions.Summary(),
-		UserReputation:            reqCtx.User.Reputation,
-		UserReputationExplanation: reqCtx.User.ReputationExplanation,
+		AccountPermissions:        reqCtx.AccountPermissionsMap,
+		ActiveAccount:             reqCtx.ActiveAccountID,
+		ServiceAdminPermissions:   reqCtx.Requester.ServiceAdminPermissions.Summary(),
+		UserReputation:            reqCtx.Requester.Reputation,
+		UserReputationExplanation: reqCtx.Requester.ReputationExplanation,
 		UserIsAuthenticated:       true,
 	}
 
@@ -483,7 +478,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
-	defaultAccountID, perms, err := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
+	reqCtx, err := s.accountMembershipManager.BuildRequestContextForUser(ctx, user.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving perms for API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -493,41 +488,31 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	var requestedAccountID uint64
 
 	if requestedAccount != 0 {
-		if _, isMember := perms[requestedAccount]; !isMember {
-			logger.WithValue("perms", perms).Debug("invalid account ID requested for token")
+		if _, isMember := reqCtx.AccountPermissionsMap[requestedAccount]; !isMember {
+			logger.Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
 		}
 
 		logger.WithValue("requested_account", requestedAccount).Debug("setting token account ID to requested account")
 		requestedAccountID = requestedAccount
+		reqCtx.ActiveAccountID = requestedAccount
 	} else {
-		requestedAccountID = defaultAccountID
+		requestedAccountID = reqCtx.ActiveAccountID
 	}
 
-	logger = logger.WithValue(keys.AccountIDKey, requestedAccountID).WithValue(keys.PermissionsKey, perms)
+	logger = logger.WithValue(keys.AccountIDKey, requestedAccountID)
 
 	now := time.Now().UTC()
 	lifetime := time.Duration(math.Min(float64(maxPASETOLifetime), float64(s.config.PASETO.Lifetime)))
 	jsonToken := paseto.JSONToken{
 		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
 		Subject:    strconv.FormatUint(client.BelongsToUser, 10),
-		Jti:        uuid.New().String(),
+		Jti:        uuid.NewString(),
 		Issuer:     s.config.PASETO.Issuer,
 		IssuedAt:   now,
 		NotBefore:  now,
 		Expiration: now.Add(lifetime),
-	}
-
-	reqCtx := &types.RequestContext{
-		User: types.UserRequestContext{
-			ID:                      user.ID,
-			Reputation:              user.Reputation,
-			ReputationExplanation:   user.ReputationExplanation,
-			ServiceAdminPermissions: user.ServiceAdminPermissions,
-		},
-		ActiveAccountID:       requestedAccountID,
-		AccountPermissionsMap: perms,
 	}
 
 	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(reqCtx.ToBytes()))
@@ -566,8 +551,8 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if !reqCtx.User.ServiceAdminPermissions.CanCycleCookieSecrets() {
-		logger.WithValue("admin_permissions", reqCtx.User.ServiceAdminPermissions).Debug("invalid permissions")
+	if !reqCtx.Requester.ServiceAdminPermissions.CanCycleCookieSecrets() {
+		logger.WithValue("admin_permissions", reqCtx.Requester.ServiceAdminPermissions).Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}
@@ -577,7 +562,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		[]byte(s.config.Cookies.SigningKey),
 	)
 
-	s.auditLog.LogCycleCookieSecretEvent(ctx, reqCtx.User.ID)
+	s.auditLog.LogCycleCookieSecretEvent(ctx, reqCtx.Requester.ID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

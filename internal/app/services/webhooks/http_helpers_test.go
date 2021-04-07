@@ -10,7 +10,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -50,7 +49,12 @@ func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
 	reqCtx, err := types.RequestContextFromUser(
 		h.exampleUser,
 		h.exampleAccount.ID,
-		map[uint64]permissions.ServiceUserPermissions{h.exampleAccount.ID: testutil.BuildMaxUserPerms()},
+		map[uint64]types.UserAccountMembershipInfo{
+			h.exampleAccount.ID: {
+				AccountName: h.exampleAccount.Name,
+				Permissions: testutil.BuildMaxUserPerms(),
+			},
+		},
 	)
 	require.NoError(t, err)
 

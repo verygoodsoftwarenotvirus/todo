@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -49,7 +50,7 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 
 	var err error
 
-	user, err = utils.CreateServiceUser(ctx, urlToUse, "")
+	user, err = utils.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
 	require.NoError(t, err)
 
 	t.Logf("created user: %q", user.Username)

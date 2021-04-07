@@ -37,9 +37,7 @@ export function createAccount(
 }
 
 export function fetchAccount(id: number): Promise<AxiosResponse<Account>> {
-  return axios.get(
-    format(backendRoutes.INDIVIDUAL_ACCOUNT, id.toString()),
-  );
+  return axios.get(format(backendRoutes.INDIVIDUAL_ACCOUNT, id.toString()));
 }
 
 export function saveAccount(account: Account): Promise<AxiosResponse<Account>> {
@@ -50,9 +48,7 @@ export function saveAccount(account: Account): Promise<AxiosResponse<Account>> {
 }
 
 export function deleteAccount(id: number): Promise<AxiosResponse> {
-  return axios.delete(
-    format(backendRoutes.INDIVIDUAL_ACCOUNT, id.toString()),
-  );
+  return axios.delete(format(backendRoutes.INDIVIDUAL_ACCOUNT, id.toString()));
 }
 
 export function fetchAuditLogEntriesForAccount(

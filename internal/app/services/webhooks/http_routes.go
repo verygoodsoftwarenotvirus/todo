@@ -31,7 +31,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := reqCtx.User.ID
+	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.RequesterKey, requester)
 
@@ -83,7 +83,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.ActiveAccountID, filter)
@@ -117,7 +117,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -160,7 +160,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
-	userID := reqCtx.User.ID
+	userID := reqCtx.Requester.ID
 	logger = logger.WithValue(keys.RequesterKey, userID)
 
 	accountID := reqCtx.ActiveAccountID
@@ -231,7 +231,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	userID := reqCtx.User.ID
+	userID := reqCtx.Requester.ID
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	accountID := reqCtx.ActiveAccountID
@@ -243,7 +243,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// do the deed.
-	err = s.webhookDataManager.ArchiveWebhook(ctx, webhookID, reqCtx.ActiveAccountID, reqCtx.User.ID)
+	err = s.webhookDataManager.ArchiveWebhook(ctx, webhookID, reqCtx.ActiveAccountID, reqCtx.Requester.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -277,7 +277,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)

@@ -217,13 +217,13 @@ func (q *SQLQuerier) getIDFromResult(ctx context.Context, res sql.Result) uint64
 	return uint64(id)
 }
 
-func (q *SQLQuerier) getOneRow(ctx context.Context, queryDescription, query string, args ...interface{}) *sql.Row {
+func (q *SQLQuerier) getOneRow(ctx context.Context, querier database.Querier, queryDescription, query string, args ...interface{}) *sql.Row {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s single row fetch query", queryDescription), query, args)
 
-	return q.db.QueryRowContext(ctx, query, args...)
+	return querier.QueryRowContext(ctx, query, args...)
 }
 
 func (q *SQLQuerier) performReadQuery(ctx context.Context, queryDescription, query string, args ...interface{}) (*sql.Rows, error) {
@@ -241,29 +241,34 @@ func (q *SQLQuerier) performReadQuery(ctx context.Context, queryDescription, que
 	return rows, nil
 }
 
-func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.Querier, query, queryDesc string) (count uint64, err error) {
+func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.Querier, query, queryDesc string) (uint64, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s count query", queryDesc), query, nil)
 
-	if err = querier.QueryRowContext(ctx, query).Scan(&count); err != nil {
+	var count uint64
+	if err := q.getOneRow(ctx, querier, queryDesc, query).Scan(&count); err != nil {
 		return 0, observability.PrepareError(err, q.logger, span, "executing count query")
 	}
 
 	return count, nil
 }
 
-func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.Querier, query string, args []interface{}) (exists bool, err error) {
+func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.Querier, query string, args []interface{}) (bool, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
+
+	var exists bool
 
 	logger := q.logger.WithValue(keys.DatabaseQueryKey, query)
 	tracing.AttachDatabaseQueryToSpan(span, "boolean query", query, args)
 
-	if err = querier.QueryRowContext(ctx, query, args...).Scan(&exists); errors.Is(err, sql.ErrNoRows) {
+	err := querier.QueryRowContext(ctx, query, args...).Scan(&exists)
+	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
-	} else if err != nil {
+	}
+	if err != nil {
 		return false, observability.PrepareError(err, logger, span, "executing boolean query")
 	}
 

@@ -35,6 +35,7 @@ type (
 
 	// AccountUserMembershipSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	AccountUserMembershipSQLQueryBuilder interface {
+		BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildGetAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{})

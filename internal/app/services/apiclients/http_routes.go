@@ -44,7 +44,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := reqCtx.User.ID
+	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.UserIDKey, requester)
 
@@ -93,7 +93,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("username", input.Username)
 
 	// retrieve user.
-	user, err := s.userDataManager.GetUser(ctx, reqCtx.User.ID)
+	user, err := s.userDataManager.GetUser(ctx, reqCtx.Requester.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -174,7 +174,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := reqCtx.User.ID
+	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.RequesterKey, requester)
 
@@ -213,7 +213,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := reqCtx.User.ID
+	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.RequesterKey, requester)
 
@@ -255,7 +255,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	requester := reqCtx.User.ID
+	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	logger = logger.WithValue(keys.UserIDKey, requester)
 

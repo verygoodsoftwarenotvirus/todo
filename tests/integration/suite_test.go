@@ -49,19 +49,6 @@ type TestSuite struct {
 	adminPASETOClient *httpclient.Client
 }
 
-func (s *TestSuite) ensure() {
-	t := s.T()
-	t.Helper()
-
-	require.NotNil(t, s.ctx)
-	require.NotNil(t, s.user)
-	require.NotNil(t, s.cookie)
-	require.NotNil(t, s.cookieClient)
-	require.NotNil(t, s.pasetoClient)
-	require.NotNil(t, s.adminCookieClient)
-	require.NotNil(t, s.adminCookieClient)
-}
-
 var _ suite.SetupTestSuite = (*TestSuite)(nil)
 
 func (s *TestSuite) SetupTest() {
@@ -71,11 +58,9 @@ func (s *TestSuite) SetupTest() {
 	ctx, span := tracing.StartCustomSpan(context.Background(), testName)
 	defer span.End()
 
-	s.user, s.cookie, s.cookieClient, s.pasetoClient = createUserAndClientForTest(ctx, t)
-	s.adminCookieClient, s.adminPASETOClient = buildAdminCookieAndPASETOClients(ctx, t)
 	s.ctx, _ = tracing.StartCustomSpan(ctx, testName)
-
-	s.ensure()
+	s.user, s.cookie, s.cookieClient, s.pasetoClient = createUserAndClientForTest(s.ctx, t)
+	s.adminCookieClient, s.adminPASETOClient = buildAdminCookieAndPASETOClients(s.ctx, t)
 }
 
 func (s *TestSuite) runForEachClientExcept(name string, subtestBuilder func(*testClientWrapper) func(), exceptions ...string) {
@@ -86,7 +71,6 @@ func (s *TestSuite) runForEachClientExcept(name string, subtestBuilder func(*tes
 }
 
 func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClientWrapper {
-	s.ensure()
 	t := s.T()
 
 	clients := map[string]*testClientWrapper{

@@ -14,5 +14,5 @@ type UUIDExternalIDGenerator struct{}
 
 // NewExternalID implements our interface.
 func (g UUIDExternalIDGenerator) NewExternalID() string {
-	return uuid.New().String()
+	return uuid.NewString()
 }

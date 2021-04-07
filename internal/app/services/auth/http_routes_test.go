@@ -17,7 +17,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -164,10 +163,10 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
-			"GetMembershipsForUser",
+			"GetDefaultAccountIDForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
-		).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -361,10 +360,10 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
-			"GetMembershipsForUser",
+			"GetDefaultAccountIDForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
-		).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		helper.service.LoginHandler(helper.res, helper.req)
@@ -412,10 +411,10 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
-			"GetMembershipsForUser",
+			"GetDefaultAccountIDForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
-		).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		helper.service.LoginHandler(helper.res, helper.req)
@@ -796,7 +795,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		}
 
 		expectedOutput := &types.RequestContext{
-			User: types.UserRequestContext{
+			Requester: types.RequesterInfo{
 				ID:                      helper.exampleUser.ID,
 				Reputation:              helper.exampleUser.Reputation,
 				ReputationExplanation:   helper.exampleUser.ReputationExplanation,
@@ -827,10 +826,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
-			"GetMembershipsForUser",
+			"BuildRequestContextForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
-		).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+		).Return(helper.reqCtx, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		var bodyBytes bytes.Buffer
@@ -887,7 +886,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		}
 
 		expectedOutput := &types.RequestContext{
-			User: types.UserRequestContext{
+			Requester: types.RequesterInfo{
 				ID:                      helper.exampleUser.ID,
 				Reputation:              helper.exampleUser.Reputation,
 				ReputationExplanation:   helper.exampleUser.ReputationExplanation,
@@ -918,10 +917,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
-			"GetMembershipsForUser",
+			"BuildRequestContextForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
-		).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+		).Return(helper.reqCtx, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		var bodyBytes bytes.Buffer
@@ -1148,10 +1147,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
-			"GetMembershipsForUser",
+			"BuildRequestContextForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
-		).Return(uint64(0), map[uint64]permissions.ServiceUserPermissions(nil), errors.New("blah"))
+		).Return((*types.RequestContext)(nil), errors.New("blah"))
 		helper.service.accountMembershipManager = membershipDB
 
 		var bodyBytes bytes.Buffer
@@ -1242,10 +1241,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
-			"GetMembershipsForUser",
+			"BuildRequestContextForUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
-		).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+		).Return(helper.reqCtx, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		var bodyBytes bytes.Buffer

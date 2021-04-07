@@ -19,7 +19,7 @@ var (
 	_ types.UserDataManager = (*SQLQuerier)(nil)
 )
 
-// scanUser provides a consistent way to scan something like a *sql.Row into a User struct.
+// scanUser provides a consistent way to scan something like a *sql.Row into a Requester struct.
 func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
@@ -61,7 +61,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 	return user, filteredCount, totalCount, nil
 }
 
-// scanUsers takes database rows and loads them into a slice of User structs.
+// scanUsers takes database rows and loads them into a slice of Requester structs.
 func (q *SQLQuerier) scanUsers(ctx context.Context, rows database.ResultIterator, includeCounts bool) (users []*types.User, filteredCount, totalCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
@@ -115,7 +115,7 @@ func (q *SQLQuerier) getUser(ctx context.Context, userID uint64, withVerifiedTOT
 		query, args = q.sqlQueryBuilder.BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx, userID)
 	}
 
-	row := q.getOneRow(ctx, "user", query, args...)
+	row := q.getOneRow(ctx, q.db, "user", query, args...)
 
 	u, _, _, err := q.scanUser(ctx, row, false)
 	if err != nil {
@@ -188,7 +188,7 @@ func (q *SQLQuerier) GetUserByUsername(ctx context.Context, username string) (*t
 	logger := q.logger.WithValue(keys.UsernameKey, username)
 
 	query, args := q.sqlQueryBuilder.BuildGetUserByUsernameQuery(ctx, username)
-	row := q.getOneRow(ctx, "user", query, args...)
+	row := q.getOneRow(ctx, q.db, "user", query, args...)
 
 	u, _, _, err := q.scanUser(ctx, row, false)
 	if err != nil {
@@ -383,7 +383,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 	return user, nil
 }
 
-// UpdateUser receives a complete User struct and updates its record in the database.
+// UpdateUser receives a complete Requester struct and updates its record in the database.
 // NOTE: this function uses the ID provided in the input to make its query.
 func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)

@@ -38,7 +38,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	var entries *types.AuditLogEntryList
 	entries, err = s.auditLog.GetAuditLogEntries(ctx, filter)
@@ -74,7 +74,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// determine audit log entry ID.
 	entryID := s.auditLogEntryIDFetcher(req)

@@ -70,10 +70,6 @@ func DetermineServiceURL() *url.URL {
 		panic(err)
 	}
 
-	svcAddr := u.String()
-
-	log.Printf("using target address: %q\n", svcAddr)
-
 	return u
 }
 

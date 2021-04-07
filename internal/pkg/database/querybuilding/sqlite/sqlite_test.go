@@ -20,6 +20,8 @@ const (
 )
 
 func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
+	t.Helper()
+
 	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 

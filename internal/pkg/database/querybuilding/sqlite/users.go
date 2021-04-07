@@ -22,6 +22,13 @@ func (b *Sqlite) BuildUserHasStatusQuery(ctx context.Context, userID uint64, sta
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
+	whereStatuses := squirrel.Or{}
+	for _, status := range statuses {
+		whereStatuses = append(whereStatuses, squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableReputationColumn): status})
+	}
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.IDColumn)).
@@ -31,10 +38,7 @@ func (b *Sqlite) BuildUserHasStatusQuery(ctx context.Context, userID uint64, sta
 				fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.IDColumn):         userID,
 				fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
 			}).
-			Where(squirrel.Or{
-				squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableReputationColumn): types.BannedAccountStatus},
-				squirrel.Eq{fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.UsersTableReputationColumn): types.TerminatedAccountStatus},
-			}).
+			Where(whereStatuses).
 			Suffix(querybuilding.ExistenceSuffix))
 }
 
@@ -190,7 +194,7 @@ func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig 
 	)
 }
 
-// BuildCreateUserQuery returns a SQL query (and arguments) that would create a given User.
+// BuildCreateUserQuery returns a SQL query (and arguments) that would create a given Requester.
 // NOTE: we always default is_admin to false, on the assumption that
 // admins have DB access and will change that value via SQL query.
 // There should be no way to update a user via this structure

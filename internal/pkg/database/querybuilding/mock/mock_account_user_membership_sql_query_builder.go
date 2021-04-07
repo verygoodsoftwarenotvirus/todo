@@ -17,6 +17,13 @@ type AccountUserMembershipSQLQueryBuilder struct {
 	mock.Mock
 }
 
+// BuildGetDefaultAccountIDForUserQuery implements our interface.
+func (m *AccountUserMembershipSQLQueryBuilder) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+	returnArgs := m.Called(ctx, userID)
+
+	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
+}
+
 // BuildTransferAccountMembershipsQuery implements our interface.
 func (m *AccountUserMembershipSQLQueryBuilder) BuildTransferAccountMembershipsQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, currentOwnerID, newOwnerID, accountID)

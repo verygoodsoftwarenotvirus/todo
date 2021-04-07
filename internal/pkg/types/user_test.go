@@ -67,10 +67,10 @@ func TestRequestContextFromUser(T *testing.T) {
 			BelongsToUser: exampleUser.ID,
 		}
 
-		examplePermissions := map[uint64]permissions.ServiceUserPermissions{}
+		examplePermissions := map[uint64]UserAccountMembershipInfo{}
 
 		expected := &RequestContext{
-			User: UserRequestContext{
+			Requester: RequesterInfo{
 				ID:                      exampleUser.ID,
 				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
 			},

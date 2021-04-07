@@ -8,7 +8,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -44,7 +43,12 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 	reqCtx, err := types.RequestContextFromUser(
 		helper.exampleUser,
 		helper.exampleAccount.ID,
-		map[uint64]permissions.ServiceUserPermissions{helper.exampleAccount.ID: testutil.BuildMaxUserPerms()},
+		map[uint64]types.UserAccountMembershipInfo{
+			helper.exampleAccount.ID: {
+				AccountName: helper.exampleAccount.Name,
+				Permissions: testutil.BuildMaxUserPerms(),
+			},
+		},
 	)
 	require.NoError(t, err)
 

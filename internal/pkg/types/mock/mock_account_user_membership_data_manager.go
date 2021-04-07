@@ -16,6 +16,20 @@ type AccountUserMembershipDataManager struct {
 	mock.Mock
 }
 
+// BuildRequestContextForUser satisfies our interface contract.
+func (m *AccountUserMembershipDataManager) BuildRequestContextForUser(ctx context.Context, userID uint64) (*types.RequestContext, error) {
+	returnValues := m.Called(ctx, userID)
+
+	return returnValues.Get(0).(*types.RequestContext), returnValues.Error(1)
+}
+
+// GetDefaultAccountIDForUser satisfies our interface contract.
+func (m *AccountUserMembershipDataManager) GetDefaultAccountIDForUser(ctx context.Context, userID uint64) (uint64, error) {
+	returnValues := m.Called(ctx, userID)
+
+	return returnValues.Get(0).(uint64), returnValues.Error(1)
+}
+
 // GetMembershipsForUser satisfies our interface contract.
 func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
 	args := m.Called(ctx, userID)

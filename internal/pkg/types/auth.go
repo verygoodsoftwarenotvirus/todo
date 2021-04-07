@@ -26,15 +26,21 @@ func init() {
 }
 
 type (
-	// RequestContext represents what we encode in our authentication cookies.
-	RequestContext struct {
-		AccountPermissionsMap map[uint64]permissions.ServiceUserPermissions `json:"-"`
-		User                  UserRequestContext                            `json:"-"`
-		ActiveAccountID       uint64                                        `json:"-"`
+	// UserAccountMembershipInfo represents key information about an account membership.
+	UserAccountMembershipInfo struct {
+		AccountName string
+		Permissions permissions.ServiceUserPermissions
 	}
 
-	// UserRequestContext contains data relevant to the user making a request.
-	UserRequestContext struct {
+	// RequestContext represents what we encode in our authentication cookies.
+	RequestContext struct {
+		AccountPermissionsMap map[uint64]UserAccountMembershipInfo `json:"-"`
+		Requester             RequesterInfo                        `json:"-"`
+		ActiveAccountID       uint64                               `json:"-"`
+	}
+
+	// RequesterInfo contains data relevant to the user making a request.
+	RequesterInfo struct {
 		Reputation              userReputation                      `json:"-"`
 		ReputationExplanation   string                              `json:"-"`
 		ID                      uint64                              `json:"-"`
@@ -43,11 +49,12 @@ type (
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		PermissionsSummary        map[uint64]permissions.ServiceUserPermissionsSummary `json:"permissions,omitempty"`
-		ServiceAdminPermissions   *permissions.ServiceAdminPermissionsSummary          `json:"adminPermissions,omitempty"`
-		UserReputation            userReputation                                       `json:"userReputation,omitempty"`
-		UserReputationExplanation string                                               `json:"reputationExplanation"`
-		UserIsAuthenticated       bool                                                 `json:"isAuthenticated"`
+		AccountPermissions        map[uint64]UserAccountMembershipInfo        `json:"accountPermissions,omitempty"`
+		ServiceAdminPermissions   *permissions.ServiceAdminPermissionsSummary `json:"adminPermissions,omitempty"`
+		UserReputation            userReputation                              `json:"userReputation,omitempty"`
+		UserReputationExplanation string                                      `json:"reputationExplanation"`
+		ActiveAccount             uint64                                      `json:"activeAccount,omitempty"`
+		UserIsAuthenticated       bool                                        `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -132,7 +139,7 @@ var (
 )
 
 // RequestContextFromUser produces a RequestContext object from a User's data.
-func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]permissions.ServiceUserPermissions) (*RequestContext, error) {
+func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]UserAccountMembershipInfo) (*RequestContext, error) {
 	if user == nil {
 		return nil, errNilUser
 	}
@@ -146,7 +153,7 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 	}
 
 	reqCtx := &RequestContext{
-		User: UserRequestContext{
+		Requester: RequesterInfo{
 			ID:                      user.ID,
 			Reputation:              user.Reputation,
 			ReputationExplanation:   user.ReputationExplanation,

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/otel/trace"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"

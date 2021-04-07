@@ -15,6 +15,29 @@ import (
 
 var _ querybuilding.AccountUserMembershipSQLQueryBuilder = (*Postgres)(nil)
 
+// BuildGetDefaultAccountIDForUserQuery does .
+func (b *Postgres) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	return b.buildQuery(span, b.sqlBuilder.
+		Select(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn)).
+		From(querybuilding.AccountsTableName).
+		Join(fmt.Sprintf(
+			"%s ON %s.%s = %s.%s",
+			querybuilding.AccountsUserMembershipTableName,
+			querybuilding.AccountsUserMembershipTableName,
+			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+			querybuilding.AccountsTableName,
+			querybuilding.IDColumn,
+		)).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):      userID,
+			fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn): true,
+		}),
+	)
+}
+
 // BuildArchiveAccountMembershipsForUserQuery does .
 func (b *Postgres) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)

@@ -22,8 +22,14 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 
 		r := &chirouteParamManager{}
 
-		exampleUser, exampleAccount, examplePerms := fakes.BuildUserTestPrerequisites()
-		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, examplePerms)
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
+		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, map[uint64]types.UserAccountMembershipInfo{
+			exampleAccount.ID: {
+				AccountName: exampleAccount.Name,
+				Permissions: testutil.BuildMaxUserPerms(),
+			},
+		})
 
 		req := testutil.BuildTestRequest(t)
 		req = req.WithContext(

@@ -102,7 +102,7 @@ func (q *SQLQuerier) GetAccountSubscriptionPlan(ctx context.Context, accountSubs
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountSubscriptionPlanQuery(ctx, accountSubscriptionPlanID)
-	row := q.getOneRow(ctx, "account subscription plan", query, args...)
+	row := q.getOneRow(ctx, q.db, "account subscription plan", query, args...)
 
 	plan, _, _, err := q.scanAccountSubscriptionPlan(ctx, row, false)
 	if err != nil {

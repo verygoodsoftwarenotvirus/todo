@@ -12,6 +12,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestSqlite_BuildGetDefaultAccountIDForUserQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		expectedQuery := "SELECT accounts.id FROM accounts JOIN account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id WHERE account_user_memberships.belongs_to_user = ? AND account_user_memberships.default_account = ?"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+			true,
+		}
+		actualQuery, actualArgs := q.BuildGetDefaultAccountIDForUserQuery(ctx, exampleUser.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestMariaDB_BuildUserIsMemberOfAccountQuery(T *testing.T) {
 	T.Parallel()
 

@@ -87,7 +87,7 @@ func (s *service) fetchRequestContextFromRequest(ctx context.Context, req *http.
 			return nil, observability.PrepareError(err, logger, span, "decoding GOB encoded session info payload")
 		}
 
-		logger.Debug("returning request context")
+		logger.WithValue("active_account_id", reqContext.ActiveAccountID).Debug("returning request context")
 
 		return reqContext, nil
 	}
@@ -114,14 +114,7 @@ func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler
 		if user != nil {
 			logger = logger.WithValue(keys.UserIDKey, user.ID)
 
-			defaultAccount, userPermissions, membershipRetrievalErr := s.accountMembershipManager.GetMembershipsForUser(ctx, user.ID)
-			if membershipRetrievalErr != nil {
-				observability.AcknowledgeError(membershipRetrievalErr, logger, span, "fetching user memberships")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
-			}
-
-			reqCtx, requestContextErr := types.RequestContextFromUser(user, defaultAccount, userPermissions)
+			reqCtx, requestContextErr := s.accountMembershipManager.BuildRequestContextForUser(ctx, user.ID)
 			if requestContextErr != nil {
 				observability.AcknowledgeError(requestContextErr, logger, span, "forming request context")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -152,14 +145,14 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			tracing.AttachRequestingUserIDToSpan(span, userID)
 			logger = logger.WithValue(keys.RequesterKey, userID)
 
-			reqCtx, userIsBannedErr := s.userDataManager.GetRequestContextForUser(ctx, userID)
-			if userIsBannedErr != nil {
-				observability.AcknowledgeError(userIsBannedErr, logger, span, "fetching user info for cookie")
+			reqCtx, reqCtxErr := s.accountMembershipManager.BuildRequestContextForUser(ctx, userID)
+			if reqCtxErr != nil {
+				observability.AcknowledgeError(reqCtxErr, logger, span, "fetching user info for cookie")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			if activeAccount, ok := s.sessionManager.Get(ctx, string(types.AccountIDContextKey)).(uint64); ok {
+			if activeAccount, ok := s.sessionManager.Get(ctx, accountIDContextKey).(uint64); ok {
 				reqCtx.ActiveAccountID = activeAccount
 			}
 
@@ -197,11 +190,19 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		// UserAttributionMiddleware should be called before this middleware.
 		if reqCtx, err := s.requestContextFetcher(req); err == nil && reqCtx != nil {
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if reqCtx.User.Reputation == types.BannedAccountStatus {
+			if reqCtx.Requester.Reputation == types.BannedAccountStatus {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return
 			}
+
+			var authorizedAccounts []uint64
+			for k := range reqCtx.AccountPermissionsMap {
+				authorizedAccounts = append(authorizedAccounts, k)
+			}
+
+			logger = logger.WithValue("requested_account_id", reqCtx.ActiveAccountID).
+				WithValue("authorized_accounts", authorizedAccounts)
 
 			if _, authorizedForAccount := reqCtx.AccountPermissionsMap[reqCtx.ActiveAccountID]; !authorizedForAccount {
 				logger.Debug("user trying to access account they are not authorized for")
@@ -235,25 +236,25 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 				return
 			}
 
-			if requestContext.User.ServiceAdminPermissions != 0 {
+			if requestContext.Requester.ServiceAdminPermissions != 0 {
 				logger.Debug("allowing admin user!")
 				next.ServeHTTP(res, req)
 				return
 			}
 
-			accountPermissions, allowed := requestContext.AccountPermissionsMap[requestContext.ActiveAccountID]
+			accountMemberships, allowed := requestContext.AccountPermissionsMap[requestContext.ActiveAccountID]
 			if !allowed {
 				logger.Debug("not authorized for account!")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			logger = logger.WithValue(keys.RequesterKey, requestContext.User.ID).
+			logger = logger.WithValue(keys.RequesterKey, requestContext.Requester.ID).
 				WithValue(keys.AccountIDKey, requestContext.ActiveAccountID).
 				WithValue(keys.PermissionsKey, requestContext.AccountPermissionsMap)
 
 			for _, p := range perms {
-				if !accountPermissions.HasPermission(p) {
+				if !accountMemberships.Permissions.HasPermission(p) {
 					logger.WithValue("requested_permission", p).Debug("inadequate permissions")
 					s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 					return
@@ -282,9 +283,9 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+		logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
-		if !reqCtx.User.ServiceAdminPermissions.IsServiceAdmin() {
+		if !reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return

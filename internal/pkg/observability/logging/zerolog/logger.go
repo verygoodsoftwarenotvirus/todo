@@ -28,7 +28,7 @@ type logger struct {
 
 // buildZerologger builds a new zerologger.
 func buildZerologger() zerolog.Logger {
-	return zerolog.New(os.Stdout).With().Timestamp().Logger()
+	return zerolog.New(os.Stdout).With().Timestamp().Logger().Level(zerolog.InfoLevel)
 }
 
 // NewLogger builds a new logger.

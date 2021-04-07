@@ -130,7 +130,7 @@ func (q *SQLQuerier) GetItem(ctx context.Context, itemID, accountID uint64) (*ty
 	})
 
 	query, args := q.sqlQueryBuilder.BuildGetItemQuery(ctx, itemID, accountID)
-	row := q.getOneRow(ctx, "item", query, args...)
+	row := q.getOneRow(ctx, q.db, "item", query, args...)
 
 	item, _, _, err := q.scanItem(ctx, row, false)
 	if err != nil {

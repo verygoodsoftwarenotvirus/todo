@@ -274,6 +274,9 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			require.NoError(t, accountCreationErr)
 			require.NotNil(t, account)
 
+			logger = logger.WithValue(keys.AccountIDKey, account.ID)
+			logger.Debug("created account, switching")
+
 			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultUserPermissions, "expected and actual permissions do not match")
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 

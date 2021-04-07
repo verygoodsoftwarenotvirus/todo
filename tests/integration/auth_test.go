@@ -14,6 +14,7 @@ import (
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -172,15 +173,12 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		actual, err := testClient.UserStatus(ctx, cookie)
 		assert.NoError(t, err)
 
-		expected := &types.UserStatusResponse{
-			UserIsAuthenticated:       true,
-			UserReputation:            types.GoodStandingAccountStatus,
-			UserReputationExplanation: "",
-			ServiceAdminPermissions:   nil,
-		}
-
-		assert.Equal(t, expected, actual)
-		assert.NoError(t, err)
+		assert.Equal(t, true, actual.UserIsAuthenticated, "expected UserIsAuthenticated to equal %v, but got %v", true, actual.UserIsAuthenticated)
+		assert.Equal(t, types.GoodStandingAccountStatus, actual.UserReputation, "expected UserReputation to equal %v, but got %v", types.GoodStandingAccountStatus, actual.UserReputation)
+		assert.Equal(t, "", actual.UserReputationExplanation, "expected UserReputationExplanation to equal %v, but got %v", "", actual.UserReputationExplanation)
+		assert.Equal(t, (*permissions.ServiceAdminPermissionsSummary)(nil), actual.ServiceAdminPermissions, "expected ServiceAdminPermissions to equal %v, but got %v", nil, actual.ServiceAdminPermissions)
+		assert.NotZero(t, actual.ActiveAccount)
+		assert.NotEmpty(t, actual.AccountPermissions)
 
 		assert.NoError(t, testClient.Logout(ctx))
 	})

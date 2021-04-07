@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -36,7 +35,7 @@ func TestAuthService_CookieAuthenticationMiddleware(T *testing.T) {
 		helper.service.userDataManager = md
 
 		aumdm := &mocktypes.AccountUserMembershipDataManager{}
-		aumdm.On("GetMembershipsForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(helper.exampleAccount.ID, helper.examplePerms, nil)
+		aumdm.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(helper.reqCtx, nil)
 		helper.service.accountMembershipManager = aumdm
 
 		ms := &MockHTTPHandler{}
@@ -89,9 +88,9 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
-		mockUserDataManager := &mocktypes.UserDataManager{}
-		mockUserDataManager.On("GetRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
-		helper.service.userDataManager = mockUserDataManager
+		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
+		mockAccountMembershipManager.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
+		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
@@ -102,7 +101,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, h)
+		mock.AssertExpectationsForObjects(t, mockAccountMembershipManager, h)
 	})
 
 	T.Run("with PASETO", func(t *testing.T) {
@@ -112,9 +111,9 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
-		helper.service.userDataManager = mockDB
+		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
+		mockAccountMembershipManager.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
+		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
@@ -125,16 +124,16 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, h)
+		mock.AssertExpectationsForObjects(t, mockAccountMembershipManager, h)
 	})
 
 	T.Run("with error fetching request context for user", func(t *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		mockDB := database.BuildMockDatabase().UserDataManager
-		mockDB.On("GetRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return((*types.RequestContext)(nil), errors.New("blah"))
-		helper.service.userDataManager = mockDB
+		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
+		mockAccountMembershipManager.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return((*types.RequestContext)(nil), errors.New("blah"))
+		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
@@ -143,7 +142,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, mh)
+		mock.AssertExpectationsForObjects(t, mockAccountMembershipManager, mh)
 	})
 }
 

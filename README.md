@@ -6,17 +6,21 @@ archetypal todo process
 
 The following tools are prerequisites for development work:
 
-- [make](https://www.gnu.org/software/make/)
-- [go](https://golang.org/)
+- [make](https://www.gnu.org/software/make/) or [mage](https://www.magefile.org)
+- [go](https://golang.org/) 1.16+
 - [node.js](https://nodejs.org/)
 - [pnpm](https://pnpm.js.org/)
 - [docker](https://docs.docker.com/get-docker/) or [podman](https://podman.io/)
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [wire](https://github.com/google/wire) for dependency management
 
-Assuming you have go installed, you can install these by running `make dev-tools`
+## using `mage`
+
+If you don't have `mage` installed, and you do have `go` installed, you can run `go run mage.go ensureMage` to install it. If you don't have `go` installed, I can't help you.
 
 ## `make`  targets of note
+
+Assuming you have go installed, you can install prerequisite tools by running `make dev-tools`
 
 - `dev` - run the backend
 - `dev_frontend` - watch and build the frontend

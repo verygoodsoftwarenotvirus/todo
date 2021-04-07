@@ -29,10 +29,10 @@ func TestPostgres_BuildUserIsBannedQuery(T *testing.T) {
 		expectedQuery := "SELECT EXISTS ( SELECT users.id FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND (users.reputation = $2 OR users.reputation = $3) )"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
-			types.BannedAccountStatus,
-			types.TerminatedAccountStatus,
+			string(types.BannedAccountStatus),
+			string(types.TerminatedAccountStatus),
 		}
-		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID)
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, string(types.BannedAccountStatus), string(types.TerminatedAccountStatus))
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

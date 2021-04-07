@@ -85,7 +85,7 @@ func (q *SQLQuerier) GetAuditLogEntry(ctx context.Context, entryID uint64) (*typ
 	logger := q.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntryQuery(ctx, entryID)
-	row := q.getOneRow(ctx, "audit log entry", query, args...)
+	row := q.getOneRow(ctx, q.db, "audit log entry", query, args...)
 
 	entry, _, err := q.scanAuditLogEntry(ctx, row, false)
 	if err != nil {
@@ -197,7 +197,8 @@ func (q *SQLQuerier) createAuditLogEntryInTransaction(ctx context.Context, trans
 		return ErrNilTransactionProvided
 	}
 
-	logger := q.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType)
+	logger := q.logger.WithValue(keys.AuditLogEntryEventTypeKey, input.EventType).
+		WithValue(keys.AuditLogEntryContextKey, input.Context)
 	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(ctx, input)
 
 	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)

@@ -241,7 +241,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// figure out who this is all for.
-	requester := reqCtx.User.ID
+	requester := reqCtx.Requester.ID
 	logger = logger.WithValue(keys.RequesterKey, requester)
 	tracing.AttachRequestingUserIDToSpan(span, requester)
 
@@ -364,7 +364,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// make sure this is all on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
 		ctx,
-		reqCtx.User.ID,
+		reqCtx.Requester.ID,
 		input.CurrentPassword,
 		input.TOTPToken,
 	)
@@ -376,7 +376,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	// document who this is for.
-	tracing.AttachRequestingUserIDToSpan(span, reqCtx.User.ID)
+	tracing.AttachRequestingUserIDToSpan(span, reqCtx.Requester.ID)
 	tracing.AttachUsernameToSpan(span, user.Username)
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
@@ -431,13 +431,13 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// determine relevant user ID.
-	tracing.AttachRequestingUserIDToSpan(span, reqCtx.User.ID)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	tracing.AttachRequestingUserIDToSpan(span, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 
 	// make sure everything's on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
 		ctx,
-		reqCtx.User.ID,
+		reqCtx.Requester.ID,
 		input.CurrentPassword,
 		input.TOTPToken,
 	)
@@ -504,10 +504,10 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.User.ID)
+	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
 	logger.Debug("request context data extracted")
 
-	user, err := s.userDataManager.GetUser(ctx, reqCtx.User.ID)
+	user, err := s.userDataManager.GetUser(ctx, reqCtx.Requester.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching associated user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -524,7 +524,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	internalPath := fmt.Sprintf("avatar_%d", reqCtx.User.ID)
+	internalPath := fmt.Sprintf("avatar_%d", reqCtx.Requester.ID)
 	logger = logger.WithValue("file_size", len(img.Data)).WithValue("internal_path", internalPath)
 
 	if err = s.uploadManager.SaveFile(ctx, internalPath, img.Data); err != nil {

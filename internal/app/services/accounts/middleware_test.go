@@ -14,7 +14,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -48,7 +47,12 @@ func (s *accountsServiceMiddlewareTestSuite) SetupTest() {
 	reqCtx, err := types.RequestContextFromUser(
 		s.exampleUser,
 		s.exampleAccount.ID,
-		map[uint64]permissions.ServiceUserPermissions{s.exampleAccount.ID: testutil.BuildMaxUserPerms()},
+		map[uint64]types.UserAccountMembershipInfo{
+			s.exampleAccount.ID: {
+				AccountName: s.exampleAccount.Name,
+				Permissions: testutil.BuildMaxUserPerms(),
+			},
+		},
 	)
 	require.NoError(s.T(), err)
 

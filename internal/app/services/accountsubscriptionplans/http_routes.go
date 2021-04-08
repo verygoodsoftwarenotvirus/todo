@@ -38,7 +38,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	accountSubscriptionPlans, err := s.accountSubscriptionPlanDataManager.GetAccountSubscriptionPlans(ctx, filter)
 
@@ -79,7 +79,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// create plan in database.
 	accountSubscriptionPlan, err := s.accountSubscriptionPlanDataManager.CreateAccountSubscriptionPlan(ctx, input)
@@ -113,7 +113,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// determine plan ID.
 	accountSubscriptionPlanID := s.accountSubscriptionPlanIDFetcher(req)
@@ -159,7 +159,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// determine plan ID.
 	accountSubscriptionPlanID := s.accountSubscriptionPlanIDFetcher(req)
@@ -208,7 +208,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// determine plan ID.
 	planID := s.accountSubscriptionPlanIDFetcher(req)
@@ -249,7 +249,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// determine plan ID.
 	planID := s.accountSubscriptionPlanIDFetcher(req)

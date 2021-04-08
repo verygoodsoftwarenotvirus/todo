@@ -202,7 +202,6 @@ func (q *SQLQuerier) createAuditLogEntryInTransaction(ctx context.Context, trans
 	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(ctx, input)
 
 	tracing.AttachAuditLogEntryEventTypeToSpan(span, input.EventType)
-	logger.Debug("audit log entry created")
 
 	// create the audit log entry.
 	if err := q.performWriteQueryIgnoringReturn(ctx, transaction, "audit log entry creation", query, args); err != nil {
@@ -211,6 +210,8 @@ func (q *SQLQuerier) createAuditLogEntryInTransaction(ctx context.Context, trans
 
 		return err
 	}
+
+	logger.Info("audit log entry created")
 
 	return nil
 }
@@ -245,5 +246,5 @@ func (q *SQLQuerier) createAuditLogEntry(ctx context.Context, querier database.Q
 
 	tracing.AttachAuditLogEntryIDToSpan(span, id)
 
-	logger.Debug("audit log entry created")
+	logger.Info("audit log entry created")
 }

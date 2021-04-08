@@ -198,6 +198,8 @@ func (q *SQLQuerier) CreateAccountSubscriptionPlan(ctx context.Context, input *t
 		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	logger.Info("account subscription plan created")
+
 	return accountSubscriptionPlan, nil
 }
 
@@ -236,6 +238,8 @@ func (q *SQLQuerier) UpdateAccountSubscriptionPlan(ctx context.Context, updated 
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	logger.Info("account subscription plan updated")
+
 	return nil
 }
 
@@ -272,6 +276,8 @@ func (q *SQLQuerier) ArchiveAccountSubscriptionPlan(ctx context.Context, account
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("account subscription plan archived")
 
 	return nil
 }

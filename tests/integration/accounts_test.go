@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	testlogging "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/testing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -248,22 +246,14 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 		return func() {
 			t := s.T()
 
-			logger := testlogging.NewLogger(t)
-
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			const userCount = 1
-			// create dummy users
-			users := []*types.User{}
-			clients := []*http.Client{}
+			const userCount = 3
 
-			// create users
-			for i := 0; i < userCount; i++ {
-				u, _, c, _ := createUserAndClientForTest(ctx, t)
-				users = append(users, u)
-				clients = append(clients, c)
-			}
+			currentStatus, statusErr := testClients.main.UserStatus(s.ctx)
+			requireNotNilAndNoProblems(t, currentStatus, statusErr)
+			t.Logf("initial account is #%d; initial user ID is #%d", currentStatus.ActiveAccount, s.user.ID)
 
 			// fetch account data
 			accountCreationInput := &types.AccountCreationInput{
@@ -274,14 +264,12 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			require.NoError(t, accountCreationErr)
 			require.NotNil(t, account)
 
-			logger = logger.WithValue(keys.AccountIDKey, account.ID)
-			logger.Debug("created account, switching")
+			t.Logf("created account #%d", account.ID)
 
 			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultUserPermissions, "expected and actual permissions do not match")
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
-			logger = logger.WithValue(keys.AccountIDKey, account.ID)
-			logger.Debug("switched account")
+			t.Logf("switched main test client active account to #%d, creating webhook", account.ID)
 
 			// create a webhook
 			exampleWebhook := fakes.BuildFakeWebhook()
@@ -290,8 +278,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			requireNotNilAndNoProblems(t, createdWebhook, creationErr)
 			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
 
-			logger = logger.WithValue(keys.WebhookIDKey, createdWebhook.ID)
-			logger.Debug(fmt.Sprintf("created webhook for account %d", createdWebhook.BelongsToAccount))
+			t.Logf("created webhook #%d for account #%d", createdWebhook.ID, createdWebhook.BelongsToAccount)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
 				{EventType: audit.AccountCreationEvent},
@@ -299,8 +286,24 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				{EventType: audit.WebhookCreationEvent},
 			}
 
-			// check that each user cannot see the webhook
+			// create dummy users
+			users := []*types.User{}
+			clients := []*http.Client{}
+
+			// create users
 			for i := 0; i < userCount; i++ {
+				u, _, c, _ := createUserAndClientForTest(ctx, t)
+				users = append(users, u)
+				clients = append(clients, c)
+
+				currentStatus, statusErr = c.UserStatus(s.ctx)
+				requireNotNilAndNoProblems(t, currentStatus, statusErr)
+				t.Logf("created user user #%d with account #%d", u.ID, currentStatus.ActiveAccount)
+			}
+
+			// check that each user cannot see the unreachable webhook
+			for i := 0; i < userCount; i++ {
+				t.Logf("checking that user #%d CANNOT see webhook #%d belonging to account #%d", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
 				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
 				require.Nil(t, webhook)
 				require.Error(t, err)
@@ -308,16 +311,26 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			// add them to the account
 			for i := 0; i < userCount; i++ {
+				t.Logf("adding user #%d to account #%d", users[i].ID, account.ID)
 				require.NoError(t, testClients.main.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{
 					UserID: users[i].ID,
 					Reason: t.Name(),
 				}))
+				t.Logf("added user #%d to account #%d", users[i].ID, account.ID)
 				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAddedToAccountEvent})
+
+				t.Logf("setting user #%d's client to account #%d", users[i].ID, account.ID)
 				require.NoError(t, clients[i].SwitchActiveAccount(ctx, account.ID))
+
+				currentStatus, statusErr = clients[i].UserStatus(s.ctx)
+				requireNotNilAndNoProblems(t, currentStatus, statusErr)
+				require.Equal(t, currentStatus.ActiveAccount, account.ID)
+				t.Logf("set user #%d's current active account to #%d", users[i].ID, account.ID)
 			}
 
 			// check that each user can see the webhook
 			for i := 0; i < userCount; i++ {
+				t.Logf("checking if user #%d CAN now see webhook #%d belonging to account #%d", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
 				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
 				requireNotNilAndNoProblems(t, webhook, err)
 			}

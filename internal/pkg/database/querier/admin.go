@@ -12,8 +12,8 @@ import (
 
 var _ types.AdminUserDataManager = (*SQLQuerier)(nil)
 
-// UpdateUserAccountStatus updates a user's account status.
-func (q *SQLQuerier) UpdateUserAccountStatus(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
+// UpdateUserReputation updates a user's account status.
+func (q *SQLQuerier) UpdateUserReputation(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -25,6 +25,8 @@ func (q *SQLQuerier) UpdateUserAccountStatus(ctx context.Context, userID uint64,
 	if err := q.performWriteQueryIgnoringReturn(ctx, q.db, "user status update query", query, args); err != nil {
 		return observability.PrepareError(err, logger, span, "user status update")
 	}
+
+	logger.Info("user reputation updated")
 
 	return nil
 }

@@ -11,8 +11,8 @@ const (
 	AccountSubscriptionPlanIDKey = "account_subscription_plan.id"
 	// PermissionsKey is the standard key for referring to an account user membership ID.
 	PermissionsKey = "user.permissions"
-	// RequesterKey is the standard key for referring to a requesting user's ID.
-	RequesterKey = "request.made_by"
+	// RequesterIDKey is the standard key for referring to a requesting user's ID.
+	RequesterIDKey = "request.made_by"
 	// AccountIDKey is the standard key for referring to an account ID.
 	AccountIDKey = "account.id"
 	// ActiveAccountIDKey is the standard key for referring to an active account ID.

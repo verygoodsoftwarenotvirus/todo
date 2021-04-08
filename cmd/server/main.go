@@ -29,6 +29,8 @@ func main() {
 		configFilepath string
 	)
 
+	logger.SetLevel(logging.DebugLevel)
+
 	logger.SetRequestIDFunc(func(req *http.Request) string {
 		return chimiddleware.GetReqID(req.Context())
 	})

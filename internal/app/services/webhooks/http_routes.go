@@ -33,7 +33,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// try to pluck the parsed input from the request context.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.WebhookCreationInput)
@@ -83,7 +83,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, reqCtx.ActiveAccountID, filter)
@@ -117,7 +117,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -161,7 +161,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	userID := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, userID)
+	logger = logger.WithValue(keys.RequesterIDKey, userID)
 
 	accountID := reqCtx.ActiveAccountID
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -277,7 +277,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)

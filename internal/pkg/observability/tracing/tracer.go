@@ -8,23 +8,23 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/trace"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
-type tracingErrorHandler struct{}
+type tracingErrorHandler struct {
+	logger logging.Logger
+}
 
 func (h tracingErrorHandler) Handle(err error) {
-	logger := zerolog.NewLogger()
-
-	logger.Error(err, "tracer reported issue")
+	h.logger.Error(err, "tracer reported issue")
 }
 
 func init() {
-	otel.SetErrorHandler(tracingErrorHandler{})
+	otel.SetErrorHandler(tracingErrorHandler{logger: logging.NewNonOperationalLogger().WithName("otel_errors")})
 }
 
 // SetupJaeger creates a new trace provider instance and registers it as global trace provider.

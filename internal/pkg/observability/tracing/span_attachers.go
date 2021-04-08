@@ -74,7 +74,7 @@ func AttachAccountIDToSpan(span trace.Span, accountID uint64) {
 
 // AttachRequestingUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachRequestingUserIDToSpan(span trace.Span, userID uint64) {
-	attachUint64ToSpan(span, keys.RequesterKey, userID)
+	attachUint64ToSpan(span, keys.RequesterIDKey, userID)
 }
 
 // AttachAccountSubscriptionPlanIDToSpan provides a consistent way to attach a plan's ID to a span.
@@ -92,7 +92,7 @@ func AttachChangeSummarySpan(span trace.Span, typeName string, changes []*types.
 // AttachRequestContextToSpan provides a consistent way to attach a RequestContext object to a span.
 func AttachRequestContextToSpan(span trace.Span, reqCtx *types.RequestContext) {
 	if reqCtx != nil {
-		attachUint64ToSpan(span, keys.RequesterKey, reqCtx.Requester.ID)
+		attachUint64ToSpan(span, keys.RequesterIDKey, reqCtx.Requester.ID)
 		attachUint64ToSpan(span, keys.ActiveAccountIDKey, reqCtx.ActiveAccountID)
 		attachBooleanToSpan(span, keys.UserIsAdminKey, reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin())
 	}

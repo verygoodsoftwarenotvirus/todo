@@ -50,7 +50,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	// determine if this is an admin request
@@ -105,7 +105,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
 	// create account in database.
@@ -142,7 +142,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	// determine account ID.
@@ -191,7 +191,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
 	// determine account ID.
@@ -242,7 +242,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	// determine account ID.
@@ -294,7 +294,7 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	accountID := s.accountIDFetcher(req)
 	tracing.AttachAccountIDToSpan(span, accountID)
@@ -335,7 +335,7 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	}
 
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	accountID := s.accountIDFetcher(req)
@@ -386,7 +386,7 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 
 	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// transfer ownership of account in database.
 	if err = s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, requester, input); err != nil {
@@ -419,7 +419,7 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	accountID := s.accountIDFetcher(req)
@@ -460,7 +460,7 @@ func (s *service) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	// mark account as default in database.
@@ -490,7 +490,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
 	// determine account ID.

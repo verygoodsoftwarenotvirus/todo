@@ -48,12 +48,10 @@ func requireNotNilAndNoProblems(t *testing.T, i interface{}, err error) {
 func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.User, cookie *http.Cookie, cookieClient, pasetoClient *httpclient.Client) {
 	t.Helper()
 
-	var err error
-
-	user, err = utils.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
+	user, err := utils.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
 	require.NoError(t, err)
 
-	t.Logf("created user: %q", user.Username)
+	t.Logf("created user #%d: %q", user.ID, user.Username)
 
 	cookie, err = utils.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
@@ -85,7 +83,7 @@ func initializeCookiePoweredClient(t *testing.T, cookie *http.Cookie) (*httpclie
 		panic("url not set!")
 	}
 
-	loggerToUse := logging.NewNonOperationalLogger()
+	loggerToUse := zerolog.NewLogger()
 	if useTestLogger {
 		loggerToUse = testlogging.NewLogger(t)
 	}

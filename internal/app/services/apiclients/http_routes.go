@@ -176,7 +176,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -215,7 +215,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := reqCtx.Requester.ID
 	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)

@@ -8,6 +8,7 @@ import (
 	"github.com/Masterminds/squirrel"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -58,13 +59,27 @@ func (b *Sqlite) BuildGetAccountMembershipsForUserQuery(ctx context.Context, use
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+	columns := append(
+		querybuilding.AccountsUserMembershipTableColumns,
+		fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableNameColumn),
+	)
+
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Select(querybuilding.AccountsUserMembershipTableColumns...).
+		b.sqlBuilder.Select(columns...).
+			Join(fmt.Sprintf(
+				"%s ON %s.%s = %s.%s",
+				querybuilding.AccountsTableName,
+				querybuilding.AccountsTableName,
+				querybuilding.IDColumn,
+				querybuilding.AccountsUserMembershipTableName,
+				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+			)).
 			From(querybuilding.AccountsUserMembershipTableName).
 			Where(squirrel.Eq{
-				querybuilding.ArchivedOnColumn:                               nil,
-				querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.ArchivedOnColumn):                               nil,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn): userID,
 			}),
 	)
 }

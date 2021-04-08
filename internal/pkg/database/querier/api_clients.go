@@ -287,6 +287,8 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	logger.Info("API client created")
+
 	return client, nil
 }
 
@@ -329,6 +331,8 @@ func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, 
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("API client archived")
 
 	return nil
 }

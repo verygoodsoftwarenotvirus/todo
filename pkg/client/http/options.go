@@ -99,6 +99,8 @@ func UsingCookie(cookie *http.Cookie) func(*Client) error {
 		c.authedClient.Transport = newCookieRoundTripper(c, cookie)
 		c.authedClient = buildRetryingClient(c.authedClient, c.logger)
 
+		c.logger.Debug("set client auth cookie")
+
 		return nil
 	}
 }

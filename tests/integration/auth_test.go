@@ -170,14 +170,15 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		require.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		actual, err := testClient.UserStatus(ctx, cookie)
+		actual, err := testClient.UserStatus(ctx)
 		assert.NoError(t, err)
 
 		assert.Equal(t, true, actual.UserIsAuthenticated, "expected UserIsAuthenticated to equal %v, but got %v", true, actual.UserIsAuthenticated)
 		assert.Equal(t, types.GoodStandingAccountStatus, actual.UserReputation, "expected UserReputation to equal %v, but got %v", types.GoodStandingAccountStatus, actual.UserReputation)
 		assert.Equal(t, "", actual.UserReputationExplanation, "expected UserReputationExplanation to equal %v, but got %v", "", actual.UserReputationExplanation)
-		assert.Equal(t, (*permissions.ServiceAdminPermissionsSummary)(nil), actual.ServiceAdminPermissions, "expected ServiceAdminPermissions to equal %v, but got %v", nil, actual.ServiceAdminPermissions)
+		assert.Equal(t, (*permissions.ServiceAdminPermissionsSummary)(nil), actual.ServiceAdminPermissionsSummary, "expected ServiceAdminPermissionsSummary to equal %v, but got %v", nil, actual.ServiceAdminPermissionsSummary)
 		assert.NotZero(t, actual.ActiveAccount)
+		assert.Contains(t, actual.AccountPermissions, actual.ActiveAccount)
 		assert.NotEmpty(t, actual.AccountPermissions)
 
 		assert.NoError(t, testClient.Logout(ctx))

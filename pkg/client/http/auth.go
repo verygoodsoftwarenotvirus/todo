@@ -11,17 +11,13 @@ import (
 )
 
 // UserStatus fetches a user's status.
-func (c *Client) UserStatus(ctx context.Context, cookie *http.Cookie) (*types.UserStatusResponse, error) {
+func (c *Client) UserStatus(ctx context.Context) (*types.UserStatusResponse, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if cookie == nil {
-		return nil, ErrCookieRequired
-	}
-
 	logger := c.logger
 
-	req, err := c.requestBuilder.BuildUserStatusRequest(ctx, cookie)
+	req, err := c.requestBuilder.BuildUserStatusRequest(ctx)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "building user status request")
 	}
@@ -29,7 +25,7 @@ func (c *Client) UserStatus(ctx context.Context, cookie *http.Cookie) (*types.Us
 	var output *types.UserStatusResponse
 
 	if err = c.fetchAndUnmarshal(ctx, req, &output); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
+		return nil, observability.PrepareError(err, logger, span, "retrieving user status")
 	}
 
 	return output, nil

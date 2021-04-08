@@ -16,13 +16,9 @@ const (
 )
 
 // BuildUserStatusRequest builds an HTTP request that fetches a user's status.
-func (b *Builder) BuildUserStatusRequest(ctx context.Context, cookie *http.Cookie) (*http.Request, error) {
+func (b *Builder) BuildUserStatusRequest(ctx context.Context) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
-
-	if cookie == nil {
-		return nil, ErrCookieRequired
-	}
 
 	logger := b.logger
 	uri := b.buildVersionlessURL(ctx, nil, authBasePath, "status")
@@ -31,8 +27,6 @@ func (b *Builder) BuildUserStatusRequest(ctx context.Context, cookie *http.Cooki
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "building user status request")
 	}
-
-	req.AddCookie(cookie)
 
 	return req, nil
 }

@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"database/sql"
@@ -15,7 +14,6 @@ import (
 	"github.com/google/uuid"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -24,139 +22,6 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/o1egl/paseto"
 )
-
-// getUserIDFromCookie takes a request object and fetches the cookie data if it is present.
-func (s *service) getUserIDFromCookie(ctx context.Context, req *http.Request) (context.Context, uint64, error) {
-	ctx, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	if cookie, cookieErr := req.Cookie(s.config.Cookies.Name); !errors.Is(cookieErr, http.ErrNoCookie) && cookie != nil {
-		var (
-			token string
-			err   error
-		)
-
-		if err = s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token); err != nil {
-			return nil, 0, observability.PrepareError(err, logger, span, "retrieving request context")
-		}
-
-		ctx, err = s.sessionManager.Load(ctx, token)
-		if err != nil {
-			return nil, 0, observability.PrepareError(err, logger, span, "loading session")
-		}
-
-		userID, ok := s.sessionManager.Get(ctx, userIDContextKey).(uint64)
-		if !ok {
-			return nil, 0, observability.PrepareError(err, logger, span, "retrieving session data")
-		}
-
-		logger.Debug("determined userID from request cookie")
-
-		return ctx, userID, nil
-	}
-
-	return nil, 0, http.ErrNoCookie
-}
-
-// determineUserFromRequestCookie takes a request object and fetches the cookie, and then the user for that cookie.
-func (s *service) determineUserFromRequestCookie(ctx context.Context, req *http.Request) (*types.User, error) {
-	ctx, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger.WithRequest(req).WithValue("cookie_count", len(req.Cookies()))
-
-	ctx, userID, err := s.getUserIDFromCookie(ctx, req)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "fetching cookie data from request")
-	}
-
-	user, err := s.userDataManager.GetUser(ctx, userID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "fetching user from database")
-	}
-
-	tracing.AttachUserIDToSpan(span, userID)
-	logger.Debug("user determined from request cookie")
-
-	return user, nil
-}
-
-// validateLogin takes login information and returns whether or not the login is valid.
-// In the event that there's an error, this function will return false and the error.
-func (s *service) validateLogin(ctx context.Context, user *types.User, loginInput *types.UserLoginInput) (bool, error) {
-	ctx, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	// alias the relevant data.
-	logger := s.logger.WithValue(keys.UsernameKey, user.Username)
-
-	// check for login validity.
-	loginValid, err := s.authenticator.ValidateLogin(
-		ctx,
-		user.HashedPassword,
-		loginInput.Password,
-		user.TwoFactorSecret,
-		loginInput.TOTPToken,
-		user.Salt,
-	)
-
-	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, authentication.ErrPasswordHashTooWeak) {
-		// if the login is otherwise valid, but the password is too weak, try to rehash it.
-		logger.Debug("hashed password was deemed too weak, updating its hash")
-
-		// re-hash the authentication
-		var updated string
-		updated, err = s.authenticator.HashPassword(ctx, loginInput.Password)
-		if err != nil {
-			return false, observability.PrepareError(err, logger, span, "hashing password at new strength")
-		}
-
-		// update stored hashed password in the database.
-		user.HashedPassword = updated
-		if updateErr := s.userDataManager.UpdateUser(ctx, user, nil); updateErr != nil {
-			return false, observability.PrepareError(err, logger, span, "saving updated password hash")
-		}
-
-		return loginValid, nil
-	}
-
-	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
-		return false, err
-	} else if err != nil {
-		return false, observability.PrepareError(err, logger, span, "validating login")
-	}
-
-	logger.Debug("login validated")
-
-	return loginValid, nil
-}
-
-// buildCookie provides a consistent way of constructing an HTTP cookie.
-func (s *service) buildCookie(value string, expiry time.Time) (*http.Cookie, error) {
-	encoded, err := s.cookieManager.Encode(s.config.Cookies.Name, value)
-	if err != nil {
-		// NOTE: these errs should be infrequent, and should cause alarm when they do occur
-		s.logger.WithName(cookieErrorLogName).Error(err, "error encoding cookie")
-		return nil, err
-	}
-
-	// https://www.calhoun.io/securing-cookies-in-go/
-	cookie := &http.Cookie{
-		Name:     s.config.Cookies.Name,
-		Value:    encoded,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   s.config.Cookies.SecureOnly,
-		Domain:   s.config.Cookies.Domain,
-		Expires:  expiry,
-		SameSite: http.SameSiteStrictMode,
-		MaxAge:   int(time.Until(expiry).Seconds()),
-	}
-
-	return cookie, nil
-}
 
 // LoginHandler is our login route.
 func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
@@ -255,13 +120,18 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Debug("login successful")
 	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
 	http.SetCookie(res, cookie)
 
-	statusResponse := user.ToStatusResponse(true)
+	statusResponse := &types.UserStatusResponse{
+		UserIsAuthenticated:            true,
+		UserReputation:                 user.Reputation,
+		UserReputationExplanation:      user.ReputationExplanation,
+		ServiceAdminPermissionsSummary: user.ServiceAdminPermissions.Summary(),
+	}
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
+	logger.Debug("user logged in")
 }
 
 // ChangeActiveAccountHandler is our login route.
@@ -278,7 +148,8 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	logger = logger.WithValue("requested_id", input.AccountID)
+	accountID := input.AccountID
+	logger = logger.WithValue("new_session_account_id", accountID)
 
 	// determine user ID.
 	reqCtx, err := s.requestContextFetcher(req)
@@ -288,9 +159,10 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	logger = logger.WithValue("user_id", reqCtx.Requester.ID)
+	requesterID := reqCtx.Requester.ID
+	logger = logger.WithValue("user_id", requesterID)
 
-	authorizedForAccount, err := s.accountMembershipManager.UserIsMemberOfAccount(ctx, reqCtx.Requester.ID, input.AccountID)
+	authorizedForAccount, err := s.accountMembershipManager.UserIsMemberOfAccount(ctx, requesterID, accountID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "checking permissions")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
@@ -316,7 +188,8 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	s.sessionManager.Put(ctx, accountIDContextKey, input.AccountID)
+	s.sessionManager.Put(ctx, accountIDContextKey, accountID)
+	s.sessionManager.Put(ctx, userIDContextKey, requesterID)
 
 	token, expiry, err := s.sessionManager.Commit(ctx)
 	if err != nil {
@@ -332,7 +205,7 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	logger.Debug("successfully changed cookie active account")
+	logger.Info("successfully changed active session account")
 	http.SetCookie(res, cookie)
 
 	res.WriteHeader(http.StatusAccepted)
@@ -399,12 +272,12 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	statusResponse = &types.UserStatusResponse{
-		AccountPermissions:        reqCtx.AccountPermissionsMap,
-		ActiveAccount:             reqCtx.ActiveAccountID,
-		ServiceAdminPermissions:   reqCtx.Requester.ServiceAdminPermissions.Summary(),
-		UserReputation:            reqCtx.Requester.Reputation,
-		UserReputationExplanation: reqCtx.Requester.ReputationExplanation,
-		UserIsAuthenticated:       true,
+		AccountPermissions:             reqCtx.AccountPermissionsMap,
+		ActiveAccount:                  reqCtx.ActiveAccountID,
+		ServiceAdminPermissionsSummary: reqCtx.Requester.ServiceAdminPermissions.Summary(),
+		UserReputation:                 reqCtx.Requester.Reputation,
+		UserReputationExplanation:      reqCtx.Requester.ReputationExplanation,
+		UserIsAuthenticated:            true,
 	}
 
 	s.encoderDecoder.RespondWithData(ctx, res, statusResponse)

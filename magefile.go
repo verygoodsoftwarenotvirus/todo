@@ -35,17 +35,19 @@ const (
 )
 
 var (
-	cwd             string
-	debug           bool
-	verbose         bool
+	cwd string
+	debug,
+	letHang,
+	verbose bool
 	containerRunner = docker
 	logger          logging.Logger
 
 	Aliases = map[string]interface{}{
-		"dev":               Run,
-		"loud":              Verbose,
-		"fmt":               Format,
-		"integration-tests": IntegrationTests,
+		"dev":                Run,
+		"loud":               Verbose,
+		"fmt":                Format,
+		"integration-tests":  IntegrationTests,
+		"lintegration-tests": LintegrationTests,
 	}
 	_ = Aliases
 )
@@ -78,6 +80,8 @@ func init() {
 	}
 }
 
+// bool vars
+
 func Debug() {
 	debug = true
 	logger.SetLevel(logging.DebugLevel)
@@ -89,16 +93,21 @@ func Verbose() {
 	logger.Debug("verbose output activated")
 }
 
+func LetHang() {
+	letHang = true
+	logger.Debug("let hang activated")
+}
+
 // helpers
 
-func clear() {
+func Clear() {
 	const controlSequenceIntroducer = "\033["
 	const clearSequence = "" +
 		controlSequenceIntroducer + "2J" + // erase entire display
 		controlSequenceIntroducer + "3J" + // erase entire display including scroll-back buffer
 		controlSequenceIntroducer + "[1;1H" // reset cursor position to top of display
 
-	fmt.Printf(clearSequence)
+	print(clearSequence)
 }
 
 func runGoCommand(verbose bool, arguments ...string) error {
@@ -211,15 +220,20 @@ func determineTestablePackages() ([]string, error) {
 	return out, nil
 }
 
-func runContainer(runSpec containerRunSpec) error {
+func runContainer(outLoud bool, runSpec containerRunSpec) error {
 	containerRunArgs := append([]string{run}, runSpec.runArgs...)
 	containerRunArgs = append(containerRunArgs, fmt.Sprintf("%s:%s", runSpec.imageName, runSpec.imageVersion))
 	containerRunArgs = append(containerRunArgs, runSpec.imageArgs...)
 
-	return sh.RunV(containerRunner, containerRunArgs...)
+	var runCmd = sh.Run
+	if outLoud {
+		runCmd = sh.RunV
+	}
+
+	return runCmd(containerRunner, containerRunArgs...)
 }
 
-func runCompose(letHang bool, composeFiles ...string) error {
+func runCompose(composeFiles ...string) error {
 	fullCommand := []string{}
 	for _, f := range composeFiles {
 		if f == "" {
@@ -246,7 +260,7 @@ func runCompose(letHang bool, composeFiles ...string) error {
 
 // tool ensurers
 
-// Install Mage if necessary
+// Install mage if necessary
 func EnsureMage() error {
 	return pkg.EnsureMage("v1.11.0")
 }
@@ -316,6 +330,7 @@ func checkForDocker() error {
 	return nil
 }
 
+// Install all auxiliary dev tools
 func EnsureDevTools() error {
 	if err := ensureDependencyInjector(); err != nil {
 		return err
@@ -336,7 +351,13 @@ func EnsureDevTools() error {
 	return nil
 }
 
-// end tool ensurers
+// tool invokers
+
+func fixFieldAlignment() {
+	ensureFieldalignment()
+
+	sh.Run("fieldalignment", "-fix", "./...")
+}
 
 // dependency stuff
 
@@ -514,7 +535,7 @@ func CheckFormatting() error {
 	return nil
 }
 
-func DockerLint() error {
+func dockerLint(outLoud bool) error {
 	const (
 		dockerLintImage        = "openpolicyagent/conftest"
 		dockerLintImageVersion = "v0.21.0"
@@ -555,7 +576,11 @@ func DockerLint() error {
 		}, dockerfiles...),
 	}
 
-	return runContainer(dockerLintCmd)
+	return runContainer(outLoud, dockerLintCmd)
+}
+
+func DockerLint() error {
+	return dockerLint(true)
 }
 
 func Lint() error {
@@ -564,7 +589,9 @@ func Lint() error {
 		lintImageVersion = "latest"
 	)
 
-	if err := DockerLint(); err != nil {
+	fixFieldAlignment()
+
+	if err := dockerLint(verbose); err != nil {
 		return err
 	}
 
@@ -589,7 +616,7 @@ func Lint() error {
 		},
 	}
 
-	return runContainer(lintCmd)
+	return runContainer(true, lintCmd)
 }
 
 func Coverage() error {
@@ -656,18 +683,18 @@ const (
 	sqlite   = "sqlite"
 )
 
-func runIntegrationTest(dbProvider string) error {
+func IntegrationTest(dbProvider string) error {
 	dbProvider = strings.TrimSpace(strings.ToLower(dbProvider))
 
 	if err := validateDBProvider(dbProvider); err != nil {
 		return nil
 	}
 
-	if err := runCompose(
-		false,
+	err := runCompose(
 		"environments/testing/compose_files/integration_tests/integration-tests-base.yaml",
 		fmt.Sprintf("environments/testing/compose_files/integration_tests/integration-tests-%s.yaml", dbProvider),
-	); err != nil {
+	)
+	if err != nil {
 		return err
 	}
 
@@ -675,13 +702,13 @@ func runIntegrationTest(dbProvider string) error {
 }
 
 func IntegrationTests() error {
-	if err := runIntegrationTest(sqlite); err != nil {
+	if err := IntegrationTest(sqlite); err != nil {
 		return err
 	}
-	if err := runIntegrationTest(postgres); err != nil {
+	if err := IntegrationTest(postgres); err != nil {
 		return err
 	}
-	if err := runIntegrationTest(mariadb); err != nil {
+	if err := IntegrationTest(mariadb); err != nil {
 		return err
 	}
 
@@ -694,7 +721,6 @@ func IntegrationCoverage() error {
 	}
 
 	err := runCompose(
-		false,
 		"environments/testing/compose_files/integration_tests/integration-tests-base.yaml",
 		"environments/testing/compose_files/integration_tests/integration-coverage.yaml",
 	)
@@ -725,18 +751,14 @@ func runLoadTest(dbProvider string) error {
 		return nil
 	}
 
-	if err := runCompose(
-		false,
-		"environments/testing/compose_files/load_tests/load-tests-base.yaml",
-		fmt.Sprintf("environments/testing/compose_files/load_tests/load-tests-%s.yaml", dbProvider),
-	); err != nil {
+	if err := runCompose("environments/testing/compose_files/load_tests/load-tests-base.yaml", fmt.Sprintf("environments/testing/compose_files/load_tests/load-tests-%s.yaml", dbProvider)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func Loadtests() error {
+func LoadTests() error {
 	if err := runLoadTest(sqlite); err != nil {
 		return err
 	}
@@ -753,7 +775,7 @@ func Loadtests() error {
 }
 
 func BrowserDrivenTests() error {
-	if err := runCompose(false, "environments/testing/compose_files/frontend-tests.yaml"); err != nil {
+	if err := runCompose("environments/testing/compose_files/frontend-tests.yaml"); err != nil {
 		return err
 	}
 
@@ -771,14 +793,14 @@ func Run() error {
 		return err
 	}
 
-	if err := runCompose(false, "environments/local/docker-compose.yaml"); err != nil {
+	if err := runCompose("environments/local/docker-compose.yaml"); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func FrontendAutobuild() error {
+func FrontendAutoBuild() error {
 	if err := os.RemoveAll(filepath.Join(frontendDir, "dist", "build")); err != nil {
 		return err
 	}

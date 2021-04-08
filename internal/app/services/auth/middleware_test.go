@@ -30,10 +30,6 @@ func TestAuthService_CookieAuthenticationMiddleware(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(helper.exampleUser, nil)
-		helper.service.userDataManager = md
-
 		aumdm := &mocktypes.AccountUserMembershipDataManager{}
 		aumdm.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(helper.reqCtx, nil)
 		helper.service.accountMembershipManager = aumdm
@@ -43,36 +39,7 @@ func TestAuthService_CookieAuthenticationMiddleware(T *testing.T) {
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
-		helper.service.CookieAuthenticationMiddleware(ms).ServeHTTP(helper.res, helper.req)
-
-		mock.AssertExpectationsForObjects(t, md, ms)
-	})
-
-	T.Run("with nil user returned by datastore and without error", func(t *testing.T) {
-		t.Parallel()
-		helper := buildTestHelper(t)
-
-		md := &mocktypes.UserDataManager{}
-		md.On("GetUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return((*types.User)(nil), nil)
-		helper.service.userDataManager = md
-
-		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
-
-		ms := &MockHTTPHandler{}
-
-		helper.service.CookieAuthenticationMiddleware(ms).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, md, ms)
-	})
-
-	T.Run("without user attached to request", func(t *testing.T) {
-		t.Parallel()
-		helper := buildTestHelper(t)
-
-		ms := &MockHTTPHandler{}
-		helper.service.CookieAuthenticationMiddleware(ms).ServeHTTP(helper.res, helper.req)
+		helper.service.CookieRequirementMiddleware(ms).ServeHTTP(helper.res, helper.req)
 
 		mock.AssertExpectationsForObjects(t, ms)
 	})

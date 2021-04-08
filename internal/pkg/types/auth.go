@@ -28,8 +28,8 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
-		AccountName string
-		Permissions permissions.ServiceUserPermissions
+		AccountName string                             `json:"name"`
+		Permissions permissions.ServiceUserPermissions `json:"permissions"`
 	}
 
 	// RequestContext represents what we encode in our authentication cookies.
@@ -49,12 +49,12 @@ type (
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		AccountPermissions        map[uint64]UserAccountMembershipInfo        `json:"accountPermissions,omitempty"`
-		ServiceAdminPermissions   *permissions.ServiceAdminPermissionsSummary `json:"adminPermissions,omitempty"`
-		UserReputation            userReputation                              `json:"userReputation,omitempty"`
-		UserReputationExplanation string                                      `json:"reputationExplanation"`
-		ActiveAccount             uint64                                      `json:"activeAccount,omitempty"`
-		UserIsAuthenticated       bool                                        `json:"isAuthenticated"`
+		AccountPermissions             map[uint64]UserAccountMembershipInfo        `json:"accountPermissions,omitempty"`
+		ServiceAdminPermissionsSummary *permissions.ServiceAdminPermissionsSummary `json:"adminPermissions,omitempty"`
+		UserReputation                 userReputation                              `json:"userReputation,omitempty"`
+		UserReputationExplanation      string                                      `json:"reputationExplanation"`
+		ActiveAccount                  uint64                                      `json:"activeAccount,omitempty"`
+		UserIsAuthenticated            bool                                        `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -86,7 +86,7 @@ type (
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
 		PermissionRestrictionMiddleware(p ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler
-		CookieAuthenticationMiddleware(next http.Handler) http.Handler
+		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
 		AdminMiddleware(next http.Handler) http.Handler

@@ -76,9 +76,9 @@ func buildRetryingClient(client *http.Client, logger logging.Logger) *http.Clien
 		RetryWaitMin: minRetryWait,
 		RetryWaitMax: maxRetryWait,
 		RetryMax:     maxRetryCount,
-		RequestLogHook: func(_ retryablehttp.Logger, req *http.Request, numTries int) {
+		RequestLogHook: func(_ retryablehttp.Logger, req *http.Request, numRetries int) {
 			if req != nil {
-				logger.WithRequest(req).WithValue("attempt_number", numTries).Debug("making request")
+				logger.WithRequest(req).WithValue("retry_count", numRetries).Debug("making request")
 			}
 		},
 		ResponseLogHook: func(_ retryablehttp.Logger, res *http.Response) {

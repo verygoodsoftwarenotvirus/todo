@@ -41,7 +41,7 @@ func TestQuerier_UpdateUserAccountStatus(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
 
-		err := c.UpdateUserAccountStatus(ctx, exampleUser.ID, exampleInput)
+		err := c.UpdateUserReputation(ctx, exampleUser.ID, exampleInput)
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)

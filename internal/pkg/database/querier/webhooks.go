@@ -290,6 +290,9 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 	}
 
 	tracing.AttachWebhookIDToSpan(span, x.ID)
+	logger = logger.WithValue(keys.WebhookIDKey, x.ID)
+
+	logger.Info("webhook created")
 
 	return x, nil
 }
@@ -310,7 +313,7 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 
 	logger := q.logger.
 		WithValue(keys.WebhookIDKey, updated.ID).
-		WithValue(keys.RequesterKey, changedByUser).
+		WithValue(keys.RequesterIDKey, changedByUser).
 		WithValue(keys.AccountIDKey, updated.BelongsToAccount)
 
 	query, args := q.sqlQueryBuilder.BuildUpdateWebhookQuery(ctx, updated)
@@ -338,7 +341,7 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
-	logger.Debug("successfully updated webhook")
+	logger.Debug("webhook updated")
 
 	return nil
 }
@@ -361,9 +364,9 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.WebhookIDKey: webhookID,
-		keys.AccountIDKey: accountID,
-		keys.RequesterKey: archivedByUserID,
+		keys.WebhookIDKey:   webhookID,
+		keys.AccountIDKey:   accountID,
+		keys.RequesterIDKey: archivedByUserID,
 	})
 
 	query, args := q.sqlQueryBuilder.BuildArchiveWebhookQuery(ctx, webhookID, accountID)
@@ -386,6 +389,8 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("webhook archived")
 
 	return nil
 }

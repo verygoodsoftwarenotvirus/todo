@@ -296,6 +296,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	user.ID = userID
 	account.BelongsToUser = user.ID
+	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -314,6 +315,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 	}
 
 	account.ID = accountID
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -343,6 +345,8 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	tracing.AttachUserIDToSpan(span, user.ID)
 	tracing.AttachAccountIDToSpan(span, account.ID)
+
+	logger.Info("user and account created")
 
 	return nil
 }
@@ -417,6 +421,8 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, change
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	logger.Info("user updated")
+
 	return nil
 }
 
@@ -456,6 +462,8 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newH
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("user password updated")
 
 	return nil
 }
@@ -497,6 +505,8 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID uint6
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	logger.Info("user two factor secret updated")
+
 	return nil
 }
 
@@ -532,6 +542,8 @@ func (q *SQLQuerier) VerifyUserTwoFactorSecret(ctx context.Context, userID uint6
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("user two factor secret verified")
 
 	return nil
 }
@@ -575,6 +587,8 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("user archived")
 
 	return nil
 }

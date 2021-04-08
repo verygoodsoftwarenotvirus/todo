@@ -136,7 +136,7 @@ type (
 	// AdminUserDataManager contains administrative User functions that we don't necessarily want to expose
 	// to, say, the collection of handlers.
 	AdminUserDataManager interface {
-		UpdateUserAccountStatus(ctx context.Context, userID uint64, input UserReputationUpdateInput) error
+		UpdateUserReputation(ctx context.Context, userID uint64, input UserReputationUpdateInput) error
 	}
 
 	// UserDataManager describes a structure which can manage users in permanent storage.
@@ -190,16 +190,6 @@ func (u *User) Update(input *User) {
 
 	if input.TwoFactorSecret != "" && input.TwoFactorSecret != u.TwoFactorSecret {
 		u.TwoFactorSecret = input.TwoFactorSecret
-	}
-}
-
-// ToStatusResponse produces a UserStatusResponse object from a User's data.
-func (u *User) ToStatusResponse(isAuthenticated bool) *UserStatusResponse {
-	return &UserStatusResponse{
-		UserIsAuthenticated:       isAuthenticated,
-		UserReputation:            u.Reputation,
-		UserReputationExplanation: u.ReputationExplanation,
-		ServiceAdminPermissions:   u.ServiceAdminPermissions.Summary(),
 	}
 }
 

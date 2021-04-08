@@ -2,7 +2,6 @@ package querier
 
 import (
 	"context"
-	"errors"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
@@ -15,12 +14,10 @@ import (
 
 var (
 	_ types.AccountUserMembershipDataManager = (*SQLQuerier)(nil)
-
-	errDefaultAccountNotFoundForUser = errors.New("default account not found for user")
 )
 
 // scanAccountUserMembership takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountUserMembership struct.
-func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan database.Scanner) (x *types.AccountUserMembership, err error) {
+func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan database.Scanner) (x *types.AccountUserMembership, accountName string, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -36,39 +33,48 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 		&x.DefaultAccount,
 		&x.CreatedOn,
 		&x.ArchivedOn,
+		&accountName,
 	}
 
 	if err = scan.Scan(targetVars...); err != nil {
-		return nil, observability.PrepareError(err, q.logger, span, "scanning account user memberships")
+		return nil, "", observability.PrepareError(err, q.logger, span, "scanning account user memberships")
 	}
 
 	newPerms := permissions.NewServiceUserPermissions(uint32(rawPerms))
 	x.UserAccountPermissions = newPerms
 
-	return x, nil
+	return x, accountName, nil
 }
 
 // scanAccountUserMemberships takes some database rows and turns them into a slice of memberships.
-func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (memberships []*types.AccountUserMembership, err error) {
+func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (defaultAccount uint64, membershipMap map[uint64]types.UserAccountMembershipInfo, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	membershipMap = map[uint64]types.UserAccountMembershipInfo{}
 	logger := q.logger
 
 	for rows.Next() {
-		x, scanErr := q.scanAccountUserMembership(ctx, rows)
+		x, accountName, scanErr := q.scanAccountUserMembership(ctx, rows)
 		if scanErr != nil {
-			return nil, scanErr
+			return 0, nil, scanErr
 		}
 
-		memberships = append(memberships, x)
+		if x.DefaultAccount && defaultAccount == 0 {
+			defaultAccount = x.BelongsToAccount
+		}
+
+		membershipMap[x.BelongsToAccount] = types.UserAccountMembershipInfo{
+			AccountName: accountName,
+			Permissions: x.UserAccountPermissions,
+		}
 	}
 
 	if err = q.checkRowsForErrorAndClose(ctx, rows); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "handling rows")
+		return 0, nil, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
-	return memberships, nil
+	return defaultAccount, membershipMap, nil
 }
 
 // BuildRequestContextForUser does .
@@ -95,29 +101,9 @@ func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint
 		return nil, observability.PrepareError(err, logger, span, "fetching user's memberships from database")
 	}
 
-	memberships, err := q.scanAccountUserMemberships(ctx, membershipRows)
+	defaultAccountID, membershipMap, err := q.scanAccountUserMemberships(ctx, membershipRows)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user's memberships from database")
-	}
-
-	activeAccountID := uint64(0)
-	accountPermissionsMap := map[uint64]types.UserAccountMembershipInfo{}
-
-	for _, membership := range memberships {
-		if membership.BelongsToAccount != 0 {
-			accountPermissionsMap[membership.BelongsToAccount] = types.UserAccountMembershipInfo{
-				//AccountName: membership. //TODO
-				Permissions: membership.UserAccountPermissions,
-			}
-
-			if membership.DefaultAccount && activeAccountID == 0 {
-				activeAccountID = membership.BelongsToAccount
-			}
-		}
-	}
-
-	if activeAccountID == 0 {
-		return nil, observability.PrepareError(errDefaultAccountNotFoundForUser, logger, span, "default account not found for user #%d", userID)
 	}
 
 	reqCtx := &types.RequestContext{
@@ -127,8 +113,8 @@ func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint
 			ReputationExplanation:   user.ReputationExplanation,
 			ServiceAdminPermissions: user.ServiceAdminPermissions,
 		},
-		AccountPermissionsMap: accountPermissionsMap,
-		ActiveAccountID:       activeAccountID,
+		AccountPermissionsMap: membershipMap,
+		ActiveAccountID:       defaultAccountID,
 	}
 
 	return reqCtx, nil
@@ -154,49 +140,6 @@ func (q *SQLQuerier) GetDefaultAccountIDForUser(ctx context.Context, userID uint
 	return id, nil
 }
 
-// GetMembershipsForUser does a thing. TODO: deprecate me.
-func (q *SQLQuerier) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if userID == 0 {
-		return 0, nil, ErrInvalidIDProvided
-	}
-
-	logger := q.logger.WithValue(keys.UserIDKey, userID)
-	tracing.AttachUserIDToSpan(span, userID)
-
-	query, args := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(ctx, userID)
-
-	membershipRows, err := q.performReadQuery(ctx, "account memberships for user", query, args...)
-	if err != nil {
-		return 0, nil, observability.PrepareError(err, logger, span, "fetching memberships from database")
-	}
-
-	memberships, err := q.scanAccountUserMemberships(ctx, membershipRows)
-	if err != nil {
-		return 0, nil, observability.PrepareError(err, logger, span, "scanning memberships from database")
-	}
-
-	permissionsMap = map[uint64]permissions.ServiceUserPermissions{}
-
-	for _, membership := range memberships {
-		if membership.BelongsToAccount != 0 {
-			permissionsMap[membership.BelongsToAccount] = membership.UserAccountPermissions
-
-			if membership.DefaultAccount && defaultAccount == 0 {
-				defaultAccount = membership.BelongsToAccount
-			}
-		}
-	}
-
-	if defaultAccount == 0 {
-		return 0, nil, observability.PrepareError(errDefaultAccountNotFoundForUser, logger, span, "account not found for user #%d", userID)
-	}
-
-	return defaultAccount, permissionsMap, nil
-}
-
 // MarkAccountAsUserDefault does a thing.
 func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser uint64) error {
 	ctx, span := q.tracer.StartSpan(ctx)
@@ -207,9 +150,9 @@ func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accou
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey:    userID,
-		keys.AccountIDKey: accountID,
-		keys.RequesterKey: changedByUser,
+		keys.UserIDKey:      userID,
+		keys.AccountIDKey:   accountID,
+		keys.RequesterIDKey: changedByUser,
 	})
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -237,6 +180,8 @@ func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accou
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("account marked as default")
 
 	return nil
 }
@@ -282,10 +227,10 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userI
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.AccountIDKey: accountID,
-		keys.UserIDKey:    userID,
-		keys.RequesterKey: changedByUser,
-		"new_permissions": input.UserAccountPermissions,
+		keys.AccountIDKey:   accountID,
+		keys.UserIDKey:      userID,
+		keys.RequesterIDKey: changedByUser,
+		"new_permissions":   input.UserAccountPermissions,
 	})
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -314,7 +259,7 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userI
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
-	logger.Debug("user permissions modified")
+	logger.Info("user permissions modified")
 
 	return nil
 }
@@ -333,10 +278,10 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.AccountIDKey: accountID,
-		keys.RequesterKey: transferredBy,
-		"current_owner":   input.CurrentOwner,
-		"new_owner":       input.NewOwner,
+		keys.AccountIDKey:   accountID,
+		keys.RequesterIDKey: transferredBy,
+		"current_owner":     input.CurrentOwner,
+		"new_owner":         input.NewOwner,
 	})
 
 	tracing.AttachUserIDToSpan(span, input.NewOwner)
@@ -373,6 +318,8 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	logger.Info("account transferred to new owner")
+
 	return nil
 }
 
@@ -390,7 +337,7 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.RequesterKey:   addedByUser,
+		keys.RequesterIDKey: addedByUser,
 		keys.UserIDKey:      input.UserID,
 		keys.AccountIDKey:   accountID,
 		keys.PermissionsKey: input.UserAccountPermissions,
@@ -422,7 +369,7 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
-	logger.Debug("user added to account")
+	logger.Info("user added to account")
 
 	return nil
 }
@@ -441,10 +388,10 @@ func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountI
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey:    userID,
-		keys.AccountIDKey: accountID,
-		keys.ReasonKey:    reason,
-		keys.RequesterKey: removedByUser,
+		keys.UserIDKey:      userID,
+		keys.AccountIDKey:   accountID,
+		keys.ReasonKey:      reason,
+		keys.RequesterIDKey: removedByUser,
 	})
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -472,6 +419,8 @@ func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountI
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("user removed from account")
 
 	return nil
 }

@@ -66,8 +66,8 @@ func (m *AuthService) PermissionRestrictionMiddleware(p ...permissions.ServiceUs
 	return m.Called(p).Get(0).(func(next http.Handler) http.Handler)
 }
 
-// CookieAuthenticationMiddleware implements our AuthService interface.
-func (m *AuthService) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
+// CookieRequirementMiddleware implements our AuthService interface.
+func (m *AuthService) CookieRequirementMiddleware(next http.Handler) http.Handler {
 	return m.Called(next).Get(0).(http.Handler)
 }
 

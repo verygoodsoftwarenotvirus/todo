@@ -65,7 +65,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, fronten
 
 	router.Route("/users", func(userRouter routing.Router) {
 		userRouter.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
-		userRouter.WithMiddleware(s.authService.CookieAuthenticationMiddleware).Post("/logout", s.authService.LogoutHandler)
+		userRouter.WithMiddleware(s.authService.CookieRequirementMiddleware).Post("/logout", s.authService.LogoutHandler)
 		userRouter.WithMiddleware(s.usersService.UserCreationInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.WithMiddleware(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 

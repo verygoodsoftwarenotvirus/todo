@@ -242,7 +242,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 
 	// figure out who this is all for.
 	requester := reqCtx.Requester.ID
-	logger = logger.WithValue(keys.RequesterKey, requester)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestingUserIDToSpan(span, requester)
 
 	// fetch user data.
@@ -432,7 +432,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// determine relevant user ID.
 	tracing.AttachRequestingUserIDToSpan(span, reqCtx.Requester.ID)
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 	// make sure everything's on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
@@ -504,7 +504,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 	logger.Debug("request context data extracted")
 
 	user, err := s.userDataManager.GetUser(ctx, reqCtx.Requester.ID)

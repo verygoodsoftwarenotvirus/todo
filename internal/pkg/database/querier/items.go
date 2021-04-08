@@ -341,7 +341,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 		return nil, ErrNilInputProvided
 	}
 
-	logger := q.logger.WithValue(keys.RequesterKey, createdByUser)
+	logger := q.logger.WithValue(keys.RequesterIDKey, createdByUser)
 	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 
 	query, args := q.sqlQueryBuilder.BuildCreateItemQuery(ctx, input)
@@ -376,6 +376,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 	}
 
 	tracing.AttachItemIDToSpan(span, x.ID)
+	logger.Info("item created")
 
 	return x, nil
 }
@@ -415,6 +416,8 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("item updated")
 
 	return nil
 }
@@ -462,6 +465,8 @@ func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archive
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("item archived")
 
 	return nil
 }

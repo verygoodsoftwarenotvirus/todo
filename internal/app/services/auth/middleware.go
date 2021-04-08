@@ -59,7 +59,7 @@ func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
 	return nil
 }
 
-func (s *service) fetchRequestContextFromRequest(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
+func (s *service) fetchRequestContextFromPASETO(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -95,34 +95,17 @@ func (s *service) fetchRequestContextFromRequest(ctx context.Context, req *http.
 	return nil, errTokenNotFound
 }
 
-// CookieAuthenticationMiddleware checks every request for a user cookie.
-func (s *service) CookieAuthenticationMiddleware(next http.Handler) http.Handler {
+// CookieAuthenticationMiddleware requires every request have a valid cookie.
+func (s *service) CookieRequirementMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := s.tracer.StartSpan(req.Context())
+		_, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
-		logger := s.logger.WithRequest(req)
-
-		// fetch the user from the request.
-		user, err := s.determineUserFromRequestCookie(ctx, req)
-		if err != nil {
-			// we deliberately aren't logging here because it's done in determineUserFromRequestCookie
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "cookie required", http.StatusUnauthorized)
-			return
-		}
-
-		if user != nil {
-			logger = logger.WithValue(keys.UserIDKey, user.ID)
-
-			reqCtx, requestContextErr := s.accountMembershipManager.BuildRequestContextForUser(ctx, user.ID)
-			if requestContextErr != nil {
-				observability.AcknowledgeError(requestContextErr, logger, span, "forming request context")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-				return
+		if cookie, cookieErr := req.Cookie(s.config.Cookies.Name); !errors.Is(cookieErr, http.ErrNoCookie) && cookie != nil {
+			var token string
+			if err := s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token); err == nil {
+				next.ServeHTTP(res, req)
 			}
-
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.UserIDContextKey, reqCtx)))
-			return
 		}
 
 		// if no error was attached to the request, tell them to login first.
@@ -143,7 +126,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			ctx = cookieContext
 
 			tracing.AttachRequestingUserIDToSpan(span, userID)
-			logger = logger.WithValue(keys.RequesterKey, userID)
+			logger = logger.WithValue(keys.RequesterIDKey, userID)
 
 			reqCtx, reqCtxErr := s.accountMembershipManager.BuildRequestContextForUser(ctx, userID)
 			if reqCtxErr != nil {
@@ -152,17 +135,13 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			if activeAccount, ok := s.sessionManager.Get(ctx, accountIDContextKey).(uint64); ok {
-				reqCtx.ActiveAccountID = activeAccount
-			}
+			s.overrideRequestContextValuesWithSessionData(ctx, reqCtx)
 
-			ctx = context.WithValue(ctx, types.RequestContextKey, reqCtx)
-
-			next.ServeHTTP(res, req.WithContext(ctx))
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, reqCtx)))
 			return
 		}
 
-		tokenRequestContext, err := s.fetchRequestContextFromRequest(ctx, req)
+		tokenRequestContext, err := s.fetchRequestContextFromPASETO(ctx, req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "extracting token from request")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -189,6 +168,8 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 
 		// UserAttributionMiddleware should be called before this middleware.
 		if reqCtx, err := s.requestContextFetcher(req); err == nil && reqCtx != nil {
+			logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
+
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
 			if reqCtx.Requester.Reputation == types.BannedAccountStatus {
 				logger.Debug("banned user attempted to make request")
@@ -249,7 +230,7 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 				return
 			}
 
-			logger = logger.WithValue(keys.RequesterKey, requestContext.Requester.ID).
+			logger = logger.WithValue(keys.RequesterIDKey, requestContext.Requester.ID).
 				WithValue(keys.AccountIDKey, requestContext.ActiveAccountID).
 				WithValue(keys.PermissionsKey, requestContext.AccountPermissionsMap)
 
@@ -283,7 +264,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		logger = logger.WithValue(keys.RequesterKey, reqCtx.Requester.ID)
+		logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
 		if !reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")

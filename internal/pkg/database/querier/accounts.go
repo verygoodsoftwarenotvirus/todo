@@ -244,7 +244,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 		return nil, ErrNilInputProvided
 	}
 
-	logger := q.logger.WithValue(keys.RequesterKey, createdByUser).WithValue(keys.UserIDKey, input.BelongsToUser)
+	logger := q.logger.WithValue(keys.RequesterIDKey, createdByUser).WithValue(keys.UserIDKey, input.BelongsToUser)
 	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 
 	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, input)
@@ -270,8 +270,6 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 		DefaultUserPermissions: input.DefaultUserPermissions,
 		CreatedOn:              q.currentTime(),
 	}
-
-	logger.Debug("account created")
 
 	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, createdByUser)); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -300,7 +298,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	}
 
 	tracing.AttachAccountIDToSpan(span, account.ID)
-	logger.Debug("account created")
+	logger.Info("account created")
 
 	return account, nil
 }
@@ -340,6 +338,8 @@ func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, 
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
+	logger.Info("account updated")
+
 	return nil
 }
 
@@ -356,9 +356,9 @@ func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, arch
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.RequesterKey: archivedByUser,
-		keys.AccountIDKey: accountID,
-		keys.UserIDKey:    userID,
+		keys.RequesterIDKey: archivedByUser,
+		keys.AccountIDKey:   accountID,
+		keys.UserIDKey:      userID,
 	})
 
 	query, args := q.sqlQueryBuilder.BuildArchiveAccountQuery(ctx, accountID, userID)
@@ -381,6 +381,8 @@ func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, arch
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
+
+	logger.Info("account archived")
 
 	return nil
 }

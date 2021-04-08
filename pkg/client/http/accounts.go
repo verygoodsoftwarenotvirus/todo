@@ -21,8 +21,6 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	logger.Debug("switching account")
-
 	if c.authMethod == cookieAuthMethod {
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {

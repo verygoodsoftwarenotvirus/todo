@@ -26,7 +26,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		helper.exampleInput.NewReputation = types.BannedAccountStatus
 
 		udb := &mocktypes.AdminUserDataManager{}
-		udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
+		udb.On("UpdateUserReputation", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
 		helper.service.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -46,7 +46,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		helper.exampleInput.NewReputation = types.TerminatedAccountStatus
 
 		udb := &mocktypes.AdminUserDataManager{}
-		udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
+		udb.On("UpdateUserReputation", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
 		helper.service.userDB = udb
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -117,7 +117,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		helper.exampleInput.NewReputation = types.BannedAccountStatus
 
 		udb := &mocktypes.AdminUserDataManager{}
-		udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(sql.ErrNoRows)
+		udb.On("UpdateUserReputation", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(sql.ErrNoRows)
 		helper.service.userDB = udb
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
@@ -133,7 +133,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		helper.exampleInput.NewReputation = types.BannedAccountStatus
 
 		udb := &mocktypes.AdminUserDataManager{}
-		udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(errors.New("blah"))
+		udb.On("UpdateUserReputation", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(errors.New("blah"))
 		helper.service.userDB = udb
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
@@ -157,7 +157,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		helper.service.auditLog = auditLog
 
 		udb := &mocktypes.AdminUserDataManager{}
-		udb.On("UpdateUserAccountStatus", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
+		udb.On("UpdateUserReputation", mock.MatchedBy(testutil.ContextMatcher), helper.exampleInput.TargetUserID, *helper.exampleInput).Return(nil)
 		helper.service.userDB = udb
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)

@@ -1,0 +1,9 @@
+{
+  "extends": "@istanbuljs/nyc-config-typescript",
+  "check-coverage": true,
+  "_note_to_self": "you should fix the thresholds below, they're obviously weak.",
+  "lines": 60,
+  "functions": 15,
+  "branches": 21,
+  "statements": 60
+}

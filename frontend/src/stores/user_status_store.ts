@@ -20,7 +20,7 @@ const frontendOnlyMode =
 
 function buildUserStatusStore() {
   const storedUserStatus: UserStatus = JSON.parse(
-    localStorage.getItem(localStorageKey) || '{}',
+    window.localStorage.getItem(localStorageKey) || '{}',
   ) as UserStatus;
   const { subscribe, set } = writable(storedUserStatus);
 
@@ -36,7 +36,7 @@ function buildUserStatusStore() {
   };
 
   userStatusStore.subscribe((value: UserStatus) => {
-    localStorage.setItem(localStorageKey, JSON.stringify(value));
+    window.localStorage.setItem(localStorageKey, JSON.stringify(value));
   });
 
   if (frontendOnlyMode) {

@@ -5,6 +5,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/magefile/mage/mg"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -675,6 +676,10 @@ func Quicktest() error {
 		return err
 	}
 
+	if err = frontendUnitTests(true); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -846,7 +851,26 @@ func ScaffoldFrontendTests() error {
 	return nil
 }
 
-func FrontendAutoBuild() error {
+type Frontend mg.Namespace
+
+func frontendUnitTests(outLoud bool) error {
+	rf := sh.Run
+	if outLoud {
+		rf = sh.RunV
+	}
+
+	return runCommandsFromFrontendFolder(
+		func() error {
+			return rf(frontendTool, run, "test")
+		},
+	)
+}
+
+func (Frontend) UnitTests() error {
+	return frontendUnitTests(true)
+}
+
+func (Frontend) AutoBuild() error {
 	if err := os.RemoveAll(filepath.Join(frontendDir, "dist", "build")); err != nil {
 		return err
 	}
@@ -858,7 +882,7 @@ func FrontendAutoBuild() error {
 	)
 }
 
-func FrontendOnly() error {
+func (Frontend) Only() error {
 	if err := os.RemoveAll(filepath.Join(frontendDir, "dist", "build")); err != nil {
 		return err
 	}

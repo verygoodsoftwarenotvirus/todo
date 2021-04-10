@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -132,7 +133,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.ExternalID = ""
 		exampleAccountCreationInput := &types.AccountCreationInput{
-			Name:                   exampleUser.Username,
+			Name:                   fmt.Sprintf("%s_default", exampleUser.Username),
 			DefaultUserPermissions: math.MaxUint32,
 			BelongsToUser:          exampleUser.ID,
 		}

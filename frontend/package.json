@@ -11,7 +11,7 @@
     "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && rm -rf dist/build && npm install && npm run build:tailwind && npm run build:fontawesome && npm run build",
     "start": "sirv dist --single --host=localhost --port=5000",
     "start:frontend-only": "cross-env FRONTEND_ONLY_MODE=true rollup --watch --config rollup.config.js",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\"}' nyc mocha --require ts-node/register --require jsdom-global/register --include 'src/**/*.ts' 'src/**/*_test.ts'",
+    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\"}' nyc mocha --require ts-node/register 'src/**/*.test.ts'",
     "validate": "svelte-check"
   },
   "dependencies": {

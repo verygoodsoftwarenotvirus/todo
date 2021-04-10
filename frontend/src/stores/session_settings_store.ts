@@ -1,6 +1,6 @@
+import { writable } from 'svelte/store';
 import { Logger } from '../logger';
 import { UserSiteSettings } from '../types';
-import { writable } from 'svelte/store';
 
 const logger = new Logger().withDebugValue(
   'source',

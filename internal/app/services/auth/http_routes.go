@@ -272,7 +272,7 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	statusResponse = &types.UserStatusResponse{
-		AccountPermissions:             reqCtx.AccountPermissionsMap,
+		AccountPermissions:             reqCtx.AccountPermissionsMap.ToPermissionMapByAccountName(),
 		ActiveAccount:                  reqCtx.ActiveAccountID,
 		ServiceAdminPermissionsSummary: reqCtx.Requester.ServiceAdminPermissions.Summary(),
 		UserReputation:                 reqCtx.Requester.Reputation,

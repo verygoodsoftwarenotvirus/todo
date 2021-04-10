@@ -47,6 +47,15 @@ func init() {
 	gob.Register(ServiceUserPermissions(0))
 }
 
+// ServiceUserPermissionChecker returns whether or not a given permission applies to a user.
+type ServiceUserPermissionChecker interface {
+	// CanManageAPIClients should return whether a user is authorized to manage API clients.
+	CanManageAPIClients() bool
+
+	// CanManageWebhooks should return whether a user is authorized to manage webhooks.
+	CanManageWebhooks() bool
+}
+
 // ServiceUserPermissionsSummary summarizes a user's permissions.
 type ServiceUserPermissionsSummary struct {
 	CanManageWebhooks   bool `json:"canManageWebhooks"`

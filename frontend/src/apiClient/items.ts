@@ -1,3 +1,5 @@
+import axios, { AxiosResponse } from 'axios';
+import format from 'string-format';
 import { backendRoutes } from '../constants/routes';
 import { Logger } from '../logger';
 import type {
@@ -7,8 +9,6 @@ import type {
   ItemList,
   QueryFilter,
 } from '../types';
-import axios, { AxiosResponse } from 'axios';
-import format from 'string-format';
 
 const logger = new Logger().withDebugValue('source', 'src/apiClient/items.ts');
 

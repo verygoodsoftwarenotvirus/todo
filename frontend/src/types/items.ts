@@ -1,10 +1,13 @@
-import { APITableCell, APITableHeader } from '../components/core/apiTable/types';
-import type { itemModelTranslations } from '../i18n';
-import { Pagination } from './api';
-import { defaultFactories } from './fakes';
-import { renderUnixTime } from '../utils';
 import * as Factory from 'factory.ts';
 import faker from 'faker';
+import {
+  APITableCell,
+  APITableHeader,
+} from '../components/core/apiTable/types';
+import type { itemModelTranslations } from '../i18n';
+import { renderUnixTime } from '../utils';
+import { Pagination } from './api';
+import { defaultFactories } from './fakes';
 
 export class ItemList extends Pagination {
   items: Item[];

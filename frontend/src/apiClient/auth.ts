@@ -1,3 +1,4 @@
+import axios, { AxiosResponse } from 'axios';
 import { backendRoutes } from '../constants/routes';
 import { Logger } from '../logger';
 import type {
@@ -9,7 +10,6 @@ import type {
   UserRegistrationResponse,
   UserTwoFactorSecretUpdateRequest,
 } from '../types';
-import axios, { AxiosResponse } from 'axios';
 
 const logger = new Logger().withDebugValue('source', 'src/apiClient/auth.ts');
 

@@ -30,8 +30,8 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&account.ID,
 		&account.ExternalID,
 		&account.Name,
-		&account.PlanID,
-		&account.DefaultUserPermissions,
+		&account.AccountSubscriptionPlanID,
+		&account.DefaultNewMemberPermissions,
 		&account.CreatedOn,
 		&account.LastUpdatedOn,
 		&account.ArchivedOn,
@@ -264,11 +264,11 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	logger = logger.WithValue(keys.AccountIDKey, id)
 
 	account := &types.Account{
-		ID:                     id,
-		Name:                   input.Name,
-		BelongsToUser:          input.BelongsToUser,
-		DefaultUserPermissions: input.DefaultUserPermissions,
-		CreatedOn:              q.currentTime(),
+		ID:                          id,
+		Name:                        input.Name,
+		BelongsToUser:               input.BelongsToUser,
+		DefaultNewMemberPermissions: input.DefaultUserPermissions,
+		CreatedOn:                   q.currentTime(),
 	}
 
 	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, createdByUser)); err != nil {
@@ -278,7 +278,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 
 	addInput := &types.AddUserToAccountInput{
 		UserID:                 input.BelongsToUser,
-		UserAccountPermissions: account.DefaultUserPermissions,
+		UserAccountPermissions: account.DefaultNewMemberPermissions,
 		Reason:                 "account creation",
 	}
 

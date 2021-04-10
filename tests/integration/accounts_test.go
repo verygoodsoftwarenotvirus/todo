@@ -266,7 +266,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			t.Logf("created account #%d", account.ID)
 
-			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultUserPermissions, "expected and actual permissions do not match")
+			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultNewMemberPermissions, "expected and actual permissions do not match")
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
 			t.Logf("switched main test client active account to #%d, creating webhook", account.ID)
@@ -407,7 +407,7 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 
 			t.Logf("created account #%d", account.ID)
 
-			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultUserPermissions, "expected and actual permissions do not match")
+			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultNewMemberPermissions, "expected and actual permissions do not match")
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
 			t.Logf("switched to active account: %d", account.ID)

@@ -11,7 +11,7 @@ const (
 	cycleCookieSecretPermission ServiceAdminPermissions = 1 << iota
 	banUserPermission
 	canTerminateAccountsPermission
-	unusedServiceAdminPermission4
+	canImpersonateAccountsPermission
 	unusedServiceAdminPermission5
 	unusedServiceAdminPermission6
 	unusedServiceAdminPermission7
@@ -46,24 +46,28 @@ func init() {
 	gob.Register(ServiceAdminPermissions(0))
 }
 
+// ServiceAdminPermissionChecker returns whether or not a given permission applies to a user.
+type ServiceAdminPermissionChecker interface {
+	IsServiceAdmin() bool
+	CanCycleCookieSecrets() bool
+	CanBanUsers() bool
+	CanTerminateAccounts() bool
+}
+
+// ServiceAdminPermissionsSummary summarizes a user's permissions.
+type ServiceAdminPermissionsSummary struct {
+	CanCycleCookieSecrets  bool `json:"canCycleCookieSecret"`
+	CanBanUsers            bool `json:"canBanUsers"`
+	CanTerminateAccounts   bool `json:"canTerminateAccounts"`
+	CanImpersonateAccounts bool `json:"canImpersonateAccounts"`
+}
+
 // ServiceAdminPermissions is a bitmask for keeping track of admin user permissions.
 type ServiceAdminPermissions uint32
 
 // NewServiceAdminPermissions builds a new ServiceAdminPermissionChecker.
 func NewServiceAdminPermissions(x uint32) ServiceAdminPermissions {
 	return ServiceAdminPermissions(x)
-}
-
-// Summary produces a ServiceAdminPermissionsSummary.
-func (p ServiceAdminPermissions) Summary() *ServiceAdminPermissionsSummary {
-	if p == 0 {
-		return nil
-	}
-
-	return &ServiceAdminPermissionsSummary{
-		CanCycleCookieSecrets: p.CanCycleCookieSecrets(),
-		CanBanUsers:           p.CanBanUsers(),
-	}
 }
 
 // Value implements the driver.Valuer interface.
@@ -104,6 +108,20 @@ func (p *ServiceAdminPermissions) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Summary produces a ServiceAdminPermissionsSummary.
+func (p ServiceAdminPermissions) Summary() *ServiceAdminPermissionsSummary {
+	if p == 0 {
+		return nil
+	}
+
+	return &ServiceAdminPermissionsSummary{
+		CanCycleCookieSecrets:  p.CanCycleCookieSecrets(),
+		CanBanUsers:            p.CanBanUsers(),
+		CanTerminateAccounts:   p.CanTerminateAccounts(),
+		CanImpersonateAccounts: p.CanImpersonateAccounts(),
+	}
+}
+
 // IsServiceAdmin determines whether or not a user has service admin permissions.
 func (p ServiceAdminPermissions) IsServiceAdmin() bool {
 	return p != 0
@@ -124,8 +142,8 @@ func (p ServiceAdminPermissions) CanTerminateAccounts() bool {
 	return p&canTerminateAccountsPermission != 0
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission4() bool {
-	return p&unusedServiceAdminPermission4 != 0
+func (p ServiceAdminPermissions) CanImpersonateAccounts() bool {
+	return p&canImpersonateAccountsPermission != 0
 }
 
 func (p ServiceAdminPermissions) hasReservedUnusedPermission5() bool {

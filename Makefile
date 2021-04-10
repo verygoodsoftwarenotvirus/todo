@@ -5,11 +5,12 @@ ________________________________
       \   ^__^
        \  (oo)\_______
           (__)\       )\/\\
-              ||----w |
-              ||     ||
+              ||---W-|
+              ||    ||
 endef
-
 export MAGE_INQUIRY
+
 .DEFAULT:
 	@echo "$$MAGE_INQUIRY"
+	@sleep 5
 	@mage $@

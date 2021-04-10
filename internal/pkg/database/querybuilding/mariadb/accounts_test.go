@@ -136,7 +136,7 @@ func TestMariaDB_BuildCreateAccountQuery(T *testing.T) {
 			exampleAccount.ExternalID,
 			exampleAccount.Name,
 			exampleAccount.BelongsToUser,
-			exampleAccount.DefaultUserPermissions,
+			exampleAccount.DefaultNewMemberPermissions,
 		}
 		actualQuery, actualArgs := q.BuildAccountCreationQuery(ctx, exampleInput)
 

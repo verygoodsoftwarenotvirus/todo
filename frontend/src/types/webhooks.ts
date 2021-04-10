@@ -1,10 +1,13 @@
-import { APITableCell, APITableHeader } from '../components/core/apiTable/types';
+import * as Factory from 'factory.ts';
+import faker from 'faker';
+import {
+  APITableCell,
+  APITableHeader,
+} from '../components/core/apiTable/types';
 import type { webhookModelTranslations } from '../i18n';
 import { Pagination } from '../types/api';
 import { defaultFactories } from '../types/fakes';
 import { renderUnixTime } from '../utils';
-import * as Factory from 'factory.ts';
-import faker from 'faker';
 
 export class WebhookList extends Pagination {
   webhooks: Webhook[];

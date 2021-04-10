@@ -33,8 +33,8 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 			x.ID,
 			x.ExternalID,
 			x.Name,
-			x.PlanID,
-			x.DefaultUserPermissions,
+			x.AccountSubscriptionPlanID,
+			x.DefaultNewMemberPermissions,
 			x.CreatedOn,
 			x.LastUpdatedOn,
 			x.ArchivedOn,
@@ -608,7 +608,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
 			Reason:                 "account creation",
 			UserID:                 exampleUser.ID,
-			UserAccountPermissions: exampleAccount.DefaultUserPermissions,
+			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
 		}
 
 		ctx := context.Background()

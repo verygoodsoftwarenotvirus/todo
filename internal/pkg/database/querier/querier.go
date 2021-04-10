@@ -121,7 +121,7 @@ func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserCon
 
 		// these structs will be fleshed out by createUser
 		user := &types.User{Username: testUserConfig.Username}
-		account := &types.Account{DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32)}
+		account := &types.Account{DefaultNewMemberPermissions: permissions.ServiceUserPermissions(math.MaxUint32)}
 
 		if err := q.createUser(ctx, user, account, query, args); err != nil {
 			q.logger.Error(err, "creating test user")

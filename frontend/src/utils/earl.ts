@@ -1,5 +1,5 @@
 // QueryFilter keys
-import { isNumeric, parseBool } from "./misc";
+import { isNumeric, parseBool } from './misc';
 
 const queryFilterKeyPage = 'page',
   queryFilterKeyCreatedBefore = 'createdBefore',
@@ -28,9 +28,15 @@ export function inheritQueryFilterSearchParams(
     const x = (pageURLParams.get(key) || '').trim();
 
     if (x) {
-      if (key === queryFilterKeyIncludeArchived && parseBool(x.toLowerCase()) !== null) {
+      if (
+        key === queryFilterKeyIncludeArchived &&
+        parseBool(x.toLowerCase()) !== null
+      ) {
         outboundURLParams.set(key, x);
-      } else if (key === queryFilterKeySortBy && ['asc', 'desc'].includes(x.toLowerCase())) {
+      } else if (
+        key === queryFilterKeySortBy &&
+        ['asc', 'desc'].includes(x.toLowerCase())
+      ) {
         outboundURLParams.set(key, x);
       } else if (isNumeric(x)) {
         outboundURLParams.set(key, x);

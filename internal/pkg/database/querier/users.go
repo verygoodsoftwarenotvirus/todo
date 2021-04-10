@@ -304,8 +304,8 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 	}
 
 	// create the account.
-	accountCreationInput := types.NewAccountCreationInputForUser(user)
-	accountCreationInput.DefaultUserPermissions = account.DefaultUserPermissions
+	accountCreationInput := types.AccountCreationInputForNewUser(user)
+	accountCreationInput.DefaultUserPermissions = account.DefaultNewMemberPermissions
 	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, accountCreationInput)
 
 	accountID, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
@@ -330,7 +330,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	addToAccountInput := &types.AddUserToAccountInput{
 		UserID:                 user.ID,
-		UserAccountPermissions: account.DefaultUserPermissions,
+		UserAccountPermissions: account.DefaultNewMemberPermissions,
 		Reason:                 "account creation",
 	}
 
@@ -374,10 +374,10 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 	}
 
 	account := &types.Account{
-		Name:                   input.Username,
-		PlanID:                 nil,
-		CreatedOn:              q.currentTime(),
-		DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
+		Name:                        input.Username,
+		AccountSubscriptionPlanID:   nil,
+		CreatedOn:                   q.currentTime(),
+		DefaultNewMemberPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
 	}
 
 	if err := q.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {

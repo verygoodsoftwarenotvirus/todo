@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -800,20 +801,61 @@ func Run() error {
 	return nil
 }
 
+func runCommandsFromFrontendFolder(funcs ...func() error) error {
+	if err := os.Chdir(frontendDir); err != nil {
+		return err
+	}
+
+	for _, f := range funcs {
+		if err := f(); err != nil {
+			return err
+		}
+	}
+
+	return os.Chdir(cwd)
+}
+
+func ScaffoldFrontendTests() error {
+	err := filepath.Walk("frontend/src",
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if strings.HasSuffix(info.Name(), ".ts") && !strings.HasSuffix(info.Name(), ".test.ts") && !strings.HasSuffix(info.Name(), ".d.ts") {
+				sansExtension := path[:len(path)-3]
+				newFileName := sansExtension + ".test.ts"
+				if _, statErr := os.Stat(newFileName); os.IsNotExist(statErr) {
+					output := fmt.Sprintf(`import './%s'; // TODO: test me!
+`, filepath.Base(sansExtension))
+
+					if writeErr :=  ioutil.WriteFile(newFileName, []byte(output), 0644); writeErr != nil {
+						return writeErr
+					}
+				} else {
+					return statErr
+				}
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func FrontendAutoBuild() error {
 	if err := os.RemoveAll(filepath.Join(frontendDir, "dist", "build")); err != nil {
 		return err
 	}
 
-	if err := os.Chdir(frontendDir); err != nil {
-		return err
-	}
-
-	if err := sh.RunV(frontendTool, run, "autobuild"); err != nil {
-		return err
-	}
-
-	return os.Chdir(cwd)
+	return runCommandsFromFrontendFolder(
+		func() error {
+			return sh.RunV(frontendTool, run, "autobuild")
+		},
+	)
 }
 
 func FrontendOnly() error {

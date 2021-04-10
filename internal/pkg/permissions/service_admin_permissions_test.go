@@ -48,17 +48,17 @@ func TestServiceAdminPermissions_CanTerminateAccounts(T *testing.T) {
 	})
 }
 
-func TestServiceAdminPermissions_hasReservedUnusedPermission4(T *testing.T) {
+func TestServiceAdminPermissions_CanImpersonateAccounts(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceAdminPermissions(0)
-		assert.False(t, x.hasReservedUnusedPermission4())
+		assert.False(t, x.CanImpersonateAccounts())
 
-		y := ServiceAdminPermissions(0 | uint32(unusedServiceAdminPermission4))
-		assert.True(t, y.hasReservedUnusedPermission4())
+		y := ServiceAdminPermissions(0 | uint32(canImpersonateAccountsPermission))
+		assert.True(t, y.CanImpersonateAccounts())
 	})
 }
 

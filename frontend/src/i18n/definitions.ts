@@ -1,3 +1,4 @@
+import { LanguageTag, languageTag, translate } from 'typed-intl';
 import type {
   accountModelTranslations,
   accountSettingsPageTranslations,
@@ -24,7 +25,6 @@ import type {
   webhookModelTranslations,
 } from '../i18n';
 import { englishTranslations } from '../i18n/english';
-import { LanguageTag, languageTag, translate } from 'typed-intl';
 
 const english = 'en-US';
 const mexicanSpanish = 'es-MX';

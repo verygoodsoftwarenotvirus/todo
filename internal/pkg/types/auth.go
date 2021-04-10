@@ -28,15 +28,18 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
+		AccountID   uint64                             `json:"accountID"`
 		AccountName string                             `json:"name"`
 		Permissions permissions.ServiceUserPermissions `json:"permissions"`
 	}
 
+	AccountPermissionsMap map[uint64]UserAccountMembershipInfo
+
 	// RequestContext represents what we encode in our authentication cookies.
 	RequestContext struct {
-		AccountPermissionsMap map[uint64]UserAccountMembershipInfo `json:"-"`
-		Requester             RequesterInfo                        `json:"-"`
-		ActiveAccountID       uint64                               `json:"-"`
+		AccountPermissionsMap AccountPermissionsMap `json:"-"`
+		Requester             RequesterInfo         `json:"-"`
+		ActiveAccountID       uint64                `json:"-"`
 	}
 
 	// RequesterInfo contains data relevant to the user making a request.
@@ -49,7 +52,7 @@ type (
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		AccountPermissions             map[uint64]UserAccountMembershipInfo        `json:"accountPermissions,omitempty"`
+		AccountPermissions             map[string]UserAccountMembershipInfo        `json:"accountPermissions,omitempty"`
 		ServiceAdminPermissionsSummary *permissions.ServiceAdminPermissionsSummary `json:"adminPermissions,omitempty"`
 		UserReputation                 userReputation                              `json:"userReputation,omitempty"`
 		UserReputationExplanation      string                                      `json:"reputationExplanation"`
@@ -85,7 +88,7 @@ type (
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
-		PermissionRestrictionMiddleware(p ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler
+		PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler
 		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
@@ -119,6 +122,15 @@ func (i *PASETOCreationInput) Validate(ctx context.Context) error {
 		validation.Field(&i.ClientID, validation.Required),
 		validation.Field(&i.RequestTime, validation.Required),
 	)
+}
+
+func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]UserAccountMembershipInfo {
+	out := map[string]UserAccountMembershipInfo{}
+	for _, v := range perms {
+		out[v.AccountName] = v
+	}
+
+	return out
 }
 
 // ToBytes returns the gob encoded session info.

@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -12,15 +13,15 @@ import (
 type (
 	// Account represents an account.
 	Account struct {
-		ArchivedOn             *uint64                            `json:"archivedOn"`
-		PlanID                 *uint64                            `json:"planID"`
-		LastUpdatedOn          *uint64                            `json:"lastUpdatedOn"`
-		Name                   string                             `json:"name"`
-		ExternalID             string                             `json:"externalID"`
-		CreatedOn              uint64                             `json:"createdOn"`
-		ID                     uint64                             `json:"id"`
-		BelongsToUser          uint64                             `json:"belongsToUser"`
-		DefaultUserPermissions permissions.ServiceUserPermissions `json:"defaultUserPermissions"`
+		ArchivedOn                  *uint64                            `json:"archivedOn"`
+		AccountSubscriptionPlanID   *uint64                            `json:"accountSubscriptionPlanID"`
+		LastUpdatedOn               *uint64                            `json:"lastUpdatedOn"`
+		Name                        string                             `json:"name"`
+		ExternalID                  string                             `json:"externalID"`
+		CreatedOn                   uint64                             `json:"createdOn"`
+		ID                          uint64                             `json:"id"`
+		BelongsToUser               uint64                             `json:"belongsToUser"`
+		DefaultNewMemberPermissions permissions.ServiceUserPermissions `json:"defaultNewMemberPermissions"`
 	}
 
 	// AccountList represents a list of accounts.
@@ -109,10 +110,10 @@ func (x *AccountUpdateInput) Validate(ctx context.Context) error {
 	)
 }
 
-// NewAccountCreationInputForUser creates a new AccountInputCreation struct for a given user.
-func NewAccountCreationInputForUser(u *User) *AccountCreationInput {
+// AccountCreationInputForNewUser creates a new AccountInputCreation struct for a given user.
+func AccountCreationInputForNewUser(u *User) *AccountCreationInput {
 	return &AccountCreationInput{
-		Name:          u.Username,
+		Name:          fmt.Sprintf("%s_default", u.Username),
 		BelongsToUser: u.ID,
 	}
 }

@@ -536,7 +536,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.NewAccountCreationInputForUser(exampleUser)
+		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
 
 		ctx := context.Background()
@@ -696,7 +696,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.NewAccountCreationInputForUser(exampleUser)
+		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
 
 		ctx := context.Background()
@@ -760,7 +760,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.NewAccountCreationInputForUser(exampleUser)
+		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
 
 		ctx := context.Background()

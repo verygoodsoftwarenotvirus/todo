@@ -22,8 +22,8 @@ import type {
   userSettingsPageTranslations,
   webhookCreationPageTranslations,
   webhookModelTranslations,
-} from '@/i18n';
-import { englishTranslations } from '@/i18n/english';
+} from '../i18n';
+import { englishTranslations } from '../i18n/english';
 import { LanguageTag, languageTag, translate } from 'typed-intl';
 
 const english = 'en-US';

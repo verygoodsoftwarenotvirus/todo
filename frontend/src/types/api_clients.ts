@@ -1,8 +1,8 @@
-import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
-import type { apiClientModelTranslations } from '@/i18n';
-import { Pagination } from '@/types/api';
-import { defaultFactories } from '@/types/fakes';
-import { renderUnixTime } from '@/utils';
+import { APITableCell, APITableHeader } from '../components/core/apiTable/types';
+import type { apiClientModelTranslations } from '../i18n';
+import { Pagination } from '../types/api';
+import { defaultFactories } from '../types/fakes';
+import { renderUnixTime } from '../utils';
 import * as Factory from 'factory.ts';
 import faker from 'faker';
 
@@ -75,31 +75,25 @@ export class APIClient {
   static asRow = (x: APIClient): APITableCell[] => {
     return [
       new APITableCell({
-        fieldName: 'id',
+        isIDCell: true,
         content: x.id.toString(),
       }),
       new APITableCell({
-        fieldName: 'externalID',
         content: x.externalID,
       }),
       new APITableCell({
-        fieldName: 'name',
         content: x.name,
       }),
       new APITableCell({
-        fieldName: 'clientID',
         content: x.clientID,
       }),
       new APITableCell({
-        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
       }),
       new APITableCell({
-        fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
-        fieldName: 'belongsToAccount',
         content: x.belongsToAccount.toString(),
         requiresAdmin: true,
       }),

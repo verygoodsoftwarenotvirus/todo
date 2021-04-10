@@ -1,4 +1,4 @@
-import { Logger } from '@/logger';
+import { Logger } from '../logger';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import {
   createAccount,

@@ -1,8 +1,8 @@
-import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
-import type { auditLogEntryTableTranslations } from '@/i18n';
-import { Pagination } from '@/types/api';
-import { defaultFactories } from '@/types/fakes';
-import { renderUnixTime } from '@/utils';
+import { APITableCell, APITableHeader } from '../components/core/apiTable/types';
+import type { auditLogEntryTableTranslations } from '../i18n';
+import { Pagination } from '../types/api';
+import { defaultFactories } from '../types/fakes';
+import { renderUnixTime } from '../utils';
 import * as Factory from 'factory.ts';
 import faker from 'faker';
 
@@ -57,20 +57,17 @@ export class AuditLogEntry {
   static asRow = (x: AuditLogEntry): APITableCell[] => {
     return [
       new APITableCell({
-        fieldName: 'id',
+        isIDCell: true,
         content: x.id.toString(),
       }),
       new APITableCell({
-        fieldName: 'eventType',
         content: x.eventType,
       }),
       new APITableCell({
-        fieldName: 'context',
         content: JSON.stringify(x.context),
         isJSON: true,
       }),
       new APITableCell({
-        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
       }),
     ];

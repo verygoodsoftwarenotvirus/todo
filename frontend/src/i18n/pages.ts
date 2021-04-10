@@ -1,4 +1,4 @@
-import type { webhookModelTranslations } from '@/i18n/types';
+import type { webhookModelTranslations } from './types';
 
 export type homePageTranslations = {
   mainGreeting: string;

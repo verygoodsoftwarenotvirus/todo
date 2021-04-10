@@ -1,4 +1,4 @@
-import { parseBool } from '@/utils';
+import { parseBool } from '../utils';
 
 const enum SortBy {
   ASCENDING = 'asc',
@@ -68,9 +68,8 @@ export class QueryFilter {
     out.updatedAfter = input.get(queryFilterKeyUpdatedAfter)
       ? parseInt(input.get(queryFilterKeyUpdatedAfter) || '0')
       : out.updatedAfter;
-    out.includeArchived = parseBool(
-      input.get(queryFilterKeyIncludeArchived) || 'false',
-    );
+    out.includeArchived =
+      parseBool(input.get(queryFilterKeyIncludeArchived) || 'false') || false;
     out.sortBy = (input.get(queryFilterKeySortBy) ||
       SortBy.ASCENDING.toString()) as SortBy;
 

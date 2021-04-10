@@ -1,3 +1,3 @@
-export * from '@/constants/constants';
-export * from '@/constants/http';
-export * from '@/constants/routes';
+export * from './constants';
+export * from './http';
+export * from './routes';

@@ -1,12 +1,12 @@
-import { backendRoutes } from '@/constants/routes';
-import { Logger } from '@/logger';
+import { backendRoutes } from '../constants/routes';
+import { Logger } from '../logger';
 import type {
   APIClient,
   APIClientCreationInput,
   APIClientList,
   AuditLogEntry,
   QueryFilter,
-} from '@/types';
+} from '../types';
 import axios, { AxiosResponse } from 'axios';
 import format from 'string-format';
 

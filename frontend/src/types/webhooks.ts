@@ -1,8 +1,8 @@
-import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
-import type { webhookModelTranslations } from '@/i18n';
-import { Pagination } from '@/types/api';
-import { defaultFactories } from '@/types/fakes';
-import { renderUnixTime } from '@/utils';
+import { APITableCell, APITableHeader } from '../components/core/apiTable/types';
+import type { webhookModelTranslations } from '../i18n';
+import { Pagination } from '../types/api';
+import { defaultFactories } from '../types/fakes';
+import { renderUnixTime } from '../utils';
 import * as Factory from 'factory.ts';
 import faker from 'faker';
 
@@ -99,50 +99,40 @@ export class Webhook {
   static asRow = (x: Webhook): APITableCell[] => {
     return [
       new APITableCell({
-        fieldName: 'id',
+        isIDCell: true,
         content: x.id.toString(),
       }),
       new APITableCell({
-        fieldName: 'name',
         content: x.name,
       }),
       new APITableCell({
-        fieldName: 'contentType',
         content: x.contentType,
       }),
-      new APITableCell({ fieldName: 'url', content: x.url }),
+      new APITableCell({ content: x.url }),
       new APITableCell({
-        fieldName: 'method',
         content: x.method,
       }),
       new APITableCell({
-        fieldName: 'events',
         content: x.events.toString(),
       }),
       new APITableCell({
-        fieldName: 'dataTypes',
         content: x.dataTypes.toString(),
       }),
       new APITableCell({
-        fieldName: 'topics',
         content: (x.topics || []).toString(),
       }),
       new APITableCell({
-        fieldName: 'externalID',
         content: x.externalID,
         requiresAdmin: true,
       }),
       new APITableCell({
-        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
       }),
       new APITableCell({
-        fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.lastUpdatedOn),
         requiresAdmin: true,
       }),
       new APITableCell({
-        fieldName: 'belongsToAccount',
         content: x.belongsToAccount.toString(),
         requiresAdmin: true,
       }),

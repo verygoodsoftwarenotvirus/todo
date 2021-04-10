@@ -1,3 +1,3 @@
-import { LogLevel } from '@/logger';
+import { LogLevel } from '../logger';
 
 const sitewideLogLevel: LogLevel = LogLevel.Debug;

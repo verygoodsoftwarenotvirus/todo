@@ -1,11 +1,13 @@
 // QueryFilter keys
-const queryFilterKeyPage = 'page';
-const queryFilterKeyCreatedBefore = 'createdBefore';
-const queryFilterKeyCreatedAfter = 'createdAfter';
-const queryFilterKeyUpdatedBefore = 'updatedBefore';
-const queryFilterKeyUpdatedAfter = 'updatedAfter';
-const queryFilterKeyIncludeArchived = 'includeArchived';
-const queryFilterKeySortBy = 'sortBy';
+import { isNumeric, parseBool } from "./misc";
+
+const queryFilterKeyPage = 'page',
+  queryFilterKeyCreatedBefore = 'createdBefore',
+  queryFilterKeyCreatedAfter = 'createdAfter',
+  queryFilterKeyUpdatedBefore = 'updatedBefore',
+  queryFilterKeyUpdatedAfter = 'updatedAfter',
+  queryFilterKeyIncludeArchived = 'includeArchived',
+  queryFilterKeySortBy = 'sortBy';
 
 const validQueryFilterKeys: string[] = [
   queryFilterKeyPage,
@@ -20,25 +22,17 @@ const validQueryFilterKeys: string[] = [
 export function inheritQueryFilterSearchParams(
   pageURLParams: URLSearchParams,
 ): URLSearchParams {
-  // const pageURLParams: URLSearchParams = new URLSearchParams(window.location.search);
   const outboundURLParams: URLSearchParams = new URLSearchParams();
 
-  validQueryFilterKeys.forEach((key: string, _: number) => {
-    const x = pageURLParams.get(key);
+  validQueryFilterKeys.forEach((key: string) => {
+    const x = (pageURLParams.get(key) || '').trim();
 
     if (x) {
-      if (key === queryFilterKeyIncludeArchived) {
-        const val = (x as string).toLowerCase().trim();
-        if (val === 'true' || val === 'false') {
-          outboundURLParams.set(key, x);
-        }
-      } else if (key === queryFilterKeySortBy) {
-        const val = (x as string).toLowerCase().trim();
-        if (val === 'asc' || val === 'desc') {
-          outboundURLParams.set(key, x);
-        }
-      } else {
-        // assumed numeric here
+      if (key === queryFilterKeyIncludeArchived && parseBool(x.toLowerCase()) !== null) {
+        outboundURLParams.set(key, x);
+      } else if (key === queryFilterKeySortBy && ['asc', 'desc'].includes(x.toLowerCase())) {
+        outboundURLParams.set(key, x);
+      } else if (isNumeric(x)) {
         outboundURLParams.set(key, x);
       }
     }

@@ -8,10 +8,10 @@ import {
   UserStatus,
   UserSiteSettings,
   fakeAccountFactory,
-} from '@/types';
-import { Logger } from '@/logger';
-import { V1APIClient } from '@/apiClient';
-import { Superstore } from '@/stores';
+} from '../../types';
+import { Logger } from '../../logger';
+import { V1APIClient } from '../../apiClient';
+import { Superstore } from '../../stores';
 
 export let accountID: number;
 export let location: Location;

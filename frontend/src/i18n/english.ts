@@ -1,5 +1,5 @@
-import type { SiteTranslationMap } from '@/i18n/definitions';
-import type { webhookModelTranslations } from '@/i18n/types';
+import type { SiteTranslationMap } from './definitions';
+import type { webhookModelTranslations } from './types';
 
 const _id = 'ID',
   _externalID = 'External ID',

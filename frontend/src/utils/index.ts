@@ -1,4 +1,3 @@
 export * from './earl';
-export * from './golang';
+export * from './misc';
 export * from './time';
-export * from './utils';

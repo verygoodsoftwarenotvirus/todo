@@ -2,7 +2,7 @@
 <script lang="typescript">
 import { Router, Route, navigate } from 'svelte-routing';
 
-import { Logger } from '@/logger';
+import { Logger } from './logger';
 
 // Admin Layout
 import Admin from './layouts/dashboard.svelte';
@@ -17,9 +17,9 @@ import Things from './layouts/things.svelte';
 
 // No Layout Pages
 import Dashboard from './views/dashboard.svelte';
-import { UserSiteSettings, UserStatus } from '@/types';
-import { Superstore } from '@/stores';
-import { frontendRoutes } from '@/constants';
+import { UserSiteSettings, UserStatus } from './types';
+import { Superstore } from './stores';
+import { frontendRoutes } from './constants';
 
 export let url: string = '';
 

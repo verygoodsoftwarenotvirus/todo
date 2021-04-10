@@ -4,25 +4,25 @@ export interface APITableHeader {
 }
 
 interface APITableCellParams {
-  fieldName?: string;
-  content?: string;
+  content: string;
+  isIDCell?: boolean;
   isJSON?: boolean;
   requiresAdmin?: boolean;
 }
 
 export class APITableCell {
-  fieldName: string;
   content: string;
+  isIDCell: boolean;
   isJSON: boolean;
   requiresAdmin: boolean;
 
   constructor({
-    fieldName = '',
     content = '',
+    isIDCell = false,
     isJSON = false,
     requiresAdmin = false,
   }: APITableCellParams) {
-    this.fieldName = fieldName;
+    this.isIDCell = isIDCell;
     this.content = content;
     this.isJSON = isJSON;
     this.requiresAdmin = requiresAdmin;

@@ -1,5 +1,5 @@
-import { Logger } from '@/logger';
-import type { UserSiteSettings, UserStatus } from '@/types';
+import { Logger } from '../logger';
+import type { UserSiteSettings, UserStatus } from '../types';
 import { adminModeStore } from './admin_mode_store';
 import { sessionSettingsStore } from './session_settings_store';
 import { userStatusStore } from './user_status_store';

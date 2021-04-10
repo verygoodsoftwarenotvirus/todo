@@ -1,12 +1,10 @@
-import { APITableCell, APITableHeader } from '@/components/core/apiTable/types';
-import type { userModelTranslations } from '@/i18n';
-import { Pagination } from '@/types/api';
-import { defaultFactories } from '@/types/fakes';
-import { isNumeric, renderUnixTime } from '@/utils';
+import { APITableCell, APITableHeader } from '../components/core/apiTable/types';
+import type { userModelTranslations } from '../i18n';
+import { Pagination } from './api';
+import { defaultFactories } from './fakes';
+import { isNumeric, renderUnixTime } from '../utils';
 import * as Factory from 'factory.ts';
 import faker from 'faker';
-
-// import { AdminPermissions } from '@/types/permissions/permission_mask';
 
 export class UserList extends Pagination {
   users: User[];
@@ -93,47 +91,37 @@ export class User {
   static asRow = (x: User): APITableCell[] => {
     return [
       new APITableCell({
-        fieldName: 'id',
+        isIDCell: true,
         content: x.id.toString(),
       }),
       new APITableCell({
-        fieldName: 'username',
         content: x.username,
       }),
       new APITableCell({
-        fieldName: 'reputation',
         content: x.reputation,
       }),
       new APITableCell({
-        fieldName: 'reputationExplanation',
         content: x.reputationExplanation,
       }),
       new APITableCell({
-        fieldName: 'serviceAdminPermissions',
         content: x.serviceAdminPermissions.toString(),
       }),
       new APITableCell({
-        fieldName: 'requiresPasswordChange',
         content: x.requiresPasswordChange.toString(),
       }),
       new APITableCell({
-        fieldName: 'passwordLastChangedOn',
         content: (x.passwordLastChangedOn || 'never').toString(),
       }),
       new APITableCell({
-        fieldName: 'externalID',
         content: x.externalID,
       }),
       new APITableCell({
-        fieldName: 'createdOn',
         content: renderUnixTime(x.createdOn),
       }),
       new APITableCell({
-        fieldName: 'lastUpdatedOn',
         content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
-        fieldName: 'archivedOn',
         content: renderUnixTime(x.archivedOn),
         requiresAdmin: true,
       }),

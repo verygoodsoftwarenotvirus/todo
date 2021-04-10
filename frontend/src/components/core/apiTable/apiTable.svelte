@@ -198,7 +198,7 @@ function goToNewPage() {
         {#each rows as row}
           <tr>
             {#each rowRenderFunction(row) as cell}
-              {#if cell.fieldName.toLocaleLowerCase() === 'id' && individualPageLink !== ''}
+              {#if cell.isIDCell && individualPageLink !== ''}
                 <a use:link href="{individualPageLink}/{row.id}">
                   <th class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center">
                     <span class="ml-3 font-bold btext-gray-700">

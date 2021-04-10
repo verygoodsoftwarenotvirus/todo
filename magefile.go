@@ -665,18 +665,32 @@ func Coverage() error {
 
 // Testing
 
-func Quicktest() error {
+func backendUnitTests(outLoud bool) error {
 	packagesToTest, err := determineTestablePackages()
 	if err != nil {
 		return err
 	}
 
 	fullCommand := append([]string{"test", "-cover", "-race", "-failfast"}, packagesToTest...)
-	if err = runGoCommand(true, fullCommand...); err != nil {
+	if err = runGoCommand(outLoud, fullCommand...); err != nil {
 		return err
 	}
 
-	if err = frontendUnitTests(true); err != nil {
+	return nil
+}
+
+type Backend mg.Namespace
+
+func (Backend) UnitTests() error {
+	return backendUnitTests(true)
+}
+
+func Quicktest() error {
+	if err := backendUnitTests(true); err != nil {
+		return err
+	}
+
+	if err := frontendUnitTests(true); err != nil {
 		return err
 	}
 

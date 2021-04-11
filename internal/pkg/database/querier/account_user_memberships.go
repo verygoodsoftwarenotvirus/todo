@@ -65,7 +65,7 @@ func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows databa
 		}
 
 		membershipMap[x.BelongsToAccount] = types.UserAccountMembershipInfo{
-			AccountID:   x.ID,
+			AccountID:   x.BelongsToAccount,
 			AccountName: accountName,
 			Permissions: x.UserAccountPermissions,
 		}

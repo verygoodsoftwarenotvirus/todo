@@ -476,16 +476,15 @@ func formatBackend() error {
 	return sh.Run("gofmt", append([]string{"-s", "-w"}, goFiles...)...)
 }
 
-func formatFrontend() error {
-	if err := os.Chdir(frontendDir); err != nil {
-		return err
+func formatFrontend(outLoud bool) error {
+	rf := sh.Run
+	if outLoud {
+		rf = sh.RunV
 	}
 
-	if err := sh.RunV(frontendTool, run, "format"); err != nil {
-		return err
-	}
-
-	return os.Chdir(cwd)
+	return runCommandsFromFrontendFolder(func() error {
+		return rf(frontendTool, run, "format")
+	})
 }
 
 func Format() error {
@@ -493,7 +492,7 @@ func Format() error {
 		return err
 	}
 
-	if err := formatFrontend(); err != nil {
+	if err := formatFrontend(false); err != nil {
 		return err
 	}
 
@@ -848,7 +847,7 @@ func ScaffoldFrontendTests() error {
 					output := fmt.Sprintf(`import './%s'; // TODO: test me!
 `, filepath.Base(sansExtension))
 
-					if writeErr :=  ioutil.WriteFile(newFileName, []byte(output), 0644); writeErr != nil {
+					if writeErr := ioutil.WriteFile(newFileName, []byte(output), 0644); writeErr != nil {
 						return writeErr
 					}
 				} else {
@@ -873,11 +872,9 @@ func frontendUnitTests(outLoud bool) error {
 		rf = sh.RunV
 	}
 
-	return runCommandsFromFrontendFolder(
-		func() error {
-			return rf(frontendTool, run, "test")
-		},
-	)
+	return runCommandsFromFrontendFolder(func() error {
+		return rf(frontendTool, run, "test")
+	})
 }
 
 func (Frontend) UnitTests() error {
@@ -889,11 +886,9 @@ func (Frontend) AutoBuild() error {
 		return err
 	}
 
-	return runCommandsFromFrontendFolder(
-		func() error {
-			return sh.RunV(frontendTool, run, "autobuild")
-		},
-	)
+	return runCommandsFromFrontendFolder(func() error {
+		return sh.RunV(frontendTool, run, "autobuild")
+	})
 }
 
 func (Frontend) Only() error {

@@ -12,7 +12,7 @@ describe('earl', () => {
         expectation,
       );
     });
-  
+
     it('should ignore non-numeric values', () => {
       const expectedPage = '12345',
         expectedCreatedBefore = 'lol',
@@ -21,7 +21,7 @@ describe('earl', () => {
         expectedUpdatedAfter = 'lol',
         expectedIncludeArchived = 'true',
         expectedSortBy = 'asc';
-    
+
       const input = new URLSearchParams([
         ['page', expectedPage],
         ['createdBefore', expectedCreatedBefore],
@@ -31,16 +31,17 @@ describe('earl', () => {
         ['includeArchived', expectedIncludeArchived],
         ['sortBy', expectedSortBy],
       ]);
-    
-      const expectation = `page=${expectedPage}&` +
+
+      const expectation =
+        `page=${expectedPage}&` +
         `includeArchived=${expectedIncludeArchived}&` +
         `sortBy=${expectedSortBy}`;
-    
+
       expect(inheritQueryFilterSearchParams(input).toString()).to.equal(
         expectation,
       );
     });
-    
+
     it('should be fleshed out with full input', () => {
       const expectedPage = '12345',
         expectedCreatedBefore = '23456',
@@ -49,7 +50,7 @@ describe('earl', () => {
         expectedUpdatedAfter = '56789',
         expectedIncludeArchived = 'true',
         expectedSortBy = 'asc';
-    
+
       const input = new URLSearchParams([
         ['page', expectedPage],
         ['createdBefore', expectedCreatedBefore],
@@ -59,15 +60,16 @@ describe('earl', () => {
         ['includeArchived', expectedIncludeArchived],
         ['sortBy', expectedSortBy],
       ]);
-    
-      const expectation = `page=${expectedPage}&` +
+
+      const expectation =
+        `page=${expectedPage}&` +
         `createdBefore=${expectedCreatedBefore}&` +
         `createdAfter=${expectedCreatedAfter}&` +
         `updatedBefore=${expectedUpdatedBefore}&` +
         `updatedAfter=${expectedUpdatedAfter}&` +
         `includeArchived=${expectedIncludeArchived}&` +
         `sortBy=${expectedSortBy}`;
-    
+
       expect(inheritQueryFilterSearchParams(input).toString()).to.equal(
         expectation,
       );

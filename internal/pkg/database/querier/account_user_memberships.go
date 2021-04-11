@@ -40,18 +40,18 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 		return nil, "", observability.PrepareError(err, q.logger, span, "scanning account user memberships")
 	}
 
-	newPerms := permissions.NewServiceUserPermissions(uint32(rawPerms))
+	newPerms := permissions.NewServiceUserPermissions(rawPerms)
 	x.UserAccountPermissions = newPerms
 
 	return x, accountName, nil
 }
 
 // scanAccountUserMemberships takes some database rows and turns them into a slice of memberships.
-func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (defaultAccount uint64, membershipMap map[uint64]types.UserAccountMembershipInfo, err error) {
+func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (defaultAccount uint64, membershipMap map[uint64]*types.UserAccountMembershipInfo, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	membershipMap = map[uint64]types.UserAccountMembershipInfo{}
+	membershipMap = map[uint64]*types.UserAccountMembershipInfo{}
 	logger := q.logger
 
 	for rows.Next() {
@@ -64,7 +64,7 @@ func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows databa
 			defaultAccount = x.BelongsToAccount
 		}
 
-		membershipMap[x.BelongsToAccount] = types.UserAccountMembershipInfo{
+		membershipMap[x.BelongsToAccount] = &types.UserAccountMembershipInfo{
 			AccountID:   x.BelongsToAccount,
 			AccountName: accountName,
 			Permissions: x.UserAccountPermissions,
@@ -109,10 +109,10 @@ func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint
 
 	reqCtx := &types.RequestContext{
 		Requester: types.RequesterInfo{
-			ID:                      user.ID,
-			Reputation:              user.Reputation,
-			ReputationExplanation:   user.ReputationExplanation,
-			ServiceAdminPermissions: user.ServiceAdminPermissions,
+			ID:                     user.ID,
+			Reputation:             user.Reputation,
+			ReputationExplanation:  user.ReputationExplanation,
+			ServiceAdminPermission: user.ServiceAdminPermission,
 		},
 		AccountPermissionsMap: membershipMap,
 		ActiveAccountID:       defaultAccountID,

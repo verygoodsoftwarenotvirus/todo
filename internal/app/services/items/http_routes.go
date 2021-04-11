@@ -172,11 +172,11 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
 
 	var items *types.ItemList
 
-	if reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
+	if reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() && isAdminRequest {
 		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
 	} else {
 		items, err = s.itemDataManager.GetItems(ctx, reqCtx.ActiveAccountID, filter)
@@ -224,7 +224,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	// determine if it's an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
 
 	var (
 		relevantIDs []uint64

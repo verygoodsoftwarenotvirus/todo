@@ -104,7 +104,7 @@ func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, use
 				userID,
 				accountID,
 				true,
-				math.MaxUint32,
+				math.MaxInt64,
 			),
 	)
 }
@@ -135,7 +135,7 @@ func (b *Postgres) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userI
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *Postgres) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermissions) (query string, args []interface{}) {
+func (b *Postgres) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

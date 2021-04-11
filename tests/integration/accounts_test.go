@@ -258,7 +258,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			// fetch account data
 			accountCreationInput := &types.AccountCreationInput{
 				Name:                   fakes.BuildFakeAccount().Name,
-				DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
+				DefaultUserPermissions: permissions.ServiceUserPermission(math.MaxInt64),
 			}
 			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
 			require.NoError(t, accountCreationErr)
@@ -399,7 +399,7 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			// fetch account data
 			accountCreationInput := &types.AccountCreationInput{
 				Name:                   fakes.BuildFakeAccount().Name,
-				DefaultUserPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
+				DefaultUserPermissions: permissions.ServiceUserPermission(math.MaxInt64),
 			}
 			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
 			require.NoError(t, accountCreationErr)

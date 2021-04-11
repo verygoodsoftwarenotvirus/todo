@@ -204,7 +204,7 @@ func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
 			[]byte("aaaaaaaaaaaaaaaa"),
 			"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 			types.GoodStandingAccountStatus,
-			math.MaxUint32,
+			math.MaxInt64,
 		}
 		actualQuery, actualArgs := q.BuildTestUserCreationQuery(ctx, exampleInput)
 

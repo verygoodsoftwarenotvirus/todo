@@ -28,12 +28,13 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
-		AccountID   uint64                             `json:"accountID"`
-		AccountName string                             `json:"name"`
-		Permissions permissions.ServiceUserPermissions `json:"permissions"`
+		AccountName string                            `json:"name"`
+		AccountID   uint64                            `json:"accountID"`
+		Permissions permissions.ServiceUserPermission `json:"permissions"`
 	}
 
-	AccountPermissionsMap map[uint64]UserAccountMembershipInfo
+	// AccountPermissionsMap maps accounts to membership info.
+	AccountPermissionsMap map[uint64]*UserAccountMembershipInfo
 
 	// RequestContext represents what we encode in our authentication cookies.
 	RequestContext struct {
@@ -44,15 +45,15 @@ type (
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
-		Reputation              userReputation                      `json:"-"`
-		ReputationExplanation   string                              `json:"-"`
-		ID                      uint64                              `json:"-"`
-		ServiceAdminPermissions permissions.ServiceAdminPermissions `json:"-"`
+		Reputation             userReputation                     `json:"-"`
+		ReputationExplanation  string                             `json:"-"`
+		ID                     uint64                             `json:"-"`
+		ServiceAdminPermission permissions.ServiceAdminPermission `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		AccountPermissions             map[string]UserAccountMembershipInfo        `json:"accountPermissions,omitempty"`
+		AccountPermissions             map[string]*UserAccountMembershipInfo       `json:"accountPermissions,omitempty"`
 		ServiceAdminPermissionsSummary *permissions.ServiceAdminPermissionsSummary `json:"adminPermissions,omitempty"`
 		UserReputation                 userReputation                              `json:"userReputation,omitempty"`
 		UserReputationExplanation      string                                      `json:"reputationExplanation"`
@@ -88,7 +89,7 @@ type (
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
-		PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler
+		PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler
 		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
@@ -124,8 +125,9 @@ func (i *PASETOCreationInput) Validate(ctx context.Context) error {
 	)
 }
 
-func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]UserAccountMembershipInfo {
-	out := map[string]UserAccountMembershipInfo{}
+// ToPermissionMapByAccountName returns an AccountPermissionsMap arranged by account name.
+func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]*UserAccountMembershipInfo {
+	out := map[string]*UserAccountMembershipInfo{}
 	for _, v := range perms {
 		out[v.AccountName] = v
 	}
@@ -151,7 +153,7 @@ var (
 )
 
 // RequestContextFromUser produces a RequestContext object from a User's data.
-func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]UserAccountMembershipInfo) (*RequestContext, error) {
+func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap AccountPermissionsMap) (*RequestContext, error) {
 	if user == nil {
 		return nil, errNilUser
 	}
@@ -166,10 +168,10 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 
 	reqCtx := &RequestContext{
 		Requester: RequesterInfo{
-			ID:                      user.ID,
-			Reputation:              user.Reputation,
-			ReputationExplanation:   user.ReputationExplanation,
-			ServiceAdminPermissions: user.ServiceAdminPermissions,
+			ID:                     user.ID,
+			Reputation:             user.Reputation,
+			ReputationExplanation:  user.ReputationExplanation,
+			ServiceAdminPermission: user.ServiceAdminPermission,
 		},
 		AccountPermissionsMap: accountPermissionsMap,
 		ActiveAccountID:       activeAccountID,

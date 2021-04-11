@@ -49,7 +49,7 @@ type authServiceHTTPRoutesTestHelper struct {
 	exampleUser       *types.User
 	exampleAccount    *types.Account
 	exampleAPIClient  *types.APIClient
-	examplePerms      map[uint64]types.UserAccountMembershipInfo
+	examplePerms      map[uint64]*types.UserAccountMembershipInfo
 	exampleLoginInput *types.UserLoginInput
 }
 
@@ -79,7 +79,7 @@ func buildTestHelper(t *testing.T) *authServiceHTTPRoutesTestHelper {
 	helper.exampleAPIClient.BelongsToUser = helper.exampleUser.ID
 	helper.exampleLoginInput = fakes.BuildFakeUserLoginInputFromUser(helper.exampleUser)
 
-	helper.examplePerms = map[uint64]types.UserAccountMembershipInfo{
+	helper.examplePerms = map[uint64]*types.UserAccountMembershipInfo{
 		helper.exampleAccount.ID: {
 			AccountName: helper.exampleAccount.Name,
 			Permissions: testutil.BuildMaxUserPerms(),
@@ -96,7 +96,7 @@ func buildTestHelper(t *testing.T) *authServiceHTTPRoutesTestHelper {
 	helper.req, err = http.NewRequestWithContext(
 		helper.ctx,
 		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
+		"https://todo.verygoodsoftwarenotvirus.ru",
 		nil,
 	)
 	require.NotNil(t, helper.req)

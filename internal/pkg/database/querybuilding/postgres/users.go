@@ -181,7 +181,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 
 	perms := 0
 	if testUserConfig.IsServiceAdmin {
-		perms = math.MaxUint32
+		perms = math.MaxInt64
 	}
 
 	return b.buildQuery(

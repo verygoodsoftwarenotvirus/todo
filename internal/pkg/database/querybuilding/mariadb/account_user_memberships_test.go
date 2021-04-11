@@ -154,7 +154,7 @@ func TestMariaDB_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 			exampleUser.ID,
 			exampleAccount.ID,
 			true,
-			math.MaxUint32,
+			math.MaxInt64,
 		}
 		actualQuery, actualArgs := q.BuildCreateMembershipForNewUserQuery(ctx, exampleUser.ID, exampleAccount.ID)
 

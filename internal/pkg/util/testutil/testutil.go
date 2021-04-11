@@ -39,22 +39,22 @@ func init() {
 }
 
 // BuildMaxServiceAdminPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildMaxServiceAdminPerms() permissions.ServiceAdminPermissions {
-	return permissions.NewServiceAdminPermissions(math.MaxUint32)
+func BuildMaxServiceAdminPerms() permissions.ServiceAdminPermission {
+	return permissions.NewServiceAdminPermissions(math.MaxInt64)
 }
 
 // BuildMaxUserPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildMaxUserPerms() permissions.ServiceUserPermissions {
-	return permissions.NewServiceUserPermissions(math.MaxUint32)
+func BuildMaxUserPerms() permissions.ServiceUserPermission {
+	return permissions.NewServiceUserPermissions(math.MaxInt64)
 }
 
 // BuildNoAdminPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildNoAdminPerms() permissions.ServiceAdminPermissions {
+func BuildNoAdminPerms() permissions.ServiceAdminPermission {
 	return permissions.NewServiceAdminPermissions(0)
 }
 
 // BuildNoUserPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildNoUserPerms() permissions.ServiceUserPermissions {
+func BuildNoUserPerms() permissions.ServiceUserPermission {
 	return permissions.NewServiceUserPermissions(0)
 }
 

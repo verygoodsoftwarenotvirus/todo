@@ -189,7 +189,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 
 	perms := 0
 	if testUserConfig.IsServiceAdmin {
-		perms = math.MaxUint32
+		perms = math.MaxInt64
 	}
 
 	tracing.AttachUsernameToSpan(span, testUserConfig.Username)

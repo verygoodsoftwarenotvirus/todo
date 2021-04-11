@@ -31,10 +31,10 @@ func (m *AccountUserMembershipDataManager) GetDefaultAccountIDForUser(ctx contex
 }
 
 // GetMembershipsForUser satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermissions, err error) {
+func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermission, err error) {
 	args := m.Called(ctx, userID)
 
-	return args.Get(0).(uint64), args.Get(1).(map[uint64]permissions.ServiceUserPermissions), args.Error(2)
+	return args.Get(0).(uint64), args.Get(1).(map[uint64]permissions.ServiceUserPermission), args.Error(2)
 }
 
 // MarkAccountAsUserDefault implements the interface.

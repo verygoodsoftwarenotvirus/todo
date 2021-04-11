@@ -27,9 +27,9 @@ type adminServiceHTTPRoutesTestHelper struct {
 }
 
 func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
-	helper.exampleUser.ServiceAdminPermissions = 0
+	helper.exampleUser.ServiceAdminPermission = 0
 	helper.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
-		return types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]types.UserAccountMembershipInfo{
+		return types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
 			helper.exampleAccount.ID: {
 				AccountName: helper.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),
@@ -50,7 +50,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	helper.exampleUser = fakes.BuildFakeUser()
-	helper.exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
+	helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
 	helper.exampleAccount = fakes.BuildFakeAccount()
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 	helper.exampleInput = fakes.BuildFakeAccountStatusUpdateInput()
@@ -65,7 +65,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	reqCtx, err := types.RequestContextFromUser(
 		helper.exampleUser,
 		helper.exampleAccount.ID,
-		map[uint64]types.UserAccountMembershipInfo{
+		map[uint64]*types.UserAccountMembershipInfo{
 			helper.exampleAccount.ID: {
 				AccountName: helper.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),

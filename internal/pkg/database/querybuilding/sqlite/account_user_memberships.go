@@ -138,7 +138,7 @@ func (b *Sqlite) BuildTransferAccountMembershipsQuery(ctx context.Context, curre
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermissions) (query string, args []interface{}) {
+func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -171,7 +171,7 @@ func (b *Sqlite) BuildCreateMembershipForNewUserQuery(ctx context.Context, userI
 				userID,
 				accountID,
 				true,
-				math.MaxUint32,
+				math.MaxInt64,
 			),
 	)
 }

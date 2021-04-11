@@ -27,7 +27,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 	logger := q.logger.WithValue("include_counts", includeCounts)
 	user = &types.User{}
 
-	var perms uint32
+	var perms int64
 
 	targetVars := []interface{}{
 		&user.ID,
@@ -56,7 +56,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
-	user.ServiceAdminPermissions = permissions.NewServiceAdminPermissions(perms)
+	user.ServiceAdminPermission = permissions.NewServiceAdminPermissions(perms)
 
 	return user, filteredCount, totalCount, nil
 }
@@ -377,7 +377,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 		Name:                        input.Username,
 		AccountSubscriptionPlanID:   nil,
 		CreatedOn:                   q.currentTime(),
-		DefaultNewMemberPermissions: permissions.ServiceUserPermissions(math.MaxUint32),
+		DefaultNewMemberPermissions: permissions.ServiceUserPermission(math.MaxInt64),
 	}
 
 	if err := q.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {

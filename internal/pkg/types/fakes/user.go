@@ -23,7 +23,7 @@ func BuildFakeUser() *types.User {
 		// Salt:           []byte(fakes.Word()),
 		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),
 		TwoFactorSecretVerifiedOn: func(i uint64) *uint64 { return &i }(uint64(uint32(fake.Date().Unix()))),
-		ServiceAdminPermissions:   permissions.NewServiceAdminPermissions(0),
+		ServiceAdminPermission:    permissions.NewServiceAdminPermissions(0),
 		CreatedOn:                 uint64(uint32(fake.Date().Unix())),
 	}
 }

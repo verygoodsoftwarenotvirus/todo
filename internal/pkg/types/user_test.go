@@ -16,10 +16,10 @@ func TestUser_JSONUnmarshal(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		exampleInput := User{
-			Username:                "new_username",
-			HashedPassword:          "updated_hashed_pass",
-			TwoFactorSecret:         "new fancy secret",
-			ServiceAdminPermissions: permissions.NewServiceAdminPermissions(123),
+			Username:               "new_username",
+			HashedPassword:         "updated_hashed_pass",
+			TwoFactorSecret:        "new fancy secret",
+			ServiceAdminPermission: permissions.NewServiceAdminPermissions(123),
 		}
 
 		jsonBytes, err := json.Marshal(&exampleInput)
@@ -58,8 +58,8 @@ func TestRequestContextFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{
-			ID:                      12345,
-			ServiceAdminPermissions: permissions.NewServiceAdminPermissions(1),
+			ID:                     12345,
+			ServiceAdminPermission: permissions.NewServiceAdminPermissions(1),
 		}
 
 		exampleAccount := &Account{
@@ -67,12 +67,12 @@ func TestRequestContextFromUser(T *testing.T) {
 			BelongsToUser: exampleUser.ID,
 		}
 
-		examplePermissions := map[uint64]UserAccountMembershipInfo{}
+		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
 
 		expected := &RequestContext{
 			Requester: RequesterInfo{
-				ID:                      exampleUser.ID,
-				ServiceAdminPermissions: exampleUser.ServiceAdminPermissions,
+				ID:                     exampleUser.ID,
+				ServiceAdminPermission: exampleUser.ServiceAdminPermission,
 			},
 			ActiveAccountID:       exampleAccount.ID,
 			AccountPermissionsMap: examplePermissions,

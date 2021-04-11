@@ -134,7 +134,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		exampleAccount.ExternalID = ""
 		exampleAccountCreationInput := &types.AccountCreationInput{
 			Name:                   fmt.Sprintf("%s_default", exampleUser.Username),
-			DefaultUserPermissions: math.MaxUint32,
+			DefaultUserPermissions: math.MaxInt64,
 			BelongsToUser:          exampleUser.ID,
 		}
 

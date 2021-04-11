@@ -94,7 +94,7 @@ func AttachRequestContextToSpan(span trace.Span, reqCtx *types.RequestContext) {
 	if reqCtx != nil {
 		attachUint64ToSpan(span, keys.RequesterIDKey, reqCtx.Requester.ID)
 		attachUint64ToSpan(span, keys.ActiveAccountIDKey, reqCtx.ActiveAccountID)
-		attachBooleanToSpan(span, keys.UserIsAdminKey, reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin())
+		attachBooleanToSpan(span, keys.UserIsAdminKey, reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin())
 	}
 }
 

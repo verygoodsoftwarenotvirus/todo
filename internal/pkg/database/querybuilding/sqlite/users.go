@@ -165,7 +165,7 @@ func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig 
 
 	perms := 0
 	if testUserConfig.IsServiceAdmin {
-		perms = math.MaxUint32
+		perms = math.MaxInt64
 	}
 
 	return b.buildQuery(

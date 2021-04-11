@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	// cycleCookieSecretPermission signifies whether or not the admin in question can cycle cookie secrets.
-	cycleCookieSecretPermission ServiceAdminPermissions = 1 << iota
+	// cycleCookieSecretPermission signifies whether the admin in question can cycle cookie secrets.
+	cycleCookieSecretPermission ServiceAdminPermission = 1 << iota
 	banUserPermission
 	canTerminateAccountsPermission
 	canImpersonateAccountsPermission
@@ -40,13 +40,44 @@ const (
 	unusedServiceAdminPermission30
 	unusedServiceAdminPermission31
 	unusedServiceAdminPermission32
+	unusedServiceAdminPermission33
+	unusedServiceAdminPermission34
+	unusedServiceAdminPermission35
+	unusedServiceAdminPermission36
+	unusedServiceAdminPermission37
+	unusedServiceAdminPermission38
+	unusedServiceAdminPermission39
+	unusedServiceAdminPermission40
+	unusedServiceAdminPermission41
+	unusedServiceAdminPermission42
+	unusedServiceAdminPermission43
+	unusedServiceAdminPermission44
+	unusedServiceAdminPermission45
+	unusedServiceAdminPermission46
+	unusedServiceAdminPermission47
+	unusedServiceAdminPermission48
+	unusedServiceAdminPermission49
+	unusedServiceAdminPermission50
+	unusedServiceAdminPermission51
+	unusedServiceAdminPermission52
+	unusedServiceAdminPermission53
+	unusedServiceAdminPermission54
+	unusedServiceAdminPermission55
+	unusedServiceAdminPermission56
+	unusedServiceAdminPermission57
+	unusedServiceAdminPermission58
+	unusedServiceAdminPermission59
+	unusedServiceAdminPermission61
+	unusedServiceAdminPermission62
+	unusedServiceAdminPermission63
+	unusedServiceAdminPermission64
 )
 
 func init() {
-	gob.Register(ServiceAdminPermissions(0))
+	gob.Register(ServiceAdminPermission(0))
 }
 
-// ServiceAdminPermissionChecker returns whether or not a given permission applies to a user.
+// ServiceAdminPermissionChecker returns whether a given permission applies to a user.
 type ServiceAdminPermissionChecker interface {
 	IsServiceAdmin() bool
 	CanCycleCookieSecrets() bool
@@ -62,54 +93,54 @@ type ServiceAdminPermissionsSummary struct {
 	CanImpersonateAccounts bool `json:"canImpersonateAccounts"`
 }
 
-// ServiceAdminPermissions is a bitmask for keeping track of admin user permissions.
-type ServiceAdminPermissions uint32
+// ServiceAdminPermission is a bitmask for keeping track of admin user permissions.
+type ServiceAdminPermission int64
 
 // NewServiceAdminPermissions builds a new ServiceAdminPermissionChecker.
-func NewServiceAdminPermissions(x uint32) ServiceAdminPermissions {
-	return ServiceAdminPermissions(x)
+func NewServiceAdminPermissions(x int64) ServiceAdminPermission {
+	return ServiceAdminPermission(x)
 }
 
 // Value implements the driver.Valuer interface.
-func (p ServiceAdminPermissions) Value() (driver.Value, error) {
+func (p ServiceAdminPermission) Value() (driver.Value, error) {
 	return driver.Value(int64(p)), nil
 }
 
 // Scan implements the sql.Scanner interface.
-func (p *ServiceAdminPermissions) Scan(value interface{}) error {
+func (p *ServiceAdminPermission) Scan(value interface{}) error {
 	b, ok := value.(int32)
 	if !ok {
-		*p = ServiceAdminPermissions(0)
+		*p = ServiceAdminPermission(0)
 	}
 
-	*p = ServiceAdminPermissions(b)
+	*p = ServiceAdminPermission(b)
 
 	return nil
 }
 
-var _ json.Marshaler = (*ServiceAdminPermissions)(nil)
+var _ json.Marshaler = (*ServiceAdminPermission)(nil)
 
 // MarshalJSON implements the json.Marshaler interface.
-func (p *ServiceAdminPermissions) MarshalJSON() ([]byte, error) {
-	return json.Marshal(uint32(*p))
+func (p *ServiceAdminPermission) MarshalJSON() ([]byte, error) {
+	return json.Marshal(int64(*p))
 }
 
-var _ json.Unmarshaler = (*ServiceAdminPermissions)(nil)
+var _ json.Unmarshaler = (*ServiceAdminPermission)(nil)
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (p *ServiceAdminPermissions) UnmarshalJSON(data []byte) error {
-	var v uint32
+func (p *ServiceAdminPermission) UnmarshalJSON(data []byte) error {
+	var v int64
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*p = ServiceAdminPermissions(v)
+	*p = ServiceAdminPermission(v)
 
 	return nil
 }
 
 // Summary produces a ServiceAdminPermissionsSummary.
-func (p ServiceAdminPermissions) Summary() *ServiceAdminPermissionsSummary {
+func (p ServiceAdminPermission) Summary() *ServiceAdminPermissionsSummary {
 	if p == 0 {
 		return nil
 	}
@@ -122,138 +153,268 @@ func (p ServiceAdminPermissions) Summary() *ServiceAdminPermissionsSummary {
 	}
 }
 
-// IsServiceAdmin determines whether or not a user has service admin permissions.
-func (p ServiceAdminPermissions) IsServiceAdmin() bool {
+// HasPermission determines whether a user can view items.
+func (p ServiceAdminPermission) HasPermission(perm ServiceAdminPermission) bool {
+	return p&perm != 0
+}
+
+// IsServiceAdmin determines whether a user has service admin permissions.
+func (p ServiceAdminPermission) IsServiceAdmin() bool {
 	return p != 0
 }
 
-// CanCycleCookieSecrets determines whether or not a user can cycle cookie secrets.
-func (p ServiceAdminPermissions) CanCycleCookieSecrets() bool {
-	return p&cycleCookieSecretPermission != 0
+// CanCycleCookieSecrets determines whether a user can cycle cookie secrets.
+func (p ServiceAdminPermission) CanCycleCookieSecrets() bool {
+	return p.HasPermission(cycleCookieSecretPermission)
 }
 
-// CanBanUsers determines whether or not a user can ban users.
-func (p ServiceAdminPermissions) CanBanUsers() bool {
-	return p&banUserPermission != 0
+// CanBanUsers determines whether a user can ban users.
+func (p ServiceAdminPermission) CanBanUsers() bool {
+	return p.HasPermission(banUserPermission)
 }
 
-// CanTerminateAccounts determines whether or not a user can terminate accounts.
-func (p ServiceAdminPermissions) CanTerminateAccounts() bool {
-	return p&canTerminateAccountsPermission != 0
+// CanTerminateAccounts determines whether a user can terminate accounts.
+func (p ServiceAdminPermission) CanTerminateAccounts() bool {
+	return p.HasPermission(canTerminateAccountsPermission)
 }
 
-func (p ServiceAdminPermissions) CanImpersonateAccounts() bool {
-	return p&canImpersonateAccountsPermission != 0
+// CanImpersonateAccounts determines whether a user can impersonate accounts.
+func (p ServiceAdminPermission) CanImpersonateAccounts() bool {
+	return p.HasPermission(canImpersonateAccountsPermission)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission5() bool {
-	return p&unusedServiceAdminPermission5 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission5() bool {
+	return p.HasPermission(unusedServiceAdminPermission5)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission6() bool {
-	return p&unusedServiceAdminPermission6 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission6() bool {
+	return p.HasPermission(unusedServiceAdminPermission6)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission7() bool {
-	return p&unusedServiceAdminPermission7 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission7() bool {
+	return p.HasPermission(unusedServiceAdminPermission7)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission8() bool {
-	return p&unusedServiceAdminPermission8 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission8() bool {
+	return p.HasPermission(unusedServiceAdminPermission8)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission9() bool {
-	return p&unusedServiceAdminPermission9 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission9() bool {
+	return p.HasPermission(unusedServiceAdminPermission9)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission10() bool {
-	return p&unusedServiceAdminPermission10 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission10() bool {
+	return p.HasPermission(unusedServiceAdminPermission10)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission11() bool {
-	return p&unusedServiceAdminPermission11 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission11() bool {
+	return p.HasPermission(unusedServiceAdminPermission11)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission12() bool {
-	return p&unusedServiceAdminPermission12 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission12() bool {
+	return p.HasPermission(unusedServiceAdminPermission12)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission13() bool {
-	return p&unusedServiceAdminPermission13 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission13() bool {
+	return p.HasPermission(unusedServiceAdminPermission13)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission14() bool {
-	return p&unusedServiceAdminPermission14 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission14() bool {
+	return p.HasPermission(unusedServiceAdminPermission14)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission15() bool {
-	return p&unusedServiceAdminPermission15 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission15() bool {
+	return p.HasPermission(unusedServiceAdminPermission15)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission16() bool {
-	return p&unusedServiceAdminPermission16 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission16() bool {
+	return p.HasPermission(unusedServiceAdminPermission16)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission17() bool {
-	return p&unusedServiceAdminPermission17 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission17() bool {
+	return p.HasPermission(unusedServiceAdminPermission17)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission18() bool {
-	return p&unusedServiceAdminPermission18 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission18() bool {
+	return p.HasPermission(unusedServiceAdminPermission18)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission19() bool {
-	return p&unusedServiceAdminPermission19 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission19() bool {
+	return p.HasPermission(unusedServiceAdminPermission19)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission20() bool {
-	return p&unusedServiceAdminPermission20 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission20() bool {
+	return p.HasPermission(unusedServiceAdminPermission20)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission21() bool {
-	return p&unusedServiceAdminPermission21 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission21() bool {
+	return p.HasPermission(unusedServiceAdminPermission21)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission22() bool {
-	return p&unusedServiceAdminPermission22 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission22() bool {
+	return p.HasPermission(unusedServiceAdminPermission22)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission23() bool {
-	return p&unusedServiceAdminPermission23 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission23() bool {
+	return p.HasPermission(unusedServiceAdminPermission23)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission24() bool {
-	return p&unusedServiceAdminPermission24 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission24() bool {
+	return p.HasPermission(unusedServiceAdminPermission24)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission25() bool {
-	return p&unusedServiceAdminPermission25 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission25() bool {
+	return p.HasPermission(unusedServiceAdminPermission25)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission26() bool {
-	return p&unusedServiceAdminPermission26 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission26() bool {
+	return p.HasPermission(unusedServiceAdminPermission26)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission27() bool {
-	return p&unusedServiceAdminPermission27 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission27() bool {
+	return p.HasPermission(unusedServiceAdminPermission27)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission28() bool {
-	return p&unusedServiceAdminPermission28 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission28() bool {
+	return p.HasPermission(unusedServiceAdminPermission28)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission29() bool {
-	return p&unusedServiceAdminPermission29 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission29() bool {
+	return p.HasPermission(unusedServiceAdminPermission29)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission30() bool {
-	return p&unusedServiceAdminPermission30 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission30() bool {
+	return p.HasPermission(unusedServiceAdminPermission30)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission31() bool {
-	return p&unusedServiceAdminPermission31 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission31() bool {
+	return p.HasPermission(unusedServiceAdminPermission31)
 }
 
-func (p ServiceAdminPermissions) hasReservedUnusedPermission32() bool {
-	return p&unusedServiceAdminPermission32 != 0
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission32() bool {
+	return p.HasPermission(unusedServiceAdminPermission32)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission33() bool {
+	return p.HasPermission(unusedServiceAdminPermission33)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission34() bool {
+	return p.HasPermission(unusedServiceAdminPermission34)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission35() bool {
+	return p.HasPermission(unusedServiceAdminPermission35)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission36() bool {
+	return p.HasPermission(unusedServiceAdminPermission36)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission37() bool {
+	return p.HasPermission(unusedServiceAdminPermission37)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission38() bool {
+	return p.HasPermission(unusedServiceAdminPermission38)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission39() bool {
+	return p.HasPermission(unusedServiceAdminPermission39)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission40() bool {
+	return p.HasPermission(unusedServiceAdminPermission40)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission41() bool {
+	return p.HasPermission(unusedServiceAdminPermission41)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission42() bool {
+	return p.HasPermission(unusedServiceAdminPermission42)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission43() bool {
+	return p.HasPermission(unusedServiceAdminPermission43)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission44() bool {
+	return p.HasPermission(unusedServiceAdminPermission44)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission45() bool {
+	return p.HasPermission(unusedServiceAdminPermission45)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission46() bool {
+	return p.HasPermission(unusedServiceAdminPermission46)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission47() bool {
+	return p.HasPermission(unusedServiceAdminPermission47)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission48() bool {
+	return p.HasPermission(unusedServiceAdminPermission48)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission49() bool {
+	return p.HasPermission(unusedServiceAdminPermission49)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission50() bool {
+	return p.HasPermission(unusedServiceAdminPermission50)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission51() bool {
+	return p.HasPermission(unusedServiceAdminPermission51)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission52() bool {
+	return p.HasPermission(unusedServiceAdminPermission52)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission53() bool {
+	return p.HasPermission(unusedServiceAdminPermission53)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission54() bool {
+	return p.HasPermission(unusedServiceAdminPermission54)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission55() bool {
+	return p.HasPermission(unusedServiceAdminPermission55)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission56() bool {
+	return p.HasPermission(unusedServiceAdminPermission56)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission57() bool {
+	return p.HasPermission(unusedServiceAdminPermission57)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission58() bool {
+	return p.HasPermission(unusedServiceAdminPermission58)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission59() bool {
+	return p.HasPermission(unusedServiceAdminPermission59)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission61() bool {
+	return p.HasPermission(unusedServiceAdminPermission61)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission62() bool {
+	return p.HasPermission(unusedServiceAdminPermission62)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission63() bool {
+	return p.HasPermission(unusedServiceAdminPermission63)
+}
+
+func (p ServiceAdminPermission) hasUnusedServiceAdminPermission64() bool {
+	return p.HasPermission(unusedServiceAdminPermission64)
 }

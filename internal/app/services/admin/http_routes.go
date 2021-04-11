@@ -41,7 +41,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	tracing.AttachRequestContextToSpan(span, reqCtx)
 
-	if !reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() {
+	if !reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() {
 		// this should never happen in production
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "inadequate permissions for route", http.StatusForbidden)
 		return
@@ -54,9 +54,9 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	switch input.NewReputation {
 	case types.BannedAccountStatus:
-		allowed = reqCtx.Requester.ServiceAdminPermissions.CanBanUsers()
+		allowed = reqCtx.Requester.ServiceAdminPermission.CanBanUsers()
 	case types.TerminatedAccountStatus:
-		allowed = reqCtx.Requester.ServiceAdminPermissions.CanTerminateAccounts()
+		allowed = reqCtx.Requester.ServiceAdminPermission.CanTerminateAccounts()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 	}
 

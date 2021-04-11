@@ -42,7 +42,7 @@ func buildTestHelper(t *testing.T) *accountSubscriptionPlansServiceHTTPRoutesTes
 	reqCtx, err := types.RequestContextFromUser(
 		helper.exampleUser,
 		helper.exampleAccount.ID,
-		map[uint64]types.UserAccountMembershipInfo{
+		map[uint64]*types.UserAccountMembershipInfo{
 			helper.exampleAccount.ID: {
 				AccountName: helper.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),

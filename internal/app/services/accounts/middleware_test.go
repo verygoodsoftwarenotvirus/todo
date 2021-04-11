@@ -47,7 +47,7 @@ func (s *accountsServiceMiddlewareTestSuite) SetupTest() {
 	reqCtx, err := types.RequestContextFromUser(
 		s.exampleUser,
 		s.exampleAccount.ID,
-		map[uint64]types.UserAccountMembershipInfo{
+		map[uint64]*types.UserAccountMembershipInfo{
 			s.exampleAccount.ID: {
 				AccountName: s.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),

@@ -56,11 +56,11 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	// determine if this is an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
 
 	var accounts *types.AccountList
 
-	if reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() && isAdminRequest {
+	if reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() && isAdminRequest {
 		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
 	} else {
 		accounts, err = s.accountDataManager.GetAccounts(ctx, requester, filter)

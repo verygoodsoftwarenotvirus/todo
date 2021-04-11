@@ -268,7 +268,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
+		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
 		helper.setContextFetcher(t)
 
 		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)

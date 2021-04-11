@@ -70,7 +70,7 @@ func BuildUserMarkedAccountAsDefaultEventEntry(performedBy, userID, accountID ui
 }
 
 // BuildModifyUserPermissionsEventEntry builds an entry creation input for when a membership is created.
-func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, newPermissions permissions.ServiceUserPermissions, reason string) *types.AuditLogEntryCreationInput {
+func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, newPermissions permissions.ServiceUserPermission, reason string) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   modifiedBy,
 		AccountAssignmentKey: accountID,

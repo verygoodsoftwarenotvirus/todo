@@ -41,7 +41,7 @@ func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*
 			user.PasswordLastChangedOn,
 			user.TwoFactorSecret,
 			user.TwoFactorSecretVerifiedOn,
-			user.ServiceAdminPermissions,
+			user.ServiceAdminPermission,
 			user.Reputation,
 			user.ReputationExplanation,
 			user.CreatedOn,
@@ -537,7 +537,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
 		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
-		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
+		exampleAccountCreationInput.DefaultUserPermissions = math.MaxInt64
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -697,7 +697,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
 		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
-		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
+		exampleAccountCreationInput.DefaultUserPermissions = math.MaxInt64
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -761,7 +761,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleAccount.ExternalID = ""
 		exampleAccount.CreatedOn = exampleCreationTime
 		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
-		exampleAccountCreationInput.DefaultUserPermissions = math.MaxUint32
+		exampleAccountCreationInput.DefaultUserPermissions = math.MaxInt64
 
 		ctx := context.Background()
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()

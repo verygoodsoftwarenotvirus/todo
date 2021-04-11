@@ -592,7 +592,7 @@ func TestAuthService_CycleSecretHandler(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceAdminPermissions = testutil.BuildMaxServiceAdminPerms()
+		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
 		helper.setContextFetcher(t)
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -694,10 +694,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expectedOutput := &types.RequestContext{
 			Requester: types.RequesterInfo{
-				ID:                      helper.exampleUser.ID,
-				Reputation:              helper.exampleUser.Reputation,
-				ReputationExplanation:   helper.exampleUser.ReputationExplanation,
-				ServiceAdminPermissions: helper.exampleUser.ServiceAdminPermissions,
+				ID:                     helper.exampleUser.ID,
+				Reputation:             helper.exampleUser.Reputation,
+				ReputationExplanation:  helper.exampleUser.ReputationExplanation,
+				ServiceAdminPermission: helper.exampleUser.ServiceAdminPermission,
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,
 			AccountPermissionsMap: helper.examplePerms,
@@ -785,10 +785,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expectedOutput := &types.RequestContext{
 			Requester: types.RequesterInfo{
-				ID:                      helper.exampleUser.ID,
-				Reputation:              helper.exampleUser.Reputation,
-				ReputationExplanation:   helper.exampleUser.ReputationExplanation,
-				ServiceAdminPermissions: helper.exampleUser.ServiceAdminPermissions,
+				ID:                     helper.exampleUser.ID,
+				Reputation:             helper.exampleUser.Reputation,
+				ReputationExplanation:  helper.exampleUser.ReputationExplanation,
+				ServiceAdminPermission: helper.exampleUser.ServiceAdminPermission,
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,
 			AccountPermissionsMap: helper.examplePerms,

@@ -24,7 +24,7 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, map[uint64]types.UserAccountMembershipInfo{
+		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
 			exampleAccount.ID: {
 				AccountName: exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),

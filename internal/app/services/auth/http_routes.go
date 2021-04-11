@@ -127,7 +127,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		UserIsAuthenticated:            true,
 		UserReputation:                 user.Reputation,
 		UserReputationExplanation:      user.ReputationExplanation,
-		ServiceAdminPermissionsSummary: user.ServiceAdminPermissions.Summary(),
+		ServiceAdminPermissionsSummary: user.ServiceAdminPermission.Summary(),
 	}
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
@@ -274,7 +274,7 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	statusResponse = &types.UserStatusResponse{
 		AccountPermissions:             reqCtx.AccountPermissionsMap.ToPermissionMapByAccountName(),
 		ActiveAccount:                  reqCtx.ActiveAccountID,
-		ServiceAdminPermissionsSummary: reqCtx.Requester.ServiceAdminPermissions.Summary(),
+		ServiceAdminPermissionsSummary: reqCtx.Requester.ServiceAdminPermission.Summary(),
 		UserReputation:                 reqCtx.Requester.Reputation,
 		UserReputationExplanation:      reqCtx.Requester.ReputationExplanation,
 		UserIsAuthenticated:            true,
@@ -424,8 +424,8 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if !reqCtx.Requester.ServiceAdminPermissions.CanCycleCookieSecrets() {
-		logger.WithValue("admin_permissions", reqCtx.Requester.ServiceAdminPermissions).Debug("invalid permissions")
+	if !reqCtx.Requester.ServiceAdminPermission.CanCycleCookieSecrets() {
+		logger.WithValue("admin_permissions", reqCtx.Requester.ServiceAdminPermission).Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}

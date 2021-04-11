@@ -101,7 +101,7 @@ func (b *MariaDB) BuildTransferAccountMembershipsQuery(ctx context.Context, curr
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermissions) (query string, args []interface{}) {
+func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -185,7 +185,7 @@ func (b *MariaDB) BuildCreateMembershipForNewUserQuery(ctx context.Context, user
 				userID,
 				accountID,
 				true,
-				math.MaxUint32,
+				math.MaxInt64,
 			),
 	)
 }

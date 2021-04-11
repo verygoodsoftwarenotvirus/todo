@@ -201,7 +201,7 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 }
 
 // PermissionRestrictionMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
-func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler {
+func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			ctx, span := s.tracer.StartSpan(req.Context())
@@ -217,7 +217,7 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 				return
 			}
 
-			if requestContext.Requester.ServiceAdminPermissions != 0 {
+			if requestContext.Requester.ServiceAdminPermission != 0 {
 				logger.Debug("allowing admin user!")
 				next.ServeHTTP(res, req)
 				return
@@ -266,7 +266,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 
 		logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
 
-		if !reqCtx.Requester.ServiceAdminPermissions.IsServiceAdmin() {
+		if !reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return

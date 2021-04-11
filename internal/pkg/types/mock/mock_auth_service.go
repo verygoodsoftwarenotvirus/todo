@@ -62,7 +62,7 @@ func (m *AuthService) ChangeActiveAccountInputMiddleware(next http.Handler) http
 }
 
 // PermissionRestrictionMiddleware implements our AuthService interface.
-func (m *AuthService) PermissionRestrictionMiddleware(p ...permissions.ServiceUserPermissions) func(next http.Handler) http.Handler {
+func (m *AuthService) PermissionRestrictionMiddleware(p ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler {
 	return m.Called(p).Get(0).(func(next http.Handler) http.Handler)
 }
 

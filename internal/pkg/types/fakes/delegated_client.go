@@ -13,7 +13,7 @@ func BuildFakeAPIClient() *types.APIClient {
 	return &types.APIClient{
 		ID:            uint64(fake.Uint32()),
 		ExternalID:    fake.UUID(),
-		Name:          fake.Word(),
+		Name:          fake.Password(true, true, true, false, false, 32),
 		ClientID:      fake.UUID(),
 		ClientSecret:  []byte(fake.Password(true, true, true, true, true, 32)),
 		BelongsToUser: fake.Uint64(),

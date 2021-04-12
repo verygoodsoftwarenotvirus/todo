@@ -183,7 +183,7 @@ func (e *serverEncoderDecoder) MustEncode(v interface{}) []byte {
 	return b.Bytes()
 }
 
-// EncodeResponse encodes successful responses.
+// RespondWithData encodes successful responses with data.
 func (e *serverEncoderDecoder) RespondWithData(ctx context.Context, res http.ResponseWriter, v interface{}) {
 	ctx, span := e.tracer.StartSpan(ctx)
 	defer span.End()

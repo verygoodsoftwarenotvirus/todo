@@ -16,7 +16,7 @@ import { Superstore } from '../../stores';
 export let accountID: number;
 export let location: Location;
 
-// removeme later
+// TODO: remove me later
 let memberships: object[] = [];
 let members: object[] = [];
 
@@ -25,6 +25,7 @@ let logger = new Logger().withDebugValue(
   'src/views/user/userSettings.svelte',
 );
 
+let frontendOnlyMode: boolean = false;
 let currentAuthStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
 let translationsToUse = currentSessionSettings.getTranslations().pages.accountSettings;
@@ -32,33 +33,39 @@ let translationsToUse = currentSessionSettings.getTranslations().pages.accountSe
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
+    if (accountID !== currentAuthStatus.activeAccount) {
+      accountID = currentAuthStatus.activeAccount;
+      fetchAccount();
+    }
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
     translationsToUse = currentSessionSettings.getTranslations().pages.accountSettings;
   },
 });
+frontendOnlyMode = superstore.frontendOnlyMode;
 
-let ogUser: Account = new Account();
+let originalAccount: Account = new Account();
 let account: Account = new Account();
 let accountFetchError: string = '';
 
+onMount(fetchAccount);
 
-onMount(() => {
-  if (superstore.frontendOnlyMode) {
+function fetchAccount() {
+  if (frontendOnlyMode) {
     account = fakeAccountFactory.build();
-    ogUser = { ...account };
-  } else {
+    originalAccount = { ...account };
+  } else if (accountID !== 0) {
     V1APIClient.fetchAccount(accountID)
       .then((resp: AxiosResponse<Account>) => {
         account = resp.data;
-        ogUser = { ...account };
+        originalAccount = { ...account };
       })
       .catch((err: AxiosError<ErrorResponse>) => {
         accountFetchError = err.message;
       });
   }
-});
+}
 </script>
 
 <div class="flex flex-wrap">

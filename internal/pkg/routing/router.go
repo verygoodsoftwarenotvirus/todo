@@ -28,7 +28,6 @@ type (
 		// Route mounts a sub-Router along a `pattern`` string.
 		Route(pattern string, fn func(r Router)) Router
 
-		// HTTP-method routing along `pattern`
 		Connect(pattern string, handler http.HandlerFunc)
 		Delete(pattern string, handler http.HandlerFunc)
 		Get(pattern string, handler http.HandlerFunc)
@@ -42,7 +41,6 @@ type (
 
 	// RouteParamManager builds route param fetchers for a compatible router.
 	RouteParamManager interface {
-		// Route params
 		UserIDFetcherFromRequestContext(req *http.Request) uint64
 		FetchContextFromRequest(req *http.Request) (*types.RequestContext, error)
 		BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string) func(req *http.Request) uint64

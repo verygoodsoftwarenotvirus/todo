@@ -97,7 +97,7 @@ func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint
 
 	getAccountMembershipsQuery, getAccountMembershipsArgs := q.sqlQueryBuilder.BuildGetAccountMembershipsForUserQuery(ctx, userID)
 
-	membershipRows, err := q.performReadQuery(ctx, "account memberships for user", getAccountMembershipsQuery, getAccountMembershipsArgs...)
+	membershipRows, err := q.performReadQuery(ctx, q.db, "account memberships for user", getAccountMembershipsQuery, getAccountMembershipsArgs...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "fetching user's memberships from database")
 	}

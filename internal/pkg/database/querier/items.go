@@ -223,7 +223,7 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *typ
 
 	query, args := q.sqlQueryBuilder.BuildGetItemsQuery(ctx, accountID, false, filter)
 
-	rows, err := q.performReadQuery(ctx, "items", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "items", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "executing items list retrieval query")
 	}
@@ -250,7 +250,7 @@ func (q *SQLQuerier) GetItemsForAdmin(ctx context.Context, filter *types.QueryFi
 
 	query, args := q.sqlQueryBuilder.BuildGetItemsQuery(ctx, 0, true, filter)
 
-	rows, err := q.performReadQuery(ctx, "items for admin", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "items for admin", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "executing items list retrieval query for admin")
 	}
@@ -285,7 +285,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limi
 
 	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, accountID, limit, ids, false)
 
-	rows, err := q.performReadQuery(ctx, "items with IDs", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "items with IDs", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "fetching items from database")
 	}
@@ -319,7 +319,7 @@ func (q *SQLQuerier) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, i
 
 	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, 0, limit, ids, true)
 
-	rows, err := q.performReadQuery(ctx, "items with IDs for admin", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "items with IDs for admin", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "fetching items from database")
 	}
@@ -485,7 +485,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForItem(ctx context.Context, itemID uint6
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForItemQuery(ctx, itemID)
 
-	rows, err := q.performReadQuery(ctx, "audit log entries for item", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for item", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

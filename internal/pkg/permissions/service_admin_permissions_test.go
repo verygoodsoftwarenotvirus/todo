@@ -10,7 +10,7 @@ import (
 func TestServiceAdminPermissions(T *testing.T) {
 	T.Parallel()
 
-	T.Run("with no permissions", func(t *testing.T){
+	T.Run("with no permissions", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceAdminPermission(0)
@@ -80,7 +80,7 @@ func TestServiceAdminPermissions(T *testing.T) {
 		assert.False(t, x.hasUnusedServiceAdminPermission64())
 	})
 
-	T.Run("with all permissions", func(t *testing.T){
+	T.Run("with all permissions", func(t *testing.T) {
 		t.Parallel()
 
 		x := ServiceAdminPermission(math.MaxInt64)

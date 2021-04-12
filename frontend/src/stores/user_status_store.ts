@@ -40,14 +40,15 @@ function buildUserStatusStore() {
   });
 
   if (frontendOnlyMode) {
-    const permMap = new Map<number, UserPermissionSummary>();
+    const permMap = new Map<string, UserPermissionSummary>();
     userStatusStore.setUserStatus(
       new UserStatus(
         'good',
         'testing',
         true,
+        123,
         permMap,
-        new AdminPermissionSummary(true),
+        new AdminPermissionSummary(true, true, true),
       ),
     );
   } else {

@@ -176,7 +176,7 @@ func (q *SQLQuerier) GetWebhooks(ctx context.Context, accountID uint64, filter *
 
 	query, args := q.sqlQueryBuilder.BuildGetWebhooksQuery(ctx, accountID, filter)
 
-	rows, err := q.performReadQuery(ctx, "webhooks", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "webhooks", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "fetching webhook from database")
 	}
@@ -407,7 +407,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID
 	logger := q.logger.WithValue(keys.WebhookIDKey, webhookID)
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(ctx, webhookID)
 
-	rows, err := q.performReadQuery(ctx, "audit log entries for webhook", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for webhook", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

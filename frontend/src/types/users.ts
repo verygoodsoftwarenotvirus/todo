@@ -212,20 +212,23 @@ export class UserStatus {
   isAuthenticated: boolean;
   userReputation: string;
   reputationExplanation: string;
-  userPermissions?: Map<number, UserPermissionSummary>;
+  activeAccount: number;
+  accountPermissions?: Map<string, UserPermissionSummary>;
   adminPermissions?: AdminPermissionSummary;
 
   constructor(
     userReputation: string = '',
     reputationExplanation: string = '',
     isAuthenticated: boolean = false,
-    userPermissions?: Map<number, UserPermissionSummary>,
+    activeAccount: number = 0,
+    accountPermissions?: Map<string, UserPermissionSummary>,
     adminPermissions?: AdminPermissionSummary,
   ) {
     this.userReputation = userReputation;
     this.reputationExplanation = reputationExplanation;
     this.isAuthenticated = isAuthenticated;
-    this.userPermissions = userPermissions;
+    this.activeAccount = activeAccount;
+    this.accountPermissions = accountPermissions;
     this.adminPermissions = adminPermissions;
   }
 

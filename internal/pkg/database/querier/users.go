@@ -216,7 +216,7 @@ func (q *SQLQuerier) SearchForUsersByUsername(ctx context.Context, usernameQuery
 
 	query, args := q.sqlQueryBuilder.BuildSearchForUserByUsernameQuery(ctx, usernameQuery)
 
-	rows, err := q.performReadQuery(ctx, "user search by username", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "user search by username", query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -264,7 +264,7 @@ func (q *SQLQuerier) GetUsers(ctx context.Context, filter *types.QueryFilter) (x
 
 	query, args := q.sqlQueryBuilder.BuildGetUsersQuery(ctx, filter)
 
-	rows, err := q.performReadQuery(ctx, "users", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "users", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
@@ -606,7 +606,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForUser(ctx context.Context, userID uint6
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(ctx, userID)
 
-	rows, err := q.performReadQuery(ctx, "audit log entries for user", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for user", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

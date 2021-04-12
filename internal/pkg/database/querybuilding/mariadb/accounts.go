@@ -22,10 +22,20 @@ func (b *MariaDB) BuildGetAccountQuery(ctx context.Context, accountID, userID ui
 	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
+	columns := append(querybuilding.AccountsTableColumns, querybuilding.AccountsUserMembershipTableColumns...)
+
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Select(querybuilding.AccountsTableColumns...).
+		b.sqlBuilder.Select(columns...).
 			From(querybuilding.AccountsTableName).
+			Join(fmt.Sprintf(
+				"%s ON %s.%s = %s.%s",
+				querybuilding.AccountsUserMembershipTableName,
+				querybuilding.AccountsUserMembershipTableName,
+				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+				querybuilding.AccountsTableName,
+				querybuilding.IDColumn,
+			)).
 			Where(squirrel.Eq{
 				fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn):                         accountID,
 				fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn): userID,
@@ -73,9 +83,52 @@ func (b *MariaDB) BuildGetAccountsQuery(ctx context.Context, userID uint64, forA
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
-	return b.buildListQuery(ctx, querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn, querybuilding.AccountsTableColumns, userID, forAdmin, filter)
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	}
+
+	var includeArchived bool
+	if filter != nil {
+		includeArchived = filter.IncludeArchived
+	}
+
+	columns := append(querybuilding.AccountsTableColumns, querybuilding.AccountsUserMembershipTableColumns...)
+	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
+	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
+
+	builder := b.sqlBuilder.
+		Select(append(
+			columns,
+			fmt.Sprintf("(%s) as total_count", totalCountQuery),
+			fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
+		)...).
+		From(querybuilding.AccountsTableName).
+		Join(fmt.Sprintf(
+			"%s ON %s.%s = %s.%s",
+			querybuilding.AccountsUserMembershipTableName,
+			querybuilding.AccountsUserMembershipTableName,
+			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+			querybuilding.AccountsTableName,
+			querybuilding.IDColumn,
+		))
+
+	if !forAdmin {
+		builder = builder.Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn):                 nil,
+			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn): userID,
+		})
+	}
+
+	builder = builder.GroupBy(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn))
+
+	if filter != nil {
+		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.AccountsTableName, builder)
+	}
+
+	query, selectArgs := b.buildQuery(span, builder)
+
+	return query, append(append(filteredCountQueryArgs, totalCountQueryArgs...), selectArgs...)
 }
 
 // BuildAccountCreationQuery takes an account and returns a creation query for that account and the relevant arguments.

@@ -20,7 +20,7 @@ import (
 )
 
 func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, accounts ...*types.Account) *sqlmock.Rows {
-	columns := querybuilding.AccountsTableColumns
+	columns := append(querybuilding.AccountsTableColumns, querybuilding.AccountsUserMembershipTableColumns...)
 
 	if includeCounts {
 		columns = append(columns, "filtered_count", "total_count")
@@ -29,23 +29,32 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 	exampleRows := sqlmock.NewRows(columns)
 
 	for _, x := range accounts {
-		rowValues := []driver.Value{
-			x.ID,
-			x.ExternalID,
-			x.Name,
-			x.AccountSubscriptionPlanID,
-			x.DefaultNewMemberPermissions,
-			x.CreatedOn,
-			x.LastUpdatedOn,
-			x.ArchivedOn,
-			x.BelongsToUser,
-		}
+		for _, y := range x.Members {
+			rowValues := []driver.Value{
+				x.ID,
+				x.ExternalID,
+				x.Name,
+				x.AccountSubscriptionPlanID,
+				x.DefaultNewMemberPermissions,
+				x.CreatedOn,
+				x.LastUpdatedOn,
+				x.ArchivedOn,
+				x.BelongsToUser,
+				y.ID,
+				y.BelongsToUser,
+				y.BelongsToAccount,
+				y.UserAccountPermissions,
+				y.DefaultAccount,
+				y.CreatedOn,
+				y.ArchivedOn,
+			}
 
-		if includeCounts {
-			rowValues = append(rowValues, filteredCount, len(accounts))
-		}
+			if includeCounts {
+				rowValues = append(rowValues, filteredCount, len(accounts))
+			}
 
-		exampleRows.AddRow(rowValues...)
+			exampleRows.AddRow(rowValues...)
+		}
 	}
 
 	return exampleRows
@@ -604,6 +613,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.ExternalID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
 			Reason:                 "account creation",
@@ -673,6 +683,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
+		exampleAccount.Members = []*types.AccountUserMembership{}
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
 		ctx := context.Background()

@@ -83,7 +83,7 @@ func (w *entryWrapper) WithRequest(req *http.Request) logging.Logger {
 	return w
 }
 
-// WithRequest satisfies our interface.
+// WithResponse satisfies our interface.
 func (w *entryWrapper) WithResponse(res *http.Response) logging.Logger {
 	w2 := w.WithRequest(res.Request)
 

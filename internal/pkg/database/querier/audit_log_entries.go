@@ -172,7 +172,7 @@ func (q *SQLQuerier) GetAuditLogEntries(ctx context.Context, filter *types.Query
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesQuery(ctx, filter)
 
-	rows, err := q.performReadQuery(ctx, "audit log entries", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "audit log entries", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

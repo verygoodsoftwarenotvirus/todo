@@ -95,7 +95,7 @@ func (s *service) fetchRequestContextFromPASETO(ctx context.Context, req *http.R
 	return nil, errTokenNotFound
 }
 
-// CookieAuthenticationMiddleware requires every request have a valid cookie.
+// CookieRequirementMiddleware requires every request have a valid cookie.
 func (s *service) CookieRequirementMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		_, span := s.tracer.StartSpan(req.Context())

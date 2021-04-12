@@ -73,7 +73,9 @@ func (b *Postgres) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, f
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	}
 
 	return b.buildListQuery(ctx, querybuilding.APIClientsTableName, querybuilding.APIClientsTableOwnershipColumn, querybuilding.APIClientsTableColumns, userID, false, filter)
 }

@@ -17,6 +17,7 @@ require (
 	github.com/blevesearch/bleve/v2 v2.0.3
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/carolynvs/magex v0.5.0
+	github.com/cznic/ql v1.2.0 // indirect
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -58,4 +59,5 @@ require (
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
+	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 )

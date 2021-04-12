@@ -48,7 +48,6 @@ type Logger interface {
 	SetLevel(Level)
 	SetRequestIDFunc(RequestIDFunc)
 
-	// Builder functions
 	Clone() Logger
 	WithName(string) Logger
 	WithValues(map[string]interface{}) Logger

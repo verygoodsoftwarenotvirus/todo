@@ -18,13 +18,14 @@ var (
 )
 
 // scanAccount takes a database Scanner (i.e. *sql.Row) and scans the result into an Account struct.
-func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, includeCounts bool) (account *types.Account, filteredCount, totalCount uint64, err error) {
+func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, includeCounts bool) (account *types.Account, membership *types.AccountUserMembership, filteredCount, totalCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger.WithValue("include_counts", includeCounts)
 
-	account = &types.Account{}
+	account = &types.Account{Members: []*types.AccountUserMembership{}}
+	membership = &types.AccountUserMembership{}
 
 	targetVars := []interface{}{
 		&account.ID,
@@ -36,6 +37,13 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&account.LastUpdatedOn,
 		&account.ArchivedOn,
 		&account.BelongsToUser,
+		&membership.ID,
+		&membership.BelongsToUser,
+		&membership.BelongsToAccount,
+		&membership.UserAccountPermissions,
+		&membership.DefaultAccount,
+		&membership.CreatedOn,
+		&membership.ArchivedOn,
 	}
 
 	if includeCounts {
@@ -43,10 +51,10 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 	}
 
 	if err = scan.Scan(targetVars...); err != nil {
-		return nil, 0, 0, observability.PrepareError(err, logger, span, "fetching memberships from database")
+		return nil, nil, 0, 0, observability.PrepareError(err, logger, span, "fetching memberships from database")
 	}
 
-	return account, filteredCount, totalCount, nil
+	return account, membership, filteredCount, totalCount, nil
 }
 
 // scanAccounts takes some database rows and turns them into a slice of accounts.
@@ -56,11 +64,25 @@ func (q *SQLQuerier) scanAccounts(ctx context.Context, rows database.ResultItera
 
 	logger := q.logger.WithValue("include_counts", includeCounts)
 
+	accounts = []*types.Account{}
+
+	var currentAccount *types.Account
 	for rows.Next() {
-		x, fc, tc, scanErr := q.scanAccount(ctx, rows, includeCounts)
+		account, membership, fc, tc, scanErr := q.scanAccount(ctx, rows, includeCounts)
 		if scanErr != nil {
 			return nil, 0, 0, scanErr
 		}
+
+		if currentAccount == nil {
+			currentAccount = account
+		}
+
+		if currentAccount.ID != account.ID {
+			accounts = append(accounts, currentAccount)
+			currentAccount = account
+		}
+
+		currentAccount.Members = append(currentAccount.Members, membership)
 
 		if includeCounts {
 			if filteredCount == 0 {
@@ -71,8 +93,10 @@ func (q *SQLQuerier) scanAccounts(ctx context.Context, rows database.ResultItera
 				totalCount = tc
 			}
 		}
+	}
 
-		accounts = append(accounts, x)
+	if currentAccount != nil {
+		accounts = append(accounts, currentAccount)
 	}
 
 	if err = q.checkRowsForErrorAndClose(ctx, rows); err != nil {
@@ -100,11 +124,23 @@ func (q *SQLQuerier) GetAccount(ctx context.Context, accountID, userID uint64) (
 	})
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountQuery(ctx, accountID, userID)
-	row := q.getOneRow(ctx, q.db, "account", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "account", query, args...)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "executing accounts list retrieval query")
+	}
 
-	account, _, _, err := q.scanAccount(ctx, row, false)
+	accounts, _, _, err := q.scanAccounts(ctx, rows, false)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
+	}
+
+	var account *types.Account
+	if len(accounts) > 0 {
+		account = accounts[0]
+	}
+
+	if account == nil {
+		return nil, sql.ErrNoRows
 	}
 
 	return account, nil
@@ -196,7 +232,7 @@ func (q *SQLQuerier) GetAccounts(ctx context.Context, userID uint64, filter *typ
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, userID, false, filter)
 
-	rows, err := q.performReadQuery(ctx, "accounts", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "accounts", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "executing accounts list retrieval query")
 	}
@@ -223,7 +259,7 @@ func (q *SQLQuerier) GetAccountsForAdmin(ctx context.Context, filter *types.Quer
 
 	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, 0, true, filter)
 
-	rows, err := q.performReadQuery(ctx, "accounts for admin", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "accounts for admin", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for accounts")
 	}
@@ -401,7 +437,7 @@ func (q *SQLQuerier) GetAuditLogEntriesForAccount(ctx context.Context, accountID
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForAccountQuery(ctx, accountID)
 
-	rows, err := q.performReadQuery(ctx, "audit log entries for account", query, args...)
+	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for account", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
 	}

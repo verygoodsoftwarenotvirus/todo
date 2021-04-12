@@ -226,13 +226,13 @@ func (q *SQLQuerier) getOneRow(ctx context.Context, querier database.Querier, qu
 	return querier.QueryRowContext(ctx, query, args...)
 }
 
-func (q *SQLQuerier) performReadQuery(ctx context.Context, queryDescription, query string, args ...interface{}) (*sql.Rows, error) {
+func (q *SQLQuerier) performReadQuery(ctx context.Context, querier database.Querier, queryDescription, query string, args ...interface{}) (*sql.Rows, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s fetch query", queryDescription), query, args)
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := querier.QueryContext(ctx, query, args...)
 	if err != nil {
 		logger := q.logger
 		return nil, observability.PrepareError(err, logger, span, "scanning user")

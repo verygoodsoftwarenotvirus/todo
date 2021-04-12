@@ -18,6 +18,7 @@ type (
 		LastUpdatedOn               *uint64                           `json:"lastUpdatedOn"`
 		Name                        string                            `json:"name"`
 		ExternalID                  string                            `json:"externalID"`
+		Members                     []*AccountUserMembership          `json:"members"`
 		CreatedOn                   uint64                            `json:"createdOn"`
 		ID                          uint64                            `json:"id"`
 		BelongsToUser               uint64                            `json:"belongsToUser"`

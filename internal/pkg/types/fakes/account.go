@@ -14,6 +14,7 @@ func BuildFakeAccount() *types.Account {
 		Name:          fake.Word(),
 		CreatedOn:     uint64(uint32(fake.Date().Unix())),
 		BelongsToUser: fake.Uint64(),
+		Members:       BuildFakeAccountUserMembershipList().AccountUserMemberships,
 	}
 }
 

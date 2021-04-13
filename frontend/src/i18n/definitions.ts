@@ -1,7 +1,7 @@
 import { LanguageTag, languageTag, translate } from 'typed-intl';
 import type {
   accountModelTranslations,
-  accountSettingsPageTranslations,
+  accountSettingsPageTranslations, accountUserMembershipModelTranslations,
   adminFooterTranslations,
   adminNavbarTranslations,
   apiClientModelTranslations,
@@ -74,6 +74,7 @@ export type SiteTranslationMap = {
   models: {
     item: itemModelTranslations;
     account: accountModelTranslations;
+    accountUserMembership: accountUserMembershipModelTranslations;
     apiClient: apiClientModelTranslations;
     user: userModelTranslations;
     auditLogEntry: auditLogEntryTranslations;

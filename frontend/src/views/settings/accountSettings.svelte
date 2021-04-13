@@ -1,5 +1,4 @@
 <script lang="typescript">
-import { onMount } from 'svelte';
 import type { AxiosError, AxiosResponse } from 'axios';
 
 import {
@@ -8,6 +7,7 @@ import {
   UserStatus,
   UserSiteSettings,
   fakeAccountFactory,
+  AccountUserMembership,
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
@@ -28,7 +28,9 @@ let logger = new Logger().withDebugValue(
 let frontendOnlyMode: boolean = false;
 let currentAuthStatus = new UserStatus();
 let currentSessionSettings = new UserSiteSettings();
-let translationsToUse = currentSessionSettings.getTranslations().pages.accountSettings;
+let translationsToUse = currentSessionSettings.getTranslations();
+let pageTranslations = translationsToUse.pages.accountSettings;
+let modelTranslations = translationsToUse.models.accountUserMembership;
 
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
@@ -40,16 +42,18 @@ let superstore = new Superstore({
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;
-    translationsToUse = currentSessionSettings.getTranslations().pages.accountSettings;
+    translationsToUse = currentSessionSettings.getTranslations();
+    pageTranslations = translationsToUse.pages.accountSettings;
+    modelTranslations = translationsToUse.models.accountUserMembership;
   },
 });
 frontendOnlyMode = superstore.frontendOnlyMode;
 
+let adminMode: boolean = false;
+
 let originalAccount: Account = new Account();
 let account: Account = new Account();
 let accountFetchError: string = '';
-
-onMount(fetchAccount);
 
 function fetchAccount() {
   if (frontendOnlyMode) {
@@ -74,7 +78,7 @@ function fetchAccount() {
       <div class="rounded-t bg-white mb-0 px-6 py-6">
         <div class="text-center flex justify-between">
           <h6 class="text-gray-800 text-xl font-bold">
-            {translationsToUse.title}
+            {pageTranslations.title}
           </h6>
         </div>
       </div>
@@ -82,14 +86,14 @@ function fetchAccount() {
       <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
         <div class="text-center flex justify-between">
           <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
-            {translationsToUse.sectionLabels.info}
+            {pageTranslations.sectionLabels.info}
           </h6>
         </div>
         <div class="flex flex-wrap">
           <div class="w-full lg:w-6/12 px-4">
             <div class="relative w-full mb-3">
               <label class="block uppercase text-gray-700 text-xs font-bold mb-2" for="grid-username">
-                {translationsToUse.inputLabels.name}
+                {pageTranslations.inputLabels.name}
               </label>
               <input
                 id="grid-username"
@@ -106,61 +110,45 @@ function fetchAccount() {
 
           <div class="text-center flex justify-between">
             <h6 class="text-gray-500 text-sm mt-3 mb-6 font-bold uppercase">
-              {translationsToUse.sectionLabels.members}
+              {pageTranslations.sectionLabels.members}
             </h6>
             <button
               on:click="{console.log}"
               class="{false ? 'bg-blue-500' : 'bg-gray-300'} text-white active:bg-blue-600 font-bold uppercase text-xs rounded p-3 m-2"
               type="button"
             >
-              {translationsToUse.buttons.saveMembers}
+              {pageTranslations.buttons.saveMembers}
             </button>
           </div>
-          <div class="flex flex-wrap">
 
+          <div class="flex flex-wrap">
             <div class="w-full lg:w-3/12 px-4">
-              <div class="relative w-full mb-3">
-                <ul>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                </ul>
-              </div>
-            </div>
-            <div class="w-full lg:w-3/12 px-4">
-              <div class="relative w-full mb-3">
-                <ul>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                </ul>
-              </div>
-            </div>
-            <div class="w-full lg:w-3/12 px-4">
-              <div class="relative w-full mb-3">
-                <ul>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                </ul>
-              </div>
-            </div>
-            <div class="w-full lg:w-3/12 px-4">
-              <div class="relative w-full mb-3">
-                <ul>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                  <li>fart</li>
-                </ul>
-              </div>
+
+
+
+              <table class="items-center w-full bg-transparent border-collapse">
+                <thead>
+                <tr>
+                  {#each AccountUserMembership.headers(modelTranslations) as header}
+                      <th class="px-6 align-middle border border-solid py-3 text-xs uppercase border-l-0 border-r-0 whitespace-no-wrap font-semibold text-left bg-gray-100 text-gray-600 border-gray-200">
+                        {header.content}
+                      </th>
+                  {/each}
+                </tr>
+                </thead>
+                <tbody>
+                {#each account.members as membership}
+                  <tr>
+                    {#each AccountUserMembership.asRow(membership) as cell}
+                        <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4" >
+                          {cell.content}
+                        </td>
+                    {/each}
+                  </tr>
+                {/each}
+                </tbody>
+              </table>
+
             </div>
           </div>
           {/if}

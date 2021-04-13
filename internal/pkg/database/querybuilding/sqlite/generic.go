@@ -122,12 +122,13 @@ func (b *Sqlite) buildListQuery(ctx context.Context, tableName, ownershipColumn 
 		From(tableName)
 
 	if !forAdmin {
-		builder = builder.Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn): nil,
-			fmt.Sprintf("%s.%s", tableName, ownershipColumn):                ownerID,
-		})
-	}
+		w := squirrel.Eq{fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn): nil}
+		if ownershipColumn != "" && ownerID != 0 {
+			w[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = ownerID
+		}
 
+		builder = builder.Where(w)
+	}
 	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, querybuilding.IDColumn))
 
 	if filter != nil {

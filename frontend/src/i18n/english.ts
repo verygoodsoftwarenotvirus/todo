@@ -362,8 +362,31 @@ export const englishTranslations: SiteTranslationMap = {
         name: _name,
         accountSubscriptionPlanID: 'Plan ID',
         createdOn: _createdOn,
+        defaultNewMemberPermissions: 'Default New User Permissions',
         lastUpdatedOn: _lastUpdatedOn,
         belongsToUser: _belongsToUser,
+        archivedOn: _archivedOn,
+      },
+      labels: {
+        name: _name,
+        accountSubscriptionPlanID: 'Plan ID',
+      },
+      inputPlaceholders: {
+        name: 'name',
+        accountSubscriptionPlanID: 'Plan ID',
+      },
+    },
+    accountUserMembership: {
+      actions: {
+        create: 'Create Account',
+      },
+      columns: {
+        id: _id,
+        createdOn: _createdOn,
+        belongsToUser: "User ID",
+        userAccountPermissions: "Permissions",
+        defaultAccount: "Default",
+        belongsToAccount: _belongsToAccount,
         archivedOn: _archivedOn,
       },
       labels: {

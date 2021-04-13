@@ -152,7 +152,7 @@ export const fakeWebhookFactory = Factory.Sync.makeFactory<Webhook>({
   events: Factory.Sync.each(() => faker.random.words().split(' ')),
   dataTypes: Factory.Sync.each(() => faker.random.words().split(' ')),
   topics: Factory.Sync.each(() => faker.random.words().split(' ')),
-  belongsToAccount: Factory.Sync.each(() => faker.random.number()),
+  belongsToAccount: Factory.Sync.each(() => faker.datatype.number()),
   ...defaultFactories,
 });
 

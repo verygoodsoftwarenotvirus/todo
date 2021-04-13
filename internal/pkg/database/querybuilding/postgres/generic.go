@@ -127,10 +127,12 @@ func (b *Postgres) buildListQuery(ctx context.Context, tableName, ownershipColum
 		From(tableName)
 
 	if !forAdmin {
-		builder = builder.Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn): nil,
-			fmt.Sprintf("%s.%s", tableName, ownershipColumn):                userID,
-		})
+		w := squirrel.Eq{fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn): nil}
+		if ownershipColumn != "" && userID != 0 {
+			w[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = userID
+		}
+
+		builder = builder.Where(w)
 	}
 
 	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, querybuilding.IDColumn))

@@ -143,19 +143,8 @@ func (b *Sqlite) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilt
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
-	builder := b.sqlBuilder.
-		Select(querybuilding.UsersTableColumns...).
-		From(querybuilding.UsersTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.CreatedOnColumn))
 
-	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.UsersTableName, builder)
-	}
-
-	return b.buildQuery(span, builder)
+	return b.buildListQuery(ctx, querybuilding.UsersTableName, "", querybuilding.UsersTableColumns, 0, false, filter)
 }
 
 // BuildTestUserCreationQuery builds a query and arguments that creates a test user.

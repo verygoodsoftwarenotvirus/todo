@@ -29,7 +29,6 @@ let translationsToUse = currentSessionSettings.getTranslations().components.drop
 let superstore = new Superstore({
   userStatusStoreUpdateFunc: (value: UserStatus) => {
     currentAuthStatus = value;
-    logger.withValue("newStatus", value).debug("new status dropped");
   },
   sessionSettingsStoreUpdateFunc: (value: UserSiteSettings) => {
     currentSessionSettings = value;

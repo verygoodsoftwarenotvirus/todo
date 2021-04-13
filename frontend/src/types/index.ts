@@ -1,5 +1,6 @@
 // core
 export * from './accounts';
+export * from './account_user_membership';
 export * from './api';
 export * from './api_clients';
 export * from './audit_log_entries';

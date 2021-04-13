@@ -117,6 +117,6 @@ export const fakeAPIClientFactory = Factory.Sync.makeFactory<APIClient>({
   externalID: Factory.Sync.each(() => faker.random.uuid()),
   clientID: Factory.Sync.each(() => faker.random.uuid()),
   clientSecret: Factory.Sync.each(() => faker.random.uuid()),
-  belongsToAccount: Factory.Sync.each(() => faker.random.number()),
+  belongsToAccount: Factory.Sync.each(() => faker.datatype.number()),
   ...defaultFactories,
 });

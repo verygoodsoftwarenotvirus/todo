@@ -1,7 +1,7 @@
 import * as Factory from 'factory.ts';
 import faker from 'faker';
 
-export const idFactory = Factory.Sync.each(() => faker.random.number());
+export const idFactory = Factory.Sync.each(() => faker.datatype.number());
 
 // yes I've seen this article: https://swizec.com/blog/a-day-is-not-606024-seconds-long/swizec/6755
 const oneDayInMillis = 86400000;

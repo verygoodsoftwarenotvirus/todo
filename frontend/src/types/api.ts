@@ -1,5 +1,14 @@
-export interface DatabaseRecord {
+export class DatabaseRecord {
   id: number;
+  createdOn: number;
+  
+  constructor(
+    id: number = 0,
+    createdOn: number = 0,
+  ) {
+    this.id = id;
+    this.createdOn = createdOn;
+  }
 }
 
 export class Pagination {

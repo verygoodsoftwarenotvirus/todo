@@ -7,6 +7,29 @@ export type auditLogEntryTranslations = {
   };
 };
 
+export type accountUserMembershipModelTranslations = {
+  actions: {
+    create: string;
+  };
+  columns: {
+    id: string;
+    createdOn: string;
+    archivedOn: string
+    userAccountPermissions: string;
+    defaultAccount: string;
+    belongsToAccount: string;
+    belongsToUser: string;
+  };
+  labels: {
+    name: string;
+    accountSubscriptionPlanID: string;
+  };
+  inputPlaceholders: {
+    name: string;
+    accountSubscriptionPlanID: string;
+  };
+};
+
 export type accountModelTranslations = {
   actions: {
     create: string;
@@ -19,6 +42,7 @@ export type accountModelTranslations = {
     createdOn: string;
     lastUpdatedOn: string;
     belongsToUser: string;
+    defaultNewMemberPermissions: string;
     archivedOn: string;
   };
   labels: {

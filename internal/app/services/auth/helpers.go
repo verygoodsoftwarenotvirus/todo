@@ -23,7 +23,6 @@ func (s *service) overrideRequestContextValuesWithSessionData(ctx context.Contex
 	defer span.End()
 
 	if activeAccount, ok := s.sessionManager.Get(ctx, accountIDContextKey).(uint64); ok {
-		s.logger.Debug("overriding active account for request context")
 		reqCtx.ActiveAccountID = activeAccount
 	}
 }

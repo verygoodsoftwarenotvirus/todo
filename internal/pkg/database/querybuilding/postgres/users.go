@@ -142,36 +142,7 @@ func (b *Postgres) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFi
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	countQueryBuilder := b.sqlBuilder.PlaceholderFormat(squirrel.Question).
-		Select(allCountQuery).
-		From(querybuilding.UsersTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
-		})
-
-	if filter != nil {
-		countQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, querybuilding.ItemsTableName, countQueryBuilder)
-	}
-
-	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
-	b.logQueryBuildingError(span, err)
-
-	builder := b.sqlBuilder.
-		Select(append(querybuilding.UsersTableColumns, fmt.Sprintf("(%s)", countQuery))...).
-		From(querybuilding.UsersTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.CreatedOnColumn))
-
-	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.UsersTableName, builder)
-	}
-
-	query, selectArgs, err := builder.ToSql()
-	b.logQueryBuildingError(span, err)
-
-	return query, append(countQueryArgs, selectArgs...)
+	return b.buildListQuery(ctx, querybuilding.UsersTableName, "", querybuilding.UsersTableColumns, 0, false, filter)
 }
 
 // BuildTestUserCreationQuery returns a SQL query (and arguments) that would create a test user.

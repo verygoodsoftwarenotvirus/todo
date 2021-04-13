@@ -6,8 +6,13 @@ import {
 } from '../components/core/apiTable/types';
 import type { accountModelTranslations } from '../i18n';
 import { renderUnixTime } from '../utils';
-import { Pagination } from './api';
+import {DatabaseRecord, Pagination} from './api';
 import { defaultFactories } from './fakes';
+import {
+  AccountUserMembership,
+  fakeAccountUserMembershipFactory,
+} from "../types/account_user_membership";
+import {create} from "string-format";
 
 export class AccountList extends Pagination {
   accounts: Account[];
@@ -19,15 +24,15 @@ export class AccountList extends Pagination {
   }
 }
 
-export class Account {
-  id: number;
+export class Account extends DatabaseRecord {
   name: string;
   externalID: string;
   accountSubscriptionPlanID?: number;
-  createdOn: number;
   lastUpdatedOn?: number;
   archivedOn?: number;
   belongsToUser: number;
+  defaultNewMemberPermissions: number;
+  members: AccountUserMembership[];
 
   constructor(
     id: number = 0,
@@ -36,13 +41,16 @@ export class Account {
     accountSubscriptionPlanID?: number,
     createdOn: number = 0,
     belongsToUser: number = 0,
+    defaultNewMemberPermissions: number = 0,
+    members: AccountUserMembership[] = [],
   ) {
-    this.id = id;
+    super(id, createdOn)
     this.name = name;
     this.externalID = externalID;
     this.accountSubscriptionPlanID = accountSubscriptionPlanID;
-    this.createdOn = createdOn;
     this.belongsToUser = belongsToUser;
+    this.defaultNewMemberPermissions = defaultNewMemberPermissions;
+    this.members = members;
   }
 
   static areEqual = function (x: Account, y: Account): boolean {
@@ -108,7 +116,9 @@ export class AccountCreationInput {
 export const fakeAccountFactory = Factory.Sync.makeFactory<Account>({
   name: Factory.Sync.each(() => faker.random.word()),
   externalID: Factory.Sync.each(() => faker.random.uuid()),
-  accountSubscriptionPlanID: Factory.Sync.each(() => faker.random.number()),
-  belongsToUser: Factory.Sync.each(() => faker.random.number()),
+  accountSubscriptionPlanID: Factory.Sync.each(() => faker.datatype.number()),
+  belongsToUser: Factory.Sync.each(() => faker.datatype.number()),
+  defaultNewMemberPermissions: Number.MAX_SAFE_INTEGER,
+  members: fakeAccountUserMembershipFactory.buildList(10),
   ...defaultFactories,
 });

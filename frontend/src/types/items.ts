@@ -117,6 +117,6 @@ export const fakeItemFactory = Factory.Sync.makeFactory<Item>({
   name: Factory.Sync.each(() => faker.random.word()),
   externalID: Factory.Sync.each(() => faker.random.uuid()),
   details: Factory.Sync.each(() => faker.random.word()),
-  belongsToAccount: Factory.Sync.each(() => faker.random.number()),
+  belongsToAccount: Factory.Sync.each(() => faker.datatype.number()),
   ...defaultFactories,
 });

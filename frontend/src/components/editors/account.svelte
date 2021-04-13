@@ -67,7 +67,7 @@ function fetchAccount(): void {
     const i = fakeAccountFactory.build();
     account = { ...i };
     originalAccount = { ...i };
-  } else {
+  } else if (accountID !== 0){
     V1APIClient.fetchAccount(accountID)
       .then((response: AxiosResponse<Account>) => {
         account = { ...response.data };

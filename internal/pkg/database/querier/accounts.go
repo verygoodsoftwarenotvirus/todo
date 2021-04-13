@@ -10,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -27,6 +28,8 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 	account = &types.Account{Members: []*types.AccountUserMembership{}}
 	membership = &types.AccountUserMembership{}
 
+	var perms int64
+
 	targetVars := []interface{}{
 		&account.ID,
 		&account.ExternalID,
@@ -40,7 +43,7 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&membership.ID,
 		&membership.BelongsToUser,
 		&membership.BelongsToAccount,
-		&membership.UserAccountPermissions,
+		&perms,
 		&membership.DefaultAccount,
 		&membership.CreatedOn,
 		&membership.ArchivedOn,
@@ -53,6 +56,8 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 	if err = scan.Scan(targetVars...); err != nil {
 		return nil, nil, 0, 0, observability.PrepareError(err, logger, span, "fetching memberships from database")
 	}
+
+	membership.UserAccountPermissions = permissions.ServiceUserPermission(perms)
 
 	return account, membership, filteredCount, totalCount, nil
 }

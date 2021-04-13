@@ -117,12 +117,15 @@ export class User {
       }),
       new APITableCell({
         content: x.externalID,
+        requiresAdmin: true,
       }),
       new APITableCell({
         content: renderUnixTime(x.createdOn),
+        requiresAdmin: true,
       }),
       new APITableCell({
         content: renderUnixTime(x.lastUpdatedOn),
+        requiresAdmin: true,
       }),
       new APITableCell({
         content: renderUnixTime(x.archivedOn),
@@ -138,10 +141,10 @@ export const fakeUserFactory = Factory.Sync.makeFactory<User>({
   externalID: Factory.Sync.each(() => faker.random.uuid()),
   username: Factory.Sync.each(() => faker.random.word()),
   serviceAdminPermissions: Factory.Sync.each(() =>
-    faker.random.number(maximumPossiblePermissions),
+    faker.datatype.number(maximumPossiblePermissions),
   ),
-  requiresPasswordChange: Factory.Sync.each(() => faker.random.boolean()),
-  passwordLastChangedOn: Factory.Sync.each(() => faker.random.number()),
+  requiresPasswordChange: Factory.Sync.each(() => faker.datatype.boolean()),
+  passwordLastChangedOn: Factory.Sync.each(() => faker.datatype.number()),
   reputation: Factory.Sync.each(() => faker.random.word()),
   reputationExplanation: Factory.Sync.each(() => faker.random.words(10)),
   adminPermissions: Factory.Sync.each(() => new AdminPermissionSummary()),

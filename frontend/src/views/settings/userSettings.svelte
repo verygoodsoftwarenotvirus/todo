@@ -14,8 +14,6 @@ import {
 } from '../../types';
 import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
-import { translations } from '../../i18n';
-import { sessionSettingsStore } from '../../stores';
 import { frontendRoutes } from '../../constants';
 import { Superstore } from '../../stores';
 

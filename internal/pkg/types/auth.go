@@ -43,6 +43,12 @@ type (
 		ActiveAccountID       uint64                `json:"-"`
 	}
 
+	// FrontendUserAccountMembershipInfo represents key information about an account membership to the frontend.
+	FrontendUserAccountMembershipInfo struct {
+		UserAccountMembershipInfo
+		Permissions permissions.ServiceUserPermissionsSummary `json:"permissions"`
+	}
+
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
 		Reputation             userReputation                     `json:"-"`
@@ -53,12 +59,12 @@ type (
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		AccountPermissions             map[string]*UserAccountMembershipInfo       `json:"accountPermissions,omitempty"`
-		ServiceAdminPermissionsSummary *permissions.ServiceAdminPermissionsSummary `json:"adminPermissions,omitempty"`
-		UserReputation                 userReputation                              `json:"userReputation,omitempty"`
-		UserReputationExplanation      string                                      `json:"reputationExplanation"`
-		ActiveAccount                  uint64                                      `json:"activeAccount,omitempty"`
-		UserIsAuthenticated            bool                                        `json:"isAuthenticated"`
+		AccountPermissions             map[string]*FrontendUserAccountMembershipInfo `json:"accountPermissions,omitempty"`
+		ServiceAdminPermissionsSummary *permissions.ServiceAdminPermissionsSummary   `json:"adminPermissions,omitempty"`
+		UserReputation                 userReputation                                `json:"userReputation,omitempty"`
+		UserReputationExplanation      string                                        `json:"reputationExplanation"`
+		ActiveAccount                  uint64                                        `json:"activeAccount,omitempty"`
+		UserIsAuthenticated            bool                                          `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -126,10 +132,13 @@ func (i *PASETOCreationInput) Validate(ctx context.Context) error {
 }
 
 // ToPermissionMapByAccountName returns an AccountPermissionsMap arranged by account name.
-func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]*UserAccountMembershipInfo {
-	out := map[string]*UserAccountMembershipInfo{}
+func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]*FrontendUserAccountMembershipInfo {
+	out := map[string]*FrontendUserAccountMembershipInfo{}
 	for _, v := range perms {
-		out[v.AccountName] = v
+		out[v.AccountName] = &FrontendUserAccountMembershipInfo{
+			UserAccountMembershipInfo: *v,
+			Permissions:               v.Permissions.Summary(),
+		}
 	}
 
 	return out

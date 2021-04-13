@@ -95,6 +95,8 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	logger = logger.WithValue(keys.NameKey, input.Name)
+
 	// retrieve request context.
 	reqCtx, err := s.requestContextFetcher(req)
 	if err != nil {

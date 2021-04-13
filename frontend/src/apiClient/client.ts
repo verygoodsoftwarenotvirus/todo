@@ -76,7 +76,7 @@ axios.interceptors.response.use((response: AxiosResponse):
   logger
     .withDebugValue('url', response.config.url || '')
     .withDebugValue('responseStatus', response?.status.toString())
-    .withDebugValue('responseBody', JSON.stringify(response.data))
+    .withDebugValue('responseBody', response.data)
     .withDebugValue('requestBody', response.config.data || null)
     .debug(`response received`);
 

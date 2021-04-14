@@ -13,9 +13,7 @@ const (
 
 // Config contains settings regarding search indices.
 type Config struct {
-	// Provider indicates who provides the search functionality.
-	Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-	// ItemsIndexPath indicates where our items search index files should go.
+	Provider       string    `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 	ItemsIndexPath IndexPath `json:"items_index_path" mapstructure:"items_index_path" toml:"items_index_path,omitempty"`
 }
 

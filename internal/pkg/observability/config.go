@@ -12,9 +12,7 @@ import (
 type (
 	// Config contains settings about how we report our metrics.
 	Config struct {
-		// Tracing contains tracing settings.
 		Tracing tracing.Config `json:"tracing" mapstructure:"tracing" toml:"tracing,omitempty"`
-		// Metrics contains metrics settings.
 		Metrics metrics.Config `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
 	}
 )

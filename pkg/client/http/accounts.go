@@ -22,8 +22,6 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	if c.authMethod == cookieAuthMethod {
-		input := &types.ChangeActiveAccountInput{}
-
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
 			return observability.PrepareError(err, logger, span, "building account switch request")

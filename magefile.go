@@ -171,6 +171,19 @@ func doesNotEndWith(input string, exclusions ...string) bool {
 	return doesNotMatch(input, strings.HasSuffix, exclusions...)
 }
 
+func PrintTestPackages() error {
+	packages, err := determineTestablePackages()
+	if err != nil {
+		return err
+	}
+
+	for _, x := range packages {
+		fmt.Println(x)
+	}
+
+	return nil
+}
+
 func determineTestablePackages() ([]string, error) {
 	var out []string
 

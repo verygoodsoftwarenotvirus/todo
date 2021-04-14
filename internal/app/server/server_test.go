@@ -1,6 +1,7 @@
 package server
 
 import (
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
@@ -10,6 +11,17 @@ import (
 
 func TestProvideServer(T *testing.T) {
 	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := &config.ServerConfig{}
+		srv := &httpserver.Server{}
+		x, err := ProvideServer(cfg, srv)
+
+		assert.NotNil(t, x)
+		assert.NoError(t, err)
+	})
 
 	T.Run("with nil config provided", func(t *testing.T) {
 		t.Parallel()

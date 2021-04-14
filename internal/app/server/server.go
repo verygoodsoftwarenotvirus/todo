@@ -10,10 +10,9 @@ import (
 )
 
 type (
-	// Server is the structure responsible for hosting all available protocols.
-	// In the events we adopted a gRPC implementation of the surface, this is
-	// the structure that would contain it and be responsible for calling its
-	// serve method.
+	// Server is the structure responsible for hosting all available protocols. In the event
+	// we adopted, say, a gRPC implementation of the surface, this is the structure that would
+	// contain it and be responsible for calling its serve method.
 	Server struct {
 		config     *config.ServerConfig
 		httpServer *httpserver.Server

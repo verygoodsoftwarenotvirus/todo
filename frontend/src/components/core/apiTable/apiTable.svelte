@@ -6,6 +6,7 @@ import { Logger } from '../../../logger';
 import { QueryFilter, UserSiteSettings, UserStatus } from '../../../types';
 import { Superstore } from '../../../stores';
 import type { APITableCell, APITableHeader } from './types';
+import format from "string-format";
 
 let logger = new Logger().withDebugValue(
   'source',
@@ -199,7 +200,7 @@ function goToNewPage() {
           <tr>
             {#each rowRenderFunction(row) as cell}
               {#if cell.isIDCell && individualPageLink !== ''}
-                <a use:link href="{individualPageLink}/{row.id}">
+                <a use:link href="{format(individualPageLink, row.id)}">
                   <th class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-no-wrap p-4 text-left flex items-center">
                     <span class="ml-3 font-bold btext-gray-700">
                       {row.id}

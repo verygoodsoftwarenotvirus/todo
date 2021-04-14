@@ -152,7 +152,7 @@ function createWebhook(): void {
 
   if (superstore.frontendOnlyMode) {
     navigate(
-      format(frontendRoutes.INDIVIDUAL_WEBHOOK, faker.random.number().toString()),
+      format(frontendRoutes.INDIVIDUAL_WEBHOOK, faker.datatype.number().toString()),
       {
         state: {},
         replace: true,

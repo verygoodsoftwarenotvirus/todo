@@ -19,10 +19,10 @@ const (
 )
 
 // BuildUserAddedToAccountEventEntry builds an entry creation input for when a membership is created.
-func BuildUserAddedToAccountEventEntry(addedBy, accountID uint64, input *types.AddUserToAccountInput) *types.AuditLogEntryCreationInput {
+func BuildUserAddedToAccountEventEntry(addedBy uint64, input *types.AddUserToAccountInput) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   addedBy,
-		AccountAssignmentKey: accountID,
+		AccountAssignmentKey: input.AccountID,
 		UserAssignmentKey:    input.UserID,
 		PermissionsKey:       input.UserAccountPermissions,
 	}

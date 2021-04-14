@@ -17,7 +17,7 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 
 import APITable from '../core/apiTable/apiTable.svelte';
-import { statusCodes } from '../../constants';
+import {frontendRoutes, statusCodes} from '../../constants';
 import { Superstore } from '../../stores';
 
 export let location;
@@ -86,7 +86,9 @@ function fetchAPIClients() {
   } else {
     V1APIClient.fetchListOfAPIClients(queryFilter, adminMode)
       .then((response: AxiosResponse<APIClientList>) => {
-        apiClients = response.data.apiClients || [];
+        apiClients = response.data.clients || [];
+
+        console.dir(apiClients)
 
         queryFilter.page = response.data.page;
         apiTableIncrementDisabled = apiClients.length === 0;
@@ -125,7 +127,8 @@ function promptDelete(id: number) {
       title="APIClients"
       headers="{APIClient.headers(translationsToUse)}"
       rows="{apiClients}"
-      individualPageLink="/user/api_clients"
+      creationLink="{frontendRoutes.CREATE_API_CLIENT}"
+      individualPageLink="{frontendRoutes.INDIVIDUAL_API_CLIENT}"
       dataRetrievalError="{apiClientRetrievalError}"
       searchFunction="{searchAPIClients}"
       incrementDisabled="{apiTableIncrementDisabled}"

@@ -35,7 +35,7 @@ type (
 	// APIClientCreationInput is a struct for use when creating API clients.
 	APIClientCreationInput struct {
 		UserLoginInput
-		Name          string `json:"name"`
+		Name          string `json:"clientName"`
 		ClientID      string `json:"-"`
 		ClientSecret  []byte `json:"-"`
 		BelongsToUser uint64 `json:"-"`

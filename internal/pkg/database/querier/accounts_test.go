@@ -43,9 +43,10 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 				y.ID,
 				y.BelongsToUser,
 				y.BelongsToAccount,
-				y.UserAccountPermissions,
+				int64(y.UserAccountPermissions),
 				y.DefaultAccount,
 				y.CreatedOn,
+				x.LastUpdatedOn,
 				y.ArchivedOn,
 			}
 
@@ -618,6 +619,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
 			Reason:                 "account creation",
 			UserID:                 exampleUser.ID,
+			AccountID:              exampleAccount.ID,
 			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
 		}
 
@@ -647,7 +649,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
-			On("BuildAddUserToAccountQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccount.ID, exampleAccountAdditionInput).
+			On("BuildAddUserToAccountQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountAdditionInput).
 			Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).

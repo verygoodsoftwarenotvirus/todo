@@ -28,10 +28,8 @@ export class Account extends DatabaseRecord {
   name: string;
   externalID: string;
   accountSubscriptionPlanID?: number;
-  lastUpdatedOn?: number;
-  archivedOn?: number;
-  belongsToUser: number;
   defaultNewMemberPermissions: number;
+  belongsToUser: number;
   members: AccountUserMembership[];
 
   constructor(
@@ -39,12 +37,14 @@ export class Account extends DatabaseRecord {
     name: string = '',
     externalID: string = '',
     accountSubscriptionPlanID?: number,
-    createdOn: number = 0,
-    belongsToUser: number = 0,
     defaultNewMemberPermissions: number = 0,
     members: AccountUserMembership[] = [],
+    createdOn: number = 0,
+    lastUpdatedOn?: number,
+    archivedOn?: number,
+    belongsToUser: number = 0,
   ) {
-    super(id, createdOn)
+    super(id, createdOn, lastUpdatedOn, archivedOn);
     this.name = name;
     this.externalID = externalID;
     this.accountSubscriptionPlanID = accountSubscriptionPlanID;
@@ -115,7 +115,7 @@ export class AccountCreationInput {
 
 export const fakeAccountFactory = Factory.Sync.makeFactory<Account>({
   name: Factory.Sync.each(() => faker.random.word()),
-  externalID: Factory.Sync.each(() => faker.random.uuid()),
+  externalID: Factory.Sync.each(() => faker.datatype.uuid()),
   accountSubscriptionPlanID: Factory.Sync.each(() => faker.datatype.number()),
   belongsToUser: Factory.Sync.each(() => faker.datatype.number()),
   defaultNewMemberPermissions: Number.MAX_SAFE_INTEGER,

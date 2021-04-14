@@ -1,13 +1,19 @@
 export class DatabaseRecord {
   id: number;
   createdOn: number;
+  lastUpdatedOn?: number;
+  archivedOn?: number;
   
   constructor(
     id: number = 0,
     createdOn: number = 0,
+    lastUpdatedOn?: number,
+    archivedOn?: number,
   ) {
     this.id = id;
     this.createdOn = createdOn;
+    this.lastUpdatedOn = lastUpdatedOn;
+    this.archivedOn = archivedOn;
   }
 }
 

@@ -137,16 +137,20 @@ export type apiClientModelTranslations = {
     clientID: string;
     createdOn: string;
     lastUpdatedOn: string;
-    belongsToAccount: string;
+    belongsToUser: string;
     archivedOn: string;
   };
   labels: {
     name: string;
-    clientID: string;
+    username: string;
+    password: string;
+    totpToken: string
   };
   inputPlaceholders: {
     name: string;
-    clientID: string;
+    username: string;
+    password: string;
+    totpToken: string
   };
 };
 

@@ -215,12 +215,12 @@ func (b *Postgres) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, 
 }
 
 // BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) (query string, args []interface{}) {
+func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, input *types.AddUserToAccountInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, input.UserID)
-	tracing.AttachAccountIDToSpan(span, accountID)
+	tracing.AttachAccountIDToSpan(span, input.AccountID)
 
 	return b.buildQuery(
 		span,
@@ -232,7 +232,7 @@ func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, accountID uin
 			).
 			Values(
 				input.UserID,
-				accountID,
+				input.AccountID,
 				input.UserAccountPermissions,
 			),
 	)

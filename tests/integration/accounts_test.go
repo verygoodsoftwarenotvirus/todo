@@ -312,9 +312,10 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			// add them to the account
 			for i := 0; i < userCount; i++ {
 				t.Logf("adding user #%d to account #%d", users[i].ID, account.ID)
-				require.NoError(t, testClients.main.AddUserToAccount(ctx, account.ID, &types.AddUserToAccountInput{
-					UserID: users[i].ID,
-					Reason: t.Name(),
+				require.NoError(t, testClients.main.AddUserToAccount(ctx, &types.AddUserToAccountInput{
+					UserID:    users[i].ID,
+					AccountID: account.ID,
+					Reason:    t.Name(),
 				}))
 				t.Logf("added user #%d to account #%d", users[i].ID, account.ID)
 				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAddedToAccountEvent})

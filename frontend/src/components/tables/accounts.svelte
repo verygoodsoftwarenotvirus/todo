@@ -17,7 +17,7 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 
 import APITable from '../core/apiTable/apiTable.svelte';
-import { statusCodes } from '../../constants';
+import {frontendRoutes, statusCodes} from '../../constants';
 import { Superstore } from '../../stores';
 
 export let location: Location;
@@ -125,7 +125,7 @@ function promptDelete(id: number) {
       title="Accounts"
       headers="{Account.headers(translationsToUse)}"
       rows="{accounts}"
-      individualPageLink="/admin/accounts"
+      individualPageLink="{frontendRoutes.ADMIN_INDIVIDUAL_ACCOUNT}"
       dataRetrievalError="{accountRetrievalError}"
       searchFunction="{searchAccounts}"
       incrementDisabled="{apiTableIncrementDisabled}"

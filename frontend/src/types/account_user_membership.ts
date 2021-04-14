@@ -6,7 +6,7 @@ import {
 } from '../components/core/apiTable/types';
 import type { accountUserMembershipModelTranslations } from '../i18n';
 import { renderUnixTime } from '../utils';
-import { Pagination } from './api';
+import {DatabaseRecord, Pagination} from './api';
 import { defaultFactories } from './fakes';
 import {Logger} from "../logger";
 
@@ -25,14 +25,11 @@ export class AccountUserMembershipList extends Pagination {
   }
 }
 
-export class AccountUserMembership {
-  id: number;
+export class AccountUserMembership extends DatabaseRecord {
   belongsToUser: number;
   userAccountPermissions: number;
   belongsToAccount: number;
   defaultAccount: boolean;
-  createdOn: number;
-  archivedOn?: number;
   
   constructor(
     id: number = 0,
@@ -41,15 +38,14 @@ export class AccountUserMembership {
     belongsToAccount: number = 0,
     defaultAccount: boolean = false,
     createdOn: number = 0,
+    lastUpdatedOn?: number,
     archivedOn?: number,
   ) {
-    this.id = id;
+    super(id, createdOn, lastUpdatedOn, archivedOn);
     this.belongsToUser = belongsToUser;
     this.userAccountPermissions = userAccountPermissions;
     this.belongsToAccount = belongsToAccount;
     this.defaultAccount = defaultAccount;
-    this.createdOn = createdOn;
-    this.archivedOn = archivedOn;
   }
   
   // this function should return everything there are no presumed fields

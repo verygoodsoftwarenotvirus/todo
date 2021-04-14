@@ -32,6 +32,7 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 		&rawPerms,
 		&x.DefaultAccount,
 		&x.CreatedOn,
+		&x.LastUpdatedOn,
 		&x.ArchivedOn,
 		&accountName,
 	}
@@ -325,13 +326,9 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 }
 
 // AddUserToAccount does a thing.
-func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, accountID, addedByUser uint64) error {
+func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser uint64) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
-
-	if accountID == 0 {
-		return ErrInvalidIDProvided
-	}
 
 	if input == nil {
 		return ErrNilInputProvided
@@ -340,15 +337,15 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 	logger := q.logger.WithValues(map[string]interface{}{
 		keys.RequesterIDKey: addedByUser,
 		keys.UserIDKey:      input.UserID,
-		keys.AccountIDKey:   accountID,
+		keys.AccountIDKey:   input.AccountID,
 		keys.PermissionsKey: input.UserAccountPermissions,
 	})
 
 	tracing.AttachUserIDToSpan(span, input.UserID)
-	tracing.AttachAccountIDToSpan(span, accountID)
+	tracing.AttachAccountIDToSpan(span, input.AccountID)
 	tracing.AttachRequestingUserIDToSpan(span, addedByUser)
 
-	query, args := q.sqlQueryBuilder.BuildAddUserToAccountQuery(ctx, accountID, input)
+	query, args := q.sqlQueryBuilder.BuildAddUserToAccountQuery(ctx, input)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -361,7 +358,7 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 		return observability.PrepareError(err, logger, span, "creating user account membership")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, accountID, input)); err != nil {
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, input)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
 	}

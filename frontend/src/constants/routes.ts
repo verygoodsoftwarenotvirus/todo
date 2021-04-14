@@ -26,6 +26,12 @@ export enum backendRoutes {
   INDIVIDUAL_ACCOUNT = '/api/v1/accounts/{}',
   INDIVIDUAL_ACCOUNT_AUDIT_LOG = '/api/v1/accounts/{}/audit',
 
+  // API Clients
+  CREATE_API_CLIENT = '/api/v1/api_clients',
+  GET_API_CLIENTS = '/api/v1/api_clients',
+  INDIVIDUAL_API_CLIENT = '/api/v1/api_clients/{}',
+  INDIVIDUAL_API_CLIENT_AUDIT_LOG = '/api/v1/api_clients/{}/audit',
+
   // Webhooks
   CREATE_WEBHOOK = '/api/v1/webhooks',
   GET_WEBHOOKS = '/api/v1/webhooks',
@@ -47,9 +53,12 @@ export enum frontendRoutes {
   // Admin Pages
   ADMIN_DASHBOARD = '/admin/dashboard',
   ADMIN_USERS = '/admin/users',
+  ADMIN_CREATE_USER = '/admin/users/new',
+  ADMIN_INDIVIDUAL_USER = '/admin/users/{}',
   ADMIN_ACCOUNTS = '/admin/accounts',
   ADMIN_AUDIT_LOGS = '/admin/audit_log',
   ADMIN_SETTINGS = '/admin/settings',
+  ADMIN_INDIVIDUAL_ACCOUNT = '/admin/accounts/{}',
 
   // User auth
   LOGIN = '/auth/login',
@@ -61,6 +70,7 @@ export enum frontendRoutes {
   // User routes
   USER_SETTINGS = '/user/settings',
   USER_LIST_API_CLIENTS = '/user/api_clients',
+  CREATE_API_CLIENT = '/user/api_clients/new',
   INDIVIDUAL_API_CLIENT = '/user/api_clients/{}',
 
   // Webhooks

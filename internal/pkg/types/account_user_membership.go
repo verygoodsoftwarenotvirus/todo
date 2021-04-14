@@ -12,6 +12,7 @@ type (
 	// AccountUserMembership defines a relationship between a user and an account.
 	AccountUserMembership struct {
 		ArchivedOn             *uint64                           `json:"archivedOn"`
+		LastUpdatedOn          *uint64                           `json:"lastUpdatedOn"`
 		BelongsToUser          uint64                            `json:"belongsToUser"`
 		BelongsToAccount       uint64                            `json:"belongsToAccount"`
 		CreatedOn              uint64                            `json:"createdOn"`
@@ -44,6 +45,7 @@ type (
 	AddUserToAccountInput struct {
 		Reason                 string                            `json:"reason"`
 		UserID                 uint64                            `json:"userID"`
+		AccountID              uint64                            `json:"accountID"`
 		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`
 	}
 
@@ -68,7 +70,7 @@ type (
 		UserIsMemberOfAccount(ctx context.Context, userID, accountID uint64) (bool, error)
 		ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser uint64, input *ModifyUserPermissionsInput) error
 		TransferAccountOwnership(ctx context.Context, accountID uint64, transferredBy uint64, input *TransferAccountOwnershipInput) error
-		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput, accountID, addedByUser uint64) error
+		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput, addedByUser uint64) error
 		RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser uint64, reason string) error
 	}
 )

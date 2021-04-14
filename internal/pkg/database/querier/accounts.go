@@ -46,6 +46,7 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&perms,
 		&membership.DefaultAccount,
 		&membership.CreatedOn,
+		&membership.LastUpdatedOn,
 		&membership.ArchivedOn,
 	}
 
@@ -319,17 +320,18 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 
 	addInput := &types.AddUserToAccountInput{
 		UserID:                 input.BelongsToUser,
+		AccountID:              account.ID,
 		UserAccountPermissions: account.DefaultNewMemberPermissions,
 		Reason:                 "account creation",
 	}
 
-	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildAddUserToAccountQuery(ctx, account.ID, addInput)
+	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildAddUserToAccountQuery(ctx, addInput)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return nil, observability.PrepareError(err, logger, span, "creating account membership")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(createdByUser, account.ID, addInput)); err != nil {
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(createdByUser, addInput)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return nil, observability.PrepareError(err, logger, span, "writing account membership creation audit log event entry")
 	}

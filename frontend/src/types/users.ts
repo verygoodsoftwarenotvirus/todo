@@ -6,7 +6,7 @@ import {
 } from '../components/core/apiTable/types';
 import type { userModelTranslations } from '../i18n';
 import { isNumeric, renderUnixTime } from '../utils';
-import { Pagination } from './api';
+import {DatabaseRecord, Pagination} from './api';
 import { defaultFactories } from './fakes';
 
 export class UserList extends Pagination {
@@ -19,8 +19,7 @@ export class UserList extends Pagination {
   }
 }
 
-export class User {
-  id: number;
+export class User extends DatabaseRecord {
   externalID: string;
   username: string;
   serviceAdminPermissions: number; // TODO: implement permission bitmask
@@ -29,9 +28,6 @@ export class User {
   reputation: string;
   reputationExplanation: string;
   adminPermissions: AdminPermissionSummary;
-  createdOn: number;
-  lastUpdatedOn: number;
-  archivedOn?: number;
 
   constructor(
     id: number = 0,
@@ -47,7 +43,7 @@ export class User {
     lastUpdatedOn: number = 0,
     archivedOn?: number,
   ) {
-    this.id = id;
+    super(id, createdOn, lastUpdatedOn, archivedOn)
     this.externalID = externalID;
     this.username = username;
     this.serviceAdminPermissions = serviceAdminPermissions;
@@ -56,9 +52,6 @@ export class User {
     this.reputation = reputation;
     this.reputationExplanation = reputationExplanation;
     this.adminPermissions = adminPermissions;
-    this.createdOn = createdOn;
-    this.lastUpdatedOn = lastUpdatedOn;
-    this.archivedOn = archivedOn;
   }
 
   static areEqual = function (x: User, y: User): boolean {
@@ -138,7 +131,7 @@ export class User {
 const maximumPossiblePermissions: number = 4294967295;
 
 export const fakeUserFactory = Factory.Sync.makeFactory<User>({
-  externalID: Factory.Sync.each(() => faker.random.uuid()),
+  externalID: Factory.Sync.each(() => faker.datatype.uuid()),
   username: Factory.Sync.each(() => faker.random.word()),
   serviceAdminPermissions: Factory.Sync.each(() =>
     faker.datatype.number(maximumPossiblePermissions),

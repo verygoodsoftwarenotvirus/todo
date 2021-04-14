@@ -106,6 +106,7 @@ var (
 				default_account BOOLEAN NOT NULL DEFAULT 'false',
 				user_account_permissions BIGINT NOT NULL DEFAULT 0,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
+				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
 				UNIQUE("belongs_to_account", "belongs_to_user")
 			);`,

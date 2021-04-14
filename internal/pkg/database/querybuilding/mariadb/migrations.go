@@ -67,7 +67,7 @@ var (
 		},
 		{
 			Version:     0.05,
-			Description: "create account subscription account subscription plans table and default plan",
+			Description: "create account subscription plans table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS account_subscription_plans (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
@@ -156,6 +156,7 @@ var (
 				"    `default_account` BOOLEAN NOT NULL DEFAULT false,",
 				"    `user_account_permissions` BIGINT UNSIGNED NOT NULL DEFAULT 0,",
 				"    `created_on` BIGINT UNSIGNED,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    PRIMARY KEY (`id`),",
 				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE,",

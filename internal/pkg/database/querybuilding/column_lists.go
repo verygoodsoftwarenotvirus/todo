@@ -34,6 +34,7 @@ var (
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableUserPermissionsColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableDefaultUserAccountColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, CreatedOnColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, ArchivedOnColumn),
 	}
 

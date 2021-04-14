@@ -124,7 +124,7 @@ function promptDelete(id: number) {
       headers="{Webhook.headers(translationsToUse)}"
       rows="{webhooks}"
       creationLink="{frontendRoutes.CREATE_WEBHOOK}"
-      individualPageLink="/account/webhooks"
+      individualPageLink="{frontendRoutes.INDIVIDUAL_WEBHOOK}"
       dataRetrievalError="{webhookRetrievalError}"
       searchFunction="{searchWebhooks}"
       incrementDisabled="{apiTableIncrementDisabled}"

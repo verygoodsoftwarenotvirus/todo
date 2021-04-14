@@ -133,13 +133,9 @@ func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint
 }
 
 // BuildAddUserRequest builds a request that adds a user to an account.
-func (b *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) (*http.Request, error) {
+func (b *Builder) BuildAddUserRequest(ctx context.Context, input *types.AddUserToAccountInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
-
-	if accountID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
 
 	if input == nil {
 		return nil, ErrNilInputProvided
@@ -151,7 +147,7 @@ func (b *Builder) BuildAddUserRequest(ctx context.Context, accountID uint64, inp
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "member")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(input.AccountID, 10), "member")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)

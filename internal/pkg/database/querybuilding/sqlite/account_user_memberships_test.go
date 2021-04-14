@@ -72,7 +72,9 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleInput := &types.AddUserToAccountInput{
-			UserID: exampleUser.ID,
+			UserID:    exampleUser.ID,
+			AccountID: exampleAccount.ID,
+			Reason:    t.Name(),
 		}
 
 		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,user_account_permissions) VALUES (?,?,?)"
@@ -81,7 +83,7 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 			exampleAccount.ID,
 			exampleInput.UserAccountPermissions,
 		}
-		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(ctx, exampleAccount.ID, exampleInput)
+		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -175,7 +177,7 @@ func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.archived_on, accounts.name FROM account_user_memberships JOIN accounts ON accounts.id = account_user_memberships.belongs_to_account WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = ?"
+		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on, accounts.name FROM account_user_memberships JOIN accounts ON accounts.id = account_user_memberships.belongs_to_account WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = ?"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}

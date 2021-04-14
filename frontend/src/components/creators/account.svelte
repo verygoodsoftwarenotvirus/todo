@@ -34,7 +34,7 @@ function createItem(): void {
 
   if (superstore.frontendOnlyMode) {
     navigate(
-      format(frontendRoutes.INDIVIDUAL_ITEM, faker.random.number().toString()),
+      format(frontendRoutes.INDIVIDUAL_ITEM, faker.datatype.number().toString()),
       {
         state: {},
         replace: true,

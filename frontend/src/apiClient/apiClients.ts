@@ -12,7 +12,7 @@ import type {
 
 const logger = new Logger().withDebugValue(
   'source',
-  'src/apiClient/accounts.ts',
+  'src/apiClient/apiClients.ts',
 );
 
 export function fetchListOfAPIClients(
@@ -26,37 +26,37 @@ export function fetchListOfAPIClients(
   }
 
   return axios.get(
-    `${backendRoutes.GET_ACCOUNTS}?${outboundURLParams.toString()}`,
+    `${backendRoutes.GET_API_CLIENTS}?${outboundURLParams.toString()}`,
   );
 }
 
 export function createAPIClient(
   account: APIClientCreationInput,
 ): Promise<AxiosResponse<APIClient>> {
-  return axios.post(backendRoutes.CREATE_ACCOUNT, account);
+  return axios.post(backendRoutes.CREATE_API_CLIENT, account);
 }
 
 export function fetchAPIClient(id: number): Promise<AxiosResponse<APIClient>> {
-  return axios.get(format(backendRoutes.INDIVIDUAL_ACCOUNT, id.toString()));
+  return axios.get(format(backendRoutes.INDIVIDUAL_API_CLIENT, id.toString()));
 }
 
 export function saveAPIClient(
   account: APIClient,
 ): Promise<AxiosResponse<APIClient>> {
   return axios.put(
-    format(backendRoutes.INDIVIDUAL_ACCOUNT, account.id.toString()),
+    format(backendRoutes.INDIVIDUAL_API_CLIENT, account.id.toString()),
     account,
   );
 }
 
 export function deleteAPIClient(id: number): Promise<AxiosResponse> {
-  return axios.delete(format(backendRoutes.INDIVIDUAL_ACCOUNT, id.toString()));
+  return axios.delete(format(backendRoutes.INDIVIDUAL_API_CLIENT, id.toString()));
 }
 
 export function fetchAuditLogEntriesForAPIClient(
   id: number,
 ): Promise<AxiosResponse<AuditLogEntry[]>> {
   return axios.get(
-    format(backendRoutes.INDIVIDUAL_ACCOUNT_AUDIT_LOG, id.toString()),
+    format(backendRoutes.INDIVIDUAL_API_CLIENT_AUDIT_LOG, id.toString()),
   );
 }

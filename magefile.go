@@ -358,7 +358,7 @@ func EnsureDevTools() error {
 func fixFieldAlignment() {
 	ensureFieldalignment()
 
-	sh.Run("fieldalignment", "-fix", "./...")
+	sh.Output("fieldalignment", "-fix", "./...")
 }
 
 // dependency stuff

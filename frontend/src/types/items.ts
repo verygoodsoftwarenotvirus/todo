@@ -6,7 +6,7 @@ import {
 } from '../components/core/apiTable/types';
 import type { itemModelTranslations } from '../i18n';
 import { renderUnixTime } from '../utils';
-import { Pagination } from './api';
+import {DatabaseRecord, Pagination} from './api';
 import { defaultFactories } from './fakes';
 
 export class ItemList extends Pagination {
@@ -19,14 +19,10 @@ export class ItemList extends Pagination {
   }
 }
 
-export class Item {
-  id: number;
+export class Item extends DatabaseRecord {
   externalID: string;
   name: string;
   details: string;
-  createdOn: number;
-  lastUpdatedOn?: number;
-  archivedOn?: number;
   belongsToAccount: number;
 
   constructor(
@@ -35,13 +31,14 @@ export class Item {
     name: string = '',
     details: string = '',
     createdOn: number = 0,
+    lastUpdatedOn?: number,
+    archivedOn?: number,
     belongsToAccount: number = 0,
   ) {
-    this.id = id;
+    super(id, createdOn, lastUpdatedOn, archivedOn)
     this.name = name;
     this.externalID = externalID;
     this.details = details;
-    this.createdOn = createdOn;
     this.belongsToAccount = belongsToAccount;
   }
 
@@ -115,7 +112,7 @@ export class ItemCreationInput {
 
 export const fakeItemFactory = Factory.Sync.makeFactory<Item>({
   name: Factory.Sync.each(() => faker.random.word()),
-  externalID: Factory.Sync.each(() => faker.random.uuid()),
+  externalID: Factory.Sync.each(() => faker.datatype.uuid()),
   details: Factory.Sync.each(() => faker.random.word()),
   belongsToAccount: Factory.Sync.each(() => faker.datatype.number()),
   ...defaultFactories,

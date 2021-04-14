@@ -303,7 +303,7 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, accountID, requester); err != nil {
+	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, requester); err != nil {
 		observability.AcknowledgeError(err, logger, span, "adding user to account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

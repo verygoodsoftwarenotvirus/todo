@@ -39,7 +39,7 @@ var (
 		},
 		{
 			Version:     0.03,
-			Description: "create account subscription account subscription plans table and default plan",
+			Description: "create account subscription plans table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_subscription_plans (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -106,6 +106,7 @@ var (
 				user_account_permissions INTEGER NOT NULL DEFAULT 0,
 				default_account BOOLEAN NOT NULL DEFAULT 'false',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
 				CONSTRAINT plan_name_unique UNIQUE (belongs_to_account, belongs_to_user)
 			);`,

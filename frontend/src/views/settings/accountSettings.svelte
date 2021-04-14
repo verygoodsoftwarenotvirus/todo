@@ -13,7 +13,7 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 import { Superstore } from '../../stores';
 
-export let accountID: number;
+let accountID: number;
 export let location: Location;
 
 // TODO: remove me later

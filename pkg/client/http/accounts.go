@@ -22,6 +22,8 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	if c.authMethod == cookieAuthMethod {
+		input := &types.ChangeActiveAccountInput{}
+
 		req, err := c.requestBuilder.BuildSwitchActiveAccountRequest(ctx, accountID)
 		if err != nil {
 			return observability.PrepareError(err, logger, span, "building account switch request")
@@ -161,7 +163,7 @@ func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
 }
 
 // AddUserToAccount adds a user to an account.
-func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) error {
+func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -169,15 +171,15 @@ func (c *Client) AddUserToAccount(ctx context.Context, accountID uint64, input *
 		return ErrNilInputProvided
 	}
 
-	logger := c.logger.WithValue(keys.AccountIDKey, accountID).WithValue(keys.UserIDKey, input.UserID)
-	tracing.AttachAccountIDToSpan(span, accountID)
+	logger := c.logger.WithValue(keys.AccountIDKey, input.AccountID).WithValue(keys.UserIDKey, input.UserID)
+	tracing.AttachAccountIDToSpan(span, input.AccountID)
 	tracing.AttachUserIDToSpan(span, input.UserID)
 
 	if err := input.Validate(ctx); err != nil {
 		return observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	req, err := c.requestBuilder.BuildAddUserRequest(ctx, accountID, input)
+	req, err := c.requestBuilder.BuildAddUserRequest(ctx, input)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "building add user to account request")
 	}

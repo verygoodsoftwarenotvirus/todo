@@ -14,7 +14,7 @@ import { Logger } from '../../logger';
 import { V1APIClient } from '../../apiClient';
 
 import APITable from '../core/apiTable/apiTable.svelte';
-import { statusCodes } from '../../constants';
+import {frontendRoutes, statusCodes} from '../../constants';
 import { Superstore } from '../../stores';
 
 export let location;
@@ -56,6 +56,8 @@ let apiTableSearchQuery: string = '';
 function searchUsers() {
   logger.debug('searchUsers called');
 }
+
+frontendRoutes
 
 function incrementPage() {
   if (!apiTableIncrementDisabled) {
@@ -122,8 +124,8 @@ function promptDelete(id: number) {
       title="Users"
       headers="{User.headers(translationsToUse)}"
       rows="{users}"
-      individualPageLink="/admin/users"
-      creationLink="/admin/users/new"
+      individualPageLink="{frontendRoutes.ADMIN_INDIVIDUAL_USER}"
+      creationLink="{frontendRoutes.ADMIN_CREATE_USER}"
       dataRetrievalError="{userRetrievalError}"
       searchFunction="{searchUsers}"
       incrementDisabled="{apiTableIncrementDisabled}"

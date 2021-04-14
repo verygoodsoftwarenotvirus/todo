@@ -10,12 +10,12 @@ import { defaultFactories } from '../types/fakes';
 import { renderUnixTime } from '../utils';
 
 export class APIClientList extends Pagination {
-  apiClients: APIClient[];
+  clients: APIClient[];
 
   constructor() {
     super();
 
-    this.apiClients = [];
+    this.clients = [];
   }
 }
 
@@ -28,7 +28,7 @@ export class APIClient {
   createdOn: number;
   lastUpdatedOn?: number;
   archivedOn?: number;
-  belongsToAccount: number;
+  belongsToUser: number;
 
   constructor(
     id: number = 0,
@@ -37,7 +37,7 @@ export class APIClient {
     clientID: string = '',
     clientSecret: string = '',
     createdOn: number = 0,
-    belongsToAccount: number = 0,
+    belongsToUser: number = 0,
   ) {
     this.id = id;
     this.name = name;
@@ -45,7 +45,7 @@ export class APIClient {
     this.clientID = clientID;
     this.clientSecret = clientSecret;
     this.createdOn = createdOn;
-    this.belongsToAccount = belongsToAccount;
+    this.belongsToUser = belongsToUser;
   }
 
   static areEqual = function (x: APIClient, y: APIClient): boolean {
@@ -70,7 +70,7 @@ export class APIClient {
       { content: columns.clientID, requiresAdmin: false },
       { content: columns.createdOn, requiresAdmin: false },
       { content: columns.lastUpdatedOn, requiresAdmin: false },
-      { content: columns.belongsToAccount, requiresAdmin: true },
+      { content: columns.belongsToUser, requiresAdmin: true },
     ];
   };
 
@@ -97,7 +97,7 @@ export class APIClient {
         content: renderUnixTime(x.lastUpdatedOn),
       }),
       new APITableCell({
-        content: x.belongsToAccount.toString(),
+        content: x.belongsToUser.toString(),
         requiresAdmin: true,
       }),
     ];
@@ -106,17 +106,35 @@ export class APIClient {
 
 export class APIClientCreationInput {
   name: string;
+  username: string;
+  password: string;
+  totpToken: string;
 
-  constructor(name: string = '') {
+  constructor(
+    name: string = '',
+    username: string = '',
+    password: string = '',
+    totpToken: string = '',
+  ) {
     this.name = name;
+    this.username = username;
+    this.password = password;
+    this.totpToken  = totpToken;
+  }
+  
+  complete(): boolean {
+    return this.name !== '' &&
+      this.username !== '' &&
+      this.password !== '' &&
+      this.totpToken !== ''
   }
 }
 
 export const fakeAPIClientFactory = Factory.Sync.makeFactory<APIClient>({
   name: Factory.Sync.each(() => faker.random.word()),
-  externalID: Factory.Sync.each(() => faker.random.uuid()),
-  clientID: Factory.Sync.each(() => faker.random.uuid()),
-  clientSecret: Factory.Sync.each(() => faker.random.uuid()),
-  belongsToAccount: Factory.Sync.each(() => faker.datatype.number()),
+  externalID: Factory.Sync.each(() => faker.datatype.uuid()),
+  clientID: Factory.Sync.each(() => faker.datatype.uuid()),
+  clientSecret: Factory.Sync.each(() => faker.datatype.uuid()),
+  belongsToUser: Factory.Sync.each(() => faker.datatype.number()),
   ...defaultFactories,
 });

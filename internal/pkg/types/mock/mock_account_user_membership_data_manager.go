@@ -50,8 +50,8 @@ func (m *AccountUserMembershipDataManager) UserIsMemberOfAccount(ctx context.Con
 }
 
 // AddUserToAccount implements the interface.
-func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, accountID, addedByUser uint64) error {
-	return m.Called(ctx, input, accountID, addedByUser).Error(0)
+func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser uint64) error {
+	return m.Called(ctx, input, addedByUser).Error(0)
 }
 
 // RemoveUserFromAccount implements the interface.

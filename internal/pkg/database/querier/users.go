@@ -330,11 +330,12 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	addToAccountInput := &types.AddUserToAccountInput{
 		UserID:                 user.ID,
+		AccountID:              account.ID,
 		UserAccountPermissions: account.DefaultNewMemberPermissions,
 		Reason:                 "account creation",
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, account.ID, addToAccountInput)); err != nil {
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, addToAccountInput)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
 	}

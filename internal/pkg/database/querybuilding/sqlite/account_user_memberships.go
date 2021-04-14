@@ -196,7 +196,7 @@ func (b *Sqlite) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, ac
 }
 
 // BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, accountID uint64, input *types.AddUserToAccountInput) (query string, args []interface{}) {
+func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, input *types.AddUserToAccountInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -210,7 +210,7 @@ func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, accountID uint6
 			).
 			Values(
 				input.UserID,
-				accountID,
+				input.AccountID,
 				input.UserAccountPermissions,
 			),
 	)

@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -39,12 +40,12 @@ func (s *service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx, s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
-			logger.WithValue("validation_error", err).Debug("provided input was invalid")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// attach parsed value to request context.
+		// attach parsed value to session context data.
 		ctx = context.WithValue(ctx, userCreationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -67,12 +68,12 @@ func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 		}
 
 		if err := x.Validate(ctx, s.authSettings.MinimumPasswordLength); err != nil {
-			logger.WithValue("validation_error", err).Debug("provided input was invalid")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// attach parsed value to request context.
+		// attach parsed value to session context data.
 		ctx = context.WithValue(ctx, passwordChangeMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -95,12 +96,12 @@ func (s *service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("provided input was invalid")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// attach parsed value to request context.
+		// attach parsed value to session context data.
 		ctx = context.WithValue(ctx, totpSecretVerificationMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
@@ -123,12 +124,12 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("provided input was invalid")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		// attach parsed value to request context.
+		// attach parsed value to session context data.
 		ctx = context.WithValue(ctx, totpSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})

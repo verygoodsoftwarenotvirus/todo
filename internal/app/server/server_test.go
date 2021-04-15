@@ -1,9 +1,9 @@
 package server
 
 import (
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"testing"
 
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 
 	"github.com/stretchr/testify/assert"

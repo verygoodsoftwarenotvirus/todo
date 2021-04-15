@@ -30,15 +30,15 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
 	var entries *types.AuditLogEntryList
 	entries, err = s.auditLog.GetAuditLogEntries(ctx, filter)
@@ -66,15 +66,15 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, reqCtx)
-	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
 	// determine audit log entry ID.
 	entryID := s.auditLogEntryIDFetcher(req)

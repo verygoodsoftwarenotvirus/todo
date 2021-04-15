@@ -42,25 +42,25 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachRequestToSpan(span, req)
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
-	// fetch request context
-	reqCtx, err := s.requestContextFetcher(req)
+	// fetch session context data
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// determine if this is an admin request
 	rawQueryAdminKey := req.URL.Query().Get("admin")
 	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
+	isAdminRequest := sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
 
 	var accounts *types.AccountList
 
-	if reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() && isAdminRequest {
+	if isAdminRequest {
 		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
 	} else {
 		accounts, err = s.accountDataManager.GetAccounts(ctx, requester, filter)
@@ -87,7 +87,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check request context for parsed input struct.
+	// check session context data for parsed input struct.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.AccountCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
@@ -97,16 +97,16 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.NameKey, input.Name)
 
-	// retrieve request context.
-	reqCtx, err := s.requestContextFetcher(req)
+	// retrieve session context data.
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, reqCtx)
-	requester := reqCtx.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
@@ -137,15 +137,15 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -175,7 +175,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check for parsed input attached to request context.
+	// check for parsed input attached to session context data.
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.AccountUpdateInput)
 	if !ok {
 		logger.Info("no input attached to request")
@@ -184,15 +184,15 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching request context")
+		observability.AcknowledgeError(err, logger, span, "fetching session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, reqCtx)
-	requester := reqCtx.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
@@ -236,16 +236,16 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -278,7 +278,7 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check request context for parsed input struct.
+	// check session context data for parsed input struct.
 	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.AddUserToAccountInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
@@ -287,15 +287,15 @@ func (s *service) AddUserHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	requester := sessionCtxData.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	accountID := s.accountIDFetcher(req)
@@ -320,8 +320,8 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check request context for parsed input struct.
-	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.ModifyUserPermissionsInput)
+	// check session context data for parsed input struct.
+	input, ok := ctx.Value(modifyMembershipMiddlewareCtxKey).(*types.ModifyUserPermissionsInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
@@ -329,16 +329,16 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	}
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	accountID := s.accountIDFetcher(req)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -366,8 +366,8 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check request context for parsed input struct.
-	input, ok := ctx.Value(addUserToAccountMiddlewareCtxKey).(*types.TransferAccountOwnershipInput)
+	// check session context data for parsed input struct.
+	input, ok := ctx.Value(transferAccountMiddlewareCtxKey).(*types.TransferAccountOwnershipInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
@@ -379,15 +379,15 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "transferring account ownership")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	requester := sessionCtxData.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// transfer ownership of account in database.
@@ -408,21 +408,21 @@ func (s *service) RemoveUserHandler(res http.ResponseWriter, req *http.Request) 
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check request context for parsed input struct.
+	// check session context data for parsed input struct.
 	reason := req.URL.Query().Get("reason")
 	logger = logger.WithValue(keys.ReasonKey, reason)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	accountID := s.accountIDFetcher(req)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -455,15 +455,15 @@ func (s *service) MarkAsDefaultHandler(res http.ResponseWriter, req *http.Reques
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// mark account as default in database.
 	if err = s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, requester, accountID, requester); err != nil {
@@ -484,16 +484,16 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)

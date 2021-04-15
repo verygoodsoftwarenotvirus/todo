@@ -26,7 +26,7 @@ type (
 		logger                             logging.Logger
 		accountSubscriptionPlanDataManager types.AccountSubscriptionPlanDataManager
 		accountSubscriptionPlanIDFetcher   func(*http.Request) uint64
-		requestContextFetcher              func(*http.Request) (*types.RequestContext, error)
+		sessionContextDataFetcher          func(*http.Request) (*types.SessionContextData, error)
 		planCounter                        metrics.UnitCounter
 		encoderDecoder                     encoding.ServerEncoderDecoder
 		tracer                             tracing.Tracer
@@ -44,7 +44,7 @@ func ProvideService(
 	return &service{
 		logger:                             logging.EnsureLogger(logger).WithName(serviceName),
 		accountSubscriptionPlanIDFetcher:   routeParamManager.BuildRouteParamIDFetcher(logger, AccountSubscriptionPlanIDURIParamKey, "account subscription plan"),
-		requestContextFetcher:              routeParamManager.FetchContextFromRequest,
+		sessionContextDataFetcher:          routeParamManager.FetchContextFromRequest,
 		accountSubscriptionPlanDataManager: accountSubscriptionPlanDataManager,
 		encoderDecoder:                     encoder,
 		planCounter:                        metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),

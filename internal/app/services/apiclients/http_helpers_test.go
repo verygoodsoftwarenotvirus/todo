@@ -40,7 +40,7 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 	helper.exampleAPIClient.BelongsToUser = helper.exampleUser.ID
 	helper.exampleInput = fakes.BuildFakeAPIClientCreationInputFromClient(helper.exampleAPIClient)
 
-	reqCtx, err := types.RequestContextFromUser(
+	sessionCtxData, err := types.SessionContextDataFromUser(
 		helper.exampleUser,
 		helper.exampleAccount.ID,
 		map[uint64]*types.UserAccountMembershipInfo{
@@ -53,13 +53,13 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-		return reqCtx, nil
+	helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		return sessionCtxData, nil
 	}
 
 	req := testutil.BuildTestRequest(t)
 
-	helper.req = req.WithContext(context.WithValue(req.Context(), types.RequestContextKey, reqCtx))
+	helper.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
 	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), creationMiddlewareCtxKey, helper.exampleInput))
 
 	helper.res = httptest.NewRecorder()

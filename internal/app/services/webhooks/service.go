@@ -30,13 +30,13 @@ var (
 type (
 	// service handles webhooks.
 	service struct {
-		logger                logging.Logger
-		webhookCounter        metrics.UnitCounter
-		webhookDataManager    types.WebhookDataManager
-		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
-		webhookIDFetcher      func(*http.Request) uint64
-		encoderDecoder        encoding.ServerEncoderDecoder
-		tracer                tracing.Tracer
+		logger                    logging.Logger
+		webhookCounter            metrics.UnitCounter
+		webhookDataManager        types.WebhookDataManager
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		webhookIDFetcher          func(*http.Request) uint64
+		encoderDecoder            encoding.ServerEncoderDecoder
+		tracer                    tracing.Tracer
 	}
 )
 
@@ -49,12 +49,12 @@ func ProvideWebhooksService(
 	routeParamManager routing.RouteParamManager,
 ) types.WebhookDataService {
 	return &service{
-		logger:                logging.EnsureLogger(logger).WithName(serviceName),
-		webhookDataManager:    webhookDataManager,
-		encoderDecoder:        encoder,
-		webhookCounter:        metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
-		requestContextFetcher: routeParamManager.FetchContextFromRequest,
-		webhookIDFetcher:      routeParamManager.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
-		tracer:                tracing.NewTracer(serviceName),
+		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
+		webhookDataManager:        webhookDataManager,
+		encoderDecoder:            encoder,
+		webhookCounter:            metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
+		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		webhookIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
+		tracer:                    tracing.NewTracer(serviceName),
 	}
 }

@@ -27,7 +27,11 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		mh.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
@@ -45,16 +49,21 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.UserCreationInput{})).Return(errors.New("blah"))
-		ed.On(
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.RequestMatcher()),
+			mock.IsType(&types.UserCreationInput{}),
+		).Return(errors.New("blah"))
+		encoderDecoder.On(
 			"EncodeErrorResponse",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		s.encoderDecoder = ed
+		s.encoderDecoder = encoderDecoder
 
 		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
@@ -65,7 +74,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 }
 
@@ -79,7 +88,11 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		mh.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		req := testutil.BuildTestRequest(t)
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakePasswordUpdateInput())
@@ -97,16 +110,21 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.PasswordUpdateInput{})).Return(errors.New("blah"))
-		ed.On(
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.RequestMatcher()),
+			mock.IsType(&types.PasswordUpdateInput{}),
+		).Return(errors.New("blah"))
+		encoderDecoder.On(
 			"EncodeErrorResponse",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		s.encoderDecoder = ed
+		s.encoderDecoder = encoderDecoder
 
 		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
@@ -117,7 +135,7 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 }
 
@@ -131,7 +149,11 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		mh.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		req := testutil.BuildTestRequest(t)
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeTOTPSecretVerificationInput())
@@ -149,16 +171,21 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On(
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
 			"EncodeErrorResponse",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.TOTPSecretVerificationInput{})).Return(errors.New("blah"))
-		s.encoderDecoder = ed
+		encoderDecoder.On(
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.RequestMatcher()),
+			mock.IsType(&types.TOTPSecretVerificationInput{}),
+		).Return(errors.New("blah"))
+		s.encoderDecoder = encoderDecoder
 
 		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
@@ -169,7 +196,7 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 }
 
@@ -183,7 +210,11 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		mh.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		req := testutil.BuildTestRequest(t)
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeTOTPSecretRefreshInput())
@@ -201,16 +232,21 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		t.Parallel()
 		s := buildTestService(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.TOTPSecretRefreshInput{})).Return(errors.New("blah"))
-		ed.On(
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.RequestMatcher()),
+			mock.IsType(&types.TOTPSecretRefreshInput{}),
+		).Return(errors.New("blah"))
+		encoderDecoder.On(
 			"EncodeErrorResponse",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		s.encoderDecoder = ed
+		s.encoderDecoder = encoderDecoder
 
 		req := testutil.BuildTestRequest(t)
 		res := httptest.NewRecorder()
@@ -221,6 +257,6 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 }

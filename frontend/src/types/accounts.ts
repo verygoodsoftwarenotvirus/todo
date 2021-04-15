@@ -5,14 +5,13 @@ import {
   APITableHeader,
 } from '../components/core/apiTable/types';
 import type { accountModelTranslations } from '../i18n';
-import { renderUnixTime } from '../utils';
-import {DatabaseRecord, Pagination} from './api';
-import { defaultFactories } from './fakes';
 import {
   AccountUserMembership,
   fakeAccountUserMembershipFactory,
-} from "../types/account_user_membership";
-import {create} from "string-format";
+} from '../types/account_user_membership';
+import { renderUnixTime } from '../utils';
+import { DatabaseRecord, Pagination } from './api';
+import { defaultFactories } from './fakes';
 
 export class AccountList extends Pagination {
   accounts: Account[];

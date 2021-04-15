@@ -24,8 +24,10 @@ func TestQuerier_ScanAccountUserMemberships(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On("Next").Return(false)
-		mockRows.On("Err").Return(errors.New("blah"))
+		mockRows.On(
+			"Next").Return(false)
+		mockRows.On(
+			"Err").Return(errors.New("blah"))
 
 		_, _, err := q.scanAccountUserMemberships(ctx, mockRows)
 		assert.Error(t, err)
@@ -38,9 +40,12 @@ func TestQuerier_ScanAccountUserMemberships(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On("Next").Return(false)
-		mockRows.On("Err").Return(nil)
-		mockRows.On("Close").Return(errors.New("blah"))
+		mockRows.On(
+			"Next").Return(false)
+		mockRows.On(
+			"Err").Return(nil)
+		mockRows.On(
+			"Close").Return(errors.New("blah"))
 
 		_, _, err := q.scanAccountUserMemberships(ctx, mockRows)
 		assert.Error(t, err)
@@ -72,7 +77,9 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 
 		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
-			On("BuildAddUserToAccountQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).
+			On("BuildAddUserToAccountQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				exampleInput).
 			Return(fakeUpdateQuery, fakeUpdateArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).

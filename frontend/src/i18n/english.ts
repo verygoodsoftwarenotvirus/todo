@@ -387,9 +387,9 @@ export const englishTranslations: SiteTranslationMap = {
       columns: {
         id: _id,
         createdOn: _createdOn,
-        belongsToUser: "User ID",
-        userAccountPermissions: "Permissions",
-        defaultAccount: "Default",
+        belongsToUser: 'User ID',
+        userAccountPermissions: 'Permissions',
+        defaultAccount: 'Default',
         belongsToAccount: _belongsToAccount,
         archivedOn: _archivedOn,
       },

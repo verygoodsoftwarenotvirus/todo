@@ -44,7 +44,7 @@ type authServiceHTTPRoutesTestHelper struct {
 	ctx               context.Context
 	req               *http.Request
 	res               *httptest.ResponseRecorder
-	reqCtx            *types.RequestContext
+	sessionCtxData    *types.SessionContextData
 	service           *service
 	exampleUser       *types.User
 	exampleAccount    *types.Account
@@ -56,12 +56,12 @@ type authServiceHTTPRoutesTestHelper struct {
 func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher(t *testing.T) {
 	t.Helper()
 
-	reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 	require.NoError(t, err)
 
-	helper.reqCtx = reqCtx
-	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-		return reqCtx, nil
+	helper.sessionCtxData = sessionCtxData
+	helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		return sessionCtxData, nil
 	}
 }
 

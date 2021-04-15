@@ -24,15 +24,15 @@ func TestMariaDB_BuildUserIsBannedQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleStatuses := []string{
-			string(types.BannedAccountStatus),
-			string(types.TerminatedAccountStatus),
+			string(types.BannedUserReputation),
+			string(types.TerminatedUserReputation),
 		}
 
 		expectedQuery := "SELECT EXISTS ( SELECT users.id FROM users WHERE users.archived_on IS NULL AND users.id = ? AND (users.reputation = ? OR users.reputation = ?) )"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
-			string(types.BannedAccountStatus),
-			string(types.TerminatedAccountStatus),
+			string(types.BannedUserReputation),
+			string(types.TerminatedUserReputation),
 		}
 		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, exampleStatuses...)
 
@@ -199,7 +199,8 @@ func TestMariaDB_BuildTestUserCreationQuery(T *testing.T) {
 		}
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On(
+			"NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,salt,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES (?,?,?,?,?,?,?,UNIX_TIMESTAMP())"
@@ -225,7 +226,8 @@ func TestMariaDB_BuildCreateUserQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On(
+			"NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,salt,two_factor_secret,reputation,site_admin_permissions) VALUES (?,?,?,?,?,?,?)"

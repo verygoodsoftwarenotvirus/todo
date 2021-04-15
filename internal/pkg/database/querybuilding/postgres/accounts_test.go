@@ -128,7 +128,8 @@ func TestPostgres_BuildCreateAccountQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleAccount.ExternalID)
+		exIDGen.On(
+			"NewExternalID").Return(exampleAccount.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO accounts (external_id,name,belongs_to_user,default_user_permissions) VALUES ($1,$2,$3,$4) RETURNING id"

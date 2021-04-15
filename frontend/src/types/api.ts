@@ -3,7 +3,7 @@ export class DatabaseRecord {
   createdOn: number;
   lastUpdatedOn?: number;
   archivedOn?: number;
-  
+
   constructor(
     id: number = 0,
     createdOn: number = 0,

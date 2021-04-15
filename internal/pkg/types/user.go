@@ -15,10 +15,10 @@ const (
 	GoodStandingAccountStatus userReputation = "good"
 	// UnverifiedAccountStatus indicates a User's account requires two factor secret verification.
 	UnverifiedAccountStatus userReputation = "unverified"
-	// BannedAccountStatus indicates a User's account is banned.
-	BannedAccountStatus userReputation = "banned"
-	// TerminatedAccountStatus indicates a User's account is banned.
-	TerminatedAccountStatus userReputation = "terminated"
+	// BannedUserReputation indicates a User's account is banned.
+	BannedUserReputation userReputation = "banned"
+	// TerminatedUserReputation indicates a User's account is banned.
+	TerminatedUserReputation userReputation = "terminated"
 
 	validTOTPTokenLength = 6
 )
@@ -32,8 +32,8 @@ func IsValidAccountStatus(s string) bool {
 	switch s {
 	case string(GoodStandingAccountStatus),
 		string(UnverifiedAccountStatus),
-		string(BannedAccountStatus),
-		string(TerminatedAccountStatus):
+		string(BannedUserReputation),
+		string(TerminatedUserReputation):
 		return true
 	default:
 		return false
@@ -195,7 +195,7 @@ func (u *User) Update(input *User) {
 
 // IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
-	return u.Reputation == BannedAccountStatus
+	return u.Reputation == BannedUserReputation
 }
 
 // Validate ensures our provided UserCreationInput meets expectations.

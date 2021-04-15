@@ -39,7 +39,9 @@ func TestProvideWebhooksService(T *testing.T) {
 		}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.IsType(logging.NewNonOperationalLogger()), WebhookIDURIParamKey, "webhook").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On(
+			"BuildRouteParamIDFetcher",
+			mock.IsType(logging.NewNonOperationalLogger()), WebhookIDURIParamKey, "webhook").Return(func(*http.Request) uint64 { return 0 })
 
 		actual := ProvideWebhooksService(
 			logging.NewNonOperationalLogger(),

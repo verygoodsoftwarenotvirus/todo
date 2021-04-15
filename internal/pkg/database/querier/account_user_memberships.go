@@ -79,8 +79,8 @@ func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows databa
 	return defaultAccount, membershipMap, nil
 }
 
-// BuildRequestContextForUser does .
-func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint64) (*types.RequestContext, error) {
+// BuildSessionContextDataForUser does .
+func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID uint64) (*types.SessionContextData, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -108,7 +108,7 @@ func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint
 		return nil, observability.PrepareError(err, logger, span, "scanning user's memberships from database")
 	}
 
-	reqCtx := &types.RequestContext{
+	sessionCtxData := &types.SessionContextData{
 		Requester: types.RequesterInfo{
 			ID:                     user.ID,
 			Reputation:             user.Reputation,
@@ -119,7 +119,7 @@ func (q *SQLQuerier) BuildRequestContextForUser(ctx context.Context, userID uint
 		ActiveAccountID:       defaultAccountID,
 	}
 
-	return reqCtx, nil
+	return sessionCtxData, nil
 }
 
 // GetDefaultAccountIDForUser does .

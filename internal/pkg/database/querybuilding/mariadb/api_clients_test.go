@@ -147,7 +147,8 @@ func TestMariaDB_BuildCreateAPIClientQuery(T *testing.T) {
 		exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleAPIClient.ExternalID)
+		exIDGen.On(
+			"NewExternalID").Return(exampleAPIClient.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO api_clients (external_id,name,client_id,secret_key,belongs_to_user) VALUES (?,?,?,?,?)"

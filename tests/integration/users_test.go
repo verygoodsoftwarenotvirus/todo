@@ -235,7 +235,7 @@ func (s *TestSuite) TestUsers_Auditing_Returns404ForNonexistentUser() {
 			defer span.End()
 
 			input := fakes.BuildFakeAccountStatusUpdateInput()
-			input.NewReputation = types.BannedAccountStatus
+			input.NewReputation = types.BannedUserReputation
 			input.TargetUserID = nonexistentID
 
 			// Ban user.

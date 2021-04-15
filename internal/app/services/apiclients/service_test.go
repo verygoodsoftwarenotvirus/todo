@@ -23,15 +23,15 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	return &service{
-		apiClientDataManager:  database.BuildMockDatabase(),
-		logger:                logging.NewNonOperationalLogger(),
-		encoderDecoder:        mockencoding.NewMockEncoderDecoder(),
-		authenticator:         &mockauth.Authenticator{},
-		requestContextFetcher: chi.NewRouteParamManager().FetchContextFromRequest,
-		urlClientIDExtractor:  func(req *http.Request) uint64 { return 0 },
-		apiClientCounter:      &mockmetrics.UnitCounter{},
-		secretGenerator:       &mockSecretGenerator{},
-		tracer:                tracing.NewTracer(serviceName),
+		apiClientDataManager:      database.BuildMockDatabase(),
+		logger:                    logging.NewNonOperationalLogger(),
+		encoderDecoder:            mockencoding.NewMockEncoderDecoder(),
+		authenticator:             &mockauth.Authenticator{},
+		sessionContextDataFetcher: chi.NewRouteParamManager().FetchContextFromRequest,
+		urlClientIDExtractor:      func(req *http.Request) uint64 { return 0 },
+		apiClientCounter:          &mockmetrics.UnitCounter{},
+		secretGenerator:           &mockSecretGenerator{},
+		tracer:                    tracing.NewTracer(serviceName),
 	}
 }
 
@@ -43,7 +43,9 @@ func TestProvideAPIClientsService(T *testing.T) {
 		mockAPIClientDataManager := &mocktypes.APIClientDataManager{}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.IsType(logging.NewNonOperationalLogger()), APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On(
+			"BuildRouteParamIDFetcher",
+			mock.IsType(logging.NewNonOperationalLogger()), APIClientIDURIParamKey, "api client").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideAPIClientsService(
 			logging.NewNonOperationalLogger(),

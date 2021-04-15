@@ -33,18 +33,18 @@ type (
 
 	// service handles authentication service-wide.
 	service struct {
-		config                   *Config
-		logger                   logging.Logger
-		authenticator            authentication.Authenticator
-		userDataManager          types.UserDataManager
-		auditLog                 types.AuthAuditManager
-		apiClientManager         types.APIClientDataManager
-		accountMembershipManager types.AccountUserMembershipDataManager
-		encoderDecoder           encoding.ServerEncoderDecoder
-		cookieManager            cookieEncoderDecoder
-		sessionManager           *scs.SessionManager
-		requestContextFetcher    func(*http.Request) (*types.RequestContext, error)
-		tracer                   tracing.Tracer
+		config                    *Config
+		logger                    logging.Logger
+		authenticator             authentication.Authenticator
+		userDataManager           types.UserDataManager
+		auditLog                  types.AuthAuditManager
+		apiClientManager          types.APIClientDataManager
+		accountMembershipManager  types.AccountUserMembershipDataManager
+		encoderDecoder            encoding.ServerEncoderDecoder
+		cookieManager             cookieEncoderDecoder
+		sessionManager            *scs.SessionManager
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		tracer                    tracing.Tracer
 	}
 )
 
@@ -62,16 +62,16 @@ func ProvideService(
 	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
 	svc := &service{
-		logger:                   logging.EnsureLogger(logger).WithName(serviceName),
-		encoderDecoder:           encoder,
-		config:                   cfg,
-		userDataManager:          userDataManager,
-		auditLog:                 auditLog,
-		apiClientManager:         apiClientsService,
-		accountMembershipManager: accountMembershipManager,
-		authenticator:            authenticator,
-		sessionManager:           sessionManager,
-		requestContextFetcher:    routeParamManager.FetchContextFromRequest,
+		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
+		encoderDecoder:            encoder,
+		config:                    cfg,
+		userDataManager:           userDataManager,
+		auditLog:                  auditLog,
+		apiClientManager:          apiClientsService,
+		accountMembershipManager:  accountMembershipManager,
+		authenticator:             authenticator,
+		sessionManager:            sessionManager,
+		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
 		cookieManager: securecookie.New(
 			securecookie.GenerateRandomKey(cookieSecretSize),
 			[]byte(cfg.Cookies.SigningKey),

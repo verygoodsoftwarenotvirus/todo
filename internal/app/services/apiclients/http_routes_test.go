@@ -37,14 +37,19 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"RespondWithData",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			mock.IsType(&types.APIClientList{}),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ListHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 
 	T.Run("with no results returned from datastore", func(t *testing.T) {
@@ -61,14 +66,19 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("RespondWithData", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientList{}))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"RespondWithData",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			mock.IsType(&types.APIClientList{}),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ListHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 
 	T.Run("with error retrieving clients from the datastore", func(t *testing.T) {
@@ -85,14 +95,18 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ListHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
 
@@ -124,8 +138,10 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.authenticator = a
 
 		sg := &mockSecretGenerator{}
-		sg.On("GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
-		sg.On("GenerateClientSecret").Return(helper.exampleAPIClient.ClientSecret, nil)
+		sg.On(
+			"GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
+		sg.On(
+			"GenerateClientSecret").Return(helper.exampleAPIClient.ClientSecret, nil)
 		helper.service.secretGenerator = sg
 
 		mockDB.APIClientDataManager.On(
@@ -140,14 +156,18 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		uc.On("Increment", mock.MatchedBy(testutil.ContextMatcher)).Return()
 		helper.service.apiClientCounter = uc
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeResponseWithStatus", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), mock.IsType(&types.APIClientCreationResponse{}), http.StatusCreated)
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeResponseWithStatus",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			mock.IsType(&types.APIClientCreationResponse{}), http.StatusCreated)
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, uc, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, uc, encoderDecoder)
 	})
 
 	T.Run("without input attached to request", func(t *testing.T) {
@@ -156,14 +176,18 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.req = testutil.BuildTestRequest(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeInvalidInputResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeInvalidInputResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed)
+		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
 	T.Run("with error retrieving user", func(t *testing.T) {
@@ -179,14 +203,18 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 
 	T.Run("with invalid credentials", func(t *testing.T) {
@@ -220,14 +248,18 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(false, nil)
 		helper.service.authenticator = a
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnauthorizedResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnauthorizedResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, encoderDecoder)
 	})
 
 	T.Run("with invalid password", func(t *testing.T) {
@@ -261,14 +293,18 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(true, errors.New("blah"))
 		helper.service.authenticator = a
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, encoderDecoder)
 	})
 
 	T.Run("with error generating client ID", func(t *testing.T) {
@@ -295,7 +331,8 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.authenticator = a
 
 		sg := &mockSecretGenerator{}
-		sg.On("GenerateClientID").Return("", errors.New("blah"))
+		sg.On(
+			"GenerateClientID").Return("", errors.New("blah"))
 		helper.service.secretGenerator = sg
 
 		mockDB.APIClientDataManager.On(
@@ -308,14 +345,18 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
 	})
 
 	T.Run("with error generating client secret", func(t *testing.T) {
@@ -343,8 +384,10 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.authenticator = a
 
 		sg := &mockSecretGenerator{}
-		sg.On("GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
-		sg.On("GenerateClientSecret").Return([]byte(nil), errors.New("blah"))
+		sg.On(
+			"GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
+		sg.On(
+			"GenerateClientSecret").Return([]byte(nil), errors.New("blah"))
 		helper.service.secretGenerator = sg
 
 		mockDB.APIClientDataManager.On(
@@ -355,14 +398,18 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
 	})
 
 	T.Run("with error creating API Client in data store", func(t *testing.T) {
@@ -389,8 +436,10 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.authenticator = a
 
 		sg := &mockSecretGenerator{}
-		sg.On("GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
-		sg.On("GenerateClientSecret").Return(helper.exampleAPIClient.ClientSecret, nil)
+		sg.On(
+			"GenerateClientID").Return(helper.exampleAPIClient.ClientID, nil)
+		sg.On(
+			"GenerateClientSecret").Return(helper.exampleAPIClient.ClientSecret, nil)
 		helper.service.secretGenerator = sg
 
 		mockDB.APIClientDataManager.On(
@@ -403,13 +452,17 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("EncodeUnspecifiedInternalServerErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, ed)
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
 	})
 }

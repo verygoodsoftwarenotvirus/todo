@@ -118,7 +118,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// fetch parsed input from request context.
+	// fetch parsed input from session context data.
 	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*types.UserCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to UsersService CreateHandler request")
@@ -233,15 +233,15 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	// figure out who this is all for.
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachRequestingUserIDToSpan(span, requester)
 
@@ -297,7 +297,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 	logger := s.logger.WithRequest(req)
 
-	// check request context for parsed input.
+	// check session context data for parsed input.
 	input, ok := req.Context().Value(totpSecretVerificationMiddlewareCtxKey).(*types.TOTPSecretVerificationInput)
 	if !ok || input == nil {
 		logger.Debug("no input found on TOTP secret refresh request")
@@ -346,7 +346,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 
 	logger := s.logger.WithRequest(req)
 
-	// check request context for parsed input.
+	// check session context data for parsed input.
 	input, ok := req.Context().Value(totpSecretRefreshMiddlewareCtxKey).(*types.TOTPSecretRefreshInput)
 	if !ok {
 		logger.Debug("no input found on TOTP secret refresh request")
@@ -354,9 +354,9 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
@@ -364,7 +364,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	// make sure this is all on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
 		ctx,
-		reqCtx.Requester.ID,
+		sessionCtxData.Requester.ID,
 		input.CurrentPassword,
 		input.TOTPToken,
 	)
@@ -376,7 +376,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	}
 
 	// document who this is for.
-	tracing.AttachRequestingUserIDToSpan(span, reqCtx.Requester.ID)
+	tracing.AttachRequestingUserIDToSpan(span, sessionCtxData.Requester.ID)
 	tracing.AttachUsernameToSpan(span, user.Username)
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
@@ -415,7 +415,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	logger := s.logger.WithRequest(req)
 
-	// check request context for parsed value.
+	// check session context data for parsed value.
 	input, ok := ctx.Value(passwordChangeMiddlewareCtxKey).(*types.PasswordUpdateInput)
 	if !ok {
 		logger.Debug("no input found on UpdatePasswordHandler request")
@@ -423,21 +423,21 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
 	// determine relevant user ID.
-	tracing.AttachRequestingUserIDToSpan(span, reqCtx.Requester.ID)
-	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
+	tracing.AttachRequestingUserIDToSpan(span, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
 	// make sure everything's on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
 		ctx,
-		reqCtx.Requester.ID,
+		sessionCtxData.Requester.ID,
 		input.CurrentPassword,
 		input.TOTPToken,
 	)
@@ -497,17 +497,17 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 
 	logger := s.logger.WithRequest(req)
 
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
 	}
 
-	logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
-	logger.Debug("request context data extracted")
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger.Debug("session context data data extracted")
 
-	user, err := s.userDataManager.GetUser(ctx, reqCtx.Requester.ID)
+	user, err := s.userDataManager.GetUser(ctx, sessionCtxData.Requester.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching associated user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -524,7 +524,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	internalPath := fmt.Sprintf("avatar_%d", reqCtx.Requester.ID)
+	internalPath := fmt.Sprintf("avatar_%d", sessionCtxData.Requester.ID)
 	logger = logger.WithValue("file_size", len(img.Data)).WithValue("internal_path", internalPath)
 
 	if err = s.uploadManager.SaveFile(ctx, internalPath, img.Data); err != nil {

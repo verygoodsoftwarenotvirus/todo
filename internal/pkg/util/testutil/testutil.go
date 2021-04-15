@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"image"
 	"image/color"
 	"image/png"
@@ -151,6 +153,11 @@ func ParseTwoFactorSecretFromBase64EncodedQRCode(qrCode string) (string, error) 
 	}
 
 	return u.Query().Get("secret"), nil
+}
+
+// BrokenSessionContextDataFetcher is a deliberately broken sessionContextDataFetcher.
+func BrokenSessionContextDataFetcher(*http.Request) (*types.SessionContextData, error) {
+	return nil, errors.New("blah")
 }
 
 // CreateBodyFromStruct takes any value in and returns an io.ReadCloser for an http.Request's body.

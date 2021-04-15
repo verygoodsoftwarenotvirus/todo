@@ -51,7 +51,7 @@ func TestUser_Update(T *testing.T) {
 	})
 }
 
-func TestRequestContextFromUser(T *testing.T) {
+func TestSessionContextDataFromUser(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestRequestContextFromUser(T *testing.T) {
 
 		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
 
-		expected := &RequestContext{
+		expected := &SessionContextData{
 			Requester: RequesterInfo{
 				ID:                     exampleUser.ID,
 				ServiceAdminPermission: exampleUser.ServiceAdminPermission,
@@ -78,7 +78,7 @@ func TestRequestContextFromUser(T *testing.T) {
 			AccountPermissionsMap: examplePermissions,
 		}
 
-		actual, _ := RequestContextFromUser(exampleUser, exampleAccount.ID, examplePermissions)
+		actual, _ := SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermissions)
 
 		assert.Equal(t, expected, actual)
 	})

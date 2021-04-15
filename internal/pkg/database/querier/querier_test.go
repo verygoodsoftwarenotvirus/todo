@@ -107,7 +107,9 @@ func buildErroneousMockRow() *sqlmock.Rows {
 func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
 	fakeAuditLogEntryQuery, fakeAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-		On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.ContextMatcher), mock.IsType(&types.AuditLogEntryCreationInput{})).
+		On("BuildCreateAuditLogEntryQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.IsType(&types.AuditLogEntryCreationInput{})).
 		Return(fakeAuditLogEntryQuery, fakeAuditLogEntryArgs)
 
 	db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryQuery)).
@@ -159,7 +161,9 @@ func TestQuerier_Migrate(T *testing.T) {
 		migrationFuncCalled := false
 
 		// expect BuildMigrationFunc to be called
-		mockQueryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).
+		mockQueryBuilder.On(
+			"BuildMigrationFunc",
+			mock.IsType(&sql.DB{})).
 			Return(func() {
 				migrationFuncCalled = true
 			})
@@ -168,7 +172,10 @@ func TestQuerier_Migrate(T *testing.T) {
 
 		// expect TestUser to be created
 		fakeTestUserCreationQuery, fakeTestUserCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.On("BuildTestUserCreationQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).
+		mockQueryBuilder.On(
+			"BuildTestUserCreationQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleInput).
 			Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeTestUserCreationQuery)).
@@ -177,7 +184,10 @@ func TestQuerier_Migrate(T *testing.T) {
 
 		// create audit log entry for created TestUser
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
+			"BuildCreateAuditLogEntryQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
 			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
@@ -186,7 +196,10 @@ func TestQuerier_Migrate(T *testing.T) {
 
 		// create account for created TestUser
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On("BuildAccountCreationQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAccountCreationInput).
+		mockQueryBuilder.AccountSQLQueryBuilder.On(
+			"BuildAccountCreationQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleAccountCreationInput).
 			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
@@ -194,7 +207,10 @@ func TestQuerier_Migrate(T *testing.T) {
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
+			"BuildCreateAuditLogEntryQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
 			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
@@ -203,7 +219,10 @@ func TestQuerier_Migrate(T *testing.T) {
 
 		// create account user membership for created user
 		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On("BuildCreateMembershipForNewUserQuery", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, exampleAccount.ID).
+		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
+			"BuildCreateMembershipForNewUserQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID, exampleAccount.ID).
 			Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
@@ -211,7 +230,10 @@ func TestQuerier_Migrate(T *testing.T) {
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
 
 		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On("BuildCreateAuditLogEntryQuery", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
+		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
+			"BuildCreateAuditLogEntryQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
 			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
@@ -259,12 +281,17 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		// expect BuildMigrationFunc to be called
-		mockQueryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).
+		mockQueryBuilder.On(
+			"BuildMigrationFunc",
+			mock.IsType(&sql.DB{})).
 			Return(func() {})
 
 		// expect TestUser to be created
 		fakeTestUserCreationQuery, fakeTestUserCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.On("BuildTestUserCreationQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).
+		mockQueryBuilder.On(
+			"BuildTestUserCreationQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleInput).
 			Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
 
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -335,7 +362,10 @@ func TestProvideDatabaseClient(T *testing.T) {
 		require.NoError(t, err)
 
 		queryBuilder := database.BuildMockSQLQueryBuilder()
-		queryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).Return(fakeMigrationFunc)
+		queryBuilder.On(
+			"BuildMigrationFunc",
+			mock.IsType(&sql.DB{}),
+		).Return(fakeMigrationFunc)
 
 		mockDB.ExpectPing().WillDelayFor(0)
 
@@ -366,7 +396,10 @@ func TestProvideDatabaseClient(T *testing.T) {
 		require.NoError(t, err)
 
 		queryBuilder := database.BuildMockSQLQueryBuilder()
-		queryBuilder.On("BuildMigrationFunc", mock.IsType(&sql.DB{})).Return(fakeMigrationFunc)
+		queryBuilder.On(
+			"BuildMigrationFunc",
+			mock.IsType(&sql.DB{}),
+		).Return(fakeMigrationFunc)
 
 		mockDB.ExpectPing().WillDelayFor(0)
 
@@ -469,7 +502,8 @@ func TestQuerier_getIDFromResult(T *testing.T) {
 		expected := int64(123)
 
 		m := &database.MockSQLResult{}
-		m.On("LastInsertId").Return(expected, nil)
+		m.On(
+			"LastInsertId").Return(expected, nil)
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -482,7 +516,8 @@ func TestQuerier_getIDFromResult(T *testing.T) {
 		t.Parallel()
 
 		m := &database.MockSQLResult{}
-		m.On("LastInsertId").Return(int64(0), errors.New("blah"))
+		m.On(
+			"LastInsertId").Return(int64(0), errors.New("blah"))
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -501,8 +536,10 @@ func TestQuerier_handleRows(T *testing.T) {
 		ctx := context.Background()
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On("Err").Return(nil)
-		mockRows.On("Close").Return(nil)
+		mockRows.On(
+			"Err").Return(nil)
+		mockRows.On(
+			"Close").Return(nil)
 
 		c, _ := buildTestClient(t)
 
@@ -517,7 +554,8 @@ func TestQuerier_handleRows(T *testing.T) {
 		expected := errors.New("blah")
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On("Err").Return(expected)
+		mockRows.On(
+			"Err").Return(expected)
 
 		c, _ := buildTestClient(t)
 
@@ -533,8 +571,10 @@ func TestQuerier_handleRows(T *testing.T) {
 		expected := errors.New("blah")
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On("Err").Return(nil)
-		mockRows.On("Close").Return(expected)
+		mockRows.On(
+			"Err").Return(nil)
+		mockRows.On(
+			"Close").Return(expected)
 
 		c, _ := buildTestClient(t)
 

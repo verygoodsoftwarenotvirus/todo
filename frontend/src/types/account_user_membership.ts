@@ -5,10 +5,10 @@ import {
   APITableHeader,
 } from '../components/core/apiTable/types';
 import type { accountUserMembershipModelTranslations } from '../i18n';
+import { Logger } from '../logger';
 import { renderUnixTime } from '../utils';
-import {DatabaseRecord, Pagination} from './api';
+import { DatabaseRecord, Pagination } from './api';
 import { defaultFactories } from './fakes';
-import {Logger} from "../logger";
 
 let logger = new Logger().withDebugValue(
   'source',
@@ -17,10 +17,10 @@ let logger = new Logger().withDebugValue(
 
 export class AccountUserMembershipList extends Pagination {
   accountUserMemberships: AccountUserMembership[];
-  
+
   constructor() {
     super();
-    
+
     this.accountUserMemberships = [];
   }
 }
@@ -30,7 +30,7 @@ export class AccountUserMembership extends DatabaseRecord {
   userAccountPermissions: number;
   belongsToAccount: number;
   defaultAccount: boolean;
-  
+
   constructor(
     id: number = 0,
     belongsToUser: number = 0,
@@ -47,7 +47,7 @@ export class AccountUserMembership extends DatabaseRecord {
     this.belongsToAccount = belongsToAccount;
     this.defaultAccount = defaultAccount;
   }
-  
+
   // this function should return everything there are no presumed fields
   static headers = (
     translations: Readonly<accountUserMembershipModelTranslations>,
@@ -61,7 +61,7 @@ export class AccountUserMembership extends DatabaseRecord {
       { content: columns.archivedOn, requiresAdmin: true },
     ];
   };
-  
+
   // this function should return everything there are no presumed fields
   static asRow = (x: AccountUserMembership): APITableCell[] => {
     return [
@@ -84,7 +84,10 @@ export class AccountUserMembership extends DatabaseRecord {
     ];
   };
 
-  static areEqual = function (x: AccountUserMembership, y: AccountUserMembership): boolean {
+  static areEqual = function (
+    x: AccountUserMembership,
+    y: AccountUserMembership,
+  ): boolean {
     return (
       x.id === y.id &&
       x.belongsToUser === y.belongsToUser &&
@@ -100,17 +103,19 @@ export class AccountUserMembership extends DatabaseRecord {
 export class AccountUserMembershipCreationInput {
   name: string;
   details: string;
-  
+
   constructor(name: string = '', details: string = '') {
     this.name = name;
     this.details = details;
   }
 }
 
-export const fakeAccountUserMembershipFactory = Factory.Sync.makeFactory<AccountUserMembership>({
-  belongsToUser: Factory.Sync.each(() => faker.datatype.number()),
-  userAccountPermissions: Factory.Sync.each(() => faker.datatype.number()),
-  belongsToAccount: Factory.Sync.each(() => faker.datatype.number()),
-  defaultAccount: Factory.Sync.each(() => faker.datatype.boolean()),
-  ...defaultFactories,
-});
+export const fakeAccountUserMembershipFactory = Factory.Sync.makeFactory<AccountUserMembership>(
+  {
+    belongsToUser: Factory.Sync.each(() => faker.datatype.number()),
+    userAccountPermissions: Factory.Sync.each(() => faker.datatype.number()),
+    belongsToAccount: Factory.Sync.each(() => faker.datatype.number()),
+    defaultAccount: Factory.Sync.each(() => faker.datatype.boolean()),
+    ...defaultFactories,
+  },
+);

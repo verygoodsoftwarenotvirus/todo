@@ -21,16 +21,16 @@ const (
 type (
 	// service handles authentication service-wide.
 	service struct {
-		config                *authservice.Config
-		logger                logging.Logger
-		authenticator         authentication.Authenticator
-		userDB                types.AdminUserDataManager
-		auditLog              types.AdminAuditManager
-		encoderDecoder        encoding.ServerEncoderDecoder
-		sessionManager        *scs.SessionManager
-		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
-		userIDFetcher         func(*http.Request) uint64
-		tracer                tracing.Tracer
+		config                    *authservice.Config
+		logger                    logging.Logger
+		authenticator             authentication.Authenticator
+		userDB                    types.AdminUserDataManager
+		auditLog                  types.AdminAuditManager
+		encoderDecoder            encoding.ServerEncoderDecoder
+		sessionManager            *scs.SessionManager
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		userIDFetcher             func(*http.Request) uint64
+		tracer                    tracing.Tracer
 	}
 )
 
@@ -46,16 +46,16 @@ func ProvideService(
 	routeParamManager routing.RouteParamManager,
 ) types.AdminService {
 	svc := &service{
-		logger:                logging.EnsureLogger(logger).WithName(serviceName),
-		encoderDecoder:        encoder,
-		config:                cfg,
-		userDB:                userDataManager,
-		auditLog:              auditLog,
-		authenticator:         authenticator,
-		sessionManager:        sessionManager,
-		requestContextFetcher: routeParamManager.FetchContextFromRequest,
-		userIDFetcher:         routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
-		tracer:                tracing.NewTracer(serviceName),
+		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
+		encoderDecoder:            encoder,
+		config:                    cfg,
+		userDB:                    userDataManager,
+		auditLog:                  auditLog,
+		authenticator:             authenticator,
+		sessionManager:            sessionManager,
+		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		tracer:                    tracing.NewTracer(serviceName),
 	}
 	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime
 

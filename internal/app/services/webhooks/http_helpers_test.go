@@ -46,7 +46,7 @@ func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
 		return h.exampleWebhook.ID
 	}
 
-	reqCtx, err := types.RequestContextFromUser(
+	sessionCtxData, err := types.SessionContextDataFromUser(
 		h.exampleUser,
 		h.exampleAccount.ID,
 		map[uint64]*types.UserAccountMembershipInfo{
@@ -59,13 +59,13 @@ func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	h.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	h.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-		return reqCtx, nil
+	h.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		return sessionCtxData, nil
 	}
 
 	req := testutil.BuildTestRequest(t)
 
-	h.req = req.WithContext(context.WithValue(req.Context(), types.RequestContextKey, reqCtx))
+	h.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
 	h.req = h.req.WithContext(context.WithValue(h.req.Context(), createMiddlewareCtxKey, h.exampleCreationInput))
 	h.req = h.req.WithContext(context.WithValue(h.req.Context(), updateMiddlewareCtxKey, h.exampleUpdateInput))
 

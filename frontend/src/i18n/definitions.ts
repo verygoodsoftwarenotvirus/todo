@@ -1,7 +1,8 @@
 import { LanguageTag, languageTag, translate } from 'typed-intl';
 import type {
   accountModelTranslations,
-  accountSettingsPageTranslations, accountUserMembershipModelTranslations,
+  accountSettingsPageTranslations,
+  accountUserMembershipModelTranslations,
   adminFooterTranslations,
   adminNavbarTranslations,
   apiClientModelTranslations,

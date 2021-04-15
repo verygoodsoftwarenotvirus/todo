@@ -13,16 +13,16 @@ import (
 )
 
 const (
-	// RequestContextKey is the non-string type we use for referencing RequestContext structs.
-	RequestContextKey ContextKey = "request_context"
-	// UserIDContextKey is the non-string type we use for referencing RequestContext structs.
+	// SessionContextDataKey is the non-string type we use for referencing SessionContextData structs.
+	SessionContextDataKey ContextKey = "request_context"
+	// UserIDContextKey is the non-string type we use for referencing SessionContextData structs.
 	UserIDContextKey ContextKey = "userID"
-	// AccountIDContextKey is the non-string type we use for referencing RequestContext structs.
+	// AccountIDContextKey is the non-string type we use for referencing SessionContextData structs.
 	AccountIDContextKey ContextKey = "accountID"
 )
 
 func init() {
-	gob.Register(&RequestContext{})
+	gob.Register(&SessionContextData{})
 }
 
 type (
@@ -36,8 +36,8 @@ type (
 	// AccountPermissionsMap maps accounts to membership info.
 	AccountPermissionsMap map[uint64]*UserAccountMembershipInfo
 
-	// RequestContext represents what we encode in our authentication cookies.
-	RequestContext struct {
+	// SessionContextData represents what we encode in our authentication cookies.
+	SessionContextData struct {
 		AccountPermissionsMap AccountPermissionsMap `json:"-"`
 		Requester             RequesterInfo         `json:"-"`
 		ActiveAccountID       uint64                `json:"-"`
@@ -145,7 +145,7 @@ func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]*Fr
 }
 
 // ToBytes returns the gob encoded session info.
-func (x *RequestContext) ToBytes() []byte {
+func (x *SessionContextData) ToBytes() []byte {
 	var b bytes.Buffer
 
 	if err := gob.NewEncoder(&b).Encode(x); err != nil {
@@ -156,13 +156,13 @@ func (x *RequestContext) ToBytes() []byte {
 }
 
 var (
-	errNilUser          = errors.New("non-nil user required for request context")
-	errZeroAccountID    = errors.New("active account ID required for request context")
-	errNilPermissionMap = errors.New("non-nil permissions map required for request context")
+	errNilUser          = errors.New("non-nil user required for session context data")
+	errZeroAccountID    = errors.New("active account ID required for session context data")
+	errNilPermissionMap = errors.New("non-nil permissions map required for session context data")
 )
 
-// RequestContextFromUser produces a RequestContext object from a User's data.
-func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissionsMap AccountPermissionsMap) (*RequestContext, error) {
+// SessionContextDataFromUser produces a SessionContextData object from a User's data.
+func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap AccountPermissionsMap) (*SessionContextData, error) {
 	if user == nil {
 		return nil, errNilUser
 	}
@@ -175,7 +175,7 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 		return nil, errNilPermissionMap
 	}
 
-	reqCtx := &RequestContext{
+	sessionCtxData := &SessionContextData{
 		Requester: RequesterInfo{
 			ID:                     user.ID,
 			Reputation:             user.Reputation,
@@ -186,5 +186,5 @@ func RequestContextFromUser(user *User, activeAccountID uint64, accountPermissio
 		ActiveAccountID:       activeAccountID,
 	}
 
-	return reqCtx, nil
+	return sessionCtxData, nil
 }

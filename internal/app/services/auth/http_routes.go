@@ -152,14 +152,14 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	logger = logger.WithValue("new_session_account_id", accountID)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching request context")
+		observability.AcknowledgeError(err, logger, span, "fetching session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requesterID := reqCtx.Requester.ID
+	requesterID := sessionCtxData.Requester.ID
 	logger = logger.WithValue("user_id", requesterID)
 
 	authorizedForAccount, err := s.accountMembershipManager.UserIsMemberOfAccount(ctx, requesterID, accountID)
@@ -219,9 +219,9 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching request context")
+		observability.AcknowledgeError(err, logger, span, "fetching session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
@@ -243,7 +243,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
 			c.MaxAge = -1
 			http.SetCookie(res, c)
-			s.auditLog.LogLogoutEvent(ctx, reqCtx.Requester.ID)
+			s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.ID)
 		} else {
 			observability.AcknowledgeError(err, logger, span, "building cookie")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
@@ -264,19 +264,19 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	var statusResponse *types.UserStatusResponse
 
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching request context")
+		observability.AcknowledgeError(err, logger, span, "fetching session context data")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	statusResponse = &types.UserStatusResponse{
-		AccountPermissions:             reqCtx.AccountPermissionsMap.ToPermissionMapByAccountName(),
-		ActiveAccount:                  reqCtx.ActiveAccountID,
-		ServiceAdminPermissionsSummary: reqCtx.Requester.ServiceAdminPermission.Summary(),
-		UserReputation:                 reqCtx.Requester.Reputation,
-		UserReputationExplanation:      reqCtx.Requester.ReputationExplanation,
+		AccountPermissions:             sessionCtxData.AccountPermissionsMap.ToPermissionMapByAccountName(),
+		ActiveAccount:                  sessionCtxData.ActiveAccountID,
+		ServiceAdminPermissionsSummary: sessionCtxData.Requester.ServiceAdminPermission.Summary(),
+		UserReputation:                 sessionCtxData.Requester.Reputation,
+		UserReputationExplanation:      sessionCtxData.Requester.ReputationExplanation,
 		UserIsAuthenticated:            true,
 	}
 
@@ -351,7 +351,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
-	reqCtx, err := s.accountMembershipManager.BuildRequestContextForUser(ctx, user.ID)
+	sessionCtxData, err := s.accountMembershipManager.BuildSessionContextDataForUser(ctx, user.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving perms for API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -361,7 +361,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	var requestedAccountID uint64
 
 	if requestedAccount != 0 {
-		if _, isMember := reqCtx.AccountPermissionsMap[requestedAccount]; !isMember {
+		if _, isMember := sessionCtxData.AccountPermissionsMap[requestedAccount]; !isMember {
 			logger.Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
@@ -369,9 +369,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 		logger.WithValue("requested_account", requestedAccount).Debug("setting token account ID to requested account")
 		requestedAccountID = requestedAccount
-		reqCtx.ActiveAccountID = requestedAccount
+		sessionCtxData.ActiveAccountID = requestedAccount
 	} else {
-		requestedAccountID = reqCtx.ActiveAccountID
+		requestedAccountID = sessionCtxData.ActiveAccountID
 	}
 
 	logger = logger.WithValue(keys.AccountIDKey, requestedAccountID)
@@ -388,7 +388,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		Expiration: now.Add(lifetime),
 	}
 
-	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(reqCtx.ToBytes()))
+	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(sessionCtxData.ToBytes()))
 
 	// Encrypt data
 	token, err := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, "")
@@ -417,15 +417,15 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 	logger.Info("cycling cookie secret!")
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching request context")
+		observability.AcknowledgeError(err, logger, span, "fetching session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	if !reqCtx.Requester.ServiceAdminPermission.CanCycleCookieSecrets() {
-		logger.WithValue("admin_permissions", reqCtx.Requester.ServiceAdminPermission).Debug("invalid permissions")
+	if !sessionCtxData.Requester.ServiceAdminPermission.CanCycleCookieSecrets() {
+		logger.WithValue("admin_permissions", sessionCtxData.Requester.ServiceAdminPermission).Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}
@@ -435,7 +435,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		[]byte(s.config.Cookies.SigningKey),
 	)
 
-	s.auditLog.LogCycleCookieSecretEvent(ctx, reqCtx.Requester.ID)
+	s.auditLog.LogCycleCookieSecretEvent(ctx, sessionCtxData.Requester.ID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

@@ -19,16 +19,16 @@ type RouteParamManager struct {
 	mock.Mock
 }
 
-// UserIDFetcherFromRequestContext satisfies our interface contract.
-func (m *RouteParamManager) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
+// UserIDFetcherFromSessionContextData satisfies our interface contract.
+func (m *RouteParamManager) UserIDFetcherFromSessionContextData(req *http.Request) uint64 {
 	return m.Called(req).Get(0).(uint64)
 }
 
 // FetchContextFromRequest satisfies our interface contract.
-func (m *RouteParamManager) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
+func (m *RouteParamManager) FetchContextFromRequest(req *http.Request) (*types.SessionContextData, error) {
 	args := m.Called(req)
 
-	return args.Get(0).(*types.RequestContext), args.Error(1)
+	return args.Get(0).(*types.SessionContextData), args.Error(1)
 }
 
 // BuildRouteParamIDFetcher satisfies our interface contract.

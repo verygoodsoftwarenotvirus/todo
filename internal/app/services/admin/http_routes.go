@@ -22,7 +22,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	logger := s.logger.WithRequest(req)
 
-	// check request context for parsed input struct.
+	// check session context data for parsed input struct.
 	input, ok := ctx.Value(accountStatusUpdateMiddlewareCtxKey).(*types.UserReputationUpdateInput)
 	if !ok || input == nil {
 		logger.Info("valid input not attached to request")
@@ -32,32 +32,33 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	logger = logger.WithValue("new_status", input.NewReputation)
 
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
-	if !reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() {
+	if !sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() {
 		// this should never happen in production
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "inadequate permissions for route", http.StatusForbidden)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
+	requester := sessionCtxData.Requester.ID
 	logger = logger.WithValue("ban_giver", requester)
 
 	var allowed bool
 
 	switch input.NewReputation {
-	case types.BannedAccountStatus:
-		allowed = reqCtx.Requester.ServiceAdminPermission.CanBanUsers()
-	case types.TerminatedAccountStatus:
-		allowed = reqCtx.Requester.ServiceAdminPermission.CanTerminateAccounts()
+	case types.BannedUserReputation:
+		allowed = sessionCtxData.Requester.ServiceAdminPermission.CanBanUsers()
+	case types.TerminatedUserReputation:
+		allowed = sessionCtxData.Requester.ServiceAdminPermission.CanTerminateAccounts()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
+		allowed = true
 	}
 
 	if !allowed {
@@ -72,7 +73,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 		if errors.Is(err, sql.ErrNoRows) {
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		} else {
-			observability.AcknowledgeError(err, logger, span, "retrieving request context")
+			observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		}
 
@@ -80,11 +81,12 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	}
 
 	switch input.NewReputation {
-	case types.BannedAccountStatus:
+	case types.BannedUserReputation:
 		s.auditLog.LogUserBanEvent(ctx, requester, input.TargetUserID, input.Reason)
-	case types.TerminatedAccountStatus:
+	case types.TerminatedUserReputation:
 		s.auditLog.LogAccountTerminationEvent(ctx, requester, input.TargetUserID, input.Reason)
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
+		// the appropriate audit log entry is already written, the above are supplementary
 	}
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, nil, http.StatusAccepted)

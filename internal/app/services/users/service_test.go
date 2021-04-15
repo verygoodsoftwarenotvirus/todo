@@ -29,7 +29,10 @@ func buildTestService(t *testing.T) *service {
 
 	uc := &mockmetrics.UnitCounter{}
 	mockDB := database.BuildMockDatabase()
-	mockDB.UserDataManager.On("GetAllUsersCount", mock.MatchedBy(testutil.ContextMatcher)).Return(expectedUserCount, nil)
+	mockDB.UserDataManager.On(
+		"GetAllUsersCount",
+		mock.MatchedBy(testutil.ContextMatcher),
+	).Return(expectedUserCount, nil)
 
 	s := ProvideUsersService(
 		&authservice.Config{},
@@ -58,7 +61,9 @@ func TestProvideUsersService(T *testing.T) {
 		t.Parallel()
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On(
+			"BuildRouteParamIDFetcher",
+			mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideUsersService(
 			&authservice.Config{},

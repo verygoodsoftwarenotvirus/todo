@@ -62,7 +62,8 @@ func TestV1Client_CloseRequestBody(T *testing.T) {
 
 		ctx := context.Background()
 		rc := newMockReadCloser()
-		rc.On("Close").Return(errors.New("blah"))
+		rc.On(
+			"Close").Return(errors.New("blah"))
 
 		res := &http.Response{
 			Body:       rc,

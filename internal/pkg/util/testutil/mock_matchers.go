@@ -10,7 +10,7 @@ import (
 // ContextMatcher is a matcher for use with testify/mock's MatchBy function. It provides some level of type
 // safety reassurance over mock.Anything, in that the resulting function will panic if anything other than
 // a context.Context.
-func ContextMatcher(ctx context.Context) bool {
+func ContextMatcher(context.Context) bool {
 	return true
 }
 
@@ -33,8 +33,6 @@ func RequestMatcher() func(*http.Request) bool {
 // ResponseWriterMatcher is a matcher for use with testify/mock's MatchBy function. It provides some level of type
 // safety reassurance over mock.Anything, in that the resulting function will panic if anything other than
 // a http.ResponseWriter.
-func ResponseWriterMatcher() func(http.ResponseWriter) bool {
-	return func(res http.ResponseWriter) bool {
-		return true
-	}
+func ResponseWriterMatcher(http.ResponseWriter) bool {
+	return true
 }

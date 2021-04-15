@@ -59,7 +59,7 @@ func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
 	return nil
 }
 
-func (s *service) fetchRequestContextFromPASETO(ctx context.Context, req *http.Request) (*types.RequestContext, error) {
+func (s *service) fetchSessionContextDataFromPASETO(ctx context.Context, req *http.Request) (*types.SessionContextData, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -81,13 +81,13 @@ func (s *service) fetchRequestContextFromPASETO(ctx context.Context, req *http.R
 			return nil, observability.PrepareError(err, logger, span, "decoding base64 encoded GOB payload")
 		}
 
-		var reqContext *types.RequestContext
+		var reqContext *types.SessionContextData
 
 		if err = gob.NewDecoder(bytes.NewReader(gobEncoded)).Decode(&reqContext); err != nil {
 			return nil, observability.PrepareError(err, logger, span, "decoding GOB encoded session info payload")
 		}
 
-		logger.WithValue("active_account_id", reqContext.ActiveAccountID).Debug("returning request context")
+		logger.WithValue("active_account_id", reqContext.ActiveAccountID).Debug("returning session context data")
 
 		return reqContext, nil
 	}
@@ -128,29 +128,29 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			tracing.AttachRequestingUserIDToSpan(span, userID)
 			logger = logger.WithValue(keys.RequesterIDKey, userID)
 
-			reqCtx, reqCtxErr := s.accountMembershipManager.BuildRequestContextForUser(ctx, userID)
-			if reqCtxErr != nil {
-				observability.AcknowledgeError(reqCtxErr, logger, span, "fetching user info for cookie")
+			sessionCtxData, sessionCtxDataErr := s.accountMembershipManager.BuildSessionContextDataForUser(ctx, userID)
+			if sessionCtxDataErr != nil {
+				observability.AcknowledgeError(sessionCtxDataErr, logger, span, "fetching user info for cookie")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			s.overrideRequestContextValuesWithSessionData(ctx, reqCtx)
+			s.overrideSessionContextDataValuesWithSessionData(ctx, sessionCtxData)
 
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, reqCtx)))
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionContextDataKey, sessionCtxData)))
 			return
 		}
 
-		tokenRequestContext, err := s.fetchRequestContextFromPASETO(ctx, req)
+		tokenSessionContextData, err := s.fetchSessionContextDataFromPASETO(ctx, req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "extracting token from request")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
 		}
 
-		if tokenRequestContext != nil {
+		if tokenSessionContextData != nil {
 			// no need to fetch info since tokens are so short-lived.
-			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.RequestContextKey, tokenRequestContext)))
+			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionContextDataKey, tokenSessionContextData)))
 			return
 		}
 
@@ -167,25 +167,25 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		// UserAttributionMiddleware should be called before this middleware.
-		if reqCtx, err := s.requestContextFetcher(req); err == nil && reqCtx != nil {
-			logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
+		if sessionCtxData, err := s.sessionContextDataFetcher(req); err == nil && sessionCtxData != nil {
+			logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
 			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if reqCtx.Requester.Reputation == types.BannedAccountStatus {
+			if sessionCtxData.Requester.Reputation == types.BannedUserReputation {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return
 			}
 
 			var authorizedAccounts []uint64
-			for k := range reqCtx.AccountPermissionsMap {
+			for k := range sessionCtxData.AccountPermissionsMap {
 				authorizedAccounts = append(authorizedAccounts, k)
 			}
 
-			logger = logger.WithValue("requested_account_id", reqCtx.ActiveAccountID).
+			logger = logger.WithValue("requested_account_id", sessionCtxData.ActiveAccountID).
 				WithValue("authorized_accounts", authorizedAccounts)
 
-			if _, authorizedForAccount := reqCtx.AccountPermissionsMap[reqCtx.ActiveAccountID]; !authorizedForAccount {
+			if _, authorizedForAccount := sessionCtxData.AccountPermissionsMap[sessionCtxData.ActiveAccountID]; !authorizedForAccount {
 				logger.Debug("user trying to access account they are not authorized for")
 				http.Redirect(res, req, "/", http.StatusUnauthorized)
 				return
@@ -209,30 +209,30 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 
 			logger := s.logger.WithRequest(req)
 
-			// check for a request context first.
-			requestContext, err := s.requestContextFetcher(req)
+			// check for a session context data first.
+			sessionContextData, err := s.sessionContextDataFetcher(req)
 			if err != nil {
-				observability.AcknowledgeError(err, logger, span, "retrieving request context")
+				observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			if requestContext.Requester.ServiceAdminPermission != 0 {
+			if sessionContextData.Requester.ServiceAdminPermission != 0 {
 				logger.Debug("allowing admin user!")
 				next.ServeHTTP(res, req)
 				return
 			}
 
-			accountMemberships, allowed := requestContext.AccountPermissionsMap[requestContext.ActiveAccountID]
+			accountMemberships, allowed := sessionContextData.AccountPermissionsMap[sessionContextData.ActiveAccountID]
 			if !allowed {
 				logger.Debug("not authorized for account!")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			logger = logger.WithValue(keys.RequesterIDKey, requestContext.Requester.ID).
-				WithValue(keys.AccountIDKey, requestContext.ActiveAccountID).
-				WithValue(keys.PermissionsKey, requestContext.AccountPermissionsMap)
+			logger = logger.WithValue(keys.RequesterIDKey, sessionContextData.Requester.ID).
+				WithValue(keys.AccountIDKey, sessionContextData.ActiveAccountID).
+				WithValue(keys.PermissionsKey, sessionContextData.AccountPermissionsMap)
 
 			for _, p := range perms {
 				if !accountMemberships.Permissions.HasPermission(p) {
@@ -257,16 +257,16 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 
 		logger := s.logger.WithRequest(req)
 
-		reqCtx, err := s.requestContextFetcher(req)
+		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "retrieving request context")
+			observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
 		}
 
-		logger = logger.WithValue(keys.RequesterIDKey, reqCtx.Requester.ID)
+		logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
-		if !reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin() {
+		if !sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
@@ -292,7 +292,7 @@ func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Han
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -346,7 +346,7 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

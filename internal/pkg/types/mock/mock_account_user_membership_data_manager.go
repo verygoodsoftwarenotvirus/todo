@@ -16,11 +16,11 @@ type AccountUserMembershipDataManager struct {
 	mock.Mock
 }
 
-// BuildRequestContextForUser satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) BuildRequestContextForUser(ctx context.Context, userID uint64) (*types.RequestContext, error) {
+// BuildSessionContextDataForUser satisfies our interface contract.
+func (m *AccountUserMembershipDataManager) BuildSessionContextDataForUser(ctx context.Context, userID uint64) (*types.SessionContextData, error) {
 	returnValues := m.Called(ctx, userID)
 
-	return returnValues.Get(0).(*types.RequestContext), returnValues.Error(1)
+	return returnValues.Get(0).(*types.SessionContextData), returnValues.Error(1)
 }
 
 // GetDefaultAccountIDForUser satisfies our interface contract.

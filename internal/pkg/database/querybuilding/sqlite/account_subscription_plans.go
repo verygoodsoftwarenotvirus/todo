@@ -16,7 +16,7 @@ var (
 	_ querybuilding.AccountSubscriptionPlanSQLQueryBuilder = (*Sqlite)(nil)
 )
 
-// BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
+// BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an account subscription plan with a given ID belong to a user with a given ID.
 func (b *Sqlite) BuildGetAccountSubscriptionPlanQuery(ctx context.Context, accountSubscriptionPlanID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -58,7 +58,7 @@ func (b *Sqlite) BuildGetAccountSubscriptionPlansQuery(ctx context.Context, filt
 	return b.buildListQuery(ctx, querybuilding.AccountSubscriptionPlansTableName, "", querybuilding.AccountSubscriptionPlansTableColumns, 0, true, filter)
 }
 
-// BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
+// BuildCreateAccountSubscriptionPlanQuery takes an account subscription plan and returns a creation query for that plan and the relevant arguments.
 func (b *Sqlite) BuildCreateAccountSubscriptionPlanQuery(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -83,7 +83,7 @@ func (b *Sqlite) BuildCreateAccountSubscriptionPlanQuery(ctx context.Context, in
 	)
 }
 
-// BuildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
+// BuildUpdateAccountSubscriptionPlanQuery takes an account subscription plan and returns an update SQL query, with the relevant query parameters.
 func (b *Sqlite) BuildUpdateAccountSubscriptionPlanQuery(ctx context.Context, input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

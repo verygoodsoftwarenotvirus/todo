@@ -39,7 +39,7 @@ func BuildFakeAccountSubscriptionPlanList() *types.AccountSubscriptionPlanList {
 	}
 }
 
-// BuildFakePlanUpdateInputFromPlan builds a faked AccountSubscriptionPlanUpdateInput from an plan.
+// BuildFakePlanUpdateInputFromPlan builds a faked AccountSubscriptionPlanUpdateInput from an account subscription plan.
 func BuildFakePlanUpdateInputFromPlan(plan *types.AccountSubscriptionPlan) *types.AccountSubscriptionPlanUpdateInput {
 	return &types.AccountSubscriptionPlanUpdateInput{
 		Name:        plan.Name,
@@ -55,7 +55,7 @@ func BuildFakeAccountSubscriptionPlanCreationInput() *types.AccountSubscriptionP
 	return BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(plan)
 }
 
-// BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan builds a faked AccountSubscriptionPlanCreationInput from an plan.
+// BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan builds a faked AccountSubscriptionPlanCreationInput from an account subscription plan.
 func BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(plan *types.AccountSubscriptionPlan) *types.AccountSubscriptionPlanCreationInput {
 	return &types.AccountSubscriptionPlanCreationInput{
 		Name:        plan.Name,

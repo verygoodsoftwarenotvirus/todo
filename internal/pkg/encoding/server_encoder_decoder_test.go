@@ -27,12 +27,12 @@ func TestServerEncoderDecoder_RespondWithData(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed.RespondWithData(ctx, res, ex)
+		encoderDecoder.RespondWithData(ctx, res, ex)
 		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
 	})
 
@@ -40,13 +40,13 @@ func TestServerEncoderDecoder_RespondWithData(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeaderKey, "application/xml")
 
-		ed.RespondWithData(ctx, res, ex)
+		encoderDecoder.RespondWithData(ctx, res, ex)
 		assert.Equal(t, fmt.Sprintf("<example><name>%s</name></example>", expectation), res.Body.String())
 	})
 }
@@ -58,13 +58,13 @@ func TestServerEncoderDecoder_EncodeResponseWithStatus(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
 		expected := 666
-		ed.EncodeResponseWithStatus(ctx, res, ex, expected)
+		encoderDecoder.EncodeResponseWithStatus(ctx, res, ex, expected)
 
 		assert.Equal(t, expected, res.Code, "expected code to be %d, but got %d", expected, res.Code)
 		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
@@ -79,12 +79,12 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed.EncodeErrorResponse(ctx, res, exampleMessage, exampleCode)
+		encoderDecoder.EncodeErrorResponse(ctx, res, exampleMessage, exampleCode)
 		assert.Equal(t, res.Body.String(), fmt.Sprintf("{\"message\":%q,\"code\":%d}\n", exampleMessage, exampleCode))
 		assert.Equal(t, exampleCode, res.Code, "expected status code to match")
 	})
@@ -94,13 +94,13 @@ func TestServerEncoderDecoder_EncodeErrorResponse(T *testing.T) {
 		exampleMessage := "something went awry"
 		exampleCode := http.StatusBadRequest
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeaderKey, "application/xml")
 
-		ed.EncodeErrorResponse(ctx, res, exampleMessage, exampleCode)
+		encoderDecoder.EncodeErrorResponse(ctx, res, exampleMessage, exampleCode)
 		assert.Equal(t, fmt.Sprintf("<ErrorResponse><Message>%s</Message><Code>%d</Code></ErrorResponse>", exampleMessage, exampleCode), res.Body.String())
 		assert.Equal(t, exampleCode, res.Code, "expected status code to match")
 	})
@@ -115,8 +115,8 @@ func TestServerEncoderDecoder_EncodeInvalidInputResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
-		ed.EncodeInvalidInputResponse(ctx, res)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 
 		expectedCode := http.StatusBadRequest
 		assert.EqualValues(t, expectedCode, res.Code, "expected code to be %d, got %d instead", expectedCode, res.Code)
@@ -132,8 +132,8 @@ func TestServerEncoderDecoder_EncodeNotFoundResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
-		ed.EncodeNotFoundResponse(ctx, res)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder.EncodeNotFoundResponse(ctx, res)
 
 		expectedCode := http.StatusNotFound
 		assert.EqualValues(t, expectedCode, res.Code, "expected code to be %d, got %d instead", expectedCode, res.Code)
@@ -149,8 +149,8 @@ func TestServerEncoderDecoder_EncodeUnspecifiedInternalServerErrorResponse(T *te
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
-		ed.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 
 		expectedCode := http.StatusInternalServerError
 		assert.EqualValues(t, expectedCode, res.Code, "expected code to be %d, got %d instead", expectedCode, res.Code)
@@ -166,8 +166,8 @@ func TestServerEncoderDecoder_EncodeUnauthorizedResponse(T *testing.T) {
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
-		ed.EncodeUnauthorizedResponse(ctx, res)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 
 		expectedCode := http.StatusUnauthorized
 		assert.EqualValues(t, expectedCode, res.Code, "expected code to be %d, got %d instead", expectedCode, res.Code)
@@ -183,7 +183,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		bs, err := json.Marshal(e)
 		require.NoError(t, err)
@@ -198,7 +198,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 		req.Header.Set(ContentTypeHeaderKey, contentTypeJSON)
 
 		var x example
-		assert.NoError(t, ed.DecodeRequest(ctx, req, &x))
+		assert.NoError(t, encoderDecoder.DecodeRequest(ctx, req, &x))
 		assert.Equal(t, x.Name, e.Name)
 	})
 
@@ -208,7 +208,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 		expectation := "name"
 		e := &example{Name: expectation}
-		ed := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
 
 		bs, err := xml.Marshal(e)
 		require.NoError(t, err)
@@ -223,7 +223,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 		req.Header.Set(ContentTypeHeaderKey, contentTypeXML)
 
 		var x example
-		assert.NoError(t, ed.DecodeRequest(ctx, req, &x))
+		assert.NoError(t, encoderDecoder.DecodeRequest(ctx, req, &x))
 		assert.Equal(t, x.Name, e.Name)
 	})
 }

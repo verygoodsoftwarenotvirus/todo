@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -24,7 +25,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("provided input was invalid")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -51,7 +52,7 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("provided input was invalid")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

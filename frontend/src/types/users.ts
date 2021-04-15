@@ -6,7 +6,7 @@ import {
 } from '../components/core/apiTable/types';
 import type { userModelTranslations } from '../i18n';
 import { isNumeric, renderUnixTime } from '../utils';
-import {DatabaseRecord, Pagination} from './api';
+import { DatabaseRecord, Pagination } from './api';
 import { defaultFactories } from './fakes';
 
 export class UserList extends Pagination {
@@ -43,7 +43,7 @@ export class User extends DatabaseRecord {
     lastUpdatedOn: number = 0,
     archivedOn?: number,
   ) {
-    super(id, createdOn, lastUpdatedOn, archivedOn)
+    super(id, createdOn, lastUpdatedOn, archivedOn);
     this.externalID = externalID;
     this.username = username;
     this.serviceAdminPermissions = serviceAdminPermissions;

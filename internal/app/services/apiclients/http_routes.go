@@ -37,15 +37,15 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	requester := sessionCtxData.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.UserIDKey, requester)
 
 	// fetch API clients.
@@ -72,7 +72,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
-	// fetch creation input from request context.
+	// fetch creation input from session context data.
 	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.APIClientCreationInput)
 	if !ok {
 		logger.Info("valid input not attached to request")
@@ -80,20 +80,20 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// check request context for user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	// check session context data for user ID.
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// keep relevant data in mind.
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue("username", input.Username)
 
 	// retrieve user.
-	user, err := s.userDataManager.GetUser(ctx, reqCtx.Requester.ID)
+	user, err := s.userDataManager.GetUser(ctx, sessionCtxData.Requester.ID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -167,15 +167,15 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	requester := sessionCtxData.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// determine API client ID.
@@ -206,15 +206,15 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 
 	// determine user ID.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	requester := sessionCtxData.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// determine API client ID.
@@ -223,7 +223,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, apiClientID)
 
 	// archive the API client in the database.
-	err = s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, reqCtx.ActiveAccountID, requester)
+	err = s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, sessionCtxData.ActiveAccountID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -248,15 +248,15 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	logger := s.logger.WithRequest(req)
 
 	// determine user.
-	reqCtx, err := s.requestContextFetcher(req)
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving request context")
+		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
-	requester := reqCtx.Requester.ID
-	tracing.AttachRequestContextToSpan(span, reqCtx)
+	requester := sessionCtxData.Requester.ID
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.UserIDKey, requester)
 
 	// determine relevant API client ID.

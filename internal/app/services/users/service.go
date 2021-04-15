@@ -37,19 +37,19 @@ type (
 
 	// service handles our users.
 	service struct {
-		userDataManager       types.UserDataManager
-		accountDataManager    types.AccountDataManager
-		authSettings          *authservice.Config
-		authenticator         authentication.Authenticator
-		logger                logging.Logger
-		encoderDecoder        encoding.ServerEncoderDecoder
-		userIDFetcher         func(*http.Request) uint64
-		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
-		userCounter           metrics.UnitCounter
-		secretGenerator       secretGenerator
-		imageUploadProcessor  images.ImageUploadProcessor
-		uploadManager         uploads.UploadManager
-		tracer                tracing.Tracer
+		userDataManager           types.UserDataManager
+		accountDataManager        types.AccountDataManager
+		authSettings              *authservice.Config
+		authenticator             authentication.Authenticator
+		logger                    logging.Logger
+		encoderDecoder            encoding.ServerEncoderDecoder
+		userIDFetcher             func(*http.Request) uint64
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		userCounter               metrics.UnitCounter
+		secretGenerator           secretGenerator
+		imageUploadProcessor      images.ImageUploadProcessor
+		uploadManager             uploads.UploadManager
+		tracer                    tracing.Tracer
 	}
 )
 
@@ -67,18 +67,18 @@ func ProvideUsersService(
 	routeParamManager routing.RouteParamManager,
 ) types.UserDataService {
 	return &service{
-		logger:                logging.EnsureLogger(logger).WithName(serviceName),
-		userDataManager:       userDataManager,
-		accountDataManager:    accountDataManager,
-		authenticator:         authenticator,
-		userIDFetcher:         routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
-		requestContextFetcher: routeParamManager.FetchContextFromRequest,
-		encoderDecoder:        encoder,
-		authSettings:          authSettings,
-		userCounter:           metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
-		secretGenerator:       &standardSecretGenerator{},
-		tracer:                tracing.NewTracer(serviceName),
-		imageUploadProcessor:  imageUploadProcessor,
-		uploadManager:         uploadManager,
+		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
+		userDataManager:           userDataManager,
+		accountDataManager:        accountDataManager,
+		authenticator:             authenticator,
+		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		encoderDecoder:            encoder,
+		authSettings:              authSettings,
+		userCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
+		secretGenerator:           &standardSecretGenerator{},
+		tracer:                    tracing.NewTracer(serviceName),
+		imageUploadProcessor:      imageUploadProcessor,
+		uploadManager:             uploadManager,
 	}
 }

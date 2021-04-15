@@ -6,7 +6,7 @@ import {
 } from '../components/core/apiTable/types';
 import type { itemModelTranslations } from '../i18n';
 import { renderUnixTime } from '../utils';
-import {DatabaseRecord, Pagination} from './api';
+import { DatabaseRecord, Pagination } from './api';
 import { defaultFactories } from './fakes';
 
 export class ItemList extends Pagination {
@@ -35,7 +35,7 @@ export class Item extends DatabaseRecord {
     archivedOn?: number,
     belongsToAccount: number = 0,
   ) {
-    super(id, createdOn, lastUpdatedOn, archivedOn)
+    super(id, createdOn, lastUpdatedOn, archivedOn);
     this.name = name;
     this.externalID = externalID;
     this.details = details;

@@ -95,7 +95,8 @@ func TestPostgres_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleAccountSubscriptionPlan.ExternalID)
+		exIDGen.On(
+			"NewExternalID").Return(exampleAccountSubscriptionPlan.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO account_subscription_plans (external_id,name,description,price,period) VALUES ($1,$2,$3,$4,$5) RETURNING id"

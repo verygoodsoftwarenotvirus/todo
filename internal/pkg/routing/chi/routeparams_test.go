@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_requestContextFetcherFromRequestContext(T *testing.T) {
+func Test_sessionContextDataFetcherFromSessionContextData(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		expected, _ := types.RequestContextFromUser(exampleUser, exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
+		expected, _ := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
 			exampleAccount.ID: {
 				AccountName: exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),
@@ -33,7 +33,7 @@ func Test_requestContextFetcherFromRequestContext(T *testing.T) {
 
 		req := testutil.BuildTestRequest(t)
 		req = req.WithContext(
-			context.WithValue(req.Context(), types.RequestContextKey, expected),
+			context.WithValue(req.Context(), types.SessionContextDataKey, expected),
 		)
 
 		actual, err := r.FetchContextFromRequest(req)

@@ -82,19 +82,19 @@ func AttachAccountSubscriptionPlanIDToSpan(span trace.Span, planID uint64) {
 	attachUint64ToSpan(span, keys.AccountSubscriptionPlanIDKey, planID)
 }
 
-// AttachChangeSummarySpan provides a consistent way to attach a RequestContext object to a span.
+// AttachChangeSummarySpan provides a consistent way to attach a SessionContextData object to a span.
 func AttachChangeSummarySpan(span trace.Span, typeName string, changes []*types.FieldChangeSummary) {
 	for i, change := range changes {
 		span.SetAttributes(attribute.Any(fmt.Sprintf("%s.field_changes.%d", typeName, i), change))
 	}
 }
 
-// AttachRequestContextToSpan provides a consistent way to attach a RequestContext object to a span.
-func AttachRequestContextToSpan(span trace.Span, reqCtx *types.RequestContext) {
-	if reqCtx != nil {
-		attachUint64ToSpan(span, keys.RequesterIDKey, reqCtx.Requester.ID)
-		attachUint64ToSpan(span, keys.ActiveAccountIDKey, reqCtx.ActiveAccountID)
-		attachBooleanToSpan(span, keys.UserIsAdminKey, reqCtx.Requester.ServiceAdminPermission.IsServiceAdmin())
+// AttachSessionContextDataToSpan provides a consistent way to attach a SessionContextData object to a span.
+func AttachSessionContextDataToSpan(span trace.Span, sessionCtxData *types.SessionContextData) {
+	if sessionCtxData != nil {
+		attachUint64ToSpan(span, keys.RequesterIDKey, sessionCtxData.Requester.ID)
+		attachUint64ToSpan(span, keys.ActiveAccountIDKey, sessionCtxData.ActiveAccountID)
+		attachBooleanToSpan(span, keys.UserIsAdminKey, sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin())
 	}
 }
 

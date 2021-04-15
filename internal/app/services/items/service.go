@@ -27,14 +27,14 @@ type (
 
 	// service handles to-do list items.
 	service struct {
-		logger                logging.Logger
-		itemDataManager       types.ItemDataManager
-		itemIDFetcher         func(*http.Request) uint64
-		requestContextFetcher func(*http.Request) (*types.RequestContext, error)
-		itemCounter           metrics.UnitCounter
-		encoderDecoder        encoding.ServerEncoderDecoder
-		tracer                tracing.Tracer
-		search                SearchIndex
+		logger                    logging.Logger
+		itemDataManager           types.ItemDataManager
+		itemIDFetcher             func(*http.Request) uint64
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		itemCounter               metrics.UnitCounter
+		encoderDecoder            encoding.ServerEncoderDecoder
+		tracer                    tracing.Tracer
+		search                    SearchIndex
 	}
 )
 
@@ -57,14 +57,14 @@ func ProvideService(
 	}
 
 	svc := &service{
-		logger:                logging.EnsureLogger(logger).WithName(serviceName),
-		itemIDFetcher:         routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
-		requestContextFetcher: routeParamManager.FetchContextFromRequest,
-		itemDataManager:       itemDataManager,
-		encoderDecoder:        encoder,
-		itemCounter:           metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
-		search:                searchIndexManager,
-		tracer:                tracing.NewTracer(serviceName),
+		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
+		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
+		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		itemDataManager:           itemDataManager,
+		encoderDecoder:            encoder,
+		itemCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
+		search:                    searchIndexManager,
+		tracer:                    tracing.NewTracer(serviceName),
 	}
 
 	return svc, nil

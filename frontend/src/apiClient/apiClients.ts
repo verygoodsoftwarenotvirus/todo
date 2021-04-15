@@ -50,7 +50,9 @@ export function saveAPIClient(
 }
 
 export function deleteAPIClient(id: number): Promise<AxiosResponse> {
-  return axios.delete(format(backendRoutes.INDIVIDUAL_API_CLIENT, id.toString()));
+  return axios.delete(
+    format(backendRoutes.INDIVIDUAL_API_CLIENT, id.toString()),
+  );
 }
 
 export function fetchAuditLogEntriesForAPIClient(

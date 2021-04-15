@@ -35,7 +35,7 @@ func buildTestHelper(t *testing.T) *accountsServiceHTTPRoutesTestHelper {
 	helper.exampleAccount = fakes.BuildFakeAccount()
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 
-	reqCtx, err := types.RequestContextFromUser(
+	sessionCtxData, err := types.SessionContextDataFromUser(
 		helper.exampleUser,
 		helper.exampleAccount.ID,
 		map[uint64]*types.UserAccountMembershipInfo{
@@ -48,18 +48,21 @@ func buildTestHelper(t *testing.T) *accountsServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	helper.service.requestContextFetcher = func(_ *http.Request) (*types.RequestContext, error) {
-		return reqCtx, nil
+	helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		return sessionCtxData, nil
 	}
 	helper.service.accountIDFetcher = func(req *http.Request) uint64 {
 		return helper.exampleAccount.ID
+	}
+	helper.service.userIDFetcher = func(req *http.Request) uint64 {
+		return helper.exampleUser.ID
 	}
 
 	helper.res = httptest.NewRecorder()
 	helper.req, err = http.NewRequestWithContext(
 		helper.ctx,
 		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
+		"https://todo.verygoodsoftwarenotvirus.ru",
 		nil,
 	)
 	require.NotNil(t, helper.req)

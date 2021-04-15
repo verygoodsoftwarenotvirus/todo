@@ -28,17 +28,20 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On(
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
 			"DecodeRequest",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&http.Request{}),
 			mock.IsType(&types.APIClientCreationInput{}),
 		).Return(nil)
-		s.encoderDecoder = ed
+		s.encoderDecoder = encoderDecoder
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{}))
+		mh.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}))
 
 		h := s.CreationInputMiddleware(mh)
 		req := testutil.BuildTestRequest(t)
@@ -52,7 +55,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		h.ServeHTTP(res, req)
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
@@ -60,21 +63,21 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 
 		s := buildTestService(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On(
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
 			"DecodeRequest",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(&http.Request{}),
 			mock.IsType(&types.APIClientCreationInput{}),
 		).Return(errors.New("blah"))
-		ed.On(
+		encoderDecoder.On(
 			"EncodeErrorResponse",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		s.encoderDecoder = ed
+		s.encoderDecoder = encoderDecoder
 
 		mh := &testutil.MockHTTPHandler{}
 		h := s.CreationInputMiddleware(mh)
@@ -84,7 +87,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		h.ServeHTTP(res, req)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 }
 

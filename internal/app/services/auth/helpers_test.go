@@ -68,19 +68,19 @@ func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
 
 		helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
-		udb := &mocktypes.UserDataManager{}
-		udb.On(
+		userDataManager := &mocktypes.UserDataManager{}
+		userDataManager.On(
 			"GetUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
-		helper.service.userDataManager = udb
+		helper.service.userDataManager = userDataManager
 
 		actualUser, err := helper.service.determineUserFromRequestCookie(helper.ctx, helper.req)
 		assert.Equal(t, helper.exampleUser, actualUser)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, udb)
+		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
 	T.Run("without cookie", func(t *testing.T) {
@@ -99,18 +99,18 @@ func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
 		helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		expectedError := errors.New("blah")
-		udb := &mocktypes.UserDataManager{}
-		udb.On(
+		userDataManager := &mocktypes.UserDataManager{}
+		userDataManager.On(
 			"GetUser",
 			mock.MatchedBy(testutil.ContextMatcher),
 			helper.exampleUser.ID,
 		).Return((*types.User)(nil), expectedError)
-		helper.service.userDataManager = udb
+		helper.service.userDataManager = userDataManager
 
 		actualUser, err := helper.service.determineUserFromRequestCookie(helper.req.Context(), helper.req)
 		assert.Nil(t, actualUser)
 		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, udb)
+		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 }

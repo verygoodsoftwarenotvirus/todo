@@ -81,6 +81,8 @@ const (
 	QueryErrorKey = "QUERY_ERROR"
 	// RowIDErrorKey is the standard key for referring to an error fetching a row ID.
 	RowIDErrorKey = "ROW_ID_ERROR"
+	// ValidationErrorKey is the standard key for referring to a struct validation error.
+	ValidationErrorKey = "validation_error"
 
 	// ItemIDKey is the standard key for referring to an item ID.
 	ItemIDKey = "item_id"

@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -12,6 +13,10 @@ import (
 const (
 	// addUserToAccountMiddlewareCtxKey is a string alias we can use for referring to account input data in contexts.
 	addUserToAccountMiddlewareCtxKey types.ContextKey = "add_user_to_account"
+	// transferAccountMiddlewareCtxKey is a string alias we can use for referring to account input data in contexts.
+	transferAccountMiddlewareCtxKey types.ContextKey = "transfer_account"
+	// modifyMembershipMiddlewareCtxKey is a string alias we can use for referring to account input data in contexts.
+	modifyMembershipMiddlewareCtxKey types.ContextKey = "modify_membership"
 	// createMiddlewareCtxKey is a string alias we can use for referring to account input data in contexts.
 	createMiddlewareCtxKey types.ContextKey = "account_create_input"
 	// updateMiddlewareCtxKey is a string alias we can use for referring to account update data in contexts.
@@ -35,7 +40,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -65,7 +70,7 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -94,7 +99,7 @@ func (s *service) AddMemberInputMiddleware(next http.Handler) http.Handler {
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -123,14 +128,14 @@ func (s *service) ModifyMemberPermissionsInputMiddleware(next http.Handler) http
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		logger.Debug("attached membership permission modification input to request")
 
-		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, modifyMembershipMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -152,14 +157,14 @@ func (s *service) AccountTransferInputMiddleware(next http.Handler) http.Handler
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		logger.Debug("attached account transfer input to request")
 
-		ctx = context.WithValue(ctx, addUserToAccountMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, transferAccountMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

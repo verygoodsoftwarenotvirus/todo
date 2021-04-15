@@ -64,7 +64,7 @@ type (
 
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
 	AccountUserMembershipDataManager interface {
-		BuildRequestContextForUser(ctx context.Context, userID uint64) (*RequestContext, error)
+		BuildSessionContextDataForUser(ctx context.Context, userID uint64) (*SessionContextData, error)
 		GetDefaultAccountIDForUser(ctx context.Context, userID uint64) (uint64, error)
 		MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser uint64) error
 		UserIsMemberOfAccount(ctx context.Context, userID, accountID uint64) (bool, error)

@@ -119,14 +119,16 @@ export class APIClientCreationInput {
     this.name = name;
     this.username = username;
     this.password = password;
-    this.totpToken  = totpToken;
+    this.totpToken = totpToken;
   }
-  
+
   complete(): boolean {
-    return this.name !== '' &&
+    return (
+      this.name !== '' &&
       this.username !== '' &&
       this.password !== '' &&
       this.totpToken !== ''
+    );
   }
 }
 

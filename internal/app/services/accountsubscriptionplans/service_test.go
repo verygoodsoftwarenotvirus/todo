@@ -39,7 +39,9 @@ func TestProvidePlansService(T *testing.T) {
 		}
 
 		rpm := mockrouting.NewRouteParamManager()
-		rpm.On("BuildRouteParamIDFetcher", mock.IsType(logging.NewNonOperationalLogger()), AccountSubscriptionPlanIDURIParamKey, "account subscription plan").Return(func(*http.Request) uint64 { return 0 })
+		rpm.On(
+			"BuildRouteParamIDFetcher",
+			mock.IsType(logging.NewNonOperationalLogger()), AccountSubscriptionPlanIDURIParamKey, "account subscription plan").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideService(
 			logging.NewNonOperationalLogger(),

@@ -61,8 +61,10 @@ func TestQuerier_ScanAPIClients(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On("Next").Return(false)
-		mockRows.On("Err").Return(errors.New("blah"))
+		mockRows.On(
+			"Next").Return(false)
+		mockRows.On(
+			"Err").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanAPIClients(ctx, mockRows, false)
 		assert.Error(t, err)
@@ -75,9 +77,12 @@ func TestQuerier_ScanAPIClients(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On("Next").Return(false)
-		mockRows.On("Err").Return(nil)
-		mockRows.On("Close").Return(errors.New("blah"))
+		mockRows.On(
+			"Next").Return(false)
+		mockRows.On(
+			"Err").Return(nil)
+		mockRows.On(
+			"Close").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanAPIClients(ctx, mockRows, false)
 		assert.Error(t, err)
@@ -97,7 +102,11 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientByClientIDQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAPIClient.ClientID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientByClientIDQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleAPIClient.ClientID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -121,7 +130,11 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientByClientIDQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAPIClient.ClientID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientByClientIDQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleAPIClient.ClientID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -146,7 +159,11 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientByClientIDQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAPIClient.ClientID).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientByClientIDQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleAPIClient.ClientID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -174,7 +191,10 @@ func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAllAPIClientsCountQuery", mock.MatchedBy(testutil.ContextMatcher)).Return(fakeQuery)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAllAPIClientsCountQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+		).Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -196,7 +216,10 @@ func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAllAPIClientsCountQuery", mock.MatchedBy(testutil.ContextMatcher)).Return(fakeQuery)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAllAPIClientsCountQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+		).Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -238,7 +261,9 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), uint64(1), uint64(exampleBatchSize+1)).
+			On("BuildGetBatchOfAPIClientsQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -287,7 +312,9 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), uint64(1), uint64(exampleBatchSize+1)).
+			On("BuildGetBatchOfAPIClientsQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -352,7 +379,9 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), uint64(1), uint64(exampleBatchSize+1)).
+			On("BuildGetBatchOfAPIClientsQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -390,7 +419,9 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), uint64(1), uint64(exampleBatchSize+1)).
+			On("BuildGetBatchOfAPIClientsQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -423,7 +454,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientsQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -449,7 +484,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientsQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -473,7 +512,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientsQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -498,7 +541,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientsQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -522,7 +569,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildGetAPIClientsQuery", mock.MatchedBy(testutil.ContextMatcher), exampleUser.ID, filter).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientsQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleUser.ID, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -555,7 +606,11 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildCreateAPIClientQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildCreateAPIClientQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -590,7 +645,11 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildCreateAPIClientQuery", mock.MatchedBy(testutil.ContextMatcher), exampleInput).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildCreateAPIClientQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -627,7 +686,11 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On("BuildArchiveAPIClientQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAPIClient.ID, exampleAPIClient.BelongsToUser).Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildArchiveAPIClientQuery",
+			mock.MatchedBy(testutil.ContextMatcher),
+			exampleAPIClient.ID, exampleAPIClient.BelongsToUser,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -662,7 +725,9 @@ func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForAPIClientQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAPIClient.ID).
+			On("BuildGetAuditLogEntriesForAPIClientQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				exampleAPIClient.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -691,7 +756,9 @@ func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForAPIClientQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAPIClient.ID).
+			On("BuildGetAuditLogEntriesForAPIClientQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				exampleAPIClient.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -717,7 +784,9 @@ func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForAPIClientQuery", mock.MatchedBy(testutil.ContextMatcher), exampleAPIClient.ID).
+			On("BuildGetAuditLogEntriesForAPIClientQuery",
+				mock.MatchedBy(testutil.ContextMatcher),
+				exampleAPIClient.ID).
 			Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 

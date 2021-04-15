@@ -36,10 +36,14 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		mh := &testutil.MockHTTPHandler{}
-		mh.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		mh.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -63,7 +67,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -82,19 +86,24 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.UserReputationUpdateInput{})).Return(errors.New("blah"))
-		ed.On(
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.RequestMatcher()),
+			mock.IsType(&types.UserReputationUpdateInput{}),
+		).Return(errors.New("blah"))
+		encoderDecoder.On(
 			"EncodeErrorResponse",
 			mock.MatchedBy(testutil.ContextMatcher),
 			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
 			"invalid request content",
 			http.StatusBadRequest,
 		)
-		s.encoderDecoder = ed
+		s.encoderDecoder = encoderDecoder
 
 		res := httptest.NewRecorder()
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://todo.verygoodsoftwarenotvirus.ru", nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", nil)
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
@@ -104,6 +113,6 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
-		mock.AssertExpectationsForObjects(t, ed, mh)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 }

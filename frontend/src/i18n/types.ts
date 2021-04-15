@@ -14,7 +14,7 @@ export type accountUserMembershipModelTranslations = {
   columns: {
     id: string;
     createdOn: string;
-    archivedOn: string
+    archivedOn: string;
     userAccountPermissions: string;
     defaultAccount: string;
     belongsToAccount: string;
@@ -144,13 +144,13 @@ export type apiClientModelTranslations = {
     name: string;
     username: string;
     password: string;
-    totpToken: string
+    totpToken: string;
   };
   inputPlaceholders: {
     name: string;
     username: string;
     password: string;
-    totpToken: string
+    totpToken: string;
   };
 };
 

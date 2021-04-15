@@ -18,12 +18,12 @@ var (
 	errNoUserIDFoundInSession = errors.New("no user ID found in session")
 )
 
-func (s *service) overrideRequestContextValuesWithSessionData(ctx context.Context, reqCtx *types.RequestContext) {
+func (s *service) overrideSessionContextDataValuesWithSessionData(ctx context.Context, sessionCtxData *types.SessionContextData) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if activeAccount, ok := s.sessionManager.Get(ctx, accountIDContextKey).(uint64); ok {
-		reqCtx.ActiveAccountID = activeAccount
+		sessionCtxData.ActiveAccountID = activeAccount
 	}
 }
 
@@ -42,7 +42,7 @@ func (s *service) getUserIDFromCookie(ctx context.Context, req *http.Request) (c
 
 		if err = s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token); err != nil {
 			logger = logger.WithValue("cookie", cookie.Value)
-			return nil, 0, observability.PrepareError(err, logger, span, "retrieving request context")
+			return nil, 0, observability.PrepareError(err, logger, span, "retrieving session context data")
 		}
 
 		ctx, err = s.sessionManager.Load(ctx, token)

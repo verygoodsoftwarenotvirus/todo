@@ -29,10 +29,10 @@ func TestPostgres_BuildUserIsBannedQuery(T *testing.T) {
 		expectedQuery := "SELECT EXISTS ( SELECT users.id FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND (users.reputation = $2 OR users.reputation = $3) )"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
-			string(types.BannedAccountStatus),
-			string(types.TerminatedAccountStatus),
+			string(types.BannedUserReputation),
+			string(types.TerminatedUserReputation),
 		}
-		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, string(types.BannedAccountStatus), string(types.TerminatedAccountStatus))
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, string(types.BannedUserReputation), string(types.TerminatedUserReputation))
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -193,7 +193,8 @@ func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
 		exampleInput.IsServiceAdmin = true
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On(
+			"NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,salt,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES ($1,$2,$3,$4,$5,$6,$7,extract(epoch FROM NOW())) RETURNING id"
@@ -229,7 +230,8 @@ func TestPostgres_BuildCreateUserQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On(
+			"NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,salt,two_factor_secret,reputation,site_admin_permissions) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id"

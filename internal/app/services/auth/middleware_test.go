@@ -31,11 +31,19 @@ func TestAuthService_CookieAuthenticationMiddleware(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		aumdm := &mocktypes.AccountUserMembershipDataManager{}
-		aumdm.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(helper.reqCtx, nil)
+		aumdm.On(
+			"BuildSessionContextDataForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			helper.exampleUser.ID,
+		).Return(helper.sessionCtxData, nil)
 		helper.service.accountMembershipManager = aumdm
 
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		ms.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
@@ -52,17 +60,25 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
-		mockAccountMembershipManager.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
+		mockAccountMembershipManager.On(
+			"BuildSessionContextDataForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			helper.exampleUser.ID,
+		).Return(sessionCtxData, nil)
 		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		h.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		helper.service.UserAttributionMiddleware(h).ServeHTTP(helper.res, helper.req)
 
@@ -75,17 +91,25 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
-		mockAccountMembershipManager.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
+		mockAccountMembershipManager.On(
+			"BuildSessionContextDataForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			helper.exampleUser.ID,
+		).Return(sessionCtxData, nil)
 		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		h.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		helper.service.UserAttributionMiddleware(h).ServeHTTP(helper.res, helper.req)
 
@@ -94,12 +118,16 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockAccountMembershipManager, h)
 	})
 
-	T.Run("with error fetching request context for user", func(t *testing.T) {
+	T.Run("with error fetching session context data for user", func(t *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
-		mockAccountMembershipManager.On("BuildRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return((*types.RequestContext)(nil), errors.New("blah"))
+		mockAccountMembershipManager.On(
+			"BuildSessionContextDataForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			helper.exampleUser.ID,
+		).Return((*types.SessionContextData)(nil), errors.New("blah"))
 		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
@@ -120,17 +148,25 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
-		mockUserDataManager.On("GetRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
+		mockUserDataManager.On(
+			"GetSessionContextDataForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			helper.exampleUser.ID,
+		).Return(sessionCtxData, nil)
 		helper.service.userDataManager = mockUserDataManager
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		h.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.RequestContextKey, reqCtx))
+		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.SessionContextDataKey, sessionCtxData))
 
 		helper.service.AuthorizationMiddleware(h).ServeHTTP(helper.res, helper.req)
 
@@ -143,20 +179,28 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.Reputation = types.BannedAccountStatus
+		helper.exampleUser.Reputation = types.BannedUserReputation
 		helper.setContextFetcher(t)
 
-		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
-		mockUserDataManager.On("GetRequestContextForUser", mock.MatchedBy(testutil.ContextMatcher), helper.exampleUser.ID).Return(reqCtx, nil)
+		mockUserDataManager.On(
+			"GetSessionContextDataForUser",
+			mock.MatchedBy(testutil.ContextMatcher),
+			helper.exampleUser.ID,
+		).Return(sessionCtxData, nil)
 		helper.service.userDataManager = mockUserDataManager
 
 		h := &MockHTTPHandler{}
-		h.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		h.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.RequestContextKey, reqCtx))
+		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.SessionContextDataKey, sessionCtxData))
 
 		mh := &testutil.MockHTTPHandler{}
 		helper.service.AuthorizationMiddleware(mh).ServeHTTP(helper.res, helper.req)
@@ -166,11 +210,11 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mh)
 	})
 
-	T.Run("with missing request context", func(t *testing.T) {
+	T.Run("with missing session context data", func(t *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		helper.service.requestContextFetcher = func(*http.Request) (*types.RequestContext, error) {
+		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return nil, nil
 		}
 
@@ -201,7 +245,11 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		ms.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		helper.service.UserLoginInputMiddleware(ms).ServeHTTP(helper.res, helper.req)
 
@@ -215,15 +263,23 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		var b bytes.Buffer
 		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.UserLoginInput{})).Return(errors.New("blah"))
-		ed.On("EncodeErrorResponse", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.ResponseWriterMatcher()), "attached input is invalid", http.StatusBadRequest)
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.RequestMatcher()),
+			mock.IsType(&types.UserLoginInput{}),
+		).Return(errors.New("blah"))
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.ResponseWriterMatcher), "attached input is invalid", http.StatusBadRequest)
+		helper.service.encoderDecoder = encoderDecoder
 
 		ms := &MockHTTPHandler{}
 		helper.service.UserLoginInputMiddleware(ms).ServeHTTP(helper.res, helper.req)
 
-		mock.AssertExpectationsForObjects(t, ed, ms)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, ms)
 	})
 
 	T.Run("with error decoding request but valid input attached to request form", func(t *testing.T) {
@@ -248,16 +304,25 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 
 		helper.req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 
-		ed := mockencoding.NewMockEncoderDecoder()
-		ed.On("DecodeRequest", mock.MatchedBy(testutil.ContextMatcher), mock.MatchedBy(testutil.RequestMatcher()), mock.IsType(&types.UserLoginInput{})).Return(errors.New("blah"))
-		helper.service.encoderDecoder = ed
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			mock.MatchedBy(testutil.ContextMatcher),
+			mock.MatchedBy(testutil.RequestMatcher()),
+			mock.IsType(&types.UserLoginInput{}),
+		).Return(errors.New("blah"))
+		helper.service.encoderDecoder = encoderDecoder
 
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		ms.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		helper.service.UserLoginInputMiddleware(ms).ServeHTTP(helper.res, helper.req)
 
-		mock.AssertExpectationsForObjects(t, ed, ms)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, ms)
 	})
 }
 
@@ -271,13 +336,17 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
 		helper.setContextFetcher(t)
 
-		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.RequestContextKey, reqCtx))
+		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
 		ms := &MockHTTPHandler{}
-		ms.On("ServeHTTP", mock.IsType(http.ResponseWriter(httptest.NewRecorder())), mock.IsType(&http.Request{})).Return()
+		ms.On(
+			"ServeHTTP",
+			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			mock.IsType(&http.Request{}),
+		).Return()
 
 		helper.service.AdminMiddleware(ms).ServeHTTP(helper.res, helper.req)
 
@@ -286,7 +355,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, ms)
 	})
 
-	T.Run("without request context attached", func(t *testing.T) {
+	T.Run("without session context data attached", func(t *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
@@ -302,10 +371,10 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		t.Parallel()
 		helper := buildTestHelper(t)
 
-		reqCtx, err := types.RequestContextFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
 		require.NoError(t, err)
 
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.RequestContextKey, reqCtx))
+		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
 		ms := &MockHTTPHandler{}
 		helper.service.AdminMiddleware(ms).ServeHTTP(helper.res, helper.req)

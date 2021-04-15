@@ -69,7 +69,7 @@ type (
 	}
 )
 
-// Update merges an PlanInput with an plan.
+// Update merges an PlanInput with an account subscription plan.
 func (x *AccountSubscriptionPlan) Update(input *AccountSubscriptionPlanUpdateInput) []*FieldChangeSummary {
 	var out []*FieldChangeSummary
 
@@ -90,12 +90,8 @@ func (x *AccountSubscriptionPlan) Update(input *AccountSubscriptionPlanUpdateInp
 func (x *AccountSubscriptionPlanCreationInput) Validate(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
-	)
-}
-
-// Validate validates a AccountSubscriptionPlanUpdateInput.
-func (x *AccountSubscriptionPlanUpdateInput) Validate(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, x,
-		validation.Field(&x.Name, validation.Required),
+		validation.Field(&x.Description, validation.Required),
+		validation.Field(&x.Price, validation.Required),
+		validation.Field(&x.Period, validation.Required),
 	)
 }

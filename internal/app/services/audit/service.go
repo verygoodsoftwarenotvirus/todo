@@ -22,12 +22,12 @@ var (
 type (
 	// service handles audit log entries.
 	service struct {
-		logger                 logging.Logger
-		auditLog               types.AuditLogEntryDataManager
-		auditLogEntryIDFetcher func(*http.Request) uint64
-		requestContextFetcher  func(*http.Request) (*types.RequestContext, error)
-		encoderDecoder         encoding.ServerEncoderDecoder
-		tracer                 tracing.Tracer
+		logger                    logging.Logger
+		auditLog                  types.AuditLogEntryDataManager
+		auditLogEntryIDFetcher    func(*http.Request) uint64
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		encoderDecoder            encoding.ServerEncoderDecoder
+		tracer                    tracing.Tracer
 	}
 )
 
@@ -39,11 +39,11 @@ func ProvideService(
 	routeParamManager routing.RouteParamManager,
 ) types.AuditLogEntryDataService {
 	return &service{
-		logger:                 logging.EnsureLogger(logger).WithName(serviceName),
-		auditLog:               auditLog,
-		auditLogEntryIDFetcher: routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
-		requestContextFetcher:  routeParamManager.FetchContextFromRequest,
-		encoderDecoder:         encoder,
-		tracer:                 tracing.NewTracer(serviceName),
+		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
+		auditLog:                  auditLog,
+		auditLogEntryIDFetcher:    routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
+		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		encoderDecoder:            encoder,
+		tracer:                    tracing.NewTracer(serviceName),
 	}
 }

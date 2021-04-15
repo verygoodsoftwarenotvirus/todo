@@ -14,7 +14,7 @@ import (
 
 var _ querybuilding.AccountSubscriptionPlanSQLQueryBuilder = (*MariaDB)(nil)
 
-// BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an plan with a given ID belong to a user with a given ID.
+// BuildGetAccountSubscriptionPlanQuery constructs a SQL query for fetching an account subscription plan with a given ID belong to a user with a given ID.
 func (b *MariaDB) BuildGetAccountSubscriptionPlanQuery(ctx context.Context, accountSubscriptionPlanID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -58,7 +58,7 @@ func (b *MariaDB) BuildGetAccountSubscriptionPlansQuery(ctx context.Context, fil
 	return b.buildListQuery(ctx, querybuilding.AccountSubscriptionPlansTableName, "", querybuilding.AccountSubscriptionPlansTableColumns, 0, true, filter)
 }
 
-// BuildCreateAccountSubscriptionPlanQuery takes an plan and returns a creation query for that plan and the relevant arguments.
+// BuildCreateAccountSubscriptionPlanQuery takes an account subscription plan and returns a creation query for that plan and the relevant arguments.
 func (b *MariaDB) BuildCreateAccountSubscriptionPlanQuery(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -83,7 +83,7 @@ func (b *MariaDB) BuildCreateAccountSubscriptionPlanQuery(ctx context.Context, i
 	)
 }
 
-// BuildUpdateAccountSubscriptionPlanQuery takes an plan and returns an update SQL query, with the relevant query parameters.
+// BuildUpdateAccountSubscriptionPlanQuery takes an account subscription plan and returns an update SQL query, with the relevant query parameters.
 func (b *MariaDB) BuildUpdateAccountSubscriptionPlanQuery(ctx context.Context, input *types.AccountSubscriptionPlan) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

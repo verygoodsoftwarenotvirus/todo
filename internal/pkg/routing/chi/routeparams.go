@@ -16,7 +16,7 @@ import (
 type chirouteParamManager struct{}
 
 var (
-	errNoRequestContextAvailable = errors.New("no RequestContext attached to request context")
+	errNoSessionContextDataAvailable = errors.New("no SessionContextData attached to session context data")
 )
 
 // NewRouteParamManager provides a new RouteParamManager.
@@ -24,22 +24,22 @@ func NewRouteParamManager() routing.RouteParamManager {
 	return &chirouteParamManager{}
 }
 
-// UserIDFetcherFromRequestContext fetches a user ID from a request.
-func (r chirouteParamManager) UserIDFetcherFromRequestContext(req *http.Request) uint64 {
-	if reqCtx, err := r.FetchContextFromRequest(req); err == nil && reqCtx != nil {
-		return reqCtx.Requester.ID
+// UserIDFetcherFromSessionContextData fetches a user ID from a request.
+func (r chirouteParamManager) UserIDFetcherFromSessionContextData(req *http.Request) uint64 {
+	if sessionCtxData, err := r.FetchContextFromRequest(req); err == nil && sessionCtxData != nil {
+		return sessionCtxData.Requester.ID
 	}
 
 	return 0
 }
 
-// FetchContextFromRequest fetches a RequestContext from a request.
-func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types.RequestContext, error) {
-	if reqCtx, ok := req.Context().Value(types.RequestContextKey).(*types.RequestContext); ok && reqCtx != nil {
-		return reqCtx, nil
+// FetchContextFromRequest fetches a SessionContextData from a request.
+func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types.SessionContextData, error) {
+	if sessionCtxData, ok := req.Context().Value(types.SessionContextDataKey).(*types.SessionContextData); ok && sessionCtxData != nil {
+		return sessionCtxData, nil
 	}
 
-	return nil, errNoRequestContextAvailable
+	return nil, errNoSessionContextDataAvailable
 }
 
 // BuildRouteParamIDFetcher builds a function that fetches a given key from a path with variables added by a router.

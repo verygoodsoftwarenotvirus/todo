@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -29,7 +30,7 @@ func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Han
 		}
 
 		if err := x.Validate(ctx); err != nil {
-			logger.WithValue("validation_error", err).Debug("invalid input attached to request")
+			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
 		}

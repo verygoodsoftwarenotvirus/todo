@@ -18,7 +18,7 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	logger := logging.NewNonOperationalLogger()
-	ed := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
+	encoderDecoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
 	s, err := ProvideService(
 		logger,
@@ -34,7 +34,7 @@ func buildTestService(t *testing.T) *service {
 		&mocktypes.APIClientDataManager{},
 		&mocktypes.AccountUserMembershipDataManager{},
 		scs.New(),
-		ed,
+		encoderDecoder,
 		chi.NewRouteParamManager(),
 	)
 	require.NoError(t, err)
@@ -48,7 +48,7 @@ func TestProvideAuthService(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		logger := logging.NewNonOperationalLogger()
-		ed := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
+		encoderDecoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
 		s, err := ProvideService(
 			logger,
@@ -64,7 +64,7 @@ func TestProvideAuthService(T *testing.T) {
 			&mocktypes.APIClientDataManager{},
 			&mocktypes.AccountUserMembershipDataManager{},
 			scs.New(),
-			ed,
+			encoderDecoder,
 			chi.NewRouteParamManager(),
 		)
 		assert.NotNil(t, s)

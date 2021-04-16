@@ -21,6 +21,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
@@ -28,7 +29,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On(
 			"GetAuditLogEntries",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAuditLogEntryList, nil)
 		helper.service.auditLog = auditLogEntryManager
@@ -36,8 +37,8 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.AuditLogEntryList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -48,14 +49,37 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 
+	T.Run("with error fetching session context data", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			"unauthenticated",
+			http.StatusUnauthorized,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.ListHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, encoderDecoder)
+	})
+
 	T.Run("with no results returned from datastore", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On(
 			"GetAuditLogEntries",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AuditLogEntryList)(nil), sql.ErrNoRows)
 		helper.service.auditLog = auditLogEntryManager
@@ -63,8 +87,8 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.AuditLogEntryList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -76,12 +100,13 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 	})
 	T.Run("with error reading from datastore", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On(
 			"GetAuditLogEntries",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AuditLogEntryList)(nil), errors.New("blah"))
 		helper.service.auditLog = auditLogEntryManager
@@ -89,8 +114,8 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -106,12 +131,13 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On(
 			"GetAuditLogEntry",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAuditLogEntry.ID,
 		).Return(helper.exampleAuditLogEntry, nil)
 		helper.service.auditLog = auditLogEntryManager
@@ -119,8 +145,8 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.AuditLogEntry{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -131,14 +157,37 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 
+	T.Run("with error fetching session context data", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			"unauthenticated",
+			http.StatusUnauthorized,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.ReadHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, encoderDecoder)
+	})
+
 	T.Run("with no audit log entries returned from datastore", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On(
 			"GetAuditLogEntry",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAuditLogEntry.ID,
 		).Return((*types.AuditLogEntry)(nil), sql.ErrNoRows)
 		helper.service.auditLog = auditLogEntryManager
@@ -146,8 +195,8 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -159,12 +208,13 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 
 	T.Run("with error reading from datastore", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		auditLogEntryManager := &mocktypes.AuditLogEntryDataManager{}
 		auditLogEntryManager.On(
 			"GetAuditLogEntry",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAuditLogEntry.ID,
 		).Return((*types.AuditLogEntry)(nil), errors.New("blah"))
 		helper.service.auditLog = auditLogEntryManager
@@ -172,8 +222,8 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 

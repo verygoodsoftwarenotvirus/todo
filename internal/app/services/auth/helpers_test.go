@@ -2,8 +2,14 @@ package auth
 
 import (
 	"errors"
+	"github.com/gorilla/securecookie"
+	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,14 +19,15 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 )
 
-func TestAuthService_DecodeCookieFromRequest(T *testing.T) {
+func TestAuthService_getUserIDFromCookie(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
-		helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
+		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		_, userID, err := helper.service.getUserIDFromCookie(helper.ctx, helper.req)
 		assert.NoError(t, err)
@@ -29,6 +36,7 @@ func TestAuthService_DecodeCookieFromRequest(T *testing.T) {
 
 	T.Run("with invalid cookie", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		// begin building bad cookie.
@@ -50,12 +58,53 @@ func TestAuthService_DecodeCookieFromRequest(T *testing.T) {
 
 	T.Run("without cookie", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		_, userID, err := helper.service.getUserIDFromCookie(helper.req.Context(), helper.req)
 		assert.Error(t, err)
 		assert.Equal(t, err, http.ErrNoCookie)
 		assert.Zero(t, userID)
+	})
+
+	T.Run("with error loading from session", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		expectedToken := "blahblah"
+
+		sm := &mockSessionManager{}
+		sm.On("Load", testutil.ContextMatcher, expectedToken).Return(helper.ctx, errors.New("blah"))
+		helper.service.sessionManager = sm
+
+		c, err := helper.service.buildCookie(expectedToken, time.Now().Add(helper.service.config.Cookies.Lifetime))
+		require.NoError(t, err)
+		helper.req.AddCookie(c)
+
+		_, _, err = helper.service.getUserIDFromCookie(helper.ctx, helper.req)
+		assert.Error(t, err)
+	})
+
+	T.Run("with no user ID attached to context", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		ctx, sessionErr := helper.service.sessionManager.Load(helper.req.Context(), "")
+		require.NoError(t, sessionErr)
+		require.NoError(t, helper.service.sessionManager.RenewToken(ctx))
+
+		token, _, err := helper.service.sessionManager.Commit(ctx)
+		assert.NotEmpty(t, token)
+		assert.NoError(t, err)
+
+		c, err := helper.service.buildCookie(token, time.Now().Add(helper.service.config.Cookies.Lifetime))
+		require.NoError(t, err)
+		helper.req.AddCookie(c)
+
+		_, _, err = helper.service.getUserIDFromCookie(helper.ctx, helper.req)
+		assert.Error(t, err)
 	})
 }
 
@@ -64,14 +113,15 @@ func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
-		helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
+		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -85,6 +135,7 @@ func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
 
 	T.Run("without cookie", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		actualUser, err := helper.service.determineUserFromRequestCookie(helper.req.Context(), helper.req)
@@ -94,15 +145,16 @@ func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
 
 	T.Run("with error retrieving user from datastore", func(t *testing.T) {
 		t.Parallel()
+
 		helper := buildTestHelper(t)
 
-		helper.ctx, helper.req = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
+		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		expectedError := errors.New("blah")
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return((*types.User)(nil), expectedError)
 		helper.service.userDataManager = userDataManager
@@ -112,5 +164,246 @@ func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
 		assert.Error(t, err)
 
 		mock.AssertExpectationsForObjects(t, userDataManager)
+	})
+}
+
+func TestAuthService_validateLogin(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		authenticator := &mockauth.Authenticator{}
+		authenticator.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			helper.exampleLoginInput.Password,
+			helper.exampleUser.TwoFactorSecret,
+			helper.exampleLoginInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(true, nil)
+		helper.service.authenticator = authenticator
+
+		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
+		assert.True(t, actual)
+		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, authenticator)
+	})
+
+	T.Run("with too weak of a password hash", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		authenticator := &mockauth.Authenticator{}
+		authenticator.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			helper.exampleLoginInput.Password,
+			helper.exampleUser.TwoFactorSecret,
+			helper.exampleLoginInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(true, authentication.ErrPasswordHashTooWeak)
+		helper.service.authenticator = authenticator
+
+		authenticator.On(
+			"HashPassword",
+			testutil.ContextMatcher,
+			helper.exampleLoginInput.Password,
+		).Return("blah", nil)
+
+		userDataManager := &mocktypes.UserDataManager{}
+		userDataManager.On(
+			"UpdateUser",
+			testutil.ContextMatcher,
+			mock.IsType(&types.User{}),
+		).Return(nil)
+		helper.service.userDataManager = userDataManager
+
+		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
+		assert.True(t, actual)
+		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, authenticator, userDataManager)
+	})
+
+	T.Run("with error re-hashing too-weak password hash", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		expectedErr := errors.New("arbitrary")
+
+		authenticator := &mockauth.Authenticator{}
+		authenticator.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			helper.exampleLoginInput.Password,
+			helper.exampleUser.TwoFactorSecret,
+			helper.exampleLoginInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(true, authentication.ErrPasswordHashTooWeak)
+
+		authenticator.On(
+			"HashPassword",
+			testutil.ContextMatcher,
+			helper.exampleLoginInput.Password,
+		).Return("", expectedErr)
+		helper.service.authenticator = authenticator
+
+		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
+		assert.False(t, actual)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, authenticator)
+	})
+
+	T.Run("with too weak a password hash and error updating user", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		expectedErr := errors.New("arbitrary")
+
+		authenticator := &mockauth.Authenticator{}
+		authenticator.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			helper.exampleLoginInput.Password,
+			helper.exampleUser.TwoFactorSecret,
+			helper.exampleLoginInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(true, bcrypt.ErrCostTooLow)
+
+		authenticator.On(
+			"HashPassword",
+			testutil.ContextMatcher,
+			helper.exampleLoginInput.Password,
+		).Return("blah", nil)
+		helper.service.authenticator = authenticator
+
+		userDataManager := &mocktypes.UserDataManager{}
+		userDataManager.On(
+			"UpdateUser",
+			testutil.ContextMatcher,
+			mock.IsType(&types.User{}),
+		).Return(expectedErr)
+		helper.service.userDataManager = userDataManager
+
+		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
+		assert.False(t, actual)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, authenticator, userDataManager)
+	})
+
+	T.Run("with invalid two factor code", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		authenticator := &mockauth.Authenticator{}
+		authenticator.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			helper.exampleLoginInput.Password,
+			helper.exampleUser.TwoFactorSecret,
+			helper.exampleLoginInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(true, authentication.ErrInvalidTwoFactorCode)
+		helper.service.authenticator = authenticator
+
+		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
+		assert.False(t, actual)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, authenticator)
+	})
+
+	T.Run("with error returned from validator", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		expectedErr := errors.New("arbitrary")
+
+		authenticator := &mockauth.Authenticator{}
+		authenticator.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			helper.exampleLoginInput.Password,
+			helper.exampleUser.TwoFactorSecret,
+			helper.exampleLoginInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(false, expectedErr)
+		helper.service.authenticator = authenticator
+
+		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
+		assert.False(t, actual)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, authenticator)
+	})
+
+	T.Run("with invalid login", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		authenticator := &mockauth.Authenticator{}
+		authenticator.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			helper.exampleLoginInput.Password,
+			helper.exampleUser.TwoFactorSecret,
+			helper.exampleLoginInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(false, nil)
+		helper.service.authenticator = authenticator
+
+		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
+		assert.False(t, actual)
+		assert.NoError(t, err)
+
+		mock.AssertExpectationsForObjects(t, authenticator)
+	})
+}
+
+func TestAuthService_buildCookie(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		cookie, err := helper.service.buildCookie("example", time.Now().Add(helper.service.config.Cookies.Lifetime))
+		assert.NotNil(t, cookie)
+		assert.NoError(t, err)
+	})
+
+	T.Run("with invalid cookie builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		helper.service.cookieManager = securecookie.New(
+			securecookie.GenerateRandomKey(0),
+			[]byte(""),
+		)
+
+		cookie, err := helper.service.buildCookie("example", time.Now().Add(helper.service.config.Cookies.Lifetime))
+		assert.Nil(t, cookie)
+		assert.Error(t, err)
 	})
 }

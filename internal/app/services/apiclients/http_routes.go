@@ -40,7 +40,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
 
@@ -124,13 +124,13 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// set some data.
-	if input.ClientID, err = s.secretGenerator.GenerateClientID(); err != nil {
+	if input.ClientID, err = s.secretGenerator.GenerateBase64EncodedString(ctx, clientIDSize); err != nil {
 		observability.AcknowledgeError(err, logger, span, "generating client id")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	if input.ClientSecret, err = s.secretGenerator.GenerateClientSecret(); err != nil {
+	if input.ClientSecret, err = s.secretGenerator.GenerateRawBytes(ctx, clientSecretSize); err != nil {
 		observability.AcknowledgeError(err, logger, span, "generating client secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

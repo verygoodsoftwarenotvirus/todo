@@ -78,7 +78,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.
 			On("BuildAddUserToAccountQuery",
-				mock.MatchedBy(testutil.ContextMatcher),
+				testutil.ContextMatcher,
 				exampleInput).
 			Return(fakeUpdateQuery, fakeUpdateArgs)
 

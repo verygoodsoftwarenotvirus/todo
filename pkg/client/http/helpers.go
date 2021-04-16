@@ -47,7 +47,7 @@ func errorFromResponse(res *http.Response) error {
 	}
 }
 
-// argIsNotPointer checks an argument and returns whether or not it is a pointer.
+// argIsNotPointer checks an argument and returns whether it is a pointer.
 func argIsNotPointer(i interface{}) (bool, error) {
 	if i == nil || reflect.TypeOf(i).Kind() != reflect.Ptr {
 		return true, ErrArgumentIsNotPointer
@@ -56,7 +56,7 @@ func argIsNotPointer(i interface{}) (bool, error) {
 	return false, nil
 }
 
-// argIsNotNil checks an argument and returns whether or not it is nil.
+// argIsNotNil checks an argument and returns whether it is nil.
 func argIsNotNil(i interface{}) (bool, error) {
 	if i == nil {
 		return true, ErrNilInputProvided

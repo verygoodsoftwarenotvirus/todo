@@ -29,8 +29,8 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		req := testutil.BuildTestRequest(t)
@@ -52,14 +52,14 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.UserCreationInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -90,8 +90,8 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		req := testutil.BuildTestRequest(t)
@@ -113,14 +113,14 @@ func TestService_PasswordUpdateInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.PasswordUpdateInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -151,8 +151,8 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		req := testutil.BuildTestRequest(t)
@@ -174,15 +174,15 @@ func TestService_TOTPSecretVerificationInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.TOTPSecretVerificationInput{}),
 		).Return(errors.New("blah"))
 		s.encoderDecoder = encoderDecoder
@@ -212,8 +212,8 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		req := testutil.BuildTestRequest(t)
@@ -235,14 +235,14 @@ func TestService_TOTPSecretRefreshInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.TOTPSecretRefreshInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)

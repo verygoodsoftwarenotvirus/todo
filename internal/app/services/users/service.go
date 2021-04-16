@@ -1,6 +1,7 @@
 package users
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"net/http"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
@@ -46,7 +47,7 @@ type (
 		userIDFetcher             func(*http.Request) uint64
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		userCounter               metrics.UnitCounter
-		secretGenerator           secretGenerator
+		secretGenerator           random.Generator
 		imageUploadProcessor      images.ImageUploadProcessor
 		uploadManager             uploads.UploadManager
 		tracer                    tracing.Tracer
@@ -76,7 +77,7 @@ func ProvideUsersService(
 		encoderDecoder:            encoder,
 		authSettings:              authSettings,
 		userCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
-		secretGenerator:           &standardSecretGenerator{},
+		secretGenerator:           random.NewGenerator(logger),
 		tracer:                    tracing.NewTracer(serviceName),
 		imageUploadProcessor:      imageUploadProcessor,
 		uploadManager:             uploadManager,

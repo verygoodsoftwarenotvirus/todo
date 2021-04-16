@@ -73,20 +73,18 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		jsonBytes, err := json.Marshal(&exampleCreationInput)
 		require.NoError(t, err)
 
-		mh := &testutil.MockHTTPHandler{}
-		mh.On(
-			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
-		).Return()
-
 		res := httptest.NewRecorder()
 		req, err := http.NewRequestWithContext(s.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		actual := s.service.CreationInputMiddleware(mh)
-		actual.ServeHTTP(res, req)
+		mh := &testutil.MockHTTPHandler{}
+		mh.On(
+			"ServeHTTP",
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
+		).Return()
+		s.service.CreationInputMiddleware(mh).ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
 
@@ -101,14 +99,14 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.AccountCreationInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -167,8 +165,8 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -192,14 +190,14 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.AccountUpdateInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -259,8 +257,8 @@ func TestService_AddMemberInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -284,14 +282,14 @@ func TestService_AddMemberInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.AddUserToAccountInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -351,8 +349,8 @@ func TestService_ModifyMemberPermissionsInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -376,14 +374,14 @@ func TestService_ModifyMemberPermissionsInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.ModifyUserPermissionsInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -443,8 +441,8 @@ func TestService_AccountTransferInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -468,14 +466,14 @@ func TestService_AccountTransferInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.TransferAccountOwnershipInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)

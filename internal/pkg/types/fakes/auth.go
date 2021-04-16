@@ -33,3 +33,10 @@ func BuildFakeTransferAccountOwnershipInput() *types.TransferAccountOwnershipInp
 		NewOwner:     fake.Uint64(),
 	}
 }
+
+// BuildFakeChangeActiveAccountInput builds a faked BuildFakeChangeActiveAccountInput.
+func BuildFakeChangeActiveAccountInput() *types.ChangeActiveAccountInput {
+	return &types.ChangeActiveAccountInput{
+		AccountID: fake.Uint64(),
+	}
+}

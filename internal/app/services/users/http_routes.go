@@ -29,6 +29,9 @@ const (
 	base64ImagePrefix = "data:image/jpeg;base64,"
 
 	minimumPasswordEntropy = 75
+
+	saltSize       = 16
+	totpSecretSize = 64
 )
 
 // validateCredentialChangeRequest takes a user's credentials and determines
@@ -155,14 +158,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// generate a two factor secret.
-	if input.TwoFactorSecret, err = s.secretGenerator.GenerateTwoFactorSecret(); err != nil {
+	if input.TwoFactorSecret, err = s.secretGenerator.GenerateBase32EncodedString(ctx, totpSecretSize); err != nil {
 		observability.AcknowledgeError(err, logger, span, "error generating TOTP secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// generate a salt.
-	if input.Salt, err = s.secretGenerator.GenerateSalt(); err != nil {
+	if input.Salt, err = s.secretGenerator.GenerateRawBytes(ctx, saltSize); err != nil {
 		observability.AcknowledgeError(err, logger, span, "error generating salt")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -381,7 +384,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	logger = logger.WithValue(keys.UserIDKey, user.ID)
 
 	// set the two factor secret.
-	tfs, err := s.secretGenerator.GenerateTwoFactorSecret()
+	tfs, err := s.secretGenerator.GenerateBase32EncodedString(ctx, totpSecretSize)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "generating 2FA secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)

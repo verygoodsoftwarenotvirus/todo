@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"database/sql"
@@ -22,6 +23,47 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/o1egl/paseto"
 )
+
+func (s *service) issueSessionManagedCookie(ctx context.Context, req *http.Request, res http.ResponseWriter, accountID, requesterID uint64) (cookie *http.Cookie, responseWritten bool) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger
+
+	ctx, err := s.sessionManager.Load(ctx, "")
+	if err != nil {
+		// this will never happen while token is empty.
+		observability.AcknowledgeError(err, logger, span, "loading token")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return nil, true
+	}
+
+	if err = s.sessionManager.RenewToken(ctx); err != nil {
+		observability.AcknowledgeError(err, logger, span, "renewing token")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return nil, true
+	}
+
+	s.sessionManager.Put(ctx, accountIDContextKey, accountID)
+	s.sessionManager.Put(ctx, userIDContextKey, requesterID)
+
+	token, expiry, err := s.sessionManager.Commit(ctx)
+	if err != nil {
+		// this branch cannot be tested because I cannot anticipate what the values committed will be
+		observability.AcknowledgeError(err, logger, span, "writing to session store")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return nil, true
+	}
+
+	cookie, err = s.buildCookie(token, expiry)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "building cookie")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+		return nil, true
+	}
+
+	return cookie, false
+}
 
 // LoginHandler is our login route.
 func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
@@ -90,33 +132,8 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx, err = s.sessionManager.Load(ctx, "")
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "loading token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.sessionManager.RenewToken(ctx); err != nil {
-		observability.AcknowledgeError(err, logger, span, "renewing token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	s.sessionManager.Put(ctx, userIDContextKey, user.ID)
-	s.sessionManager.Put(ctx, accountIDContextKey, defaultAccountID)
-
-	token, expiry, err := s.sessionManager.Commit(ctx)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "writing to session store")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	cookie, err := s.buildCookie(token, expiry)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "building cookie")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+	cookie, responseWritten := s.issueSessionManagedCookie(ctx, req, res, defaultAccountID, user.ID)
+	if responseWritten {
 		return
 	}
 
@@ -175,33 +192,8 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	ctx, err = s.sessionManager.Load(ctx, "")
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "loading token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	if err = s.sessionManager.RenewToken(ctx); err != nil {
-		observability.AcknowledgeError(err, logger, span, "renewing token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	s.sessionManager.Put(ctx, accountIDContextKey, accountID)
-	s.sessionManager.Put(ctx, userIDContextKey, requesterID)
-
-	token, expiry, err := s.sessionManager.Commit(ctx)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "writing to session store")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	cookie, err := s.buildCookie(token, expiry)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "building cookie")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
+	cookie, responseWritten := s.issueSessionManagedCookie(ctx, req, res, accountID, requesterID)
+	if responseWritten {
 		return
 	}
 
@@ -228,6 +220,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 
 	ctx, err = s.sessionManager.Load(ctx, "")
 	if err != nil {
+		// this can literally never happen in this version of scs, because the token is empty
 		observability.AcknowledgeError(err, logger, span, "loading token")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
 		return
@@ -284,7 +277,7 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 const (
-	requestTimeThreshold = 2 * time.Minute
+	pasetoRequestTimeThreshold = 2 * time.Minute
 )
 
 // PASETOHandler returns the user info for the user making the request.
@@ -309,7 +302,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	reqTime := time.Unix(0, pasetoRequest.RequestTime)
-	if time.Until(reqTime) > requestTimeThreshold || time.Since(reqTime) > requestTimeThreshold {
+	if time.Until(reqTime) > pasetoRequestTimeThreshold || time.Since(reqTime) > pasetoRequestTimeThreshold {
 		logger.WithValue("provided_request_time", reqTime.String()).Debug("PASETO request denied because its time is out of threshold")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
@@ -376,8 +369,27 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.AccountIDKey, requestedAccountID)
 
+	// Encrypt data
+	tokenRes, err := s.buildPASETOResponse(ctx, sessionCtxData, client)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "encrypting PASETO")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	logger.Info("PASETO issued")
+
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
+}
+
+func (s *service) buildPASETOToken(ctx context.Context, sessionCtxData *types.SessionContextData, client *types.APIClient) paseto.JSONToken {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
 	now := time.Now().UTC()
 	lifetime := time.Duration(math.Min(float64(maxPASETOLifetime), float64(s.config.PASETO.Lifetime)))
+	expiry := now.Add(lifetime)
+
 	jsonToken := paseto.JSONToken{
 		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
 		Subject:    strconv.FormatUint(client.BelongsToUser, 10),
@@ -385,17 +397,24 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		Issuer:     s.config.PASETO.Issuer,
 		IssuedAt:   now,
 		NotBefore:  now,
-		Expiration: now.Add(lifetime),
+		Expiration: expiry,
 	}
 
 	jsonToken.Set(pasetoDataKey, base64.RawURLEncoding.EncodeToString(sessionCtxData.ToBytes()))
 
+	return jsonToken
+}
+
+func (s *service) buildPASETOResponse(ctx context.Context, sessionCtxData *types.SessionContextData, client *types.APIClient) (*types.PASETOResponse, error) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	jsonToken := s.buildPASETOToken(ctx, sessionCtxData, client)
+
 	// Encrypt data
 	token, err := paseto.NewV2().Encrypt(s.config.PASETO.LocalModeKey, jsonToken, "")
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "encrypting PASETO")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
+		return nil, observability.PrepareError(err, s.logger, span, "encrypting PASETO")
 	}
 
 	tokenRes := &types.PASETOResponse{
@@ -403,9 +422,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		ExpiresAt: jsonToken.Expiration.String(),
 	}
 
-	logger.Info("PASETO issued")
-
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, tokenRes, http.StatusAccepted)
+	return tokenRes, nil
 }
 
 // CycleCookieSecretHandler rotates the cookie building secret with a new random secret.

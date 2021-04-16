@@ -84,7 +84,7 @@ func (s *service) determineUserFromRequestCookie(ctx context.Context, req *http.
 	return user, nil
 }
 
-// validateLogin takes login information and returns whether or not the login is valid.
+// validateLogin takes login information and returns whether the login is valid.
 // In the event that there's an error, this function will return false and the error.
 func (s *service) validateLogin(ctx context.Context, user *types.User, loginInput *types.UserLoginInput) (bool, error) {
 	ctx, span := s.tracer.StartSpan(ctx)
@@ -121,9 +121,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		}
 
 		return loginValid, nil
-	}
-
-	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
+	} else if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
 		return false, err
 	} else if err != nil {
 		return false, observability.PrepareError(err, logger, span, "validating login")

@@ -38,8 +38,8 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -89,14 +89,14 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.AccountSubscriptionPlanCreationInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -134,8 +134,8 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -160,14 +160,14 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.AccountSubscriptionPlanUpdateInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -201,8 +201,8 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()

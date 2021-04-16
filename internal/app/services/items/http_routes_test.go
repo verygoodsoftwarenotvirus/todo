@@ -32,7 +32,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItems",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
@@ -41,8 +41,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.ItemList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -61,7 +61,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItems",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), sql.ErrNoRows)
@@ -70,8 +70,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.ItemList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -90,7 +90,7 @@ func TestItemsService_ListHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItems",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), errors.New("blah"))
@@ -99,8 +99,8 @@ func TestItemsService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -132,7 +132,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Search",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleQuery, helper.exampleAccount.ID,
 		).Return(exampleItemIDs, nil)
 		helper.service.search = indexManager
@@ -140,7 +140,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItemsWithIDs",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID, exampleLimit, exampleItemIDs,
 		).Return(exampleItemList.Items, nil)
 		helper.service.itemDataManager = itemDataManager
@@ -148,8 +148,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType([]*types.Item{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -170,7 +170,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Search",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleQuery, helper.exampleAccount.ID,
 		).Return([]uint64{}, errors.New("blah"))
 		helper.service.search = indexManager
@@ -178,8 +178,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -199,7 +199,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Search",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleQuery, helper.exampleAccount.ID,
 		).Return(exampleItemIDs, nil)
 		helper.service.search = indexManager
@@ -207,7 +207,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItemsWithIDs",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID, exampleLimit, exampleItemIDs,
 		).Return([]*types.Item{}, sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
@@ -215,8 +215,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType([]*types.Item{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -237,7 +237,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Search",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleQuery, helper.exampleAccount.ID,
 		).Return(exampleItemIDs, nil)
 		helper.service.search = indexManager
@@ -245,7 +245,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItemsWithIDs",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID, exampleLimit, exampleItemIDs,
 		).Return([]*types.Item{}, errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
@@ -253,8 +253,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -276,19 +276,19 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"CreateItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
 		).Return(helper.exampleItem, nil)
 		helper.service.itemDataManager = itemDataManager
 
 		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Increment", mock.MatchedBy(testutil.ContextMatcher)).Return()
+		unitCounter.On("Increment", testutil.ContextMatcher).Return()
 		helper.service.itemCounter = unitCounter
 
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Index",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleItem,
 		).Return(nil)
 		helper.service.search = indexManager
@@ -296,8 +296,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeResponseWithStatus",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.Item{}), http.StatusCreated)
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -317,8 +317,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeInvalidInputResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -336,7 +336,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"CreateItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
 		).Return((*types.Item)(nil), errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
@@ -344,8 +344,8 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -366,7 +366,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ItemExists",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return(true, nil)
 		helper.service.itemDataManager = itemDataManager
@@ -385,7 +385,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ItemExists",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return(false, sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
@@ -393,8 +393,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -412,7 +412,7 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ItemExists",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return(false, errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
@@ -420,8 +420,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -442,7 +442,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			h.exampleItem.ID, h.exampleAccount.ID,
 		).Return(h.exampleItem, nil)
 		h.service.itemDataManager = itemDataManager
@@ -450,8 +450,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.Item{}))
 		h.service.encoderDecoder = encoderDecoder
 
@@ -469,7 +469,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
@@ -477,8 +477,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -496,7 +496,7 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			h.exampleItem.ID, h.exampleAccount.ID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		h.service.itemDataManager = itemDataManager
@@ -504,8 +504,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher))
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher)
 		h.service.encoderDecoder = encoderDecoder
 
 		h.service.ReadHandler(h.res, h.req)
@@ -526,12 +526,12 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			h.exampleItem.ID, h.exampleAccount.ID,
 		).Return(h.exampleItem, nil)
 		itemDataManager.On(
 			"UpdateItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
@@ -540,7 +540,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Index",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			h.exampleItem.ID, h.exampleItem,
 		).Return(nil)
 		h.service.search = indexManager
@@ -548,8 +548,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.Item{}))
 		h.service.encoderDecoder = encoderDecoder
 
@@ -569,8 +569,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeInvalidInputResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -588,7 +588,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
@@ -596,8 +596,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -615,7 +615,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
@@ -623,8 +623,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -642,12 +642,12 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"GetItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return(helper.exampleItem, nil)
 		itemDataManager.On(
 			"UpdateItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
@@ -656,8 +656,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -678,7 +678,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ArchiveItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			h.exampleItem.ID, h.exampleAccount.ID,
 		).Return(nil)
 		h.service.itemDataManager = itemDataManager
@@ -686,13 +686,13 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Delete",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			h.exampleItem.ID,
 		).Return(nil)
 		h.service.search = indexManager
 
 		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
+		unitCounter.On("Decrement", testutil.ContextMatcher).Return()
 		h.service.itemCounter = unitCounter
 
 		h.service.ArchiveHandler(h.res, h.req)
@@ -709,7 +709,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ArchiveItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
@@ -717,8 +717,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -736,7 +736,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ArchiveItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return(errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
@@ -744,8 +744,8 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -763,7 +763,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ArchiveItem",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID, helper.exampleAccount.ID,
 		).Return(nil)
 		helper.service.itemDataManager = itemDataManager
@@ -771,13 +771,13 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Delete",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleItem.ID,
 		).Return(errors.New("blah"))
 		helper.service.search = indexManager
 
 		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
+		unitCounter.On("Decrement", testutil.ContextMatcher).Return()
 		helper.service.itemCounter = unitCounter
 
 		helper.service.ArchiveHandler(helper.res, helper.req)

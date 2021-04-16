@@ -81,7 +81,7 @@ func (q *SQLQuerier) scanItems(ctx context.Context, rows database.ResultIterator
 	return items, filteredCount, totalCount, nil
 }
 
-// ItemExists fetches whether or not an item exists from the database.
+// ItemExists fetches whether an item exists from the database.
 func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID uint64) (exists bool, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()

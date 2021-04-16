@@ -27,7 +27,7 @@ var (
 	totpTokenLengthRule = validation.Length(validTOTPTokenLength, validTOTPTokenLength)
 )
 
-// IsValidAccountStatus returns whether or not the provided string is a valid userReputation.
+// IsValidAccountStatus returns whether the provided string is a valid userReputation.
 func IsValidAccountStatus(s string) bool {
 	switch s {
 	case string(GoodStandingAccountStatus),

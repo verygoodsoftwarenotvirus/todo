@@ -21,16 +21,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ http.Handler = (*MockHTTPHandler)(nil)
-
-type MockHTTPHandler struct {
-	mock.Mock
-}
-
-func (m *MockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
-
 func TestService_CreationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
@@ -45,11 +35,11 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
 		require.NoError(t, err)
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -99,14 +89,14 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.WebhookCreationInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -117,7 +107,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		actual := s.CreationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
@@ -141,11 +131,11 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		jsonBytes, err := json.Marshal(&exampleUpdateInput)
 		require.NoError(t, err)
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		mh.On(
 			"ServeHTTP",
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
-			mock.IsType(&http.Request{}),
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
 		).Return()
 
 		res := httptest.NewRecorder()
@@ -170,14 +160,14 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"DecodeRequest",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.RequestMatcher()),
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
 			mock.IsType(&types.WebhookUpdateInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.IsType(http.ResponseWriter(httptest.NewRecorder())),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			"invalid request content",
 			http.StatusBadRequest,
 		)
@@ -188,7 +178,7 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, req)
 
-		mh := &MockHTTPHandler{}
+		mh := &testutil.MockHTTPHandler{}
 		actual := s.UpdateInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 

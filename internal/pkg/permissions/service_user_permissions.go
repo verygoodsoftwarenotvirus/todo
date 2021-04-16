@@ -78,7 +78,7 @@ func init() {
 	gob.Register(ServiceUserPermission(0))
 }
 
-// ServiceUserPermissionChecker returns whether or not a given permission applies to a user.
+// ServiceUserPermissionChecker returns whether a given permission applies to a user.
 type ServiceUserPermissionChecker interface {
 	// CanManageAPIClients should return whether a user is authorized to manage API clients.
 	CanManageAPIClients() bool
@@ -152,17 +152,17 @@ func (p *ServiceUserPermission) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// HasPermission determines whether or not a user can view items.
+// HasPermission determines whether a user can view items.
 func (p ServiceUserPermission) HasPermission(perm ServiceUserPermission) bool {
 	return p&perm != 0
 }
 
-// CanManageWebhooks determines whether or not a user can create items.
+// CanManageWebhooks determines whether a user can create items.
 func (p ServiceUserPermission) CanManageWebhooks() bool {
 	return p.HasPermission(CanManageWebhooks)
 }
 
-// CanManageAPIClients determines whether or not a user can create items.
+// CanManageAPIClients determines whether a user can create items.
 func (p ServiceUserPermission) CanManageAPIClients() bool {
 	return p.HasPermission(CanManageAPIClients)
 }

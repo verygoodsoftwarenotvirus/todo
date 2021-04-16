@@ -191,7 +191,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
+			"https://todo.verygoodsoftwarenotvirus.ru",
 			bytes.NewReader(bs),
 		)
 		require.NoError(t, err)
@@ -216,7 +216,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 		req, err := http.NewRequestWithContext(
 			ctx,
 			http.MethodGet,
-			"http://todo.verygoodsoftwarenotvirus.ru",
+			"https://todo.verygoodsoftwarenotvirus.ru",
 			bytes.NewReader(bs),
 		)
 		require.NoError(t, err)

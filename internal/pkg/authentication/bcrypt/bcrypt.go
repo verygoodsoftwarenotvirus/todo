@@ -123,7 +123,7 @@ func (b *Authenticator) ValidateLogin(
 	return passwordMatches, nil
 }
 
-// PasswordMatches validates whether or not a bcrypt-hashed authentication matches a provided authentication.
+// PasswordMatches validates whether a bcrypt-hashed authentication matches a provided authentication.
 func (b *Authenticator) PasswordMatches(ctx context.Context, hashedPassword, providedPassword string, _ []byte) bool {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -150,7 +150,7 @@ func (b *Authenticator) hashedPasswordIsTooWeak(ctx context.Context, hashedPassw
 	return nil
 }
 
-// PasswordIsAcceptable takes a authentication and returns whether or not it satisfies the authenticator.
+// PasswordIsAcceptable takes a authentication and returns whether it satisfies the authenticator.
 func (b *Authenticator) PasswordIsAcceptable(pass string) bool {
 	return uint(len(pass)) >= b.minimumPasswordSize
 }

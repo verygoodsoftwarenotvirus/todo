@@ -2,6 +2,7 @@ package auth
 
 import (
 	"testing"
+	"time"
 
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -26,6 +27,11 @@ func buildTestService(t *testing.T) *service {
 			Cookies: CookieConfig{
 				Name:       DefaultCookieName,
 				SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
+			},
+			PASETO: PASETOConfig{
+				Issuer:       "test",
+				LocalModeKey: []byte("BLAHBLAHBLAHPRETENDTHISISSECRET!"),
+				Lifetime:     time.Hour,
 			},
 		},
 		&mockauth.Authenticator{},

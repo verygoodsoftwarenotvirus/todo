@@ -36,8 +36,8 @@ var (
 func init() {
 	flag.StringVarP(&uri, "url", "u", "", "where the target instance is hosted")
 	flag.IntVarP(&count, "count", "c", -1, "how many users/items per user to create")
-	flag.BoolVarP(&debug, "debug", "d", false, "whether or not debug mode is enabled")
-	flag.BoolVarP(&singleUserMode, "single-user-mode", "s", false, "whether or not single user mode is enabled")
+	flag.BoolVarP(&debug, "debug", "d", false, "whether debug mode is enabled")
+	flag.BoolVarP(&singleUserMode, "single-user-mode", "s", false, "whether single user mode is enabled")
 }
 
 func clearTheScreen() {

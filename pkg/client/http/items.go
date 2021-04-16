@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-// ItemExists retrieves whether or not an item exists.
+// ItemExists retrieves whether an item exists.
 func (c *Client) ItemExists(ctx context.Context, itemID uint64) (bool, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

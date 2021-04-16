@@ -4,7 +4,7 @@ import { isNumeric, parseBool } from './misc';
 
 describe('utils', () => {
   describe('isNumeric', () => {
-    it('should determine whether or not something is numeric', () => {
+    it('should determine whether something is numeric', () => {
       const expectations = new Map<string, boolean>([
         ['12345', true],
         ['fart', false],

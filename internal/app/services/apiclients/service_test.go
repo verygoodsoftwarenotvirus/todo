@@ -1,6 +1,7 @@
 package apiclients
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"net/http"
 	"testing"
 
@@ -30,7 +31,7 @@ func buildTestService(t *testing.T) *service {
 		sessionContextDataFetcher: chi.NewRouteParamManager().FetchContextFromRequest,
 		urlClientIDExtractor:      func(req *http.Request) uint64 { return 0 },
 		apiClientCounter:          &mockmetrics.UnitCounter{},
-		secretGenerator:           &mockSecretGenerator{},
+		secretGenerator:           &random.MockGenerator{},
 		tracer:                    tracing.NewTracer(serviceName),
 	}
 }

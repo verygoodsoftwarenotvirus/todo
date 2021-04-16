@@ -190,7 +190,7 @@ func (c *Client) BuildWebsocketURL(ctx context.Context, qp url.Values, parts ...
 	return u.String()
 }
 
-// IsUp returns whether or not the service's health endpoint is returning 200s.
+// IsUp returns whether the service's health endpoint is returning 200s.
 func (c *Client) IsUp(ctx context.Context) bool {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()

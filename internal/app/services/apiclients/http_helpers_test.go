@@ -56,6 +56,9 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 	helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
+	helper.service.urlClientIDExtractor = func(*http.Request) uint64 {
+		return helper.exampleAPIClient.ID
+	}
 
 	req := testutil.BuildTestRequest(t)
 

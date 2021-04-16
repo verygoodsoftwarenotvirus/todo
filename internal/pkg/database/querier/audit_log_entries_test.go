@@ -27,7 +27,7 @@ func prepareForAuditLogEntryCreation(t *testing.T, exampleAuditLogEntry *types.A
 	fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 		"BuildCreateAuditLogEntryQuery",
-		mock.MatchedBy(testutil.ContextMatcher),
+		testutil.ContextMatcher,
 		exampleAuditLogEntry,
 	).Return(fakeQuery, fakeArgs)
 
@@ -116,7 +116,7 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetAuditLogEntryQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleAuditLogEntry.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -143,7 +143,7 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetAuditLogEntryQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleAuditLogEntry.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -174,7 +174,7 @@ func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-			On("BuildGetAllAuditLogEntriesCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
+			On("BuildGetAllAuditLogEntriesCountQuery", testutil.ContextMatcher).
 			Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -198,7 +198,7 @@ func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-			On("BuildGetAllAuditLogEntriesCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
+			On("BuildGetAllAuditLogEntriesCountQuery", testutil.ContextMatcher).
 			Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -233,7 +233,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		fakeCountQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetAllAuditLogEntriesCountQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 		).Return(fakeCountQuery)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeCountQuery)).
@@ -243,7 +243,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		fakeSelectQuery, fakeSelectArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetBatchOfAuditLogEntriesQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			expectedStart, expectedEnd,
 		).Return(fakeSelectQuery, fakeSelectArgs)
 
@@ -285,7 +285,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-			On("BuildGetAllAuditLogEntriesCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
+			On("BuildGetAllAuditLogEntriesCountQuery", testutil.ContextMatcher).
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -295,7 +295,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
 			On("BuildGetBatchOfAuditLogEntriesQuery",
-				mock.MatchedBy(testutil.ContextMatcher),
+				testutil.ContextMatcher,
 				uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -324,7 +324,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-			On("BuildGetAllAuditLogEntriesCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
+			On("BuildGetAllAuditLogEntriesCountQuery", testutil.ContextMatcher).
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -352,7 +352,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-			On("BuildGetAllAuditLogEntriesCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
+			On("BuildGetAllAuditLogEntriesCountQuery", testutil.ContextMatcher).
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -362,7 +362,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
 			On("BuildGetBatchOfAuditLogEntriesQuery",
-				mock.MatchedBy(testutil.ContextMatcher),
+				testutil.ContextMatcher,
 				uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -392,7 +392,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-			On("BuildGetAllAuditLogEntriesCountQuery", mock.MatchedBy(testutil.ContextMatcher)).
+			On("BuildGetAllAuditLogEntriesCountQuery", testutil.ContextMatcher).
 			Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -402,7 +402,7 @@ func TestQuerier_GetAllAuditLogEntries(T *testing.T) {
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
 			On("BuildGetBatchOfAuditLogEntriesQuery",
-				mock.MatchedBy(testutil.ContextMatcher),
+				testutil.ContextMatcher,
 				uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -435,7 +435,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetAuditLogEntriesQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			filter,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -465,7 +465,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetAuditLogEntriesQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			filter,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -492,7 +492,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetAuditLogEntriesQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			filter,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -519,7 +519,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildGetAuditLogEntriesQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			filter,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -552,7 +552,7 @@ func TestQuerier_createAuditLogEntry(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleInput,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -608,7 +608,7 @@ func TestQuerier_createAuditLogEntry(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			exampleInput,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder

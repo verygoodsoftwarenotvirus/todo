@@ -31,7 +31,7 @@ func buildTestService(t *testing.T) *service {
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On(
 		"GetAllUsersCount",
-		mock.MatchedBy(testutil.ContextMatcher),
+		testutil.ContextMatcher,
 	).Return(expectedUserCount, nil)
 
 	s := ProvideUsersService(

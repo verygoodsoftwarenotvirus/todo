@@ -2,15 +2,13 @@ package auth
 
 import (
 	"fmt"
-	"net/http"
-	"time"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"net/http"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/gorilla/securecookie"
@@ -42,7 +40,7 @@ type (
 		accountMembershipManager  types.AccountUserMembershipDataManager
 		encoderDecoder            encoding.ServerEncoderDecoder
 		cookieManager             cookieEncoderDecoder
-		sessionManager            *scs.SessionManager
+		sessionManager            sessionManager
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		tracer                    tracing.Tracer
 	}
@@ -78,19 +76,6 @@ func ProvideService(
 		),
 		tracer: tracing.NewTracer(serviceName),
 	}
-	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime
-
-	c, err := svc.buildCookie("", time.Now())
-	if err != nil {
-		return nil, fmt.Errorf("building example cookie: %w", err)
-	}
-
-	svc.sessionManager.Cookie.Name = c.Name
-	svc.sessionManager.Cookie.Domain = c.Domain
-	svc.sessionManager.Cookie.HttpOnly = c.HttpOnly
-	svc.sessionManager.Cookie.Path = c.Path
-	svc.sessionManager.Cookie.SameSite = c.SameSite
-	svc.sessionManager.Cookie.Secure = c.Secure
 
 	if _, err := svc.cookieManager.Encode(cfg.Cookies.Name, "blah"); err != nil {
 		logger.WithValue("cookie_signing_key_length", len(cfg.Cookies.SigningKey)).Error(err, "building test cookie")

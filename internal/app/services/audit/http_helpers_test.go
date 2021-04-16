@@ -61,7 +61,7 @@ func buildTestHelper(t *testing.T) *auditServiceHTTPRoutesTestHelper {
 	helper.req, err = http.NewRequestWithContext(
 		helper.ctx,
 		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
+		"https://todo.verygoodsoftwarenotvirus.ru",
 		nil,
 	)
 	require.NotNil(t, helper.req)

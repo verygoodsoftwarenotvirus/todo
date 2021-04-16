@@ -131,7 +131,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			sessionCtxData, sessionCtxDataErr := s.accountMembershipManager.BuildSessionContextDataForUser(ctx, userID)
 			if sessionCtxDataErr != nil {
 				observability.AcknowledgeError(sessionCtxDataErr, logger, span, "fetching user info for cookie")
-				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 				return
 			}
 
@@ -144,8 +144,6 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 		tokenSessionContextData, err := s.fetchSessionContextDataFromPASETO(ctx, req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "extracting token from request")
-			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
-			return
 		}
 
 		if tokenSessionContextData != nil {
@@ -200,7 +198,7 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// PermissionRestrictionMiddleware is concerned with figuring otu who a user is, but not worried about kicking out users who are not known.
+// PermissionRestrictionMiddleware is concerned with figuring out who a user is, but not worried about kicking out users who are not known.
 func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {

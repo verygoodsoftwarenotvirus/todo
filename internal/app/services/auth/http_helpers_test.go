@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request) {
+func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request, string) {
 	t.Helper()
 
 	exampleAccount := fakes.BuildFakeAccount()
@@ -37,7 +37,7 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 	require.NoError(t, err)
 	req.AddCookie(c)
 
-	return ctx, req.WithContext(ctx)
+	return ctx, req.WithContext(ctx), token
 }
 
 type authServiceHTTPRoutesTestHelper struct {

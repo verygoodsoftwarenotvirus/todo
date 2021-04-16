@@ -63,7 +63,7 @@ func buildTestHelper(t *testing.T) *accountSubscriptionPlansServiceHTTPRoutesTes
 	helper.req, err = http.NewRequestWithContext(
 		helper.ctx,
 		http.MethodGet,
-		"http://todo.verygoodsoftwarenotvirus.ru",
+		"https://todo.verygoodsoftwarenotvirus.ru",
 		nil,
 	)
 	require.NoError(t, err)

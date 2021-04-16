@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -139,7 +140,13 @@ func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config,
 	}
 
 	sessionManager.Lifetime = cookieConfig.Lifetime
-	// elaborate further here later if you so choose
+	sessionManager.Lifetime = cookieConfig.Lifetime
+	sessionManager.Cookie.Name = cookieConfig.Name
+	sessionManager.Cookie.Domain = cookieConfig.Domain
+	sessionManager.Cookie.HttpOnly = true
+	sessionManager.Cookie.Path = "/"
+	sessionManager.Cookie.SameSite = http.SameSiteStrictMode
+	sessionManager.Cookie.Secure = cookieConfig.SecureOnly
 
 	return sessionManager, nil
 }

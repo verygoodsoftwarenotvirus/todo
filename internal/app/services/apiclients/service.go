@@ -1,25 +1,18 @@
 package apiclients
 
 import (
-	"crypto/rand"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
-
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
 
 const (
 	// creationMiddlewareCtxKey is a string alias for referring to API client creation data.
@@ -43,7 +36,7 @@ type (
 		urlClientIDExtractor      func(req *http.Request) uint64
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		apiClientCounter          metrics.UnitCounter
-		secretGenerator           secretGenerator
+		secretGenerator           random.Generator
 		tracer                    tracing.Tracer
 	}
 )
@@ -64,7 +57,7 @@ func ProvideAPIClientsService(
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:            encoderDecoder,
 		authenticator:             authenticator,
-		secretGenerator:           &standardSecretGenerator{},
+		secretGenerator:           random.NewGenerator(logger),
 		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
 		urlClientIDExtractor:      routeParamManager.BuildRouteParamIDFetcher(logger, APIClientIDURIParamKey, "api client"),
 		tracer:                    tracing.NewTracer(serviceName),

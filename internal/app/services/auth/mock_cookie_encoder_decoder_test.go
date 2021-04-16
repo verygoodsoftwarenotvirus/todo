@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"net/http"
-
 	"github.com/stretchr/testify/mock"
 )
 
@@ -20,14 +18,4 @@ func (m *mockCookieEncoderDecoder) Encode(name string, value interface{}) (strin
 func (m *mockCookieEncoderDecoder) Decode(name, value string, dst interface{}) error {
 	args := m.Called(name, value, dst)
 	return args.Error(0)
-}
-
-var _ http.Handler = (*MockHTTPHandler)(nil)
-
-type MockHTTPHandler struct {
-	mock.Mock
-}
-
-func (m *MockHTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
 }

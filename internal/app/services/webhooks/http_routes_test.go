@@ -30,7 +30,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleWebhookList, nil)
@@ -39,8 +39,8 @@ func TestWebhooksService_List(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.WebhookList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -59,7 +59,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), sql.ErrNoRows)
@@ -68,8 +68,8 @@ func TestWebhooksService_List(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.WebhookList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -88,7 +88,7 @@ func TestWebhooksService_List(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhooks",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.WebhookList)(nil), errors.New("blah"))
@@ -97,8 +97,8 @@ func TestWebhooksService_List(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -118,13 +118,13 @@ func TestWebhooksService_Create(T *testing.T) {
 		helper := newTestHelper(t)
 
 		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Increment", mock.MatchedBy(testutil.ContextMatcher)).Return()
+		unitCounter.On("Increment", testutil.ContextMatcher).Return()
 		helper.service.webhookCounter = unitCounter
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.WebhookCreationInput{}),
 			helper.exampleUser.ID,
 		).Return(helper.exampleWebhook, nil)
@@ -133,8 +133,8 @@ func TestWebhooksService_Create(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeResponseWithStatus",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.Webhook{}), http.StatusCreated)
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -153,8 +153,8 @@ func TestWebhooksService_Create(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeInvalidInputResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -172,7 +172,7 @@ func TestWebhooksService_Create(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"CreateWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.WebhookCreationInput{}),
 			helper.exampleUser.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
@@ -181,8 +181,8 @@ func TestWebhooksService_Create(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -204,7 +204,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 		).Return(helper.exampleWebhook, nil)
@@ -213,8 +213,8 @@ func TestWebhooksService_Read(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.Webhook{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -233,7 +233,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
@@ -242,8 +242,8 @@ func TestWebhooksService_Read(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -261,7 +261,7 @@ func TestWebhooksService_Read(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
@@ -270,8 +270,8 @@ func TestWebhooksService_Read(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -293,14 +293,14 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 		).Return(helper.exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
 			helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
@@ -310,8 +310,8 @@ func TestWebhooksService_Update(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 			mock.IsType(&types.Webhook{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -331,8 +331,8 @@ func TestWebhooksService_Update(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeInvalidInputResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -350,7 +350,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), sql.ErrNoRows)
@@ -359,8 +359,8 @@ func TestWebhooksService_Update(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -378,7 +378,7 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
@@ -387,8 +387,8 @@ func TestWebhooksService_Update(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -406,14 +406,14 @@ func TestWebhooksService_Update(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"GetWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 		).Return(helper.exampleWebhook, nil)
 
 		wd.On(
 			"UpdateWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
 			helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
@@ -423,8 +423,8 @@ func TestWebhooksService_Update(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -444,13 +444,13 @@ func TestWebhooksService_Archive(T *testing.T) {
 		helper := newTestHelper(t)
 
 		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Decrement", mock.MatchedBy(testutil.ContextMatcher)).Return()
+		unitCounter.On("Decrement", testutil.ContextMatcher).Return()
 		helper.service.webhookCounter = unitCounter
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -471,7 +471,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -481,8 +481,8 @@ func TestWebhooksService_Archive(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -500,7 +500,7 @@ func TestWebhooksService_Archive(T *testing.T) {
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
-			mock.MatchedBy(testutil.ContextMatcher),
+			testutil.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -510,8 +510,8 @@ func TestWebhooksService_Archive(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			mock.MatchedBy(testutil.ContextMatcher),
-			mock.MatchedBy(testutil.ResponseWriterMatcher),
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 

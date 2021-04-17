@@ -5,44 +5,38 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestAccountUserMembershipEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildUserAddedToAccountEventEntry(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildUserAddedToAccountEventEntry": {
-			expectedEventType: audit.UserAddedToAccountEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.UserAssignmentKey,
-				audit.PermissionsKey,
-				audit.ReasonKey,
-			},
-			actual: audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, &types.AddUserToAccountInput{}),
-		},
-		"BuildUserRemovedFromAccountEventEntry": {
-			expectedEventType: audit.UserRemovedFromAccountEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.UserAssignmentKey,
-				audit.ReasonKey,
-			},
-			actual: audit.BuildUserRemovedFromAccountEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID, "blah blah"),
-		},
-		"BuildUserMarkedAccountAsDefaultEventEntry": {
-			expectedEventType: audit.AccountMarkedAsDefaultEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.UserAssignmentKey,
-				audit.ReasonKey,
-			},
-			actual: audit.BuildUserMarkedAccountAsDefaultEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID),
-		},
-	}
+	assert.NotNil(t, audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, &types.AddUserToAccountInput{}))
+}
 
-	runEventBuilderTests(T, tests)
+func TestBuildUserRemovedFromAccountEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUserRemovedFromAccountEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID, "blah blah"))
+}
+
+func TestBuildUserMarkedAccountAsDefaultEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUserMarkedAccountAsDefaultEventEntry(exampleAdminUserID, exampleUserID, exampleAccountID))
+}
+
+func TestBuildModifyUserPermissionsEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildModifyUserPermissionsEventEntry(exampleUserID, exampleAccountID, exampleAdminUserID, testutil.BuildNoUserPerms(), ""))
+}
+
+func TestBuildTransferAccountOwnershipEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildTransferAccountOwnershipEventEntry(exampleAccountID, exampleAdminUserID, fakes.BuildFakeTransferAccountOwnershipInput()))
 }

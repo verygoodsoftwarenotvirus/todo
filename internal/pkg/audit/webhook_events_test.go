@@ -1,6 +1,7 @@
 package audit_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
@@ -11,41 +12,18 @@ const (
 	exampleWebhookID uint64 = 123
 )
 
-func TestWebhookEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildWebhookCreationEventEntry(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildWebhookCreationEventEntry": {
-			expectedEventType: audit.WebhookCreationEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.CreationAssignmentKey,
-				audit.WebhookAssignmentKey,
-				audit.AccountAssignmentKey,
-			},
-			actual: audit.BuildWebhookCreationEventEntry(&types.Webhook{}, exampleUserID),
-		},
-		"BuildWebhookUpdateEventEntry": {
-			expectedEventType: audit.WebhookUpdateEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.WebhookAssignmentKey,
-				audit.ChangesAssignmentKey,
-				audit.AccountAssignmentKey,
-			},
-			actual: audit.BuildWebhookUpdateEventEntry(exampleUserID, exampleAccountID, exampleWebhookID, nil),
-		},
-		"BuildWebhookArchiveEventEntry": {
-			expectedEventType: audit.WebhookArchiveEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.WebhookAssignmentKey,
-				audit.UserAssignmentKey,
-			},
-			actual: audit.BuildWebhookArchiveEventEntry(exampleUserID, exampleAccountID, exampleWebhookID),
-		},
-	}
+	assert.NotNil(t, audit.BuildWebhookCreationEventEntry(&types.Webhook{}, exampleUserID))
+}
+func TestBuildWebhookUpdateEventEntry(t *testing.T) {
+	t.Parallel()
 
-	runEventBuilderTests(T, tests)
+	assert.NotNil(t, audit.BuildWebhookUpdateEventEntry(exampleUserID, exampleAccountID, exampleWebhookID, nil))
+}
+func TestBuildWebhookArchiveEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildWebhookArchiveEventEntry(exampleUserID, exampleAccountID, exampleWebhookID))
 }

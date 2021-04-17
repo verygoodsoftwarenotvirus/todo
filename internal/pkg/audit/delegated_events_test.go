@@ -1,6 +1,7 @@
 package audit_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
@@ -11,29 +12,14 @@ const (
 	exampleAPIClientDatabaseID uint64 = 123
 )
 
-func TestAPIClientEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildAPIClientCreationEventEntry(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildAPIClientCreationEventEntry": {
-			expectedEventType: audit.APIClientCreationEvent,
-			expectedContextKeys: []string{
-				audit.APIClientAssignmentKey,
-				audit.CreationAssignmentKey,
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildAPIClientCreationEventEntry(&types.APIClient{}, exampleUserID),
-		},
-		"BuildAPIClientArchiveEventEntry": {
-			expectedEventType: audit.APIClientArchiveEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.APIClientAssignmentKey,
-			},
-			actual: audit.BuildAPIClientArchiveEventEntry(exampleAccountID, exampleAPIClientDatabaseID, exampleUserID),
-		},
-	}
+	assert.NotNil(t, audit.BuildAPIClientCreationEventEntry(&types.APIClient{}, exampleUserID))
+}
 
-	runEventBuilderTests(T, tests)
+func TestBuildAPIClientArchiveEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildAPIClientArchiveEventEntry(exampleAccountID, exampleAPIClientDatabaseID, exampleUserID))
 }

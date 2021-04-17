@@ -1,6 +1,7 @@
 package audit_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
@@ -11,48 +12,32 @@ const (
 	exampleUserID      uint64 = 123
 )
 
-func TestUserEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildUserCreationEventEntry(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildUserCreationEventEntry": {
-			expectedEventType: audit.UserCreationEvent,
-			expectedContextKeys: []string{
-				audit.CreationAssignmentKey,
-				audit.UserAssignmentKey,
-			},
-			actual: audit.BuildUserCreationEventEntry(exampleUserID),
-		},
-		"BuildUserVerifyTwoFactorSecretEventEntry": {
-			expectedEventType: audit.UserVerifyTwoFactorSecretEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleUserID),
-		},
-		"BuildUserUpdateTwoFactorSecretEventEntry": {
-			expectedEventType: audit.UserUpdateTwoFactorSecretEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleUserID),
-		},
-		"BuildUserUpdatePasswordEventEntry": {
-			expectedEventType: audit.UserUpdatePasswordEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildUserUpdatePasswordEventEntry(exampleUserID),
-		},
-		"BuildUserArchiveEventEntry": {
-			expectedEventType: audit.UserArchiveEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.UserAssignmentKey,
-			},
-			actual: audit.BuildUserArchiveEventEntry(exampleUserID),
-		},
-	}
+	assert.NotNil(t, audit.BuildUserCreationEventEntry(exampleUserID))
+}
 
-	runEventBuilderTests(T, tests)
+func TestBuildUserVerifyTwoFactorSecretEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUserVerifyTwoFactorSecretEventEntry(exampleUserID))
+}
+
+func TestBuildUserUpdateTwoFactorSecretEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUserUpdateTwoFactorSecretEventEntry(exampleUserID))
+}
+
+func TestBuildUserUpdatePasswordEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUserUpdatePasswordEventEntry(exampleUserID))
+}
+
+func TestBuildUserArchiveEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUserArchiveEventEntry(exampleUserID))
 }

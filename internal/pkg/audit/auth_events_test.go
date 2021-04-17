@@ -4,48 +4,36 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestAuditEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildCycleCookieSecretEvent(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildCycleCookieSecretEvent": {
-			expectedEventType: audit.CycleCookieSecretEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildCycleCookieSecretEvent(exampleUserID),
-		},
-		"BuildSuccessfulLoginEventEntry": {
-			expectedEventType: audit.SuccessfulLoginEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildSuccessfulLoginEventEntry(exampleUserID),
-		},
-		"BuildUnsuccessfulLoginBadPasswordEventEntry": {
-			expectedEventType: audit.UnsuccessfulLoginBadPasswordEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleUserID),
-		},
-		"BuildUnsuccessfulLoginBad2FATokenEventEntry": {
-			expectedEventType: audit.UnsuccessfulLoginBad2FATokenEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleUserID),
-		},
-		"BuildLogoutEventEntry": {
-			expectedEventType: audit.LogoutEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-			},
-			actual: audit.BuildLogoutEventEntry(exampleUserID),
-		},
-	}
+	assert.NotNil(t, audit.BuildCycleCookieSecretEvent(exampleUserID))
+}
 
-	runEventBuilderTests(T, tests)
+func TestBuildSuccessfulLoginEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildSuccessfulLoginEventEntry(exampleUserID))
+}
+
+func TestBuildUnsuccessfulLoginBadPasswordEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(exampleUserID))
+}
+
+func TestBuildUnsuccessfulLoginBad2FATokenEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(exampleUserID))
+}
+
+func TestBuildLogoutEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildLogoutEventEntry(exampleUserID))
 }

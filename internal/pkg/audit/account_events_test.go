@@ -5,46 +5,28 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
 	exampleAccountID uint64 = 123
 )
 
-func TestAccountEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildAccountCreationEventEntry(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildAccountCreationEventEntry": {
-			expectedEventType: audit.AccountCreationEvent,
-			expectedContextKeys: []string{
-				audit.UserAssignmentKey,
-				audit.ActorAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.CreationAssignmentKey,
-			},
-			actual: audit.BuildAccountCreationEventEntry(&types.Account{}, exampleUserID),
-		},
-		"BuildAccountUpdateEventEntry": {
-			expectedEventType: audit.AccountUpdateEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.UserAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.ChangesAssignmentKey,
-			},
-			actual: audit.BuildAccountUpdateEventEntry(exampleUserID, exampleAccountID, exampleUserID, nil),
-		},
-		"BuildAccountArchiveEventEntry": {
-			expectedEventType: audit.AccountArchiveEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.UserAssignmentKey,
-				audit.AccountAssignmentKey,
-			},
-			actual: audit.BuildAccountArchiveEventEntry(exampleUserID, exampleAccountID, exampleUserID),
-		},
-	}
+	assert.NotNil(t, audit.BuildAccountCreationEventEntry(&types.Account{}, exampleUserID))
+}
 
-	runEventBuilderTests(T, tests)
+func TestBuildAccountUpdateEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildAccountUpdateEventEntry(exampleUserID, exampleAccountID, exampleUserID, nil))
+}
+
+func TestBuildAccountArchiveEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildAccountArchiveEventEntry(exampleUserID, exampleAccountID, exampleUserID))
 }

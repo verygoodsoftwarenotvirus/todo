@@ -4,22 +4,12 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestAdminEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildUserBanEventEntry(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildUserBanEventEntry": {
-			expectedEventType: audit.UserBannedEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.UserAssignmentKey,
-				audit.ReasonKey,
-			},
-			actual: audit.BuildUserBanEventEntry(exampleUserID, exampleUserID, "reason"),
-		},
-	}
-
-	runEventBuilderTests(T, tests)
+	assert.NotNil(t, audit.BuildUserBanEventEntry(exampleUserID, exampleUserID, "reason"))
 }

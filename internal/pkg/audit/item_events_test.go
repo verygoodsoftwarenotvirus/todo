@@ -5,46 +5,28 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
 	exampleItemID uint64 = 123
 )
 
-func TestItemEventBuilders(T *testing.T) {
-	T.Parallel()
+func TestBuildItemCreationEventEntry(t *testing.T) {
+	t.Parallel()
 
-	tests := map[string]*eventBuilderTest{
-		"BuildItemCreationEventEntry": {
-			expectedEventType: audit.ItemCreationEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.ItemAssignmentKey,
-				audit.CreationAssignmentKey,
-				audit.AccountAssignmentKey,
-			},
-			actual: audit.BuildItemCreationEventEntry(&types.Item{}, exampleAccountID),
-		},
-		"BuildItemUpdateEventEntry": {
-			expectedEventType: audit.ItemUpdateEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.ItemAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.ChangesAssignmentKey,
-			},
-			actual: audit.BuildItemUpdateEventEntry(exampleUserID, exampleItemID, exampleAccountID, nil),
-		},
-		"BuildItemArchiveEventEntry": {
-			expectedEventType: audit.ItemArchiveEvent,
-			expectedContextKeys: []string{
-				audit.ActorAssignmentKey,
-				audit.AccountAssignmentKey,
-				audit.ItemAssignmentKey,
-			},
-			actual: audit.BuildItemArchiveEventEntry(exampleUserID, exampleItemID, exampleAccountID),
-		},
-	}
+	assert.NotNil(t, audit.BuildItemCreationEventEntry(&types.Item{}, exampleAccountID))
+}
 
-	runEventBuilderTests(T, tests)
+func TestBuildItemUpdateEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildItemUpdateEventEntry(exampleUserID, exampleItemID, exampleAccountID, nil))
+}
+
+func TestBuildItemArchiveEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildItemArchiveEventEntry(exampleUserID, exampleItemID, exampleAccountID))
 }

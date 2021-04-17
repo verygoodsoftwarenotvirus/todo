@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"image"
 	"image/color"
 	"image/png"
@@ -21,6 +20,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/makiuchi-d/gozxing"
@@ -155,9 +156,12 @@ func ParseTwoFactorSecretFromBase64EncodedQRCode(qrCode string) (string, error) 
 	return u.Query().Get("secret"), nil
 }
 
+// errArbitrary is an arbitrary error.
+var errArbitrary = errors.New("blah")
+
 // BrokenSessionContextDataFetcher is a deliberately broken sessionContextDataFetcher.
 func BrokenSessionContextDataFetcher(*http.Request) (*types.SessionContextData, error) {
-	return nil, errors.New("blah")
+	return nil, errArbitrary
 }
 
 // CreateBodyFromStruct takes any value in and returns an io.ReadCloser for an http.Request's body.

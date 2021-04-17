@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
@@ -18,8 +19,8 @@ const (
 
 // parseBool differs from strconv.ParseBool in that it returns false by default.
 func parseBool(str string) bool {
-	switch str {
-	case "1", "t", "T", "true", "TRUE", "True":
+	switch strings.ToLower(strings.TrimSpace(str)) {
+	case "1", "t", "true":
 		return true
 	default:
 		return false
@@ -222,7 +223,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
 	// determine if it's an admin request
-	rawQueryAdminKey := req.URL.Query().Get("admin")
+	rawQueryAdminKey := req.URL.Query().Get(types.AdminQueryKey)
 	adminQueryPresent := parseBool(rawQueryAdminKey)
 	isAdminRequest := sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
 

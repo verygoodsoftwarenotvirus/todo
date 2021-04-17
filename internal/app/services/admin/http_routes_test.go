@@ -3,11 +3,10 @@ package admin
 import (
 	"database/sql"
 	"errors"
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -15,6 +14,7 @@ import (
 	"github.com/alexedwards/scs/v2/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.T) {
@@ -100,7 +100,6 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
 	})
 
@@ -121,7 +120,6 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
@@ -198,7 +196,6 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
@@ -219,7 +216,6 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
@@ -253,7 +249,6 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 }

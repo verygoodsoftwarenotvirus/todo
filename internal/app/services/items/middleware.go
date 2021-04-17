@@ -2,8 +2,9 @@ package items
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"

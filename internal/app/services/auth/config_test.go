@@ -2,11 +2,13 @@ package auth
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"testing"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_Validate(T *testing.T) {

@@ -2,21 +2,21 @@ package auth
 
 import (
 	"errors"
-	"github.com/gorilla/securecookie"
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
+	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+
+	"github.com/gorilla/securecookie"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAuthService_getUserIDFromCookie(T *testing.T) {

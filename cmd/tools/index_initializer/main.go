@@ -8,9 +8,10 @@ package main
 
 import (
 	"context"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"log"
 	"time"
+
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"

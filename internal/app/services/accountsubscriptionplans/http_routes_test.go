@@ -127,7 +127,6 @@ func TestAccountSubscriptionPlansService_ListHandler(T *testing.T) {
 		helper.service.ListHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -168,7 +167,6 @@ func TestAccountSubscriptionPlansService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, unitCounter, encoderDecoder)
 	})
 
@@ -214,7 +212,6 @@ func TestAccountSubscriptionPlansService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -245,7 +242,6 @@ func TestAccountSubscriptionPlansService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -330,7 +326,6 @@ func TestAccountSubscriptionPlansService_ReadHandler(T *testing.T) {
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 
@@ -357,7 +352,6 @@ func TestAccountSubscriptionPlansService_ReadHandler(T *testing.T) {
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -431,7 +425,6 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -462,7 +455,6 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 
@@ -493,7 +485,6 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 
@@ -529,7 +520,6 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -557,7 +547,6 @@ func TestAccountSubscriptionPlansService_ArchiveHandler(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, unitCounter)
 	})
 
@@ -607,7 +596,6 @@ func TestAccountSubscriptionPlansService_ArchiveHandler(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 
@@ -634,7 +622,6 @@ func TestAccountSubscriptionPlansService_ArchiveHandler(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -660,7 +647,6 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 
@@ -702,7 +688,6 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 
@@ -722,7 +707,6 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 }

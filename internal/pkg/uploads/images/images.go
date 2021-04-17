@@ -17,7 +17,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -29,8 +28,8 @@ const (
 	imageJPEG = "image/jpeg"
 	imageGIF  = "image/gif"
 
-	// parsedImageContextKey is what we use to attach parsed images to requests.
-	parsedImageContextKey types.ContextKey = "parsed_image"
+	// ParsedImageContextKey is used to attach parsed images to a request.
+	ParsedImageContextKey types.ContextKey = "parsed_image"
 )
 
 var (
@@ -53,7 +52,6 @@ type (
 	// ImageUploadProcessor process image uploads.
 	ImageUploadProcessor interface {
 		Process(ctx context.Context, req *http.Request, filename string) (*Image, error)
-		BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.ServerEncoderDecoder, filename string) http.Handler
 	}
 
 	uploadProcessor struct {
@@ -154,49 +152,4 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 	}
 
 	return i, nil
-}
-
-// BuildAvatarUploadMiddleware ensures that an image is attached to the request.
-func (p *uploadProcessor) BuildAvatarUploadMiddleware(next http.Handler, encoderDecoder encoding.ServerEncoderDecoder, filename string) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := p.tracer.StartSpan(req.Context())
-		defer span.End()
-
-		logger := p.logger.WithRequest(req)
-
-		file, info, err := req.FormFile(filename)
-		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "parsing request form")
-			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-			return
-		}
-
-		logger.Debug("content type check passed")
-
-		bs, err := ioutil.ReadAll(file)
-		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "reading attached file")
-			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-			return
-		}
-
-		logger.Debug("image upload read from request")
-
-		if _, _, err = image.Decode(bytes.NewReader(bs)); err != nil {
-			observability.AcknowledgeError(err, logger, span, "decoding attached image")
-			encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-			return
-		}
-
-		i := &Image{
-			Filename:    info.Filename,
-			ContentType: contentTypeFromFilename(info.Filename),
-			Data:        bs,
-			Size:        len(bs),
-		}
-
-		req = req.WithContext(context.WithValue(ctx, parsedImageContextKey, i))
-
-		next.ServeHTTP(res, req)
-	})
 }

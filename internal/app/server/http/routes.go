@@ -112,7 +112,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, fronten
 		v1Router.Route("/users", func(usersRouter routing.Router) {
 			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get(root, s.usersService.ListHandler)
 			usersRouter.WithMiddleware(s.authService.AdminMiddleware).Get("/search", s.usersService.UsernameSearchHandler)
-			usersRouter.WithMiddleware(s.usersService.AvatarUploadMiddleware).Post("/avatar/upload", s.usersService.AvatarUploadHandler)
+			usersRouter.Post("/avatar/upload", s.usersService.AvatarUploadHandler)
 			usersRouter.Get("/self", s.usersService.SelfHandler)
 
 			singleUserRoute := buildNumericIDURLChunk(usersservice.UserIDURIParamKey)

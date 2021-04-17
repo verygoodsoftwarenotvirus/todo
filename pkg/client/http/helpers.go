@@ -15,9 +15,9 @@ import (
 
 var panicker = panicking.NewProductionPanicker()
 
-// mustParseURL parses a url or otherwise panics.
+// mustParseURL parses a URL string or otherwise panics.
 func mustParseURL(raw string) *url.URL {
-	u, err := url.Parse(raw)
+	u, err := url.ParseRequestURI(raw)
 	if err != nil {
 		panicker.Panic(err)
 	}

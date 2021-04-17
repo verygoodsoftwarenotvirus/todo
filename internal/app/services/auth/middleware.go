@@ -76,7 +76,9 @@ func (s *service) fetchSessionContextDataFromPASETO(ctx context.Context, req *ht
 			return nil, errTokenExpired
 		}
 
-		gobEncoded, err := base64.RawURLEncoding.DecodeString(token.Get(pasetoDataKey))
+		base64Encoded := token.Get(pasetoDataKey)
+
+		gobEncoded, err := base64.RawURLEncoding.DecodeString(base64Encoded)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "decoding base64 encoded GOB payload")
 		}
@@ -277,15 +279,15 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 // ChangeActiveAccountInputMiddleware fetches user login input from requests.
 func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		x := new(types.ChangeActiveAccountInput)
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
 
+		x := new(types.ChangeActiveAccountInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
 			return
 		}
 

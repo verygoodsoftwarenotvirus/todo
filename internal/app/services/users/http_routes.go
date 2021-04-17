@@ -138,7 +138,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	// ensure the authentication isn't garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
 		logger.WithValue("password_validation_error", err).Debug("weak password provided to user creation route")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "authentication too weak!", http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "password too weak", http.StatusBadRequest)
 		return
 	}
 
@@ -212,7 +212,7 @@ func (s *service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 		totpIssuer,
 	)
 
-	bmp, err := qrcode.NewQRCodeWriter().EncodeWithoutHint(otpString, gozxing.BarcodeFormat_QR_CODE, 128, 128)
+	x, err := qrcode.NewQRCodeWriter().EncodeWithoutHint(otpString, gozxing.BarcodeFormat_QR_CODE, 128, 128)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "encoding secret to QR code")
 		return ""
@@ -220,7 +220,7 @@ func (s *service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 
 	// encode the QR code to PNG.
 	var b bytes.Buffer
-	if err = png.Encode(&b, bmp); err != nil {
+	if err = png.Encode(&b, x); err != nil {
 		observability.AcknowledgeError(err, logger, span, "encoding QR code to PNG")
 		return ""
 	}
@@ -476,14 +476,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	}
 
 	// we're all good, log the user out
-	cookie, err := req.Cookie(s.authSettings.Cookies.Name)
-	if err != nil {
-		// this should never occur in production
-		observability.AcknowledgeError(err, logger, span, "retrieving cookie to invalidate")
-	} else {
-		cookie.MaxAge = -1
-		http.SetCookie(res, cookie)
-	}
+	http.SetCookie(res, &http.Cookie{MaxAge: -1})
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
 	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)

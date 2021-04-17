@@ -5,12 +5,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/magefile/mage/mg"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/magefile/mage/mg"
 
 	"github.com/carolynvs/magex/pkg"
 	"github.com/magefile/mage/sh"

@@ -48,7 +48,7 @@ func buildTestService(t *testing.T) *service {
 	return s.(*service)
 }
 
-func TestProvideAuthService(T *testing.T) {
+func TestProvideService(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -73,7 +73,35 @@ func TestProvideAuthService(T *testing.T) {
 			encoderDecoder,
 			chi.NewRouteParamManager(),
 		)
+
 		assert.NotNil(t, s)
 		assert.NoError(t, err)
+	})
+
+	T.Run("with invalid cookie key", func(t *testing.T) {
+		t.Parallel()
+		logger := logging.NewNonOperationalLogger()
+		encoderDecoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
+
+		s, err := ProvideService(
+			logger,
+			&Config{
+				Cookies: CookieConfig{
+					Name:       DefaultCookieName,
+					SigningKey: "BLAHBLAHBLAH",
+				},
+			},
+			&mockauth.Authenticator{},
+			&mocktypes.UserDataManager{},
+			&mocktypes.AuditLogEntryDataManager{},
+			&mocktypes.APIClientDataManager{},
+			&mocktypes.AccountUserMembershipDataManager{},
+			scs.New(),
+			encoderDecoder,
+			chi.NewRouteParamManager(),
+		)
+
+		assert.Nil(t, s)
+		assert.Error(t, err)
 	})
 }

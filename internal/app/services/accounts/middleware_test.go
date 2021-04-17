@@ -122,7 +122,6 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 
@@ -145,7 +144,6 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
-
 		mock.AssertExpectationsForObjects(t, mh)
 	})
 }

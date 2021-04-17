@@ -121,9 +121,13 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		}
 
 		return loginValid, nil
-	} else if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
+	}
+
+	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
 		return false, err
-	} else if err != nil {
+	}
+
+	if err != nil {
 		return false, observability.PrepareError(err, logger, span, "validating login")
 	}
 

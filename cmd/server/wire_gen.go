@@ -8,8 +8,9 @@ package main
 import (
 	"context"
 	"database/sql"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accounts"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"

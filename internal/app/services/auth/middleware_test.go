@@ -3,28 +3,28 @@ package auth
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
-	"strings"
+	"strconv"
 	"testing"
+	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
+	"github.com/google/uuid"
+	"github.com/o1egl/paseto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-var jsonEncoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 func TestParseLoginInputFromForm(T *testing.T) {
 	T.Parallel()
@@ -57,6 +57,31 @@ func TestParseLoginInputFromForm(T *testing.T) {
 	})
 }
 
+func buildArbitraryPASETO(t *testing.T, helper *authServiceHTTPRoutesTestHelper, issueTime time.Time, lifetime time.Duration, pasetoData string) *types.PASETOResponse {
+	t.Helper()
+
+	jsonToken := paseto.JSONToken{
+		Audience:   strconv.FormatUint(helper.exampleAPIClient.BelongsToUser, 10),
+		Subject:    strconv.FormatUint(helper.exampleAPIClient.BelongsToUser, 10),
+		Jti:        uuid.NewString(),
+		Issuer:     helper.service.config.PASETO.Issuer,
+		IssuedAt:   issueTime,
+		NotBefore:  issueTime,
+		Expiration: issueTime.Add(lifetime),
+	}
+
+	jsonToken.Set(pasetoDataKey, pasetoData)
+
+	// Encrypt data
+	token, err := paseto.NewV2().Encrypt(helper.service.config.PASETO.LocalModeKey, jsonToken, "")
+	require.NoError(t, err)
+
+	return &types.PASETOResponse{
+		Token:     token,
+		ExpiresAt: jsonToken.Expiration.String(),
+	}
+}
+
 func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 	T.Parallel()
 
@@ -82,6 +107,51 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		helper.req.Header.Set(pasetoAuthorizationKey, "blah")
+
+		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with expired token", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		tokenRes := buildArbitraryPASETO(t, helper, time.Now().Add(-24*time.Hour), time.Minute, base64.RawURLEncoding.EncodeToString(helper.sessionCtxData.ToBytes()))
+
+		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+
+		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid base64 encoding", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, `       \\\\\\\\\\\\               lololo`)
+
+		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+
+		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid GOB string", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, base64.RawURLEncoding.EncodeToString([]byte("fart")))
+
+		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -300,7 +370,6 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 		helper.service.AuthorizationMiddleware(mh).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mh)
 	})
 
@@ -317,7 +386,6 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 		helper.service.AuthorizationMiddleware(mh).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mh)
 	})
 
@@ -488,15 +556,23 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockHandler)
 	})
 
-	T.Run("without session context data attached", func(t *testing.T) {
+	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
 
+		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
+		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		require.NoError(t, err)
+
+		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
+
 		mockHandler := &testutil.MockHTTPHandler{}
 		helper.service.AdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockHandler)
 	})
@@ -515,7 +591,6 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		helper.service.AdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockHandler)
 	})
 }
@@ -550,61 +625,12 @@ func TestAuthService_ChangeActiveAccountInputMiddleware(T *testing.T) {
 	})
 
 	T.Run("with error decoding request", func(t *testing.T) {
-		t.SkipNow()
+		t.Parallel()
 
 		helper := buildTestHelper(t)
 
 		var b bytes.Buffer
-		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"DecodeRequest",
-			testutil.ContextMatcher,
-			testutil.RequestMatcher,
-			mock.IsType(&types.UserLoginInput{}),
-		).Return(errors.New("blah"))
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher, "attached input is invalid", http.StatusBadRequest)
-		helper.service.encoderDecoder = encoderDecoder
-
-		mockHandler := &testutil.MockHTTPHandler{}
-		mockHandler.On(
-			"ServeHTTP",
-			testutil.ResponseWriterMatcher,
-			testutil.RequestMatcher,
-		).Return()
-
-		helper.service.ChangeActiveAccountInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
-	})
-
-	T.Run("with error decoding request but valid input attached to request form", func(t *testing.T) {
-		t.SkipNow()
-
-		helper := buildTestHelper(t)
-
-		form := url.Values{
-			usernameFormKey:  {helper.exampleLoginInput.Username},
-			passwordFormKey:  {helper.exampleLoginInput.Password},
-			totpTokenFormKey: {helper.exampleLoginInput.TOTPToken},
-		}
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(
-			helper.ctx,
-			http.MethodPost,
-			"https://todo.verygoodsoftwarenotvirus.ru",
-			strings.NewReader(form.Encode()),
-		)
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		helper.req.Header.Set("Content-type", "application/x-www-form-urlencoded")
+		require.NoError(t, json.NewEncoder(&b).Encode(&types.ChangeActiveAccountInput{AccountID: helper.exampleAccount.ID}))
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
@@ -613,14 +639,40 @@ func TestAuthService_ChangeActiveAccountInputMiddleware(T *testing.T) {
 			testutil.RequestMatcher,
 			mock.IsType(&types.ChangeActiveAccountInput{}),
 		).Return(errors.New("blah"))
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			"attached input is invalid",
+			http.StatusBadRequest,
+		)
 		helper.service.encoderDecoder = encoderDecoder
 
 		mockHandler := &testutil.MockHTTPHandler{}
-
 		helper.service.ChangeActiveAccountInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusOK, helper.res.Code)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		exampleInput := &types.ChangeActiveAccountInput{}
+		jsonBytes, err := json.Marshal(&exampleInput)
+		require.NoError(t, err)
+
+		req, err := http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		mockHandler := &testutil.MockHTTPHandler{}
+		helper.service.ChangeActiveAccountInputMiddleware(mockHandler).ServeHTTP(helper.res, req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockHandler)
 	})
 }
 
@@ -635,10 +687,7 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		var b bytes.Buffer
 		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
 
-		req, err := http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", &b)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
+		var err error
 		helper.req, err = http.NewRequest(http.MethodPost, "/login", &b)
 		require.NoError(t, err)
 
@@ -653,6 +702,115 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, helper.res.Code)
 		mock.AssertExpectationsForObjects(t, mockHandler)
+	})
+
+	T.Run("with error decoding request", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		var b bytes.Buffer
+		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
+			mock.IsType(&types.UserLoginInput{}),
+		).Return(errors.New("blah"))
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher, "attached input is invalid", http.StatusBadRequest)
+		helper.service.encoderDecoder = encoderDecoder
+
+		mockHandler := &testutil.MockHTTPHandler{}
+		helper.service.UserLoginInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		exampleInput := &types.UserLoginInput{}
+
+		var b bytes.Buffer
+		require.NoError(t, json.NewEncoder(&b).Encode(exampleInput))
+
+		var err error
+		helper.req, err = http.NewRequest(http.MethodPost, "/login", &b)
+		require.NoError(t, err)
+
+		mockHandler := &testutil.MockHTTPHandler{}
+		helper.service.UserLoginInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockHandler)
+	})
+}
+
+func TestAuthService_PASETOCreationInputMiddleware(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		var b bytes.Buffer
+		require.NoError(t, json.NewEncoder(&b).Encode(fakes.BuildFakePASETOCreationInput()))
+
+		req, err := http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", &b)
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		helper.req, err = http.NewRequest(http.MethodPost, "/login", &b)
+		require.NoError(t, err)
+
+		mockHandler := &testutil.MockHTTPHandler{}
+		mockHandler.On(
+			"ServeHTTP",
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
+		).Return()
+
+		helper.service.PASETOCreationInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusOK, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockHandler)
+	})
+
+	T.Run("with error decoding request", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"DecodeRequest",
+			testutil.ContextMatcher,
+			testutil.RequestMatcher,
+			mock.IsType(&types.PASETOCreationInput{}),
+		).Return(errors.New("blah"))
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			"attached input is invalid",
+			http.StatusBadRequest,
+		)
+		helper.service.encoderDecoder = encoderDecoder
+
+		mockHandler := &testutil.MockHTTPHandler{}
+		helper.service.PASETOCreationInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
 	})
 
 	T.Run("with invalid input", func(t *testing.T) {
@@ -661,7 +819,7 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		var b bytes.Buffer
-		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
+		require.NoError(t, json.NewEncoder(&b).Encode(&types.PASETOCreationInput{}))
 
 		req, err := http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", &b)
 		require.NoError(t, err)
@@ -671,192 +829,8 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		require.NoError(t, err)
 
 		mockHandler := &testutil.MockHTTPHandler{}
-		mockHandler.On(
-			"ServeHTTP",
-			testutil.ResponseWriterMatcher,
-			testutil.RequestMatcher,
-		).Return()
-
-		helper.service.UserLoginInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockHandler)
-	})
-
-	T.Run("with error decoding request", func(t *testing.T) {
-		t.SkipNow()
-
-		helper := buildTestHelper(t)
-
-		var b bytes.Buffer
-		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"DecodeRequest",
-			testutil.ContextMatcher,
-			testutil.RequestMatcher,
-			mock.IsType(&types.UserLoginInput{}),
-		).Return(errors.New("blah"))
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher, "attached input is invalid", http.StatusBadRequest)
-		helper.service.encoderDecoder = encoderDecoder
-
-		mockHandler := &testutil.MockHTTPHandler{}
-		helper.service.UserLoginInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
-	})
-
-	T.Run("with error decoding request but valid input attached to request form", func(t *testing.T) {
-		t.SkipNow()
-
-		helper := buildTestHelper(t)
-
-		form := url.Values{
-			usernameFormKey:  {helper.exampleLoginInput.Username},
-			passwordFormKey:  {helper.exampleLoginInput.Password},
-			totpTokenFormKey: {helper.exampleLoginInput.TOTPToken},
-		}
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(
-			helper.ctx,
-			http.MethodPost,
-			"https://todo.verygoodsoftwarenotvirus.ru",
-			strings.NewReader(form.Encode()),
-		)
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		helper.req.Header.Set("Content-type", "application/x-www-form-urlencoded")
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"DecodeRequest",
-			testutil.ContextMatcher,
-			testutil.RequestMatcher,
-			mock.IsType(&types.UserLoginInput{}),
-		).Return(errors.New("blah"))
-		helper.service.encoderDecoder = encoderDecoder
-
-		mockHandler := &testutil.MockHTTPHandler{}
-		mockHandler.On(
-			"ServeHTTP",
-			testutil.ResponseWriterMatcher,
-			testutil.RequestMatcher,
-		).Return()
-
-		helper.service.UserLoginInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
-	})
-}
-
-func TestAuthService_PASETOCreationInputMiddleware(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.SkipNow()
-
-		helper := buildTestHelper(t)
-
-		var b bytes.Buffer
-		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
-
-		req, err := http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", &b)
-		require.NoError(t, err)
-		require.NotNil(t, req)
-
-		helper.req, err = http.NewRequest(http.MethodPost, "/login", &b)
-		require.NoError(t, err)
-
-		mockHandler := &testutil.MockHTTPHandler{}
-		mockHandler.On(
-			"ServeHTTP",
-			testutil.ResponseWriterMatcher,
-			testutil.RequestMatcher,
-		).Return()
-
 		helper.service.PASETOCreationInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
-		mock.AssertExpectationsForObjects(t, mockHandler)
-	})
-
-	T.Run("with error decoding request", func(t *testing.T) {
-		t.SkipNow()
-
-		helper := buildTestHelper(t)
-
-		var b bytes.Buffer
-		require.NoError(t, json.NewEncoder(&b).Encode(helper.exampleLoginInput))
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"DecodeRequest",
-			testutil.ContextMatcher,
-			testutil.RequestMatcher,
-			mock.IsType(&types.UserLoginInput{}),
-		).Return(errors.New("blah"))
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher, "attached input is invalid", http.StatusBadRequest)
-		helper.service.encoderDecoder = encoderDecoder
-
-		mockHandler := &testutil.MockHTTPHandler{}
-		helper.service.PASETOCreationInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
-	})
-
-	T.Run("with error decoding request but valid input attached to request form", func(t *testing.T) {
-		t.SkipNow()
-
-		helper := buildTestHelper(t)
-
-		form := url.Values{
-			usernameFormKey:  {helper.exampleLoginInput.Username},
-			passwordFormKey:  {helper.exampleLoginInput.Password},
-			totpTokenFormKey: {helper.exampleLoginInput.TOTPToken},
-		}
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(
-			helper.ctx,
-			http.MethodPost,
-			"https://todo.verygoodsoftwarenotvirus.ru",
-			strings.NewReader(form.Encode()),
-		)
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		helper.req.Header.Set("Content-type", "application/x-www-form-urlencoded")
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"DecodeRequest",
-			testutil.ContextMatcher,
-			testutil.RequestMatcher,
-			mock.IsType(&types.UserLoginInput{}),
-		).Return(errors.New("blah"))
-		helper.service.encoderDecoder = encoderDecoder
-
-		mockHandler := &testutil.MockHTTPHandler{}
-		mockHandler.On(
-			"ServeHTTP",
-			testutil.ResponseWriterMatcher,
-			testutil.RequestMatcher,
-		).Return()
-
-		helper.service.PASETOCreationInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder, mockHandler)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 }

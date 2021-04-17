@@ -2,10 +2,11 @@ package testutil
 
 import (
 	"context"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+
+	"github.com/stretchr/testify/mock"
 )
 
 // ContextMatcher is a matcher for use with testify/mock's MatchBy function. It provides some level of type

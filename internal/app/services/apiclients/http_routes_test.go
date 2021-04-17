@@ -3,10 +3,11 @@ package apiclients
 import (
 	"database/sql"
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"net/http"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -132,7 +133,6 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 
 		helper.service.ListHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
@@ -200,7 +200,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, a, sg, uc, encoderDecoder)
 	})
 
@@ -242,7 +241,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -270,7 +268,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 
@@ -316,7 +313,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, a, encoderDecoder)
 	})
 
@@ -362,7 +358,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, a, encoderDecoder)
 	})
 
@@ -418,7 +413,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
 	})
 
@@ -478,7 +472,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
 	})
 
@@ -539,7 +532,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
 	})
 }
@@ -630,7 +622,6 @@ func TestAPIClientsService_ReadHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
-
 		t.Parallel()
 
 		helper := buildTestHelper(t)
@@ -743,7 +734,6 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
-
 		t.Parallel()
 
 		helper := buildTestHelper(t)
@@ -804,7 +794,6 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
 	})
 
@@ -854,7 +843,6 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
 	})
 
@@ -882,7 +870,6 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
 	})
 }

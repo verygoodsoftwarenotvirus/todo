@@ -24,8 +24,8 @@ import (
 	"github.com/o1egl/paseto"
 )
 
-func (s *service) issueSessionManagedCookie(ctx context.Context, req *http.Request, res http.ResponseWriter, accountID, requesterID uint64) (cookie *http.Cookie, responseWritten bool) {
-	ctx, span := s.tracer.StartSpan(req.Context())
+func (s *service) issueSessionManagedCookie(ctx context.Context, res http.ResponseWriter, accountID, requesterID uint64) (cookie *http.Cookie, responseWritten bool) {
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger
@@ -132,7 +132,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	cookie, responseWritten := s.issueSessionManagedCookie(ctx, req, res, defaultAccountID, user.ID)
+	cookie, responseWritten := s.issueSessionManagedCookie(ctx, res, defaultAccountID, user.ID)
 	if responseWritten {
 		return
 	}
@@ -192,7 +192,7 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	cookie, responseWritten := s.issueSessionManagedCookie(ctx, req, res, accountID, requesterID)
+	cookie, responseWritten := s.issueSessionManagedCookie(ctx, res, accountID, requesterID)
 	if responseWritten {
 		return
 	}
@@ -324,6 +324,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 
 	mac := hmac.New(sha256.New, client.ClientSecret)
 	if _, macWriteErr := mac.Write(s.encoderDecoder.MustEncodeJSON(pasetoRequest)); macWriteErr != nil {
+		// sha256.digest.Write does not ever return an error, so this branch will remain "uncovered" :(
 		observability.AcknowledgeError(err, logger, span, "writing HMAC message for comparison")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 		return
@@ -383,7 +384,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 func (s *service) buildPASETOToken(ctx context.Context, sessionCtxData *types.SessionContextData, client *types.APIClient) paseto.JSONToken {
-	ctx, span := s.tracer.StartSpan(ctx)
+	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	now := time.Now().UTC()

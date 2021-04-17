@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
@@ -40,6 +41,7 @@ type (
 	}
 )
 
+// NewGenerator builds a new Generator.
 func NewGenerator(logger logging.Logger) Generator {
 	return &standardGenerator{
 		logger: logging.EnsureLogger(logger).WithName("random_string_generator"),
@@ -48,23 +50,23 @@ func NewGenerator(logger logging.Logger) Generator {
 }
 
 // GenerateBase32EncodedString generates a one-off value with an anonymous Generator.
-func GenerateBase32EncodedString(ctx context.Context, len int) (string, error) {
-	return defaultGenerator.GenerateBase32EncodedString(ctx, len)
+func GenerateBase32EncodedString(ctx context.Context, length int) (string, error) {
+	return defaultGenerator.GenerateBase32EncodedString(ctx, length)
 }
 
 // GenerateBase64EncodedString generates a one-off value with an anonymous Generator.
-func GenerateBase64EncodedString(ctx context.Context, len int) (string, error) {
-	return defaultGenerator.GenerateBase64EncodedString(ctx, len)
+func GenerateBase64EncodedString(ctx context.Context, length int) (string, error) {
+	return defaultGenerator.GenerateBase64EncodedString(ctx, length)
 }
 
 // GenerateRawBytes generates a one-off value with an anonymous Generator.
-func GenerateRawBytes(ctx context.Context, len int) ([]byte, error) {
-	return defaultGenerator.GenerateRawBytes(ctx, len)
+func GenerateRawBytes(ctx context.Context, length int) ([]byte, error) {
+	return defaultGenerator.GenerateRawBytes(ctx, length)
 }
 
 // GenerateBase32EncodedString generates a base64-encoded string of a securely random byte array of a given length.
 func (g *standardGenerator) GenerateBase32EncodedString(ctx context.Context, length int) (string, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	logger := g.logger.WithValue("requested_length", length)
@@ -79,7 +81,7 @@ func (g *standardGenerator) GenerateBase32EncodedString(ctx context.Context, len
 
 // GenerateBase64EncodedString generates a base64-encoded string of a securely random byte array of a given length.
 func (g *standardGenerator) GenerateBase64EncodedString(ctx context.Context, length int) (string, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	logger := g.logger.WithValue("requested_length", length)
@@ -94,7 +96,7 @@ func (g *standardGenerator) GenerateBase64EncodedString(ctx context.Context, len
 
 // GenerateRawBytes generates a securely random byte array.
 func (g *standardGenerator) GenerateRawBytes(ctx context.Context, length int) ([]byte, error) {
-	ctx, span := tracing.StartSpan(ctx)
+	_, span := tracing.StartSpan(ctx)
 	defer span.End()
 
 	logger := g.logger.WithValue("requested_length", length)

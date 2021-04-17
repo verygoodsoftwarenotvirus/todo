@@ -1,8 +1,9 @@
 package users
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
@@ -29,11 +30,6 @@ type (
 	// RequestValidator validates request.
 	RequestValidator interface {
 		Validate(req *http.Request) (bool, error)
-	}
-
-	secretGenerator interface {
-		GenerateTwoFactorSecret() (string, error)
-		GenerateSalt() ([]byte, error)
 	}
 
 	// service handles our users.

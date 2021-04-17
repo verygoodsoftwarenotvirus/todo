@@ -110,7 +110,6 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
 	})
 }
@@ -181,7 +180,32 @@ func TestService_UpdateInputMiddleware(T *testing.T) {
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder, mh)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		s := buildTestService()
+		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		exampleCreationInput := &types.ItemUpdateInput{}
+		jsonBytes, err := json.Marshal(&exampleCreationInput)
+		require.NoError(t, err)
+
+		mh := &testutil.MockHTTPHandler{}
+
+		res := httptest.NewRecorder()
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, req)
+
+		actual := s.UpdateInputMiddleware(mh)
+		actual.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
+
+		mock.AssertExpectationsForObjects(t, mh)
 	})
 }

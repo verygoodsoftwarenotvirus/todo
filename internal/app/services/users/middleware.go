@@ -2,10 +2,10 @@ package users
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -133,9 +133,4 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		ctx = context.WithValue(ctx, totpSecretRefreshMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
-}
-
-// AvatarUploadMiddleware fetches 2FA update input from requests.
-func (s *service) AvatarUploadMiddleware(next http.Handler) http.Handler {
-	return s.imageUploadProcessor.BuildAvatarUploadMiddleware(next, s.encoderDecoder, "avatar")
 }

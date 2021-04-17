@@ -5,9 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -15,8 +13,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
 	mockuploads "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -65,7 +65,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Equal(t, helper.exampleUser, actual)
 		assert.Equal(t, http.StatusOK, sc)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
@@ -94,7 +93,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusNotFound, sc)
-
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
@@ -123,7 +121,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusInternalServerError, sc)
-
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
@@ -164,7 +161,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusBadRequest, sc)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
@@ -205,71 +201,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 
 		assert.Nil(t, actual)
 		assert.Equal(t, http.StatusUnauthorized, sc)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
-	})
-}
-
-func TestService_ListHandler(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		exampleUserList := fakes.BuildFakeUserList()
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUsers",
-			testutil.ContextMatcher,
-			mock.IsType(&types.QueryFilter{}),
-		).Return(exampleUserList, nil)
-		helper.service.userDataManager = mockDB
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType(&types.UserList{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.ListHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
-	})
-
-	T.Run("with error reading from database", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUsers",
-			testutil.ContextMatcher,
-			mock.IsType(&types.QueryFilter{}),
-		).Return((*types.UserList)(nil), errors.New("blah"))
-		helper.service.userDataManager = mockDB
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.ListHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
 
@@ -339,7 +271,68 @@ func TestService_UsernameSearchHandler(T *testing.T) {
 		helper.service.UsernameSearchHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+	})
+}
 
+func TestService_ListHandler(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		exampleUserList := fakes.BuildFakeUserList()
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUsers",
+			testutil.ContextMatcher,
+			mock.IsType(&types.QueryFilter{}),
+		).Return(exampleUserList, nil)
+		helper.service.userDataManager = mockDB
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"RespondWithData",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			mock.IsType(&types.UserList{}),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.ListHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+	})
+
+	T.Run("with error reading from database", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUsers",
+			testutil.ContextMatcher,
+			mock.IsType(&types.QueryFilter{}),
+		).Return((*types.UserList)(nil), errors.New("blah"))
+		helper.service.userDataManager = mockDB
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.ListHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
@@ -373,13 +366,6 @@ func TestService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = db
 
-		db.AccountDataManager.On(
-			"CreateAccount",
-			testutil.ContextMatcher,
-			mock.IsType(&types.AccountCreationInput{}),
-		).Return(exampleAccount, nil)
-		helper.service.accountDataManager = db
-
 		unitCounter := &mockmetrics.UnitCounter{}
 		unitCounter.On("Increment", testutil.ContextMatcher).Return()
 		helper.service.userCounter = unitCounter
@@ -404,7 +390,6 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, auth, db, unitCounter, encoderDecoder)
 	})
 
@@ -448,7 +433,43 @@ func TestService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 
-	T.Run("with error authentication authentication", func(t *testing.T) {
+	T.Run("with error validating password", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(helper.exampleUser)
+		exampleInput.Password = "a"
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.BelongsToUser = helper.exampleUser.ID
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			"password too weak",
+			http.StatusBadRequest,
+		)
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.req = helper.req.WithContext(
+			context.WithValue(
+				helper.req.Context(),
+				userCreationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		helper.service.authSettings.EnableUserSignup = true
+		helper.service.CreateHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, encoderDecoder)
+	})
+
+	T.Run("with error hashing password", func(t *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
@@ -483,7 +504,6 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, auth, encoderDecoder)
 	})
 
@@ -538,7 +558,6 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, auth, db, sg, encoderDecoder)
 	})
 
@@ -598,7 +617,6 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, auth, db, sg, encoderDecoder)
 	})
 
@@ -645,8 +663,129 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, auth, db, encoderDecoder)
+	})
+}
+
+func TestService_buildQRCode(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		actual := helper.service.buildQRCode(helper.ctx, helper.exampleUser.Username, helper.exampleUser.TwoFactorSecret)
+
+		assert.NotEmpty(t, actual)
+		assert.True(t, strings.HasPrefix(actual, base64ImagePrefix))
+	})
+}
+
+func TestService_SelfHandler(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, nil)
+		helper.service.userDataManager = mockDB
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"RespondWithData",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			mock.IsType(&types.User{}),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.SelfHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+	})
+
+	T.Run("with error retrieving session context data", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnauthorizedResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.SelfHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, encoderDecoder)
+	})
+
+	T.Run("with no rows found", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, sql.ErrNoRows)
+		helper.service.userDataManager = mockDB
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeNotFoundResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.SelfHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+	})
+
+	T.Run("with error reading from database", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, errors.New("blah"))
+		helper.service.userDataManager = mockDB
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.SelfHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
 
@@ -706,7 +845,6 @@ func TestService_ReadHandler(T *testing.T) {
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 
@@ -734,7 +872,229 @@ func TestService_ReadHandler(T *testing.T) {
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+	})
+}
 
+func TestService_TOTPSecretValidationHandler(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
+
+		helper.req = helper.req.WithContext(
+			context.WithValue(
+				helper.req.Context(),
+				totpSecretVerificationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUserWithUnverifiedTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, nil)
+		mockDB.UserDataManager.On(
+			"VerifyUserTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(nil)
+		helper.service.userDataManager = mockDB
+
+		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusAccepted, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+
+	T.Run("without valid input attached", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUserWithUnverifiedTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, nil)
+		helper.service.userDataManager = mockDB
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeInvalidInputResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+	})
+
+	T.Run("with error fetching user", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
+
+		helper.req = helper.req.WithContext(
+			context.WithValue(
+				helper.req.Context(),
+				totpSecretVerificationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUserWithUnverifiedTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return((*types.User)(nil), errors.New("blah"))
+		helper.service.userDataManager = mockDB
+
+		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+	})
+
+	T.Run("with secret already validated", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		og := helper.exampleUser.TwoFactorSecretVerifiedOn
+		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
+
+		helper.req = helper.req.WithContext(
+			context.WithValue(
+				helper.req.Context(),
+				totpSecretVerificationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		helper.exampleUser.TwoFactorSecretVerifiedOn = og
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			"TOTP secret already verified",
+			http.StatusAlreadyReported,
+		)
+		helper.service.encoderDecoder = encoderDecoder
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUserWithUnverifiedTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, nil)
+		helper.service.userDataManager = mockDB
+
+		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusAlreadyReported, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+
+	T.Run("with invalid code", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
+		exampleInput.TOTPToken = "INVALID"
+
+		helper.req = helper.req.WithContext(
+			context.WithValue(
+				helper.req.Context(),
+				totpSecretVerificationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUserWithUnverifiedTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, nil)
+		helper.service.userDataManager = mockDB
+
+		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB)
+	})
+
+	T.Run("with error verifying two factor secret", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
+
+		helper.req = helper.req.WithContext(
+			context.WithValue(
+				helper.req.Context(),
+				totpSecretVerificationMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUserWithUnverifiedTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, nil)
+		mockDB.UserDataManager.On(
+			"VerifyUserTwoFactorSecret",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(errors.New("blah"))
+		helper.service.userDataManager = mockDB
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
@@ -793,7 +1153,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		helper.service.NewTOTPSecretHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth, encoderDecoder)
 	})
 
@@ -845,7 +1204,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		helper.service.NewTOTPSecretHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -892,7 +1250,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		helper.service.NewTOTPSecretHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
@@ -953,7 +1310,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		helper.service.NewTOTPSecretHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth, sg, encoderDecoder)
 	})
 
@@ -1008,237 +1364,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		helper.service.NewTOTPSecretHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth, encoderDecoder)
-	})
-}
-
-func TestService_TOTPSecretValidationHandler(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
-
-		helper.req = helper.req.WithContext(
-			context.WithValue(
-				helper.req.Context(),
-				totpSecretVerificationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUserWithUnverifiedTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return(helper.exampleUser, nil)
-		mockDB.UserDataManager.On(
-			"VerifyUserTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return(nil)
-		helper.service.userDataManager = mockDB
-
-		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusAccepted, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("without valid input attached", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUserWithUnverifiedTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return(helper.exampleUser, nil)
-		helper.service.userDataManager = mockDB
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeInvalidInputResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
-	})
-
-	T.Run("with error fetching user", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
-
-		helper.req = helper.req.WithContext(
-			context.WithValue(
-				helper.req.Context(),
-				totpSecretVerificationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUserWithUnverifiedTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return((*types.User)(nil), errors.New("blah"))
-		helper.service.userDataManager = mockDB
-
-		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
-	})
-
-	T.Run("with secret already validated", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		og := helper.exampleUser.TwoFactorSecretVerifiedOn
-		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
-
-		helper.req = helper.req.WithContext(
-			context.WithValue(
-				helper.req.Context(),
-				totpSecretVerificationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		helper.exampleUser.TwoFactorSecretVerifiedOn = og
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			"TOTP secret already verified",
-			http.StatusAlreadyReported,
-		)
-		helper.service.encoderDecoder = encoderDecoder
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUserWithUnverifiedTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return(helper.exampleUser, nil)
-		helper.service.userDataManager = mockDB
-
-		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusAlreadyReported, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("with invalid code", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
-		exampleInput.TOTPToken = "INVALID"
-
-		helper.req = helper.req.WithContext(
-			context.WithValue(
-				helper.req.Context(),
-				totpSecretVerificationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUserWithUnverifiedTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return(helper.exampleUser, nil)
-		helper.service.userDataManager = mockDB
-
-		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
-	})
-
-	T.Run("with error verifying two factor secret", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		helper.exampleUser.TwoFactorSecretVerifiedOn = nil
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
-
-		helper.req = helper.req.WithContext(
-			context.WithValue(
-				helper.req.Context(),
-				totpSecretVerificationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.UserDataManager.On(
-			"GetUserWithUnverifiedTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return(helper.exampleUser, nil)
-		mockDB.UserDataManager.On(
-			"VerifyUserTwoFactorSecret",
-			testutil.ContextMatcher,
-			helper.exampleUser.ID,
-		).Return(errors.New("blah"))
-		helper.service.userDataManager = mockDB
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.TOTPSecretVerificationHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
 
@@ -1294,7 +1420,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusSeeOther, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
@@ -1314,7 +1439,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -1347,7 +1471,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -1395,11 +1518,52 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 
-	T.Run("with error authentication authentication", func(t *testing.T) {
+	T.Run("with invalid password", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
+		exampleInput.NewPassword = "a"
+
+		helper.req = helper.req.WithContext(
+			context.WithValue(
+				helper.req.Context(),
+				passwordChangeMiddlewareCtxKey,
+				exampleInput,
+			),
+		)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"GetUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(helper.exampleUser, nil)
+		helper.service.userDataManager = mockDB
+
+		auth := &mockauth.Authenticator{}
+		auth.On(
+			"ValidateLogin",
+			testutil.ContextMatcher,
+			helper.exampleUser.HashedPassword,
+			exampleInput.CurrentPassword,
+			helper.exampleUser.TwoFactorSecret,
+			exampleInput.TOTPToken,
+			helper.exampleUser.Salt,
+		).Return(true, nil)
+		helper.service.authenticator = auth
+
+		helper.service.UpdatePasswordHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB, auth)
+	})
+
+	T.Run("with error hashing password", func(t *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
@@ -1456,7 +1620,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth, encoderDecoder)
 	})
 
@@ -1517,7 +1680,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, auth, encoderDecoder)
 	})
 }
@@ -1589,7 +1751,6 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		helper.service.AvatarUploadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -1651,7 +1812,6 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		helper.service.AvatarUploadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, ip, encoderDecoder)
 	})
 
@@ -1695,7 +1855,6 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		helper.service.AvatarUploadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, ip, um, encoderDecoder)
 	})
 
@@ -1744,12 +1903,11 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		helper.service.AvatarUploadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, ip, um, encoderDecoder)
 	})
 }
 
-func TestService_Archive(T *testing.T) {
+func TestService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -1772,8 +1930,26 @@ func TestService_Archive(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, unitCounter)
+	})
+
+	T.Run("with now results in the database", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		mockDB := database.BuildMockDatabase()
+		mockDB.UserDataManager.On(
+			"ArchiveUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(sql.ErrNoRows)
+		helper.service.userDataManager = mockDB
+
+		helper.service.ArchiveHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error updating database", func(t *testing.T) {
@@ -1800,12 +1976,11 @@ func TestService_Archive(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
 
-func TestService_buildQRCode(T *testing.T) {
+func TestService_AuditEntryHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -1813,9 +1988,82 @@ func TestService_buildQRCode(T *testing.T) {
 
 		helper := newTestHelper(t)
 
-		actual := helper.service.buildQRCode(helper.ctx, helper.exampleUser.Username, helper.exampleUser.TwoFactorSecret)
+		exampleAuditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
 
-		assert.NotEmpty(t, actual)
-		assert.True(t, strings.HasPrefix(actual, base64ImagePrefix))
+		userDataManager := &mocktypes.UserDataManager{}
+		userDataManager.On(
+			"GetAuditLogEntriesForUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return(exampleAuditLogEntries, nil)
+		helper.service.userDataManager = userDataManager
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"RespondWithData",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+			mock.IsType([]*types.AuditLogEntry{}),
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.AuditEntryHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusOK, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, userDataManager, encoderDecoder)
+	})
+
+	T.Run("with sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		userDataManager := &mocktypes.UserDataManager{}
+		userDataManager.On(
+			"GetAuditLogEntriesForUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return([]*types.AuditLogEntry(nil), sql.ErrNoRows)
+		helper.service.userDataManager = userDataManager
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeNotFoundResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.AuditEntryHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, userDataManager, encoderDecoder)
+	})
+
+	T.Run("with error reading from database", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		userDataManager := &mocktypes.UserDataManager{}
+		userDataManager.On(
+			"GetAuditLogEntriesForUser",
+			testutil.ContextMatcher,
+			helper.exampleUser.ID,
+		).Return([]*types.AuditLogEntry(nil), errors.New("blah"))
+		helper.service.userDataManager = userDataManager
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			testutil.ContextMatcher,
+			testutil.ResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.AuditEntryHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, userDataManager, encoderDecoder)
 	})
 }

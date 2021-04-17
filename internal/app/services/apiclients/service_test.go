@@ -1,9 +1,10 @@
 package apiclients
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"net/http"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"

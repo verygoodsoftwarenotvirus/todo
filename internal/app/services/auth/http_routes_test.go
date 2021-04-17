@@ -11,11 +11,12 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
-	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"net/http"
 	"testing"
 	"time"
+
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
@@ -49,7 +50,7 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now().Add(24*time.Hour), nil)
 		helper.service.sessionManager = sm
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.req, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.NotNil(t, cookie)
 		assert.False(t, written)
 
@@ -80,7 +81,7 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.req, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
 		assert.True(t, written)
 
@@ -107,7 +108,7 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.req, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
 		assert.True(t, written)
 
@@ -139,7 +140,7 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.req, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
 		assert.True(t, written)
 
@@ -166,7 +167,7 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 			[]byte(""),
 		)
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.req, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
 		assert.True(t, written)
 	})
@@ -1546,7 +1547,6 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager)
 	})
 
@@ -1596,7 +1596,6 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager)
 	})
 
@@ -1654,7 +1653,6 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager, membershipDB)
 	})
 
@@ -1692,7 +1690,6 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager)
 	})
 
@@ -1810,7 +1807,6 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager, membershipDB)
 	})
 }

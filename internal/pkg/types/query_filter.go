@@ -17,10 +17,12 @@ const (
 	// DefaultLimit represents how many results we return in a response by default.
 	DefaultLimit = 20
 
-	// SearchQueryKey is the query param key we use to find search queries in requests.
+	// SearchQueryKey is the query param key to find search queries in requests.
 	SearchQueryKey = "q"
-	// LimitQueryKey is the query param key we use to specify a limit in a query.
+	// LimitQueryKey is the query param key to specify a limit in a query.
 	LimitQueryKey = "limit"
+	// AdminQueryKey is the query param key to specify a limit is on behalf of a service admin.
+	AdminQueryKey = "admin"
 
 	pageQueryKey            = "page"
 	createdBeforeQueryKey   = "createdBefore"

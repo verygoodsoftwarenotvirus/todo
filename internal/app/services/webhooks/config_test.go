@@ -1,4 +1,4 @@
-package audit
+package webhooks
 
 import (
 	"context"
@@ -13,8 +13,12 @@ func TestConfig_Validate(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := &Config{}
 		ctx := context.Background()
+
+		cfg := &Config{
+			Debug:   false,
+			Enabled: false,
+		}
 
 		assert.NoError(t, cfg.Validate(ctx))
 	})

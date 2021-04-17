@@ -1,6 +1,8 @@
 package fakes
 
 import (
+	"time"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -34,9 +36,17 @@ func BuildFakeTransferAccountOwnershipInput() *types.TransferAccountOwnershipInp
 	}
 }
 
-// BuildFakeChangeActiveAccountInput builds a faked BuildFakeChangeActiveAccountInput.
+// BuildFakeChangeActiveAccountInput builds a faked ChangeActiveAccountInput.
 func BuildFakeChangeActiveAccountInput() *types.ChangeActiveAccountInput {
 	return &types.ChangeActiveAccountInput{
 		AccountID: fake.Uint64(),
+	}
+}
+
+// BuildFakePASETOCreationInput builds a faked PASETOCreationInput.
+func BuildFakePASETOCreationInput() *types.PASETOCreationInput {
+	return &types.PASETOCreationInput{
+		ClientID:    fake.UUID(),
+		RequestTime: time.Now().Unix(),
 	}
 }

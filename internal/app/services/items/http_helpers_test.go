@@ -27,7 +27,7 @@ type itemsServiceHTTPRoutesTestHelper struct {
 	exampleUpdateInput   *types.ItemUpdateInput
 }
 
-func newTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
+func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 	t.Helper()
 
 	h := &itemsServiceHTTPRoutesTestHelper{}

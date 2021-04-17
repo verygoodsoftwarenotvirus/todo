@@ -1,6 +1,7 @@
 package items
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -44,7 +45,10 @@ func TestProvideItemsService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()), ItemIDURIParamKey, "item").Return(func(*http.Request) uint64 { return 0 })
+			mock.IsType(logging.NewNonOperationalLogger()),
+			ItemIDURIParamKey,
+			"item",
+		).Return(func(*http.Request) uint64 { return 0 })
 
 		s, err := ProvideService(
 			logging.NewNonOperationalLogger(),
@@ -62,5 +66,28 @@ func TestProvideItemsService(T *testing.T) {
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, rpm)
+	})
+
+	T.Run("with error providing index", func(t *testing.T) {
+		t.Parallel()
+
+		var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {
+			return &mockmetrics.UnitCounter{}
+		}
+
+		s, err := ProvideService(
+			logging.NewNonOperationalLogger(),
+			&mocktypes.ItemDataManager{},
+			mockencoding.NewMockEncoderDecoder(),
+			ucp,
+			search.Config{ItemsIndexPath: "example/path"},
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return nil, errors.New("blah")
+			},
+			mockrouting.NewRouteParamManager(),
+		)
+
+		assert.Nil(t, s)
+		assert.Error(t, err)
 	})
 }

@@ -66,7 +66,6 @@ var (
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableUsernameColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAvatarColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableHashedPasswordColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableSaltColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableRequiresPasswordChangeColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTablePasswordLastChangedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorSekretColumn),

@@ -51,7 +51,7 @@ func TestPostgres_BuildGetUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -74,7 +74,7 @@ func TestPostgres_BuildGetUserWithUnverifiedTwoFactorSecretQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NULL"
+		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND users.two_factor_secret_verified_on IS NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -97,7 +97,7 @@ func TestPostgres_BuildGetUsersQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL) as total_count, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.last_updated_on > $3 AND users.last_updated_on < $4) as filtered_count FROM users WHERE users.archived_on IS NULL AND users.created_on > $5 AND users.created_on < $6 AND users.last_updated_on > $7 AND users.last_updated_on < $8 GROUP BY users.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL) as total_count, (SELECT COUNT(users.id) FROM users WHERE users.archived_on IS NULL AND users.created_on > $1 AND users.created_on < $2 AND users.last_updated_on > $3 AND users.last_updated_on < $4) as filtered_count FROM users WHERE users.archived_on IS NULL AND users.created_on > $5 AND users.created_on < $6 AND users.last_updated_on > $7 AND users.last_updated_on < $8 GROUP BY users.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -127,7 +127,7 @@ func TestPostgres_BuildGetUserByUsernameQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = $1 AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 		}
@@ -150,7 +150,7 @@ func TestPostgres_BuildSearchForUserByUsernameQuery(T *testing.T) {
 
 		exampleUsername := fakes.BuildFakeUser().Username
 
-		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.salt, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username ILIKE $1 AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username ILIKE $1 AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			fmt.Sprintf("%s%%", exampleUsername),
 		}
@@ -197,12 +197,11 @@ func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
 			"NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,salt,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES ($1,$2,$3,$4,$5,$6,$7,extract(epoch FROM NOW())) RETURNING id"
+		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES ($1,$2,$3,$4,$5,$6,extract(epoch FROM NOW())) RETURNING id"
 		expectedArgs := []interface{}{
 			exampleUser.ExternalID,
 			exampleInput.Username,
 			exampleInput.HashedPassword,
-			[]byte("aaaaaaaaaaaaaaaa"),
 			"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 			types.GoodStandingAccountStatus,
 			math.MaxInt64,
@@ -234,12 +233,11 @@ func TestPostgres_BuildCreateUserQuery(T *testing.T) {
 			"NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,salt,two_factor_secret,reputation,site_admin_permissions) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id"
+		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id"
 		expectedArgs := []interface{}{
 			exampleUser.ExternalID,
 			exampleUser.Username,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleUser.TwoFactorSecret,
 			types.UnverifiedAccountStatus,
 			0,
@@ -265,11 +263,10 @@ func TestPostgres_BuildUpdateUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, salt = $3, avatar_src = $4, two_factor_secret = $5, two_factor_secret_verified_on = $6, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $7"
+		expectedQuery := "UPDATE users SET username = $1, hashed_password = $2, avatar_src = $3, two_factor_secret = $4, two_factor_secret_verified_on = $5, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $6"
 		expectedArgs := []interface{}{
 			exampleUser.Username,
 			exampleUser.HashedPassword,
-			exampleUser.Salt,
 			exampleUser.AvatarSrc,
 			exampleUser.TwoFactorSecret,
 			exampleUser.TwoFactorSecretVerifiedOn,

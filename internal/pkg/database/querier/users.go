@@ -35,7 +35,6 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		&user.Username,
 		&user.AvatarSrc,
 		&user.HashedPassword,
-		&user.Salt,
 		&user.RequiresPasswordChange,
 		&user.PasswordLastChangedOn,
 		&user.TwoFactorSecret,

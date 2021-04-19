@@ -558,65 +558,6 @@ func TestService_CreateHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, auth, db, sg, encoderDecoder)
 	})
 
-	T.Run("with error generating salt", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(helper.exampleUser)
-
-		auth := &passwords.MockAuthenticator{}
-		auth.On(
-			"HashPassword",
-			testutil.ContextMatcher,
-			exampleInput.Password,
-		).Return(helper.exampleUser.HashedPassword, nil)
-		helper.service.authenticator = auth
-
-		db := database.BuildMockDatabase()
-		db.UserDataManager.On(
-			"CreateUser",
-			testutil.ContextMatcher,
-			mock.IsType(&types.UserDataStoreCreationInput{}),
-		).Return(helper.exampleUser, nil)
-		helper.service.userDataManager = db
-
-		sg := &random.MockGenerator{}
-		sg.On(
-			"GenerateBase32EncodedString",
-			testutil.ContextMatcher,
-			totpSecretSize,
-		).Return("PRETENDTHISISASECRET", nil)
-		sg.On(
-			"GenerateRawBytes",
-			testutil.ContextMatcher,
-			saltSize,
-		).Return([]byte{}, errors.New("blah"))
-		helper.service.secretGenerator = sg
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.req = helper.req.WithContext(
-			context.WithValue(
-				helper.req.Context(),
-				userCreationMiddlewareCtxKey,
-				exampleInput,
-			),
-		)
-
-		helper.service.authSettings.EnableUserSignup = true
-		helper.service.CreateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, auth, db, sg, encoderDecoder)
-	})
-
 	T.Run("with error creating entry in database", func(t *testing.T) {
 		t.Parallel()
 

@@ -56,7 +56,6 @@ type (
 		Reputation                userReputation                     `json:"reputation"`
 		TwoFactorSecret           string                             `json:"-"`
 		HashedPassword            string                             `json:"-"`
-		Salt                      []byte                             `json:"-"`
 		CreatedOn                 uint64                             `json:"createdOn"`
 		ID                        uint64                             `json:"id"`
 		ServiceAdminPermission    permissions.ServiceAdminPermission `json:"serviceAdminPermissions"`
@@ -88,7 +87,6 @@ type (
 		Username        string `json:"-"`
 		HashedPassword  string `json:"-"`
 		TwoFactorSecret string `json:"-"`
-		Salt            []byte `json:"-"`
 	}
 
 	// UserCreationResponse is a response structure for Users that doesn't contain passwords fields, but does contain the two factor secret.

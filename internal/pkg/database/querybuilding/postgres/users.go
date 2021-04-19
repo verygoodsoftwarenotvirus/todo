@@ -162,7 +162,6 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				querybuilding.ExternalIDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
-				querybuilding.UsersTableSaltColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
 				querybuilding.UsersTableAdminPermissionsColumn,
@@ -172,7 +171,6 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				b.externalIDGenerator.NewExternalID(),
 				testUserConfig.Username,
 				testUserConfig.HashedPassword,
-				querybuilding.DefaultTestUserSalt,
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
 				perms,
@@ -198,7 +196,6 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				querybuilding.ExternalIDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
-				querybuilding.UsersTableSaltColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
 				querybuilding.UsersTableAdminPermissionsColumn,
@@ -207,7 +204,6 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				b.externalIDGenerator.NewExternalID(),
 				input.Username,
 				input.HashedPassword,
-				input.Salt,
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
 				0,
@@ -226,7 +222,6 @@ func (b *Postgres) BuildUpdateUserQuery(ctx context.Context, input *types.User) 
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
 			Set(querybuilding.UsersTableUsernameColumn, input.Username).
 			Set(querybuilding.UsersTableHashedPasswordColumn, input.HashedPassword).
-			Set(querybuilding.UsersTableSaltColumn, input.Salt).
 			Set(querybuilding.UsersTableAvatarColumn, input.AvatarSrc).
 			Set(querybuilding.UsersTableTwoFactorSekretColumn, input.TwoFactorSecret).
 			Set(querybuilding.UsersTableTwoFactorVerifiedOnColumn, input.TwoFactorSecretVerifiedOn).

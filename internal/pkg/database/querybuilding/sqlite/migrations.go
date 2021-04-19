@@ -64,7 +64,6 @@ var (
 				username TEXT NOT NULL,
 				avatar_src TEXT,
 				hashed_password TEXT NOT NULL,
-				salt TINYBLOB NOT NULL,
 				password_last_changed_on INTEGER DEFAULT NULL,
 				requires_password_change BOOLEAN NOT NULL DEFAULT 'false',
 				two_factor_secret TEXT NOT NULL,

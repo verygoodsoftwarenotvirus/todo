@@ -36,7 +36,6 @@ func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*
 			user.Username,
 			user.AvatarSrc,
 			user.HashedPassword,
-			user.Salt,
 			user.RequiresPasswordChange,
 			user.PasswordLastChangedOn,
 			user.TwoFactorSecret,

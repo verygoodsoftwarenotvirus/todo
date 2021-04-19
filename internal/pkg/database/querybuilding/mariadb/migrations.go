@@ -99,7 +99,6 @@ var (
 				"    `username` VARCHAR(128) NOT NULL,",
 				"    `avatar_src` LONGTEXT NOT NULL DEFAULT '',",
 				"    `hashed_password` VARCHAR(100) NOT NULL,",
-				"    `salt` BINARY(16) NOT NULL,",
 				"    `requires_password_change` BOOLEAN NOT NULL DEFAULT false,",
 				"    `password_last_changed_on` INTEGER UNSIGNED,",
 				"    `two_factor_secret` VARCHAR(256) NOT NULL,",

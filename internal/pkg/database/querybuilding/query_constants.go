@@ -88,8 +88,6 @@ const (
 	UsersTableUsernameColumn = "username"
 	// UsersTableHashedPasswordColumn is what the users table calls the <> column.
 	UsersTableHashedPasswordColumn = "hashed_password"
-	// UsersTableSaltColumn is what the users table calls the <> column.
-	UsersTableSaltColumn = "salt"
 	// UsersTableRequiresPasswordChangeColumn is what the users table calls the <> column.
 	UsersTableRequiresPasswordChangeColumn = "requires_password_change"
 	// UsersTablePasswordLastChangedOnColumn is what the users table calls the <> column.

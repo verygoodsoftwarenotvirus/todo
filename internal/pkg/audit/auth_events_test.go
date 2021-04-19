@@ -20,6 +20,12 @@ func TestBuildSuccessfulLoginEventEntry(t *testing.T) {
 	assert.NotNil(t, audit.BuildSuccessfulLoginEventEntry(exampleUserID))
 }
 
+func TestBannedUserLoginAttemptEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildBannedUserLoginAttemptEventEntry(exampleUserID))
+}
+
 func TestBuildUnsuccessfulLoginBadPasswordEventEntry(t *testing.T) {
 	t.Parallel()
 

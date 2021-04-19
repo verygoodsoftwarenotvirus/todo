@@ -25,7 +25,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
@@ -52,7 +52,7 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return

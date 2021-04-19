@@ -24,7 +24,7 @@ func (b *Builder) BuildUserReputationUpdateInputRequest(ctx context.Context, inp
 
 	logger := b.logger.WithValue(keys.UserIDKey, input.TargetUserID)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

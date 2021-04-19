@@ -53,7 +53,7 @@ func (b *Builder) BuildCreateWebhookRequest(ctx context.Context, input *types.We
 
 	logger := b.logger.WithValue(keys.NameKey, input.Name)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

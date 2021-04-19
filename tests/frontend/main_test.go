@@ -127,21 +127,21 @@ func TestRegistrationFlow(T *testing.T) {
 
 			t.Logf("found registration page username field and filled it with: %q", user.Username)
 
-			// fetch the authentication field and fill it
+			// fetch the passwords field and fill it
 			passwordField, passwordFieldFindErr := driver.FindElement(selenium.ByID, passwordInputID)
-			require.NoError(t, passwordFieldFindErr, "unexpected error finding registration page authentication input field: %v", passwordFieldFindErr)
+			require.NoError(t, passwordFieldFindErr, "unexpected error finding registration page passwords input field: %v", passwordFieldFindErr)
 			registrationPagePasswordFieldInputErr := passwordField.SendKeys(user.Password)
-			require.NoError(t, registrationPagePasswordFieldInputErr, "unexpected error sending input to registration page authentication input field: %v", registrationPagePasswordFieldInputErr)
+			require.NoError(t, registrationPagePasswordFieldInputErr, "unexpected error sending input to registration page passwords input field: %v", registrationPagePasswordFieldInputErr)
 
-			t.Logf("found registration page authentication field and filled it with: %q", user.Password)
+			t.Logf("found registration page passwords field and filled it with: %q", user.Password)
 
-			// fetch the authentication confirm field and fill it
+			// fetch the passwords confirm field and fill it
 			passwordRepeatField, passwordRepeatFieldFindErr := driver.FindElement(selenium.ByID, passwordRepeatInputID)
-			require.NoError(t, passwordRepeatFieldFindErr, "unexpected error finding authentication repeat input field: %v", passwordRepeatFieldFindErr)
+			require.NoError(t, passwordRepeatFieldFindErr, "unexpected error finding passwords repeat input field: %v", passwordRepeatFieldFindErr)
 			passwordRepeatFieldInputErr := passwordRepeatField.SendKeys(user.Password)
 			require.NoError(t, passwordRepeatFieldInputErr, "unexpected error sending input to blah: %v", passwordRepeatFieldInputErr)
 
-			t.Logf("found registration page authentication repeat field and filled it with: %q", user.Password)
+			t.Logf("found registration page passwords repeat field and filled it with: %q", user.Password)
 
 			// fetch the button.
 			registerButton, registerButtonFindErr := driver.FindElement(selenium.ByID, registrationButtonID)
@@ -231,13 +231,13 @@ func TestRegistrationFlow(T *testing.T) {
 
 			t.Logf("found login page username field and filled it with: %q", user.Username)
 
-			// fetch the authentication field and fill it
+			// fetch the passwords field and fill it
 			passwordField, passwordFieldFindErr = driver.FindElement(selenium.ByID, passwordInputID)
-			require.NoError(t, passwordFieldFindErr, "unexpected error finding login page authentication input field: %v", passwordFieldFindErr)
+			require.NoError(t, passwordFieldFindErr, "unexpected error finding login page passwords input field: %v", passwordFieldFindErr)
 			loginPagePasswordFieldInputErr := passwordField.SendKeys(user.Password)
 			require.NoError(t, loginPagePasswordFieldInputErr, "unexpected error sending input to blah: %v", loginPagePasswordFieldInputErr)
 
-			t.Logf("found login page authentication field and filled it with: %q", user.Password)
+			t.Logf("found login page passwords field and filled it with: %q", user.Password)
 
 			code, secondCodeGenerationErr := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 			require.NoError(t, secondCodeGenerationErr)

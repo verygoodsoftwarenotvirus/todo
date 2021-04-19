@@ -31,7 +31,7 @@ const (
 
 	// usernameFormKey is the string we look for in request forms for username information.
 	usernameFormKey = "username"
-	// passwordFormKey is the string we look for in request forms for authentication information.
+	// passwordFormKey is the string we look for in request forms for passwords information.
 	passwordFormKey = "password"
 	// totpTokenFormKey is the string we look for in request forms for TOTP token information.
 	totpTokenFormKey = "totpToken"
@@ -291,7 +291,7 @@ func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Han
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
@@ -345,7 +345,7 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return

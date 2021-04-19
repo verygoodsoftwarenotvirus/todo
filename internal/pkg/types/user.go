@@ -91,7 +91,7 @@ type (
 		Salt            []byte `json:"-"`
 	}
 
-	// UserCreationResponse is a response structure for Users that doesn't contain authentication fields, but does contain the two factor secret.
+	// UserCreationResponse is a response structure for Users that doesn't contain passwords fields, but does contain the two factor secret.
 	UserCreationResponse struct {
 		Username        string         `json:"username"`
 		AccountStatus   userReputation `json:"accountStatus"`
@@ -108,7 +108,7 @@ type (
 		TOTPToken string `json:"totpToken"`
 	}
 
-	// PasswordUpdateInput represents input a User would provide when updating their authentication.
+	// PasswordUpdateInput represents input a User would provide when updating their passwords.
 	PasswordUpdateInput struct {
 		NewPassword     string `json:"newPassword"`
 		CurrentPassword string `json:"currentPassword"`
@@ -205,7 +205,7 @@ func (i *UserCreationInput) Validate(ctx context.Context, minUsernameLength, min
 	)
 }
 
-// Validate ensures our  provided UserLoginInput meets expectations.
+// Validate ensures our provided UserLoginInput meets expectations.
 func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
@@ -223,16 +223,16 @@ func (i *PasswordUpdateInput) Validate(ctx context.Context, minPasswordLength ui
 	)
 }
 
-// Validate ensures our provided TOTPSecretRefreshInput meets expectations.
-func (i *TOTPSecretRefreshInput) Validate(ctx context.Context) error {
+// ValidateWithContext ensures our provided TOTPSecretRefreshInput meets expectations.
+func (i *TOTPSecretRefreshInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.CurrentPassword, validation.Required),
 		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
 	)
 }
 
-// Validate ensures our provided TOTPSecretVerificationInput meets expectations.
-func (i *TOTPSecretVerificationInput) Validate(ctx context.Context) error {
+// ValidateWithContext ensures our provided TOTPSecretVerificationInput meets expectations.
+func (i *TOTPSecretVerificationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.UserID, validation.Required),
 		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),

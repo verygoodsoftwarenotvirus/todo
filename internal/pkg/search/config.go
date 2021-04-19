@@ -17,8 +17,8 @@ type Config struct {
 	ItemsIndexPath IndexPath `json:"items_index_path" mapstructure:"items_index_path" toml:"items_index_path,omitempty"`
 }
 
-// Validate validates a Config struct.
-func (cfg *Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates a Config struct.
+func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Provider, validation.In(BleveProvider)),
 		validation.Field(&cfg.ItemsIndexPath, validation.Required),

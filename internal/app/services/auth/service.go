@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
@@ -30,11 +30,11 @@ type (
 		Decode(name, value string, dst interface{}) error
 	}
 
-	// service handles authentication service-wide.
+	// service handles passwords service-wide.
 	service struct {
 		config                    *Config
 		logger                    logging.Logger
-		authenticator             authentication.Authenticator
+		authenticator             passwords.Authenticator
 		userDataManager           types.UserDataManager
 		auditLog                  types.AuthAuditManager
 		apiClientManager          types.APIClientDataManager
@@ -51,7 +51,7 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	cfg *Config,
-	authenticator authentication.Authenticator,
+	authenticator passwords.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
 	apiClientsService types.APIClientDataManager,

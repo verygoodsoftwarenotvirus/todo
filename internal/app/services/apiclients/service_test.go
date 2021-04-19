@@ -4,15 +4,14 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
-
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -28,7 +27,7 @@ func buildTestService(t *testing.T) *service {
 		apiClientDataManager:      database.BuildMockDatabase(),
 		logger:                    logging.NewNonOperationalLogger(),
 		encoderDecoder:            mockencoding.NewMockEncoderDecoder(),
-		authenticator:             &mockauth.Authenticator{},
+		authenticator:             &passwords.MockAuthenticator{},
 		sessionContextDataFetcher: chi.NewRouteParamManager().FetchContextFromRequest,
 		urlClientIDExtractor:      func(req *http.Request) uint64 { return 0 },
 		apiClientCounter:          &mockmetrics.UnitCounter{},
@@ -53,7 +52,7 @@ func TestProvideAPIClientsService(T *testing.T) {
 			logging.NewNonOperationalLogger(),
 			mockAPIClientDataManager,
 			&mocktypes.UserDataManager{},
-			&mockauth.Authenticator{},
+			&passwords.MockAuthenticator{},
 			mockencoding.NewMockEncoderDecoder(),
 			func(counterName, description string) metrics.UnitCounter {
 				return nil

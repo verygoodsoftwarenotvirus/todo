@@ -36,7 +36,7 @@ type (
 	// AccountPermissionsMap maps accounts to membership info.
 	AccountPermissionsMap map[uint64]*UserAccountMembershipInfo
 
-	// SessionContextData represents what we encode in our authentication cookies.
+	// SessionContextData represents what we encode in our passwords cookies.
 	SessionContextData struct {
 		AccountPermissionsMap AccountPermissionsMap `json:"-"`
 		Requester             RequesterInfo         `json:"-"`
@@ -86,7 +86,7 @@ type (
 		ExpiresAt string `json:"expiresAt"`
 	}
 
-	// AuthService describes a structure capable of handling authentication and authorization requests.
+	// AuthService describes a structure capable of handling passwords and authorization requests.
 	AuthService interface {
 		StatusHandler(res http.ResponseWriter, req *http.Request)
 		LoginHandler(res http.ResponseWriter, req *http.Request)
@@ -116,15 +116,15 @@ type (
 	}
 )
 
-// Validate validates a ChangeActiveAccountInput.
-func (x *ChangeActiveAccountInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a ChangeActiveAccountInput.
+func (x *ChangeActiveAccountInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.AccountID, validation.Required),
 	)
 }
 
-// Validate ensures our  provided UserLoginInput meets expectations.
-func (i *PASETOCreationInput) Validate(ctx context.Context) error {
+// ValidateWithContext ensures our  provided UserLoginInput meets expectations.
+func (i *PASETOCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.ClientID, validation.Required),
 		validation.Field(&i.RequestTime, validation.Required),

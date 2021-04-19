@@ -3,10 +3,10 @@ package apiclients
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -31,7 +31,7 @@ type (
 		logger                    logging.Logger
 		apiClientDataManager      types.APIClientDataManager
 		userDataManager           types.UserDataManager
-		authenticator             authentication.Authenticator
+		authenticator             passwords.Authenticator
 		encoderDecoder            encoding.ServerEncoderDecoder
 		urlClientIDExtractor      func(req *http.Request) uint64
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
@@ -46,7 +46,7 @@ func ProvideAPIClientsService(
 	logger logging.Logger,
 	clientDataManager types.APIClientDataManager,
 	userDataManager types.UserDataManager,
-	authenticator authentication.Authenticator,
+	authenticator passwords.Authenticator,
 	encoderDecoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,

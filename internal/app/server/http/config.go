@@ -16,8 +16,8 @@ type (
 	}
 )
 
-// Validate validates a Config struct.
-func (cfg *Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates a Config struct.
+func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.HTTPPort, validation.Required),
 		validation.Field(&cfg.StartupDeadline, validation.Required),

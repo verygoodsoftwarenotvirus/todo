@@ -14,7 +14,7 @@ import (
 func TestBuildUserAddedToAccountEventEntry(t *testing.T) {
 	t.Parallel()
 
-	assert.NotNil(t, audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, &types.AddUserToAccountInput{}))
+	assert.NotNil(t, audit.BuildUserAddedToAccountEventEntry(exampleAdminUserID, &types.AddUserToAccountInput{Reason: t.Name()}))
 }
 
 func TestBuildUserRemovedFromAccountEventEntry(t *testing.T) {
@@ -32,7 +32,7 @@ func TestBuildUserMarkedAccountAsDefaultEventEntry(t *testing.T) {
 func TestBuildModifyUserPermissionsEventEntry(t *testing.T) {
 	t.Parallel()
 
-	assert.NotNil(t, audit.BuildModifyUserPermissionsEventEntry(exampleUserID, exampleAccountID, exampleAdminUserID, testutil.BuildNoUserPerms(), ""))
+	assert.NotNil(t, audit.BuildModifyUserPermissionsEventEntry(exampleUserID, exampleAccountID, exampleAdminUserID, testutil.BuildNoUserPerms(), t.Name()))
 }
 
 func TestBuildTransferAccountOwnershipEventEntry(t *testing.T) {

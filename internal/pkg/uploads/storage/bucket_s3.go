@@ -18,8 +18,8 @@ type (
 	}
 )
 
-// Validate validates the S3Config.
-func (c *S3Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates the S3Config.
+func (c *S3Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.BucketName, validation.Required),
 	)

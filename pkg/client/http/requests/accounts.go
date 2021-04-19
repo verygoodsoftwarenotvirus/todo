@@ -82,7 +82,7 @@ func (b *Builder) BuildCreateAccountRequest(ctx context.Context, input *types.Ac
 
 	logger := b.logger.WithValue(keys.NameKey, input.Name)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
@@ -143,7 +143,7 @@ func (b *Builder) BuildAddUserRequest(ctx context.Context, input *types.AddUserT
 
 	logger := b.logger.WithValue(keys.UserIDKey, input.UserID)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
@@ -213,7 +213,7 @@ func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 
 	logger := b.logger.WithValue(keys.UserIDKey, userID).WithValue(keys.AccountIDKey, accountID)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
@@ -238,7 +238,7 @@ func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, acco
 
 	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

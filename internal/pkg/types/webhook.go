@@ -151,8 +151,8 @@ func (w *Webhook) Update(input *WebhookUpdateInput) []*FieldChangeSummary {
 	return changes
 }
 
-// Validate validates a WebhookCreationInput.
-func (w *WebhookCreationInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a WebhookCreationInput.
+func (w *WebhookCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),
@@ -163,8 +163,8 @@ func (w *WebhookCreationInput) Validate(ctx context.Context) error {
 	)
 }
 
-// Validate validates a WebhookUpdateInput.
-func (w *WebhookUpdateInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a WebhookUpdateInput.
+func (w *WebhookUpdateInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),

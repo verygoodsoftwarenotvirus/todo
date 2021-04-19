@@ -110,7 +110,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		input.Password,
 		user.TwoFactorSecret,
 		input.TOTPToken,
-		user.Salt,
 	)
 
 	if !valid {

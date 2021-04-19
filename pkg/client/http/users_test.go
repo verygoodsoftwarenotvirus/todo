@@ -35,7 +35,7 @@ var _ suite.SetupTestSuite = (*usersBaseSuite)(nil)
 func (s *usersBaseSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.exampleUser = fakes.BuildFakeUser()
-	// the hashed authentication is never transmitted over the wire.
+	// the hashed passwords is never transmitted over the wire.
 	s.exampleUser.HashedPassword = ""
 	// the two factor secret is transmitted over the wire only on creation.
 	s.exampleUser.TwoFactorSecret = ""
@@ -46,7 +46,7 @@ func (s *usersBaseSuite) SetupTest() {
 	s.exampleUserList = fakes.BuildFakeUserList()
 
 	for i := 0; i < len(s.exampleUserList.Users); i++ {
-		// the hashed authentication is never transmitted over the wire.
+		// the hashed passwords is never transmitted over the wire.
 		s.exampleUserList.Users[i].HashedPassword = ""
 		// the two factor secret is transmitted over the wire only on creation.
 		s.exampleUserList.Users[i].TwoFactorSecret = ""

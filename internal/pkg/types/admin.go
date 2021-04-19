@@ -34,8 +34,8 @@ type (
 	}
 )
 
-// Validate ensures our struct is validatable.
-func (i *UserReputationUpdateInput) Validate(ctx context.Context) error {
+// ValidateWithContext ensures our struct is validatable.
+func (i *UserReputationUpdateInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.NewReputation, validation.Required),
 		validation.Field(&i.Reason, validation.Required),

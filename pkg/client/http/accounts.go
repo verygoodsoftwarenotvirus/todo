@@ -95,7 +95,7 @@ func (c *Client) CreateAccount(ctx context.Context, input *types.AccountCreation
 
 	logger := c.logger.WithValue("account_name", input.Name)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
@@ -173,7 +173,7 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 	tracing.AttachAccountIDToSpan(span, input.AccountID)
 	tracing.AttachUserIDToSpan(span, input.UserID)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return observability.PrepareError(err, logger, span, "validating input")
 	}
 
@@ -267,7 +267,7 @@ func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID 
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return observability.PrepareError(err, logger, span, "validating input")
 	}
 
@@ -303,7 +303,7 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64,
 	tracing.AttachToSpan(span, "old_owner", input.CurrentOwner)
 	tracing.AttachToSpan(span, "new_owner", input.NewOwner)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return observability.PrepareError(err, logger, span, "validating input")
 	}
 

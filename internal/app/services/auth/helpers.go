@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
@@ -100,30 +99,9 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		loginInput.Password,
 		user.TwoFactorSecret,
 		loginInput.TOTPToken,
-		user.Salt,
 	)
 
-	if errors.Is(err, bcrypt.ErrCostTooLow) || errors.Is(err, authentication.ErrPasswordHashTooWeak) {
-		// if the login is otherwise valid, but the password is too weak, try to rehash it.
-		logger.Debug("hashed password was deemed too weak, updating its hash")
-
-		// re-hash the authentication
-		var updated string
-		updated, err = s.authenticator.HashPassword(ctx, loginInput.Password)
-		if err != nil {
-			return false, observability.PrepareError(err, logger, span, "hashing password at new strength")
-		}
-
-		// update stored hashed password in the database.
-		user.HashedPassword = updated
-		if updateErr := s.userDataManager.UpdateUser(ctx, user, nil); updateErr != nil {
-			return false, observability.PrepareError(err, logger, span, "saving updated password hash")
-		}
-
-		return loginValid, nil
-	}
-
-	if errors.Is(err, authentication.ErrInvalidTwoFactorCode) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
+	if errors.Is(err, passwords.ErrInvalidTwoFactorCode) || errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
 		return false, err
 	}
 

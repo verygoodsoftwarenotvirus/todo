@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -44,7 +44,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -52,7 +52,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 			examplePassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleTOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = auth
 
@@ -140,7 +139,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -148,7 +147,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 			examplePassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleTOTPToken,
-			helper.exampleUser.Salt,
 		).Return(false, errors.New("blah"))
 		helper.service.authenticator = auth
 
@@ -180,7 +178,7 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -188,7 +186,6 @@ func TestService_validateCredentialChangeRequest(T *testing.T) {
 			examplePassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleTOTPToken,
-			helper.exampleUser.Salt,
 		).Return(false, nil)
 		helper.service.authenticator = auth
 
@@ -350,7 +347,7 @@ func TestService_CreateHandler(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = helper.exampleUser.ID
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"HashPassword",
 			testutil.ContextMatcher,
@@ -476,7 +473,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(helper.exampleUser)
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"HashPassword",
 			testutil.ContextMatcher,
@@ -514,7 +511,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(helper.exampleUser)
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"HashPassword",
 			testutil.ContextMatcher,
@@ -568,7 +565,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(helper.exampleUser)
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"HashPassword",
 			testutil.ContextMatcher,
@@ -627,7 +624,7 @@ func TestService_CreateHandler(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(helper.exampleUser)
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"HashPassword",
 			testutil.ContextMatcher,
@@ -1130,7 +1127,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1138,7 +1135,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = auth
 
@@ -1235,7 +1231,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1243,7 +1239,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(false, errors.New("blah"))
 		helper.service.authenticator = auth
 
@@ -1279,7 +1274,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1287,7 +1282,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = auth
 
@@ -1341,7 +1335,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 		).Return(errors.New("blah"))
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1349,7 +1343,6 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = auth
 
@@ -1400,7 +1393,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1408,7 +1401,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		auth.On(
 			"HashPassword",
@@ -1503,7 +1495,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1511,7 +1503,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(false, errors.New("blah"))
 		helper.service.authenticator = auth
 
@@ -1545,7 +1536,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1553,7 +1544,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = auth
 
@@ -1592,7 +1582,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1600,7 +1590,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		auth.On(
 			"HashPassword",
@@ -1652,7 +1641,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 		).Return(errors.New("blah"))
 		helper.service.userDataManager = mockDB
 
-		auth := &mockauth.Authenticator{}
+		auth := &passwords.MockAuthenticator{}
 		auth.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -1660,7 +1649,6 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 			exampleInput.CurrentPassword,
 			helper.exampleUser.TwoFactorSecret,
 			exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		auth.On(
 			"HashPassword",

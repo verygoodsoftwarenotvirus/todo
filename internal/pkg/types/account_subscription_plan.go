@@ -86,8 +86,8 @@ func (x *AccountSubscriptionPlan) Update(input *AccountSubscriptionPlanUpdateInp
 	return out
 }
 
-// Validate validates a AccountSubscriptionPlanCreationInput.
-func (x *AccountSubscriptionPlanCreationInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a AccountSubscriptionPlanCreationInput.
+func (x *AccountSubscriptionPlanCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 		validation.Field(&x.Description, validation.Required),

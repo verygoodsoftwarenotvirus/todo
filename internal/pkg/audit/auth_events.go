@@ -22,13 +22,13 @@ const (
 	AccountTerminatedEvent = "account_terminated"
 	// CycleCookieSecretEvent events indicate an admin cycled the cookie secret.
 	CycleCookieSecretEvent = "cookie_secret_cycled"
-	// SuccessfulLoginEvent events indicate a user successfully authenticated into the service via username + authentication + 2fa.
+	// SuccessfulLoginEvent events indicate a user successfully authenticated into the service via username + passwords + 2fa.
 	SuccessfulLoginEvent = "user_logged_in"
 	// LogoutEvent events indicate a user successfully logged out.
 	LogoutEvent = "user_logged_out"
-	// BannedUserLoginAttemptEvent events indicate a user successfully authenticated into the service via username + authentication + 2fa.
+	// BannedUserLoginAttemptEvent events indicate a user successfully authenticated into the service via username + passwords + 2fa.
 	BannedUserLoginAttemptEvent = "banned_user_login_attempt"
-	// UnsuccessfulLoginBadPasswordEvent events indicate a user attempted to authenticate into the service, but failed because of an invalid authentication.
+	// UnsuccessfulLoginBadPasswordEvent events indicate a user attempted to authenticate into the service, but failed because of an invalid passwords.
 	UnsuccessfulLoginBadPasswordEvent = "user_login_failed_bad_password"
 	// UnsuccessfulLoginBad2FATokenEvent events indicate a user attempted to authenticate into the service, but failed because of a faulty two factor token.
 	UnsuccessfulLoginBad2FATokenEvent = "user_login_failed_bad_2FA_token"
@@ -64,7 +64,7 @@ func BuildBannedUserLoginAttemptEventEntry(userID uint64) *types.AuditLogEntryCr
 	}
 }
 
-// BuildUnsuccessfulLoginBadPasswordEventEntry builds an entry creation input for when a user fails to log in because of a bad authentication.
+// BuildUnsuccessfulLoginBadPasswordEventEntry builds an entry creation input for when a user fails to log in because of a bad passwords.
 func BuildUnsuccessfulLoginBadPasswordEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: UnsuccessfulLoginBadPasswordEvent,

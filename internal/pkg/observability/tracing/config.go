@@ -31,16 +31,16 @@ type (
 	}
 )
 
-// Validate validates the config struct.
-func (c *Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates the config struct.
+func (c *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		// validation.Field(&c.Provider, validation.In(Jaeger)),
 		validation.Field(&c.Jaeger, validation.When(c.Provider == Jaeger, validation.Required).Else(validation.Nil)),
 	)
 }
 
-// Validate validates the config struct.
-func (c *JaegerConfig) Validate(ctx context.Context) error {
+// ValidateWithContext validates the config struct.
+func (c *JaegerConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.CollectorEndpoint, validation.Required),
 		validation.Field(&c.ServiceName, validation.Required),

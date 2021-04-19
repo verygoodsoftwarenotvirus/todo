@@ -18,7 +18,7 @@ const (
 )
 
 type (
-	// GCSBlobConfig configures a gcs blob authentication method.
+	// GCSBlobConfig configures a gcs blob passwords method.
 	GCSBlobConfig struct {
 		GoogleAccessID     string `json:"google_access_id" mapstructure:"google_access_id" toml:"google_access_id,omitempty"`
 		PrivateKeyFilepath string `json:"private_key_filepath" mapstructure:"private_key_filepath" toml:"private_key_filepath,omitempty"`
@@ -76,8 +76,8 @@ func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
 	return bucket, nil
 }
 
-// Validate validates the GCSConfig.
-func (c *GCSConfig) Validate(ctx context.Context) error {
+// ValidateWithContext validates the GCSConfig.
+func (c *GCSConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c, validation.Required),
 	)

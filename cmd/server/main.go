@@ -8,11 +8,11 @@ import (
 	"os"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
 )
@@ -79,7 +79,7 @@ func main() {
 
 	// setup DB client
 	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
-	authenticator := bcrypt.ProvideAuthenticator(bcrypt.ProvideHashCost(), logger)
+	authenticator := passwords.ProvideArgon2Authenticator(logger)
 
 	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB)
 	if err != nil {

@@ -9,6 +9,7 @@ require (
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/RussellLuo/validating/v2 v2.1.0
+	github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
 	github.com/alexedwards/scs/mysqlstore v0.0.0-20210406055609-070afe7455ec
 	github.com/alexedwards/scs/postgresstore v0.0.0-20210406055609-070afe7455ec
 	github.com/alexedwards/scs/sqlite3store v0.0.0-20210406055609-070afe7455ec
@@ -56,7 +57,7 @@ require (
 	go.opentelemetry.io/otel/trace v0.19.0
 	go.uber.org/zap v1.16.0
 	gocloud.dev v0.22.0
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect

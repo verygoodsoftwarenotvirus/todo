@@ -35,7 +35,7 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpClient *htt
 
 	logger.Debug("fetching auth token")
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return "", observability.PrepareError(err, logger, span, "validating input")
 	}
 

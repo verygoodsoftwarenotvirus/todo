@@ -1,11 +1,12 @@
 package audit_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (

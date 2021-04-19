@@ -38,7 +38,7 @@ type (
 		Lifetime     time.Duration `json:"lifetime" mapstructure:"lifetime" toml:"lifetime,omitempty"`
 	}
 
-	// Config represents our authentication configuration.
+	// Config represents our passwords configuration.
 	Config struct {
 		PASETO                PASETOConfig `json:"paseto" mapstructure:"paseto" toml:"paseto,omitempty"`
 		Cookies               CookieConfig `json:"cookies" mapstructure:"cookies" toml:"cookies,omitempty"`
@@ -49,8 +49,8 @@ type (
 	}
 )
 
-// Validate validates a CookieConfig struct.
-func (cfg *CookieConfig) Validate(ctx context.Context) error {
+// ValidateWithContext validates a CookieConfig struct.
+func (cfg *CookieConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Name, validation.Required),
 		validation.Field(&cfg.Domain, validation.Required),
@@ -58,16 +58,16 @@ func (cfg *CookieConfig) Validate(ctx context.Context) error {
 	)
 }
 
-// Validate validates a PASETOConfig struct.
-func (cfg *PASETOConfig) Validate(ctx context.Context) error {
+// ValidateWithContext validates a PASETOConfig struct.
+func (cfg *PASETOConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Issuer, validation.Required),
 		validation.Field(&cfg.LocalModeKey, validation.Required, validation.Length(pasetoKeyRequiredLength, pasetoKeyRequiredLength)),
 	)
 }
 
-// Validate validates a Config struct.
-func (cfg *Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates a Config struct.
+func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Cookies, validation.Required),
 		validation.Field(&cfg.PASETO, validation.Required),

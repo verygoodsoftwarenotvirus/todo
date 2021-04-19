@@ -30,7 +30,7 @@ func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Han
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return

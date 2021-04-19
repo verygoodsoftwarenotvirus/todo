@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
@@ -39,7 +39,7 @@ func buildTestService(t *testing.T) *service {
 		logging.NewNonOperationalLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
-		&mockauth.Authenticator{},
+		&passwords.MockAuthenticator{},
 		mockencoding.NewMockEncoderDecoder(),
 		func(counterName, description string) metrics.UnitCounter {
 			return uc
@@ -70,7 +70,7 @@ func TestProvideUsersService(T *testing.T) {
 			logging.NewNonOperationalLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
-			&mockauth.Authenticator{},
+			&passwords.MockAuthenticator{},
 			mockencoding.NewMockEncoderDecoder(),
 			func(counterName, description string) metrics.UnitCounter {
 				return &mockmetrics.UnitCounter{}

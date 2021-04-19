@@ -72,7 +72,7 @@ func BuildTestUserCreationConfig() *types.TestUserCreationConfig {
 	return &types.TestUserCreationConfig{
 		Username:       exampleUser.Username,
 		Password:       exampleUser.Password,
-		HashedPassword: "hashed authentication",
+		HashedPassword: "hashed passwords",
 		IsServiceAdmin: false,
 	}
 }

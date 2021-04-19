@@ -56,8 +56,8 @@ type (
 	}
 )
 
-// Validate validates the Config.
-func (c *Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates the Config.
+func (c *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.BucketName, validation.Required),
 		validation.Field(&c.Provider, validation.In(AzureProvider, GCSProvider, S3Provider, FilesystemProvider, MemoryProvider)),
@@ -81,7 +81,7 @@ func NewUploadManager(ctx context.Context, logger logging.Logger, cfg *Config, r
 		filenameFetcher: routeParamManager.BuildRouteParamStringIDFetcher(cfg.UploadFilenameKey),
 	}
 
-	if err := cfg.Validate(ctx); err != nil {
+	if err := cfg.ValidateWithContext(ctx); err != nil {
 		return nil, fmt.Errorf("upload manager provided invalid config: %w", err)
 	}
 

@@ -97,15 +97,15 @@ func (x *Account) Update(input *AccountUpdateInput) []*FieldChangeSummary {
 	return out
 }
 
-// Validate validates a AccountCreationInput.
-func (x *AccountCreationInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a AccountCreationInput.
+func (x *AccountCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }
 
-// Validate validates a AccountUpdateInput.
-func (x *AccountUpdateInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a AccountUpdateInput.
+func (x *AccountUpdateInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)

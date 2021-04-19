@@ -67,7 +67,7 @@ func (c *Client) CreateAccountSubscriptionPlan(ctx context.Context, input *types
 
 	logger := c.logger.WithValue("account_subscription_plan_name", input.Name)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

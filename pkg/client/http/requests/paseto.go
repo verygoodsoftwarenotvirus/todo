@@ -51,7 +51,7 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

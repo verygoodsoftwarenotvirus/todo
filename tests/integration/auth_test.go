@@ -256,13 +256,13 @@ func (s *TestSuite) TestPasswordChanging() {
 		require.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		// create new authentication.
+		// create new passwords.
 		var backwardsPass string
 		for _, v := range testUser.HashedPassword {
 			backwardsPass = string(v) + backwardsPass
 		}
 
-		// update authentication.
+		// update passwords.
 		assert.NoError(t, testClient.ChangePassword(ctx, cookie, &types.PasswordUpdateInput{
 			CurrentPassword: testUser.HashedPassword,
 			TOTPToken:       generateTOTPTokenForUser(t, testUser),
@@ -272,7 +272,7 @@ func (s *TestSuite) TestPasswordChanging() {
 		// logout.
 		assert.NoError(t, testClient.Logout(ctx))
 
-		// login again with new authentication.
+		// login again with new passwords.
 		cookie, err = testClient.Login(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  backwardsPass,

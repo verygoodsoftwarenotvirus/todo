@@ -2,7 +2,6 @@ package viper
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"math"
@@ -18,19 +17,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
-
 const (
 	maxPASETOLifetime = 10 * time.Minute
 )
 
 var (
-	errNilInput = errors.New("nil input provided")
+	errNilInput                            = errors.New("nil input provided")
+	errInvalidTestUserRunModeConfiguration = errors.New("requested test user in production run mode")
 )
 
 // BuildViperConfig is a constructor function that initializes a viper config.
@@ -82,7 +75,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		return nil, errNilInput
 	}
 
-	if err := input.Validate(context.Background()); err != nil {
+	if err := input.ValidateWithContext(context.Background()); err != nil {
 		return nil, err
 	}
 
@@ -163,9 +156,13 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyUploaderAzureTryTimeout, input.Uploads.Storage.AzureConfig.Retrying.TryTimeout)
 		cfg.Set(ConfigKeyUploaderAzureRetryDelay, input.Uploads.Storage.AzureConfig.Retrying.RetryDelay)
 		cfg.Set(ConfigKeyUploaderAzureMaxRetryDelay, input.Uploads.Storage.AzureConfig.Retrying.MaxRetryDelay)
-		cfg.Set(ConfigKeyUploaderAzureRetryReadsFromSecondaryHost, input.Uploads.Storage.AzureConfig.Retrying.RetryReadsFromSecondaryHost)
+		if input.Uploads.Storage.AzureConfig != nil {
+			cfg.Set(ConfigKeyUploaderAzureRetryReadsFromSecondaryHost, input.Uploads.Storage.AzureConfig.Retrying.RetryReadsFromSecondaryHost)
+		}
 		cfg.Set(ConfigKeyUploaderAzureTokenCredentialsInitialToken, input.Uploads.Storage.AzureConfig.TokenCredentialsInitialToken)
 		cfg.Set(ConfigKeyUploaderAzureSharedKeyAccountKey, input.Uploads.Storage.AzureConfig.SharedKeyAccountKey)
+
+		fallthrough
 	case input.Uploads.Storage.GCSConfig != nil:
 		cfg.Set(ConfigKeyUploaderProvider, "gcs")
 		cfg.Set(ConfigKeyUploaderGCSAccountKeyFilepath, input.Uploads.Storage.GCSConfig.ServiceAccountKeyFilepath)
@@ -173,9 +170,13 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyUploaderGCSBucketName, input.Uploads.Storage.GCSConfig.BucketName)
 		cfg.Set(ConfigKeyUploaderGCSGoogleAccessID, input.Uploads.Storage.GCSConfig.BlobSettings.GoogleAccessID)
 		cfg.Set(ConfigKeyUploaderGCSPrivateKeyFilepath, input.Uploads.Storage.GCSConfig.BlobSettings.PrivateKeyFilepath)
+
+		fallthrough
 	case input.Uploads.Storage.S3Config != nil:
 		cfg.Set(ConfigKeyUploaderProvider, "s3")
 		cfg.Set(ConfigKeyUploaderS3BucketName, input.Uploads.Storage.S3Config.BucketName)
+
+		fallthrough
 	case input.Uploads.Storage.FilesystemConfig != nil:
 		cfg.Set(ConfigKeyUploaderProvider, "filesystem")
 		cfg.Set(ConfigKeyUploaderFilesystemRootDirectory, input.Uploads.Storage.FilesystemConfig.RootDirectory)
@@ -183,8 +184,6 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	return cfg, nil
 }
-
-var errInvalidTestUserRunModeConfiguration = errors.New("requested test user in production run mode")
 
 // ParseConfigFile parses a configuration file.
 func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string) (*config.ServerConfig, error) {
@@ -207,7 +206,7 @@ func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string
 		return nil, errInvalidTestUserRunModeConfiguration
 	}
 
-	if validationErr := serverConfig.Validate(ctx); validationErr != nil {
+	if validationErr := serverConfig.ValidateWithContext(ctx); validationErr != nil {
 		return nil, validationErr
 	}
 

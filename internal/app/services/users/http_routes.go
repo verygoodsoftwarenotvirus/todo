@@ -52,7 +52,7 @@ func (s *service) validateCredentialChangeRequest(ctx context.Context, userID ui
 	}
 
 	// validate login.
-	valid, validationErr := s.authenticator.ValidateLogin(ctx, user.HashedPassword, password, user.TwoFactorSecret, totpToken, user.Salt)
+	valid, validationErr := s.authenticator.ValidateLogin(ctx, user.HashedPassword, password, user.TwoFactorSecret, totpToken)
 	if validationErr != nil {
 		logger.WithValue("validation_error", validationErr).Debug("error validating credentials")
 		return nil, http.StatusBadRequest
@@ -135,14 +135,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UsernameKey, userInput.Username)
 	tracing.AttachUsernameToSpan(span, userInput.Username)
 
-	// ensure the authentication isn't garbage-tier
+	// ensure the passwords isn't garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
 		logger.WithValue("password_validation_error", err).Debug("weak password provided to user creation route")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "password too weak", http.StatusBadRequest)
 		return
 	}
 
-	// hash the authentication.
+	// hash the passwords.
 	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "hashing password")
@@ -410,7 +410,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, result, http.StatusAccepted)
 }
 
-// UpdatePasswordHandler updates a user's authentication, after validating that information received
+// UpdatePasswordHandler updates a user's passwords, after validating that information received
 // from PasswordUpdateInputContextMiddleware is valid.
 func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -453,14 +453,14 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	tracing.AttachUsernameToSpan(span, user.Username)
 
-	// ensure the authentication isn't garbage-tier
+	// ensure the passwords isn't garbage-tier
 	if err = passwordvalidator.Validate(input.NewPassword, minimumPasswordEntropy); err != nil {
 		logger.WithValue("password_validation_error", err).Debug("invalid password provided")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "new authentication is too weak!", http.StatusBadRequest)
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "new passwords is too weak!", http.StatusBadRequest)
 		return
 	}
 
-	// hash the new authentication.
+	// hash the new passwords.
 	newPasswordHash, err := s.authenticator.HashPassword(ctx, input.NewPassword)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "hashing password")

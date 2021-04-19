@@ -169,7 +169,7 @@ func main() {
 			fmt.Printf(`
 
 username:  %s
-authentication:  %s
+passwords:  %s
 2FA token: %s
 
 `, singleUser.Username, singleUser.HashedPassword, buildTOTPTokenForSecret(singleUser.TwoFactorSecret))

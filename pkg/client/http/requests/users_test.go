@@ -38,7 +38,7 @@ func (s *usersTestSuite) SetupTest() {
 	s.builder = buildTestRequestBuilder()
 
 	s.exampleUser = fakes.BuildFakeUser()
-	// the hashed authentication is never transmitted over the wire.
+	// the hashed passwords is never transmitted over the wire.
 	s.exampleUser.HashedPassword = ""
 	// the two factor secret is transmitted over the wire only on creation.
 	s.exampleUser.TwoFactorSecret = ""
@@ -49,7 +49,7 @@ func (s *usersTestSuite) SetupTest() {
 	s.exampleUserList = fakes.BuildFakeUserList()
 
 	for i := 0; i < len(s.exampleUserList.Users); i++ {
-		// the hashed authentication is never transmitted over the wire.
+		// the hashed passwords is never transmitted over the wire.
 		s.exampleUserList.Users[i].HashedPassword = ""
 		// the two factor secret is transmitted over the wire only on creation.
 		s.exampleUserList.Users[i].TwoFactorSecret = ""

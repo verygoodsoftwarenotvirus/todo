@@ -14,8 +14,8 @@ type Config struct {
 	Debug   bool           `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 }
 
-// Validate validates an Config struct.
-func (cfg *Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates an Config struct.
+func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Storage),
 	)

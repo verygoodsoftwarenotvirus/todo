@@ -14,10 +14,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/gorilla/securecookie"
@@ -108,9 +108,9 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "validating login")
 
-		if errors.Is(err, authentication.ErrInvalidTwoFactorCode) {
+		if errors.Is(err, passwords.ErrInvalidTwoFactorCode) {
 			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
-		} else if errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
+		} else if errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
 			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		}
 

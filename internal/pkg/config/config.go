@@ -2,12 +2,10 @@ package config
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -29,6 +27,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
@@ -42,22 +42,12 @@ const (
 	DefaultRunMode = DevelopmentRunMode
 	// DefaultStartupDeadline is the default amount of time we allow for server startup.
 	DefaultStartupDeadline = time.Minute
-
-	randStringSize = 32
-	randReadSize   = 24
 )
 
 var (
 	errNilDatabaseConnection   = errors.New("nil DB connection provided")
 	errInvalidDatabaseProvider = errors.New("invalid database provider")
 )
-
-func init() {
-	b := make([]byte, 64)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-}
 
 type (
 	// runMode describes what method of operation the server is under.
@@ -88,79 +78,31 @@ func (cfg *ServerConfig) EncodeToFile(path string, marshaller func(v interface{}
 		return err
 	}
 
-	return ioutil.WriteFile(path, byteSlice, 0600)
+	return os.WriteFile(path, byteSlice, 0600)
 }
 
-// Validate validates a ServerConfig struct.
-func (cfg *ServerConfig) Validate(ctx context.Context) error {
-	if err := cfg.Auth.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Auth portion of config: %w", err)
-	}
+var _ validation.ValidatableWithContext = (*ServerConfig)(nil)
 
-	if err := cfg.Database.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Database portion of config: %w", err)
-	}
-
-	if err := cfg.Observability.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Observability portion of config: %w", err)
-	}
-
-	if err := cfg.Meta.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Meta portion of config: %w", err)
-	}
-
-	if err := cfg.Encoding.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Meta portion of config: %w", err)
-	}
-
-	if err := cfg.Frontend.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Frontend portion of config: %w", err)
-	}
-
-	if err := cfg.Uploads.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Uploads portion of config: %w", err)
-	}
-
-	if err := cfg.Search.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Search portion of config: %w", err)
-	}
-
-	if err := cfg.Routing.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Routing portion of config: %w", err)
-	}
-
-	if err := cfg.Server.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Server portion of config: %w", err)
-	}
-
-	if err := cfg.Webhooks.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the Webhooks portion of config: %w", err)
-	}
-
-	if err := cfg.AuditLog.Validate(ctx); err != nil {
-		return fmt.Errorf("validating the AuditLog portion of config: %w", err)
-	}
-
-	return nil
-}
-
-// RandString produces a random string.
-// https://blog.questionable.services/article/generating-secure-random-numbers-crypto-rand/
-func RandString() string {
-	b := make([]byte, randReadSize)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-
-	return base64.URLEncoding.EncodeToString(b)
+// ValidateWithContext validates a ServerConfig struct.
+func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
+		validation.Field(&cfg.Search),
+		validation.Field(&cfg.Uploads),
+		validation.Field(&cfg.Routing),
+		validation.Field(&cfg.Meta),
+		validation.Field(&cfg.Encoding),
+		validation.Field(&cfg.Frontend),
+		validation.Field(&cfg.Observability),
+		validation.Field(&cfg.Database),
+		validation.Field(&cfg.Auth),
+		validation.Field(&cfg.Server),
+		validation.Field(&cfg.Webhooks),
+		validation.Field(&cfg.AuditLog),
+	)
 }
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
-func (cfg *ServerConfig) ProvideDatabaseClient(
-	ctx context.Context,
-	logger logging.Logger,
-	rawDB *sql.DB,
-) (database.DataManager, error) {
+func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
 	}

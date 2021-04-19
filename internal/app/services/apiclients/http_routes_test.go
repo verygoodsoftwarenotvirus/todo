@@ -6,19 +6,18 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestAPIClientsService_ListHandler(T *testing.T) {
@@ -153,7 +152,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		a := &mockauth.Authenticator{}
+		a := &passwords.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -161,7 +160,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = a
 
@@ -291,7 +289,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		a := &mockauth.Authenticator{}
+		a := &passwords.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -299,7 +297,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(false, nil)
 		helper.service.authenticator = a
 
@@ -336,7 +333,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		a := &mockauth.Authenticator{}
+		a := &passwords.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -344,7 +341,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, errors.New("blah"))
 		helper.service.authenticator = a
 
@@ -373,7 +369,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 
-		a := &mockauth.Authenticator{}
+		a := &passwords.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -381,7 +377,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = a
 
@@ -429,7 +424,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		a := &mockauth.Authenticator{}
+		a := &passwords.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -437,7 +432,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = a
 
@@ -487,7 +481,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 
-		a := &mockauth.Authenticator{}
+		a := &passwords.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -495,7 +489,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = a
 

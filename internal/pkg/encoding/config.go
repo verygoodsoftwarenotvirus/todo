@@ -11,8 +11,8 @@ type Config struct {
 	ContentType string `json:"content_type" mapstructure:"content_type" toml:"content_type,omitempty"`
 }
 
-// Validate validates a Config struct.
-func (cfg *Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates a Config struct.
+func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.ContentType, validation.Required),
 	)

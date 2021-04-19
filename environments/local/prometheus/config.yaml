@@ -28,11 +28,11 @@ scrape_configs:
     #   key: 'value'
 
     # Sets the `Authorization` header on every scrape request with the
-    # configured username and authentication.
-    # authentication and password_file are mutually exclusive.
+    # configured username and passwords.
+    # passwords and password_file are mutually exclusive.
     #  basic_auth:
     #    username: <string>
-    #    authentication: <secret>
+    #    passwords: <secret>
     #    password_file: <string>
 
     # Sets the `Authorization` header on every scrape request with
@@ -48,7 +48,7 @@ scrape_configs:
       # CA certificate to validate API server certificate with.
       #   ca_file: '/path/to/file'
 
-      # Certificate and key files for client cert authentication to the server.
+      # Certificate and key files for client cert passwords to the server.
       #   cert_file: '/path/to/file'
       #   key_file: '/path/to/file'
 

@@ -102,7 +102,7 @@ func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemC
 
 	logger := b.logger
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

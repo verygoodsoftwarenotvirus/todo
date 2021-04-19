@@ -14,8 +14,8 @@ type Config struct {
 	CacheStaticFiles     bool   `json:"cache_static_files" mapstructure:"cache_static_files" toml:"cache_static_files,omitempty"`
 }
 
-// Validate validates a Config struct.
-func (s Config) Validate(ctx context.Context) error {
+// ValidateWithContext validates a Config struct.
+func (s Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &s,
 		validation.Field(&s.StaticFilesDirectory, validation.Required),
 	)

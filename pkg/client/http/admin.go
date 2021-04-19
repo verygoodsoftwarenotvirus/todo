@@ -21,7 +21,7 @@ func (c *Client) UpdateUserReputation(ctx context.Context, input *types.UserRepu
 	logger := c.logger.WithValue(keys.AccountIDKey, input.TargetUserID)
 	tracing.AttachAccountIDToSpan(span, input.TargetUserID)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return observability.PrepareError(err, logger, span, "validating input")
 	}
 

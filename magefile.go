@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -294,6 +293,19 @@ func ensureDependencyInjector() error {
 	return nil
 }
 
+func ensureGoimports() error {
+	present, checkErr := pkg.IsCommandAvailable("goimports", "", "")
+	if checkErr != nil {
+		return checkErr
+	}
+
+	if !present {
+		return runGoCommand(false, "get", "golang.org/x/tools/cmd/goimports")
+	}
+
+	return nil
+}
+
 func ensureFieldalignment() error {
 	present, checkErr := pkg.IsCommandAvailable("fieldalignment", "", "")
 	if checkErr != nil {
@@ -373,6 +385,12 @@ func fixFieldAlignment() {
 	ensureFieldalignment()
 
 	sh.Output("fieldalignment", "-fix", "./...")
+}
+
+func runGoimports() error {
+	ensureGoimports()
+
+	return runGoCommand(false, "-local", thisRepo)
 }
 
 // dependency stuff
@@ -899,7 +917,7 @@ func ScaffoldFrontendTests() error {
 					output := fmt.Sprintf(`import './%s'; // TODO: test me!
 `, filepath.Base(sansExtension))
 
-					if writeErr := ioutil.WriteFile(newFileName, []byte(output), 0644); writeErr != nil {
+					if writeErr := os.WriteFile(newFileName, []byte(output), 0644); writeErr != nil {
 						return writeErr
 					}
 				} else {

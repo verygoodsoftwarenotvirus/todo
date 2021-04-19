@@ -13,7 +13,7 @@ const (
 	// userCreationMiddlewareCtxKey is the context key for creation input.
 	userCreationMiddlewareCtxKey types.ContextKey = "user_creation_input"
 
-	// passwordChangeMiddlewareCtxKey is the context key for authentication changes.
+	// passwordChangeMiddlewareCtxKey is the context key for passwords changes.
 	passwordChangeMiddlewareCtxKey types.ContextKey = "user_password_change"
 
 	// totpSecretVerificationMiddlewareCtxKey is the context key for TOTP token refreshes.
@@ -51,7 +51,7 @@ func (s *service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// PasswordUpdateInputMiddleware fetches authentication update input from requests.
+// PasswordUpdateInputMiddleware fetches passwords update input from requests.
 func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		x := new(types.PasswordUpdateInput)
@@ -95,7 +95,7 @@ func (s *service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
@@ -123,7 +123,7 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return

@@ -427,7 +427,7 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, change
 	return nil
 }
 
-// UpdateUserPassword updates a user's authentication hash in the database.
+// UpdateUserPassword updates a user's passwords hash in the database.
 func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
@@ -450,7 +450,7 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newH
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user authentication update", query, args); err != nil {
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user passwords update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating user password")
 	}

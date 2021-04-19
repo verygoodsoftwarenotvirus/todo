@@ -32,7 +32,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := x.Validate(ctx); err != nil {
+		if err := x.ValidateWithContext(ctx); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
@@ -59,7 +59,7 @@ func (s *service) UpdateInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// we would call x.Validate(ctx) here if that were applicable.
+		// we would call x.ValidateWithContext(ctx) here if that were applicable.
 
 		ctx = context.WithValue(ctx, updateMiddlewareCtxKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))

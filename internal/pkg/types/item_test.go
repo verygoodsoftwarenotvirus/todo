@@ -51,7 +51,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 			Details: fake.Word(),
 		}
 
-		actual := x.Validate(context.Background())
+		actual := x.ValidateWithContext(context.Background())
 		assert.Nil(t, actual)
 	})
 
@@ -63,7 +63,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 			Details: "",
 		}
 
-		actual := x.Validate(context.Background())
+		actual := x.ValidateWithContext(context.Background())
 		assert.Error(t, actual)
 	})
 }
@@ -79,7 +79,7 @@ func TestItemUpdateInput_Validate(T *testing.T) {
 			Details: fake.Word(),
 		}
 
-		actual := x.Validate(context.Background())
+		actual := x.ValidateWithContext(context.Background())
 		assert.Nil(t, actual)
 	})
 
@@ -91,7 +91,7 @@ func TestItemUpdateInput_Validate(T *testing.T) {
 			Details: "",
 		}
 
-		actual := x.Validate(context.Background())
+		actual := x.ValidateWithContext(context.Background())
 		assert.Error(t, actual)
 	})
 }

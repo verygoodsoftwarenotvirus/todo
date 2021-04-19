@@ -270,7 +270,7 @@ func (b *MariaDB) BuildUpdateUserQuery(ctx context.Context, input *types.User) (
 	)
 }
 
-// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's authentication.
+// BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's passwords.
 func (b *MariaDB) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

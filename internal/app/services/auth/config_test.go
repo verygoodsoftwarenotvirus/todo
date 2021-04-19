@@ -38,7 +38,7 @@ func TestConfig_Validate(T *testing.T) {
 			MinimumPasswordLength: 123,
 		}
 
-		assert.NoError(t, cfg.Validate(ctx))
+		assert.NoError(t, cfg.ValidateWithContext(ctx))
 	})
 }
 
@@ -55,7 +55,7 @@ func TestCookieConfig_Validate(T *testing.T) {
 		}
 		ctx := context.Background()
 
-		assert.NoError(t, cfg.Validate(ctx))
+		assert.NoError(t, cfg.ValidateWithContext(ctx))
 	})
 }
 
@@ -75,6 +75,6 @@ func TestPASETOConfig_Validate(T *testing.T) {
 			LocalModeKey: localKey,
 		}
 
-		assert.NoError(t, cfg.Validate(ctx))
+		assert.NoError(t, cfg.ValidateWithContext(ctx))
 	})
 }

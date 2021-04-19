@@ -6,9 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/bcrypt"
-	mockauth "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/authentication/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
@@ -175,7 +173,7 @@ func TestAuthService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &mockauth.Authenticator{}
+		authenticator := &passwords.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -183,7 +181,6 @@ func TestAuthService_validateLogin(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(true, nil)
 		helper.service.authenticator = authenticator
 
@@ -194,122 +191,12 @@ func TestAuthService_validateLogin(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, authenticator)
 	})
 
-	T.Run("with too weak of a password hash", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		authenticator := &mockauth.Authenticator{}
-		authenticator.On(
-			"ValidateLogin",
-			testutil.ContextMatcher,
-			helper.exampleUser.HashedPassword,
-			helper.exampleLoginInput.Password,
-			helper.exampleUser.TwoFactorSecret,
-			helper.exampleLoginInput.TOTPToken,
-			helper.exampleUser.Salt,
-		).Return(true, authentication.ErrPasswordHashTooWeak)
-		helper.service.authenticator = authenticator
-
-		authenticator.On(
-			"HashPassword",
-			testutil.ContextMatcher,
-			helper.exampleLoginInput.Password,
-		).Return("blah", nil)
-
-		userDataManager := &mocktypes.UserDataManager{}
-		userDataManager.On(
-			"UpdateUser",
-			testutil.ContextMatcher,
-			mock.IsType(&types.User{}),
-		).Return(nil)
-		helper.service.userDataManager = userDataManager
-
-		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
-		assert.True(t, actual)
-		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, authenticator, userDataManager)
-	})
-
-	T.Run("with error re-hashing too-weak password hash", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		expectedErr := errors.New("arbitrary")
-
-		authenticator := &mockauth.Authenticator{}
-		authenticator.On(
-			"ValidateLogin",
-			testutil.ContextMatcher,
-			helper.exampleUser.HashedPassword,
-			helper.exampleLoginInput.Password,
-			helper.exampleUser.TwoFactorSecret,
-			helper.exampleLoginInput.TOTPToken,
-			helper.exampleUser.Salt,
-		).Return(true, authentication.ErrPasswordHashTooWeak)
-
-		authenticator.On(
-			"HashPassword",
-			testutil.ContextMatcher,
-			helper.exampleLoginInput.Password,
-		).Return("", expectedErr)
-		helper.service.authenticator = authenticator
-
-		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
-		assert.False(t, actual)
-		assert.Error(t, err)
-
-		mock.AssertExpectationsForObjects(t, authenticator)
-	})
-
-	T.Run("with too weak a password hash and error updating user", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		expectedErr := errors.New("arbitrary")
-
-		authenticator := &mockauth.Authenticator{}
-		authenticator.On(
-			"ValidateLogin",
-			testutil.ContextMatcher,
-			helper.exampleUser.HashedPassword,
-			helper.exampleLoginInput.Password,
-			helper.exampleUser.TwoFactorSecret,
-			helper.exampleLoginInput.TOTPToken,
-			helper.exampleUser.Salt,
-		).Return(true, bcrypt.ErrCostTooLow)
-
-		authenticator.On(
-			"HashPassword",
-			testutil.ContextMatcher,
-			helper.exampleLoginInput.Password,
-		).Return("blah", nil)
-		helper.service.authenticator = authenticator
-
-		userDataManager := &mocktypes.UserDataManager{}
-		userDataManager.On(
-			"UpdateUser",
-			testutil.ContextMatcher,
-			mock.IsType(&types.User{}),
-		).Return(expectedErr)
-		helper.service.userDataManager = userDataManager
-
-		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
-		assert.False(t, actual)
-		assert.Error(t, err)
-
-		mock.AssertExpectationsForObjects(t, authenticator, userDataManager)
-	})
-
 	T.Run("with invalid two factor code", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
 
-		authenticator := &mockauth.Authenticator{}
+		authenticator := &passwords.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -317,8 +204,7 @@ func TestAuthService_validateLogin(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-			helper.exampleUser.Salt,
-		).Return(true, authentication.ErrInvalidTwoFactorCode)
+		).Return(true, passwords.ErrInvalidTwoFactorCode)
 		helper.service.authenticator = authenticator
 
 		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
@@ -335,7 +221,7 @@ func TestAuthService_validateLogin(T *testing.T) {
 
 		expectedErr := errors.New("arbitrary")
 
-		authenticator := &mockauth.Authenticator{}
+		authenticator := &passwords.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -343,7 +229,6 @@ func TestAuthService_validateLogin(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(false, expectedErr)
 		helper.service.authenticator = authenticator
 
@@ -359,7 +244,7 @@ func TestAuthService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &mockauth.Authenticator{}
+		authenticator := &passwords.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -367,7 +252,6 @@ func TestAuthService_validateLogin(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-			helper.exampleUser.Salt,
 		).Return(false, nil)
 		helper.service.authenticator = authenticator
 

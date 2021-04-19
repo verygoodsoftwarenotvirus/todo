@@ -60,7 +60,7 @@ func (b *Builder) BuildCreateAccountSubscriptionPlanRequest(ctx context.Context,
 
 	logger := b.logger.WithValue(keys.NameKey, input.Name)
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

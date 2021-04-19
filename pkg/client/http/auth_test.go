@@ -35,7 +35,7 @@ func (s *authTestSuite) SetupTest() {
 	s.ctx = context.Background()
 
 	s.exampleUser = fakes.BuildFakeUser()
-	// the hashed authentication is never transmitted over the wire.
+	// the hashed passwords is never transmitted over the wire.
 	s.exampleUser.HashedPassword = ""
 	// the two factor secret is transmitted over the wire only on creation.
 	s.exampleUser.TwoFactorSecret = ""

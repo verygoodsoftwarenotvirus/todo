@@ -21,6 +21,6 @@ func TestConfig_Validate(T *testing.T) {
 			Debug:           true,
 		}
 
-		assert.NoError(t, cfg.Validate(ctx))
+		assert.NoError(t, cfg.ValidateWithContext(ctx))
 	})
 }

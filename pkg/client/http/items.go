@@ -118,7 +118,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 
 	logger := c.logger
 
-	if err := input.Validate(ctx); err != nil {
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 

@@ -17,7 +17,7 @@ func TestConfig_Validate(T *testing.T) {
 			StaticFilesDirectory: "blah",
 		}
 
-		assert.NoError(t, cfg.Validate(context.Background()))
+		assert.NoError(t, cfg.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("invalid", func(t *testing.T) {
@@ -25,6 +25,6 @@ func TestConfig_Validate(T *testing.T) {
 
 		cfg := &Config{}
 
-		assert.Error(t, cfg.Validate(context.Background()))
+		assert.Error(t, cfg.ValidateWithContext(context.Background()))
 	})
 }

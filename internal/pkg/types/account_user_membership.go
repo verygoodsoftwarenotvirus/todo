@@ -75,15 +75,15 @@ type (
 	}
 )
 
-// Validate validates an AddUserToAccountInput.
-func (x *AddUserToAccountInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates an AddUserToAccountInput.
+func (x *AddUserToAccountInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.UserID, validation.Required),
 	)
 }
 
-// Validate validates a TransferAccountOwnershipInput.
-func (x *TransferAccountOwnershipInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a TransferAccountOwnershipInput.
+func (x *TransferAccountOwnershipInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.CurrentOwner, validation.Required),
 		validation.Field(&x.NewOwner, validation.Required),
@@ -91,8 +91,8 @@ func (x *TransferAccountOwnershipInput) Validate(ctx context.Context) error {
 	)
 }
 
-// Validate validates a ModifyUserPermissionsInput.
-func (x *ModifyUserPermissionsInput) Validate(ctx context.Context) error {
+// ValidateWithContext validates a ModifyUserPermissionsInput.
+func (x *ModifyUserPermissionsInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.UserAccountPermissions, validation.Required),
 		validation.Field(&x.Reason, validation.Required),

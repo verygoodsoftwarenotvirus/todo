@@ -18,8 +18,8 @@ type (
 	}
 )
 
-// Validate validates the FilesystemConfig.
-func (c *FilesystemConfig) Validate(ctx context.Context) error {
+// ValidateWithContext validates the FilesystemConfig.
+func (c *FilesystemConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.RootDirectory, validation.Required),
 	)

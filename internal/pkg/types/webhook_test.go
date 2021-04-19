@@ -65,7 +65,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-		assert.Nil(t, buildValidWebhookCreationInput().Validate(context.Background()))
+		assert.Nil(t, buildValidWebhookCreationInput().ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad name", func(t *testing.T) {
@@ -73,7 +73,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Name = ""
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad url", func(t *testing.T) {
@@ -82,7 +82,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 		// much as we'd like to use testutil.InvalidRawURL here, it causes a cyclical import :'(
 		exampleInput.URL = fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127)))
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad method", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Method = "balogna"
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad content type", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.ContentType = "application/balogna"
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("empty events", func(t *testing.T) {
@@ -106,7 +106,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Events = []string{}
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("empty data types", func(t *testing.T) {
@@ -114,7 +114,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.DataTypes = []string{}
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 }
 
@@ -135,7 +135,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-		assert.Nil(t, buildValidWebhookCreationInput().Validate(context.Background()))
+		assert.Nil(t, buildValidWebhookCreationInput().ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad name", func(t *testing.T) {
@@ -143,7 +143,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Name = ""
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad url", func(t *testing.T) {
@@ -151,7 +151,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.URL = fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127)))
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad method", func(t *testing.T) {
@@ -159,7 +159,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Method = "balogna"
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("bad content type", func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.ContentType = "application/balogna"
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("empty events", func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.Events = []string{}
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 
 	T.Run("empty data types", func(t *testing.T) {
@@ -183,6 +183,6 @@ func TestWebhookUpdateInput_Validate(T *testing.T) {
 		exampleInput := buildValidWebhookCreationInput()
 		exampleInput.DataTypes = []string{}
 
-		assert.Error(t, exampleInput.Validate(context.Background()))
+		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))
 	})
 }

@@ -1,10 +1,11 @@
 package audit_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -34,6 +35,12 @@ func TestBuildUserUpdatePasswordEventEntry(t *testing.T) {
 	t.Parallel()
 
 	assert.NotNil(t, audit.BuildUserUpdatePasswordEventEntry(exampleUserID))
+}
+
+func TestBuildUserUpdateEventEntry(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, audit.BuildUserUpdateEventEntry(exampleUserID, nil))
 }
 
 func TestBuildUserArchiveEventEntry(t *testing.T) {

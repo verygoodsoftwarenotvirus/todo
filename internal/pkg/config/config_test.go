@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -18,6 +17,7 @@ import (
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 
@@ -84,7 +84,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 		assert.NoError(t, cfg.EncodeToFile(f.Name(), json.Marshal))
 	})
 
-	T.Run("with error marshalling", func(t *testing.T) {
+	T.Run("with error marshaling", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := &ServerConfig{}

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
+	"io"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -36,16 +37,18 @@ type (
 	}
 
 	standardGenerator struct {
-		logger logging.Logger
-		tracer tracing.Tracer
+		logger     logging.Logger
+		tracer     tracing.Tracer
+		randReader io.Reader
 	}
 )
 
 // NewGenerator builds a new Generator.
 func NewGenerator(logger logging.Logger) Generator {
 	return &standardGenerator{
-		logger: logging.EnsureLogger(logger).WithName("random_string_generator"),
-		tracer: tracing.NewTracer("secret_generator"),
+		logger:     logging.EnsureLogger(logger).WithName("random_string_generator"),
+		tracer:     tracing.NewTracer("secret_generator"),
+		randReader: rand.Reader,
 	}
 }
 
@@ -72,7 +75,7 @@ func (g *standardGenerator) GenerateBase32EncodedString(ctx context.Context, len
 	logger := g.logger.WithValue("requested_length", length)
 
 	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
+	if _, err := g.randReader.Read(b); err != nil {
 		return "", observability.PrepareError(err, logger, span, "reading from secure random source")
 	}
 
@@ -87,7 +90,7 @@ func (g *standardGenerator) GenerateBase64EncodedString(ctx context.Context, len
 	logger := g.logger.WithValue("requested_length", length)
 
 	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
+	if _, err := g.randReader.Read(b); err != nil {
 		return "", observability.PrepareError(err, logger, span, "reading from secure random source")
 	}
 
@@ -102,7 +105,7 @@ func (g *standardGenerator) GenerateRawBytes(ctx context.Context, length int) ([
 	logger := g.logger.WithValue("requested_length", length)
 
 	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
+	if _, err := g.randReader.Read(b); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "reading from secure random source")
 	}
 

@@ -102,6 +102,7 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 }
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
+// NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
 func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection

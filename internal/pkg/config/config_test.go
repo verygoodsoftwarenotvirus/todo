@@ -1,7 +1,11 @@
 package config
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -78,5 +82,70 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 		require.NoError(t, err)
 
 		assert.NoError(t, cfg.EncodeToFile(f.Name(), json.Marshal))
+	})
+
+	T.Run("with error marshalling", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := &ServerConfig{}
+
+		f, err := ioutil.TempFile("", "")
+		require.NoError(t, err)
+
+		assert.Error(t, cfg.EncodeToFile(f.Name(), func(interface{}) ([]byte, error) {
+			return nil, errors.New("blah")
+		}))
+	})
+}
+
+func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
+	T.Parallel()
+
+	T.Run("supported providers", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		logger := logging.NewNonOperationalLogger()
+
+		for _, provider := range []string{"sqlite", "postgres", "mariadb"} {
+			cfg := &ServerConfig{
+				Database: dbconfig.Config{
+					Provider: provider,
+				},
+			}
+
+			x, err := cfg.ProvideDatabaseClient(ctx, logger, &sql.DB{})
+			assert.NotNil(t, x)
+			assert.NoError(t, err)
+		}
+	})
+
+	T.Run("with nil *sql.DB", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		logger := logging.NewNonOperationalLogger()
+		cfg := &ServerConfig{}
+
+		x, err := cfg.ProvideDatabaseClient(ctx, logger, nil)
+		assert.Nil(t, x)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid provider", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		logger := logging.NewNonOperationalLogger()
+
+		cfg := &ServerConfig{
+			Database: dbconfig.Config{
+				Provider: "provider",
+			},
+		}
+
+		x, err := cfg.ProvideDatabaseClient(ctx, logger, &sql.DB{})
+		assert.Nil(t, x)
+		assert.Error(t, err)
 	})
 }

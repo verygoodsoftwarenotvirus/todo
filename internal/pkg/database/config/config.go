@@ -8,13 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Masterminds/squirrel"
-	"github.com/alexedwards/scs/mysqlstore"
-	"github.com/alexedwards/scs/postgresstore"
-	"github.com/alexedwards/scs/sqlite3store"
-	"github.com/alexedwards/scs/v2"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/mariadb"
@@ -22,14 +15,21 @@ import (
 	zqlite "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+
+	"github.com/Masterminds/squirrel"
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/postgresstore"
+	"github.com/alexedwards/scs/sqlite3store"
+	"github.com/alexedwards/scs/v2"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
-	// PostgresProviderKey is the string we use to refer to postgres.
+	// PostgresProviderKey is the string used to refer to postgres.
 	PostgresProviderKey = "postgres"
-	// MariaDBProviderKey is the string we use to refer to mariaDB.
+	// MariaDBProviderKey is the string used to refer to mariaDB.
 	MariaDBProviderKey = "mariadb"
-	// SqliteProviderKey is the string we use to refer to sqlite.
+	// SqliteProviderKey is the string used to refer to sqlite.
 	SqliteProviderKey = "sqlite"
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between database metrics queries.

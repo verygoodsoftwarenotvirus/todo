@@ -172,12 +172,12 @@ func (q *SQLQuerier) GetAllAccounts(ctx context.Context, results chan []*types.A
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if batchSize == 0 {
-		batchSize = defaultBatchSize
-	}
-
 	if results == nil {
 		return ErrNilInputProvided
+	}
+
+	if batchSize == 0 {
+		batchSize = defaultBatchSize
 	}
 
 	logger := q.logger.WithValue("batch_size", batchSize)
@@ -282,6 +282,10 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if createdByUser == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
@@ -289,12 +293,12 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	logger := q.logger.WithValue(keys.RequesterIDKey, createdByUser).WithValue(keys.UserIDKey, input.BelongsToUser)
 	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 
-	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, input)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, input)
 
 	// create the account.
 	id, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
@@ -351,6 +355,10 @@ func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, 
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if changedByUser == 0 {
+		return ErrInvalidIDProvided
+	}
+
 	if updated == nil {
 		return ErrNilInputProvided
 	}
@@ -360,12 +368,12 @@ func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, 
 	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 	tracing.AttachChangeSummarySpan(span, "account", changes)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateAccountQuery(ctx, updated)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildUpdateAccountQuery(ctx, updated)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -391,7 +399,7 @@ func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, arch
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 || userID == 0 {
+	if accountID == 0 || userID == 0 || archivedByUser == 0 {
 		return ErrInvalidIDProvided
 	}
 
@@ -404,12 +412,12 @@ func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, arch
 		keys.UserIDKey:      userID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveAccountQuery(ctx, accountID, userID)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildArchiveAccountQuery(ctx, accountID, userID)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account archive", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)

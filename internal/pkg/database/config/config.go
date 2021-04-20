@@ -25,12 +25,12 @@ import (
 )
 
 const (
-	// PostgresProviderKey is the string used to refer to postgres.
-	PostgresProviderKey = "postgres"
-	// MariaDBProviderKey is the string used to refer to mariaDB.
-	MariaDBProviderKey = "mariadb"
-	// SqliteProviderKey is the string used to refer to sqlite.
-	SqliteProviderKey = "sqlite"
+	// PostgresProvider is the string used to refer to postgres.
+	PostgresProvider = "postgres"
+	// MariaDBProvider is the string used to refer to mariaDB.
+	MariaDBProvider = "mariadb"
+	// SqliteProvider is the string used to refer to sqlite.
+	SqliteProvider = "sqlite"
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between database metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
@@ -57,9 +57,8 @@ type (
 // ValidateWithContext validates an DatabaseSettings struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.CreateTestUser),
-		validation.Field(&cfg.Provider, validation.In(PostgresProviderKey, MariaDBProviderKey, SqliteProviderKey)),
 		validation.Field(&cfg.ConnectionDetails, validation.Required),
+		validation.Field(&cfg.Provider, validation.In(PostgresProvider, MariaDBProvider, SqliteProvider)),
 		validation.Field(&cfg.CreateTestUser, validation.When(cfg.CreateTestUser != nil, validation.Required).Else(validation.Nil)),
 	)
 }
@@ -67,11 +66,11 @@ func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 // ProvideDatabaseConnection provides a database implementation dependent on the configuration.
 func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, error) {
 	switch cfg.Provider {
-	case PostgresProviderKey:
+	case PostgresProvider:
 		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails)
-	case MariaDBProviderKey:
+	case MariaDBProvider:
 		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails)
-	case SqliteProviderKey:
+	case SqliteProvider:
 		return zqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
@@ -81,9 +80,9 @@ func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, er
 // ProvideDatabasePlaceholderFormat provides .
 func (cfg *Config) ProvideDatabasePlaceholderFormat() (squirrel.PlaceholderFormat, error) {
 	switch cfg.Provider {
-	case PostgresProviderKey:
+	case PostgresProvider:
 		return squirrel.Dollar, nil
-	case MariaDBProviderKey, SqliteProviderKey:
+	case MariaDBProvider, SqliteProvider:
 		return squirrel.Question, nil
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
@@ -93,11 +92,11 @@ func (cfg *Config) ProvideDatabasePlaceholderFormat() (squirrel.PlaceholderForma
 // ProvideJSONPluckQuery provides a query for extracting a value out of a JSON dictionary for a given database.
 func (cfg *Config) ProvideJSONPluckQuery() string {
 	switch cfg.Provider {
-	case PostgresProviderKey:
+	case PostgresProvider:
 		return `%s.%s->'%s'`
-	case MariaDBProviderKey:
+	case MariaDBProvider:
 		return `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
-	case SqliteProviderKey:
+	case SqliteProvider:
 		return `json_extract(%s.%s, '$.%s')`
 	default:
 		return ""
@@ -107,11 +106,11 @@ func (cfg *Config) ProvideJSONPluckQuery() string {
 // ProvideCurrentUnixTimestampQuery provides a database implementation dependent on the configuration.
 func (cfg *Config) ProvideCurrentUnixTimestampQuery() string {
 	switch cfg.Provider {
-	case PostgresProviderKey:
+	case PostgresProvider:
 		return `extract(epoch FROM NOW())`
-	case MariaDBProviderKey:
+	case MariaDBProvider:
 		return `UNIX_TIMESTAMP()`
-	case SqliteProviderKey:
+	case SqliteProvider:
 		return `(strftime('%s','now'))`
 	default:
 		return ""
@@ -129,11 +128,11 @@ func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config,
 	}
 
 	switch dbConf.Provider {
-	case PostgresProviderKey:
+	case PostgresProvider:
 		sessionManager.Store = postgresstore.New(db)
-	case MariaDBProviderKey:
+	case MariaDBProvider:
 		sessionManager.Store = mysqlstore.New(db)
-	case SqliteProviderKey:
+	case SqliteProvider:
 		sessionManager.Store = sqlite3store.New(db)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, dbConf.Provider)

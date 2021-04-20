@@ -75,7 +75,7 @@ func ProvideDatabaseClient(
 		idStrategy:      DefaultIDRetrievalStrategy,
 	}
 
-	if cfg.Provider == dbconfig.PostgresProviderKey {
+	if cfg.Provider == dbconfig.PostgresProvider {
 		c.idStrategy = ReturningStatementIDRetrievalStrategy
 	}
 

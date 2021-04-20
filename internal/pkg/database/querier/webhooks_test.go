@@ -104,15 +104,16 @@ func TestQuerier_GetWebhook(T *testing.T) {
 		exampleWebhook := fakes.BuildFakeWebhook()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetWebhookQuery",
-				testutil.ContextMatcher,
-				exampleWebhook.ID, exampleWebhook.BelongsToAccount).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook.ID, exampleWebhook.BelongsToAccount,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -140,9 +141,8 @@ func TestQuerier_GetAllWebhooksCount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -170,8 +170,9 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.On(
@@ -205,8 +206,9 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 		filter := (*types.QueryFilter)(nil)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.On(
@@ -237,8 +239,9 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.On(
@@ -265,8 +268,9 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.On(
@@ -301,23 +305,23 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 		exampleBatchSize := uint16(1000)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetBatchOfWebhooksQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetBatchOfWebhooksQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -356,9 +360,8 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -384,19 +387,18 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetBatchOfWebhooksQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetBatchOfWebhooksQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(secondFakeQuery)).
@@ -425,19 +427,18 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetBatchOfWebhooksQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetBatchOfWebhooksQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(secondFakeQuery)).
@@ -466,19 +467,18 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetAllWebhooksCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.WebhookSQLQueryBuilder.
-			On("BuildGetBatchOfWebhooksQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetBatchOfWebhooksQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(secondFakeQuery)).
@@ -508,8 +508,9 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
@@ -524,7 +525,7 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -548,8 +549,9 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
@@ -590,8 +592,9 @@ func TestQuerier_UpdateWebhook(T *testing.T) {
 		var expected error
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
@@ -606,7 +609,7 @@ func TestQuerier_UpdateWebhook(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -631,8 +634,9 @@ func TestQuerier_ArchiveWebhook(T *testing.T) {
 		var expected error
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
@@ -647,7 +651,7 @@ func TestQuerier_ArchiveWebhook(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -670,8 +674,9 @@ func TestQuerier_GetAuditLogEntriesForWebhook(T *testing.T) {
 		exampleWebhook := fakes.BuildFakeWebhook()
 		auditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.WebhookSQLQueryBuilder.On(

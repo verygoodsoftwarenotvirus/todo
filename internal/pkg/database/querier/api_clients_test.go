@@ -98,8 +98,9 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -120,14 +121,26 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with empty client ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAPIClientByClientID(ctx, "")
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("respects sql.ErrNoRows", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -155,8 +168,9 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -178,6 +192,130 @@ func TestQuerier_GetAPIClientByClientID(T *testing.T) {
 	})
 }
 
+func TestQuerier_GetAPIClientByDatabaseID(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientByDatabaseIDQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+			exampleUser.ID,
+		).Return(fakeQuery, fakeArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnRows(buildMockRowsFromAPIClients(false, 0, exampleAPIClient))
+
+		actual, err := c.GetAPIClientByDatabaseID(ctx, exampleAPIClient.ID, exampleUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleAPIClient, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid client ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAPIClientByDatabaseID(ctx, 0, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAPIClientByDatabaseID(ctx, exampleAPIClient.ID, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("respects sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientByDatabaseIDQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+			exampleUser.ID,
+		).Return(fakeQuery, fakeArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := c.GetAPIClientByDatabaseID(ctx, exampleAPIClient.ID, exampleUser.ID)
+		assert.Error(t, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with erroneous response from database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAPIClientByDatabaseIDQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+			exampleUser.ID,
+		).Return(fakeQuery, fakeArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnRows(buildErroneousMockRow())
+
+		actual, err := c.GetAPIClientByDatabaseID(ctx, exampleAPIClient.ID, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+}
+
 func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 	T.Parallel()
 
@@ -187,8 +325,9 @@ func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 		exampleCount := uint64(123)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -212,8 +351,9 @@ func TestQuerier_GetTotalAPIClientCount(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -239,6 +379,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		results := make(chan []*types.APIClient)
@@ -251,19 +392,18 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetBatchOfAPIClientsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -271,8 +411,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnRows(buildMockRowsFromAPIClients(false, 0, exampleAPIClientList.Clients...))
 
-		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllAPIClients(ctx, results, exampleBatchSize))
 
 		var stillQuerying = true
 		for stillQuerying {
@@ -290,8 +429,19 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with nil results channel", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		exampleBatchSize := uint16(1000)
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.GetAllAPIClients(ctx, nil, exampleBatchSize))
+	})
+
 	T.Run("with now rows returned", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		results := make(chan []*types.APIClient)
@@ -302,19 +452,18 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetBatchOfAPIClientsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -322,8 +471,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllAPIClients(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -332,6 +480,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 	T.Run("with error fetching initial count", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		results := make(chan []*types.APIClient)
@@ -341,9 +490,8 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -359,6 +507,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 	T.Run("with error querying database", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		results := make(chan []*types.APIClient)
@@ -369,19 +518,18 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetBatchOfAPIClientsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -389,8 +537,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllAPIClients(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -399,6 +546,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		results := make(chan []*types.APIClient)
@@ -409,19 +557,18 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAllAPIClientsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetBatchOfAPIClientsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetBatchOfAPIClientsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -429,8 +576,7 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		err := c.GetAllAPIClients(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllAPIClients(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -441,17 +587,17 @@ func TestQuerier_GetAllAPIClients(T *testing.T) {
 func TestQuerier_GetAPIClients(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClientList := fakes.BuildFakeAPIClientList()
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -472,16 +618,31 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		filter := types.DefaultQueryFilter()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAPIClients(ctx, 0, filter)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("with nil filter", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClientList := fakes.BuildFakeAPIClientList()
 		exampleAPIClientList.Limit, exampleAPIClientList.Page = 0, 0
 		filter := (*types.QueryFilter)(nil)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -506,10 +667,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-
+		exampleUser := fakes.BuildFakeUser()
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -535,10 +697,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-
+		exampleUser := fakes.BuildFakeUser()
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -563,10 +726,11 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-
+		exampleUser := fakes.BuildFakeUser()
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
@@ -594,14 +758,16 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClient.ExternalID = ""
 		exampleAPIClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
@@ -616,7 +782,7 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -625,22 +791,74 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		}
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual, err := c.CreateAPIClient(ctx, exampleInput, 0)
+		actual, err := c.CreateAPIClient(ctx, exampleInput, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAPIClient, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid creator ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ExternalID = ""
+		exampleAPIClient.ClientSecret = nil
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.CreateAPIClient(ctx, exampleInput, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.CreateAPIClient(ctx, nil, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ExternalID = ""
+		exampleAPIClient.ClientSecret = nil
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		actual, err := c.CreateAPIClient(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
@@ -662,7 +880,93 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		}
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual, err := c.CreateAPIClient(ctx, exampleInput, 0)
+		actual, err := c.CreateAPIClient(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error writing audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ExternalID = ""
+		exampleAPIClient.ClientSecret = nil
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildCreateAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.timeFunc = func() uint64 {
+			return exampleAPIClient.CreatedOn
+		}
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		actual, err := c.CreateAPIClient(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+		exampleAPIClient.ExternalID = ""
+		exampleAPIClient.ClientSecret = nil
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildCreateAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.timeFunc = func() uint64 {
+			return exampleAPIClient.CreatedOn
+		}
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		actual, err := c.CreateAPIClient(ctx, exampleInput, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -676,12 +980,14 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		var expected error
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
@@ -689,22 +995,183 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildArchiveAPIClientQuery",
 			testutil.ContextMatcher,
-			exampleAPIClient.ID, exampleAPIClient.BelongsToUser,
+			exampleAPIClient.ID,
+			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual := c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser, 0)
-		assert.NoError(t, actual)
-		assert.Equal(t, expected, actual)
+		assert.NoError(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid client ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveAPIClient(ctx, 0, exampleAccount.ID, exampleUser.ID))
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, 0, exampleUser.ID))
+	})
+
+	T.Run("with invalid actor ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, 0))
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildArchiveAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error writing audit log entry to database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildArchiveAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildArchiveAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -720,15 +1187,16 @@ func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 		exampleAuditLogEntriesList := fakes.BuildFakeAuditLogEntryList()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForAPIClientQuery",
-				testutil.ContextMatcher,
-				exampleAPIClient.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAuditLogEntriesForAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -745,21 +1213,33 @@ func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid client ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAuditLogEntriesForAPIClient(ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForAPIClientQuery",
-				testutil.ContextMatcher,
-				exampleAPIClient.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAuditLogEntriesForAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -779,15 +1259,16 @@ func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForAPIClientQuery",
-				testutil.ContextMatcher,
-				exampleAPIClient.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.APIClientSQLQueryBuilder.On(
+			"BuildGetAuditLogEntriesForAPIClientQuery",
+			testutil.ContextMatcher,
+			exampleAPIClient.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).

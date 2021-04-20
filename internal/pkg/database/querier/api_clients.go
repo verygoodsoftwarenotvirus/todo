@@ -244,6 +244,10 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if createdByUser == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
@@ -254,12 +258,12 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 		keys.UserIDKey:            input.BelongsToUser,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildCreateAPIClientQuery(ctx, input)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildCreateAPIClientQuery(ctx, input)
 
 	id, err := q.performWriteQuery(ctx, tx, false, "API client creation", query, args)
 	if err != nil {
@@ -297,7 +301,7 @@ func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, 
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if clientID == 0 && accountID == 0 {
+	if clientID == 0 || accountID == 0 || archivedByUser == 0 {
 		return ErrNilInputProvided
 	}
 
@@ -311,12 +315,12 @@ func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, 
 		keys.UserIDKey:              archivedByUser,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveAPIClientQuery(ctx, clientID, accountID)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildArchiveAPIClientQuery(ctx, clientID, accountID)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "API client archive", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)

@@ -97,15 +97,16 @@ func TestQuerier_GetPlan(T *testing.T) {
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleAccountSubscriptionPlan.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -119,6 +120,17 @@ func TestQuerier_GetPlan(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAccountSubscriptionPlan(ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("with invalid response from database", func(t *testing.T) {
 		t.Parallel()
 
@@ -126,15 +138,16 @@ func TestQuerier_GetPlan(T *testing.T) {
 		expectedError := errors.New(t.Name())
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleAccountSubscriptionPlan.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -155,15 +168,16 @@ func TestQuerier_GetPlan(T *testing.T) {
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleAccountSubscriptionPlan.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		exampleRows := sqlmock.NewRows(querybuilding.AccountSubscriptionPlansTableColumns).AddRow(
@@ -199,13 +213,13 @@ func TestQuerier_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 		exampleCount := uint64(123)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAllAccountSubscriptionPlansCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAllAccountSubscriptionPlansCountQuery", testutil.ContextMatcher).Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -225,13 +239,13 @@ func TestQuerier_GetAllAccountSubscriptionPlansCount(T *testing.T) {
 		expectedError := errors.New(t.Name())
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAllAccountSubscriptionPlansCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAllAccountSubscriptionPlansCountQuery", testutil.ContextMatcher).Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -257,15 +271,16 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 		exampleAccountSubscriptionPlanList := fakes.BuildFakeAccountSubscriptionPlanList()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery",
-				testutil.ContextMatcher,
-				filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAccountSubscriptionPlansQuery",
+			testutil.ContextMatcher,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -287,15 +302,16 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 		exampleAccountSubscriptionPlanList.Page, exampleAccountSubscriptionPlanList.Limit = 0, 0
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery",
-				testutil.ContextMatcher,
-				filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAccountSubscriptionPlansQuery",
+			testutil.ContextMatcher,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -316,15 +332,16 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery",
-				testutil.ContextMatcher,
-				filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAccountSubscriptionPlansQuery",
+			testutil.ContextMatcher,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -345,15 +362,16 @@ func TestQuerier_GetAccountSubscriptionPlans(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildGetAccountSubscriptionPlansQuery",
-				testutil.ContextMatcher,
-				filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildGetAccountSubscriptionPlansQuery",
+			testutil.ContextMatcher,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -379,23 +397,24 @@ func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildCreateAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleInput).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildCreateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -411,6 +430,34 @@ func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.CreateAccountSubscriptionPlan(ctx, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccountSubscriptionPlan.ExternalID = ""
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("error executing query", func(t *testing.T) {
 		t.Parallel()
 
@@ -419,17 +466,18 @@ func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildCreateAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleInput).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildCreateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -440,6 +488,88 @@ func TestQuerier_CreateAccountSubscriptionPlan(T *testing.T) {
 		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, expectedError))
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error creating transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccountSubscriptionPlan.ExternalID = ""
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildCreateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.timeFunc = func() uint64 {
+			return exampleAccountSubscriptionPlan.CreatedOn
+		}
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccountSubscriptionPlan.ExternalID = ""
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildCreateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.timeFunc = func() uint64 {
+			return exampleAccountSubscriptionPlan.CreatedOn
+		}
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		actual, err := c.CreateAccountSubscriptionPlan(ctx, exampleInput)
+		assert.Error(t, err)
 		assert.Nil(t, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
@@ -455,23 +585,24 @@ func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildUpdateAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleAccountSubscriptionPlan).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildUpdateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -483,6 +614,30 @@ func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		err := c.UpdateAccountSubscriptionPlan(ctx, nil, 0, nil)
+		assert.Error(t, err)
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan, 0, nil)
+		assert.Error(t, err)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
@@ -490,17 +645,18 @@ func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildUpdateAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleAccountSubscriptionPlan).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildUpdateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -513,6 +669,76 @@ func TestQuerier_UpdateAccountSubscriptionPlan(T *testing.T) {
 		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan, 0, nil)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, expectedError))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error creating audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildUpdateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan, 0, nil)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildUpdateAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		err := c.UpdateAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan, 0, nil)
+		assert.Error(t, err)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -527,23 +753,24 @@ func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildArchiveAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleAccountSubscriptionPlan.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildArchiveAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan.ID,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -555,6 +782,30 @@ func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		err := c.ArchiveAccountSubscriptionPlan(ctx, 0, 0)
+		assert.Error(t, err)
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID, 0)
+		assert.Error(t, err)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
@@ -562,17 +813,18 @@ func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.
-			On("BuildArchiveAccountSubscriptionPlanQuery",
-				testutil.ContextMatcher,
-				exampleAccountSubscriptionPlan.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildArchiveAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan.ID,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -588,6 +840,76 @@ func TestQuerier_ArchiveAccountSubscriptionPlan(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
+
+	T.Run("with error writing audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildArchiveAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID, 0)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.AccountSubscriptionPlanSQLQueryBuilder.On(
+			"BuildArchiveAccountSubscriptionPlanQuery",
+			testutil.ContextMatcher,
+			exampleAccountSubscriptionPlan.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountSubscriptionPlan.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		err := c.ArchiveAccountSubscriptionPlan(ctx, exampleAccountSubscriptionPlan.ID, 0)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
 }
 
 func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
@@ -595,6 +917,7 @@ func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
@@ -621,8 +944,20 @@ func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAuditLogEntriesForAccountSubscriptionPlan(ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
@@ -650,6 +985,7 @@ func TestQuerier_GetAuditLogEntriesForAccountSubscriptionPlan(T *testing.T) {
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()

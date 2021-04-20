@@ -341,15 +341,19 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 		return nil, ErrNilInputProvided
 	}
 
+	if createdByUser == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
 	logger := q.logger.WithValue(keys.RequesterIDKey, createdByUser)
 	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
-
-	query, args := q.sqlQueryBuilder.BuildCreateItemQuery(ctx, input)
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildCreateItemQuery(ctx, input)
 
 	// create the item.
 	id, err := q.performWriteQuery(ctx, tx, false, "item creation", query, args)
@@ -391,17 +395,21 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 		return ErrNilInputProvided
 	}
 
+	if changedByUser == 0 {
+		return ErrInvalidIDProvided
+	}
+
 	logger := q.logger.WithValue(keys.ItemIDKey, updated.ID)
 	tracing.AttachItemIDToSpan(span, updated.ID)
 	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
 	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateItemQuery(ctx, updated)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildUpdateItemQuery(ctx, updated)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "item update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -435,6 +443,10 @@ func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archive
 		return ErrInvalidIDProvided
 	}
 
+	if archivedBy == 0 {
+		return ErrInvalidIDProvided
+	}
+
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachUserIDToSpan(span, archivedBy)
 	tracing.AttachItemIDToSpan(span, itemID)
@@ -445,12 +457,12 @@ func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archive
 		keys.AccountIDKey: accountID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveItemQuery(ctx, itemID, accountID)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildArchiveItemQuery(ctx, itemID, accountID)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "item archive", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)

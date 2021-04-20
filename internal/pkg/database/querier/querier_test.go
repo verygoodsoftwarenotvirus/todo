@@ -104,7 +104,7 @@ func buildErroneousMockRow() *sqlmock.Rows {
 	return exampleRows
 }
 
-func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
+func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock, returnErr error) {
 	fakeAuditLogEntryQuery, fakeAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
 		On("BuildCreateAuditLogEntryQuery",
@@ -112,9 +112,14 @@ func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBui
 			mock.IsType(&types.AuditLogEntryCreationInput{})).
 		Return(fakeAuditLogEntryQuery, fakeAuditLogEntryArgs)
 
-	db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryQuery)).
-		WithArgs(interfaceToDriverValue(fakeAuditLogEntryArgs)...).
-		WillReturnResult(newSuccessfulDatabaseResult(123))
+	e := db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryQuery)).
+		WithArgs(interfaceToDriverValue(fakeAuditLogEntryArgs)...)
+
+	if returnErr != nil {
+		e.WillReturnError(returnErr)
+	} else {
+		e.WillReturnResult(newSuccessfulDatabaseResult(123))
+	}
 }
 
 // end helper funcs
@@ -148,8 +153,9 @@ func TestQuerier_Migrate(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -175,8 +181,8 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder.On(
 			"BuildTestUserCreationQuery",
 			testutil.ContextMatcher,
-			exampleInput).
-			Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
+			exampleInput,
+		).Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeTestUserCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeTestUserCreationArgs)...).
@@ -199,8 +205,8 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
 			testutil.ContextMatcher,
-			exampleAccountCreationInput).
-			Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
+			exampleAccountCreationInput,
+		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
@@ -222,8 +228,8 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildCreateMembershipForNewUserQuery",
 			testutil.ContextMatcher,
-			exampleUser.ID, exampleAccount.ID).
-			Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
+			exampleUser.ID, exampleAccount.ID,
+		).Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
@@ -291,8 +297,8 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder.On(
 			"BuildTestUserCreationQuery",
 			testutil.ContextMatcher,
-			exampleInput).
-			Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
+			exampleInput,
+		).Return(fakeTestUserCreationQuery, fakeTestUserCreationArgs)
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -383,7 +389,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
 	})
 
-	T.Run("with PostgresProviderKey", func(t *testing.T) {
+	T.Run("with PostgresProvider", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
@@ -404,7 +410,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		mockDB.ExpectPing().WillDelayFor(0)
 
 		exampleConfig := &dbconfig.Config{
-			Provider:        dbconfig.PostgresProviderKey,
+			Provider:        dbconfig.PostgresProvider,
 			Debug:           true,
 			RunMigrations:   true,
 			MaxPingAttempts: 1,

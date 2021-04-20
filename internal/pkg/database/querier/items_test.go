@@ -61,10 +61,8 @@ func TestQuerier_ScanItems(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On(
-			"Next").Return(false)
-		mockRows.On(
-			"Err").Return(errors.New("blah"))
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanItems(ctx, mockRows, false)
 		assert.Error(t, err)
@@ -77,12 +75,9 @@ func TestQuerier_ScanItems(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On(
-			"Next").Return(false)
-		mockRows.On(
-			"Err").Return(nil)
-		mockRows.On(
-			"Close").Return(errors.New("blah"))
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanItems(ctx, mockRows, false)
 		assert.Error(t, err)
@@ -100,14 +95,16 @@ func TestQuerier_ItemExists(T *testing.T) {
 		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildItemExistsQuery",
 			testutil.ContextMatcher,
-			exampleItem.ID, exampleAccount.ID,
+			exampleItem.ID,
+			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -122,6 +119,38 @@ func TestQuerier_ItemExists(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid item ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.ItemExists(ctx, 0, exampleAccount.ID)
+		assert.Error(t, err)
+		assert.False(t, actual)
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		actual, err := c.ItemExists(ctx, exampleItem.ID, 0)
+		assert.Error(t, err)
+		assert.False(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
 	T.Run("with sql.ErrNoRows", func(t *testing.T) {
 		t.Parallel()
 
@@ -130,14 +159,16 @@ func TestQuerier_ItemExists(T *testing.T) {
 		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildItemExistsQuery",
 			testutil.ContextMatcher,
-			exampleItem.ID, exampleAccount.ID,
+			exampleItem.ID,
+			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -160,14 +191,16 @@ func TestQuerier_ItemExists(T *testing.T) {
 		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildItemExistsQuery",
 			testutil.ContextMatcher,
-			exampleItem.ID, exampleAccount.ID,
+			exampleItem.ID,
+			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -194,26 +227,58 @@ func TestQuerier_GetItem(T *testing.T) {
 		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemQuery",
-				testutil.ContextMatcher,
-				exampleItem.ID, exampleAccount.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItem))
 
-		actual, err := c.GetItem(ctx, exampleItem.ID, exampleItem.BelongsToAccount)
+		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccount.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid item ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetItem(ctx, 0, exampleItem.BelongsToAccount)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetItem(ctx, exampleItem.ID, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -224,22 +289,24 @@ func TestQuerier_GetItem(T *testing.T) {
 		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemQuery",
-				testutil.ContextMatcher,
-				exampleItem.ID, exampleAccount.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetItem(ctx, exampleItem.ID, exampleItem.BelongsToAccount)
+		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccount.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -260,9 +327,8 @@ func TestQuerier_GetAllItemsCount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAllItemsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAllItemsCountQuery", testutil.ContextMatcher).Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -290,23 +356,23 @@ func TestQuerier_GetAllItems(T *testing.T) {
 		exampleBatchSize := uint16(1000)
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAllItemsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAllItemsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetBatchOfItemsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetBatchOfItemsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -314,8 +380,7 @@ func TestQuerier_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItemList.Items...))
 
-		err := c.GetAllItems(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllItems(ctx, results, exampleBatchSize))
 
 		stillQuerying := true
 		for stillQuerying {
@@ -333,6 +398,16 @@ func TestQuerier_GetAllItems(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with nil results channel", func(t *testing.T) {
+		t.Parallel()
+
+		exampleBatchSize := uint16(1000)
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.GetAllItems(ctx, nil, exampleBatchSize))
+	})
+
 	T.Run("with now rows returned", func(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
@@ -345,19 +420,18 @@ func TestQuerier_GetAllItems(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAllItemsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAllItemsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetBatchOfItemsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetBatchOfItemsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -365,8 +439,7 @@ func TestQuerier_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		err := c.GetAllItems(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllItems(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -384,9 +457,8 @@ func TestQuerier_GetAllItems(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAllItemsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAllItemsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -412,19 +484,18 @@ func TestQuerier_GetAllItems(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAllItemsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAllItemsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetBatchOfItemsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetBatchOfItemsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -432,8 +503,7 @@ func TestQuerier_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		err := c.GetAllItems(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllItems(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -452,19 +522,18 @@ func TestQuerier_GetAllItems(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAllItemsCountQuery", testutil.ContextMatcher).
-			Return(fakeQuery, []interface{}{})
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAllItemsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(expectedCount))
 
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetBatchOfItemsQuery",
-				testutil.ContextMatcher,
-				uint64(1), uint64(exampleBatchSize+1)).
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetBatchOfItemsQuery",
+			testutil.ContextMatcher,
+			uint64(1), uint64(exampleBatchSize+1)).
 			Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -472,8 +541,7 @@ func TestQuerier_GetAllItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		err := c.GetAllItems(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllItems(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -484,12 +552,11 @@ func TestQuerier_GetAllItems(T *testing.T) {
 func TestQuerier_GetItems(T *testing.T) {
 	T.Parallel()
 
-	exampleUser := fakes.BuildFakeUser()
-
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItemList := fakes.BuildFakeItemList()
 
 		ctx := context.Background()
@@ -497,11 +564,13 @@ func TestQuerier_GetItems(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, false, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			false,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -512,7 +581,7 @@ func TestQuerier_GetItems(T *testing.T) {
 				exampleItemList.Items...,
 			))
 
-		actual, err := c.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
 
@@ -523,20 +592,24 @@ func TestQuerier_GetItems(T *testing.T) {
 		t.Parallel()
 
 		filter := (*types.QueryFilter)(nil)
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItemList := fakes.BuildFakeItemList()
 		exampleItemList.Page = 0
 		exampleItemList.Limit = 0
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, false, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			false,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -547,35 +620,50 @@ func TestQuerier_GetItems(T *testing.T) {
 				exampleItemList.Items...,
 			))
 
-		actual, err := c.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
-	T.Run("with error executing query", func(t *testing.T) {
+	T.Run("with invalid account ID", func(t *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
 
 		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetItems(ctx, 0, filter)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error executing query", func(t *testing.T) {
+		t.Parallel()
+
+		filter := types.DefaultQueryFilter()
+		exampleAccount := fakes.BuildFakeAccount()
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, false, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			false,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -586,24 +674,26 @@ func TestQuerier_GetItems(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-
+		exampleAccount := fakes.BuildFakeAccount()
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, false, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			false,
+			filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetItems(ctx, exampleUser.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -625,11 +715,11 @@ func TestQuerier_GetItemsForAdmin(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				uint64(0), true, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			uint64(0), true, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -656,15 +746,16 @@ func TestQuerier_GetItemsForAdmin(T *testing.T) {
 		exampleItemList.Limit = 0
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				uint64(0), true, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			uint64(0), true, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -692,11 +783,11 @@ func TestQuerier_GetItemsForAdmin(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				uint64(0), true, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			uint64(0), true, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -720,11 +811,11 @@ func TestQuerier_GetItemsForAdmin(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsQuery",
-				testutil.ContextMatcher,
-				uint64(0), true, filter).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsQuery",
+			testutil.ContextMatcher,
+			uint64(0), true, filter,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -745,7 +836,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, x := range exampleItemList.Items {
@@ -753,15 +844,19 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, defaultLimit, exampleIDs, false).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			defaultLimit,
+			exampleIDs,
+			false,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -772,17 +867,16 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 				exampleItemList.Items...,
 			))
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, defaultLimit, exampleIDs)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList.Items, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
-	T.Run("sets limit if not present", func(t *testing.T) {
+	T.Run("with invalid account ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, x := range exampleItemList.Items {
@@ -790,15 +884,37 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetItemsWithIDs(ctx, 0, defaultLimit, exampleIDs)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("sets limit if not present", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItemList := fakes.BuildFakeItemList()
+		var exampleIDs []uint64
+		for _, x := range exampleItemList.Items {
+			exampleIDs = append(exampleIDs, x.ID)
+		}
+
+		ctx := context.Background()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, defaultLimit, exampleIDs, false).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			defaultLimit,
+			exampleIDs,
+			false,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -809,7 +925,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 				exampleItemList.Items...,
 			))
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleUser.ID, 0, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, 0, exampleIDs)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList.Items, actual)
 
@@ -819,7 +935,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, x := range exampleItemList.Items {
@@ -827,22 +943,26 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, defaultLimit, exampleIDs, false).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			defaultLimit,
+			exampleIDs,
+			false,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, defaultLimit, exampleIDs)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -852,7 +972,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, x := range exampleItemList.Items {
@@ -860,22 +980,26 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				exampleUser.ID, defaultLimit, exampleIDs, false).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			exampleAccount.ID,
+			defaultLimit,
+			exampleIDs,
+			false,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleUser.ID, defaultLimit, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, defaultLimit, exampleIDs)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -896,15 +1020,19 @@ func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				uint64(0), defaultLimit, exampleIDs, true).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			uint64(0),
+			defaultLimit,
+			exampleIDs,
+			true,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -922,6 +1050,17 @@ func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with no ids", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetItemsWithIDsForAdmin(ctx, defaultLimit, nil)
+		assert.NoError(t, err)
+		assert.NotNil(t, actual)
+	})
+
 	T.Run("sets limit if not present", func(t *testing.T) {
 		t.Parallel()
 
@@ -932,15 +1071,19 @@ func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				uint64(0), defaultLimit, exampleIDs, true).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			uint64(0),
+			defaultLimit,
+			exampleIDs,
+			true,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -968,15 +1111,19 @@ func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				uint64(0), defaultLimit, exampleIDs, true).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			uint64(0),
+			defaultLimit,
+			exampleIDs,
+			true,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -1000,15 +1147,19 @@ func TestQuerier_GetItemsWithIDsForAdmin(T *testing.T) {
 		}
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetItemsWithIDsQuery",
-				testutil.ContextMatcher,
-				uint64(0), defaultLimit, exampleIDs, true).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetItemsWithIDsQuery",
+			testutil.ContextMatcher,
+			uint64(0),
+			defaultLimit,
+			exampleIDs,
+			true,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -1029,6 +1180,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.ExternalID = ""
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
@@ -1040,17 +1192,17 @@ func TestQuerier_CreateItem(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildCreateItemQuery",
-				testutil.ContextMatcher,
-				exampleInput).
-			Return(fakeCreationQuery, fakeCreationArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildCreateItemQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeCreationQuery, fakeCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
@@ -1059,17 +1211,68 @@ func TestQuerier_CreateItem(T *testing.T) {
 		}
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual, err := c.CreateItem(ctx, exampleInput, 0)
+		actual, err := c.CreateItem(ctx, exampleInput, exampleUser.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.ExternalID = ""
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.CreateItem(ctx, nil, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid actor ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.ExternalID = ""
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.CreateItem(ctx, exampleInput, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.ExternalID = ""
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		actual, err := c.CreateItem(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
 		expectedErr := errors.New(t.Name())
+		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
@@ -1080,11 +1283,11 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildCreateItemQuery",
-				testutil.ContextMatcher,
-				exampleInput).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildCreateItemQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -1095,9 +1298,87 @@ func TestQuerier_CreateItem(T *testing.T) {
 			return exampleItem.CreatedOn
 		}
 
-		actual, err := c.CreateItem(ctx, exampleInput, 0)
+		actual, err := c.CreateItem(ctx, exampleInput, exampleUser.ID)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, expectedErr))
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error creating audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.ExternalID = ""
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildCreateItemQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeCreationQuery, fakeCreationArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		actual, err := c.CreateItem(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.ExternalID = ""
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildCreateItemQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeCreationQuery, fakeCreationArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
+			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.timeFunc = func() uint64 {
+			return exampleItem.CreatedOn
+		}
+
+		actual, err := c.CreateItem(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
 		assert.Nil(t, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
@@ -1110,6 +1391,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
@@ -1121,24 +1403,172 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildUpdateItemQuery",
-				testutil.ContextMatcher,
-				exampleItem).
-			Return(fakeUpdateQuery, fakeUpdateArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildUpdateItemQuery",
+			testutil.ContextMatcher,
+			exampleItem,
+		).Return(fakeUpdateQuery, fakeUpdateArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		err := c.UpdateItem(ctx, exampleItem, exampleAccount.ID, nil)
-		assert.NoError(t, err)
+		assert.NoError(t, c.UpdateItem(ctx, exampleItem, exampleUser.ID, nil))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.UpdateItem(ctx, nil, exampleUser.ID, nil))
+	})
+
+	T.Run("with invalid actor ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.UpdateItem(ctx, exampleItem, 0, nil))
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		assert.Error(t, c.UpdateItem(ctx, exampleItem, exampleUser.ID, nil))
+	})
+
+	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildUpdateItemQuery",
+			testutil.ContextMatcher,
+			exampleItem,
+		).Return(fakeUpdateQuery, fakeUpdateArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
+			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.UpdateItem(ctx, exampleItem, exampleUser.ID, nil))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error writing audit log entry to database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildUpdateItemQuery",
+			testutil.ContextMatcher,
+			exampleItem,
+		).Return(fakeUpdateQuery, fakeUpdateArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
+			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.UpdateItem(ctx, exampleItem, exampleUser.ID, nil))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildUpdateItemQuery",
+			testutil.ContextMatcher,
+			exampleItem,
+		).Return(fakeUpdateQuery, fakeUpdateArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
+			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.UpdateItem(ctx, exampleItem, exampleUser.ID, nil))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -1150,35 +1580,206 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildArchiveItemQuery",
-				testutil.ContextMatcher,
-				exampleItem.ID, exampleItem.BelongsToAccount).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildArchiveItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db)
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		err := c.ArchiveItem(ctx, exampleItem.ID, exampleItem.BelongsToAccount, exampleAccount.ID)
-		assert.NoError(t, err)
+		assert.NoError(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid item ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveItem(ctx, 0, exampleAccount.ID, exampleUser.ID))
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, 0, exampleUser.ID))
+	})
+
+	T.Run("with invalid actor ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, 0))
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+	})
+
+	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildArchiveItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error writing audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildArchiveItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = exampleAccount.ID
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildArchiveItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -1194,15 +1795,16 @@ func TestQuerier_GetAuditLogEntriesForItem(T *testing.T) {
 		exampleAuditLogEntriesList := fakes.BuildFakeAuditLogEntryList()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForItemQuery",
-				testutil.ContextMatcher,
-				exampleItem.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAuditLogEntriesForItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -1219,21 +1821,33 @@ func TestQuerier_GetAuditLogEntriesForItem(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid item ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAuditLogEntriesForItem(ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
 		exampleItem := fakes.BuildFakeItem()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForItemQuery",
-				testutil.ContextMatcher,
-				exampleItem.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAuditLogEntriesForItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -1253,15 +1867,16 @@ func TestQuerier_GetAuditLogEntriesForItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 
 		ctx := context.Background()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		c, db := buildTestClient(t)
 
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.
-			On("BuildGetAuditLogEntriesForItemQuery",
-				testutil.ContextMatcher,
-				exampleItem.ID).
-			Return(fakeQuery, fakeArgs)
+		mockQueryBuilder.ItemSQLQueryBuilder.On(
+			"BuildGetAuditLogEntriesForItemQuery",
+			testutil.ContextMatcher,
+			exampleItem.ID,
+		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).

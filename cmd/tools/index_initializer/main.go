@@ -37,9 +37,9 @@ var (
 	}
 
 	validDatabaseTypes = map[string]struct{}{
-		dbconfig.PostgresProviderKey: {},
-		dbconfig.MariaDBProviderKey:  {},
-		dbconfig.SqliteProviderKey:   {},
+		dbconfig.PostgresProvider: {},
+		dbconfig.MariaDBProvider:  {},
+		dbconfig.SqliteProvider:   {},
 	}
 )
 

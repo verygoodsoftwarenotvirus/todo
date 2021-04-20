@@ -163,7 +163,6 @@ func (q *SQLQuerier) CreateAccountSubscriptionPlan(ctx context.Context, input *t
 		return nil, ErrNilInputProvided
 	}
 
-	query, args := q.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(ctx, input)
 	logger := q.logger.WithValue(keys.NameKey, input.Name)
 
 	tx, err := q.db.BeginTx(ctx, nil)
@@ -172,6 +171,7 @@ func (q *SQLQuerier) CreateAccountSubscriptionPlan(ctx context.Context, input *t
 	}
 
 	// create the account subscription plan.
+	query, args := q.sqlQueryBuilder.BuildCreateAccountSubscriptionPlanQuery(ctx, input)
 	id, err := q.performWriteQuery(ctx, tx, false, "account subscription plan creation", query, args)
 	if err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -217,13 +217,12 @@ func (q *SQLQuerier) UpdateAccountSubscriptionPlan(ctx context.Context, updated 
 	tracing.AttachRequestingUserIDToSpan(span, changedBy)
 	tracing.AttachChangeSummarySpan(span, "account", changes)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(ctx, updated)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
+	query, args := q.sqlQueryBuilder.BuildUpdateAccountSubscriptionPlanQuery(ctx, updated)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account subscription plan update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating account subscription plan")
@@ -256,13 +255,12 @@ func (q *SQLQuerier) ArchiveAccountSubscriptionPlan(ctx context.Context, account
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, accountSubscriptionPlanID)
 	tracing.AttachRequestingUserIDToSpan(span, archivedBy)
 
-	query, args := q.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(ctx, accountSubscriptionPlanID)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
+	query, args := q.sqlQueryBuilder.BuildArchiveAccountSubscriptionPlanQuery(ctx, accountSubscriptionPlanID)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account subscription plan archive", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating account subscription plan")

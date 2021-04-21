@@ -304,7 +304,11 @@ func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Que
 			return 0, observability.PrepareError(err, logger, span, "executing %s query", queryDescription)
 		}
 
-		if count, err := res.RowsAffected(); count == 0 || err != nil {
+		var affectedRowCount int64
+		if affectedRowCount, err = res.RowsAffected(); affectedRowCount == 0 || err != nil {
+			// the only errors returned by the currently supported drivers are either
+			// always nil or simply indicate that no rows were affected by the query.
+
 			logger.Debug("no rows modified by query")
 			span.AddEvent("no_rows_modified")
 

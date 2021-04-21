@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
+func TestQueryFilter_ApplyFilterToQueryBuilder(T *testing.T) {
 	T.Parallel()
 
 	exampleTableName := "stuff"
@@ -34,7 +34,19 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		}
 
 		sb := squirrel.StatementBuilder.Select("*").From("testing")
-		ApplyFilterToQueryBuilder(qf, exampleTableName, sb)
+		sb = ApplyFilterToQueryBuilder(qf, exampleTableName, sb)
+		expected := "SELECT * FROM testing WHERE stuff.created_on > ? AND stuff.created_on < ? AND stuff.last_updated_on > ? AND stuff.last_updated_on < ? LIMIT 50 OFFSET 4950"
+		actual, _, err := sb.ToSql()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		sb := squirrel.StatementBuilder.Select("*").From("testing")
+		sb = ApplyFilterToQueryBuilder(nil, exampleTableName, sb)
 		expected := "SELECT * FROM testing"
 		actual, _, err := sb.ToSql()
 
@@ -42,7 +54,7 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 
-	T.Run("basic usecase", func(t *testing.T) {
+	T.Run("basic usage", func(t *testing.T) {
 		t.Parallel()
 
 		qf := &types.QueryFilter{Limit: 15, Page: 2}
@@ -88,5 +100,45 @@ func TestQueryFilter_ApplyToQueryBuilder(T *testing.T) {
 		assert.Equal(t, expected, actual, "expected and actual queries don't match")
 		assert.Nil(t, err)
 		assert.NotEmpty(t, args)
+	})
+}
+
+func TestQueryFilter_ApplyFilterToSubCountQueryBuilder(T *testing.T) {
+	T.Parallel()
+
+	exampleTableName := "stuff"
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		qf := &types.QueryFilter{
+			Page:          100,
+			Limit:         50,
+			CreatedAfter:  123456789,
+			CreatedBefore: 123456789,
+			UpdatedAfter:  123456789,
+			UpdatedBefore: 123456789,
+			SortBy:        types.SortDescending,
+		}
+
+		sb := squirrel.StatementBuilder.Select("*").From("testing")
+		sb = ApplyFilterToSubCountQueryBuilder(qf, exampleTableName, sb)
+		expected := "SELECT * FROM testing WHERE stuff.created_on > ? AND stuff.created_on < ? AND stuff.last_updated_on > ? AND stuff.last_updated_on < ?"
+		actual, _, err := sb.ToSql()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+
+	T.Run("with nil filter", func(t *testing.T) {
+		t.Parallel()
+
+		sb := squirrel.StatementBuilder.Select("*").From("testing")
+		sb = ApplyFilterToSubCountQueryBuilder(nil, exampleTableName, sb)
+		expected := "SELECT * FROM testing"
+		actual, _, err := sb.ToSql()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
 	})
 }

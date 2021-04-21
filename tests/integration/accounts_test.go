@@ -249,7 +249,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			const userCount = 3
+			const userCount = 10
 
 			currentStatus, statusErr := testClients.main.UserStatus(s.ctx)
 			requireNotNilAndNoProblems(t, currentStatus, statusErr)
@@ -351,9 +351,10 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAccountPermissionsModifiedEvent})
 			}
 
+			originalWebhookName := createdWebhook.Name
 			// check that each user can update the webhook
 			for i := 0; i < userCount; i++ {
-				createdWebhook.Name = fmt.Sprintf("%s_%d", createdWebhook.Name, time.Now().UnixNano())
+				createdWebhook.Name = fmt.Sprintf("%s_%d", originalWebhookName, time.Now().UnixNano())
 				require.NoError(t, clients[i].UpdateWebhook(ctx, createdWebhook))
 				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.WebhookUpdateEvent})
 			}

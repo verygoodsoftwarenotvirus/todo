@@ -114,11 +114,7 @@ func (q *SQLQuerier) GetWebhook(ctx context.Context, webhookID, accountID uint64
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
-
-	if accountID == 0 {
+	if webhookID == 0 || accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -193,12 +189,12 @@ func (q *SQLQuerier) GetAllWebhooks(ctx context.Context, resultChannel chan []*t
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if resultChannel == nil {
-		return ErrNilInputProvided
-	}
-
 	if batchSize == 0 {
 		batchSize = defaultBatchSize
+	}
+
+	if resultChannel == nil {
+		return ErrNilInputProvided
 	}
 
 	logger := q.logger.WithValue("batch_size", batchSize)
@@ -254,13 +250,12 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
 	logger := q.logger.WithValue(keys.AccountIDKey, input.BelongsToAccount)
 
-	query, args := q.sqlQueryBuilder.BuildCreateWebhookQuery(ctx, input)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
+	query, args := q.sqlQueryBuilder.BuildCreateWebhookQuery(ctx, input)
 	id, err := q.performWriteQuery(ctx, tx, false, "webhook creation", query, args)
 	if err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -303,6 +298,10 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if changedByUser == 0 {
+		return ErrInvalidIDProvided
+	}
+
 	if updated == nil {
 		return ErrNilInputProvided
 	}
@@ -316,13 +315,12 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 		WithValue(keys.RequesterIDKey, changedByUser).
 		WithValue(keys.AccountIDKey, updated.BelongsToAccount)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateWebhookQuery(ctx, updated)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
+	query, args := q.sqlQueryBuilder.BuildUpdateWebhookQuery(ctx, updated)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "webhook update", query, args); err != nil {
 		logger.Error(err, "updating webhook")
 		q.rollbackTransaction(ctx, tx)
@@ -351,11 +349,7 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 {
-		return ErrInvalidIDProvided
-	}
-
-	if accountID == 0 {
+	if webhookID == 0 || accountID == 0 || archivedByUserID == 0 {
 		return ErrInvalidIDProvided
 	}
 
@@ -369,12 +363,12 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 		keys.RequesterIDKey: archivedByUserID,
 	})
 
-	query, args := q.sqlQueryBuilder.BuildArchiveWebhookQuery(ctx, webhookID, accountID)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildArchiveWebhookQuery(ctx, webhookID, accountID)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "webhook archive", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)

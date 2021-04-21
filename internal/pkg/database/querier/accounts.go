@@ -374,7 +374,6 @@ func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, 
 	}
 
 	query, args := q.sqlQueryBuilder.BuildUpdateAccountQuery(ctx, updated)
-
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating account")

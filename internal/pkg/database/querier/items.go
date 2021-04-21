@@ -410,7 +410,6 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 	}
 
 	query, args := q.sqlQueryBuilder.BuildUpdateItemQuery(ctx, updated)
-
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "item update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating item")

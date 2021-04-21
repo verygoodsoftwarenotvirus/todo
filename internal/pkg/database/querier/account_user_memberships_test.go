@@ -5,18 +5,18 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/require"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func buildMockRowsFromAccountUserMemberships(accountName string, memberships ...*types.AccountUserMembership) *sqlmock.Rows {
@@ -1110,7 +1110,6 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		assert.Error(t, c.TransferAccountOwnership(ctx, exampleAccount.ID, exampleUser.ID, exampleInput))
 	})
-
 }
 
 func TestQuerier_AddUserToAccount(T *testing.T) {

@@ -199,8 +199,7 @@ func TestMariaDB_BuildTestUserCreationQuery(T *testing.T) {
 		}
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES (?,?,?,?,?,?,UNIX_TIMESTAMP())"
@@ -226,8 +225,7 @@ func TestMariaDB_BuildCreateUserQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions) VALUES (?,?,?,?,?,?)"

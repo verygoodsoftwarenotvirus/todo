@@ -193,8 +193,7 @@ func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
 		exampleInput.IsServiceAdmin = true
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES ($1,$2,$3,$4,$5,$6,extract(epoch FROM NOW())) RETURNING id"
@@ -229,8 +228,7 @@ func TestPostgres_BuildCreateUserQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id"

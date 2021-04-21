@@ -3,13 +3,14 @@ package config
 import (
 	"context"
 	"database/sql"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -87,8 +88,8 @@ func TestConfig_ProvideDatabaseConnection(T *testing.T) {
 		}
 
 		db, err := cfg.ProvideDatabaseConnection(logger)
-		assert.NotNil(t, db)
-		assert.NoError(t, err)
+		assert.Nil(t, db)
+		assert.Error(t, err)
 	})
 }
 
@@ -143,8 +144,8 @@ func TestConfig_ProvideDatabasePlaceholderFormat(T *testing.T) {
 		}
 
 		pf, err := cfg.ProvideDatabasePlaceholderFormat()
-		assert.NotNil(t, pf)
-		assert.NoError(t, err)
+		assert.Nil(t, pf)
+		assert.Error(t, err)
 	})
 }
 
@@ -194,7 +195,6 @@ func TestConfig_ProvideJSONPluckQuery(T *testing.T) {
 
 		assert.Empty(t, cfg.ProvideJSONPluckQuery())
 	})
-
 }
 
 func TestConfig_ProvideCurrentUnixTimestampQuery(T *testing.T) {

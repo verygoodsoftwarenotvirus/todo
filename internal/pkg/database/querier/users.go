@@ -133,6 +133,10 @@ func (q *SQLQuerier) UserHasStatus(ctx context.Context, userID uint64, statuses 
 		return false, ErrInvalidIDProvided
 	}
 
+	if len(statuses) == 0 {
+		return true, nil
+	}
+
 	logger := q.logger.WithValue(keys.UserIDKey, userID).WithValue("statuses", statuses)
 	tracing.AttachUserIDToSpan(span, userID)
 
@@ -400,13 +404,12 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, change
 	tracing.AttachUsernameToSpan(span, updated.Username)
 	logger := q.logger.WithValue(keys.UsernameKey, updated.Username)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateUserQuery(ctx, updated)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
+	query, args := q.sqlQueryBuilder.BuildUpdateUserQuery(ctx, updated)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating user")
@@ -442,12 +445,12 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newH
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateUserPasswordQuery(ctx, userID, newHash)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildUpdateUserPasswordQuery(ctx, userID, newHash)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user passwords update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -484,12 +487,12 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID uint6
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := q.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(ctx, userID, newSecret)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildUpdateUserTwoFactorSecretQuery(ctx, userID, newSecret)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user 2FA secret update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -522,12 +525,12 @@ func (q *SQLQuerier) VerifyUserTwoFactorSecret(ctx context.Context, userID uint6
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query, args := q.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(ctx, userID)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
+
+	query, args := q.sqlQueryBuilder.BuildVerifyUserTwoFactorSecretQuery(ctx, userID)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -560,21 +563,16 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	archiveUserQuery, archiveUserArgs := q.sqlQueryBuilder.BuildArchiveUserQuery(ctx, userID)
-
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
+	archiveUserQuery, archiveUserArgs := q.sqlQueryBuilder.BuildArchiveUserQuery(ctx, userID)
+
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user archive", archiveUserQuery, archiveUserArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "archiving user")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user archive audit log entry")
 	}
 
 	archiveMembershipsQuery, archiveMembershipsArgs := q.sqlQueryBuilder.BuildArchiveAccountMembershipsForUserQuery(ctx, userID)
@@ -582,6 +580,11 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "archiving user account memberships")
+	}
+
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user archive audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {

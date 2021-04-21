@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildGetPlanQuery(T *testing.T) {
+func TestSqlite_BuildGetAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -35,7 +35,7 @@ func TestSqlite_BuildGetPlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetAllPlansCountQuery(T *testing.T) {
+func TestSqlite_BuildGetAllAccountSubscriptionPlansCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestSqlite_BuildGetAllPlansCountQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildGetPlansQuery(T *testing.T) {
+func TestSqlite_BuildGetAccountSubscriptionPlansQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -82,7 +82,7 @@ func TestSqlite_BuildGetPlansQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
+func TestSqlite_BuildCreateAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -95,8 +95,7 @@ func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(exampleAccountSubscriptionPlan)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleAccountSubscriptionPlan.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleAccountSubscriptionPlan.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO account_subscription_plans (external_id,name,description,price,period) VALUES (?,?,?,?,?)"
@@ -117,7 +116,7 @@ func TestSqlite_BuildCreatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
+func TestSqlite_BuildUpdateAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -144,7 +143,7 @@ func TestSqlite_BuildUpdatePlanQuery(T *testing.T) {
 	})
 }
 
-func TestSqlite_BuildArchivePlanQuery(T *testing.T) {
+func TestSqlite_BuildArchiveAccountSubscriptionPlanQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -160,6 +159,29 @@ func TestSqlite_BuildArchivePlanQuery(T *testing.T) {
 			exampleAccountSubscriptionPlan.ID,
 		}
 		actualQuery, actualArgs := q.BuildArchiveAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestSqlite_BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE json_extract(audit_log.context, '$.plan_id') = ? ORDER BY audit_log.created_on"
+		expectedArgs := []interface{}{
+			exampleAccountSubscriptionPlan.ID,
+		}
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(ctx, exampleAccountSubscriptionPlan.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

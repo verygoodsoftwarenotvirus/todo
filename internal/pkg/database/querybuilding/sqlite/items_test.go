@@ -185,8 +185,7 @@ func TestSqlite_BuildCreateItemQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleItem.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleItem.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO items (external_id,name,details,belongs_to_account) VALUES (?,?,?,?)"

@@ -110,6 +110,31 @@ func TestSqlite_BuildGetAPIClientsQuery(T *testing.T) {
 	})
 }
 
+func TestSqlite_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.id = ?"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+			exampleAPIClient.ID,
+		}
+		actualQuery, actualArgs := q.BuildGetAPIClientByDatabaseIDQuery(ctx, exampleAPIClient.ID, exampleUser.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
 	T.Parallel()
 
@@ -123,8 +148,7 @@ func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
 		exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleAPIClient.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleAPIClient.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO api_clients (external_id,name,client_id,secret_key,belongs_to_user) VALUES (?,?,?,?,?)"
@@ -179,14 +203,38 @@ func TestSqlite_BuildArchiveAPIClientQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		expectedQuery := "UPDATE api_clients SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
-			exampleAPIClient.BelongsToUser,
+			exampleUser.ID,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleUser.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestSqlite_BuildGetAuditLogEntriesForAPIClientQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE json_extract(audit_log.context, '$.api_client_id') = ? ORDER BY audit_log.created_on"
+		expectedArgs := []interface{}{
+			exampleAPIClient.ID,
+		}
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAPIClientQuery(ctx, exampleAPIClient.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

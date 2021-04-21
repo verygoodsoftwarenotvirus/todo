@@ -2,15 +2,16 @@ package sqlite
 
 import (
 	"context"
+	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
@@ -113,6 +114,44 @@ func TestSqlite_BuildGetUsersQuery(T *testing.T) {
 	})
 }
 
+func TestSqlite_BuildTestUserCreationQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		fakeUUID := "blahblah"
+		mockExternalIDGenerator := &querybuilding.MockExternalIDGenerator{}
+		mockExternalIDGenerator.On("NewExternalID").Return(fakeUUID)
+		q.externalIDGenerator = mockExternalIDGenerator
+
+		exampleInput := &types.TestUserCreationConfig{
+			Username:       "username",
+			Password:       "password",
+			HashedPassword: "hashashashash",
+			IsServiceAdmin: true,
+		}
+
+		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions,two_factor_secret_verified_on) VALUES (?,?,?,?,?,?,(strftime('%s','now')))"
+		expectedArgs := []interface{}{
+			fakeUUID,
+			exampleInput.Username,
+			exampleInput.HashedPassword,
+			querybuilding.DefaultTestUserTwoFactorSecret,
+			types.GoodStandingAccountStatus,
+			int(testutil.BuildMaxUserPerms()),
+		}
+		actualQuery, actualArgs := q.BuildTestUserCreationQuery(ctx, exampleInput)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
@@ -129,6 +168,29 @@ func TestSqlite_BuildGetUserByUsernameQuery(T *testing.T) {
 			exampleUser.Username,
 		}
 		actualQuery, actualArgs := q.BuildGetUserByUsernameQuery(ctx, exampleUser.Username)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestSqlite_BuildSearchForUserByUsernameQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.site_admin_permissions, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username LIKE ? AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL"
+		expectedArgs := []interface{}{
+			fmt.Sprintf("%s%%", exampleUser.Username),
+		}
+		actualQuery, actualArgs := q.BuildSearchForUserByUsernameQuery(ctx, exampleUser.Username)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -166,8 +228,7 @@ func TestSqlite_BuildCreateUserQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleUser.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,site_admin_permissions) VALUES (?,?,?,?,?,?)"
@@ -242,6 +303,32 @@ func TestSqlite_BuildUpdateUserPasswordQuery(T *testing.T) {
 	})
 }
 
+func TestSqlite_BuildSetUserStatusQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserReputationUpdateInputFromUser(exampleUser)
+
+		expectedQuery := "UPDATE users SET reputation = ?, reputation_explanation = ? WHERE archived_on IS NULL AND id = ?"
+		expectedArgs := []interface{}{
+			exampleInput.NewReputation,
+			exampleInput.Reason,
+			exampleInput.TargetUserID,
+		}
+		actualQuery, actualArgs := q.BuildSetUserStatusQuery(ctx, exampleInput)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestSqlite_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
@@ -307,6 +394,30 @@ func TestSqlite_BuildArchiveUserQuery(T *testing.T) {
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := q.BuildArchiveUserQuery(ctx, exampleUser.ID)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestSqlite_BuildGetAuditLogEntriesForUserQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE (json_extract(audit_log.context, '$.user_id') = ? OR json_extract(audit_log.context, '$.performed_by') = ?) ORDER BY audit_log.created_on"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+			exampleUser.ID,
+		}
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForUserQuery(ctx, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

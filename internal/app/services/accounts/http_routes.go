@@ -349,7 +349,7 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	tracing.AttachAccountIDToSpan(span, userID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, requester, input); err != nil {
+	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, userID, accountID, requester, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "modifying user permissions")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

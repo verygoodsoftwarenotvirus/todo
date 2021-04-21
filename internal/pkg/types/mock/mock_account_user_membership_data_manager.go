@@ -60,8 +60,8 @@ func (m *AccountUserMembershipDataManager) RemoveUserFromAccount(ctx context.Con
 }
 
 // ModifyUserPermissions implements the interface.
-func (m *AccountUserMembershipDataManager) ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser uint64, input *types.ModifyUserPermissionsInput) error {
-	return m.Called(ctx, accountID, changedByUser, input).Error(0)
+func (m *AccountUserMembershipDataManager) ModifyUserPermissions(ctx context.Context, userID, accountID, changedByUser uint64, input *types.ModifyUserPermissionsInput) error {
+	return m.Called(ctx, userID, accountID, changedByUser, input).Error(0)
 }
 
 // TransferAccountOwnership implements the interface.

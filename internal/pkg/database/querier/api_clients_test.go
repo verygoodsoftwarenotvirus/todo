@@ -61,10 +61,8 @@ func TestQuerier_ScanAPIClients(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On(
-			"Next").Return(false)
-		mockRows.On(
-			"Err").Return(errors.New("blah"))
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanAPIClients(ctx, mockRows, false)
 		assert.Error(t, err)
@@ -77,12 +75,9 @@ func TestQuerier_ScanAPIClients(T *testing.T) {
 		q, _ := buildTestClient(t)
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On(
-			"Next").Return(false)
-		mockRows.On(
-			"Err").Return(nil)
-		mockRows.On(
-			"Close").Return(errors.New("blah"))
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanAPIClients(ctx, mockRows, false)
 		assert.Error(t, err)

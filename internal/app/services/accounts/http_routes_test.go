@@ -838,6 +838,7 @@ func TestAccountsService_ModifyMemberPermissionsHandler(T *testing.T) {
 		accountMembershipDataManager.On(
 			"ModifyUserPermissions",
 			testutil.ContextMatcher,
+			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 			exampleInput,
@@ -906,6 +907,7 @@ func TestAccountsService_ModifyMemberPermissionsHandler(T *testing.T) {
 		accountMembershipDataManager.On(
 			"ModifyUserPermissions",
 			testutil.ContextMatcher,
+			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 			exampleInput,

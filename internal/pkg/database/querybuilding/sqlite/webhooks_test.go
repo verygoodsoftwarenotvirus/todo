@@ -125,8 +125,7 @@ func TestSqlite_BuildCreateWebhookQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleWebhook.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleWebhook.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO webhooks (external_id,name,content_type,url,method,events,data_types,topics,belongs_to_account) VALUES (?,?,?,?,?,?,?,?,?)"
@@ -199,6 +198,29 @@ func TestSqlite_BuildArchiveWebhookQuery(T *testing.T) {
 			exampleWebhook.ID,
 		}
 		actualQuery, actualArgs := q.BuildArchiveWebhookQuery(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestSqlite_BuildGetAuditLogEntriesForWebhookQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE json_extract(audit_log.context, '$.webhook_id') = ? ORDER BY audit_log.created_on"
+		expectedArgs := []interface{}{
+			exampleWebhook.ID,
+		}
+		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForWebhookQuery(ctx, exampleWebhook.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

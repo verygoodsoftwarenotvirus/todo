@@ -57,6 +57,42 @@ func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhook
 	return exampleRows
 }
 
+func buildErroneousMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhooks ...*types.Webhook) *sqlmock.Rows {
+	columns := querybuilding.WebhooksTableColumns
+
+	if includeCounts {
+		columns = append(columns, "filtered_count", "total_count")
+	}
+
+	exampleRows := sqlmock.NewRows(columns)
+
+	for _, w := range webhooks {
+		rowValues := []driver.Value{
+			strings.Join(w.Events, querybuilding.WebhooksTableEventsSeparator),
+			strings.Join(w.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
+			strings.Join(w.Topics, querybuilding.WebhooksTableTopicsSeparator),
+			w.ID,
+			w.ExternalID,
+			w.Name,
+			w.ContentType,
+			w.URL,
+			w.Method,
+			w.CreatedOn,
+			w.LastUpdatedOn,
+			w.ArchivedOn,
+			w.BelongsToAccount,
+		}
+
+		if includeCounts {
+			rowValues = append(rowValues, filteredCount, len(webhooks))
+		}
+
+		exampleRows.AddRow(rowValues...)
+	}
+
+	return exampleRows
+}
+
 func TestQuerier_ScanWebhooks(T *testing.T) {
 	T.Parallel()
 
@@ -67,10 +103,8 @@ func TestQuerier_ScanWebhooks(T *testing.T) {
 		q, _ := buildTestClient(t)
 		mockRows := &database.MockResultIterator{}
 
-		mockRows.On(
-			"Next").Return(false)
-		mockRows.On(
-			"Err").Return(errors.New("blah"))
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanWebhooks(ctx, mockRows, false)
 		assert.Error(t, err)
@@ -83,12 +117,9 @@ func TestQuerier_ScanWebhooks(T *testing.T) {
 		q, _ := buildTestClient(t)
 		mockRows := &database.MockResultIterator{}
 
-		mockRows.On(
-			"Next").Return(false)
-		mockRows.On(
-			"Err").Return(nil)
-		mockRows.On(
-			"Close").Return(errors.New("blah"))
+		mockRows.On("Next").Return(false)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(errors.New("blah"))
 
 		_, _, _, err := q.scanWebhooks(ctx, mockRows, false)
 		assert.Error(t, err)
@@ -101,6 +132,7 @@ func TestQuerier_GetWebhook(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleWebhook := fakes.BuildFakeWebhook()
 
 		ctx := context.Background()
@@ -112,7 +144,8 @@ func TestQuerier_GetWebhook(T *testing.T) {
 		mockQueryBuilder.WebhookSQLQueryBuilder.On(
 			"BuildGetWebhookQuery",
 			testutil.ContextMatcher,
-			exampleWebhook.ID, exampleWebhook.BelongsToAccount,
+			exampleWebhook.ID,
+			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -120,11 +153,67 @@ func TestQuerier_GetWebhook(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhook))
 
-		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount)
+		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, exampleAccount.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleWebhook, actual)
 
-		assert.NoError(t, db.ExpectationsWereMet(), "not all database query expectations were met")
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid webhook ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetWebhook(ctx, 0, exampleAccount.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid response from database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildGetWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnRows(buildErroneousMockRowsFromWebhooks(false, 0, exampleWebhook))
+
+		actual, err := c.GetWebhook(ctx, exampleWebhook.ID, exampleAccount.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 }
@@ -233,6 +322,18 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		filter := types.DefaultQueryFilter()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetWebhooks(ctx, 0, filter)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
@@ -330,8 +431,7 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 			WithArgs(interfaceToDriverValue(secondFakeArgs)...).
 			WillReturnRows(buildMockRowsFromWebhooks(false, 0, exampleWebhookList.Webhooks...))
 
-		err := c.GetAllWebhooks(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllWebhooks(ctx, results, exampleBatchSize))
 
 		stillQuerying := true
 		for stillQuerying {
@@ -347,6 +447,15 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 		}
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with nil results channel", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.GetAllWebhooks(ctx, nil, 0))
 	})
 
 	T.Run("with error fetching initial count", func(t *testing.T) {
@@ -407,8 +516,7 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		err := c.GetAllWebhooks(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllWebhooks(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -447,8 +555,7 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		err := c.GetAllWebhooks(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllWebhooks(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -487,8 +594,7 @@ func TestQuerier_GetAllWebhooks(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		err := c.GetAllWebhooks(ctx, results, exampleBatchSize)
-		assert.NoError(t, err)
+		assert.NoError(t, c.GetAllWebhooks(ctx, results, exampleBatchSize))
 
 		time.Sleep(time.Second)
 
@@ -541,6 +647,46 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.CreateWebhook(ctx, nil, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleWebhook.ExternalID = ""
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+		c.timeFunc = func() uint64 {
+			return exampleWebhook.CreatedOn
+		}
+
+		actual, err := c.CreateWebhook(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
 	T.Run("with error executing creation query", func(t *testing.T) {
 		t.Parallel()
 
@@ -579,6 +725,90 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
+
+	T.Run("with error writing audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleWebhook.ExternalID = ""
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildCreateWebhookQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+		c.timeFunc = func() uint64 {
+			return exampleWebhook.CreatedOn
+		}
+
+		actual, err := c.CreateWebhook(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+		exampleWebhook.ExternalID = ""
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildCreateWebhookQuery",
+			testutil.ContextMatcher,
+			exampleInput,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+		c.timeFunc = func() uint64 {
+			return exampleWebhook.CreatedOn
+		}
+
+		actual, err := c.CreateWebhook(ctx, exampleInput, exampleUser.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
 }
 
 func TestQuerier_UpdateWebhook(T *testing.T) {
@@ -589,7 +819,6 @@ func TestQuerier_UpdateWebhook(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleWebhook := fakes.BuildFakeWebhook()
-		var expected error
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -615,9 +844,148 @@ func TestQuerier_UpdateWebhook(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual := c.UpdateWebhook(ctx, exampleWebhook, exampleUser.ID, nil)
-		assert.NoError(t, actual)
-		assert.Equal(t, expected, actual)
+		assert.NoError(t, c.UpdateWebhook(ctx, exampleWebhook, exampleUser.ID, nil))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.UpdateWebhook(ctx, nil, exampleUser.ID, nil))
+	})
+
+	T.Run("with invalid actor ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.UpdateWebhook(ctx, exampleWebhook, 0, nil))
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		assert.Error(t, c.UpdateWebhook(ctx, exampleWebhook, exampleUser.ID, nil))
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildUpdateWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.UpdateWebhook(ctx, exampleWebhook, exampleUser.ID, nil))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error writing audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildUpdateWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.UpdateWebhook(ctx, exampleWebhook, exampleUser.ID, nil))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildUpdateWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.UpdateWebhook(ctx, exampleWebhook, exampleUser.ID, nil))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -630,8 +998,8 @@ func TestQuerier_ArchiveWebhook(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleWebhook := fakes.BuildFakeWebhook()
-		var expected error
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -644,7 +1012,8 @@ func TestQuerier_ArchiveWebhook(T *testing.T) {
 		mockQueryBuilder.WebhookSQLQueryBuilder.On(
 			"BuildArchiveWebhookQuery",
 			testutil.ContextMatcher,
-			exampleWebhook.ID, exampleWebhook.BelongsToAccount,
+			exampleWebhook.ID,
+			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -657,9 +1026,169 @@ func TestQuerier_ArchiveWebhook(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		actual := c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount, exampleUser.ID)
+		actual := c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleAccount.ID, exampleUser.ID)
 		assert.NoError(t, actual)
-		assert.Equal(t, expected, actual)
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid webhook ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveWebhook(ctx, 0, exampleWebhook.BelongsToAccount, exampleUser.ID))
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveWebhook(ctx, exampleWebhook.ID, 0, exampleUser.ID))
+	})
+
+	T.Run("with invalid actor ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		assert.Error(t, c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleWebhook.BelongsToAccount, 0))
+	})
+
+	T.Run("with error beginning transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectBegin().WillReturnError(errors.New("blah"))
+
+		assert.Error(t, c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with error writing to database", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildArchiveWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error writing audit log entry", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildArchiveWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
+
+		db.ExpectRollback()
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleAccount.ID, exampleUser.ID))
+
+		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with error committing transaction", func(t *testing.T) {
+		t.Parallel()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAccount := fakes.BuildFakeAccount()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
+
+		db.ExpectBegin()
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+		mockQueryBuilder.WebhookSQLQueryBuilder.On(
+			"BuildArchiveWebhookQuery",
+			testutil.ContextMatcher,
+			exampleWebhook.ID,
+			exampleAccount.ID,
+		).Return(fakeQuery, fakeArgs)
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(exampleWebhook.ID))
+
+		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
+
+		db.ExpectCommit().WillReturnError(errors.New("blah"))
+
+		c.sqlQueryBuilder = mockQueryBuilder
+
+		assert.Error(t, c.ArchiveWebhook(ctx, exampleWebhook.ID, exampleAccount.ID, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -698,6 +1227,17 @@ func TestQuerier_GetAuditLogEntriesForWebhook(T *testing.T) {
 		assert.Equal(t, auditLogEntries, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+	})
+
+	T.Run("with invalid webhook ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetAuditLogEntriesForWebhook(ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {

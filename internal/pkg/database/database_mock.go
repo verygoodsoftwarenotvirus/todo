@@ -5,7 +5,7 @@ import (
 	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/mock"
+	mockquerybuilding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
@@ -64,27 +64,27 @@ var _ querybuilding.SQLQueryBuilder = (*MockSQLQueryBuilder)(nil)
 // BuildMockSQLQueryBuilder builds a MockSQLQueryBuilder.
 func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 	return &MockSQLQueryBuilder{
-		AccountSQLQueryBuilder:                 &mock2.AccountSQLQueryBuilder{},
-		AccountUserMembershipSQLQueryBuilder:   &mock2.AccountUserMembershipSQLQueryBuilder{},
-		AccountSubscriptionPlanSQLQueryBuilder: &mock2.AccountSubscriptionPlanSQLQueryBuilder{},
-		AuditLogEntrySQLQueryBuilder:           &mock2.AuditLogEntrySQLQueryBuilder{},
-		ItemSQLQueryBuilder:                    &mock2.ItemSQLQueryBuilder{},
-		APIClientSQLQueryBuilder:               &mock2.APIClientSQLQueryBuilder{},
-		UserSQLQueryBuilder:                    &mock2.UserSQLQueryBuilder{},
-		WebhookSQLQueryBuilder:                 &mock2.WebhookSQLQueryBuilder{},
+		AccountSQLQueryBuilder:                 &mockquerybuilding.AccountSQLQueryBuilder{},
+		AccountUserMembershipSQLQueryBuilder:   &mockquerybuilding.AccountUserMembershipSQLQueryBuilder{},
+		AccountSubscriptionPlanSQLQueryBuilder: &mockquerybuilding.AccountSubscriptionPlanSQLQueryBuilder{},
+		AuditLogEntrySQLQueryBuilder:           &mockquerybuilding.AuditLogEntrySQLQueryBuilder{},
+		ItemSQLQueryBuilder:                    &mockquerybuilding.ItemSQLQueryBuilder{},
+		APIClientSQLQueryBuilder:               &mockquerybuilding.APIClientSQLQueryBuilder{},
+		UserSQLQueryBuilder:                    &mockquerybuilding.UserSQLQueryBuilder{},
+		WebhookSQLQueryBuilder:                 &mockquerybuilding.WebhookSQLQueryBuilder{},
 	}
 }
 
 // MockSQLQueryBuilder is our mock database structure.
 type MockSQLQueryBuilder struct {
-	*mock2.UserSQLQueryBuilder
-	*mock2.AccountSQLQueryBuilder
-	*mock2.AccountUserMembershipSQLQueryBuilder
-	*mock2.AccountSubscriptionPlanSQLQueryBuilder
-	*mock2.AuditLogEntrySQLQueryBuilder
-	*mock2.ItemSQLQueryBuilder
-	*mock2.APIClientSQLQueryBuilder
-	*mock2.WebhookSQLQueryBuilder
+	*mockquerybuilding.UserSQLQueryBuilder
+	*mockquerybuilding.AccountSQLQueryBuilder
+	*mockquerybuilding.AccountUserMembershipSQLQueryBuilder
+	*mockquerybuilding.AccountSubscriptionPlanSQLQueryBuilder
+	*mockquerybuilding.AuditLogEntrySQLQueryBuilder
+	*mockquerybuilding.ItemSQLQueryBuilder
+	*mockquerybuilding.APIClientSQLQueryBuilder
+	*mockquerybuilding.WebhookSQLQueryBuilder
 	mock.Mock
 }
 

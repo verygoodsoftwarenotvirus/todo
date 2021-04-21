@@ -114,8 +114,7 @@ func TestMariaDB_BuildCreateAuditLogEntryQuery(T *testing.T) {
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On(
-			"NewExternalID").Return(exampleAuditLogEntry.ExternalID)
+		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
 		q.externalIDGenerator = exIDGen
 
 		expectedQuery := "INSERT INTO audit_log (external_id,event_type,context) VALUES (?,?,?)"

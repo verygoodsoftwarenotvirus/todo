@@ -32,6 +32,40 @@ const (
 
 // begin helper funcs
 
+/*
+type testHelper struct {
+	ctx            context.Context
+	filter         *types.QueryFilter
+	querier        *SQLQuerier
+	mockDB         *sqlmockExpecterWrapper
+	exampleUser    *types.User
+	exampleAccount *types.Account
+}
+
+func buildTestHelper(t *testing.T) *testHelper {
+	t.Helper()
+
+	q, db := buildTestClient(t)
+
+	h := &testHelper{
+		querier:        q,
+		mockDB:         db,
+		ctx:            context.Background(),
+		exampleUser:    fakes.BuildFakeUser(),
+		exampleAccount: fakes.BuildFakeAccount(),
+		filter:         types.DefaultQueryFilter(),
+	}
+
+	h.exampleAccount.BelongsToUser = h.exampleUser.ID
+
+	return h
+}
+
+func (h *testHelper) AssertExpectations(t mock.TestingT) bool {
+	return assert.NoError(t, h.mockDB.ExpectationsWereMet(), "not all database expectations were met")
+}
+*/
+
 func newCountDBRowResponse(count uint64) *sqlmock.Rows {
 	return sqlmock.NewRows([]string{"count"}).AddRow(count)
 }
@@ -508,8 +542,7 @@ func TestQuerier_getIDFromResult(T *testing.T) {
 		expected := int64(123)
 
 		m := &database.MockSQLResult{}
-		m.On(
-			"LastInsertId").Return(expected, nil)
+		m.On("LastInsertId").Return(expected, nil)
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -522,8 +555,7 @@ func TestQuerier_getIDFromResult(T *testing.T) {
 		t.Parallel()
 
 		m := &database.MockSQLResult{}
-		m.On(
-			"LastInsertId").Return(int64(0), errors.New("blah"))
+		m.On("LastInsertId").Return(int64(0), errors.New("blah"))
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -542,10 +574,8 @@ func TestQuerier_handleRows(T *testing.T) {
 		ctx := context.Background()
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On(
-			"Err").Return(nil)
-		mockRows.On(
-			"Close").Return(nil)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(nil)
 
 		c, _ := buildTestClient(t)
 
@@ -560,8 +590,7 @@ func TestQuerier_handleRows(T *testing.T) {
 		expected := errors.New("blah")
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On(
-			"Err").Return(expected)
+		mockRows.On("Err").Return(expected)
 
 		c, _ := buildTestClient(t)
 
@@ -577,10 +606,8 @@ func TestQuerier_handleRows(T *testing.T) {
 		expected := errors.New("blah")
 
 		mockRows := &database.MockResultIterator{}
-		mockRows.On(
-			"Err").Return(nil)
-		mockRows.On(
-			"Close").Return(expected)
+		mockRows.On("Err").Return(nil)
+		mockRows.On("Close").Return(expected)
 
 		c, _ := buildTestClient(t)
 
@@ -701,5 +728,60 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 
 		assert.Zero(t, id)
 		assert.Error(t, err)
+	})
+
+	T.Run("ignoring return with return statement id strategy", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		c.idStrategy = ReturningStatementIDRetrievalStrategy
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(newSuccessfulDatabaseResult(1))
+
+		_, err := c.performWriteQuery(ctx, c.db, true, "example", fakeQuery, fakeArgs)
+
+		assert.NoError(t, err)
+	})
+
+	T.Run("ignoring return with return statement id strategy and error executing query", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		c.idStrategy = ReturningStatementIDRetrievalStrategy
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		_, err := c.performWriteQuery(ctx, c.db, true, "example", fakeQuery, fakeArgs)
+
+		assert.Error(t, err)
+	})
+
+	T.Run("ignoring return with return statement id strategy with no rows affected", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+		c.idStrategy = ReturningStatementIDRetrievalStrategy
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
+		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
+			WithArgs(interfaceToDriverValue(fakeArgs)...).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+
+		_, err := c.performWriteQuery(ctx, c.db, true, "example", fakeQuery, fakeArgs)
+
+		assert.Error(t, err)
+		assert.True(t, errors.Is(err, sql.ErrNoRows))
 	})
 }

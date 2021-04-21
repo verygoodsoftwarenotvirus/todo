@@ -7,10 +7,9 @@ import (
 	"os"
 	"testing"
 
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+
 	"github.com/spf13/afero"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

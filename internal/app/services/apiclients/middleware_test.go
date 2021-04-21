@@ -13,7 +13,7 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

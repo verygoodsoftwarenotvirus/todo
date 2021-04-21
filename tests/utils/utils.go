@@ -1,4 +1,4 @@
-package utils
+package testutils
 
 import (
 	"bytes"
@@ -16,7 +16,6 @@ import (
 	"github.com/pquerna/otp/totp"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 )
 
@@ -54,7 +53,7 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		return nil, err
 	}
 
-	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
+	twoFactorSecret, err := ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
 	if err != nil {
 		return nil, fmt.Errorf("parsing TOTP QR code: %w", err)
 	}

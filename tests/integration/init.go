@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 const (

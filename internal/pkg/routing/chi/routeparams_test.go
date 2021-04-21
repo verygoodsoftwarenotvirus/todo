@@ -8,7 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"

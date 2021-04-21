@@ -10,15 +10,14 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 func buildMockRowsFromWebhooks(includeCounts bool, filteredCount uint64, webhooks ...*types.Webhook) *sqlmock.Rows {

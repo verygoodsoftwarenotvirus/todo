@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"

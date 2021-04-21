@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/alexedwards/scs/v2/mockstore"
 	"github.com/stretchr/testify/assert"

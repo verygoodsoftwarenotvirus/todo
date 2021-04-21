@@ -9,8 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -154,7 +153,7 @@ func (s *TestSuite) TestUsers_Searching() {
 			// create users
 			createdUserIDs := []uint64{}
 			for i := 0; i < 5; i++ {
-				user, err := utils.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i))
+				user, err := testutil.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i))
 				require.NoError(t, err)
 				createdUserIDs = append(createdUserIDs, user.ID)
 			}

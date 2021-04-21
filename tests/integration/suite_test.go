@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 const (

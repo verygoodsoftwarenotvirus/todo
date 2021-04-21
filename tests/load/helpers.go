@@ -9,16 +9,15 @@ import (
 	"reflect"
 	"time"
 
-	vegeta "github.com/tsenart/vegeta/v12/lib"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http/requests"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
+	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
 
 const (
@@ -84,12 +83,12 @@ func initializeTargetFromRequest(req *http.Request, target *vegeta.Target) error
 }
 
 func createClientForTest(ctx context.Context, name string) (*httpclient.Client, *requests.Builder, error) {
-	user, err := utils.CreateServiceUser(ctx, urlToUse, "")
+	user, err := testutils.CreateServiceUser(ctx, urlToUse, "")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	cookie, err := utils.GetLoginCookie(ctx, urlToUse, user)
+	cookie, err := testutils.GetLoginCookie(ctx, urlToUse, user)
 	if err != nil {
 		return nil, nil, err
 	}

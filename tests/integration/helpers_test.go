@@ -16,9 +16,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
 	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -48,12 +47,12 @@ func requireNotNilAndNoProblems(t *testing.T, i interface{}, err error) {
 func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.User, cookie *http.Cookie, cookieClient, pasetoClient *httpclient.Client) {
 	t.Helper()
 
-	user, err := utils.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
+	user, err := testutil.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
 	require.NoError(t, err)
 
 	t.Logf("created user #%d: %q", user.ID, user.Username)
 
-	cookie, err = utils.GetLoginCookie(ctx, urlToUse, user)
+	cookie, err = testutil.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
 	cookieClient, err = initializeCookiePoweredClient(t, cookie)
@@ -154,7 +153,7 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)
 
-	adminCookie, err := utils.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
+	adminCookie, err := testutil.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
 	require.NoError(t, err)
 
 	cClient, err := initializeCookiePoweredClient(t, adminCookie)

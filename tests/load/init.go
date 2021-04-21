@@ -8,7 +8,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/util/testutil"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 var (
@@ -19,12 +19,12 @@ var (
 func init() {
 	ctx := context.Background()
 
-	parsedURLToUse = testutil.DetermineServiceURL()
+	parsedURLToUse = testutils.DetermineServiceURL()
 	urlToUse = parsedURLToUse.String()
 	logger := zerolog.NewLogger()
 
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
-	testutil.EnsureServerIsUp(ctx, urlToUse)
+	testutils.EnsureServerIsUp(ctx, urlToUse)
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)

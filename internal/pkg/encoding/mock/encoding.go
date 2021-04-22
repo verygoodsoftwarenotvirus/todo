@@ -22,13 +22,13 @@ type EncoderDecoder struct {
 }
 
 // MustEncode satisfies our EncoderDecoder interface.
-func (m *EncoderDecoder) MustEncode(v interface{}) []byte {
-	return m.Called(v).Get(0).([]byte)
+func (m *EncoderDecoder) MustEncode(ctx context.Context, v interface{}) []byte {
+	return m.Called(ctx, v).Get(0).([]byte)
 }
 
 // MustEncodeJSON satisfies our EncoderDecoder interface.
-func (m *EncoderDecoder) MustEncodeJSON(v interface{}) []byte {
-	return m.Called(v).Get(0).([]byte)
+func (m *EncoderDecoder) MustEncodeJSON(ctx context.Context, v interface{}) []byte {
+	return m.Called(ctx, v).Get(0).([]byte)
 }
 
 // RespondWithData satisfies our EncoderDecoder interface.

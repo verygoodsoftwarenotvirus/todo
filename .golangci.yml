@@ -134,6 +134,8 @@ linters-settings:
     locale: US
     # ignore-words:
     #   - someword
+  nestif:
+    min-complexity: 8
   wsl:
     allow-cuddle-declarations: true
   unused:

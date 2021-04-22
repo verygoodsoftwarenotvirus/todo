@@ -20,19 +20,23 @@ type example struct {
 	Name string `json:"name" xml:"name"`
 }
 
-func TestServerEncoderDecoder_RespondWithData(T *testing.T) {
+type broken struct {
+	Name json.Number `json:"name" xml:"name"`
+}
+
+func TestServerEncoderDecoder_encodeResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		encoderDecoder.RespondWithData(ctx, res, ex)
+		encoderDecoder.encodeResponse(ctx, res, ex, http.StatusOK)
 		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
 	})
 
@@ -40,34 +44,27 @@ func TestServerEncoderDecoder_RespondWithData(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 		res.Header().Set(ContentTypeHeaderKey, "application/xml")
 
-		encoderDecoder.RespondWithData(ctx, res, ex)
+		encoderDecoder.encodeResponse(ctx, res, ex, http.StatusOK)
 		assert.Equal(t, fmt.Sprintf("<example><name>%s</name></example>", expectation), res.Body.String())
 	})
-}
 
-func TestServerEncoderDecoder_EncodeResponseWithStatus(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
+	T.Run("with broken structure", func(t *testing.T) {
 		t.Parallel()
 		expectation := "name"
-		ex := &example{Name: expectation}
-		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		ex := &broken{Name: json.Number(expectation)}
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
 
-		expected := 666
-		encoderDecoder.EncodeResponseWithStatus(ctx, res, ex, expected)
-
-		assert.Equal(t, expected, res.Code, "expected code to be %d, but got %d", expected, res.Code)
-		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
+		encoderDecoder.encodeResponse(ctx, res, ex, http.StatusOK)
+		assert.Empty(t, res.Body.String())
 	})
 }
 
@@ -171,6 +168,146 @@ func TestServerEncoderDecoder_EncodeUnauthorizedResponse(T *testing.T) {
 
 		expectedCode := http.StatusUnauthorized
 		assert.EqualValues(t, expectedCode, res.Code, "expected code to be %d, got %d instead", expectedCode, res.Code)
+	})
+}
+
+func TestServerEncoderDecoder_EncodeInvalidPermissionsResponse(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		res := httptest.NewRecorder()
+
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
+
+		expectedCode := http.StatusForbidden
+		assert.EqualValues(t, expectedCode, res.Code, "expected code to be %d, got %d instead", expectedCode, res.Code)
+	})
+}
+
+func TestServerEncoderDecoder_MustEncodeJSON(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+
+		expected := `{"name":"TestServerEncoderDecoder_MustEncodeJSON/standard"}
+`
+		actual := string(encoderDecoder.MustEncodeJSON(ctx, &example{Name: t.Name()}))
+
+		assert.Equal(t, expected, actual)
+	})
+
+	T.Run("with panic", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+
+		defer func() {
+			assert.NotNil(t, recover())
+		}()
+
+		encoderDecoder.MustEncodeJSON(ctx, &broken{Name: json.Number(t.Name())})
+	})
+}
+
+func TestServerEncoderDecoder_MustEncode(T *testing.T) {
+	T.Parallel()
+
+	T.Run("with JSON", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+
+		expected := `{"name":"TestServerEncoderDecoder_MustEncode/with_JSON"}
+`
+		actual := string(encoderDecoder.MustEncode(ctx, &example{Name: t.Name()}))
+
+		assert.Equal(t, expected, actual)
+	})
+
+	T.Run("with XML", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeXML)
+
+		expected := `<example><name>TestServerEncoderDecoder_MustEncode/with_XML</name></example>`
+		actual := string(encoderDecoder.MustEncode(ctx, &example{Name: t.Name()}))
+
+		assert.Equal(t, expected, actual)
+	})
+
+	T.Run("with broken struct", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+
+		defer func() {
+			assert.NotNil(t, recover())
+		}()
+
+		encoderDecoder.MustEncode(ctx, &broken{Name: json.Number(t.Name())})
+	})
+}
+
+func TestServerEncoderDecoder_RespondWithData(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+		expectation := "name"
+		ex := &example{Name: expectation}
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+
+		ctx := context.Background()
+		res := httptest.NewRecorder()
+
+		encoderDecoder.RespondWithData(ctx, res, ex)
+		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
+	})
+
+	T.Run("as XML", func(t *testing.T) {
+		t.Parallel()
+		expectation := "name"
+		ex := &example{Name: expectation}
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+
+		ctx := context.Background()
+		res := httptest.NewRecorder()
+		res.Header().Set(ContentTypeHeaderKey, "application/xml")
+
+		encoderDecoder.RespondWithData(ctx, res, ex)
+		assert.Equal(t, fmt.Sprintf("<example><name>%s</name></example>", expectation), res.Body.String())
+	})
+}
+
+func TestServerEncoderDecoder_EncodeResponseWithStatus(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+		expectation := "name"
+		ex := &example{Name: expectation}
+		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+
+		ctx := context.Background()
+		res := httptest.NewRecorder()
+
+		expected := 666
+		encoderDecoder.EncodeResponseWithStatus(ctx, res, ex, expected)
+
+		assert.Equal(t, expected, res.Code, "expected code to be %d, but got %d", expected, res.Code)
+		assert.Equal(t, res.Body.String(), fmt.Sprintf("{%q:%q}\n", "name", ex.Name))
 	})
 }
 

@@ -38,14 +38,6 @@ type (
 	UnitCounterProvider func(name, description string) UnitCounter
 )
 
-var _ UnitCounter = (*noopUnitCounter)(nil)
-
-type noopUnitCounter struct{}
-
-func (c *noopUnitCounter) Increment(_ context.Context)            {}
-func (c *noopUnitCounter) IncrementBy(_ context.Context, _ int64) {}
-func (c *noopUnitCounter) Decrement(_ context.Context)            {}
-
 // EnsureUnitCounter always provides a valid UnitCounter.
 func EnsureUnitCounter(ucp UnitCounterProvider, logger logging.Logger, counterName CounterName, description string) UnitCounter {
 	logger = logger.WithValue("counter", counterName)
@@ -60,3 +52,11 @@ func EnsureUnitCounter(ucp UnitCounterProvider, logger logging.Logger, counterNa
 
 	return &noopUnitCounter{}
 }
+
+var _ UnitCounter = (*noopUnitCounter)(nil)
+
+type noopUnitCounter struct{}
+
+func (c *noopUnitCounter) Increment(_ context.Context)            {}
+func (c *noopUnitCounter) IncrementBy(_ context.Context, _ int64) {}
+func (c *noopUnitCounter) Decrement(_ context.Context)            {}

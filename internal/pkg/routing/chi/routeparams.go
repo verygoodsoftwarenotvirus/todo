@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-type chirouteParamManager struct{}
+type chiRouteParamManager struct{}
 
 var (
 	errNoSessionContextDataAvailable = errors.New("no SessionContextData attached to session context data")
@@ -21,11 +21,11 @@ var (
 
 // NewRouteParamManager provides a new RouteParamManager.
 func NewRouteParamManager() routing.RouteParamManager {
-	return &chirouteParamManager{}
+	return &chiRouteParamManager{}
 }
 
 // UserIDFetcherFromSessionContextData fetches a user ID from a request.
-func (r chirouteParamManager) UserIDFetcherFromSessionContextData(req *http.Request) uint64 {
+func (r chiRouteParamManager) UserIDFetcherFromSessionContextData(req *http.Request) uint64 {
 	if sessionCtxData, err := r.FetchContextFromRequest(req); err == nil && sessionCtxData != nil {
 		return sessionCtxData.Requester.ID
 	}
@@ -34,7 +34,7 @@ func (r chirouteParamManager) UserIDFetcherFromSessionContextData(req *http.Requ
 }
 
 // FetchContextFromRequest fetches a SessionContextData from a request.
-func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types.SessionContextData, error) {
+func (r chiRouteParamManager) FetchContextFromRequest(req *http.Request) (*types.SessionContextData, error) {
 	if sessionCtxData, ok := req.Context().Value(types.SessionContextDataKey).(*types.SessionContextData); ok && sessionCtxData != nil {
 		return sessionCtxData, nil
 	}
@@ -43,7 +43,7 @@ func (r chirouteParamManager) FetchContextFromRequest(req *http.Request) (*types
 }
 
 // BuildRouteParamIDFetcher builds a function that fetches a given key from a path with variables added by a router.
-func (r chirouteParamManager) BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string) func(req *http.Request) uint64 {
+func (r chiRouteParamManager) BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
 		// this should never happen
 		u, err := strconv.ParseUint(chi.URLParam(req, key), 10, 64)
@@ -56,7 +56,7 @@ func (r chirouteParamManager) BuildRouteParamIDFetcher(logger logging.Logger, ke
 }
 
 // BuildRouteParamStringIDFetcher builds a function that fetches a given key from a path with variables added by a router.
-func (r chirouteParamManager) BuildRouteParamStringIDFetcher(key string) func(req *http.Request) string {
+func (r chiRouteParamManager) BuildRouteParamStringIDFetcher(key string) func(req *http.Request) string {
 	return func(req *http.Request) string {
 		return chi.URLParam(req, key)
 	}

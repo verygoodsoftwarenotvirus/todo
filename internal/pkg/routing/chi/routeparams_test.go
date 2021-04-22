@@ -20,7 +20,7 @@ func Test_sessionContextDataFetcherFromSessionContextData(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		r := &chirouteParamManager{}
+		r := &chiRouteParamManager{}
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
@@ -45,7 +45,7 @@ func Test_sessionContextDataFetcherFromSessionContextData(T *testing.T) {
 	T.Run("without attached value", func(t *testing.T) {
 		t.Parallel()
 
-		r := &chirouteParamManager{}
+		r := &chiRouteParamManager{}
 
 		req := testutil.BuildTestRequest(t)
 		actual, err := r.FetchContextFromRequest(req)
@@ -61,7 +61,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		r := &chirouteParamManager{}
+		r := &chiRouteParamManager{}
 
 		ctx := context.Background()
 		exampleKey := "blah"
@@ -88,7 +88,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 		// NOTE: This will probably never happen in dev or production
 		t.Parallel()
 
-		r := &chirouteParamManager{}
+		r := &chiRouteParamManager{}
 
 		ctx := context.Background()
 		exampleKey := "blah"

@@ -36,11 +36,6 @@ func NewLogger() logging.Logger {
 	return &logger{logger: buildZerologger()}
 }
 
-// NewLoggerWithSource builds a new logger.
-func NewLoggerWithSource(l *zerolog.Logger) logging.Logger {
-	return &logger{logger: *l}
-}
-
 // WithName is our obligatory contract fulfillment function.
 // Zerolog doesn't support named loggers :( so we have this workaround.
 func (l *logger) WithName(name string) logging.Logger {
@@ -93,7 +88,7 @@ func (l *logger) Error(err error, input string) {
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.
 func (l *logger) Fatal(err error) {
-	l.logger.Fatal().Caller().Err(err).Msg("")
+	l.logger.Fatal().Caller().Err(err).Msg(err.Error())
 }
 
 // Printf satisfies our contract for the logging.Logger Printf method.
@@ -133,12 +128,14 @@ func (l *logger) WithError(err error) logging.Logger {
 func (l *logger) attachRequestToLog(req *http.Request) zerolog.Logger {
 	if req != nil {
 		l2 := l.logger.With().
-			Str("path", req.URL.Path).
 			Str("method", req.Method).
 			Logger()
 
-		if req.URL.RawQuery != "" {
-			l2 = l2.With().Str("query", req.URL.RawQuery).Logger()
+		if req.URL != nil {
+			l2 = l2.With().Str("path", req.URL.Path).Logger()
+			if req.URL.RawQuery != "" {
+				l2 = l2.With().Str("query", req.URL.RawQuery).Logger()
+			}
 		}
 
 		if l.requestIDFunc != nil {

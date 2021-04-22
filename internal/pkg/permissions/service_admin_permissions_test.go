@@ -7,6 +7,110 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewServiceAdminPermission(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		assert.NotNil(t, NewServiceAdminPermissions(0))
+	})
+}
+
+func TestServiceAdminPermission_Value(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(0)
+
+		actual, err := x.Value()
+		assert.NotNil(t, actual)
+		assert.NoError(t, err)
+	})
+}
+
+func TestServiceAdminPermission_Scan(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(0)
+		expected := int64(123)
+
+		assert.NoError(t, x.Scan(expected))
+		assert.Equal(t, ServiceAdminPermission(expected), x)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(0)
+
+		assert.NoError(t, x.Scan("123"))
+	})
+}
+
+func TestServiceAdminPermission_MarshalJSON(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(0)
+
+		actual, err := x.MarshalJSON()
+		assert.NotNil(t, actual)
+		assert.NoError(t, err)
+	})
+}
+
+func TestServiceAdminPermission_UnmarshalJSON(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(0)
+
+		assert.NoError(t, x.UnmarshalJSON([]byte("0")))
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(0)
+
+		assert.Error(t, x.UnmarshalJSON([]byte("/")))
+	})
+}
+
+func TestServiceAdminPermission_Summary(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(math.MaxInt64)
+
+		assert.NotNil(t, x.Summary())
+	})
+}
+
+func TestServiceAdminPermission_IsServiceAdmin(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceAdminPermission(math.MaxInt64)
+
+		assert.True(t, x.IsServiceAdmin())
+	})
+}
+
 func TestServiceAdminPermissions(T *testing.T) {
 	T.Parallel()
 

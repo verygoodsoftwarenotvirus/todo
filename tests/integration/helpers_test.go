@@ -11,7 +11,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	testlogging "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/testing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -22,10 +21,6 @@ import (
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-)
-
-const (
-	useTestLogger = false
 )
 
 func reverseString(s string) string {
@@ -83,9 +78,6 @@ func initializeCookiePoweredClient(t *testing.T, cookie *http.Cookie) (*httpclie
 	}
 
 	loggerToUse := zerolog.NewLogger()
-	if useTestLogger {
-		loggerToUse = testlogging.NewLogger(t)
-	}
 
 	c, err := httpclient.NewClient(parsedURLToUse,
 		httpclient.UsingLogger(loggerToUse),

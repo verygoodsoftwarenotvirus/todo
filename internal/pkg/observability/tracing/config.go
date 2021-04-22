@@ -31,6 +31,21 @@ type (
 	}
 )
 
+// Initialize provides an instrumentation handler.
+func (c *Config) Initialize(l logging.Logger) (flushFunc func(), err error) {
+	logger := l.WithValue("tracing_provider", c.Provider)
+	logger.Info("setting tracing provider")
+
+	switch strings.TrimSpace(strings.ToLower(c.Provider)) {
+	case Jaeger:
+		logger.Debug("setting up jaeger")
+		return c.SetupJaeger()
+	default:
+		logger.Debug("invalid tracing config")
+		return nil, nil
+	}
+}
+
 // ValidateWithContext validates the config struct.
 func (c *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
@@ -45,19 +60,4 @@ func (c *JaegerConfig) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&c.CollectorEndpoint, validation.Required),
 		validation.Field(&c.ServiceName, validation.Required),
 	)
-}
-
-// Initialize provides an instrumentation handler.
-func (c *Config) Initialize(l logging.Logger) (flushFunc func(), err error) {
-	logger := l.WithValue("tracing_provider", c.Provider)
-	logger.Info("setting tracing provider")
-
-	switch strings.TrimSpace(strings.ToLower(c.Provider)) {
-	case Jaeger:
-		logger.Debug("setting up jaeger")
-		return c.SetupJaeger()
-	default:
-		logger.Debug("invalid tracing config")
-		return nil, nil
-	}
 }

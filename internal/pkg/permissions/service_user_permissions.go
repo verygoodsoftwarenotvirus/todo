@@ -101,11 +101,6 @@ func NewServiceUserPermissions(x int64) ServiceUserPermission {
 	return ServiceUserPermission(x)
 }
 
-// NewServiceUserPermissionChecker builds a new ServiceUserPermissionChecker.
-func NewServiceUserPermissionChecker(x int64) ServiceUserPermissionChecker {
-	return NewServiceUserPermissions(x)
-}
-
 // Summary implements the driver.Valuer interface.
 func (p ServiceUserPermission) Summary() ServiceUserPermissionsSummary {
 	return ServiceUserPermissionsSummary{
@@ -121,7 +116,7 @@ func (p ServiceUserPermission) Value() (driver.Value, error) {
 
 // Scan implements the sql.Scanner interface.
 func (p *ServiceUserPermission) Scan(value interface{}) error {
-	b, ok := value.(int32)
+	b, ok := value.(int64)
 	if !ok {
 		*p = ServiceUserPermission(0)
 	}

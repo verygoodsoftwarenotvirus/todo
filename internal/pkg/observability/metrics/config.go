@@ -24,7 +24,7 @@ const (
 
 	// minimumRuntimeCollectionInterval is the smallest interval we can collect metrics at
 	// this value is used to guard against zero values.
-	minimumRuntimeCollectionInterval = float64(time.Second)
+	minimumRuntimeCollectionInterval = time.Second
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between runtime metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
@@ -61,8 +61,7 @@ var (
 func initiatePrometheusExporter() {
 	prometheusExporterInitOnce.Do(func() {
 		var err error
-		prometheusExporter, err = otelprom.InstallNewPipeline(otelprom.Config{})
-		if err != nil {
+		if prometheusExporter, err = otelprom.InstallNewPipeline(otelprom.Config{}); err != nil {
 			panic(err)
 		}
 	})

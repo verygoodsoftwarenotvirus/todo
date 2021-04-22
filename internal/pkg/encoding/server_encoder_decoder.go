@@ -38,8 +38,8 @@ type (
 		EncodeUnauthorizedResponse(ctx context.Context, res http.ResponseWriter)
 		EncodeInvalidPermissionsResponse(ctx context.Context, res http.ResponseWriter)
 		DecodeRequest(ctx context.Context, req *http.Request, dest interface{}) error
-		MustEncode(v interface{}) []byte
-		MustEncodeJSON(v interface{}) []byte
+		MustEncode(ctx context.Context, v interface{}) []byte
+		MustEncodeJSON(ctx context.Context, v interface{}) []byte
 	}
 
 	// serverEncoderDecoder is our concrete implementation of EncoderDecoder.
@@ -58,6 +58,33 @@ type (
 		Decode(v interface{}) error
 	}
 )
+
+// encodeResponse encodes responses.
+func (e *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}, statusCode int) {
+	_, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := e.logger.WithValue(keys.ResponseStatusKey, statusCode)
+
+	var enc encoder
+
+	switch contentTypeFromString(res.Header().Get(ContentTypeHeaderKey)) {
+	case ContentTypeXML:
+		res.Header().Set(ContentTypeHeaderKey, contentTypeXML)
+		enc = xml.NewEncoder(res)
+	case ContentTypeJSON:
+		res.Header().Set(ContentTypeHeaderKey, contentTypeJSON)
+		fallthrough
+	default:
+		enc = json.NewEncoder(res)
+	}
+
+	res.WriteHeader(statusCode)
+
+	if err := enc.Encode(v); err != nil {
+		observability.AcknowledgeError(err, logger, span, "encoding response")
+	}
+}
 
 // EncodeErrorResponse encodes errs to responses.
 func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http.ResponseWriter, msg string, statusCode int) {
@@ -89,7 +116,8 @@ func (e *serverEncoderDecoder) EncodeErrorResponse(ctx context.Context, res http
 
 // EncodeInvalidInputResponse encodes a generic 400 error to a response.
 func (e *serverEncoderDecoder) EncodeInvalidInputResponse(ctx context.Context, res http.ResponseWriter) {
-	e.tracer.StartSpan(ctx)
+	ctx, span := e.tracer.StartSpan(ctx)
+	defer span.End()
 
 	e.EncodeErrorResponse(ctx, res, "invalid input attached to request", http.StatusBadRequest)
 }
@@ -126,36 +154,11 @@ func (e *serverEncoderDecoder) EncodeInvalidPermissionsResponse(ctx context.Cont
 	e.EncodeErrorResponse(ctx, res, "invalid permissions", http.StatusForbidden)
 }
 
-// EncodeResponse encodes responses.
-func (e *serverEncoderDecoder) encodeResponse(ctx context.Context, res http.ResponseWriter, v interface{}, statusCode int) {
+func (e *serverEncoderDecoder) MustEncodeJSON(ctx context.Context, v interface{}) []byte {
 	_, span := e.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := e.logger.WithValue(keys.ResponseStatusKey, statusCode)
-
-	var enc encoder
-
-	switch contentTypeFromString(res.Header().Get(ContentTypeHeaderKey)) {
-	case ContentTypeXML:
-		res.Header().Set(ContentTypeHeaderKey, contentTypeXML)
-		enc = xml.NewEncoder(res)
-	case ContentTypeJSON:
-		res.Header().Set(ContentTypeHeaderKey, contentTypeJSON)
-		fallthrough
-	default:
-		enc = json.NewEncoder(res)
-	}
-
-	res.WriteHeader(statusCode)
-
-	if err := enc.Encode(v); err != nil {
-		observability.AcknowledgeError(err, logger, span, "encoding response")
-	}
-}
-
-func (e *serverEncoderDecoder) MustEncodeJSON(v interface{}) []byte {
 	var b bytes.Buffer
-
 	if err := json.NewEncoder(&b).Encode(v); err != nil {
 		e.panicker.Panicf("encoding JSON content: %w", err)
 	}
@@ -163,7 +166,11 @@ func (e *serverEncoderDecoder) MustEncodeJSON(v interface{}) []byte {
 	return b.Bytes()
 }
 
-func (e *serverEncoderDecoder) MustEncode(v interface{}) []byte {
+// MustEncode encodes data or else.
+func (e *serverEncoderDecoder) MustEncode(ctx context.Context, v interface{}) []byte {
+	_, span := e.tracer.StartSpan(ctx)
+	defer span.End()
+
 	var (
 		enc encoder
 		b   bytes.Buffer

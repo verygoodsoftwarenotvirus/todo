@@ -7,6 +7,98 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewServiceUserPermission(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		assert.NotNil(t, NewServiceUserPermissions(0))
+	})
+}
+
+func TestServiceUserPermission_Summary(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceUserPermission(math.MaxInt64)
+
+		assert.NotNil(t, x.Summary())
+	})
+}
+
+func TestServiceUserPermission_Value(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceUserPermission(0)
+
+		actual, err := x.Value()
+		assert.NotNil(t, actual)
+		assert.NoError(t, err)
+	})
+}
+
+func TestServiceUserPermission_Scan(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceUserPermission(0)
+		expected := int64(123)
+
+		assert.NoError(t, x.Scan(expected))
+		assert.Equal(t, ServiceUserPermission(expected), x)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceUserPermission(0)
+
+		assert.NoError(t, x.Scan("123"))
+	})
+}
+
+func TestServiceUserPermission_MarshalJSON(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceUserPermission(0)
+
+		actual, err := x.MarshalJSON()
+		assert.NotNil(t, actual)
+		assert.NoError(t, err)
+	})
+}
+
+func TestServiceUserPermission_UnmarshalJSON(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceUserPermission(0)
+
+		assert.NoError(t, x.UnmarshalJSON([]byte("0")))
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		x := ServiceUserPermission(0)
+
+		assert.Error(t, x.UnmarshalJSON([]byte("/")))
+	})
+}
+
 func TestServiceUserPermissions(T *testing.T) {
 	T.Parallel()
 

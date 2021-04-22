@@ -323,7 +323,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	mac := hmac.New(sha256.New, client.ClientSecret)
-	if _, macWriteErr := mac.Write(s.encoderDecoder.MustEncodeJSON(pasetoRequest)); macWriteErr != nil {
+	if _, macWriteErr := mac.Write(s.encoderDecoder.MustEncodeJSON(ctx, pasetoRequest)); macWriteErr != nil {
 		// sha256.digest.Write does not ever return an error, so this branch will remain "uncovered" :(
 		observability.AcknowledgeError(err, logger, span, "writing HMAC message for comparison")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)

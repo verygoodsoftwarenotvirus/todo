@@ -176,7 +176,7 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		assert.Equal(t, true, actual.UserIsAuthenticated, "expected UserIsAuthenticated to equal %v, but got %v", true, actual.UserIsAuthenticated)
 		assert.Equal(t, types.GoodStandingAccountStatus, actual.UserReputation, "expected UserReputation to equal %v, but got %v", types.GoodStandingAccountStatus, actual.UserReputation)
 		assert.Equal(t, "", actual.UserReputationExplanation, "expected UserReputationExplanation to equal %v, but got %v", "", actual.UserReputationExplanation)
-		assert.Equal(t, (*permissions.ServiceAdminPermissionsSummary)(nil), actual.ServiceAdminPermissionsSummary, "expected ServiceAdminPermissionsSummary to equal %v, but got %v", nil, actual.ServiceAdminPermissionsSummary)
+		assert.Equal(t, &permissions.ServiceAdminPermissionsSummary{}, actual.ServiceAdminPermissionsSummary, "expected ServiceAdminPermissionsSummary to be nil, but got %v", actual.ServiceAdminPermissionsSummary)
 		assert.NotZero(t, actual.ActiveAccount)
 
 		var activeAccountPresent bool
@@ -186,7 +186,7 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 				break
 			}
 		}
-		assert.True(t, activeAccountPresent, "wtf: %+v", actual)
+		assert.True(t, activeAccountPresent)
 
 		assert.NotEmpty(t, actual.AccountPermissions)
 

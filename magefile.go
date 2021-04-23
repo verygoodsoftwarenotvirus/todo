@@ -406,9 +406,7 @@ func Wire() error {
 
 // Delete existing dependency injected build file and regenerate it.
 func Rewire() error {
-	if err := os.Remove("cmd/server/wire_gen.go"); err != nil {
-		return err
-	}
+	os.Remove("cmd/server/wire_gen.go")
 
 	return Wire()
 }

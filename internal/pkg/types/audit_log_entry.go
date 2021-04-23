@@ -56,18 +56,18 @@ type (
 )
 
 // Value implements the driver.Valuer interface.
-func (d AuditLogContext) Value() (driver.Value, error) {
-	return json.Marshal(d)
+func (c AuditLogContext) Value() (driver.Value, error) {
+	return json.Marshal(c)
 }
 
 var errByteAssertionFailed = errors.New("type assertion to []byte failed")
 
 // Scan implements the sql.Scanner interface.
-func (d *AuditLogContext) Scan(value interface{}) error {
+func (c *AuditLogContext) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errByteAssertionFailed
 	}
 
-	return json.Unmarshal(b, &d)
+	return json.Unmarshal(b, &c)
 }

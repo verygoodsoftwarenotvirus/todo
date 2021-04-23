@@ -54,7 +54,7 @@ func (u *Uploader) ServeFiles(res http.ResponseWriter, req *http.Request) {
 
 	fileName := u.filenameFetcher(req)
 
-	attrs, err := u.bucket.Attributes(ctx, fileName)
+	fileBytes, err := u.ReadFile(ctx, fileName)
 	if err != nil {
 		u.logger.Error(err, "trying to read uploaded file")
 		res.WriteHeader(http.StatusNotFound)
@@ -62,15 +62,9 @@ func (u *Uploader) ServeFiles(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fileBytes, err := u.ReadFile(ctx, fileName)
-	if err != nil {
-		u.logger.Error(err, "trying to read uploaded file")
-		res.WriteHeader(http.StatusBadRequest)
-
-		return
+	if attrs, err := u.bucket.Attributes(ctx, fileName); attrs != nil && err == nil {
+		res.Header().Set(encoding.ContentTypeHeaderKey, attrs.ContentType)
 	}
-
-	res.Header().Set(encoding.ContentTypeHeaderKey, attrs.ContentType)
 
 	if _, copyErr := io.Copy(res, bytes.NewReader(fileBytes)); copyErr != nil {
 		u.logger.Error(copyErr, "copying file bytes to response")

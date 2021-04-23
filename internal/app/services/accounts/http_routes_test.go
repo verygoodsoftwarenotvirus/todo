@@ -65,8 +65,8 @@ func TestAccountsService_ListHandler(T *testing.T) {
 
 		helper.req.URL.RawQuery = "admin=true"
 
-		fart := helper.req.URL.String()
-		_ = fart
+		blah := helper.req.URL.String()
+		_ = blah
 
 		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {

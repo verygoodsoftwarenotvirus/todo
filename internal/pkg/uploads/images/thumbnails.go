@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	allSupportedColors = 2 << 7
+	allSupportedColors = 2 << 7 // 256
 )
 
 type thumbnailer interface {
@@ -21,12 +21,12 @@ type thumbnailer interface {
 }
 
 // newThumbnailer provides a thumbnailer given a particular content type.
-func newThumbnailer(contentType string, quality int) (thumbnailer, error) {
+func newThumbnailer(contentType string) (thumbnailer, error) {
 	switch strings.TrimSpace(strings.ToLower(contentType)) {
 	case imagePNG:
 		return &pngThumbnailer{}, nil
 	case imageJPEG:
-		return &jpegThumbnailer{quality: quality}, nil
+		return &jpegThumbnailer{}, nil
 	case imageGIF:
 		return &gifThumbnailer{}, nil
 	default:
@@ -34,85 +34,91 @@ func newThumbnailer(contentType string, quality int) (thumbnailer, error) {
 	}
 }
 
-func preprocess(i *Image, width, height uint) (*bytes.Buffer, image.Image, error) {
+func preprocess(i *Image, width, height uint) (image.Image, error) {
 	img, _, err := image.Decode(bytes.NewReader(i.Data))
 	if err != nil {
-		return nil, nil, fmt.Errorf("decoding image: %w", err)
+		return nil, fmt.Errorf("decoding image: %w", err)
 	}
 
 	thumbnail := resize.Thumbnail(width, height, img, resize.Lanczos3)
-	data := new(bytes.Buffer)
 
-	return data, thumbnail, nil
+	return thumbnail, nil
 }
 
-type jpegThumbnailer struct {
-	quality int
-}
+type jpegThumbnailer struct{}
 
 // Thumbnail creates a JPEG thumbnail.
-func (t *jpegThumbnailer) Thumbnail(i *Image, width, height uint, filename string) (*Image, error) {
-	data, thumbnail, err := preprocess(i, width, height)
+func (t *jpegThumbnailer) Thumbnail(img *Image, width, height uint, filename string) (*Image, error) {
+	thumbnail, err := preprocess(img, width, height)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = jpeg.Encode(data, thumbnail, &jpeg.Options{Quality: t.quality}); err != nil {
+	var b bytes.Buffer
+	if err = jpeg.Encode(&b, thumbnail, &jpeg.Options{Quality: jpeg.DefaultQuality}); err != nil {
 		return nil, fmt.Errorf("encoding JPEG: %w", err)
 	}
 
-	bs := data.Bytes()
+	bs := b.Bytes()
 
-	return &Image{
+	i := &Image{
 		Filename:    fmt.Sprintf("%s.jpg", filename),
 		ContentType: imageJPEG,
 		Data:        bs,
 		Size:        len(bs),
-	}, nil
+	}
+
+	return i, nil
 }
 
 type pngThumbnailer struct{}
 
-// Thumbnail creates a GIF thumbnail.
-func (t *pngThumbnailer) Thumbnail(i *Image, width, height uint, filename string) (*Image, error) {
-	data, thumbnail, err := preprocess(i, width, height)
+// Thumbnail creates a PNG thumbnail.
+func (t *pngThumbnailer) Thumbnail(img *Image, width, height uint, filename string) (*Image, error) {
+	thumbnail, err := preprocess(img, width, height)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = gif.Encode(data, thumbnail, &gif.Options{NumColors: allSupportedColors}); err != nil {
+	var b bytes.Buffer
+	if err = gif.Encode(&b, thumbnail, &gif.Options{NumColors: allSupportedColors}); err != nil {
 		return nil, fmt.Errorf("encoding JPEG: %w", err)
 	}
 
-	bs := data.Bytes()
+	bs := b.Bytes()
 
-	return &Image{
+	i := &Image{
 		Filename:    fmt.Sprintf("%s.gif", filename),
 		ContentType: imageGIF,
 		Data:        bs,
 		Size:        len(bs),
-	}, nil
+	}
+
+	return i, nil
 }
 
 type gifThumbnailer struct{}
 
-// Thumbnail creates a PNG thumbnail.
-func (t *gifThumbnailer) Thumbnail(i *Image, width, height uint, filename string) (*Image, error) {
-	data, thumbnail, err := preprocess(i, width, height)
+// Thumbnail creates a GIF thumbnail.
+func (t *gifThumbnailer) Thumbnail(img *Image, width, height uint, filename string) (*Image, error) {
+	thumbnail, err := preprocess(img, width, height)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = png.Encode(data, thumbnail); err != nil {
+	var b bytes.Buffer
+	if err = png.Encode(&b, thumbnail); err != nil {
 		return nil, fmt.Errorf("encoding PNG: %w", err)
 	}
 
-	bs := data.Bytes()
+	bs := b.Bytes()
 
-	return &Image{
+	i := &Image{
 		Filename:    fmt.Sprintf("%s.png", filename),
 		ContentType: imagePNG,
 		Data:        bs,
 		Size:        len(bs),
-	}, nil
+	}
+
+	return i, nil
 }

@@ -7,12 +7,8 @@ import (
 )
 
 const (
-	// ChiProviderKey is the string we use to refer to chi.
-	ChiProviderKey = "chi"
-)
-
-var (
-	validProviders = []string{ChiProviderKey}
+	// ChiProvider is the string we use to refer to chi.
+	ChiProvider = "chi"
 )
 
 // Config configures our router.
@@ -25,6 +21,6 @@ type Config struct {
 // ValidateWithContext validates a router config struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.Provider, validation.In(validProviders)),
+		validation.Field(&cfg.Provider, validation.In(ChiProvider)),
 	)
 }

@@ -169,7 +169,7 @@ func TestAttachChangeSummarySpan(T *testing.T) {
 
 		AttachChangeSummarySpan(span, t.Name(), []*types.FieldChangeSummary{
 			{
-				OldValue: "fart",
+				OldValue: "blah",
 				NewValue: "butt",
 			},
 		})

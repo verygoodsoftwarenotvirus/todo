@@ -20,8 +20,7 @@ const (
 type (
 	// GCSBlobConfig configures a gcs blob passwords method.
 	GCSBlobConfig struct {
-		GoogleAccessID     string `json:"google_access_id" mapstructure:"google_access_id" toml:"google_access_id,omitempty"`
-		PrivateKeyFilepath string `json:"private_key_filepath" mapstructure:"private_key_filepath" toml:"private_key_filepath,omitempty"`
+		GoogleAccessID string `json:"google_access_id" mapstructure:"google_access_id" toml:"google_access_id,omitempty"`
 	}
 
 	// GCSConfig configures a gcs based storage provider.
@@ -34,25 +33,24 @@ type (
 )
 
 func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
-	creds, gcsCredsErr := gcp.DefaultCredentials(ctx)
-	if gcsCredsErr != nil {
-		return nil, fmt.Errorf("constructing GCP credentials: %w", gcsCredsErr)
-	}
-
 	var (
+		creds  *google.Credentials
 		bucket *blob.Bucket
-		err    error
 	)
 
 	if cfg.ServiceAccountKeyFilepath != "" {
-		serviceAccountKeyBytes, accountKeyErr := ioutil.ReadFile(cfg.ServiceAccountKeyFilepath)
-		if accountKeyErr != nil {
-			return nil, fmt.Errorf("reading service account key file: %w", accountKeyErr)
+		serviceAccountKeyBytes, err := ioutil.ReadFile(cfg.ServiceAccountKeyFilepath)
+		if err != nil {
+			return nil, fmt.Errorf("reading service account key file: %w", err)
 		}
 
-		creds, gcsCredsErr = google.CredentialsFromJSON(ctx, serviceAccountKeyBytes, cfg.Scopes...)
-		if gcsCredsErr != nil {
-			return nil, fmt.Errorf("using service account key credentials: %w", gcsCredsErr)
+		if creds, err = google.CredentialsFromJSON(ctx, serviceAccountKeyBytes, cfg.Scopes...); err != nil {
+			return nil, fmt.Errorf("using service account key credentials: %w", err)
+		}
+	} else {
+		var err error
+		if creds, err = gcp.DefaultCredentials(ctx); err != nil {
+			return nil, fmt.Errorf("constructing GCP credentials: %w", err)
 		}
 	}
 
@@ -63,13 +61,8 @@ func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
 
 	blobOpts := &gcsblob.Options{GoogleAccessID: cfg.BlobSettings.GoogleAccessID}
 
-	if cfg.BlobSettings.PrivateKeyFilepath != "" {
-		if blobOpts.PrivateKey, err = ioutil.ReadFile(cfg.ServiceAccountKeyFilepath); err != nil {
-			return nil, fmt.Errorf("reading private key file: %w", err)
-		}
-	}
-
-	if bucket, err = gcsblob.OpenBucket(ctx, gcsClient, cfg.BucketName, blobOpts); err != nil {
+	bucket, err := gcsblob.OpenBucket(ctx, gcsClient, cfg.BucketName, blobOpts)
+	if err != nil {
 		return nil, fmt.Errorf("initializing filesystem bucket: %w", err)
 	}
 
@@ -79,6 +72,6 @@ func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
 // ValidateWithContext validates the GCSConfig.
 func (c *GCSConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
-		validation.Field(&c, validation.Required),
+		validation.Field(&c.BucketName, validation.Required),
 	)
 }

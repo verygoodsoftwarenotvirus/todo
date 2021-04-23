@@ -27,19 +27,6 @@ var (
 	totpTokenLengthRule = validation.Length(validTOTPTokenLength, validTOTPTokenLength)
 )
 
-// IsValidAccountStatus returns whether the provided string is a valid userReputation.
-func IsValidAccountStatus(s string) bool {
-	switch s {
-	case string(GoodStandingAccountStatus),
-		string(UnverifiedAccountStatus),
-		string(BannedUserReputation),
-		string(TerminatedUserReputation):
-		return true
-	default:
-		return false
-	}
-}
-
 type (
 	userReputation string
 
@@ -190,21 +177,34 @@ func (u *User) Update(input *User) {
 	}
 }
 
+// IsValidAccountStatus returns whether the provided string is a valid userReputation.
+func IsValidAccountStatus(s string) bool {
+	switch s {
+	case string(GoodStandingAccountStatus),
+		string(UnverifiedAccountStatus),
+		string(BannedUserReputation),
+		string(TerminatedUserReputation):
+		return true
+	default:
+		return false
+	}
+}
+
 // IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
 	return u.Reputation == BannedUserReputation
 }
 
-// Validate ensures our provided UserCreationInput meets expectations.
-func (i *UserCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+// ValidateWithContext ensures our provided UserCreationInput meets expectations.
+func (i *UserCreationInput) ValidateWithContext(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
 	)
 }
 
-// Validate ensures our provided UserLoginInput meets expectations.
-func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+// ValidateWithContext ensures our provided UserLoginInput meets expectations.
+func (i *UserLoginInput) ValidateWithContext(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
@@ -212,8 +212,8 @@ func (i *UserLoginInput) Validate(ctx context.Context, minUsernameLength, minPas
 	)
 }
 
-// Validate ensures our provided PasswordUpdateInput meets expectations.
-func (i *PasswordUpdateInput) Validate(ctx context.Context, minPasswordLength uint8) error {
+// ValidateWithContext ensures our provided PasswordUpdateInput meets expectations.
+func (i *PasswordUpdateInput) ValidateWithContext(ctx context.Context, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.CurrentPassword, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
 		validation.Field(&i.NewPassword, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),

@@ -9,14 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type (
@@ -75,15 +75,22 @@ func TestNewBleveIndexManager(T *testing.T) {
 	suite.Run(T, new(bleveIndexManagerTestSuite))
 }
 
-func (s *bleveIndexManagerTestSuite) TestNewBleveIndexManager() {
+func (s *bleveIndexManagerTestSuite) TestNewBleveIndexManagerWithTestIndex() {
 	t := s.T()
 
-	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "constructor_test_happy_path.bleve"))
+	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "constructor_test_happy_path_test.bleve"))
 
 	_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
 	assert.NoError(t, err)
+}
 
-	assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
+func (s *bleveIndexManagerTestSuite) TestNewBleveIndexManagerWithItemsIndex() {
+	t := s.T()
+
+	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "constructor_test_happy_path_items.bleve"))
+
+	_, err := NewBleveIndexManager(exampleIndexPath, types.ItemsSearchIndexName, logging.NewNonOperationalLogger())
+	assert.NoError(t, err)
 }
 
 func (s *bleveIndexManagerTestSuite) TestNewBleveIndexManagerWithInvalidName() {
@@ -112,7 +119,6 @@ func (s *bleveIndexManagerTestSuite) TestIndex() {
 	}
 
 	assert.NoError(t, im.Index(s.ctx, x.ID, x))
-	assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
 }
 
 func (s *bleveIndexManagerTestSuite) TestSearch() {
@@ -135,8 +141,20 @@ func (s *bleveIndexManagerTestSuite) TestSearch() {
 	results, err := im.Search(s.ctx, x.Name, s.exampleAccountID)
 	assert.NotEmpty(t, results)
 	assert.NoError(t, err)
+}
 
-	assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
+func (s *bleveIndexManagerTestSuite) TestSearchWithInvalidQuery() {
+	t := s.T()
+
+	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_invalid_query.bleve"))
+
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	assert.NoError(t, err)
+	require.NotNil(t, im)
+
+	results, err := im.Search(s.ctx, "", s.exampleAccountID)
+	assert.Empty(t, results)
+	assert.Error(t, err)
 }
 
 func (s *bleveIndexManagerTestSuite) TestSearchWithEmptyIndexAndSearch() {
@@ -151,8 +169,6 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithEmptyIndexAndSearch() {
 	results, err := im.Search(s.ctx, "example", s.exampleAccountID)
 	assert.Empty(t, results)
 	assert.NoError(t, err)
-
-	assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
 }
 
 func (s *bleveIndexManagerTestSuite) TestSearchWithClosedIndex() {
@@ -177,8 +193,6 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithClosedIndex() {
 	results, err := im.Search(s.ctx, x.Name, s.exampleAccountID)
 	assert.Empty(t, results)
 	assert.Error(t, err)
-
-	assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
 }
 
 func (s *bleveIndexManagerTestSuite) TestSearchWithInvalidID() {
@@ -201,8 +215,28 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithInvalidID() {
 	results, err := im.Search(s.ctx, x.Name, s.exampleAccountID)
 	assert.Empty(t, results)
 	assert.Error(t, err)
+}
 
-	assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
+func (s *bleveIndexManagerTestSuite) TestSearchForAdmin() {
+	t := s.T()
+
+	const exampleQuery = "search_test"
+	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_obligatory.bleve"))
+
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	assert.NoError(t, err)
+	require.NotNil(t, im)
+
+	x := exampleType{
+		ID:            123,
+		Name:          exampleQuery,
+		BelongsToUser: s.exampleAccountID,
+	}
+	assert.NoError(t, im.Index(s.ctx, x.ID, &x))
+
+	results, err := im.SearchForAdmin(s.ctx, x.Name)
+	assert.NotEmpty(t, results)
+	assert.NoError(t, err)
 }
 
 func (s *bleveIndexManagerTestSuite) TestDelete() {
@@ -223,5 +257,4 @@ func (s *bleveIndexManagerTestSuite) TestDelete() {
 
 	assert.NoError(t, im.Index(s.ctx, x.ID, x))
 	assert.NoError(t, im.Delete(s.ctx, x.ID))
-	assert.NoError(t, os.RemoveAll(string(exampleIndexPath)))
 }

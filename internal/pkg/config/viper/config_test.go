@@ -78,7 +78,7 @@ func TestFromConfig(T *testing.T) {
 						CollectorEndpoint: "things",
 						ServiceName:       "stuff",
 					},
-					Provider:                  "fart",
+					Provider:                  "blah",
 					SpanCollectionProbability: 0,
 				},
 			},
@@ -86,18 +86,18 @@ func TestFromConfig(T *testing.T) {
 				Storage: storage.Config{
 					FilesystemConfig: &storage.FilesystemConfig{RootDirectory: "/blah"},
 					AzureConfig: &storage.AzureConfig{
-						Bucketname: "farts",
+						BucketName: "blahs",
 						Retrying:   &storage.AzureRetryConfig{},
 					},
 					GCSConfig: &storage.GCSConfig{
-						ServiceAccountKeyFilepath: "/blah/fart",
-						BucketName:                "fart",
+						ServiceAccountKeyFilepath: "/blah/blah",
+						BucketName:                "blah",
 						Scopes:                    nil,
 					},
-					S3Config:          &storage.S3Config{BucketName: "farts"},
-					BucketName:        "farts",
-					UploadFilenameKey: "farts",
-					Provider:          "farts",
+					S3Config:          &storage.S3Config{BucketName: "blahs"},
+					BucketName:        "blahs",
+					UploadFilenameKey: "blahs",
+					Provider:          "blahs",
 				},
 				Debug: false,
 			},
@@ -219,7 +219,7 @@ func TestParseConfigFile(T *testing.T) {
 
 		_, err = tf.Write([]byte(`
 [server]
-http_port = "fart"
+http_port = "blah"
 debug = ":banana:"
 `))
 		require.NoError(t, err)

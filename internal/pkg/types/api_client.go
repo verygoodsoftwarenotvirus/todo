@@ -72,9 +72,9 @@ type (
 	}
 )
 
-// Validate validates a ItemCreationInput.
-func (x *APIClientCreationInput) Validate(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
-	if err := x.UserLoginInput.Validate(ctx, minUsernameLength, minPasswordLength); err != nil {
+// ValidateWithContext validates an APICreationInput.
+func (x *APIClientCreationInput) ValidateWithContext(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+	if err := x.UserLoginInput.ValidateWithContext(ctx, minUsernameLength, minPasswordLength); err != nil {
 		return err
 	}
 

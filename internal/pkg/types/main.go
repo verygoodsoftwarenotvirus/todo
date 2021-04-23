@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"strconv"
 )
 
 const (
@@ -32,16 +31,7 @@ type (
 		Message string `json:"message"`
 		Code    int    `json:"code"`
 	}
-
-	// ID is a handy identifier type.
-	ID uint64
 )
-
-var _ fmt.Stringer = (*ID)(nil)
-
-func (x ID) String() string {
-	return strconv.FormatUint(uint64(x), 64)
-}
 
 var _ error = (*ErrorResponse)(nil)
 

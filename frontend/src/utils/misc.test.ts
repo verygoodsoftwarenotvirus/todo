@@ -7,7 +7,7 @@ describe('utils', () => {
     it('should determine whether something is numeric', () => {
       const expectations = new Map<string, boolean>([
         ['12345', true],
-        ['fart', false],
+        ['blah', false],
       ]);
 
       expectations.forEach((expectation: boolean, input: string) => {

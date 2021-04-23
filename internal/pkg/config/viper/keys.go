@@ -153,8 +153,6 @@ const (
 	blobSettingsKey                = "blob_settings"
 	// ConfigKeyUploaderGCSGoogleAccessID is the key viper will use to refer to UploadSettings.GCS.BlobSettingsGoogleAccessID.
 	ConfigKeyUploaderGCSGoogleAccessID = uploadsKey + x + storageConfigKey + x + gcsKey + x + blobSettingsKey + x + "google_access_id"
-	// ConfigKeyUploaderGCSPrivateKeyFilepath is the key viper will use to refer to UploadSettings.GCS.BlobSettings.PrivateKeyFilepath.
-	ConfigKeyUploaderGCSPrivateKeyFilepath = uploadsKey + x + storageConfigKey + x + gcsKey + x + blobSettingsKey + x + "private_key_filepath"
 
 	s3Key = "s3"
 	// ConfigKeyUploaderS3BucketName is the key viper will use to refer to Uploads.S3.BucketName.

@@ -43,35 +43,27 @@ type (
 func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 	var index bleve.Index
 
-	preexistingIndex, openIndexErr := bleve.Open(string(path))
-	if openIndexErr == nil {
+	preexistingIndex, err := bleve.Open(string(path))
+	if err == nil {
 		index = preexistingIndex
 	}
 
-	if errors.Is(openIndexErr, bleve.ErrorIndexPathDoesNotExist) || errors.Is(openIndexErr, bleve.ErrorIndexMetaMissing) {
+	if errors.Is(err, bleve.ErrorIndexPathDoesNotExist) || errors.Is(err, bleve.ErrorIndexMetaMissing) {
 		logger.WithValue("path", path).Debug("tried to open existing index, but didn't find it")
-
-		var newIndexErr error
 
 		switch name {
 		case testingSearchIndexName:
-			index, newIndexErr = bleve.New(string(path), bleve.NewIndexMapping())
-			if newIndexErr != nil {
-				logger.Error(newIndexErr, "failed to create new index")
-				return nil, newIndexErr
-			}
+			index, err = bleve.New(string(path), bleve.NewIndexMapping())
 		case types.ItemsSearchIndexName:
-			index, newIndexErr = bleve.New(string(path), buildItemMapping())
-			if newIndexErr != nil {
-				logger.Error(newIndexErr, "failed to create new index")
-				return nil, newIndexErr
-			}
+			index, err = bleve.New(string(path), buildItemMapping())
 		default:
 			return nil, fmt.Errorf("opening %s index: %w", name, errInvalidIndexName)
 		}
-	} else if openIndexErr != nil {
-		logger.Error(openIndexErr, "failed to open index")
-		return nil, fmt.Errorf("failed to open index: %w", openIndexErr)
+
+		if err != nil {
+			logger.Error(err, "failed to create new index")
+			return nil, err
+		}
 	}
 
 	serviceName := fmt.Sprintf("%s_search", name)
@@ -107,7 +99,7 @@ func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID
 		return nil, search.ErrEmptyQueryProvided
 	}
 
-	if forAdmin && accountID == 0 {
+	if !forAdmin && accountID != 0 {
 		logger = logger.WithValue(keys.AccountIDKey, accountID)
 	}
 

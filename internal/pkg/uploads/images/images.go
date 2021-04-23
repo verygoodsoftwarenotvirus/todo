@@ -18,7 +18,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 const (
@@ -27,9 +26,6 @@ const (
 	imagePNG  = "image/png"
 	imageJPEG = "image/jpeg"
 	imageGIF  = "image/gif"
-
-	// ParsedImageContextKey is used to attach parsed images to a request.
-	ParsedImageContextKey types.ContextKey = "parsed_image"
 )
 
 var (
@@ -78,8 +74,8 @@ func (i *Image) Write(w http.ResponseWriter) error {
 }
 
 // Thumbnail creates a thumbnail from an image.
-func (i *Image) Thumbnail(width, height uint, quality int, filename string) (*Image, error) {
-	t, err := newThumbnailer(i.ContentType, quality)
+func (i *Image) Thumbnail(width, height uint, filename string) (*Image, error) {
+	t, err := newThumbnailer(i.ContentType)
 	if err != nil {
 		return nil, err
 	}

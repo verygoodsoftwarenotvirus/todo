@@ -319,7 +319,7 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		if err := x.Validate(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
+		if err := x.ValidateWithContext(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
 			observability.AcknowledgeError(err, logger, span, "validating input")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return

@@ -25,12 +25,12 @@ func TestParseBool(t *testing.T) {
 	t.Parallel()
 
 	expectations := map[string]bool{
-		"1":     true,
-		"fart":  false,
-		"true":  true,
-		"troo":  false,
-		"t":     true,
-		"false": false,
+		"1":      true,
+		t.Name(): false,
+		"true":   true,
+		"troo":   false,
+		"t":      true,
+		"false":  false,
 	}
 
 	for input, expected := range expectations {

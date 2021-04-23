@@ -39,7 +39,7 @@ func (s *service) UserCreationInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		if err := x.Validate(ctx, s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
+		if err := x.ValidateWithContext(ctx, s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return
@@ -67,7 +67,7 @@ func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 			return
 		}
 
-		if err := x.Validate(ctx, s.authSettings.MinimumPasswordLength); err != nil {
+		if err := x.ValidateWithContext(ctx, s.authSettings.MinimumPasswordLength); err != nil {
 			logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 			return

@@ -7,11 +7,43 @@ import (
 	"strconv"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestFromParams(T *testing.T) {
+func TestQueryFilter_AttachToLogger(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		logger := logging.NewNonOperationalLogger()
+		qf := &QueryFilter{
+			Page:            100,
+			Limit:           MaxLimit,
+			CreatedAfter:    123456789,
+			CreatedBefore:   123456789,
+			UpdatedAfter:    123456789,
+			UpdatedBefore:   123456789,
+			SortBy:          SortDescending,
+			IncludeArchived: true,
+		}
+
+		assert.NotNil(t, qf.AttachToLogger(logger))
+	})
+
+	T.Run("with nil", func(t *testing.T) {
+		t.Parallel()
+
+		logger := logging.NewNonOperationalLogger()
+
+		assert.NotNil(t, (*QueryFilter)(nil).AttachToLogger(logger))
+	})
+}
+
+func TestQueryFilter_FromParams(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

@@ -21,6 +21,12 @@ const (
 	AccountIDContextKey ContextKey = "accountID"
 )
 
+var (
+	errNilUser          = errors.New("non-nil user required for session context data")
+	errZeroAccountID    = errors.New("active account ID required for session context data")
+	errNilPermissionMap = errors.New("non-nil permissions map required for session context data")
+)
+
 func init() {
 	gob.Register(&SessionContextData{})
 }
@@ -55,6 +61,7 @@ type (
 		ReputationExplanation  string                             `json:"-"`
 		ID                     uint64                             `json:"-"`
 		ServiceAdminPermission permissions.ServiceAdminPermission `json:"-"`
+		RequiresPasswordChange bool                               `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
@@ -155,12 +162,6 @@ func (x *SessionContextData) ToBytes() []byte {
 	return b.Bytes()
 }
 
-var (
-	errNilUser          = errors.New("non-nil user required for session context data")
-	errZeroAccountID    = errors.New("active account ID required for session context data")
-	errNilPermissionMap = errors.New("non-nil permissions map required for session context data")
-)
-
 // SessionContextDataFromUser produces a SessionContextData object from a User's data.
 func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap AccountPermissionsMap) (*SessionContextData, error) {
 	if user == nil {
@@ -181,6 +182,7 @@ func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermi
 			Reputation:             user.Reputation,
 			ReputationExplanation:  user.ReputationExplanation,
 			ServiceAdminPermission: user.ServiceAdminPermission,
+			RequiresPasswordChange: user.RequiresPasswordChange,
 		},
 		AccountPermissionsMap: accountPermissionsMap,
 		ActiveAccountID:       activeAccountID,

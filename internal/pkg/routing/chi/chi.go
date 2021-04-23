@@ -234,8 +234,9 @@ func (r *router) Trace(pattern string, handler http.HandlerFunc) {
 // BuildRouteParamIDFetcher builds a function that fetches a given key from a path with variables added by a router.
 func (r *router) BuildRouteParamIDFetcher(logger logging.Logger, key, logDescription string) func(req *http.Request) uint64 {
 	return func(req *http.Request) uint64 {
+		v := chi.URLParam(req, key)
+		u, err := strconv.ParseUint(v, 10, 64)
 		// this should never happen
-		u, err := strconv.ParseUint(chi.URLParam(req, key), 10, 64)
 		if err != nil && len(logDescription) > 0 {
 			logger.Error(err, fmt.Sprintf("fetching %s ID from request", logDescription))
 		}

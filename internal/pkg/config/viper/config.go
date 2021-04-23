@@ -151,7 +151,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyUploaderProvider, "azure")
 		cfg.Set(ConfigKeyUploaderAzureAuthMethod, input.Uploads.Storage.AzureConfig.AuthMethod)
 		cfg.Set(ConfigKeyUploaderAzureAccountName, input.Uploads.Storage.AzureConfig.AccountName)
-		cfg.Set(ConfigKeyUploaderAzureBucketName, input.Uploads.Storage.AzureConfig.Bucketname)
+		cfg.Set(ConfigKeyUploaderAzureBucketName, input.Uploads.Storage.AzureConfig.BucketName)
 		cfg.Set(ConfigKeyUploaderAzureMaxTries, input.Uploads.Storage.AzureConfig.Retrying.MaxTries)
 		cfg.Set(ConfigKeyUploaderAzureTryTimeout, input.Uploads.Storage.AzureConfig.Retrying.TryTimeout)
 		cfg.Set(ConfigKeyUploaderAzureRetryDelay, input.Uploads.Storage.AzureConfig.Retrying.RetryDelay)
@@ -169,7 +169,6 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyUploaderGCSScopes, input.Uploads.Storage.GCSConfig.Scopes)
 		cfg.Set(ConfigKeyUploaderGCSBucketName, input.Uploads.Storage.GCSConfig.BucketName)
 		cfg.Set(ConfigKeyUploaderGCSGoogleAccessID, input.Uploads.Storage.GCSConfig.BlobSettings.GoogleAccessID)
-		cfg.Set(ConfigKeyUploaderGCSPrivateKeyFilepath, input.Uploads.Storage.GCSConfig.BlobSettings.PrivateKeyFilepath)
 
 		fallthrough
 	case input.Uploads.Storage.S3Config != nil:

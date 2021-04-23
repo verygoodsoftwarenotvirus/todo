@@ -149,7 +149,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, base64.RawURLEncoding.EncodeToString([]byte("fart")))
+		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, base64.RawURLEncoding.EncodeToString([]byte("blah")))
 
 		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
 

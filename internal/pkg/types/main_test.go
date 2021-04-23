@@ -5,6 +5,7 @@ import (
 	"time"
 
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/stretchr/testify/assert"
 )
 
 func init() {
@@ -16,6 +17,7 @@ func TestErrorResponse_Error(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-		_ = (&ErrorResponse{}).Error()
+
+		assert.NotEmpty(t, (&ErrorResponse{}).Error())
 	})
 }

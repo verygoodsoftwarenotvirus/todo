@@ -85,7 +85,7 @@ type (
 		BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildArchiveUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
-		BuildSetUserStatusQuery(ctx context.Context, input types.UserReputationUpdateInput) (query string, args []interface{})
+		BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{})
 	}
 
 	// WebhookSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.

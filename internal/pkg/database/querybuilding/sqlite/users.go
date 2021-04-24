@@ -234,7 +234,7 @@ func (b *Sqlite) BuildUpdateUserQuery(ctx context.Context, input *types.User) (q
 }
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would change a user's account status.
-func (b *Sqlite) BuildSetUserStatusQuery(ctx context.Context, input types.UserReputationUpdateInput) (query string, args []interface{}) {
+func (b *Sqlite) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

@@ -100,7 +100,7 @@ func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input 
 		return ErrNilInputProvided
 	}
 
-	// validating here requires settings knowledge so we do not do it.
+	// validating here requires settings knowledge, so we do not do it.
 
 	logger := c.logger
 

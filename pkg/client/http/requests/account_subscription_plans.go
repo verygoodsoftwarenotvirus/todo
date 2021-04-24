@@ -24,17 +24,24 @@ func (b *Builder) BuildGetAccountSubscriptionPlanRequest(ctx context.Context, pl
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
+
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	uri := b.BuildURL(
 		ctx,
 		nil,
 		plansBasePath,
-		strconv.FormatUint(planID, 10),
+		id(planID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetAccountSubscriptionPlansRequest builds an HTTP request for fetching account subscription plans.
@@ -42,11 +49,18 @@ func (b *Builder) BuildGetAccountSubscriptionPlansRequest(ctx context.Context, f
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := filter.AttachToLogger(b.logger)
+
 	uri := b.BuildURL(ctx, filter.ToValues(), plansBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildCreateAccountSubscriptionPlanRequest builds an HTTP request for creating an account subscription plan.
@@ -101,17 +115,24 @@ func (b *Builder) BuildArchiveAccountSubscriptionPlanRequest(ctx context.Context
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
+
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	uri := b.BuildURL(
 		ctx,
 		nil,
 		plansBasePath,
-		strconv.FormatUint(planID, 10),
+		id(planID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetAuditLogForAccountSubscriptionPlanRequest builds an HTTP request for fetching a list of audit log entries pertaining to an account subscription plan.
@@ -123,10 +144,17 @@ func (b *Builder) BuildGetAuditLogForAccountSubscriptionPlanRequest(ctx context.
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
+
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
-	uri := b.BuildURL(ctx, nil, plansBasePath, strconv.FormatUint(planID, 10), "audit")
+	uri := b.BuildURL(ctx, nil, plansBasePath, id(planID), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }

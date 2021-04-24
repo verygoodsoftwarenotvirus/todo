@@ -1,11 +1,8 @@
 package requests
 
 import (
-	"context"
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -13,71 +10,212 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuth(t *testing.T) {
-	t.Parallel()
+func TestBuilder_BuildUserStatusRequest(T *testing.T) {
+	T.Parallel()
 
-	suite.Run(t, new(authTestSuite))
+	const expectedPath = "/auth/status"
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath)
+
+		actual, err := h.builder.BuildUserStatusRequest(h.ctx)
+		assert.NoError(t, err)
+
+		assertRequestQuality(t, actual, spec)
+	})
 }
 
-type authTestSuite struct {
-	suite.Suite
+func TestBuilder_BuildLoginRequest(T *testing.T) {
+	T.Parallel()
 
-	ctx         context.Context
-	builder     *Builder
-	exampleUser *types.User
-}
-
-var _ suite.SetupTestSuite = (*authTestSuite)(nil)
-
-func (s *authTestSuite) SetupTest() {
-	s.ctx = context.Background()
-	s.builder = buildTestRequestBuilder()
-
-	s.exampleUser = fakes.BuildFakeUser()
-	// the hashed passwords is never transmitted over the wire.
-	s.exampleUser.HashedPassword = ""
-	// the two factor secret is transmitted over the wire only on creation.
-	s.exampleUser.TwoFactorSecret = ""
-	// the two factor secret validation is never transmitted over the wire.
-	s.exampleUser.TwoFactorSecretVerifiedOn = nil
-}
-
-func (s *authTestSuite) TestBuilder_BuildLoginRequest() {
 	const expectedPath = "/users/login"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(h.exampleUser)
 
-		actual, err := s.builder.BuildLoginRequest(s.ctx, exampleInput)
+		actual, err := h.builder.BuildLoginRequest(h.ctx, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
 
-	s.Run("with nil input", func() {
-		t := s.T()
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
 
-		req, err := s.builder.BuildLoginRequest(s.ctx, nil)
+		h := buildTestHelper()
+
+		req, err := h.builder.BuildLoginRequest(h.ctx, nil)
 		assert.Nil(t, req)
 		assert.Error(t, err)
 	})
 }
 
-func (s *authTestSuite) TestBuilder_BuildVerifyTOTPSecretRequest() {
-	const expectedPath = "/users/totp_secret/verify"
+func TestBuilder_BuildLogoutRequest(T *testing.T) {
+	T.Parallel()
 
-	s.Run("standard", func() {
-		t := s.T()
+	const expectedPath = "/users/logout"
 
-		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildVerifyTOTPSecretRequest(s.ctx, s.exampleUser.ID, exampleInput.TOTPToken)
+		h := buildTestHelper()
+		spec := newRequestSpec(true, http.MethodPost, "", expectedPath)
+
+		actual, err := h.builder.BuildLogoutRequest(h.ctx)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
+	})
+}
+
+func TestBuilder_BuildChangePasswordRequest(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/users/password/new"
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPath)
+
+		actual, err := h.builder.BuildChangePasswordRequest(h.ctx, &http.Cookie{}, exampleInput)
+		assert.NoError(t, err)
+
+		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildChangePasswordRequest(h.ctx, &http.Cookie{}, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error building request", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		h.builder = buildTestRequestBuilderWithInvalidURL()
+		exampleInput := fakes.BuildFakePasswordUpdateInput()
+
+		actual, err := h.builder.BuildChangePasswordRequest(h.ctx, &http.Cookie{}, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+}
+
+func TestBuilder_BuildCycleTwoFactorSecretRequest(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/users/totp_secret/new"
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+
+		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, exampleInput)
+		assert.NoError(t, err)
+
+		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with nil cookie", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
+
+		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, nil, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, &types.TOTPSecretRefreshInput{})
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error building request", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		h.builder = buildTestRequestBuilderWithInvalidURL()
+		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
+
+		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+}
+
+func TestBuilder_BuildVerifyTOTPSecretRequest(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/users/totp_secret/verify"
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(h.exampleUser)
+
+		actual, err := h.builder.BuildVerifyTOTPSecretRequest(h.ctx, h.exampleUser.ID, exampleInput.TOTPToken)
+		assert.NoError(t, err)
+
+		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(h.exampleUser)
+
+		actual, err := h.builder.BuildVerifyTOTPSecretRequest(h.ctx, 0, exampleInput.TOTPToken)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid token", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildVerifyTOTPSecretRequest(h.ctx, h.exampleUser.ID, " nope lol ")
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 }

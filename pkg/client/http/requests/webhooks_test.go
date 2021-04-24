@@ -1,11 +1,8 @@
 package requests
 
 import (
-	"context"
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -14,118 +11,183 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWebhooks(t *testing.T) {
-	t.Parallel()
+func TestBuilder_BuildGetWebhookRequest(T *testing.T) {
+	T.Parallel()
 
-	suite.Run(t, new(webhooksTestSuite))
-}
-
-type webhooksTestSuite struct {
-	suite.Suite
-
-	ctx                context.Context
-	builder            *Builder
-	exampleWebhook     *types.Webhook
-	exampleInput       *types.WebhookCreationInput
-	exampleWebhookList *types.WebhookList
-}
-
-var _ suite.SetupTestSuite = (*webhooksTestSuite)(nil)
-
-func (s *webhooksTestSuite) SetupTest() {
-	s.ctx = context.Background()
-	s.builder = buildTestRequestBuilder()
-	s.exampleWebhook = fakes.BuildFakeWebhook()
-	s.exampleInput = fakes.BuildFakeWebhookCreationInputFromWebhook(s.exampleWebhook)
-	s.exampleWebhookList = fakes.BuildFakeWebhookList()
-}
-
-func (s *webhooksTestSuite) TestBuilder_BuildGetWebhookRequest() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(false, http.MethodGet, "", expectedPathFormat, s.exampleWebhook.ID)
+		h := buildTestHelper()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
-		actual, err := s.builder.BuildGetWebhookRequest(s.ctx, s.exampleWebhook.ID)
+		spec := newRequestSpec(false, http.MethodGet, "", expectedPathFormat, exampleWebhook.ID)
+
+		actual, err := h.builder.BuildGetWebhookRequest(h.ctx, exampleWebhook.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid webhook ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetWebhookRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *webhooksTestSuite) TestBuilder_BuildGetWebhooksRequest() {
+func TestBuilder_BuildGetWebhooksRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/webhooks"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
 
 		spec := newRequestSpec(false, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := s.builder.BuildGetWebhooksRequest(s.ctx, nil)
+		actual, err := h.builder.BuildGetWebhooksRequest(h.ctx, nil)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func (s *webhooksTestSuite) TestBuilder_BuildCreateWebhookRequest() {
+func TestBuilder_BuildCreateWebhookRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/webhooks"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeWebhookCreationInput()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		actual, err := s.builder.BuildCreateWebhookRequest(s.ctx, s.exampleInput)
+		actual, err := h.builder.BuildCreateWebhookRequest(h.ctx, exampleInput)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCreateWebhookRequest(h.ctx, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		h.builder = buildTestRequestBuilderWithInvalidURL()
+		exampleInput := &types.WebhookCreationInput{}
+
+		actual, err := h.builder.BuildCreateWebhookRequest(h.ctx, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *webhooksTestSuite) TestBuilder_BuildUpdateWebhookRequest() {
+func TestBuilder_BuildUpdateWebhookRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleWebhook.ID)
+		h := buildTestHelper()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
-		actual, err := s.builder.BuildUpdateWebhookRequest(s.ctx, s.exampleWebhook)
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleWebhook.ID)
+
+		actual, err := h.builder.BuildUpdateWebhookRequest(h.ctx, exampleWebhook)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildUpdateWebhookRequest(h.ctx, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *webhooksTestSuite) TestBuilder_BuildArchiveWebhookRequest() {
+func TestBuilder_BuildArchiveWebhookRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(false, http.MethodDelete, "", expectedPathFormat, s.exampleWebhook.ID)
+		h := buildTestHelper()
+		exampleWebhook := fakes.BuildFakeWebhook()
 
-		actual, err := s.builder.BuildArchiveWebhookRequest(s.ctx, s.exampleWebhook.ID)
+		spec := newRequestSpec(false, http.MethodDelete, "", expectedPathFormat, exampleWebhook.ID)
+
+		actual, err := h.builder.BuildArchiveWebhookRequest(h.ctx, exampleWebhook.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid webhook ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildArchiveWebhookRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *webhooksTestSuite) TestBuilder_BuildGetAuditLogForWebhookRequest() {
+func TestBuilder_BuildGetAuditLogForWebhookRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/webhooks/%d/audit"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildGetAuditLogForWebhookRequest(s.ctx, s.exampleWebhook.ID)
+		h := buildTestHelper()
+		exampleWebhook := fakes.BuildFakeWebhook()
+
+		actual, err := h.builder.BuildGetAuditLogForWebhookRequest(h.ctx, exampleWebhook.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleWebhook.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleWebhook.ID)
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid webhook ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAuditLogForWebhookRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 }

@@ -223,7 +223,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 }
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (b *MariaDB) BuildSetUserStatusQuery(ctx context.Context, input types.UserReputationUpdateInput) (query string, args []interface{}) {
+func (b *MariaDB) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

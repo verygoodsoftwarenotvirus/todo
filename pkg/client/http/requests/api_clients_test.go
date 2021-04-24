@@ -1,121 +1,173 @@
 package requests
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestAPIClients(t *testing.T) {
-	t.Parallel()
+func TestBuilder_BuildGetAPIClientRequest(T *testing.T) {
+	T.Parallel()
 
-	suite.Run(t, new(apiClientsTestSuite))
-}
-
-type apiClientsTestSuite struct {
-	suite.Suite
-
-	ctx                  context.Context
-	builder              *Builder
-	exampleAPIClient     *types.APIClient
-	exampleInput         *types.APIClientCreationInput
-	exampleAPIClientList *types.APIClientList
-}
-
-var _ suite.SetupTestSuite = (*apiClientsTestSuite)(nil)
-
-func (s *apiClientsTestSuite) SetupTest() {
-	s.ctx = context.Background()
-	s.builder = buildTestRequestBuilder()
-	s.exampleAPIClient = fakes.BuildFakeAPIClient()
-	s.exampleAPIClient.ClientSecret = nil
-	s.exampleInput = fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
-	s.exampleAPIClientList = fakes.BuildFakeAPIClientList()
-
-	for i := 0; i < len(s.exampleAPIClientList.Clients); i++ {
-		s.exampleAPIClientList.Clients[i].ClientSecret = nil
-	}
-}
-
-func (s *apiClientsTestSuite) TestBuilder_BuildGetAPIClientRequest() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
+		h := buildTestHelper()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		actual, err := s.builder.BuildGetAPIClientRequest(s.ctx, s.exampleAPIClient.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAPIClient.ID)
+
+		actual, err := h.builder.BuildGetAPIClientRequest(h.ctx, exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid client ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAPIClientRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *apiClientsTestSuite) TestBuilder_BuildGetAPIClientsRequest() {
+func TestBuilder_BuildGetAPIClientsRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/api_clients"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := s.builder.BuildGetAPIClientsRequest(s.ctx, nil)
+		actual, err := h.builder.BuildGetAPIClientsRequest(h.ctx, nil)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func (s *apiClientsTestSuite) TestBuilder_BuildCreateAPIClientRequest() {
+func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/api_clients"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeAPIClientCreationInput()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		req, err := s.builder.BuildCreateAPIClientRequest(s.ctx, &http.Cookie{}, s.exampleInput)
+		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
 
-		assertRequestQuality(t, req, spec)
+		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with nil cookie", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeAPIClientCreationInput()
+
+		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, nil, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, &http.Cookie{}, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error building data request", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeAPIClientCreationInput()
+
+		h.builder = buildTestRequestBuilderWithInvalidURL()
+		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, &http.Cookie{}, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 }
 
-func (s *apiClientsTestSuite) TestBuilder_BuildArchiveAPIClientRequest() {
+func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
+		h := buildTestHelper()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		actual, err := s.builder.BuildArchiveAPIClientRequest(s.ctx, s.exampleAPIClient.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAPIClient.ID)
+
+		actual, err := h.builder.BuildArchiveAPIClientRequest(h.ctx, exampleAPIClient.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid client ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildArchiveAPIClientRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *apiClientsTestSuite) TestBuilder_BuildGetAuditLogForAPIClientRequest() {
+func TestBuilder_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/api_clients/%d/audit"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildGetAuditLogForAPIClientRequest(s.ctx, s.exampleAPIClient.ID)
+		h := buildTestHelper()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		actual, err := h.builder.BuildGetAuditLogForAPIClientRequest(h.ctx, exampleAPIClient.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleAPIClient.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAPIClient.ID)
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid client ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAuditLogForAPIClientRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 }

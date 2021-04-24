@@ -57,7 +57,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 			"UpdateUserReputation",
 			testutil.ContextMatcher,
 			helper.exampleInput.TargetUserID,
-			*helper.exampleInput,
+			helper.exampleInput,
 		).Return(nil)
 		helper.service.userDB = userDataManager
 
@@ -86,7 +86,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 			"UpdateUserReputation",
 			testutil.ContextMatcher,
 			helper.exampleInput.TargetUserID,
-			*helper.exampleInput,
+			helper.exampleInput,
 		).Return(nil)
 		helper.service.userDB = userDataManager
 
@@ -107,14 +107,13 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.exampleInput.NewReputation = types.GoodStandingAccountStatus
 
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
 			"UpdateUserReputation",
 			testutil.ContextMatcher,
 			helper.exampleInput.TargetUserID,
-			*helper.exampleInput,
+			helper.exampleInput,
 		).Return(nil)
 		helper.service.userDB = userDataManager
 
@@ -190,7 +189,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 			"UpdateUserReputation",
 			testutil.ContextMatcher,
 			helper.exampleInput.TargetUserID,
-			*helper.exampleInput,
+			helper.exampleInput,
 		).Return(sql.ErrNoRows)
 		helper.service.userDB = userDataManager
 
@@ -210,7 +209,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 			"UpdateUserReputation",
 			testutil.ContextMatcher,
 			helper.exampleInput.TargetUserID,
-			*helper.exampleInput,
+			helper.exampleInput,
 		).Return(errors.New("blah"))
 		helper.service.userDB = userDataManager
 
@@ -243,7 +242,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 			"UpdateUserReputation",
 			testutil.ContextMatcher,
 			helper.exampleInput.TargetUserID,
-			*helper.exampleInput,
+			helper.exampleInput,
 		).Return(nil)
 		helper.service.userDB = userDataManager
 

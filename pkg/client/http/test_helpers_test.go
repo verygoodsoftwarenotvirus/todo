@@ -217,5 +217,3 @@ func buildTestClientThatWaitsTooLong(t *testing.T, spec *requestSpec) (*Client, 
 
 	return c, ts
 }
-
-// end test helpers

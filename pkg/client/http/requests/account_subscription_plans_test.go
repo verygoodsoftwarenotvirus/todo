@@ -1,11 +1,8 @@
 package requests
 
 import (
-	"context"
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,120 +11,183 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-func TestAccountSubscriptionPlans(t *testing.T) {
-	t.Parallel()
+func TestBuilder_BuildGetAccountSubscriptionPlanRequest(T *testing.T) {
+	T.Parallel()
 
-	suite.Run(t, new(accountSubscriptionPlansRequestBuildersTestSuite))
-}
-
-type accountSubscriptionPlansRequestBuildersTestSuite struct {
-	suite.Suite
-
-	ctx                                context.Context
-	builder                            *Builder
-	exampleAccountSubscriptionPlan     *types.AccountSubscriptionPlan
-	exampleInput                       *types.AccountSubscriptionPlanCreationInput
-	exampleAccountSubscriptionPlanList *types.AccountSubscriptionPlanList
-}
-
-var _ suite.SetupTestSuite = (*accountSubscriptionPlansRequestBuildersTestSuite)(nil)
-
-func (s *accountSubscriptionPlansRequestBuildersTestSuite) SetupTest() {
-	s.ctx = context.Background()
-	s.builder = buildTestRequestBuilder()
-	s.exampleAccountSubscriptionPlan = fakes.BuildFakeAccountSubscriptionPlan()
-	s.exampleInput = fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(s.exampleAccountSubscriptionPlan)
-	s.exampleAccountSubscriptionPlanList = fakes.BuildFakeAccountSubscriptionPlanList()
-}
-
-func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetAccountSubscriptionPlanRequest() {
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
+		h := buildTestHelper()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		actual, err := s.builder.BuildGetAccountSubscriptionPlanRequest(s.ctx, s.exampleAccountSubscriptionPlan.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
+
+		actual, err := h.builder.BuildGetAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid account subscription plan ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAccountSubscriptionPlanRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetAccountSubscriptionPlansRequest() {
+func TestBuilder_BuildGetAccountSubscriptionPlansRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/account_subscription_plans"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
 
 		filter := (*types.QueryFilter)(nil)
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := s.builder.BuildGetAccountSubscriptionPlansRequest(s.ctx, filter)
+		actual, err := h.builder.BuildGetAccountSubscriptionPlansRequest(h.ctx, filter)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildCreateAccountSubscriptionPlanRequest() {
+func TestBuilder_BuildCreateAccountSubscriptionPlanRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/account_subscription_plans"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildCreateAccountSubscriptionPlanRequest(s.ctx, s.exampleInput)
-		assert.NoError(t, err)
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
+		actual, err := h.builder.BuildCreateAccountSubscriptionPlanRequest(h.ctx, exampleInput)
+		assert.NoError(t, err)
+
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCreateAccountSubscriptionPlanRequest(h.ctx, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCreateAccountSubscriptionPlanRequest(h.ctx, &types.AccountSubscriptionPlanCreationInput{})
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 }
 
-func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildUpdateAccountSubscriptionPlanRequest() {
+func TestBuilder_BuildUpdateAccountSubscriptionPlanRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
+		h := buildTestHelper()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		actual, err := s.builder.BuildUpdateAccountSubscriptionPlanRequest(s.ctx, s.exampleAccountSubscriptionPlan)
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
+
+		actual, err := h.builder.BuildUpdateAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildUpdateAccountSubscriptionPlanRequest(h.ctx, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildArchiveAccountSubscriptionPlanRequest() {
+func TestBuilder_BuildArchiveAccountSubscriptionPlanRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/account_subscription_plans/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccountSubscriptionPlan.ID)
+		h := buildTestHelper()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		actual, err := s.builder.BuildArchiveAccountSubscriptionPlanRequest(s.ctx, s.exampleAccountSubscriptionPlan.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
+
+		actual, err := h.builder.BuildArchiveAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid plan ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildArchiveAccountSubscriptionPlanRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *accountSubscriptionPlansRequestBuildersTestSuite) TestBuilder_BuildGetAuditLogForAccountSubscriptionPlanRequest() {
+func TestBuilder_BuildGetAuditLogForAccountSubscriptionPlanRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/account_subscription_plans/%d/audit"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(s.ctx, s.exampleAccountSubscriptionPlan.ID)
+		h := buildTestHelper()
+		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
+
+		actual, err := h.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleAccountSubscriptionPlan.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAccountSubscriptionPlan.ID)
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid plan ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(h.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 }

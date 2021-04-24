@@ -1,11 +1,8 @@
 package requests
 
 import (
-	"context"
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/suite"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -14,156 +11,232 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestItems(t *testing.T) {
-	t.Parallel()
+func TestBuilder_BuildItemExistsRequest(T *testing.T) {
+	T.Parallel()
 
-	suite.Run(t, new(itemsTestSuite))
-}
-
-type itemsBaseSuite struct {
-	suite.Suite
-
-	ctx             context.Context
-	builder         *Builder
-	exampleItem     *types.Item
-	exampleInput    *types.ItemCreationInput
-	exampleItemList *types.ItemList
-}
-
-var _ suite.SetupTestSuite = (*itemsBaseSuite)(nil)
-
-func (s *itemsBaseSuite) SetupTest() {
-	s.ctx = context.Background()
-	s.builder = buildTestRequestBuilder()
-	s.exampleItem = fakes.BuildFakeItem()
-	s.exampleInput = fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
-	s.exampleItemList = fakes.BuildFakeItemList()
-}
-
-type itemsTestSuite struct {
-	suite.Suite
-
-	itemsBaseSuite
-}
-
-func (s *itemsTestSuite) TestBuilder_BuildItemExistsRequest() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildItemExistsRequest(s.ctx, s.exampleItem.ID)
-		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, s.exampleItem.ID)
+		h := buildTestHelper()
+		exampleItem := fakes.BuildFakeItem()
+
+		actual, err := h.builder.BuildItemExistsRequest(h.ctx, exampleItem.ID)
+		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, exampleItem.ID)
 
 		assert.NoError(t, err)
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildItemExistsRequest(h.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *itemsTestSuite) TestBuilder_BuildGetItemRequest() {
+func TestBuilder_BuildGetItemRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
+		h := buildTestHelper()
+		exampleItem := fakes.BuildFakeItem()
 
-		actual, err := s.builder.BuildGetItemRequest(s.ctx, s.exampleItem.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleItem.ID)
+
+		actual, err := h.builder.BuildGetItemRequest(h.ctx, exampleItem.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetItemRequest(h.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *itemsTestSuite) TestBuilder_BuildGetItemsRequest() {
+func TestBuilder_BuildGetItemsRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/items"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
 
 		filter := (*types.QueryFilter)(nil)
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := s.builder.BuildGetItemsRequest(s.ctx, filter)
+		actual, err := h.builder.BuildGetItemsRequest(h.ctx, filter)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func (s *itemsTestSuite) TestBuilder_BuildSearchItemsRequest() {
+func TestBuilder_BuildSearchItemsRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/items/search"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
 
 		limit := types.DefaultQueryFilter().Limit
 		exampleQuery := "whatever"
 		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
 
-		actual, err := s.builder.BuildSearchItemsRequest(s.ctx, exampleQuery, limit)
+		actual, err := h.builder.BuildSearchItemsRequest(h.ctx, exampleQuery, limit)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func (s *itemsTestSuite) TestBuilder_BuildCreateItemRequest() {
+func TestBuilder_BuildCreateItemRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/items"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildCreateItemRequest(s.ctx, s.exampleInput)
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeItemCreationInput()
+
+		actual, err := h.builder.BuildCreateItemRequest(h.ctx, exampleInput)
 		assert.NoError(t, err)
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCreateItemRequest(h.ctx, nil)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCreateItemRequest(h.ctx, &types.ItemCreationInput{})
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *itemsTestSuite) TestBuilder_BuildUpdateItemRequest() {
+func TestBuilder_BuildUpdateItemRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleItem.ID)
+		h := buildTestHelper()
+		exampleItem := fakes.BuildFakeItem()
 
-		actual, err := s.builder.BuildUpdateItemRequest(s.ctx, s.exampleItem)
+		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleItem.ID)
+
+		actual, err := h.builder.BuildUpdateItemRequest(h.ctx, exampleItem)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildUpdateItemRequest(h.ctx, nil)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *itemsTestSuite) TestBuilder_BuildArchiveItemRequest() {
+func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/items/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleItem.ID)
+		h := buildTestHelper()
+		exampleItem := fakes.BuildFakeItem()
 
-		actual, err := s.builder.BuildArchiveItemRequest(s.ctx, s.exampleItem.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleItem.ID)
+
+		actual, err := h.builder.BuildArchiveItemRequest(h.ctx, exampleItem.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildArchiveItemRequest(h.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *itemsTestSuite) TestBuilder_BuildGetAuditLogForItemRequest() {
+func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/items/%d/audit"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildGetAuditLogForItemRequest(s.ctx, s.exampleItem.ID)
+		h := buildTestHelper()
+		exampleItem := fakes.BuildFakeItem()
+
+		actual, err := h.builder.BuildGetAuditLogForItemRequest(h.ctx, exampleItem.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleItem.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleItem.ID)
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAuditLogForItemRequest(h.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

@@ -3,8 +3,9 @@ package requests
 import (
 	"context"
 	"net/http"
-	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -18,6 +19,7 @@ func (b *Builder) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uint
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger.WithValue(keys.AuditLogEntryIDKey, entryID)
 	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
 
 	uri := b.BuildURL(
@@ -25,11 +27,16 @@ func (b *Builder) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uint
 		nil,
 		adminBasePath,
 		auditLogBasePath,
-		strconv.FormatUint(entryID, 10),
+		id(entryID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetAuditLogEntriesRequest builds an HTTP request for fetching audit log entries.
@@ -37,6 +44,7 @@ func (b *Builder) BuildGetAuditLogEntriesRequest(ctx context.Context, filter *ty
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := filter.AttachToLogger(b.logger)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	uri := b.BuildURL(
@@ -47,5 +55,10 @@ func (b *Builder) BuildGetAuditLogEntriesRequest(ctx context.Context, filter *ty
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }

@@ -27,7 +27,7 @@ func (b *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID
 
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "account", "select")
+	uri := b.buildUnversionedURL(ctx, nil, usersBasePath, "account", "select")
 
 	input := &types.ChangeActiveAccountInput{
 		AccountID: accountID,
@@ -45,17 +45,23 @@ func (b *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) 
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	uri := b.BuildURL(
 		ctx,
 		nil,
 		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
+		id(accountID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetAccountsRequest builds an HTTP request for fetching a list of accounts.
@@ -63,12 +69,18 @@ func (b *Builder) BuildGetAccountsRequest(ctx context.Context, filter *types.Que
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := filter.AttachToLogger(b.logger)
 	uri := b.BuildURL(ctx, filter.ToValues(), accountsBasePath)
 
 	tracing.AttachRequestURIToSpan(span, uri)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildCreateAccountRequest builds an HTTP request for creating an account.
@@ -121,15 +133,22 @@ func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
+
 	uri := b.BuildURL(
 		ctx,
 		nil,
 		accountsBasePath,
-		strconv.FormatUint(accountID, 10),
+		id(accountID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildAddUserRequest builds a request that adds a user to an account.
@@ -162,10 +181,17 @@ func (b *Builder) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint6
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "default")
+	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
+
+	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "default")
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildRemoveUserRequest builds a request that removes a user from an account.
@@ -173,15 +199,15 @@ func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == 0 || userID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
-	if userID == 0 {
-		return nil, fmt.Errorf("userID: %w", ErrInvalidIDProvided)
-	}
+	logger := b.logger.WithValue(keys.AccountIDKey, accountID).
+		WithValue(keys.UserIDKey, userID).
+		WithValue(keys.ReasonKey, reason)
 
-	u := b.buildAPIV1URL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10))
+	u := b.buildAPIV1URL(ctx, nil, accountsBasePath, id(accountID), "members", id(userID))
 
 	if reason != "" {
 		q := u.Query()
@@ -191,7 +217,12 @@ func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 
 	tracing.AttachURLToSpan(span, u)
 
-	return http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
@@ -199,11 +230,7 @@ func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
-
-	if userID == 0 {
+	if accountID == 0 || userID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -217,7 +244,7 @@ func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "members", strconv.FormatUint(userID, 10), "permissions")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "members", id(userID), "permissions")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPatch, uri, input)
@@ -242,7 +269,7 @@ func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, acco
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "transfer")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "transfer")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -257,8 +284,15 @@ func (b *Builder) BuildGetAuditLogForAccountRequest(ctx context.Context, account
 		return nil, ErrInvalidIDProvided
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(accountID, 10), "audit")
+	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
+
+	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }

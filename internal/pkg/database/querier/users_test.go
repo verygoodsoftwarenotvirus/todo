@@ -1490,6 +1490,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleUser.ExternalID = ""
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.CreatedOn = exampleCreationTime
+		exampleUser.Reputation = ""
 		exampleUserCreationInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)

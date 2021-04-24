@@ -362,7 +362,7 @@ func TestPostgres_BuildSetUserStatusQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := types.UserReputationUpdateInput{
+		exampleInput := &types.UserReputationUpdateInput{
 			TargetUserID:  exampleUser.ID,
 			NewReputation: "new",
 			Reason:        "test",

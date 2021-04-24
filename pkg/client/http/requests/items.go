@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -24,17 +25,23 @@ func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*h
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
 		ctx,
 		nil,
 		itemsBasePath,
-		strconv.FormatUint(itemID, 10),
+		id(itemID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodHead, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetItemRequest builds an HTTP request for fetching an item.
@@ -46,17 +53,23 @@ func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
 		ctx,
 		nil,
 		itemsBasePath,
-		strconv.FormatUint(itemID, 10),
+		id(itemID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildSearchItemsRequest builds an HTTP request for querying items.
@@ -68,6 +81,9 @@ func (b *Builder) BuildSearchItemsRequest(ctx context.Context, query string, lim
 	params.Set(types.SearchQueryKey, query)
 	params.Set(types.LimitQueryKey, strconv.FormatUint(uint64(limit), 10))
 
+	logger := b.logger.WithValue(types.SearchQueryKey, query).
+		WithValue(types.LimitQueryKey, limit)
+
 	uri := b.BuildURL(
 		ctx,
 		params,
@@ -76,7 +92,12 @@ func (b *Builder) BuildSearchItemsRequest(ctx context.Context, query string, lim
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetItemsRequest builds an HTTP request for fetching a list of items.
@@ -84,11 +105,18 @@ func (b *Builder) BuildGetItemsRequest(ctx context.Context, filter *types.QueryF
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := filter.AttachToLogger(b.logger)
+
 	uri := b.BuildURL(ctx, filter.ToValues(), itemsBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildCreateItemRequest builds an HTTP request for creating an item.
@@ -143,17 +171,23 @@ func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
 		ctx,
 		nil,
 		itemsBasePath,
-		strconv.FormatUint(itemID, 10),
+		id(itemID),
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetAuditLogForItemRequest builds an HTTP request for fetching a list of audit log entries pertaining to an item.
@@ -165,10 +199,16 @@ func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uin
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	uri := b.BuildURL(ctx, nil, itemsBasePath, strconv.FormatUint(itemID, 10), "audit")
+	uri := b.BuildURL(ctx, nil, itemsBasePath, id(itemID), "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }

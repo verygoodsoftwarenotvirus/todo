@@ -101,7 +101,7 @@ func (m *UserSQLQueryBuilder) BuildGetAuditLogEntriesForUserQuery(ctx context.Co
 }
 
 // BuildSetUserStatusQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildSetUserStatusQuery(ctx context.Context, input types.UserReputationUpdateInput) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

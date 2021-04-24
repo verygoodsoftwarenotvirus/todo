@@ -7,10 +7,10 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
@@ -28,11 +28,17 @@ func (b *Builder) BuildGetUserRequest(ctx context.Context, userID uint64) (*http
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	uri := b.BuildURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10))
+	uri := b.BuildURL(ctx, nil, usersBasePath, id(userID))
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildGetUsersRequest builds an HTTP request for fetching a list of users.
@@ -40,10 +46,16 @@ func (b *Builder) BuildGetUsersRequest(ctx context.Context, filter *types.QueryF
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := filter.AttachToLogger(b.logger)
 	tracing.AttachQueryFilterToSpan(span, filter)
 	uri := b.BuildURL(ctx, filter.ToValues(), usersBasePath)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildSearchForUsersByUsernameRequest builds an HTTP request that searches for a user by their username.
@@ -55,6 +67,7 @@ func (b *Builder) BuildSearchForUsersByUsernameRequest(ctx context.Context, user
 		return nil, ErrEmptyUsernameProvided
 	}
 
+	logger := b.logger.WithValue(keys.UsernameKey, username)
 	tracing.AttachUsernameToSpan(span, username)
 
 	u := b.buildAPIV1URL(ctx, nil, usersBasePath, "search")
@@ -63,7 +76,12 @@ func (b *Builder) BuildSearchForUsersByUsernameRequest(ctx context.Context, user
 	u.RawQuery = q.Encode()
 	uri := u.String()
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildCreateUserRequest builds an HTTP request for creating a user.
@@ -78,7 +96,7 @@ func (b *Builder) BuildCreateUserRequest(ctx context.Context, input *types.UserC
 	tracing.AttachUsernameToSpan(span, input.Username)
 
 	// deliberately not validating here
-	uri := b.buildVersionlessURL(ctx, nil, usersBasePath)
+	uri := b.buildUnversionedURL(ctx, nil, usersBasePath)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -93,30 +111,19 @@ func (b *Builder) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*
 		return nil, ErrInvalidIDProvided
 	}
 
+	logger := b.logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// deliberately not validating here, maybe there should make a client-side validate method vs a server-side?
 
-	uri := b.buildAPIV1URL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10)).String()
+	uri := b.buildAPIV1URL(ctx, nil, usersBasePath, id(userID)).String()
 
-	return http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
-}
-
-// BuildGetAuditLogForUserRequest builds an HTTP request for fetching a list of audit log entries for a user.
-func (b *Builder) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if userID == 0 {
-		return nil, ErrInvalidIDProvided
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
 	}
 
-	tracing.AttachUserIDToSpan(span, userID)
-
-	uri := b.BuildURL(ctx, nil, usersBasePath, strconv.FormatUint(userID, 10), "audit")
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	return req, nil
 }
 
 // BuildAvatarUploadRequest builds an HTTP request that sets a user's avatar to the provided content.
@@ -168,6 +175,29 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("X-Upload-Content-Type", ct)
+
+	return req, nil
+}
+
+// BuildGetAuditLogForUserRequest builds an HTTP request for fetching a list of audit log entries for a user.
+func (b *Builder) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+	ctx, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	if userID == 0 {
+		return nil, ErrInvalidIDProvided
+	}
+
+	logger := b.logger.WithValue(keys.UserIDKey, userID)
+	tracing.AttachUserIDToSpan(span, userID)
+
+	uri := b.BuildURL(ctx, nil, usersBasePath, id(userID), "audit")
+	tracing.AttachRequestURIToSpan(span, uri)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building user status request")
+	}
 
 	return req, nil
 }

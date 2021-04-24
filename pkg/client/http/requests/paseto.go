@@ -28,6 +28,7 @@ func setSignatureForRequest(req *http.Request, body, secretKey []byte) error {
 
 	mac := hmac.New(sha256.New, secretKey)
 	if _, err := mac.Write(body); err != nil {
+		// this can never occur lol
 		return fmt.Errorf("writing hash content: %w", err)
 	}
 
@@ -45,7 +46,7 @@ func (b *Builder) BuildAPIClientAuthTokenRequest(ctx context.Context, input *typ
 		return nil, ErrNilInputProvided
 	}
 
-	uri := b.buildVersionlessURL(ctx, nil, pasetoBasePath)
+	uri := b.buildUnversionedURL(ctx, nil, pasetoBasePath)
 	logger := b.logger.WithValue(keys.AccountIDKey, input.AccountID).
 		WithValue(keys.APIClientClientIDKey, input.ClientID)
 

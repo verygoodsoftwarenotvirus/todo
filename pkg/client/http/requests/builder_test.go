@@ -3,117 +3,29 @@ package requests
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
-	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
-
-const (
-	exampleURI       = "https://todo.verygoodsoftwarenotvirus.ru"
-	asciiControlChar = string(byte(127))
-)
-
-var (
-	parsedExampleURL *url.URL
-)
-
-func init() {
-	var err error
-
-	parsedExampleURL, err = url.Parse(exampleURI)
-	if err != nil {
-		panic(err)
-	}
-}
-
-// begin test helpers
 
 type (
-	valuer map[string][]string
+	testingType struct {
+		Name string
+	}
+
+	testBreakableStruct struct {
+		Thing json.Number
+	}
 )
-
-func (v valuer) ToValues() url.Values {
-	return url.Values(v)
-}
-
-type requestSpec struct {
-	path              string
-	method            string
-	query             string
-	pathArgs          []interface{}
-	bodyShouldBeEmpty bool
-}
-
-func newRequestSpec(bodyShouldBeEmpty bool, method, query, path string, pathArgs ...interface{}) *requestSpec {
-	return &requestSpec{
-		path:              path,
-		pathArgs:          pathArgs,
-		method:            method,
-		query:             query,
-		bodyShouldBeEmpty: bodyShouldBeEmpty,
-	}
-}
-
-func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
-	t.Helper()
-
-	expectedPath := fmt.Sprintf(spec.path, spec.pathArgs...)
-
-	require.NotNil(t, req, "provided req must not be nil")
-	require.NotNil(t, spec, "provided spec must not be nil")
-
-	bodyBytes, err := httputil.DumpRequest(req, true)
-	require.NotEmpty(t, bodyBytes)
-	require.NoError(t, err)
-
-	if spec.bodyShouldBeEmpty {
-		bodyLines := strings.Split(string(bodyBytes), "\n")
-		require.NotEmpty(t, bodyLines)
-		assert.Empty(t, bodyLines[len(bodyLines)-1])
-	}
-
-	assert.Equal(t, spec.query, req.URL.Query().Encode(), "expected query to be %q, but was %q instead", spec.query, req.URL.Query().Encode())
-	assert.Equal(t, expectedPath, req.URL.Path, "expected path to be %q, but was %q instead", expectedPath, req.URL.Path)
-	assert.Equal(t, spec.method, req.Method, "expected method to be %q, but was %q instead", spec.method, req.Method)
-}
-
-func buildTestRequestBuilder() *Builder {
-	l := logging.NewNonOperationalLogger()
-
-	return &Builder{
-		url:     parsedExampleURL,
-		logger:  l,
-		tracer:  tracing.NewTracer("test"),
-		encoder: encoding.ProvideClientEncoder(l, encoding.ContentTypeJSON),
-	}
-}
-
-func buildTestRequestBuilderWithInvalidURL(t *testing.T) *Builder {
-	t.Helper()
-
-	l := logging.NewNonOperationalLogger()
-	u := mustParseURL("https://verygoodsoftwarenotvirus.ru")
-	u.Scheme = fmt.Sprintf(`%s://`, asciiControlChar)
-
-	return &Builder{
-		url:     u,
-		logger:  l,
-		tracer:  tracing.NewTracer("test"),
-		encoder: encoding.ProvideClientEncoder(l, encoding.ContentTypeJSON),
-	}
-}
-
-// end test helpers
 
 func TestNewBuilder(T *testing.T) {
 	T.Parallel()
@@ -128,9 +40,62 @@ func TestNewBuilder(T *testing.T) {
 		require.NotNil(t, c)
 		require.NoError(t, err)
 	})
+
+	T.Run("with nil URL", func(t *testing.T) {
+		t.Parallel()
+
+		logger := logging.NewNonOperationalLogger()
+		encoder := encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON)
+		c, err := NewBuilder(nil, logger, encoder)
+
+		require.Nil(t, c)
+		require.Error(t, err)
+	})
+
+	T.Run("with nil encoder", func(t *testing.T) {
+		t.Parallel()
+
+		logger := logging.NewNonOperationalLogger()
+		c, err := NewBuilder(mustParseURL(exampleURI), logger, nil)
+
+		require.Nil(t, c)
+		require.Error(t, err)
+	})
 }
 
-func TestBuildURL(T *testing.T) {
+func TestBuilder_URL(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		assert.NotNil(t, h.builder.URL())
+	})
+}
+
+func TestBuilder_SetURL(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		assert.NoError(t, h.builder.SetURL(&url.URL{}))
+	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		assert.Error(t, h.builder.SetURL(nil))
+	})
+}
+
+func TestBuilder_BuildURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("various urls", func(t *testing.T) {
@@ -176,13 +141,64 @@ func TestBuildURL(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		c := buildTestRequestBuilderWithInvalidURL(t)
+		c := buildTestRequestBuilderWithInvalidURL()
 
 		assert.Empty(t, c.BuildURL(ctx, nil, asciiControlChar))
 	})
 }
 
-func TestBuildVersionlessURL(T *testing.T) {
+func TestBuilder_Must(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		h.builder.Must(&http.Request{}, nil)
+	})
+
+	T.Run("with panic", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleErr := errors.New("blah")
+
+		mockPanicker := panicking.NewMockPanicker()
+		mockPanicker.On("Panic", exampleErr).Return()
+		h.builder.panicker = mockPanicker
+
+		h.builder.Must(&http.Request{}, exampleErr)
+
+		mock.AssertExpectationsForObjects(t, mockPanicker)
+	})
+}
+
+func Test_buildRawURL(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		actual, err := buildRawURL(parsedExampleURL, url.Values{}, true, "things", "and", "stuff")
+		assert.NoError(t, err)
+		assert.NotNil(t, actual)
+	})
+}
+
+func TestBuilder_buildAPIV1URL(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		assert.NotNil(t, h.builder.buildAPIV1URL(h.ctx, url.Values{}, "things", "and", "stuff"))
+	})
+}
+
+func TestBuilder_buildUnversionedURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("various urls", func(t *testing.T) {
@@ -190,7 +206,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 
 		logger := logging.NewNonOperationalLogger()
 		encoder := encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON)
-		c, err := NewBuilder(mustParseURL(exampleURI), logger, encoder)
+		b, err := NewBuilder(mustParseURL(exampleURI), logger, encoder)
 
 		require.NoError(t, err)
 
@@ -220,21 +236,21 @@ func TestBuildVersionlessURL(T *testing.T) {
 
 		for _, tc := range testCases {
 			ctx := context.Background()
-			actual := c.buildVersionlessURL(ctx, tc.inputQuery.ToValues(), tc.inputParts...)
+			actual := b.buildUnversionedURL(ctx, tc.inputQuery.ToValues(), tc.inputParts...)
 			assert.Equal(t, tc.expectation, actual)
 		}
 	})
 
 	T.Run("with invalid url parts", func(t *testing.T) {
 		t.Parallel()
-		c := buildTestRequestBuilderWithInvalidURL(t)
+		c := buildTestRequestBuilderWithInvalidURL()
 		ctx := context.Background()
-		actual := c.buildVersionlessURL(ctx, nil, asciiControlChar)
+		actual := c.buildUnversionedURL(ctx, nil, asciiControlChar)
 		assert.Empty(t, actual)
 	})
 }
 
-func TestV1Client_BuildWebsocketURL(T *testing.T) {
+func TestBuilder_BuildWebsocketURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -254,7 +270,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildHealthCheckRequest(T *testing.T) {
+func TestBuilder_BuildHealthCheckRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -272,17 +288,7 @@ func TestV1Client_BuildHealthCheckRequest(T *testing.T) {
 	})
 }
 
-type (
-	testingType struct {
-		Name string
-	}
-
-	testBreakableStruct struct {
-		Thing json.Number
-	}
-)
-
-func TestV1Client_buildDataRequest(T *testing.T) {
+func TestBuilder_buildDataRequest(T *testing.T) {
 	T.Parallel()
 
 	exampleData := &testingType{Name: "whatever"}
@@ -320,10 +326,20 @@ func TestV1Client_buildDataRequest(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		c := buildTestRequestBuilderWithInvalidURL(t)
+		c := buildTestRequestBuilderWithInvalidURL()
 		req, err := c.buildDataRequest(ctx, http.MethodPost, c.url.String(), exampleData)
 
 		require.Nil(t, req)
 		assert.Error(t, err)
+	})
+}
+
+func Test_mustParseURL(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		mustParseURL(exampleURI)
 	})
 }

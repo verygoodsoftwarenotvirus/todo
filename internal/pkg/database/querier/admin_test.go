@@ -22,7 +22,7 @@ func TestQuerier_UpdateUserReputation(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := types.UserReputationUpdateInput{
+		exampleInput := &types.UserReputationUpdateInput{
 			TargetUserID:  exampleUser.ID,
 			NewReputation: "new",
 			Reason:        "because",
@@ -54,7 +54,7 @@ func TestQuerier_UpdateUserReputation(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleInput := types.UserReputationUpdateInput{
+		exampleInput := &types.UserReputationUpdateInput{
 			TargetUserID:  exampleUser.ID,
 			NewReputation: "new",
 			Reason:        "because",

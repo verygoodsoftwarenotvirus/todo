@@ -287,7 +287,7 @@ func (b *Postgres) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, user
 }
 
 // BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (b *Postgres) BuildSetUserStatusQuery(ctx context.Context, input types.UserReputationUpdateInput) (query string, args []interface{}) {
+func (b *Postgres) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

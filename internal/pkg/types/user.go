@@ -121,7 +121,7 @@ type (
 	// AdminUserDataManager contains administrative User functions that we don't necessarily want to expose
 	// to, say, the collection of handlers.
 	AdminUserDataManager interface {
-		UpdateUserReputation(ctx context.Context, userID uint64, input UserReputationUpdateInput) error
+		UpdateUserReputation(ctx context.Context, userID uint64, input *UserReputationUpdateInput) error
 	}
 
 	// UserDataManager describes a structure which can manage users in permanent storage.

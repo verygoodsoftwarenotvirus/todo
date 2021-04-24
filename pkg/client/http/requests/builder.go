@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -29,20 +30,8 @@ type Builder struct {
 	panicker panicking.Panicker
 }
 
-// URL provides the client's URL.
-func (b *Builder) URL() *url.URL {
-	return b.url
-}
-
-// SetURL provides the client's URL.
-func (b *Builder) SetURL(u *url.URL) error {
-	if u == nil {
-		return ErrNoURLProvided
-	}
-
-	b.url = u
-
-	return nil
+func id(x uint64) string {
+	return strconv.FormatUint(x, 10)
 }
 
 // NewBuilder builds a new API client for us.
@@ -68,6 +57,22 @@ func NewBuilder(u *url.URL, logger logging.Logger, encoder encoding.ClientEncode
 	return c, nil
 }
 
+// URL provides the client's URL.
+func (b *Builder) URL() *url.URL {
+	return b.url
+}
+
+// SetURL provides the client's URL.
+func (b *Builder) SetURL(u *url.URL) error {
+	if u == nil {
+		return ErrNoURLProvided
+	}
+
+	b.url = u
+
+	return nil
+}
+
 // BuildURL builds standard service URLs.
 func (b *Builder) BuildURL(ctx context.Context, qp url.Values, parts ...string) string {
 	ctx, span := b.tracer.StartSpan(ctx)
@@ -78,15 +83,6 @@ func (b *Builder) BuildURL(ctx context.Context, qp url.Values, parts ...string) 
 	}
 
 	return ""
-}
-
-// MustBuildRequest requires that a given request be built without error.
-func MustBuildRequest(req *http.Request, err error) *http.Request {
-	if err != nil {
-		panic(err)
-	}
-
-	return req
 }
 
 // Must requires that a given request be built without error.
@@ -143,14 +139,14 @@ func (b *Builder) buildAPIV1URL(ctx context.Context, queryParams url.Values, par
 	return out
 }
 
-// buildVersionlessURL builds a url without the v1 API prefix. It should otherwise be identical to buildRawURL.
-func (b *Builder) buildVersionlessURL(ctx context.Context, qp url.Values, parts ...string) string {
+// buildUnversionedURL builds a url without the v1 API prefix. It should otherwise be identical to buildRawURL.
+func (b *Builder) buildUnversionedURL(ctx context.Context, qp url.Values, parts ...string) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	u, err := buildRawURL(b.url, qp, false, parts...)
 	if err != nil {
-		b.logger.Error(err, "building versionless url")
+		b.logger.Error(err, "building unversioned url")
 		return ""
 	}
 
@@ -176,7 +172,12 @@ func (b *Builder) BuildHealthCheckRequest(ctx context.Context) (*http.Request, e
 	u := *b.url
 	uri := fmt.Sprintf("%s://%s/_meta_/ready", u.Scheme, u.Host)
 
-	return http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, b.logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // buildDataRequest builds an HTTP request for a given method, url, and body data.
@@ -200,14 +201,4 @@ func (b *Builder) buildDataRequest(ctx context.Context, method, uri string, in i
 	tracing.AttachURLToSpan(span, req.URL)
 
 	return req, nil
-}
-
-// mustParseURL parses a url or otherwise panics.
-func mustParseURL(raw string) *url.URL {
-	u, err := url.Parse(raw)
-	if err != nil {
-		panic(err)
-	}
-
-	return u
 }

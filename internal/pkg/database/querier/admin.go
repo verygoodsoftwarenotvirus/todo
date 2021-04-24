@@ -13,7 +13,7 @@ import (
 var _ types.AdminUserDataManager = (*SQLQuerier)(nil)
 
 // UpdateUserReputation updates a user's account status.
-func (q *SQLQuerier) UpdateUserReputation(ctx context.Context, userID uint64, input types.UserReputationUpdateInput) error {
+func (q *SQLQuerier) UpdateUserReputation(ctx context.Context, userID uint64, input *types.UserReputationUpdateInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 

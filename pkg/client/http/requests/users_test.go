@@ -1,150 +1,294 @@
 package requests
 
 import (
-	"context"
+	"bytes"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
+	"math"
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestUsers(t *testing.T) {
-	t.Parallel()
+func TestBuilder_BuildGetUserRequest(T *testing.T) {
+	T.Parallel()
 
-	suite.Run(t, new(usersTestSuite))
-}
-
-type usersTestSuite struct {
-	suite.Suite
-
-	ctx             context.Context
-	builder         *Builder
-	exampleUser     *types.User
-	exampleInput    *types.UserCreationInput
-	exampleUserList *types.UserList
-}
-
-var _ suite.SetupTestSuite = (*usersTestSuite)(nil)
-
-func (s *usersTestSuite) SetupTest() {
-	s.ctx = context.Background()
-	s.builder = buildTestRequestBuilder()
-
-	s.exampleUser = fakes.BuildFakeUser()
-	// the hashed passwords is never transmitted over the wire.
-	s.exampleUser.HashedPassword = ""
-	// the two factor secret is transmitted over the wire only on creation.
-	s.exampleUser.TwoFactorSecret = ""
-	// the two factor secret validation is never transmitted over the wire.
-	s.exampleUser.TwoFactorSecretVerifiedOn = nil
-
-	s.exampleInput = fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
-	s.exampleUserList = fakes.BuildFakeUserList()
-
-	for i := 0; i < len(s.exampleUserList.Users); i++ {
-		// the hashed passwords is never transmitted over the wire.
-		s.exampleUserList.Users[i].HashedPassword = ""
-		// the two factor secret is transmitted over the wire only on creation.
-		s.exampleUserList.Users[i].TwoFactorSecret = ""
-		// the two factor secret validation is never transmitted over the wire.
-		s.exampleUserList.Users[i].TwoFactorSecretVerifiedOn = nil
-	}
-}
-
-func (s *usersTestSuite) TestBuilder_BuildGetUserRequest() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleUser.ID)
+		h := buildTestHelper()
 
-		actual, err := s.builder.BuildGetUserRequest(s.ctx, s.exampleUser.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, h.exampleUser.ID)
+
+		actual, err := h.builder.BuildGetUserRequest(h.ctx, h.exampleUser.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetUserRequest(h.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *usersTestSuite) TestBuilder_BuildGetUsersRequest() {
+func TestBuilder_BuildGetUsersRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/users"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := s.builder.BuildGetUsersRequest(s.ctx, nil)
+		actual, err := h.builder.BuildGetUsersRequest(h.ctx, nil)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
 }
 
-func (s *usersTestSuite) TestBuilder_BuildSearchForUsersByUsernameRequest() {
+func TestBuilder_BuildSearchForUsersByUsernameRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/users/search"
-	exampleUsername := fakes.BuildFakeUser().Username
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
+		h := buildTestHelper()
+
+		exampleUsername := fakes.BuildFakeUser().Username
 		spec := newRequestSpec(false, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
 
-		actual, err := s.builder.BuildSearchForUsersByUsernameRequest(s.ctx, exampleUsername)
+		actual, err := h.builder.BuildSearchForUsersByUsernameRequest(h.ctx, exampleUsername)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with empty username", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildSearchForUsersByUsernameRequest(h.ctx, "")
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *usersTestSuite) TestBuilder_BuildCreateUserRequest() {
+func TestBuilder_BuildCreateUserRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/users"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		exampleInput := fakes.BuildFakeUserCreationInput()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		actual, err := s.builder.BuildCreateUserRequest(s.ctx, s.exampleInput)
+		actual, err := h.builder.BuildCreateUserRequest(h.ctx, exampleInput)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildCreateUserRequest(h.ctx, nil)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *usersTestSuite) TestBuilder_BuildArchiveUserRequest() {
+func TestBuilder_BuildArchiveUserRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPathFormat = "/api/v1/users/%d"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleUser.ID)
+		h := buildTestHelper()
 
-		actual, err := s.builder.BuildArchiveUserRequest(s.ctx, s.exampleUser.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, h.exampleUser.ID)
+
+		actual, err := h.builder.BuildArchiveUserRequest(h.ctx, h.exampleUser.ID)
 		assert.NoError(t, err, "no error should be returned")
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildArchiveUserRequest(h.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
-func (s *usersTestSuite) TestBuilder_BuildGetAuditLogForUserRequest() {
+// buildArbitraryImage builds an image with a bunch of colors in it.
+func buildArbitraryImage(widthAndHeight int) image.Image {
+	img := image.NewRGBA(image.Rectangle{Min: image.Point{}, Max: image.Point{X: widthAndHeight, Y: widthAndHeight}})
+
+	// Set color for each pixel.
+	for x := 0; x < widthAndHeight; x++ {
+		for y := 0; y < widthAndHeight; y++ {
+			img.Set(x, y, color.RGBA{R: uint8(x % math.MaxUint8), G: uint8(y % math.MaxUint8), B: uint8(x + y%math.MaxUint8), A: math.MaxUint8})
+		}
+	}
+
+	return img
+}
+
+func buildPNGBytes(t *testing.T, i image.Image) []byte {
+	t.Helper()
+
+	b := new(bytes.Buffer)
+	require.NoError(t, png.Encode(b, i))
+
+	return b.Bytes()
+}
+
+func TestBuilder_BuildAvatarUploadRequest(T *testing.T) {
+	T.Parallel()
+
+	const expectedPath = "/api/v1/users/avatar/upload"
+
+	T.Run("standard jpeg", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		avatar := buildArbitraryImage(123)
+		avatarBytes := buildPNGBytes(t, avatar)
+
+		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "jpeg")
+		assert.NoError(t, err, "no error should be returned")
+
+		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("standard png", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		avatar := buildArbitraryImage(123)
+		avatarBytes := buildPNGBytes(t, avatar)
+
+		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "png")
+		assert.NoError(t, err, "no error should be returned")
+
+		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("standard gif", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		avatar := buildArbitraryImage(123)
+		avatarBytes := buildPNGBytes(t, avatar)
+
+		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "gif")
+		assert.NoError(t, err, "no error should be returned")
+
+		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with empty avatar", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, nil, "jpeg")
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid extension", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		avatar := buildArbitraryImage(123)
+		avatarBytes := buildPNGBytes(t, avatar)
+
+		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "")
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	T.Run("with error building request", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+		h.builder = buildTestRequestBuilderWithInvalidURL()
+
+		avatar := buildArbitraryImage(123)
+		avatarBytes := buildPNGBytes(t, avatar)
+
+		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "png")
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+}
+
+func TestBuilder_BuildGetAuditLogForUserRequest(T *testing.T) {
+	T.Parallel()
+
 	const expectedPath = "/api/v1/users/%d/audit"
 
-	s.Run("standard", func() {
-		t := s.T()
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-		actual, err := s.builder.BuildGetAuditLogForUserRequest(s.ctx, s.exampleUser.ID)
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAuditLogForUserRequest(h.ctx, h.exampleUser.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err, "no error should be returned")
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleUser.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, h.exampleUser.ID)
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		h := buildTestHelper()
+
+		actual, err := h.builder.BuildGetAuditLogForUserRequest(h.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

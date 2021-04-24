@@ -21,7 +21,7 @@ func (b *Builder) BuildUserStatusRequest(ctx context.Context) (*http.Request, er
 	defer span.End()
 
 	logger := b.logger
-	uri := b.buildVersionlessURL(ctx, nil, authBasePath, "status")
+	uri := b.buildUnversionedURL(ctx, nil, authBasePath, "status")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
@@ -44,7 +44,7 @@ func (b *Builder) BuildLoginRequest(ctx context.Context, input *types.UserLoginI
 
 	// validating here requires settings knowledge, so we do not do it
 
-	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "login")
+	uri := b.buildUnversionedURL(ctx, nil, usersBasePath, "login")
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
@@ -54,9 +54,14 @@ func (b *Builder) BuildLogoutRequest(ctx context.Context) (*http.Request, error)
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "logout")
+	uri := b.buildUnversionedURL(ctx, nil, usersBasePath, "logout")
 
-	return http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
+	if err != nil {
+		return nil, observability.PrepareError(err, b.logger, span, "building user status request")
+	}
+
+	return req, nil
 }
 
 // BuildChangePasswordRequest builds a request to change a user's password.
@@ -68,9 +73,9 @@ func (b *Builder) BuildChangePasswordRequest(ctx context.Context, cookie *http.C
 		return nil, ErrNilInputProvided
 	}
 
-	// validating here requires settings knowledge so we do not do it.
+	// validating here requires settings knowledge, so we do not do it.
 
-	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "password", "new")
+	uri := b.buildUnversionedURL(ctx, nil, usersBasePath, "password", "new")
 
 	req, err := b.buildDataRequest(ctx, http.MethodPut, uri, input)
 	if err != nil {
@@ -101,7 +106,7 @@ func (b *Builder) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "totp_secret", "new")
+	uri := b.buildUnversionedURL(ctx, nil, usersBasePath, "totp_secret", "new")
 
 	req, err := b.buildDataRequest(ctx, http.MethodPost, uri, input)
 	if err != nil {
@@ -128,7 +133,7 @@ func (b *Builder) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint6
 		return nil, observability.PrepareError(err, logger, span, "invalid token provided")
 	}
 
-	uri := b.buildVersionlessURL(ctx, nil, usersBasePath, "totp_secret", "verify")
+	uri := b.buildUnversionedURL(ctx, nil, usersBasePath, "totp_secret", "verify")
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, &types.TOTPSecretVerificationInput{
 		TOTPToken: token,

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -18,7 +18,7 @@ func mustnt(err error) {
 }
 
 func main() {
-	f, fileCreateErr := ioutil.TempFile("", "*.toml")
+	f, fileCreateErr := os.CreateTemp("", "*.toml")
 	mustnt(fileCreateErr)
 
 	_, writeErr := f.WriteString(exampleConfig)

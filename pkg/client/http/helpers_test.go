@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -104,7 +104,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 		expected := "whatever"
 		res := &http.Response{
-			Body:       ioutil.NopCloser(strings.NewReader(fmt.Sprintf(`{"name": %q}`, expected))),
+			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`{"name": %q}`, expected))),
 			StatusCode: http.StatusOK,
 		}
 		var out testingType
@@ -121,7 +121,7 @@ func TestUnmarshalBody(T *testing.T) {
 		c, _ := buildSimpleTestClient(t)
 
 		res := &http.Response{
-			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
+			Body:       io.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusOK,
 		}
 		var out testingType
@@ -137,7 +137,7 @@ func TestUnmarshalBody(T *testing.T) {
 		c, _ := buildSimpleTestClient(t)
 
 		res := &http.Response{
-			Body: ioutil.NopCloser(
+			Body: io.NopCloser(
 				strings.NewReader(
 					func() string {
 						bs, err := json.Marshal(&types.ErrorResponse{})
@@ -162,7 +162,7 @@ func TestUnmarshalBody(T *testing.T) {
 		c, _ := buildSimpleTestClient(t)
 
 		res := &http.Response{
-			Body:       ioutil.NopCloser(strings.NewReader("BLAH")),
+			Body:       io.NopCloser(strings.NewReader("BLAH")),
 			StatusCode: http.StatusBadRequest,
 		}
 		var out *testingType

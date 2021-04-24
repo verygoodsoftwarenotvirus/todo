@@ -38,6 +38,32 @@ func (s *accountsTestSuite) SetupTest() {
 	s.exampleAccountList = fakes.BuildFakeAccountList()
 }
 
+func (s *accountsTestSuite) TestV1Client_SwitchActiveAccount() {
+	const expectedPath = "/users/account/select"
+
+	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+
+	s.Run("standard", func() {
+		t := s.T()
+
+		s.exampleAccount.BelongsToUser = 0
+
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusAccepted)
+		c.authMethod = cookieAuthMethod
+
+		assert.NoError(t, c.SwitchActiveAccount(s.ctx, s.exampleAccount.ID))
+	})
+
+	s.Run("with invalid client URL", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+		c.authMethod = cookieAuthMethod
+
+		assert.Error(t, c.SwitchActiveAccount(s.ctx, s.exampleAccount.ID))
+	})
+}
+
 func (s *accountsTestSuite) TestV1Client_GetAccount() {
 	const expectedPathFormat = "/api/v1/accounts/%d"
 

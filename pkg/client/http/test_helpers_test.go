@@ -187,10 +187,6 @@ func buildTestClientWithRequestBodyValidation(t *testing.T, spec *requestSpec, i
 
 			assertRequestQuality(t, req, spec)
 
-			x, _ := httputil.DumpRequest(req, true)
-			y := string(x)
-			_ = y
-
 			require.NoError(t, json.NewDecoder(req.Body).Decode(&inputBody))
 			assert.Equal(t, expectedInput, inputBody)
 			require.NoError(t, json.NewEncoder(res).Encode(outputBody))

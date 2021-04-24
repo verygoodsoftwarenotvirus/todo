@@ -2,7 +2,7 @@ package http
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -91,7 +91,7 @@ func (c *Client) unmarshalBody(ctx context.Context, res *http.Response, dest int
 		return observability.PrepareError(err, logger, span, "nil marshal target")
 	}
 
-	bodyBytes, err := ioutil.ReadAll(res.Body)
+	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "unmarshalling error response")
 	}

@@ -3,7 +3,6 @@ package bleve
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,7 +46,7 @@ type bleveIndexManagerTestSuite struct {
 func createTmpIndexPath(t *testing.T) string {
 	t.Helper()
 
-	tmpIndexPath, err := ioutil.TempDir("", fmt.Sprintf("bleve-testidx-%d", time.Now().Unix()))
+	tmpIndexPath, err := os.MkdirTemp("", fmt.Sprintf("bleve-testidx-%d", time.Now().Unix()))
 	require.NoError(t, err)
 
 	return tmpIndexPath

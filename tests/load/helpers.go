@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"reflect"
@@ -69,7 +69,7 @@ func createAttacker(ctx context.Context, name string) (*vegeta.Attacker, *httpcl
 }
 
 func initializeTargetFromRequest(req *http.Request, target *vegeta.Target) error {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}

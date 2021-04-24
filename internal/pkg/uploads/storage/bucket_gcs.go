@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gocloud.dev/blob"
@@ -39,7 +39,7 @@ func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
 	)
 
 	if cfg.ServiceAccountKeyFilepath != "" {
-		serviceAccountKeyBytes, err := ioutil.ReadFile(cfg.ServiceAccountKeyFilepath)
+		serviceAccountKeyBytes, err := os.ReadFile(cfg.ServiceAccountKeyFilepath)
 		if err != nil {
 			return nil, fmt.Errorf("reading service account key file: %w", err)
 		}

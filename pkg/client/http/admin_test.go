@@ -68,8 +68,7 @@ func (s *adminTestSuite) TestV1Client_UpdateUserReputation() {
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusInternalServerError)
 
-		err := c.UpdateUserReputation(s.ctx, exampleInput)
-		assert.Error(t, err)
+		assert.Error(t, c.UpdateUserReputation(s.ctx, exampleInput))
 	})
 
 	s.Run("with invalid client url", func() {
@@ -77,9 +76,8 @@ func (s *adminTestSuite) TestV1Client_UpdateUserReputation() {
 
 		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
 		c := buildTestClientWithInvalidURL(t)
-		err := c.UpdateUserReputation(s.ctx, exampleInput)
 
-		assert.Error(t, err)
+		assert.Error(t, c.UpdateUserReputation(s.ctx, exampleInput))
 	})
 
 	s.Run("with timeout", func() {
@@ -89,7 +87,6 @@ func (s *adminTestSuite) TestV1Client_UpdateUserReputation() {
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 		c, _ := buildTestClientThatWaitsTooLong(t, spec)
 
-		err := c.UpdateUserReputation(s.ctx, exampleInput)
-		assert.Error(t, err)
+		assert.Error(t, c.UpdateUserReputation(s.ctx, exampleInput))
 	})
 }

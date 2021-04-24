@@ -11,7 +11,6 @@ import (
 	"image/color"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -170,7 +169,7 @@ func CreateBodyFromStruct(t *testing.T, in interface{}) io.ReadCloser {
 	out, err := json.Marshal(in)
 	require.NoError(t, err)
 
-	return ioutil.NopCloser(bytes.NewReader(out))
+	return io.NopCloser(bytes.NewReader(out))
 }
 
 // BuildArbitraryImage builds an image with a bunch of colors in it.

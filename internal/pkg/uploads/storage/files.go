@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
@@ -39,7 +38,7 @@ func (u *Uploader) ReadFile(ctx context.Context, path string) ([]byte, error) {
 		}
 	}()
 
-	fileBytes, err := ioutil.ReadAll(r)
+	fileBytes, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("reading file: %w", err)
 	}

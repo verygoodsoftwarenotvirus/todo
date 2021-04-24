@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"io/ioutil"
+	"io"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -131,7 +131,7 @@ func (p *uploadProcessor) Process(ctx context.Context, req *http.Request, filena
 		return nil, observability.PrepareError(contentTypeErr, logger, span, "validating the content type")
 	}
 
-	bs, err := ioutil.ReadAll(file)
+	bs, err := io.ReadAll(file)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "reading file from request")
 	}

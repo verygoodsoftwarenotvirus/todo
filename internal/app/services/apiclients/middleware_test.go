@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -50,7 +50,7 @@ func TestService_CreationInputMiddleware(T *testing.T) {
 		expected := fakes.BuildFakeAPIClientCreationInput()
 		bs, err := json.Marshal(expected)
 		require.NoError(t, err)
-		req.Body = ioutil.NopCloser(bytes.NewReader(bs))
+		req.Body = io.NopCloser(bytes.NewReader(bs))
 
 		h.ServeHTTP(res, req)
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)

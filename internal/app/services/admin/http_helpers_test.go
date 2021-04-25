@@ -53,7 +53,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
 	helper.exampleAccount = fakes.BuildFakeAccount()
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
-	helper.exampleInput = fakes.BuildFakeAccountStatusUpdateInput()
+	helper.exampleInput = fakes.BuildFakeUserReputationUpdateInput()
 
 	helper.res = httptest.NewRecorder()
 	helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://blah.com", nil)

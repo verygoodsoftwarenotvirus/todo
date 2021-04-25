@@ -25,7 +25,7 @@ func TestBuilder_BuildGetWebhookRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodGet, "", expectedPathFormat, exampleWebhook.ID)
 
 		actual, err := h.builder.BuildGetWebhookRequest(h.ctx, exampleWebhook.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -54,7 +54,7 @@ func TestBuilder_BuildGetWebhooksRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		actual, err := h.builder.BuildGetWebhooksRequest(h.ctx, nil)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -74,7 +74,7 @@ func TestBuilder_BuildCreateWebhookRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 		actual, err := h.builder.BuildCreateWebhookRequest(h.ctx, exampleInput)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -116,7 +116,7 @@ func TestBuilder_BuildUpdateWebhookRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleWebhook.ID)
 
 		actual, err := h.builder.BuildUpdateWebhookRequest(h.ctx, exampleWebhook)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -146,7 +146,7 @@ func TestBuilder_BuildArchiveWebhookRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodDelete, "", expectedPathFormat, exampleWebhook.ID)
 
 		actual, err := h.builder.BuildArchiveWebhookRequest(h.ctx, exampleWebhook.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -175,7 +175,7 @@ func TestBuilder_BuildGetAuditLogForWebhookRequest(T *testing.T) {
 
 		actual, err := h.builder.BuildGetAuditLogForWebhookRequest(h.ctx, exampleWebhook.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleWebhook.ID)
 		assertRequestQuality(t, actual, spec)

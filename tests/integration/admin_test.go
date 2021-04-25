@@ -20,7 +20,7 @@ func (s *TestSuite) TestAdmin_Returns404WhenModifyingUserReputation() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			input := fakes.BuildFakeAccountStatusUpdateInput()
+			input := fakes.BuildFakeUserReputationUpdateInput()
 			input.TargetUserID = nonexistentID
 
 			// Ban user.

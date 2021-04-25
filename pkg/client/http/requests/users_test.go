@@ -29,7 +29,7 @@ func TestBuilder_BuildGetUserRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, h.exampleUser.ID)
 
 		actual, err := h.builder.BuildGetUserRequest(h.ctx, h.exampleUser.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -58,7 +58,7 @@ func TestBuilder_BuildGetUsersRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		actual, err := h.builder.BuildGetUsersRequest(h.ctx, nil)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -78,7 +78,7 @@ func TestBuilder_BuildSearchForUsersByUsernameRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
 
 		actual, err := h.builder.BuildSearchForUsersByUsernameRequest(h.ctx, exampleUsername)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -108,7 +108,7 @@ func TestBuilder_BuildCreateUserRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 		actual, err := h.builder.BuildCreateUserRequest(h.ctx, exampleInput)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -137,7 +137,7 @@ func TestBuilder_BuildArchiveUserRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, h.exampleUser.ID)
 
 		actual, err := h.builder.BuildArchiveUserRequest(h.ctx, h.exampleUser.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -191,7 +191,7 @@ func TestBuilder_BuildAvatarUploadRequest(T *testing.T) {
 		avatarBytes := buildPNGBytes(t, avatar)
 
 		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "jpeg")
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -206,7 +206,7 @@ func TestBuilder_BuildAvatarUploadRequest(T *testing.T) {
 		avatarBytes := buildPNGBytes(t, avatar)
 
 		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "png")
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -221,7 +221,7 @@ func TestBuilder_BuildAvatarUploadRequest(T *testing.T) {
 		avatarBytes := buildPNGBytes(t, avatar)
 
 		actual, err := h.builder.BuildAvatarUploadRequest(h.ctx, avatarBytes, "gif")
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -276,7 +276,7 @@ func TestBuilder_BuildGetAuditLogForUserRequest(T *testing.T) {
 
 		actual, err := h.builder.BuildGetAuditLogForUserRequest(h.ctx, h.exampleUser.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, h.exampleUser.ID)
 		assertRequestQuality(t, actual, spec)

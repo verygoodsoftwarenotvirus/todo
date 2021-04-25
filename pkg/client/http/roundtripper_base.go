@@ -69,36 +69,61 @@ func buildWrappedTransport(timeout time.Duration) http.RoundTripper {
 	return otelhttp.NewTransport(t, otelhttp.WithSpanNameFormatter(tracing.FormatSpan))
 }
 
-func buildRetryingClient(client *http.Client, logger logging.Logger) *http.Client {
-	rc := &retryablehttp.Client{
-		HTTPClient:   client,
-		Logger:       logging.EnsureLogger(logger),
-		RetryWaitMin: minRetryWait,
-		RetryWaitMax: maxRetryWait,
-		RetryMax:     maxRetryCount,
-		RequestLogHook: func(_ retryablehttp.Logger, req *http.Request, numRetries int) {
-			if req != nil {
-				logger.WithRequest(req).WithValue("retry_count", numRetries).Debug("making request")
-			}
-		},
-		ResponseLogHook: func(_ retryablehttp.Logger, res *http.Response) {
-			if res != nil {
-				logger.WithResponse(res).Debug("received response")
-			}
-		},
-		CheckRetry: func(ctx context.Context, res *http.Response, err error) (bool, error) {
-			ctx, span := tracing.StartCustomSpan(ctx, "CheckRetry")
-			defer span.End()
+func buildRequestLogHook(logger logging.Logger) func(retryablehttp.Logger, *http.Request, int) {
+	logger = logging.EnsureLogger(logger)
 
+	return func(_ retryablehttp.Logger, req *http.Request, numRetries int) {
+		if req != nil {
+			logger.WithRequest(req).WithValue("retry_count", numRetries).Debug("making request")
+		}
+	}
+}
+
+func buildResponseLogHook(logger logging.Logger) func(retryablehttp.Logger, *http.Response) {
+	logger = logging.EnsureLogger(logger)
+
+	return func(_ retryablehttp.Logger, res *http.Response) {
+		if res != nil {
+			logger.WithResponse(res).Debug("received response")
+		}
+	}
+}
+
+func buildCheckRetryFunc(tracer tracing.Tracer) func(context.Context, *http.Response, error) (bool, error) {
+	return func(ctx context.Context, res *http.Response, err error) (bool, error) {
+		ctx, span := tracer.StartCustomSpan(ctx, "CheckRetry")
+		defer span.End()
+
+		if res != nil {
 			tracing.AttachResponseToSpan(span, res)
+		}
 
-			return retryablehttp.DefaultRetryPolicy(ctx, res, err)
-		},
-		Backoff: retryablehttp.DefaultBackoff,
-		ErrorHandler: func(res *http.Response, err error, numTries int) (*http.Response, error) {
-			logger.WithValue("try_number", numTries).WithResponse(res).Error(err, "executing request")
-			return res, err
-		},
+		return retryablehttp.DefaultRetryPolicy(ctx, res, err)
+	}
+}
+
+func buildErrorHandler(logger logging.Logger) func(res *http.Response, err error, numTries int) (*http.Response, error) {
+	logger = logging.EnsureLogger(logger)
+
+	return func(res *http.Response, err error, numTries int) (*http.Response, error) {
+		logger.WithValue("try_number", numTries).WithResponse(res).Error(err, "executing request")
+
+		return res, err
+	}
+}
+
+func buildRetryingClient(client *http.Client, logger logging.Logger, tracer tracing.Tracer) *http.Client {
+	rc := &retryablehttp.Client{
+		HTTPClient:      client,
+		Logger:          logging.EnsureLogger(logger),
+		RetryWaitMin:    minRetryWait,
+		RetryWaitMax:    maxRetryWait,
+		RetryMax:        maxRetryCount,
+		RequestLogHook:  buildRequestLogHook(logger),
+		ResponseLogHook: buildResponseLogHook(logger),
+		CheckRetry:      buildCheckRetryFunc(tracer),
+		Backoff:         retryablehttp.DefaultBackoff,
+		ErrorHandler:    buildErrorHandler(logger),
 	}
 
 	c := rc.StandardClient()

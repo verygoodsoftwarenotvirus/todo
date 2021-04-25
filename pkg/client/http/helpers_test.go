@@ -21,6 +21,16 @@ type testingType struct {
 	Name string `json:"name"`
 }
 
+func TestErrorFromResponse(T *testing.T) {
+	T.Parallel()
+
+	T.Run("returns error for nil response", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Error(t, errorFromResponse(nil))
+	})
+}
+
 func TestArgIsNotPointerOrNil(T *testing.T) {
 	T.Parallel()
 

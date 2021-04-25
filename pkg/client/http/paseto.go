@@ -14,6 +14,10 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpClient *htt
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if clientID == "" {
+		return "", ErrEmptyInputProvided
+	}
+
 	if secretKey == nil {
 		return "", ErrNilInputProvided
 	}
@@ -31,16 +35,15 @@ func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpClient *htt
 		RequestTime: time.Now().UTC().UnixNano(),
 	}
 
-	logger := c.logger.WithValue(keys.APIClientClientIDKey, clientID)
+	if c.accountID != 0 {
+		input.AccountID = c.accountID
+	}
 
+	logger := c.logger.WithValue(keys.APIClientClientIDKey, clientID)
 	logger.Debug("fetching auth token")
 
 	if err := input.ValidateWithContext(ctx); err != nil {
 		return "", observability.PrepareError(err, logger, span, "validating input")
-	}
-
-	if c.accountID != 0 {
-		input.AccountID = c.accountID
 	}
 
 	req, err := c.requestBuilder.BuildAPIClientAuthTokenRequest(ctx, input, secretKey)

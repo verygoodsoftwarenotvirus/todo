@@ -55,10 +55,10 @@ func (t *cookieRoundtripper) RoundTrip(req *http.Request) (*http.Response, error
 
 	res, err := t.base.RoundTrip(req)
 	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "executing roundtrip")
+		return nil, observability.PrepareError(err, logger, span, "executing RoundTrip")
 	}
 
-	if responseCookies := res.Cookies(); len(responseCookies) == 1 {
+	if responseCookies := res.Cookies(); len(responseCookies) >= 1 {
 		t.cookie = responseCookies[0]
 	}
 

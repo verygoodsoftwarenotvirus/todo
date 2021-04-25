@@ -286,6 +286,10 @@ issues:
         - gosec
         - gomnd
 
+    - path: pkg/client/http/roundtripper_*
+      linters:
+        - bodyclose
+
     - path: tests/testutil/
       linters:
         - bodyclose

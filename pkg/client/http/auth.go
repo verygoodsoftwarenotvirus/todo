@@ -80,9 +80,8 @@ func (c *Client) Logout(ctx context.Context) error {
 		return observability.PrepareError(err, logger, span, "executing logout request")
 	}
 
-	c.closeResponseBody(ctx, res)
-
 	c.authedClient.Transport = newDefaultRoundTripper(c.authedClient.Timeout)
+	c.closeResponseBody(ctx, res)
 
 	return nil
 }

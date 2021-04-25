@@ -92,12 +92,12 @@ func UsingTimeout(timeout time.Duration) func(*Client) error {
 func UsingCookie(cookie *http.Cookie) func(*Client) error {
 	return func(c *Client) error {
 		if cookie == nil {
-			return ErrNilInputProvided
+			return ErrCookieRequired
 		}
 
 		c.authMethod = cookieAuthMethod
 		c.authedClient.Transport = newCookieRoundTripper(c, cookie)
-		c.authedClient = buildRetryingClient(c.authedClient, c.logger)
+		c.authedClient = buildRetryingClient(c.authedClient, c.logger, c.tracer)
 
 		c.logger.Debug("set client auth cookie")
 
@@ -110,7 +110,7 @@ func UsingPASETO(clientID string, secretKey []byte) func(*Client) error {
 	return func(c *Client) error {
 		c.authMethod = pasetoAuthMethod
 		c.authedClient.Transport = newPASETORoundTripper(c, clientID, secretKey)
-		c.authedClient = buildRetryingClient(c.authedClient, c.logger)
+		c.authedClient = buildRetryingClient(c.authedClient, c.logger, c.tracer)
 
 		return nil
 	}

@@ -24,7 +24,7 @@ func TestBuilder_BuildUserReputationUpdateInputRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
 		actual, err := h.builder.BuildUserReputationUpdateInputRequest(h.ctx, exampleInput)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})

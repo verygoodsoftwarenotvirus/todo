@@ -9,7 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -24,7 +23,6 @@ type webhooksTestSuite struct {
 
 	ctx                context.Context
 	exampleWebhook     *types.Webhook
-	exampleInput       *types.WebhookCreationInput
 	exampleWebhookList *types.WebhookList
 }
 
@@ -33,89 +31,150 @@ var _ suite.SetupTestSuite = (*webhooksTestSuite)(nil)
 func (s *webhooksTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.exampleWebhook = fakes.BuildFakeWebhook()
-	s.exampleInput = fakes.BuildFakeWebhookCreationInputFromWebhook(s.exampleWebhook)
 	s.exampleWebhookList = fakes.BuildFakeWebhookList()
 }
 
-func (s *webhooksTestSuite) TestV1Client_GetWebhook() {
+func (s *webhooksTestSuite) TestClient_GetWebhook() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
 	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(false, http.MethodGet, "", expectedPathFormat, s.exampleWebhook.ID)
-
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
-		actual, err := c.GetWebhook(s.ctx, s.exampleWebhook.ID)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.GetWebhook(s.ctx, s.exampleWebhook.ID)
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleWebhook, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid webhook ID", func() {
 		t := s.T()
 
-		actual, err := buildTestClientWithInvalidURL(t).GetWebhook(s.ctx, s.exampleWebhook.ID)
+		c, _ := buildSimpleTestClient(t)
 
+		actual, err := c.GetWebhook(s.ctx, 0)
+		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.GetWebhook(s.ctx, s.exampleWebhook.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.GetWebhook(s.ctx, s.exampleWebhook.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
-func (s *webhooksTestSuite) TestV1Client_GetWebhooks() {
+func (s *webhooksTestSuite) TestClient_GetWebhooks() {
 	const expectedPath = "/api/v1/webhooks"
-
-	spec := newRequestSpec(false, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 	s.Run("standard", func() {
 		t := s.T()
 
+		spec := newRequestSpec(false, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleWebhookList)
-		actual, err := c.GetWebhooks(s.ctx, nil)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.GetWebhooks(s.ctx, nil)
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleWebhookList, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with error building request", func() {
 		t := s.T()
 
-		actual, err := buildTestClientWithInvalidURL(t).GetWebhooks(s.ctx, nil)
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.GetWebhooks(s.ctx, nil)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.GetWebhooks(s.ctx, nil)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
-func (s *webhooksTestSuite) TestV1Client_CreateWebhook() {
+func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 	const expectedPath = "/api/v1/webhooks"
-
-	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 	s.Run("standard", func() {
 		t := s.T()
 
-		s.exampleInput.BelongsToAccount = 0
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(s.exampleWebhook)
+		exampleInput.BelongsToAccount = 0
 
-		c := buildTestClientWithRequestBodyValidation(t, spec, &types.WebhookCreationInput{}, s.exampleInput, s.exampleWebhook)
-		actual, err := c.CreateWebhook(s.ctx, s.exampleInput)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.WebhookCreationInput{}, exampleInput, s.exampleWebhook)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.CreateWebhook(s.ctx, exampleInput)
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleWebhook, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with nil input", func() {
 		t := s.T()
 
-		actual, err := buildTestClientWithInvalidURL(t).CreateWebhook(s.ctx, s.exampleInput)
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.CreateWebhook(s.ctx, nil)
+		assert.Error(t, err)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+	})
+
+	s.Run("with invalid input", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.CreateWebhook(s.ctx, &types.WebhookCreationInput{})
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(s.exampleWebhook)
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.CreateWebhook(s.ctx, exampleInput)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(s.exampleWebhook)
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.CreateWebhook(s.ctx, exampleInput)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
-func (s *webhooksTestSuite) TestV1Client_UpdateWebhook() {
+func (s *webhooksTestSuite) TestClient_UpdateWebhook() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
 	s.Run("standard", func() {
@@ -125,39 +184,79 @@ func (s *webhooksTestSuite) TestV1Client_UpdateWebhook() {
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
 
 		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid webhook ID", func() {
 		t := s.T()
 
-		err := buildTestClientWithInvalidURL(t).UpdateWebhook(s.ctx, s.exampleWebhook)
-		assert.Error(t, err, "error should be returned")
+		c, _ := buildSimpleTestClient(t)
+
+		err := c.UpdateWebhook(s.ctx, nil)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
+		assert.Error(t, err)
 	})
 }
 
-func (s *webhooksTestSuite) TestV1Client_ArchiveWebhook() {
+func (s *webhooksTestSuite) TestClient_ArchiveWebhook() {
 	const expectedPathFormat = "/api/v1/webhooks/%d"
 
 	s.Run("standard", func() {
 		t := s.T()
 
-		spec := newRequestSpec(false, http.MethodDelete, "", expectedPathFormat, s.exampleWebhook.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleWebhook.ID)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveWebhook(s.ctx, s.exampleWebhook.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid webhook ID", func() {
 		t := s.T()
 
-		err := buildTestClientWithInvalidURL(t).ArchiveWebhook(s.ctx, s.exampleWebhook.ID)
-		assert.Error(t, err, "error should be returned")
+		c, _ := buildSimpleTestClient(t)
+
+		err := c.ArchiveWebhook(s.ctx, 0)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		err := c.ArchiveWebhook(s.ctx, s.exampleWebhook.ID)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		err := c.ArchiveWebhook(s.ctx, s.exampleWebhook.ID)
+		assert.Error(t, err)
 	})
 }
 
-func (s *webhooksTestSuite) TestV1Client_GetAuditLogForWebhook() {
+func (s *webhooksTestSuite) TestClient_GetAuditLogForWebhook() {
 	const (
 		expectedPath   = "/api/v1/webhooks/%d/audit"
 		expectedMethod = http.MethodGet
@@ -170,24 +269,33 @@ func (s *webhooksTestSuite) TestV1Client_GetAuditLogForWebhook() {
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
 		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-		actual, err := c.GetAuditLogForWebhook(s.ctx, s.exampleWebhook.ID)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.GetAuditLogForWebhook(s.ctx, s.exampleWebhook.ID)
+		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid webhook ID", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.GetAuditLogForWebhook(s.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetAuditLogForWebhook(s.ctx, s.exampleWebhook.ID)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 
-	s.Run("with invalid response", func() {
+	s.Run("with error executing request", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleWebhook.ID)
@@ -196,6 +304,6 @@ func (s *webhooksTestSuite) TestV1Client_GetAuditLogForWebhook() {
 		actual, err := c.GetAuditLogForWebhook(s.ctx, s.exampleWebhook.ID)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 }

@@ -84,7 +84,7 @@ func TestBuilder_BuildGetItemsRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		actual, err := h.builder.BuildGetItemsRequest(h.ctx, filter)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -105,7 +105,7 @@ func TestBuilder_BuildSearchItemsRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
 
 		actual, err := h.builder.BuildSearchItemsRequest(h.ctx, exampleQuery, limit)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -165,7 +165,7 @@ func TestBuilder_BuildUpdateItemRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleItem.ID)
 
 		actual, err := h.builder.BuildUpdateItemRequest(h.ctx, exampleItem)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -195,7 +195,7 @@ func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleItem.ID)
 
 		actual, err := h.builder.BuildArchiveItemRequest(h.ctx, exampleItem.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -224,7 +224,7 @@ func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
 
 		actual, err := h.builder.BuildGetAuditLogForItemRequest(h.ctx, exampleItem.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleItem.ID)
 		assertRequestQuality(t, actual, spec)

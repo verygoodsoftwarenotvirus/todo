@@ -283,7 +283,7 @@ func TestBuilder_BuildHealthCheckRequest(T *testing.T) {
 		actual, err := c.BuildHealthCheckRequest(ctx)
 
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
 	})
 }

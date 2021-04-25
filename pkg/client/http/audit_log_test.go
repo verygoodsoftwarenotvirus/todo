@@ -11,7 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAuditLogEntries(t *testing.T) {
@@ -26,57 +25,96 @@ type auditLogEntriesTestSuite struct {
 	ctx                      context.Context
 	filter                   *types.QueryFilter
 	exampleAuditLogEntry     *types.AuditLogEntry
-	exampleInput             *types.AuditLogEntryCreationInput
 	exampleAuditLogEntryList *types.AuditLogEntryList
-	expectedPath             string
 }
 
 var _ suite.SetupTestSuite = (*auditLogEntriesTestSuite)(nil)
 
 func (s *auditLogEntriesTestSuite) SetupTest() {
 	s.ctx = context.Background()
-	s.expectedPath = "/api/v1/_admin_/audit_log"
 	s.filter = (*types.QueryFilter)(nil)
 	s.exampleAuditLogEntry = fakes.BuildFakeAuditLogEntry()
-	s.exampleInput = fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(s.exampleAuditLogEntry)
 	s.exampleAuditLogEntryList = fakes.BuildFakeAuditLogEntryList()
 }
 
-func (s *auditLogEntriesTestSuite) TestV1Client_GetAuditLogEntries() {
-	const (
-		expectedMethod = http.MethodGet
-	)
-
-	spec := newRequestSpec(true, expectedMethod, "includeArchived=false&limit=20&page=1&sortBy=asc", s.expectedPath)
+func (s *auditLogEntriesTestSuite) TestClient_GetAuditLogEntry() {
+	const expectedPath = "/api/v1/_admin_/audit_log/%d"
 
 	s.Run("standard", func() {
 		t := s.T()
 
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAuditLogEntryList)
-		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleAuditLogEntry.ID)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAuditLogEntry)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, s.exampleAuditLogEntryList, actual)
+		actual, err := c.GetAuditLogEntry(s.ctx, s.exampleAuditLogEntry.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, s.exampleAuditLogEntry, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid entry ID", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.GetAuditLogEntry(s.ctx, 0)
+		assert.Error(t, err, " error should be returned")
+		assert.Nil(t, actual)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
 
+		actual, err := c.GetAuditLogEntry(s.ctx, s.exampleAuditLogEntry.ID)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 
-	s.Run("with invalid response", func() {
+	s.Run("with error executing request", func() {
 		t := s.T()
 
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, s.exampleAuditLogEntry.ID)
 		c := buildTestClientWithInvalidResponse(t, spec)
-		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
 
+		actual, err := c.GetAuditLogEntry(s.ctx, s.exampleAuditLogEntry.ID)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+}
+
+func (s *auditLogEntriesTestSuite) TestClient_GetAuditLogEntries() {
+	const expectedPath = "/api/v1/_admin_/audit_log"
+
+	s.Run("standard", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAuditLogEntryList)
+
+		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
+		assert.NoError(t, err)
+		assert.Equal(t, s.exampleAuditLogEntryList, actual)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+		c := buildTestClientWithInvalidResponse(t, spec)
+
+		actual, err := c.GetAuditLogEntries(s.ctx, s.filter)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

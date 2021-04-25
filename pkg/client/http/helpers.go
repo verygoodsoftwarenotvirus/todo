@@ -4,26 +4,12 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"net/url"
 	"reflect"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
-
-var panicker = panicking.NewProductionPanicker()
-
-// mustParseURL parses a URL string or otherwise panics.
-func mustParseURL(raw string) *url.URL {
-	u, err := url.ParseRequestURI(raw)
-	if err != nil {
-		panicker.Panic(err)
-	}
-
-	return u
-}
 
 // errorFromResponse returns library errors according to a response's status code.
 func errorFromResponse(res *http.Response) error {
@@ -36,10 +22,8 @@ func errorFromResponse(res *http.Response) error {
 		return ErrNotFound
 	case http.StatusBadRequest:
 		return ErrInvalidRequestInput
-	case http.StatusUnauthorized:
+	case http.StatusUnauthorized, http.StatusForbidden:
 		return ErrUnauthorized
-	case http.StatusForbidden:
-		return ErrBanned
 	case http.StatusInternalServerError:
 		return ErrInternalServerError
 	default:

@@ -25,7 +25,6 @@ type itemsBaseSuite struct {
 
 	ctx             context.Context
 	exampleItem     *types.Item
-	exampleInput    *types.ItemCreationInput
 	exampleItemList *types.ItemList
 }
 
@@ -34,7 +33,6 @@ var _ suite.SetupTestSuite = (*itemsBaseSuite)(nil)
 func (s *itemsBaseSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.exampleItem = fakes.BuildFakeItem()
-	s.exampleInput = fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
 	s.exampleItemList = fakes.BuildFakeItemList()
 }
 
@@ -44,7 +42,7 @@ type itemsTestSuite struct {
 	itemsBaseSuite
 }
 
-func (s *itemsTestSuite) TestV1Client_ItemExists() {
+func (s *itemsTestSuite) TestClient_ItemExists() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
 	s.Run("standard", func() {
@@ -55,77 +53,109 @@ func (s *itemsTestSuite) TestV1Client_ItemExists() {
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
 
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.True(t, actual)
 	})
 
-	s.Run("with erroneous response", func() {
+	s.Run("with invalid item ID", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, s.exampleItem.ID)
+
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
+		actual, err := c.ItemExists(s.ctx, 0)
+
+		assert.Error(t, err)
+		assert.False(t, actual)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
 
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+		assert.False(t, actual)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
+
+		assert.Error(t, err)
 		assert.False(t, actual)
 	})
 }
 
-func (s *itemsTestSuite) TestV1Client_GetItem() {
+func (s *itemsTestSuite) TestClient_GetItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
-
-	spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
 
 	s.Run("standard", func() {
 		t := s.T()
 
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
 		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
 
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleItem, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid item ID", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
+		actual, err := c.GetItem(s.ctx, 0)
+
+		require.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 
-	s.Run("with invalid response", func() {
+	s.Run("with error executing request", func() {
 		t := s.T()
 
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
 		c := buildTestClientWithInvalidResponse(t, spec)
 		actual, err := c.GetItem(s.ctx, s.exampleItem.ID)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 }
 
-func (s *itemsTestSuite) TestV1Client_GetItems() {
+func (s *itemsTestSuite) TestClient_GetItems() {
 	const expectedPath = "/api/v1/items"
-
-	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 	s.Run("standard", func() {
 		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
 
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList)
 		actual, err := c.GetItems(s.ctx, filter)
 
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleItemList, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
@@ -134,42 +164,52 @@ func (s *itemsTestSuite) TestV1Client_GetItems() {
 		actual, err := c.GetItems(s.ctx, filter)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 
-	s.Run("with invalid response", func() {
+	s.Run("with error executing request", func() {
 		t := s.T()
 
 		filter := (*types.QueryFilter)(nil)
 
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 		c := buildTestClientWithInvalidResponse(t, spec)
 		actual, err := c.GetItems(s.ctx, filter)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 }
 
-func (s *itemsTestSuite) TestV1Client_SearchItems() {
+func (s *itemsTestSuite) TestClient_SearchItems() {
 	const expectedPath = "/api/v1/items/search"
 
 	exampleQuery := "whatever"
-	spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
 
 	s.Run("standard", func() {
 		t := s.T()
 
-		limit := types.DefaultQueryFilter().Limit
-
+		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList.Items)
-		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, 0)
 
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleItemList.Items, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with empty query", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList.Items)
+		actual, err := c.SearchItems(s.ctx, "", 0)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		limit := types.DefaultQueryFilter().Limit
@@ -178,55 +218,88 @@ func (s *itemsTestSuite) TestV1Client_SearchItems() {
 		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 
 	s.Run("standard", func() {
 		t := s.T()
 
+		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
 		limit := types.DefaultQueryFilter().Limit
 		c := buildTestClientWithInvalidResponse(t, spec)
 		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 }
 
-func (s *itemsTestSuite) TestV1Client_CreateItem() {
+func (s *itemsTestSuite) TestClient_CreateItem() {
 	const expectedPath = "/api/v1/items"
-
-	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 	s.Run("standard", func() {
 		t := s.T()
 
-		s.exampleInput.BelongsToAccount = 0
+		exampleInput := fakes.BuildFakeItemCreationInput()
+		exampleInput.BelongsToAccount = 0
 
-		c := buildTestClientWithRequestBodyValidation(t, spec, &types.ItemCreationInput{}, s.exampleInput, s.exampleItem)
-		actual, err := c.CreateItem(s.ctx, s.exampleInput)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.ItemCreationInput{}, exampleInput, s.exampleItem)
 
+		actual, err := c.CreateItem(s.ctx, exampleInput)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleItem, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with nil input", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.CreateItem(s.ctx, nil)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with invalid input", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+		exampleInput := &types.ItemCreationInput{}
+
+		actual, err := c.CreateItem(s.ctx, exampleInput)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 		ctx := context.Background()
 
-		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.CreateItem(ctx, exampleInput)
 
+		actual, err := c.CreateItem(ctx, exampleInput)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+		ctx := context.Background()
+
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.CreateItem(ctx, exampleInput)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
-func (s *itemsTestSuite) TestV1Client_UpdateItem() {
+func (s *itemsTestSuite) TestClient_UpdateItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
 	s.Run("standard", func() {
@@ -236,18 +309,38 @@ func (s *itemsTestSuite) TestV1Client_UpdateItem() {
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
 
 		err := c.UpdateItem(s.ctx, s.exampleItem)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with nil input", func() {
 		t := s.T()
 
-		err := buildTestClientWithInvalidURL(t).UpdateItem(s.ctx, s.exampleItem)
-		assert.Error(t, err, "error should be returned")
+		c, _ := buildSimpleTestClient(t)
+
+		err := c.UpdateItem(s.ctx, nil)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		err := c.UpdateItem(s.ctx, s.exampleItem)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		err := c.UpdateItem(s.ctx, s.exampleItem)
+		assert.Error(t, err)
 	})
 }
 
-func (s *itemsTestSuite) TestV1Client_ArchiveItem() {
+func (s *itemsTestSuite) TestClient_ArchiveItem() {
 	const expectedPathFormat = "/api/v1/items/%d"
 
 	s.Run("standard", func() {
@@ -257,18 +350,38 @@ func (s *itemsTestSuite) TestV1Client_ArchiveItem() {
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveItem(s.ctx, s.exampleItem.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid item ID", func() {
 		t := s.T()
 
-		err := buildTestClientWithInvalidURL(t).ArchiveItem(s.ctx, s.exampleItem.ID)
-		assert.Error(t, err, "error should be returned")
+		c, _ := buildSimpleTestClient(t)
+
+		err := c.ArchiveItem(s.ctx, 0)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		err := c.ArchiveItem(s.ctx, s.exampleItem.ID)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		err := c.ArchiveItem(s.ctx, s.exampleItem.ID)
+		assert.Error(t, err)
 	})
 }
 
-func (s *itemsTestSuite) TestV1Client_GetAuditLogForItem() {
+func (s *itemsTestSuite) TestClient_GetAuditLogForItem() {
 	const (
 		expectedPath   = "/api/v1/items/%d/audit"
 		expectedMethod = http.MethodGet
@@ -281,22 +394,40 @@ func (s *itemsTestSuite) TestV1Client_GetAuditLogForItem() {
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
 		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
 
+		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	s.Run("with invalid response", func() {
+	s.Run("with invalid item ID", func() {
 		t := s.T()
 
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleItem.ID)
+		c, _ := buildSimpleTestClient(t)
 
-		c := buildTestClientWithInvalidResponse(t, spec)
-		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
-
+		actual, err := c.GetAuditLogForItem(s.ctx, 0)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.GetAuditLogForItem(s.ctx, s.exampleItem.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

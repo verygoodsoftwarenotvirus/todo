@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
-func TestV1Client_AuthenticatedClient(T *testing.T) {
+func TestClient_AuthenticatedClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -26,7 +26,7 @@ func TestV1Client_AuthenticatedClient(T *testing.T) {
 	})
 }
 
-func TestV1Client_PlainClient(T *testing.T) {
+func TestClient_PlainClient(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -52,33 +52,33 @@ func TestNewClient(T *testing.T) {
 		require.NotNil(t, c)
 		require.NoError(t, err)
 	})
-}
 
-func TestV1Client_CloseRequestBody(T *testing.T) {
-	T.Parallel()
-
-	T.Run("with error", func(t *testing.T) {
+	T.Run("with nil URL", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := context.Background()
-		rc := newMockReadCloser()
-		rc.On("Close").Return(errors.New("blah"))
+		c, err := NewClient(
+			nil,
+			UsingLogger(logging.NewNonOperationalLogger()),
+		)
 
-		res := &http.Response{
-			Body:       rc,
-			StatusCode: http.StatusOK,
-		}
-
-		c, _ := NewClient(mustParseURL(exampleURI))
-		assert.NotNil(t, c)
-
-		c.closeResponseBody(ctx, res)
-
-		mock.AssertExpectationsForObjects(t, rc)
+		require.Nil(t, c)
+		require.Error(t, err)
 	})
 }
 
-func TestBuildURL(T *testing.T) {
+func TestClient_RequestBuilder(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		c, _ := buildSimpleTestClient(t)
+
+		assert.NotNil(t, c.RequestBuilder())
+	})
+}
+
+func TestClient_BuildURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("various urls", func(t *testing.T) {
@@ -124,6 +124,30 @@ func TestBuildURL(T *testing.T) {
 		c := buildTestClientWithInvalidURL(t)
 
 		assert.Empty(t, c.BuildURL(ctx, nil, asciiControlChar))
+	})
+}
+
+func TestClient_CloseRequestBody(T *testing.T) {
+	T.Parallel()
+
+	T.Run("with error", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		rc := newMockReadCloser()
+		rc.On("Close").Return(errors.New("blah"))
+
+		res := &http.Response{
+			Body:       rc,
+			StatusCode: http.StatusOK,
+		}
+
+		c, _ := NewClient(mustParseURL(exampleURI))
+		assert.NotNil(t, c)
+
+		c.closeResponseBody(ctx, res)
+
+		mock.AssertExpectationsForObjects(t, rc)
 	})
 }
 
@@ -175,7 +199,7 @@ func TestBuildVersionlessURL(T *testing.T) {
 	})
 }
 
-func TestV1Client_BuildWebsocketURL(T *testing.T) {
+func TestClient_BuildWebsocketURL(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -191,7 +215,7 @@ func TestV1Client_BuildWebsocketURL(T *testing.T) {
 	})
 }
 
-func TestV1Client_IsUp(T *testing.T) {
+func TestClient_IsUp(T *testing.T) {
 	T.Parallel()
 
 	spec := newRequestSpec(true, http.MethodGet, "", "/_meta_/ready")
@@ -229,14 +253,14 @@ func TestV1Client_IsUp(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		c, _ := buildTestClientThatWaitsTooLong(t, spec)
+		c, _ := buildTestClientThatWaitsTooLong(t)
 
 		actual := c.IsUp(ctx)
 		assert.False(t, actual)
 	})
 }
 
-func TestV1Client_fetchAndUnmarshal(T *testing.T) {
+func TestClient_fetchAndUnmarshal(T *testing.T) {
 	T.Parallel()
 
 	exampleResponse := &argleBargle{Name: "whatever"}
@@ -261,7 +285,7 @@ func TestV1Client_fetchAndUnmarshal(T *testing.T) {
 		ctx := context.Background()
 
 		spec := newRequestSpec(true, http.MethodPost, "", "/")
-		c, ts := buildTestClientThatWaitsTooLong(t, spec)
+		c, ts := buildTestClientThatWaitsTooLong(t)
 
 		req, err := http.NewRequestWithContext(ctx, spec.method, ts.URL, nil)
 		require.NotNil(t, req)
@@ -314,7 +338,7 @@ func TestV1Client_fetchAndUnmarshal(T *testing.T) {
 	})
 }
 
-func TestV1Client_executeRawRequest(T *testing.T) {
+func TestClient_executeRawRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("with error", func(t *testing.T) {
@@ -323,8 +347,7 @@ func TestV1Client_executeRawRequest(T *testing.T) {
 
 		expectedMethod := http.MethodPost
 
-		spec := newRequestSpec(true, expectedMethod, "", "/")
-		c, ts := buildTestClientThatWaitsTooLong(t, spec)
+		c, ts := buildTestClientThatWaitsTooLong(t)
 
 		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
 		require.NotNil(t, req)
@@ -336,7 +359,7 @@ func TestV1Client_executeRawRequest(T *testing.T) {
 	})
 }
 
-func TestV1Client_checkExistence(T *testing.T) {
+func TestClient_checkExistence(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -362,8 +385,7 @@ func TestV1Client_checkExistence(T *testing.T) {
 		ctx := context.Background()
 
 		expectedMethod := http.MethodHead
-		spec := newRequestSpec(true, expectedMethod, "", "/")
-		c, ts := buildTestClientThatWaitsTooLong(t, spec)
+		c, ts := buildTestClientThatWaitsTooLong(t)
 
 		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
 		require.NotNil(t, req)
@@ -376,7 +398,7 @@ func TestV1Client_checkExistence(T *testing.T) {
 	})
 }
 
-func TestV1Client_retrieve(T *testing.T) {
+func TestClient_retrieve(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -417,8 +439,7 @@ func TestV1Client_retrieve(T *testing.T) {
 
 		expectedMethod := http.MethodPost
 
-		spec := newRequestSpec(false, expectedMethod, "", "/")
-		c, ts := buildTestClientThatWaitsTooLong(t, spec)
+		c, ts := buildTestClientThatWaitsTooLong(t)
 
 		req, err := http.NewRequestWithContext(ctx, expectedMethod, ts.URL, nil)
 		require.NotNil(t, req)
@@ -445,7 +466,7 @@ func TestV1Client_retrieve(T *testing.T) {
 	})
 }
 
-func TestV1Client_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
+func TestClient_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 	T.Parallel()
 
 	const expectedMethod = http.MethodPost
@@ -518,8 +539,7 @@ func TestV1Client_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 
-		spec := newRequestSpec(false, expectedMethod, "", "/")
-		c, ts := buildTestClientThatWaitsTooLong(t, spec)
+		c, ts := buildTestClientThatWaitsTooLong(t)
 
 		in, out := &argleBargle{}, &argleBargle{}
 

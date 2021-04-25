@@ -30,9 +30,9 @@ func newPASETORoundTripper(client *Client, clientID string, secretKey []byte) *p
 	}
 }
 
-var pasetoRoundTripperClient = buildRetryingClient(&http.Client{Timeout: defaultTimeout}, logging.NewNonOperationalLogger())
+var pasetoRoundTripperClient = buildRetryingClient(&http.Client{Timeout: defaultTimeout}, logging.NewNonOperationalLogger(), tracing.NewTracer("PASETO_roundtripper"))
 
-// RoundTrip authorizes and authenticates the request with a cookie.
+// RoundTrip authorizes and authenticates the request with a PASETO.
 func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx, span := t.tracer.StartSpan(req.Context())
 	defer span.End()

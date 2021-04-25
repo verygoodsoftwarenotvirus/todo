@@ -87,7 +87,7 @@ func TestBuilder_BuildGetAccountsRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		actual, err := h.builder.BuildGetAccountsRequest(h.ctx, filter)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -148,7 +148,7 @@ func TestBuilder_BuildUpdateAccountRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleAccount.ID)
 
 		actual, err := h.builder.BuildUpdateAccountRequest(h.ctx, exampleAccount)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -178,7 +178,7 @@ func TestBuilder_BuildArchiveAccountRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAccount.ID)
 
 		actual, err := h.builder.BuildArchiveAccountRequest(h.ctx, exampleAccount.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -208,7 +208,7 @@ func TestBuilder_BuildAddUserRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat, exampleInput.AccountID)
 
 		actual, err := h.builder.BuildAddUserRequest(h.ctx, exampleInput)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -248,7 +248,7 @@ func TestBuilder_BuildMarkAsDefaultRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodPost, "", expectedPathFormat, exampleAccount.ID)
 
 		actual, err := h.builder.BuildMarkAsDefaultRequest(h.ctx, exampleAccount.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -280,7 +280,7 @@ func TestBuilder_BuildRemoveUserRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodDelete, fmt.Sprintf("reason=%s", expectedReason), expectedPathFormat, exampleAccount.ID, h.exampleUser.ID)
 
 		actual, err := h.builder.BuildRemoveUserRequest(h.ctx, exampleAccount.ID, h.exampleUser.ID, reason)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -326,7 +326,7 @@ func TestBuilder_BuildModifyMemberPermissionsRequest(T *testing.T) {
 		exampleInput := fakes.BuildFakeUserPermissionModificationInput()
 
 		actual, err := h.builder.BuildModifyMemberPermissionsRequest(h.ctx, exampleAccount.ID, h.exampleUser.ID, exampleInput)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -394,7 +394,7 @@ func TestBuilder_BuildTransferAccountOwnershipRequest(T *testing.T) {
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
 		actual, err := h.builder.BuildTransferAccountOwnershipRequest(h.ctx, exampleAccount.ID, exampleInput)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -447,7 +447,7 @@ func TestBuilder_BuildGetAuditLogForAccountRequest(T *testing.T) {
 
 		actual, err := h.builder.BuildGetAuditLogForAccountRequest(h.ctx, exampleAccount.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAccount.ID)
 		assertRequestQuality(t, actual, spec)

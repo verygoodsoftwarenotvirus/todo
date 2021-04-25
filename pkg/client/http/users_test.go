@@ -12,7 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUsers(t *testing.T) {
@@ -26,7 +25,6 @@ type usersBaseSuite struct {
 
 	ctx             context.Context
 	exampleUser     *types.User
-	exampleInput    *types.UserCreationInput
 	exampleUserList *types.UserList
 }
 
@@ -42,9 +40,7 @@ func (s *usersBaseSuite) SetupTest() {
 	// the two factor secret validation is never transmitted over the wire.
 	s.exampleUser.TwoFactorSecretVerifiedOn = nil
 
-	s.exampleInput = fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
 	s.exampleUserList = fakes.BuildFakeUserList()
-
 	for i := 0; i < len(s.exampleUserList.Users); i++ {
 		// the hashed passwords is never transmitted over the wire.
 		s.exampleUserList.Users[i].HashedPassword = ""
@@ -61,61 +57,87 @@ type usersTestSuite struct {
 	usersBaseSuite
 }
 
-func (s *usersTestSuite) TestV1Client_GetUser() {
+func (s *usersTestSuite) TestClient_GetUser() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
 	s.Run("standard", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleUser.ID)
-
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleUser)
-		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleUser, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid user ID", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.GetUser(s.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
 
+		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.GetUser(s.ctx, s.exampleUser.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
-func (s *usersTestSuite) TestV1Client_GetUsers() {
+func (s *usersTestSuite) TestClient_GetUsers() {
 	const expectedPath = "/api/v1/users"
-
-	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 	s.Run("standard", func() {
 		t := s.T()
 
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleUserList)
-		actual, err := c.GetUsers(s.ctx, nil)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.GetUsers(s.ctx, nil)
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleUserList, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetUsers(s.ctx, nil)
 
+		actual, err := c.GetUsers(s.ctx, nil)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.GetUsers(s.ctx, nil)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
-func (s *usersTestSuite) TestV1Client_SearchForUsersByUsername() {
+func (s *usersTestSuite) TestClient_SearchForUsersByUsername() {
 	const expectedPath = "/api/v1/users/search"
 	exampleUsername := s.exampleUser.Username
 
@@ -123,55 +145,94 @@ func (s *usersTestSuite) TestV1Client_SearchForUsersByUsername() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, fmt.Sprintf("q=%s", exampleUsername), expectedPath)
-
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleUserList.Users)
-		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleUserList.Users, actual)
 	})
 
-	s.Run("with invalid client URL", func() {
+	s.Run("with empty query", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.SearchForUsersByUsername(s.ctx, "")
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
 
+		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.SearchForUsersByUsername(s.ctx, exampleUsername)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
-func (s *usersTestSuite) TestV1Client_CreateUser() {
+func (s *usersTestSuite) TestClient_CreateUser() {
 	const expectedPath = "/users"
-
-	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 	s.Run("standard", func() {
 		t := s.T()
 
 		expected := fakes.BuildUserCreationResponseFromUser(s.exampleUser)
-		c := buildTestClientWithRequestBodyValidation(t, spec, &types.UserCreationInput{}, s.exampleInput, expected)
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.UserCreationInput{}, exampleInput, expected)
 
-		actual, err := c.CreateUser(s.ctx, s.exampleInput)
-
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.CreateUser(s.ctx, exampleInput)
+		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
-	s.Run("with invalid client url", func() {
+
+	s.Run("with nil input", func() {
 		t := s.T()
 
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.CreateUser(s.ctx, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.CreateUser(s.ctx, s.exampleInput)
+		actual, err := c.CreateUser(s.ctx, exampleInput)
 
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		exampleInput := fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.CreateUser(s.ctx, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
 	})
 }
 
-func (s *usersTestSuite) TestV1Client_ArchiveUser() {
+func (s *usersTestSuite) TestClient_ArchiveUser() {
 	const expectedPathFormat = "/api/v1/users/%d"
 
 	s.Run("standard", func() {
@@ -181,18 +242,38 @@ func (s *usersTestSuite) TestV1Client_ArchiveUser() {
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		err := c.ArchiveUser(s.ctx, s.exampleUser.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid user ID", func() {
 		t := s.T()
 
-		err := buildTestClientWithInvalidURL(t).ArchiveUser(s.ctx, s.exampleUser.ID)
-		assert.Error(t, err, "error should be returned")
+		c, _ := buildSimpleTestClient(t)
+
+		err := c.ArchiveUser(s.ctx, 0)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		err := c.ArchiveUser(s.ctx, s.exampleUser.ID)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		err := c.ArchiveUser(s.ctx, s.exampleUser.ID)
+		assert.Error(t, err)
 	})
 }
 
-func (s *usersTestSuite) TestV1Client_GetAuditLogForUser() {
+func (s *usersTestSuite) TestClient_GetAuditLogForUser() {
 	const (
 		expectedPath   = "/api/v1/users/%d/audit"
 		expectedMethod = http.MethodGet
@@ -203,34 +284,99 @@ func (s *usersTestSuite) TestV1Client_GetAuditLogForUser() {
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-
 		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
+		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid user ID", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+
+		actual, err := c.GetAuditLogForUser(s.ctx, 0)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+
+	s.Run("with error building request", func() {
 		t := s.T()
 
 		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 
+		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
 	})
 
-	s.Run("with invalid response", func() {
+	s.Run("with error executing request", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
-
 		c := buildTestClientWithInvalidResponse(t, spec)
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 
+		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+}
+
+func (s *usersTestSuite) TestClient_UploadNewAvatar() {
+	const expectedPath = "/api/v1/users/avatar/upload"
+
+	s.Run("standard", func() {
+		t := s.T()
+
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
+		exampleAvatar := []byte(t.Name())
+		exampleExtension := png
+
+		err := c.UploadNewAvatar(s.ctx, exampleAvatar, exampleExtension)
+		assert.NoError(t, err)
+	})
+
+	s.Run("with invalid avatar", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+		exampleExtension := png
+
+		err := c.UploadNewAvatar(s.ctx, nil, exampleExtension)
+		assert.Error(t, err)
+	})
+
+	s.Run("with invalid extension", func() {
+		t := s.T()
+
+		c, _ := buildSimpleTestClient(t)
+		exampleAvatar := []byte(t.Name())
+
+		err := c.UploadNewAvatar(s.ctx, exampleAvatar, "")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+		exampleAvatar := []byte(t.Name())
+		exampleExtension := png
+
+		err := c.UploadNewAvatar(s.ctx, exampleAvatar, exampleExtension)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+		exampleAvatar := []byte(t.Name())
+		exampleExtension := png
+
+		err := c.UploadNewAvatar(s.ctx, exampleAvatar, exampleExtension)
+		assert.Error(t, err)
 	})
 }

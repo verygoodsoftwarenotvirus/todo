@@ -24,7 +24,7 @@ func TestBuilder_BuildGetAPIClientRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAPIClient.ID)
 
 		actual, err := h.builder.BuildGetAPIClientRequest(h.ctx, exampleAPIClient.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -53,7 +53,7 @@ func TestBuilder_BuildGetAPIClientsRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		actual, err := h.builder.BuildGetAPIClientsRequest(h.ctx, nil)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -126,7 +126,7 @@ func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAPIClient.ID)
 
 		actual, err := h.builder.BuildArchiveAPIClientRequest(h.ctx, exampleAPIClient.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -155,7 +155,7 @@ func TestBuilder_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
 
 		actual, err := h.builder.BuildGetAuditLogForAPIClientRequest(h.ctx, exampleAPIClient.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAPIClient.ID)
 		assertRequestQuality(t, actual, spec)

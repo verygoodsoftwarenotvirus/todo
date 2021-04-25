@@ -25,7 +25,6 @@ type apiClientsTestSuite struct {
 
 	ctx                  context.Context
 	exampleAPIClient     *types.APIClient
-	exampleInput         *types.APIClientCreationInput
 	exampleAPIClientList *types.APIClientList
 }
 
@@ -35,7 +34,6 @@ func (s *apiClientsTestSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.exampleAPIClient = fakes.BuildFakeAPIClient()
 	s.exampleAPIClient.ClientSecret = nil
-	s.exampleInput = fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
 	s.exampleAPIClientList = fakes.BuildFakeAPIClientList()
 
 	for i := 0; i < len(s.exampleAPIClientList.Clients); i++ {
@@ -43,7 +41,7 @@ func (s *apiClientsTestSuite) SetupTest() {
 	}
 }
 
-func (s *apiClientsTestSuite) TestV1Client_GetAPIClient() {
+func (s *apiClientsTestSuite) TestClient_GetAPIClient() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
 	s.Run("standard", func() {
@@ -53,88 +51,96 @@ func (s *apiClientsTestSuite) TestV1Client_GetAPIClient() {
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClient)
 
 		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
-
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, s.exampleAPIClient, actual)
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid API client ID", func() {
 		t := s.T()
 
-		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
+		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClient)
 
-		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
-	})
-}
-
-func (s *apiClientsTestSuite) TestV1Client_GetAPIClients() {
-	const expectedPath = "/api/v1/api_clients"
-
-	spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClientList)
-
-		actual, err := c.GetAPIClients(s.ctx, nil)
-
-		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
-		assert.Equal(t, s.exampleAPIClientList, actual)
-	})
-
-	s.Run("with invalid client url", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAPIClients(s.ctx, nil)
-
-		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
-	})
-}
-
-func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
-	const expectedPath = "/api/v1/api_clients"
-
-	spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		exampleResponse := fakes.BuildFakeAPIClientCreationResponseFromClient(s.exampleAPIClient)
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleResponse)
-
-		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleResponse, actual)
-	})
-
-	s.Run("with invalid client url", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-
-		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
-		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
-	})
-
-	s.Run("with invalid response from server", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidResponse(t, spec)
-
-		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, s.exampleInput)
+		actual, err := c.GetAPIClient(s.ctx, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
 
-	s.Run("without cookie", func() {
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.GetAPIClient(s.ctx, s.exampleAPIClient.ID)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+}
+
+func (s *apiClientsTestSuite) TestClient_GetAPIClients() {
+	const expectedPath = "/api/v1/api_clients"
+
+	s.Run("standard", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClientList)
+
+		actual, err := c.GetAPIClients(s.ctx, nil)
+		require.NotNil(t, actual)
+		assert.NoError(t, err)
+		assert.Equal(t, s.exampleAPIClientList, actual)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+		actual, err := c.GetAPIClients(s.ctx, nil)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		actual, err := c.GetAPIClients(s.ctx, nil)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
+}
+
+func (s *apiClientsTestSuite) TestClient_CreateAPIClient() {
+	const expectedPath = "/api/v1/api_clients"
+
+	s.Run("standard", func() {
+		t := s.T()
+
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
+		exampleResponse := fakes.BuildFakeAPIClientCreationResponseFromClient(s.exampleAPIClient)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleResponse)
+
+		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, exampleInput)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleResponse, actual)
+	})
+
+	s.Run("with nil cookie", func() {
 		t := s.T()
 
 		c, _ := buildTestClientWithJSONResponse(t, nil, s.exampleAPIClient)
@@ -142,9 +148,41 @@ func (s *apiClientsTestSuite) TestV1Client_CreateAPIClient() {
 		_, err := c.CreateAPIClient(s.ctx, nil, nil)
 		assert.Error(t, err)
 	})
+
+	s.Run("with nil input", func() {
+		t := s.T()
+
+		c, _ := buildTestClientWithJSONResponse(t, nil, s.exampleAPIClient)
+
+		_, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, nil)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, exampleInput)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with invalid response from server", func() {
+		t := s.T()
+
+		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(s.exampleAPIClient)
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
+		c := buildTestClientWithInvalidResponse(t, spec)
+
+		actual, err := c.CreateAPIClient(s.ctx, &http.Cookie{}, exampleInput)
+		assert.Error(t, err)
+		assert.Nil(t, actual)
+	})
 }
 
-func (s *apiClientsTestSuite) TestV1Client_ArchiveAPIClient() {
+func (s *apiClientsTestSuite) TestClient_ArchiveAPIClient() {
 	const expectedPathFormat = "/api/v1/api_clients/%d"
 
 	s.Run("standard", func() {
@@ -153,19 +191,35 @@ func (s *apiClientsTestSuite) TestV1Client_ArchiveAPIClient() {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
-		err := c.ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, c.ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID), "no error should be returned")
 	})
 
-	s.Run("with invalid client url", func() {
+	s.Run("with invalid API client ID", func() {
 		t := s.T()
 
-		err := buildTestClientWithInvalidURL(t).ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID)
-		assert.Error(t, err, "error should be returned")
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
+		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
+
+		assert.Error(t, c.ArchiveAPIClient(s.ctx, 0), "no error should be returned")
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+		assert.Error(t, c.ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID), "error should be returned")
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		c, _ := buildTestClientThatWaitsTooLong(t)
+
+		assert.Error(t, c.ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID), "no error should be returned")
 	})
 }
 
-func (s *apiClientsTestSuite) TestV1Client_GetAuditLogForAPIClient() {
+func (s *apiClientsTestSuite) TestClient_GetAuditLogForAPIClient() {
 	const (
 		expectedPath   = "/api/v1/api_clients/%d/audit"
 		expectedMethod = http.MethodGet
@@ -178,32 +232,44 @@ func (s *apiClientsTestSuite) TestV1Client_GetAuditLogForAPIClient() {
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
 		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 	})
 
-	s.Run("with invalid client url", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
-
-		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
-	})
-
-	s.Run("with invalid response", func() {
+	s.Run("with invalid API client ID", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
+		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
 
-		c := buildTestClientWithInvalidResponse(t, spec)
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, 0)
 		assert.Nil(t, actual)
-		assert.Error(t, err, "error should be returned")
+		assert.Error(t, err)
+	})
+
+	s.Run("with error building request", func() {
+		t := s.T()
+
+		c := buildTestClientWithInvalidURL(t)
+
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	s.Run("with error executing request", func() {
+		t := s.T()
+
+		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
+		c := buildTestClientWithInvalidResponse(t, spec)
+
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

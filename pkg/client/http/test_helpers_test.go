@@ -25,7 +25,17 @@ const (
 	asciiControlChar = string(byte(127))
 )
 
-// begin test helpers
+// this file only ends in "_test" so that it can be excluded from the real codebase
+
+// mustParseURL parses a URL string or otherwise panics.
+func mustParseURL(raw string) *url.URL {
+	u, err := url.ParseRequestURI(raw)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
+}
 
 type (
 	argleBargle struct {
@@ -72,12 +82,11 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 	require.NotNil(t, spec, "provided spec must not be nil")
 
 	bodyBytes, err := httputil.DumpRequest(req, true)
-	require.NotEmpty(t, bodyBytes)
-	require.NoError(t, err)
+	assert.NotEmpty(t, bodyBytes)
+	assert.NoError(t, err)
 
 	if spec.bodyShouldBeEmpty {
 		bodyLines := strings.Split(string(bodyBytes), "\n")
-		require.NotEmpty(t, bodyLines)
 		assert.Empty(t, bodyLines[len(bodyLines)-1])
 	}
 
@@ -153,6 +162,8 @@ func buildTestClientWithStatusCodeResponse(t *testing.T, spec *requestSpec, code
 }
 
 func buildTestClientWithInvalidResponse(t *testing.T, spec *requestSpec) *Client {
+	t.Helper()
+
 	ts := httptest.NewTLSServer(http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
 			t.Helper()
@@ -167,6 +178,8 @@ func buildTestClientWithInvalidResponse(t *testing.T, spec *requestSpec) *Client
 }
 
 func buildTestClientWithJSONResponse(t *testing.T, spec *requestSpec, outputBody interface{}) (*Client, *httptest.Server) {
+	t.Helper()
+
 	ts := httptest.NewTLSServer(http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
 			t.Helper()
@@ -181,6 +194,8 @@ func buildTestClientWithJSONResponse(t *testing.T, spec *requestSpec, outputBody
 }
 
 func buildTestClientWithRequestBodyValidation(t *testing.T, spec *requestSpec, inputBody, expectedInput, outputBody interface{}) *Client {
+	t.Helper()
+
 	ts := httptest.NewTLSServer(http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
 			t.Helper()
@@ -196,13 +211,11 @@ func buildTestClientWithRequestBodyValidation(t *testing.T, spec *requestSpec, i
 	return buildTestClient(t, ts)
 }
 
-func buildTestClientThatWaitsTooLong(t *testing.T, spec *requestSpec) (*Client, *httptest.Server) {
+func buildTestClientThatWaitsTooLong(t *testing.T) (*Client, *httptest.Server) {
+	t.Helper()
+
 	ts := httptest.NewTLSServer(http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
-			t.Helper()
-
-			assertRequestQuality(t, req, spec)
-
 			time.Sleep(24 * time.Hour)
 		},
 	))

@@ -31,7 +31,7 @@ func TestService_AccountStatusUpdateInputMiddleware(T *testing.T) {
 		s := buildTestService(t)
 		s.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakeAccountStatusUpdateInput()
+		exampleInput := fakes.BuildFakeUserReputationUpdateInput()
 		jsonBytes, err := json.Marshal(&exampleInput)
 		require.NoError(t, err)
 

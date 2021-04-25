@@ -233,7 +233,7 @@ func (s *TestSuite) TestUsers_Auditing_Returns404ForNonexistentUser() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			input := fakes.BuildFakeAccountStatusUpdateInput()
+			input := fakes.BuildFakeUserReputationUpdateInput()
 			input.NewReputation = types.BannedUserReputation
 			input.TargetUserID = nonexistentID
 

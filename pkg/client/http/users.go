@@ -155,6 +155,12 @@ func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) ([]*type
 	return entries, nil
 }
 
+const (
+	png  = "png"
+	jpeg = "jpeg"
+	gif  = "gif"
+)
+
 // UploadNewAvatar uploads a new avatar.
 func (c *Client) UploadNewAvatar(ctx context.Context, avatar []byte, extension string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
@@ -166,10 +172,8 @@ func (c *Client) UploadNewAvatar(ctx context.Context, avatar []byte, extension s
 
 	logger := c.logger
 
-	switch strings.ToLower(strings.TrimSpace(extension)) {
-	case "jpeg", "png", "gif":
-		//
-	default:
+	ex := strings.ToLower(strings.TrimSpace(extension))
+	if ex != jpeg && ex != png && ex != gif {
 		err := fmt.Errorf("%s: %w", extension, ErrInvalidImageExtension)
 		return observability.PrepareError(err, logger, span, "uploading avatar")
 	}

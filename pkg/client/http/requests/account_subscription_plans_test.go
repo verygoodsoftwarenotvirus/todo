@@ -56,7 +56,7 @@ func TestBuilder_BuildGetAccountSubscriptionPlansRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
 		actual, err := h.builder.BuildGetAccountSubscriptionPlansRequest(h.ctx, filter)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -116,7 +116,7 @@ func TestBuilder_BuildUpdateAccountSubscriptionPlanRequest(T *testing.T) {
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
 
 		actual, err := h.builder.BuildUpdateAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -146,7 +146,7 @@ func TestBuilder_BuildArchiveAccountSubscriptionPlanRequest(T *testing.T) {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
 
 		actual, err := h.builder.BuildArchiveAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -175,7 +175,7 @@ func TestBuilder_BuildGetAuditLogForAccountSubscriptionPlanRequest(T *testing.T)
 
 		actual, err := h.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
 		require.NotNil(t, actual)
-		assert.NoError(t, err, "no error should be returned")
+		assert.NoError(t, err)
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAccountSubscriptionPlan.ID)
 		assertRequestQuality(t, actual, spec)

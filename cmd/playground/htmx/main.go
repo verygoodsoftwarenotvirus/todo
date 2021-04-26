@@ -7,6 +7,13 @@ import (
 	. "github.com/stevelacy/daz"
 )
 
+func exmapleCard(w http.ResponseWriter, r *http.Request) {
+	// <sl-card class="card-basic">
+	//   This is just a basic card. No image, no header, and no footer. Just your content.
+	// </sl-card>
+	H("sl-card", Attr{"class": "card-basic"}, "This is just a basic card. No image, no header, and no footer. Just your content.")
+}
+
 func homepage(w http.ResponseWriter, r *http.Request) {
 	// <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.39/dist/themes/base.css">
 	shoelaceCSSImport := H(

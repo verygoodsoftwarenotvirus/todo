@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 	"math/rand"
 	"net/http"
 
 	models "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks.

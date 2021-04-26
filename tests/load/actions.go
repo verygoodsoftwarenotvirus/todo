@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 	"math/rand"
 	"net/http"
 	"time"
 
 	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 )
 
 var (
@@ -24,8 +24,8 @@ type (
 	// Action is a wrapper struct around some important values.
 	Action struct {
 		Action actionFunc
-		Weight int
 		Name   string
+		Weight int
 	}
 )
 

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -31,7 +32,7 @@ func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
 
 	req, err := act.Action()
 	if err != nil || req == nil {
-		if err == ErrUnavailableYet {
+		if errors.Is(err, ErrUnavailableYet) {
 			return hazana.DoResult{
 				RequestLabel: act.Name,
 				Error:        nil,

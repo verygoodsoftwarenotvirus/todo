@@ -665,7 +665,11 @@ func Lint() error {
 		},
 	}
 
-	return runContainer(true, lintCmd)
+	if err := runContainer(true, lintCmd); err != nil {
+		return errors.New("backend lint failed")
+	}
+
+	return nil
 }
 
 func backendCoverage() error {

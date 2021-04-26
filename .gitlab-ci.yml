@@ -78,7 +78,7 @@ integration_tests_sqlite:
   variables:
     GOPATH: "/go"
   script:
-    - apk add --update make
+    - ls -Al environments/testing/
     - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-sqlite.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
 integration_tests_postgres:

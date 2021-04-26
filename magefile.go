@@ -271,8 +271,6 @@ func runCompose(composeFiles ...string) error {
 		fullCommand = append(fullCommand, "--abort-on-container-exit")
 	}
 
-	fmt.Println(strings.Join(fullCommand, " "))
-
 	return sh.RunV("docker-compose", fullCommand...)
 }
 

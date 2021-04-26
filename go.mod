@@ -44,6 +44,7 @@ require (
 	github.com/spf13/afero v1.6.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
+	github.com/stevelacy/daz v0.1.4
 	github.com/stretchr/testify v1.7.0
 	github.com/tebeka/selenium v0.9.9
 	github.com/tsenart/vegeta/v12 v12.8.4 // indirect

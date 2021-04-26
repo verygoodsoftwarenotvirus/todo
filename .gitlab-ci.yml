@@ -79,29 +79,29 @@ integration_tests_sqlite:
     GOPATH: "/go"
   script:
     - apk add --update make
-    - make integration-tests-sqlite
+    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-sqlite.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
-#integration_tests_postgres:
-#  stage: integration-testing
-#  image: docker/compose:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apk add --update make
-#    - make integration-tests-postgres
-#
-#integration_tests_mariadb:
-#  stage: integration-testing
-#  image: docker/compose:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apk add --update make
-#    - make integration-tests-mariadb
+integration_tests_postgres:
+  stage: integration-testing
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+  script:
+    - apk add --update make
+    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-postgres.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
+
+integration_tests_mariadb:
+  stage: integration-testing
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+  script:
+    - apk add --update make
+    docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-mariadb.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
 frontend-selenium-tests:
   stage: integration-testing
@@ -112,98 +112,52 @@ frontend-selenium-tests:
     - apk add --update make
     - make frontend-tests
 
-## load tests
-#load_tests_postgres:
-#  stage: load-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#    LOADTEST_RUN_TIME: "2m30s"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make load_tests_postgres
-#  except:
-#    - schedules
-#
-#load_tests_mariadb:
-#  stage: load-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#    LOADTEST_RUN_TIME: "5m00s"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make load_tests_mariadb
-#  except:
-#    - schedules
-#
-#load_tests_sqlite:
-#  stage: load-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#    LOADTEST_RUN_TIME: "2m30s"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make load_tests_sqlite
-#  except:
-#    - schedules
-#
-## daily load tests
-#
-#daily-load_tests_postgres:on-schedule:
-#  stage: load-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#    LOADTEST_RUN_TIME: "10m"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make load_tests_postgres
-#  only:
-#    - schedules
-#
-#daily-load_tests_mariadb:on-schedule:
-#  stage: load-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#    LOADTEST_RUN_TIME: "10m"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make load_tests_mariadb
-#  only:
-#    - schedules
-#
-#daily-load_tests_sqlite:on-schedule:
-#  stage: load-testing
-#  image: docker:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#    LOADTEST_RUN_TIME: "10m"
-#  script:
-#    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-#    - pip install docker-compose
-#    - make load_tests_sqlite
-#  only:
-#    - schedules
+# daily load tests
+
+daily-load_tests_postgres:on-schedule:
+  stage: load-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "10m"
+  script:
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make load_tests_postgres
+  only:
+    - schedules
+
+daily-load_tests_mariadb:on-schedule:
+  stage: load-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "10m"
+  script:
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make load_tests_mariadb
+  only:
+    - schedules
+
+daily-load_tests_sqlite:on-schedule:
+  stage: load-testing
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    GOPATH: "/go"
+    LOADTEST_RUN_TIME: "10m"
+  script:
+    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
+    - make load_tests_sqlite
+  only:
+    - schedules
 
 # miscellaneous
 

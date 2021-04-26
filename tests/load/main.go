@@ -1,58 +1,114 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	"sync"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 
-	vegeta "github.com/tsenart/vegeta/v12/lib"
+	"github.com/emicklei/hazana"
 )
 
-func main() {
-	ctx := context.Background()
-	logger := zerolog.NewLogger()
-	rate := vegeta.Rate{Freq: 100, Per: time.Second}
-	runTime := 10 * time.Minute
+// ServiceAttacker implements hazana's Attacker interface.
+type ServiceAttacker struct {
+	todoClient *client.Client
+}
 
-	if runTimeEnvVar := os.Getenv("LOADTEST_RUN_TIME"); runTimeEnvVar != "" {
-		rt, err := time.ParseDuration(runTimeEnvVar)
-		if err != nil {
-			log.Fatal(err)
+// Setup implements hazana's Attacker interface.
+func (a *ServiceAttacker) Setup(_ hazana.Config) error {
+	return nil
+}
+
+// Do implements hazana's Attacker interface.
+func (a *ServiceAttacker) Do(_ context.Context) hazana.DoResult {
+	// Do performs one request and is executed in a separate goroutine.
+	// The context is used to cancel the request on timeout.
+	act := RandomAction(a.todoClient, a.todoClient.RequestBuilder())
+
+	req, err := act.Action()
+	if err != nil || req == nil {
+		if err == ErrUnavailableYet {
+			return hazana.DoResult{
+				RequestLabel: act.Name,
+				Error:        nil,
+				StatusCode:   200,
+			}
 		}
-
-		runTime = rt
+		log.Printf("something has gone awry: %v\n", err)
+		return hazana.DoResult{Error: err}
 	}
 
 	var (
-		metricsHat         sync.Mutex
-		metrics            vegeta.Metrics
-		attackersWaitGroup sync.WaitGroup
+		sc int
+		bo int64
+		bi []byte
 	)
-
-	for _, pair := range buildAttackTargetPairs(ctx, logger) {
-		p := pair
-
-		attackersWaitGroup.Add(1)
-
-		go func() {
-			for res := range p.attacker.Attack(p.helper.Targeter(), rate, runTime, fmt.Sprintf("%s load test", p.name)) {
-				metricsHat.Lock()
-				p.helper.HandleResult(res)
-				metrics.Add(res)
-				metricsHat.Unlock()
-			}
-
-			attackersWaitGroup.Done()
-		}()
+	if req.Body != nil {
+		bi, err = ioutil.ReadAll(req.Body)
+		if err != nil {
+			return hazana.DoResult{Error: err}
+		}
+		rdr := ioutil.NopCloser(bytes.NewBuffer(bi))
+		req.Body = rdr
 	}
 
-	attackersWaitGroup.Wait()
-	metrics.Close()
+	res, err := a.todoClient.AuthenticatedClient().Do(req)
+	if res != nil {
+		sc = res.StatusCode
+		bo = res.ContentLength
+	}
 
-	log.Printf("99th percentile: %s\n", metrics.Latencies.P99)
+	dr := hazana.DoResult{
+		RequestLabel: act.Name,
+		Error:        err,
+		StatusCode:   sc,
+		BytesIn:      int64(len(bi)),
+		BytesOut:     bo,
+	}
+	return dr
+}
+
+// Teardown implements hazana's Attacker interface.
+func (a *ServiceAttacker) Teardown() error {
+	return nil
+}
+
+// Clone implements hazana's Attacker interface.
+func (a *ServiceAttacker) Clone() hazana.Attack {
+	return a
+}
+
+func main() {
+	todoClient := initializeClient()
+
+	var runTime = 10 * time.Minute
+	if rt := os.Getenv("LOADTEST_RUN_TIME"); rt != "" {
+		_rt, err := time.ParseDuration(rt)
+		if err != nil {
+			panic(err)
+		}
+		runTime = _rt
+	}
+
+	attacker := &ServiceAttacker{todoClient: todoClient}
+	cfg := hazana.Config{
+		RPS:           50,
+		AttackTimeSec: int(runTime.Seconds()),
+		RampupTimeSec: 5,
+		MaxAttackers:  50,
+		Verbose:       true,
+		DoTimeoutSec:  10,
+	}
+
+	r := hazana.Run(attacker, cfg)
+
+	// inspect the report and compute whether the test has failed
+	// e.g by looking at the success percentage and mean response time of each metric.
+	r.Failed = false
+
+	hazana.PrintReport(r)
 }

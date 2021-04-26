@@ -6,11 +6,6 @@ services:
             JAEGER_DISABLED: 'true'
         ports:
             - 80:8888
-#        links:
-#            - tracing-server
-#            - prometheus
-#            - loki
-#            - promtail
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
@@ -23,6 +18,11 @@ services:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
         container_name: 'integration_tests'
+#        links:
+#            - tracing-server
+#            - prometheus
+#            - loki
+#            - promtail
 #    tracing-server:
 #        image: jaegertracing/all-in-one:1.22.0
 #        logging:

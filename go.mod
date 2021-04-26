@@ -19,6 +19,7 @@ require (
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/carolynvs/magex v0.5.0
 	github.com/cznic/ql v1.2.0 // indirect
+	github.com/emicklei/hazana v1.9.6
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -39,13 +40,13 @@ require (
 	github.com/o1egl/paseto v1.0.0
 	github.com/pquerna/otp v1.3.0
 	github.com/rs/zerolog v1.21.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.6.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tebeka/selenium v0.9.9
-	github.com/tsenart/vegeta/v12 v12.8.4
+	github.com/tsenart/vegeta/v12 v12.8.4 // indirect
 	github.com/wagslane/go-password-validator v0.3.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.19.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.19.0
@@ -55,7 +56,7 @@ require (
 	go.opentelemetry.io/otel/metric v0.19.0
 	go.opentelemetry.io/otel/sdk v0.19.0
 	go.opentelemetry.io/otel/trace v0.19.0
-	go.uber.org/zap v1.16.0
+	go.uber.org/zap v1.16.0 // indirect
 	gocloud.dev v0.22.0
 	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4

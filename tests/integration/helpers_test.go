@@ -50,7 +50,7 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 	cookie, err = testutil.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
-	cookieClient, err = initializeCookiePoweredClient(t, cookie)
+	cookieClient, err = initializeCookiePoweredClient(cookie)
 	require.NoError(t, err)
 
 	apiClient, err := cookieClient.CreateAPIClient(ctx, cookie, &types.APIClientCreationInput{
@@ -72,7 +72,7 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 	return user, cookie, cookieClient, pasetoClient
 }
 
-func initializeCookiePoweredClient(t *testing.T, cookie *http.Cookie) (*httpclient.Client, error) {
+func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, error) {
 	if parsedURLToUse == nil {
 		panic("url not set!")
 	}
@@ -148,7 +148,7 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 	adminCookie, err := testutil.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
 	require.NoError(t, err)
 
-	cClient, err := initializeCookiePoweredClient(t, adminCookie)
+	cClient, err := initializeCookiePoweredClient(adminCookie)
 	require.NoError(t, err)
 
 	code, err := totp.GenerateCode(premadeAdminUser.TwoFactorSecret, time.Now().UTC())

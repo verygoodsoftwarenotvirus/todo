@@ -15,4 +15,8 @@ services:
             - 80:8888
         build:
             context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/integration-server-sqlite.Dockerfile'
+            dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
+        volumes:
+            - source: '../../../../environments/testing/config_files/integration-tests-sqlite.toml'
+              target: '/etc/config.toml'
+              type: 'bind'

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -722,6 +723,10 @@ func backendUnitTests(outLoud, quick bool) error {
 		return err
 	}
 
+	log.Println("fuck")
+	log.Println(packagesToTest)
+	log.Println("fuck")
+
 	var commandStartArgs []string
 	if quick {
 		commandStartArgs = []string{"test", "-cover", "-race", "-failfast"}
@@ -795,24 +800,6 @@ func IntegrationTests() error {
 	return nil
 }
 
-// Run the integration tests and collect coverage information.
-func IntegrationCoverage() error {
-	if err := freshArtifactsDir(); err != nil {
-		return err
-	}
-
-	err := runCompose(
-		"environments/testing/compose_files/integration_tests/integration-tests-base.yaml",
-		"environments/testing/compose_files/integration_tests/integration-coverage.yaml",
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Run the integration tests and then the linter.
 func LintegrationTests() error {
 	if err := IntegrationTests(); err != nil {
@@ -826,7 +813,7 @@ func LintegrationTests() error {
 	return nil
 }
 
-func runLoadTest(dbProvider string) error {
+func LoadTest(dbProvider string) error {
 	dbProvider = strings.TrimSpace(strings.ToLower(dbProvider))
 
 	if err := validateDBProvider(dbProvider); err != nil {
@@ -842,15 +829,15 @@ func runLoadTest(dbProvider string) error {
 
 // Run load tests.
 func LoadTests() error {
-	if err := runLoadTest(sqlite); err != nil {
+	if err := LoadTest(sqlite); err != nil {
 		return err
 	}
 
-	if err := runLoadTest(postgres); err != nil {
+	if err := LoadTest(postgres); err != nil {
 		return err
 	}
 
-	if err := runLoadTest(mariadb); err != nil {
+	if err := LoadTest(mariadb); err != nil {
 		return err
 	}
 

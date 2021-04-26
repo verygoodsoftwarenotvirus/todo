@@ -97,7 +97,6 @@ type configFunc func(filePath string) error
 var files = map[string]configFunc{
 	"environments/local/config.toml":                                    localDevelopmentConfig,
 	"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
-	"environments/testing/config_files/coverage.toml":                   coverageConfig,
 	"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
 	"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
 	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
@@ -323,9 +322,9 @@ func coverageConfig(filePath string) error {
 			MetricsCollectionInterval: 2 * time.Second,
 			MaxPingAttempts:           maxAttempts,
 			CreateTestUser: &types.TestUserCreationConfig{
-				Username:       "coverageUser",
-				Password:       defaultPassword,
-				HashedPassword: mustHashPass(defaultPassword),
+				Username:       "exampleUser",
+				Password:       "integration-tests-are-cool",
+				HashedPassword: mustHashPass("integration-tests-are-cool"),
 				IsServiceAdmin: false,
 			},
 		},

@@ -1,153 +1,94 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
-	"sync"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
+	"math/rand"
+	"net/http"
 
-	vegeta "github.com/tsenart/vegeta/v12/lib"
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 )
 
-type (
-	vegetaHelper interface {
-		Targeter() func(*vegeta.Target) error
-		HandleResult(res *vegeta.Result)
+// fetchRandomItem retrieves a random item from the list of available items.
+func fetchRandomItem(ctx context.Context, c *client.Client) *models.Item {
+	itemsRes, err := c.GetItems(ctx, nil)
+	if err != nil || itemsRes == nil || len(itemsRes.Items) == 0 {
+		return nil
 	}
 
-	itemsTargeter struct {
-		logger         logging.Logger
-		client         *httpclient.Client
-		requestBuilder *requests.Builder
-		createdItems   map[uint64]struct{}
-		createdItemHat sync.RWMutex
-	}
-)
+	randIndex := rand.Intn(len(itemsRes.Items))
 
-var (
-	errInvalidAction = errors.New("invalid action")
-)
-
-func newItemsTargeter(client *httpclient.Client, requestBuilder *requests.Builder, logger logging.Logger) *itemsTargeter {
-	return &itemsTargeter{
-		client:         client,
-		requestBuilder: requestBuilder,
-		logger:         logging.EnsureLogger(logger),
-	}
+	return itemsRes.Items[randIndex]
 }
 
-func (t *itemsTargeter) selectAction() *action {
-	return selectAction(
-		action{
-			name:   "getItem",
-			weight: 100,
+func buildItemActions(c *client.Client, builder *requests.Builder) map[string]*Action {
+	return map[string]*Action{
+		"CreateItem": {
+			Name: "CreateItem",
+			Action: func() (*http.Request, error) {
+				ctx := context.Background()
+
+				itemInput := fakemodels.BuildFakeItemCreationInput()
+
+				return builder.BuildCreateItemRequest(ctx, itemInput)
+			},
+			Weight: 100,
 		},
-	)
-}
+		"GetItem": {
+			Name: "GetItem",
+			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 
-func (t *itemsTargeter) HandleResult(res *vegeta.Result) {
-	u, err := url.ParseRequestURI(res.URL)
-	if err != nil {
-		// this should never occur
-		panic(err)
-	}
+				randomItem := fetchRandomItem(ctx, c)
+				if randomItem == nil {
+					return nil, fmt.Errorf("retrieving random item: %w", ErrUnavailableYet)
+				}
 
-	switch u.Path {
-	case "/api/v1/items":
-		if res.Method == http.MethodPost {
-			var x *types.Item
+				return builder.BuildGetItemRequest(ctx, randomItem.ID)
+			},
+			Weight: 100,
+		},
+		"GetItems": {
+			Name: "GetItems",
+			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 
-			if err = json.NewDecoder(bytes.NewReader(res.Body)).Decode(&x); err != nil {
-				t.logger.Error(err, "decoding item response")
-			}
+				return builder.BuildGetItemsRequest(ctx, nil)
+			},
+			Weight: 100,
+		},
+		"UpdateItem": {
+			Name: "UpdateItem",
+			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 
-			t.createdItemHat.Lock()
-			defer t.createdItemHat.Unlock()
-			t.createdItems[x.ID] = struct{}{}
-		}
-	default:
-		t.logger.WithValue("path", u.Path).Info("request made and skipped")
-	}
-}
+				if randomItem := fetchRandomItem(ctx, c); randomItem != nil {
+					newItem := fakemodels.BuildFakeItemCreationInput()
+					randomItem.Name = newItem.Name
+					randomItem.Details = newItem.Details
+					return builder.BuildUpdateItemRequest(ctx, randomItem)
+				}
 
-func (t *itemsTargeter) Targeter() func(*vegeta.Target) error {
-	return func(target *vegeta.Target) error {
-		n := t.selectAction().name
-		ctx := context.Background()
+				return nil, ErrUnavailableYet
+			},
+			Weight: 100,
+		},
+		"ArchiveItem": {
+			Name: "ArchiveItem",
+			Action: func() (*http.Request, error) {
+				ctx := context.Background()
 
-		switch n {
-		case "getItem":
-			// how do I figure out which item to get?
-			if len(t.createdItems) == 0 {
-				return nil
-			}
+				randomItem := fetchRandomItem(ctx, c)
+				if randomItem == nil {
+					return nil, fmt.Errorf("retrieving random item: %w", ErrUnavailableYet)
+				}
 
-			req, err := t.requestBuilder.BuildGetItemRequest(ctx, randomIDFromMap(&t.createdItemHat, t.createdItems))
-			if err != nil {
-				return err
-			}
-
-			return initializeTargetFromRequest(req, target)
-		case "createItem":
-			dummyInput := fakes.BuildFakeItemCreationInput()
-
-			req, err := t.requestBuilder.BuildCreateItemRequest(ctx, dummyInput)
-			if err != nil {
-				return err
-			}
-
-			return initializeTargetFromRequest(req, target)
-		case "updateItem":
-			// how do I figure out which item to update?
-			if len(t.createdItems) == 0 {
-				return nil
-			}
-
-			id := randomIDFromMap(&t.createdItemHat, t.createdItems)
-
-			x, err := t.client.GetItem(ctx, id)
-			if err != nil {
-				return err
-			}
-
-			newInput := fakes.BuildFakeItem()
-			x.Name = newInput.Name
-
-			req, err := t.requestBuilder.BuildUpdateItemRequest(ctx, x)
-			if err != nil {
-				return err
-			}
-
-			return initializeTargetFromRequest(req, target)
-		case "archiveItem":
-			// how do I figure out which item to delete?
-			if len(t.createdItems) == 0 {
-				return nil
-			}
-
-			id := randomIDFromMap(&t.createdItemHat, t.createdItems)
-
-			req, err := t.requestBuilder.BuildArchiveItemRequest(ctx, id)
-			if err != nil {
-				return err
-			}
-
-			t.createdItemHat.Lock()
-			delete(t.createdItems, id)
-
-			return initializeTargetFromRequest(req, target)
-		default:
-			return fmt.Errorf("%s: %w", n, errInvalidAction)
-		}
+				return builder.BuildArchiveItemRequest(ctx, randomItem.ID)
+			},
+			Weight: 85,
+		},
 	}
 }

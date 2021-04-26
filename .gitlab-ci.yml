@@ -29,7 +29,8 @@ coverage:
     GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - make coverage
+    - go get -u -d github.com/magefile/mage
+    - mage coverage
 
 golang-format-check:
   stage: quality

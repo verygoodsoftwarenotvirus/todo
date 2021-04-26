@@ -9,7 +9,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/require"

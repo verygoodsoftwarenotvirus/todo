@@ -16,7 +16,7 @@ import (
 	"github.com/pquerna/otp/totp"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 )
 
 var (

@@ -7,13 +7,14 @@ import (
 	"math/rand"
 	"net/http"
 	"reflect"
+	"sync"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http/requests"
+	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
@@ -29,7 +30,10 @@ type action struct {
 	weight uint
 }
 
-func randomIDFromMap(m map[uint64]struct{}) uint64 {
+func randomIDFromMap(hat *sync.RWMutex, m map[uint64]struct{}) uint64 {
+	hat.RLock()
+	defer hat.RUnlock()
+
 	keys := reflect.ValueOf(m).MapKeys()
 
 	return keys[rand.Intn(len(keys))].Uint()

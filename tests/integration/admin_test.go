@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 )
 
 func (s *TestSuite) TestAdmin_Returns404WhenModifyingUserReputation() {
@@ -39,7 +39,7 @@ func (s *TestSuite) TestAdmin_BanningUsers() {
 
 			var (
 				user       *types.User
-				userClient *http.Client
+				userClient *httpclient.Client
 			)
 
 			switch testClients.authType {

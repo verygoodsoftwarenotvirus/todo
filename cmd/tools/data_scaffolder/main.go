@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
@@ -117,7 +117,7 @@ func main() {
 				quitter.ComplainAndQuit(fmt.Errorf("getting cookie: %v", cookieErr))
 			}
 
-			userClient, err := http.NewClient(parsedURI, http.UsingLogger(userLogger), http.UsingCookie(cookie))
+			userClient, err := httpclient.NewClient(parsedURI, httpclient.UsingLogger(userLogger), httpclient.UsingCookie(cookie))
 			if err != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("initializing client: %w", err))
 			}

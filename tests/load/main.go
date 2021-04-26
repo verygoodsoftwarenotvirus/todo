@@ -8,11 +8,14 @@ import (
 	"sync"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
 
 func main() {
 	ctx := context.Background()
+	logger := zerolog.NewLogger()
 	rate := vegeta.Rate{Freq: 100, Per: time.Second}
 	runTime := 10 * time.Minute
 
@@ -31,7 +34,7 @@ func main() {
 		attackersWaitGroup sync.WaitGroup
 	)
 
-	for _, pair := range buildAttackTargetPairs(ctx) {
+	for _, pair := range buildAttackTargetPairs(ctx, logger) {
 		p := pair
 
 		attackersWaitGroup.Add(1)

@@ -15,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"

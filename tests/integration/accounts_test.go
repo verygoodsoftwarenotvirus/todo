@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
@@ -288,7 +288,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			// create dummy users
 			users := []*types.User{}
-			clients := []*http.Client{}
+			clients := []*httpclient.Client{}
 
 			// create users
 			for i := 0; i < userCount; i++ {

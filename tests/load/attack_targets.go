@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
 
@@ -13,13 +15,15 @@ type attackTargetPair struct {
 	name     string
 }
 
-func buildAttackTargetPairs(ctx context.Context) []*attackTargetPair {
+func buildAttackTargetPairs(ctx context.Context, logger logging.Logger) []*attackTargetPair {
 	itemAttacker, itemsClient, requestBuilder, err := createAttacker(ctx, "items")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	targeter := newItemsTargeter(itemsClient, requestBuilder)
+	logger = logging.EnsureLogger(logger)
+
+	targeter := newItemsTargeter(itemsClient, requestBuilder, logger)
 
 	return []*attackTargetPair{
 		{

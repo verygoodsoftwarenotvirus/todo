@@ -230,7 +230,7 @@ linters:
     - nakedret # Finds naked returns in functions greater than a specified function length
     - nestif # Reports deeply nested if statements
     # nlreturn # nlreturn checks for a new line before return and branch statements to increase code clarity
-    - noctx # noctx finds sending http request without context.Context
+    - noctx # noctx finds sending httpclient request without context.Context
     - nolintlint # Reports ill-formed or insufficient nolint directives
     - prealloc # Finds slice declarations that could potentially be preallocated
     # rowserrcheck # checks whether Err of rows is checked successfully
@@ -286,7 +286,7 @@ issues:
         - gosec
         - gomnd
 
-    - path: pkg/client/http/roundtripper_*
+    - path: pkg/client/httpclient/roundtripper_*
       linters:
         - bodyclose
 
@@ -356,7 +356,7 @@ issues:
       linters:
         - gocritic # gocritic complains about an interface implementation I have no control over
 
-    - path: internal/server/http/server.go
+    - path: internal/server/httpclient/server.go
       linters:
         - maligned # these structs are never copied and are structured for documentation purposes
 

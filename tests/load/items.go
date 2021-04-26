@@ -1,13 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"sync"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/http/requests"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 
 	vegeta "github.com/tsenart/vegeta/v12/lib"
 )
@@ -19,9 +26,11 @@ type (
 	}
 
 	itemsTargeter struct {
-		client         *http.Client
+		logger         logging.Logger
+		client         *httpclient.Client
 		requestBuilder *requests.Builder
-		createdItemIDs map[uint64]struct{}
+		createdItems   map[uint64]struct{}
+		createdItemHat sync.RWMutex
 	}
 )
 
@@ -29,10 +38,11 @@ var (
 	errInvalidAction = errors.New("invalid action")
 )
 
-func newItemsTargeter(client *http.Client, requestBuilder *requests.Builder) *itemsTargeter {
+func newItemsTargeter(client *httpclient.Client, requestBuilder *requests.Builder, logger logging.Logger) *itemsTargeter {
 	return &itemsTargeter{
 		client:         client,
 		requestBuilder: requestBuilder,
+		logger:         logging.EnsureLogger(logger),
 	}
 }
 
@@ -46,7 +56,28 @@ func (t *itemsTargeter) selectAction() *action {
 }
 
 func (t *itemsTargeter) HandleResult(res *vegeta.Result) {
+	u, err := url.ParseRequestURI(res.URL)
+	if err != nil {
+		// this should never occur
+		panic(err)
+	}
 
+	switch u.Path {
+	case "/api/v1/items":
+		if res.Method == http.MethodPost {
+			var x *types.Item
+
+			if err = json.NewDecoder(bytes.NewReader(res.Body)).Decode(&x); err != nil {
+				t.logger.Error(err, "decoding item response")
+			}
+
+			t.createdItemHat.Lock()
+			defer t.createdItemHat.Unlock()
+			t.createdItems[x.ID] = struct{}{}
+		}
+	default:
+		t.logger.WithValue("path", u.Path).Info("request made and skipped")
+	}
 }
 
 func (t *itemsTargeter) Targeter() func(*vegeta.Target) error {
@@ -57,11 +88,11 @@ func (t *itemsTargeter) Targeter() func(*vegeta.Target) error {
 		switch n {
 		case "getItem":
 			// how do I figure out which item to get?
-			if len(t.createdItemIDs) == 0 {
+			if len(t.createdItems) == 0 {
 				return nil
 			}
 
-			req, err := t.requestBuilder.BuildGetItemRequest(ctx, randomIDFromMap(t.createdItemIDs))
+			req, err := t.requestBuilder.BuildGetItemRequest(ctx, randomIDFromMap(&t.createdItemHat, t.createdItems))
 			if err != nil {
 				return err
 			}
@@ -78,11 +109,11 @@ func (t *itemsTargeter) Targeter() func(*vegeta.Target) error {
 			return initializeTargetFromRequest(req, target)
 		case "updateItem":
 			// how do I figure out which item to update?
-			if len(t.createdItemIDs) == 0 {
+			if len(t.createdItems) == 0 {
 				return nil
 			}
 
-			id := randomIDFromMap(t.createdItemIDs)
+			id := randomIDFromMap(&t.createdItemHat, t.createdItems)
 
 			x, err := t.client.GetItem(ctx, id)
 			if err != nil {
@@ -100,14 +131,19 @@ func (t *itemsTargeter) Targeter() func(*vegeta.Target) error {
 			return initializeTargetFromRequest(req, target)
 		case "archiveItem":
 			// how do I figure out which item to delete?
-			if len(t.createdItemIDs) == 0 {
+			if len(t.createdItems) == 0 {
 				return nil
 			}
 
-			req, err := t.requestBuilder.BuildArchiveItemRequest(ctx, randomIDFromMap(t.createdItemIDs))
+			id := randomIDFromMap(&t.createdItemHat, t.createdItems)
+
+			req, err := t.requestBuilder.BuildArchiveItemRequest(ctx, id)
 			if err != nil {
 				return err
 			}
+
+			t.createdItemHat.Lock()
+			delete(t.createdItems, id)
 
 			return initializeTargetFromRequest(req, target)
 		default:

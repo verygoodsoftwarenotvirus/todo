@@ -246,8 +246,6 @@ func runContainer(outLoud bool, runSpec containerRunSpec) error {
 		runCmd = sh.RunV
 	}
 
-	fmt.Println(strings.Join(containerRunArgs, " "))
-
 	return runCmd(containerRunner, containerRunArgs...)
 }
 

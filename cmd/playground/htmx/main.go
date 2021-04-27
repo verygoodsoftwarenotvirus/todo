@@ -96,6 +96,22 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func buildExampleButton() []HTML {
+	return []HTML{
+		// <sl-button size="small">Click me</sl-button>
+		H(
+			"sl-button",
+			Attr{
+				"size":      "small",
+				"hx-get":    "/items",
+				"hx-target": "#fart",
+			},
+			"Click me",
+		),
+		H("div", Attr{"id": "fart"}),
+	}
+}
+
 func main() {
 	mux := http.NewServeMux()
 

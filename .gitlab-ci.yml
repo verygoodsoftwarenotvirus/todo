@@ -10,16 +10,6 @@ before_script:
   - cp -rf /builds/verygoodsoftwarenotvirus/todo /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-docker-security-lint:
-  stage: quality
-  image: golang:stretch
-  variables:
-    GOPATH: "/go"
-  script:
-    - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - go run mage.go ensureMage
-    - mage dockerLint
-
 coverage:
   stage: quality
   image: golang:stretch

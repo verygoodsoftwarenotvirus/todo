@@ -80,7 +80,8 @@ integration_tests_sqlite:
   variables:
     GOPATH: "/go"
   script:
-    - ls -Al environments/testing/config_files
+    - ls -Al environments/testing/config_files/integration-tests-sqlite.toml
+    - ls -Al /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
     - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-sqlite.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
 #integration_tests_postgres:

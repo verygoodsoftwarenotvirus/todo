@@ -8,6 +8,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/Masterminds/squirrel v1.5.0
+	github.com/PuerkitoBio/goquery v1.6.1
 	github.com/RussellLuo/validating/v2 v2.1.0
 	github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
 	github.com/alexedwards/scs/mysqlstore v0.0.0-20210406055609-070afe7455ec

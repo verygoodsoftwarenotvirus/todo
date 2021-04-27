@@ -48,6 +48,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tebeka/selenium v0.9.9
 	github.com/tsenart/vegeta/v12 v12.8.4 // indirect
+	github.com/unrolled/secure v1.0.8
 	github.com/wagslane/go-password-validator v0.3.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.19.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.19.0

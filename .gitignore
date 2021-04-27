@@ -12,12 +12,13 @@
 
 # pretty good IDEs
 .idea
-.vscode/
+frontend/tsvelte/.vscode/
 
 # Vim
 *.swp
 
 # Sqlite databases
+*.sqlite
 *.db
 
 # OSX
@@ -36,15 +37,17 @@ artifacts
 node_modules
 
 # Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+*.log
 
-frontend/v1/public/bundle.*
+# svelte compilation artifacts
+frontend//public/bundle.*
 
+# go test profiles
 *.coverprofile
 *.profile
 
-cmd/playground
+# bleve indices
 *.bleve
-*.sqlite
+
+# immudb things
+.root-*

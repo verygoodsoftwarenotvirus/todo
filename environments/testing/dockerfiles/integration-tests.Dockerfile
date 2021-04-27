@@ -4,9 +4,9 @@ RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-ADD . .
+COPY . .
 
-ENTRYPOINT [ "go", "test", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration" ]
+ENTRYPOINT [ "go", "test", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
 
-# for a more specific test:
-# ENTRYPOINT [ "go", "test", "-v", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/integration", "-run", "InsertTestNameHere" ]
+# to debug a specific test:
+# ENTRYPOINT [ "go", "test", "-parallel", "1", "-v", "-failfast",  "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestIntegration/TestSomethingSpecific" ]

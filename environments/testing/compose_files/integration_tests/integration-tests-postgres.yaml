@@ -12,20 +12,14 @@ services:
             - 2345:5432
     todo-server:
         environment:
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
-        ports:
-            - 80:8888
+            USE_NOOP_LOGGER: 'nope'
         links:
             - database
-        build:
-            context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/integration-server-postgres.Dockerfile'
+        volumes:
+            - source: '../../../../environments/testing/config_files/integration-tests-postgres.toml'
+              target: '/etc/config.toml'
+              type: 'bind'
     test:
         environment:
             TARGET_ADDRESS: 'http://todo-server:8888'
-        links:
-            - todo-server
-        build:
-            context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
         container_name: 'postgres_integration_tests'

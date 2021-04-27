@@ -17,16 +17,17 @@ services:
             TARGET_ADDRESS: 'http://todo-server:8888'
         links:
             - todo-server
+    todo-server:
         build:
             context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/load-tests.Dockerfile'
-    todo-server:
-        environment:
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
-        ports:
-            - 80:8888
+            dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
         links:
             - database
-        build:
-            context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/integration-server-mariadb.Dockerfile'
+            - tracing-server
+            - prometheus
+            - loki
+            - promtail
+        volumes:
+            - source: '../../../../environments/testing/config_files/integration-tests-mariadb.toml'
+              target: '/etc/config.toml'
+              type: 'bind'

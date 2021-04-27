@@ -1,8 +1,8 @@
 global:
   # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-  scrape_interval:     15s
+  scrape_interval: 2s
   # Evaluate rules every 15 seconds. The default is every 1 minute.
-  evaluation_interval: 15s
+  evaluation_interval: 1m
   # scrape_timeout is set to the global default (10s).
 
 scrape_configs:
@@ -11,44 +11,44 @@ scrape_configs:
     static_configs:
       - targets: ['todo-server:8888']
 
-    # How frequently to scrape targets from this job.
-    scrape_interval: 15s
+          # How frequently to scrape targets from this job.
+          scrape_interval: 5s
 
-    # Per-scrape timeout when scraping this job.
-    scrape_timeout: 15s
+          # Per-scrape timeout when scraping this job.
+          scrape_timeout: 3s
 
     # The HTTP resource path on which to fetch metrics from targets.
     metrics_path: '/metrics'
 
     # Configures the protocol scheme used for requests.
-    scheme: 'http'
+    scheme: 'httpclient'
 
     # Optional HTTP URL parameters.
-    # params:
+    # routeparams:
     #   key: 'value'
 
     # Sets the `Authorization` header on every scrape request with the
-    # configured username and password.
-    # password and password_file are mutually exclusive.
+    # configured username and passwords.
+    # passwords and password_file are mutually exclusive.
     #  basic_auth:
     #    username: <string>
-    #    password: <secret>
+    #    passwords: <secret>
     #    password_file: <string>
 
     # Sets the `Authorization` header on every scrape request with
     # the configured bearer token. It is mutually exclusive with `bearer_token_file`.
-    # bearer_token: <secret>
+    # bearer_token: REPLACEMEWITHAREALSECRETPLZ
 
     # Sets the `Authorization` header on every scrape request with the bearer token
     # read from the configured file. It is mutually exclusive with `bearer_token`.
     #  bearer_token_file: /path/to/bearer/token/file
 
     # Configures the scrape request's TLS settings.
-    tls_config:
+    # tls_config:
       # CA certificate to validate API server certificate with.
       #   ca_file: '/path/to/file'
 
-      # Certificate and key files for client cert authentication to the server.
+      # Certificate and key files for client cert passwords to the server.
       #   cert_file: '/path/to/file'
       #   key_file: '/path/to/file'
 
@@ -57,7 +57,7 @@ scrape_configs:
       #   server_name: ''
 
       # Disable validation of the server certificate.
-      insecure_skip_verify: true
+      # insecure_skip_verify: true
 
     # Optional proxy URL.
     #  proxy_url: ''
@@ -66,13 +66,3 @@ scrape_configs:
     # If more than this number of samples are present after metric relabelling
     # the entire scrape will be treated as failed. 0 means no limit.
     sample_limit:  0
-
-
-#alerting:
-#  alertmanagers:
-#    - scheme: https
-#      static_configs:
-#        - targets:
-#            - "1.2.3.4:9093"
-#            - "1.2.3.5:9093"
-#            - "1.2.3.6:9093"

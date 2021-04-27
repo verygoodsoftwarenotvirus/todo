@@ -11,14 +11,16 @@ import (
 	"log"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/database/v1"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/v1/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/models/v1"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	flag "github.com/spf13/pflag"
-	"gitlab.com/verygoodsoftwarenotvirus/logging/v1/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 var (
@@ -35,9 +37,9 @@ var (
 	}
 
 	validDatabaseTypes = map[string]struct{}{
-		config.PostgresProviderKey: {},
-		config.MariaDBProviderKey:  {},
-		config.SqliteProviderKey:   {},
+		dbconfig.PostgresProvider: {},
+		dbconfig.MariaDBProvider:  {},
+		dbconfig.SqliteProvider:   {},
 	}
 )
 
@@ -59,7 +61,7 @@ func init() {
 
 func main() {
 	flag.Parse()
-	logger := zerolog.NewZeroLogger().WithName("search_index_initializer")
+	logger := zerolog.NewLogger().WithName("search_index_initializer")
 	ctx := context.Background()
 
 	if indexOutputPath == "" {
@@ -82,18 +84,16 @@ func main() {
 	}
 
 	cfg := &config.ServerConfig{
-		Database: config.DatabaseSettings{
-			Provider:          databaseType,
-			ConnectionDetails: database.ConnectionDetails(dbConnectionDetails),
-		},
-		Metrics: config.MetricsSettings{
-			DBMetricsCollectionInterval: time.Second,
+		Database: dbconfig.Config{
+			MetricsCollectionInterval: time.Second,
+			Provider:                  databaseType,
+			ConnectionDetails:         database.ConnectionDetails(dbConnectionDetails),
 		},
 	}
 
 	// connect to our database.
 	logger.Debug("connecting to database")
-	rawDB, err := cfg.ProvideDatabaseConnection(logger)
+	rawDB, err := cfg.Database.ProvideDatabaseConnection(logger)
 	if err != nil {
 		log.Fatalf("error establishing connection to database: %v", err)
 	}
@@ -107,8 +107,8 @@ func main() {
 
 	switch typeName {
 	case "item":
-		outputChan := make(chan []models.Item)
-		if queryErr := dbClient.GetAllItems(ctx, outputChan); queryErr != nil {
+		outputChan := make(chan []*types.Item)
+		if queryErr := dbClient.GetAllItems(ctx, outputChan, 1000); queryErr != nil {
 			log.Fatalf("error fetching items from database: %v", err)
 		}
 

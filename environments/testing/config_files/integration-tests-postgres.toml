@@ -1,31 +1,81 @@
 
+[audit_log]
+  enabled = true
+
 [auth]
-  cookie_lifetime = "24h0m0s"
-  cookie_secret = "HEREISA32CHARSECRETWHICHISMADEUP"
+  debug = false
   enable_user_signup = true
+  minimum_password_length = 8
+  minimum_username_length = 4
+
+  [auth.cookies]
+    domain = "localhost"
+    lifetime = "24h0m0s"
+    name = "todocookie"
+    secure_only = false
+    signing_key = "HEREISA32CHARSECRETWHICHISMADEUP"
+
+  [auth.paseto]
+    issuer = "todo_service"
+    lifetime = "1m0s"
+    local_mode_key = [37,34,241,213,228,218,50,212,152,246,79,180,120,81,48,169,109,223,26,127,59,101,14,251,23,84,90,55,211,216,152,250]
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
   debug = false
+  max_ping_attempts = 50
+  metrics_collection_interval = "2s"
   provider = "postgres"
+  run_migrations = true
+
+  [database.create_test_user]
+    hashed_password = "$argon2id$v=19$m=65536,t=1,p=2$CJCbJWEFFnraTDeYNmlBOw$zYEBN7RDUG5y+1gtYmYtRQgBA8flQm1np7Z7AT/qKmw"
+    is_site_admin = true
+    password = "integration-tests-are-cool"
+    username = "exampleUser"
+
+[encoding]
+  content_type = "application/json"
 
 [frontend]
+  cache_static_files = false
+  debug = false
   static_files_directory = "/frontend"
 
 [meta]
   debug = false
   run_mode = "testing"
-  startup_deadline = "1m0s"
 
-[metrics]
-  database_metrics_collection_interval = "2s"
-  metrics_provider = "prometheus"
-  runtime_metrics_collection_interval = "2s"
-  tracing_provider = "jaeger"
+[observability]
+
+  [observability.metrics]
+    provider = ""
+    runtime_metrics_collection_interval = "1s"
+
+  [observability.tracing]
+    provider = "jaeger"
+    span_collection_probability = 1.0
+
+    [observability.tracing.jaeger]
+      collector_endpoint = "http://tracing-server:14268/api/traces"
+      service_name = "todo-service"
 
 [search]
   items_index_path = "items.bleve"
+  provider = "bleve"
 
 [server]
-  debug = true
+  debug = false
   http_port = 8888
+  startup_deadline = "1m0s"
+
+[uploads]
+
+  [uploads.storage_config]
+    bucket_name = "avatars"
+    debug = false
+    provider = "memory"
+    upload_filename_key = ""
+
+[webhooks]
+  enabled = false

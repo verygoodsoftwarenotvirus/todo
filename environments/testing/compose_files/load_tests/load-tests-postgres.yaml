@@ -20,12 +20,13 @@ services:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/load-tests.Dockerfile'
     todo-server:
-        environment:
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
-        ports:
-            - 80:8888
         links:
             - database
-        build:
-            context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/integration-server-postgres.Dockerfile'
+            - tracing-server
+            - prometheus
+            - loki
+            - promtail
+        volumes:
+            - source: '../../../../environments/testing/config_files/integration-tests-postgres.toml'
+              target: '/etc/config.toml'
+              type: 'bind'

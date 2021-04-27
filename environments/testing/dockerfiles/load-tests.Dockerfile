@@ -5,9 +5,9 @@ WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
-ADD . .
+COPY . .
 
-RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/v1/load
+RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/load
 
 # final stage
 FROM debian:stable

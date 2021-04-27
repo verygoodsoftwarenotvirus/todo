@@ -10,83 +10,79 @@ before_script:
   - cp -rf /builds/verygoodsoftwarenotvirus/todo /go/src/gitlab.com/verygoodsoftwarenotvirus/
   - cd /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-## doesn't work :'(
-#docker-security-lint:
-#  stage: quality
-#  image: docker:latest
+docker-security-lint:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - go run mage.go ensureMage
+    - mage dockerLint
+
+coverage:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - go run mage.go ensureMage
+    - mage coverage
+
+golang-format-check:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - if [ $(gofmt -l . | grep -Ev '^vendor\/' | head -c1 | wc -c) -ne 0 ]; then exit 1; fi
+
+golang-lint:
+  stage: quality
+  image: golangci/golangci-lint:latest # v1.18
+  variables:
+    GO111MODULE: "on"
+  script:
+    - go mod vendor
+    - golangci-lint run --config=.golangci.yml --deadline=15m
+
+frontend-build:
+  stage: quality
+  image: node:lts-stretch
+  before_script:
+    - npm install --global pnpm
+    - cd frontend/
+    - pnpm install
+  script:
+    - pnpm run build
+
+frontend-format-check:
+  stage: quality
+  image: node:lts-stretch
+  before_script:
+    - npm install --global pnpm
+    - cd frontend/
+    - pnpm install
+  script:
+    - pnpm run format:check
+
+#integration_tests_sqlite:
+#  stage: integration-testing
+#  image: docker/compose:latest
 #  services:
 #    - docker:dind
 #  variables:
 #    GOPATH: "/go"
 #  script:
-#    - apk add --update --no-cache make
-#    - make docker-security-lint
-
-#
-
-#coverage:
-#  stage: quality
-#  image: golang:stretch
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apt-get update -y && apt-get install -y make git gcc musl-dev
-#    - go run mage.go ensureMage
-#    - mage coverage
-#
-#golang-format-check:
-#  stage: quality
-#  image: golang:stretch
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apt-get update -y && apt-get install -y make git gcc musl-dev
-#    - if [ $(gofmt -l . | grep -Ev '^vendor\/' | head -c1 | wc -c) -ne 0 ]; then exit 1; fi
-#
-#golang-lint:
-#  stage: quality
-#  image: golangci/golangci-lint:latest # v1.18
-#  variables:
-#    GO111MODULE: "on"
-#  script:
-#    - go mod vendor
-#    - golangci-lint run --config=.golangci.yml --deadline=15m
-#
-#frontend-build:
-#  stage: quality
-#  image: node:lts-stretch
-#  before_script:
-#    - npm install --global pnpm
-#    - cd frontend/
-#    - pnpm install
-#  script:
-#    - pnpm run build
-#
-#frontend-format-check:
-#  stage: quality
-#  image: node:lts-stretch
-#  before_script:
-#    - npm install --global pnpm
-#    - cd frontend/
-#    - pnpm install
-#  script:
-#    - pnpm run format:check
-
-integration_tests_sqlite:
-  stage: integration-testing
-  image: docker/compose:latest
-  services:
-    - docker:dind
-  variables:
-    GOPATH: "/go"
-  script:
-    - ls -Al environments/testing/config_files/integration-tests-sqlite.toml
-    - ls -Al /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
-    - whoami
-    - cat /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
-    - apk add --no-cache git make musl-dev go
-    - go version
-    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-sqlite.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
+#    - ls -Al environments/testing/config_files/integration-tests-sqlite.toml
+#    - ls -Al /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
+#    - whoami
+#    - cat /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
+#    - apk add --no-cache git make musl-dev go
+#    - go version
+#    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-sqlite.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
 #integration_tests_postgres:
 #  stage: integration-testing
@@ -98,7 +94,7 @@ integration_tests_sqlite:
 #  script:
 #    - apk add --update make
 #    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-postgres.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
-#
+
 #integration_tests_mariadb:
 #  stage: integration-testing
 #  image: docker/compose:latest
@@ -109,8 +105,6 @@ integration_tests_sqlite:
 #  script:
 #    - apk add --update make
 #    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-mariadb.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
-
-#
 
 #frontend-selenium-tests:
 #  stage: integration-testing

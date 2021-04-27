@@ -84,6 +84,8 @@ integration_tests_sqlite:
     - ls -Al /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
     - whoami
     - cat /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
+    - apk add --no-cache git make musl-dev go
+    - go run mage.go ensureMage
     - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-sqlite.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
 #integration_tests_postgres:

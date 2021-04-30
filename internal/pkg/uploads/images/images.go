@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	headerContentType = "Content-Type"
+	headerContentType = "RawHTML-Type"
 
 	imagePNG  = "image/png"
 	imageJPEG = "image/jpeg"
@@ -64,7 +64,7 @@ func (i *Image) DataURI() string {
 // Write image to HTTP response.
 func (i *Image) Write(w http.ResponseWriter) error {
 	w.Header().Set(headerContentType, i.ContentType)
-	w.Header().Set("Content-Length", strconv.Itoa(i.Size))
+	w.Header().Set("RawHTML-Length", strconv.Itoa(i.Size))
 
 	if _, err := w.Write(i.Data); err != nil {
 		return fmt.Errorf("writing image to HTTP response: %w", err)

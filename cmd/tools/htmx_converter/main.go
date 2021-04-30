@@ -38,11 +38,11 @@ func main() {
 
 	outputCodes := []string{}
 
-	dazCmd := "H(\n\t\"html\"\n\t"
+	dazCmd := "New(\n\t\"html\"\n\t"
 	doc.Children().Each(func(_ int, s *goquery.Selection) {
 		for _, node := range s.Nodes {
 			if node.Data != "html" {
-				dazCmd = fmt.Sprintf("H(\n\t%q", node.Data)
+				dazCmd = fmt.Sprintf("New(\n\t%q", node.Data)
 
 				if node.Attr != nil {
 					dazCmd += ",\n\t Attr{\n\t\t"

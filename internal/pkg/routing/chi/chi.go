@@ -51,7 +51,7 @@ func buildChiMux(logger logging.Logger) chi.Router {
 		AllowedHeaders: []string{
 			"Accept",
 			"Authorization",
-			"Content-Provider",
+			"RawHTML-Provider",
 			"X-CSRF-Token",
 		},
 		ExposedHeaders:   []string{"Link"},

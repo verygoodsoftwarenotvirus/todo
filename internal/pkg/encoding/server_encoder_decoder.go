@@ -17,7 +17,7 @@ import (
 
 const (
 	// ContentTypeHeaderKey is the HTTP standard header name for content type.
-	ContentTypeHeaderKey = "Content-type"
+	ContentTypeHeaderKey = "RawHTML-type"
 	contentTypeXML       = "application/xml"
 	contentTypeJSON      = "application/json"
 )

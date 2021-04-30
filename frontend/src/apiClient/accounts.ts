@@ -25,6 +25,8 @@ export function fetchListOfAccounts(
     outboundURLParams.set('admin', 'true');
   }
 
+  //
+
   return axios.get(
     `${backendRoutes.GET_ACCOUNTS}?${outboundURLParams.toString()}`,
   );

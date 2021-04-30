@@ -17,5 +17,8 @@ func (e *Element) ModifyAttributes(mods ...html.AttrModifier) {
 }
 
 func (e *Element) HTML() html.HTML {
-	return html.New(e.name, e.attr, e.children)
+	if len(e.children) < 0 {
+		return html.New(e.name, e.attr, e.children)
+	}
+	return html.New(e.name, e.attr)
 }

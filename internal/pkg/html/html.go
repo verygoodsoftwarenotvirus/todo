@@ -19,6 +19,13 @@ var selfClosingTags = map[string]struct{}{
 
 type HTML func() string
 
+var (
+	// EscapeString is an alias for convenience's sake.
+	EscapeString = html.EscapeString
+	// UnescapeString is an alias for convenience's sake.
+	UnescapeString = html.UnescapeString
+)
+
 // UnsafeContent allows injection of JS or HTML from functions.
 func UnsafeContent(str string) func() (string, bool) {
 	return func() (string, bool) {
@@ -41,7 +48,7 @@ func New(tagName string, attrs ...interface{}) HTML {
 			case []string:
 				contents = append(contents, html.EscapeString(strings.Join(a, "")))
 			case []HTML:
-				contents = append(contents, subItems(a))
+				contents = append(contents, RenderMultiple(a...))
 			case HTML:
 				contents = append(contents, a())
 			case func() string:
@@ -70,10 +77,10 @@ func New(tagName string, attrs ...interface{}) HTML {
 	}
 }
 
-func subItems(attrs []HTML) string {
+func RenderMultiple(in ...HTML) string {
 	results := []string{}
 
-	for _, v := range attrs {
+	for _, v := range in {
 		results = append(results, v())
 	}
 

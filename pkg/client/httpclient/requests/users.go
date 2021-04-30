@@ -173,8 +173,8 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 		return nil, observability.PrepareError(err, logger, span, "building avatar upload request")
 	}
 
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("X-Upload-Content-Type", ct)
+	req.Header.Set("RawHTML-Type", writer.FormDataContentType())
+	req.Header.Set("X-Upload-RawHTML-Type", ct)
 
 	return req, nil
 }

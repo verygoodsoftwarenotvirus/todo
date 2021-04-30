@@ -52,7 +52,7 @@ func WithValues(values map[string]string) AttrModifier {
 
 // WithClass modifies an Attr to add a class.
 func WithClass(class string) AttrModifier {
-	return WithValue("class", class)
+	return WithValue("class", strings.TrimSpace(class))
 }
 
 // WithClasses is an alias for WithClass.

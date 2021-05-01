@@ -1,7 +1,7 @@
 package main
 
 import (
-	_html "html/template"
+	"html/template"
 	"log"
 	"net/http"
 )
@@ -11,8 +11,6 @@ const rawDashboardTemplate = `{{ define "dashboard" }}
 	<head>
 		<title>TODO</title>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.39/dist/themes/base.css">
-		<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0-beta.39/dist/shoelace.js"></script>
 		<script src="https://unpkg.com/htmx.org@1.3.3" integrity="sha384-QrlPmoLqMVfnV4lzjmvamY0Sv/Am8ca1W7veO++Sp6PiIGixqkD+0xZ955Nc03qO" crossorigin="anonymous"></script>
 	</head>
 	<body>
@@ -86,7 +84,7 @@ const rawDashboardTemplate = `{{ define "dashboard" }}
 
 				<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 					<div id="content">
-						{{ .RawHTML }}
+						{{ .Page }}
 					</div>
 				</main>
 			</div>
@@ -96,24 +94,41 @@ const rawDashboardTemplate = `{{ define "dashboard" }}
 {{ end }}
 `
 
-var dashboardTemplate = _html.Must(_html.New("dashboard").Parse(rawDashboardTemplate))
+var dashboardTemplate = template.Must(template.New("dashboard").Parse(rawDashboardTemplate))
 
-type dashboardPage struct {
-	Title   string
-	RawHTML _html.HTML
+type dashboardPageData struct {
+	Title string
+	Page  template.HTML
 }
 
 func renderRawStringIntoDashboard(thing string) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, _ *http.Request) {
 		log.Println("dashboard visited")
 
-		x := &dashboardPage{
-			Title:   "Dashboard",
-			RawHTML: _html.HTML(thing),
+		x := &dashboardPageData{
+			Title: "Dashboard",
+			Page:  template.HTML(thing),
 		}
 
 		if err := dashboardTemplate.Execute(res, x); err != nil {
 			log.Fatalln(err)
 		}
 	}
+}
+
+const dashboardPageTemplateFormat = `
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+	<h1 class="h2">{{ .Title }}</h1>
+</div>
+{{ .Page }}
+`
+
+var dashboardPageTemplate = template.Must(template.New("").Parse(dashboardPageTemplateFormat))
+
+func buildDashboardSubpageString(title string, content template.HTML) string {
+	x := &dashboardPageData{
+		Page:  content,
+		Title: title,
+	}
+	return renderTemplateToString(dashboardPageTemplate, x)
 }

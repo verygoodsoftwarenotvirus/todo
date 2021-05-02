@@ -1,46 +1,83 @@
 package main
 
 import (
+	"bytes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-const webhooksTableTemplateFormat = `<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>External ID</th>
-            <th>URL</th>
-            <th>Content Type</th>
-            <th>Belongs To Account</th>
-            <th>Created On</th>
-        </tr>
-    </thead>
-    <tbody>{{ range $i, $x := .Webhooks }}
-        <tr>
-            <td><a href="" hx-get="/dashboard_pages/webhooks/123" hx-target="#content">{{ $x.ID }}</a></td>
-            <td>{{ $x.Name }}</td>
-			<td>{{ $x.ExternalID }}</td>
-			<td>{{ $x.URL }}</td>
-			<td>{{ $x.ContentType }}</td>
-            <td>{{ $x.BelongsToAccount }}</td>
-            <td>{{ relativeTimeFromPtr $x.LastUpdatedOn }}</td>
-            <td>{{ relativeTime $x.CreatedOn }}</td>
-        </tr>
-    {{ end }}</tbody>
-</table>
-`
+var webhookEditorTemplateSrc = buildGenericEditorTemplate(&genericEditorTemplateConfig{
+	Name: "Webhook",
+	ID:   12345,
+	Fields: []genericEditorField{
+		{
+			Name:      "Name",
+			InputType: "text",
+			Required:  true,
+		},
+		{
+			Name:      "Method",
+			InputType: "text",
+			Required:  true,
+		},
+		{
+			Name:      "ContentType",
+			InputType: "text",
+			Required:  true,
+		},
+		{
+			Name:      "URL",
+			InputType: "text",
+			Required:  true,
+		},
+	},
+})
 
-var webhooksTableTemplate = template.Must(template.New("").Funcs(defaultFuncMap).Parse(webhooksTableTemplateFormat))
+var webhookEditorTemplate = template.Must(template.New("").Funcs(defaultFuncMap).Parse(webhookEditorTemplateSrc))
 
-func exampleWebhooksTable() string {
+func buildWebhookViewer(x *types.Webhook) string {
+	var b bytes.Buffer
+	if err := webhookEditorTemplate.Execute(&b, x); err != nil {
+		panic(err)
+	}
+	return b.String()
+}
+
+var webhooksTableTemplateSrc = buildGenericTableTemplate(&genericTableTemplateConfig{
+	ExternalURL: "/account/webhooks/123",
+	GetURL:      "/dashboard_pages/account/webhooks/123",
+	Columns: []string{
+		"ID",
+		"Name",
+		"Method",
+		"URL",
+		"Content Type",
+		"Belongs To Account",
+		"Last Updated On",
+		"Created On",
+	},
+	CellFields: []string{
+		"Name",
+		"Method",
+		"URL",
+		"ContentType",
+		"BelongsToAccount",
+	},
+	RowDataFieldName:     "Webhooks",
+	IncludeLastUpdatedOn: true,
+	IncludeCreatedOn:     true,
+})
+
+var webhooksTableTemplate = template.Must(template.New("").Funcs(defaultFuncMap).Parse(webhooksTableTemplateSrc))
+
+func buildWebhooksTable() string {
 	webhooks := fakes.BuildFakeWebhookList()
 	return renderTemplateToString(webhooksTableTemplate, webhooks)
 }
 
 func webhooksDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(buildDashboardSubpageString("Webhooks", template.HTML(exampleWebhooksTable())))(res, req)
+	renderStringToResponse(buildDashboardSubpageString("Webhooks", template.HTML(buildWebhooksTable())))(res, req)
 }

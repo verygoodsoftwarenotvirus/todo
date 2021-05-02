@@ -1,0 +1,3 @@
+[itemTableColumns]
+description = "A comma separated list of the columns in a table of items."
+other = "ID,Name,Details,Last Updated On,Created On"

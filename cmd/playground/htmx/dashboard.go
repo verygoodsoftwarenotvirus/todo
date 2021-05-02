@@ -35,12 +35,12 @@ const rawDashboardTemplate = `{{ define "dashboard" }}
 						</h6>
 						<ul class="nav flex-column">
 							<li class="nav-item">
-								<a class="nav-link" hx-target="#content" hx-get="/dashboard_pages/items">
+								<a class="nav-link" hx-target="#content" hx-push-url="/items" hx-get="/dashboard_pages/items">
 									📃 Items
 								</a>
 							</li>
 							<li class="nav-item">
-								<a class="nav-link"  aria-current="page" hx-target="#content" hx-get="/dashboard_pages/api_clients">
+								<a class="nav-link"  aria-current="page" hx-target="#content" hx-push-url="/api_clients" hx-get="/dashboard_pages/api_clients">
 									🤖 API Clients
 								</a>
 							</li>
@@ -51,12 +51,12 @@ const rawDashboardTemplate = `{{ define "dashboard" }}
 						</h6>
 						<ul class="nav flex-column">
 							<li class="nav-item">
-								<a class="nav-link"  aria-current="page" hx-target="#content" hx-get="/dashboard_pages/account/webhooks">
+								<a class="nav-link"  aria-current="page" hx-target="#content" hx-push-url="/account/webhooks" hx-get="/dashboard_pages/account/webhooks">
 									🕸️ Webhooks
 								</a>
 							</li>
 							<li class="nav-item">
-								<a class="nav-link" hx-target="#content" hx-get="/dashboard_pages/account/settings">
+								<a class="nav-link" hx-target="#content" hx-push-url="/account/settings" hx-get="/dashboard_pages/account/settings">
 									⚙️Settings
 								</a>
 							</li>
@@ -67,14 +67,14 @@ const rawDashboardTemplate = `{{ define "dashboard" }}
 						</h6>
 						<ul class="nav flex-column mb-2">
 							<li class="nav-item">
-								<a class="nav-link" hx-target="#content" hx-get="/dashboard_pages/accounts">
+								<a class="nav-link" hx-target="#content" hx-push-url="/accounts" hx-get="/dashboard_pages/accounts">
 									📚 Accounts
 								</a>
 							</li>
 						</ul>
 						<ul class="nav flex-column mb-2">
 							<li class="nav-item">
-								<a class="nav-link" hx-target="#content" hx-get="/dashboard_pages/user_settings">
+								<a class="nav-link" hx-target="#content" hx-push-url="/user/settings" hx-get="/dashboard_pages/user_settings">
 									⚙️Settings
 								</a>
 							</li>

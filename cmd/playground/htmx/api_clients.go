@@ -1,41 +1,75 @@
 package main
 
 import (
+	"bytes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-const apiClientsTableTemplateFormat = `<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Client ID</th>
-            <th>Belongs To User</th>
-            <th>Created On</th>
-        </tr>
-    </thead>
-    <tbody>{{ range $i, $x := .Clients }}
-        <tr>
-            <td><a href="" hx-get="/dashboard_pages/api_clients/123" hx-target="#content">{{ $x.ID }}</a></td>
-            <td>{{ $x.Name }}</td>
-            <td>{{ $x.ClientID }}</td>
-            <td>{{ $x.BelongsToUser }}</td>
-            <td>{{ relativeTime $x.CreatedOn }}</td>
-        </tr>
-    {{ end }}</tbody>
-</table>
-`
+var apiClientEditorTemplateSrc = buildGenericEditorTemplate(&genericEditorTemplateConfig{
+	Name: "API Client",
+	ID:   12345,
+	Fields: []genericEditorField{
+		{
+			Name:      "Name",
+			InputType: "text",
+			Required:  true,
+		},
+		{
+			Name:      "ExternalID",
+			InputType: "text",
+			Required:  true,
+		},
+		{
+			Name:      "ClientID",
+			InputType: "text",
+			Required:  true,
+		},
+	},
+})
 
-var apiClientsTableTemplate = template.Must(template.New("").Funcs(defaultFuncMap).Parse(apiClientsTableTemplateFormat))
+var apiClientEditorTemplate = template.Must(template.New("").Funcs(defaultFuncMap).Parse(apiClientEditorTemplateSrc))
 
-func exampleAPIClientsTable() string {
-	clients := fakes.BuildFakeAPIClientList()
-	return renderTemplateToString(apiClientsTableTemplate, clients)
+func buildAPIClientViewer(x *types.APIClient) string {
+	var b bytes.Buffer
+	if err := apiClientEditorTemplate.Execute(&b, x); err != nil {
+		panic(err)
+	}
+	return b.String()
+}
+
+var apiClientsTableTemplateSrc = buildGenericTableTemplate(&genericTableTemplateConfig{
+	ExternalURL: "/api_clients/123",
+	GetURL:      "/dashboard_pages/api_clients/123",
+	Columns: []string{
+		"ID",
+		"Name",
+		"External ID",
+		"Client ID",
+		"Belongs To User",
+		"Created On",
+	},
+	CellFields: []string{
+		"Name",
+		"ExternalID",
+		"ClientID",
+		"BelongsToUser",
+	},
+	RowDataFieldName:     "Clients",
+	IncludeLastUpdatedOn: false,
+	IncludeCreatedOn:     true,
+})
+
+var apiClientsTableTemplate = template.Must(template.New("").Funcs(defaultFuncMap).Parse(apiClientsTableTemplateSrc))
+
+func buildAPIClientsTable() string {
+	apiClients := fakes.BuildFakeAPIClientList()
+	return renderTemplateToString(apiClientsTableTemplate, apiClients)
 }
 
 func apiClientsDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(buildDashboardSubpageString("API Clients", template.HTML(exampleAPIClientsTable())))(res, req)
+	renderStringToResponse(buildDashboardSubpageString("APIClients", template.HTML(buildAPIClientsTable())))(res, req)
 }

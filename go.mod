@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-storage-blob-go v0.13.0
+	github.com/BurntSushi/toml v0.3.1
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/Masterminds/squirrel v1.5.0
@@ -38,6 +39,7 @@ require (
 	github.com/moul/http2curl v1.0.0
 	github.com/mssola/user_agent v0.5.2
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/nleeper/goment v1.4.1
 	github.com/o1egl/paseto v1.0.0
 	github.com/pquerna/otp v1.3.0
@@ -62,5 +64,6 @@ require (
 	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
+	golang.org/x/text v0.3.5
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 )

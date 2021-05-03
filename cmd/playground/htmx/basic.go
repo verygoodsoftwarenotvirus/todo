@@ -11,13 +11,13 @@ type genericEditorField struct {
 	Required  bool
 }
 
-type genericEditorTemplateConfig struct {
+type basicEditorTemplateConfig struct {
 	ID     uint64
 	Name   string
 	Fields []genericEditorField
 }
 
-const genericEditorTemplateSrc = `<div id="content" class="">
+const basicEditorTemplateSrc = `<div id="content" class="">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
 		<h1 class="h2">{{ .Name }} #{{ "{{ .ID }}" }}</h1>
 	</div>
@@ -37,17 +37,17 @@ const genericEditorTemplateSrc = `<div id="content" class="">
     </div>
 </div>`
 
-func buildGenericEditorTemplate(cfg *genericEditorTemplateConfig) string {
+func buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := template.Must(template.New("").Parse(genericEditorTemplateSrc)).Execute(&b, cfg); err != nil {
+	if err := template.Must(template.New("").Parse(basicEditorTemplateSrc)).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 
 	return b.String()
 }
 
-type genericTableTemplateConfig struct {
+type basicTableTemplateConfig struct {
 	GetURL               string
 	ExternalURL          string
 	RowDataFieldName     string
@@ -58,7 +58,7 @@ type genericTableTemplateConfig struct {
 	IncludeCreatedOn     bool
 }
 
-const genericTableTemplateSrc = `<table class="table table-striped">
+const basicTableTemplateSrc = `<table class="table table-striped">
     <thead>
         <tr>
             {{ range $i, $col := .Columns }}<th>{{ $col }}</th>
@@ -76,10 +76,10 @@ const genericTableTemplateSrc = `<table class="table table-striped">
 </table>
 `
 
-func buildGenericTableTemplate(cfg *genericTableTemplateConfig) string {
+func buildBasicTableTemplate(cfg *basicTableTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := template.Must(template.New("").Parse(genericTableTemplateSrc)).Execute(&b, cfg); err != nil {
+	if err := template.Must(template.New("").Parse(basicTableTemplateSrc)).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 

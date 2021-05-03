@@ -33,7 +33,7 @@ func renderStringToResponse(thing string) func(http.ResponseWriter, *http.Reques
 
 func renderTemplateToString(tmpl *template.Template, x interface{}) string {
 	var b bytes.Buffer
-	if err := tmpl.Execute(&b, x); err != nil {
+	if err := tmpl.Funcs(defaultFuncMap).Execute(&b, x); err != nil {
 		panic(err)
 	}
 	return b.String()

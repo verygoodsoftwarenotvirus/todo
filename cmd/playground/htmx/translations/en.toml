@@ -1,3 +1,56 @@
-[itemTableColumns]
+[columns.accounts]
+description = "A comma separated list of the columns in a table of accounts."
+other = "ID,Name,External ID,Belongs To User,Last Updated On,Created On"
+
+[columns.apiClients]
+description = "A comma separated list of the columns in a table of API clients."
+other = "ID,Name,External ID,Client ID,Belongs To User,Created On"
+
+[columns.webhooks]
+description = "A comma separated list of the columns in a table of webhooks."
+other = "ID,Name,Method,URL,Content Type,Belongs To Account,Last Updated On,Created On"
+
+[columns.items]
 description = "A comma separated list of the columns in a table of items."
 other = "ID,Name,Details,Last Updated On,Created On"
+
+[callsToAction.signIn]
+description = "sign in call to action."
+other = "Sign In"
+
+[dashboardSidebar.labels.things]
+description = "Sidebar label for the things section."
+other = "Things"
+
+[dashboardSidebar.labels.user]
+description = "Sidebar label for the things section."
+other = "User"
+
+[dashboardSidebar.labels.account]
+description = "Sidebar label for the things section."
+other = "Account"
+
+[dashboardSidebar.pageLinks.items]
+description = "Sidebar label for the items page."
+other = "Items"
+
+[dashboardSidebar.pageLinks.apiClients]
+description = "Sidebar label for the items page."
+other = "API Clients"
+
+[dashboardSidebar.pageLinks.webhooks]
+description = "Sidebar label for the items page."
+other = "Webhooks"
+
+[dashboardSidebar.pageLinks.accounts]
+description = "Sidebar label for the items page."
+other = "Accounts"
+
+[dashboardSidebar.pageLinks.userSettings]
+description = "Sidebar label for the items page."
+other = "Settings"
+
+[dashboardSidebar.pageLinks.accountSettings]
+description = "Sidebar label for the items page."
+other = "Settings"
+

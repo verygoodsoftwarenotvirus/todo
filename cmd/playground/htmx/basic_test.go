@@ -11,7 +11,7 @@ func Test_buildGenericEditorTemplate(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleInput := &genericEditorTemplateConfig{
+		exampleInput := &basicEditorTemplateConfig{
 			Name: "Item",
 			ID:   12345,
 			Fields: []genericEditorField{
@@ -56,7 +56,7 @@ func Test_buildGenericEditorTemplate(T *testing.T) {
     </div>
 </div>`
 
-		actual := buildGenericEditorTemplate(exampleInput)
+		actual := buildBasicEditorTemplate(exampleInput)
 
 		assert.Equal(t, expected, actual)
 	})
@@ -68,7 +68,7 @@ func Test_buildGenericTableTemplate(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleInput := &genericTableTemplateConfig{
+		exampleInput := &basicTableTemplateConfig{
 			GetURL: "/dashboard_pages/items/123",
 			Columns: []string{
 				"ID",
@@ -113,7 +113,7 @@ func Test_buildGenericTableTemplate(T *testing.T) {
 </table>
 `
 
-		actual := buildGenericTableTemplate(exampleInput)
+		actual := buildBasicTableTemplate(exampleInput)
 
 		assert.Equal(t, expected, actual)
 	})

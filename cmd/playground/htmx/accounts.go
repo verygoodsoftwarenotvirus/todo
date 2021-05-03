@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-var accountEditorTemplateSrc = buildGenericEditorTemplate(&genericEditorTemplateConfig{
+var accountEditorTemplateSrc = buildBasicEditorTemplate(&basicEditorTemplateConfig{
 	Name: "Account",
 	ID:   12345,
 	Fields: []genericEditorField{
@@ -31,17 +31,10 @@ func buildAccountViewer(x *types.Account) string {
 	return b.String()
 }
 
-var accountsTableTemplateSrc = buildGenericTableTemplate(&genericTableTemplateConfig{
+var accountsTableTemplateSrc = buildBasicTableTemplate(&basicTableTemplateConfig{
 	ExternalURL: "/accounts/123",
 	GetURL:      "/dashboard_pages/accounts/123",
-	Columns: []string{
-		"ID",
-		"Name",
-		"External ID",
-		"Belongs To User",
-		"Last Updated On",
-		"Created On",
-	},
+	Columns:     fetchTableColumns("columns.accounts"),
 	CellFields: []string{
 		"Name",
 		"ExternalID",

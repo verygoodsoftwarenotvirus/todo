@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-var webhookEditorTemplateSrc = buildGenericEditorTemplate(&genericEditorTemplateConfig{
+var webhookEditorTemplateSrc = buildBasicEditorTemplate(&basicEditorTemplateConfig{
 	Name: "Webhook",
 	ID:   12345,
 	Fields: []genericEditorField{
@@ -46,19 +46,10 @@ func buildWebhookViewer(x *types.Webhook) string {
 	return b.String()
 }
 
-var webhooksTableTemplateSrc = buildGenericTableTemplate(&genericTableTemplateConfig{
+var webhooksTableTemplateSrc = buildBasicTableTemplate(&basicTableTemplateConfig{
 	ExternalURL: "/account/webhooks/123",
 	GetURL:      "/dashboard_pages/account/webhooks/123",
-	Columns: []string{
-		"ID",
-		"Name",
-		"Method",
-		"URL",
-		"Content Type",
-		"Belongs To Account",
-		"Last Updated On",
-		"Created On",
-	},
+	Columns:     fetchTableColumns("columns.webhooks"),
 	CellFields: []string{
 		"Name",
 		"Method",

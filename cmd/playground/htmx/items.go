@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"html/template"
@@ -10,10 +9,10 @@ import (
 )
 
 func init() {
-	initializeLocalizer()
+	getLocalizer()
 }
 
-var itemEditorTemplateSrc = buildGenericEditorTemplate(&genericEditorTemplateConfig{
+var itemEditorTemplateSrc = buildBasicEditorTemplate(&basicEditorTemplateConfig{
 	Name: "Item",
 	ID:   12345,
 	Fields: []genericEditorField{
@@ -40,13 +39,10 @@ func buildItemViewer(x *types.Item) string {
 	return b.String()
 }
 
-var itemsTableTemplateSrc = buildGenericTableTemplate(&genericTableTemplateConfig{
+var itemsTableTemplateSrc = buildBasicTableTemplate(&basicTableTemplateConfig{
 	ExternalURL: "/items/123",
 	GetURL:      "/dashboard_pages/items/123",
-	Columns: prepareColumns(initializeLocalizer().MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "itemTableColumns",
-		Funcs:     defaultFuncMap,
-	})),
+	Columns:     fetchTableColumns("columns.items"),
 	CellFields: []string{
 		"Name",
 		"Details",

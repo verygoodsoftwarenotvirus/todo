@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-var apiClientEditorTemplateSrc = buildGenericEditorTemplate(&genericEditorTemplateConfig{
+var apiClientEditorTemplateSrc = buildBasicEditorTemplate(&basicEditorTemplateConfig{
 	Name: "API Client",
 	ID:   12345,
 	Fields: []genericEditorField{
@@ -41,17 +41,10 @@ func buildAPIClientViewer(x *types.APIClient) string {
 	return b.String()
 }
 
-var apiClientsTableTemplateSrc = buildGenericTableTemplate(&genericTableTemplateConfig{
+var apiClientsTableTemplateSrc = buildBasicTableTemplate(&basicTableTemplateConfig{
 	ExternalURL: "/api_clients/123",
 	GetURL:      "/dashboard_pages/api_clients/123",
-	Columns: []string{
-		"ID",
-		"Name",
-		"External ID",
-		"Client ID",
-		"Belongs To User",
-		"Created On",
-	},
+	Columns:     fetchTableColumns("columns.apiClients"),
 	CellFields: []string{
 		"Name",
 		"ExternalID",
@@ -71,5 +64,5 @@ func buildAPIClientsTable() string {
 }
 
 func apiClientsDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(buildDashboardSubpageString("APIClients", template.HTML(buildAPIClientsTable())))(res, req)
+	renderStringToResponse(buildDashboardSubpageString("API Clients", template.HTML(buildAPIClientsTable())))(res, req)
 }

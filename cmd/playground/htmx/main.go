@@ -19,7 +19,11 @@ import (
 //go:embed translations/*.toml
 var translationsDir embed.FS
 
-func prepareColumns(s string) []string {
+func fetchTableColumns(messageID string) []string {
+	s := getLocalizer().MustLocalize(&i18n.LocalizeConfig{
+		MessageID: messageID,
+		Funcs:     defaultFuncMap,
+	})
 	out := []string{}
 
 	for _, x := range strings.Split(s, ",") {
@@ -32,11 +36,19 @@ func prepareColumns(s string) []string {
 var defaultFuncMap = map[string]interface{}{
 	"relativeTime":        relativeTime,
 	"relativeTimeFromPtr": relativeTimeFromPtr,
+	"translate": func(key string) string {
+		return getLocalizer().MustLocalize(&i18n.LocalizeConfig{
+			MessageID:      key,
+			DefaultMessage: nil,
+			TemplateData:   nil,
+			Funcs:          nil,
+		})
+	},
 }
 
 var localizer *i18n.Localizer
 
-func initializeLocalizer() *i18n.Localizer {
+func getLocalizer() *i18n.Localizer {
 	if localizer == nil {
 		bundle := i18n.NewBundle(language.English)
 		bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
@@ -62,11 +74,11 @@ func initializeLocalizer() *i18n.Localizer {
 }
 
 func init() {
-	initializeLocalizer()
+	getLocalizer()
 }
 
 func main() {
-	initializeLocalizer()
+	getLocalizer()
 
 	mux := http.NewServeMux()
 
@@ -83,7 +95,7 @@ func main() {
 	mux.HandleFunc("/dashboard_pages/items", itemsDashboardPage)
 	mux.HandleFunc("/dashboard_pages/items/123", renderStringToResponse(buildItemViewer(fakes.BuildFakeItem())))
 
-	mux.HandleFunc("/api_clients", renderRawStringIntoDashboard(buildDashboardSubpageString("APIClients", template.HTML(buildAPIClientsTable()))))
+	mux.HandleFunc("/api_clients", renderRawStringIntoDashboard(buildDashboardSubpageString("API Clients", template.HTML(buildAPIClientsTable()))))
 	mux.HandleFunc("/api_clients/123", renderRawStringIntoDashboard(buildAPIClientViewer(fakes.BuildFakeAPIClient())))
 	mux.HandleFunc("/dashboard_pages/api_clients", apiClientsDashboardPage)
 	mux.HandleFunc("/dashboard_pages/api_clients/123", renderStringToResponse(buildAPIClientViewer(fakes.BuildFakeAPIClient())))
@@ -97,6 +109,11 @@ func main() {
 	mux.HandleFunc("/account/webhooks/123", renderRawStringIntoDashboard(buildWebhookViewer(fakes.BuildFakeWebhook())))
 	mux.HandleFunc("/dashboard_pages/account/webhooks", webhooksDashboardPage)
 	mux.HandleFunc("/dashboard_pages/account/webhooks/123", renderStringToResponse(buildWebhookViewer(fakes.BuildFakeWebhook())))
+
+	mux.HandleFunc("/dashboard_pages/user/settings", userSettingsDashboardPage)
+	mux.HandleFunc("/user/settings", renderRawStringIntoDashboard(buildUserSettingsDashboardPage()))
+	mux.HandleFunc("/dashboard_pages/account/settings", accountSettingsDashboardPage)
+	mux.HandleFunc("/account/settings", renderRawStringIntoDashboard(buildAccountSettingsDashboardPage()))
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatalln(err)

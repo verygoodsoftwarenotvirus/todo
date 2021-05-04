@@ -1,19 +1,17 @@
-package main
+package elements
 
 import (
-	"bytes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"html/template"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-func buildWebhookViewer(x *types.Webhook) string {
-	var b bytes.Buffer
-	if err := template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicEditorTemplate(&basicEditorTemplateConfig{
+func buildWebhookViewer(x *types.Webhook) template.HTML {
+	tmplConfig := &basicEditorTemplateConfig{
 		Name: "Webhook",
-		ID:   12345,
+		ID:   x.ID,
 		Fields: []genericEditorField{
 			{
 				Name:      "Name",
@@ -36,15 +34,16 @@ func buildWebhookViewer(x *types.Webhook) string {
 				Required:  true,
 			},
 		},
-	}))).Execute(&b, x); err != nil {
-		panic(err)
 	}
-	return b.String()
+	tmpl := template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicEditorTemplate(tmplConfig)))
+
+	return renderTemplateToHTML(tmpl, x)
 }
 
-func buildWebhooksTable() string {
+func buildWebhooksTable() template.HTML {
 	webhooks := fakes.BuildFakeWebhookList()
-	return renderTemplateToString(template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicTableTemplate(&basicTableTemplateConfig{
+
+	tableConfig := &basicTableTemplateConfig{
 		ExternalURL: "/account/webhooks/123",
 		GetURL:      "/dashboard_pages/account/webhooks/123",
 		Columns:     fetchTableColumns("columns.webhooks"),
@@ -58,9 +57,12 @@ func buildWebhooksTable() string {
 		RowDataFieldName:     "Webhooks",
 		IncludeLastUpdatedOn: true,
 		IncludeCreatedOn:     true,
-	}))), webhooks)
+	}
+	tmpl := template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicTableTemplate(tableConfig)))
+
+	return renderTemplateToHTML(tmpl, webhooks)
 }
 
 func webhooksDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(buildDashboardSubpageString("Webhooks", template.HTML(buildWebhooksTable())))(res, req)
+	renderHTMLTemplateToResponse(buildDashboardSubpageString("Webhooks", buildWebhooksTable()))(res, req)
 }

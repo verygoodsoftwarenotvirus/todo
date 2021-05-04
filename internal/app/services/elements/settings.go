@@ -1,9 +1,10 @@
-package main
+package elements
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 	"html/template"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 const userSettingsPageSrc = `<div class="col-md-8 order-md-1">
@@ -21,13 +22,13 @@ const userSettingsPageSrc = `<div class="col-md-8 order-md-1">
 	</form>
 </div>`
 
-func buildUserSettingsDashboardPage() string {
+func buildUserSettingsDashboardPage() template.HTML {
 	u := fakes.BuildFakeUser()
-	return buildDashboardSubpageString("User Settings", template.HTML(renderTemplateToString(template.Must(template.New("").Parse(userSettingsPageSrc)), u)))
+	return buildDashboardSubpageString("User Settings", renderTemplateToHTML(template.Must(template.New("").Parse(userSettingsPageSrc)), u))
 }
 
 func userSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(buildUserSettingsDashboardPage())(res, req)
+	renderHTMLTemplateToResponse(buildUserSettingsDashboardPage())(res, req)
 }
 
 const accountSettingsPageSrc = `<div class="col-md-8 order-md-1">
@@ -45,11 +46,11 @@ const accountSettingsPageSrc = `<div class="col-md-8 order-md-1">
 	</form>
 </div>`
 
-func buildAccountSettingsDashboardPage() string {
+func buildAccountSettingsDashboardPage() template.HTML {
 	a := fakes.BuildFakeAccount()
-	return buildDashboardSubpageString("Account Settings", template.HTML(renderTemplateToString(template.Must(template.New("").Parse(accountSettingsPageSrc)), a)))
+	return buildDashboardSubpageString("Account Settings", renderTemplateToHTML(template.Must(template.New("").Parse(accountSettingsPageSrc)), a))
 }
 
 func accountSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(buildAccountSettingsDashboardPage())(res, req)
+	renderHTMLTemplateToResponse(buildAccountSettingsDashboardPage())(res, req)
 }

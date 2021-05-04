@@ -3,7 +3,7 @@
 //go:generate wire
 //+build !wireinject
 
-package main
+package server
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/elements"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
@@ -34,12 +35,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
 )
 
-// Injectors from wire.go:
+// Injectors from build.go:
 
-// BuildServer builds a server.
-func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server.Server, error) {
+// Build builds a server.
+func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server.Server, error) {
 	httpserverConfig := cfg.Server
-	frontendConfig := cfg.Frontend
 	observabilityConfig := &cfg.Observability
 	metricsConfig := observabilityConfig.Metrics
 	config3 := &observabilityConfig.Metrics
@@ -98,9 +98,11 @@ func BuildServer(ctx context.Context, cfg *config.ServerConfig, logger logging.L
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
 	adminService := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
+	frontendConfig := cfg.Frontend
 	frontendService := frontend.ProvideService(logger, frontendConfig)
+	service := elements.ProvideService(logger)
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(ctx, httpserverConfig, frontendConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, frontendService, dbm, logger, serverEncoderDecoder, router)
+	httpserverServer, err := httpserver.ProvideServer(ctx, httpserverConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, frontendService, service, dbm, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

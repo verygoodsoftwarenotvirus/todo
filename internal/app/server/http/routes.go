@@ -10,7 +10,6 @@ import (
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
@@ -30,8 +29,8 @@ func buildNumericIDURLChunk(key string) string {
 	return fmt.Sprintf(root+numericIDPattern, key)
 }
 
-func (s *Server) setupRouter(ctx context.Context, router routing.Router, frontendSettings frontendservice.Config, _ metrics.Config, metricsHandler metrics.Handler) {
-	ctx, span := s.tracer.StartSpan(ctx)
+func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {
+	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	router.Route("/_meta_", func(metaRouter routing.Router) {
@@ -48,15 +47,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, fronten
 	}
 
 	// Frontend routes.
-	if sfd := frontendSettings.StaticFilesDirectory; sfd != "" {
-		s.logger.Debug("setting up static file server")
-		staticFileServer, err := s.frontendService.StaticDir(ctx, sfd)
-		if err != nil {
-			s.logger.Error(err, "establishing static file server")
-		}
-
-		router.Get("/*", staticFileServer)
-	}
+	s.frontendService2.SetupRoutes(router)
 
 	router.WithMiddleware(s.authService.PASETOCreationInputMiddleware).Post("/paseto", s.authService.PASETOHandler)
 

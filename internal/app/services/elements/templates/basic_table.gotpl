@@ -1,0 +1,16 @@
+{{- /* this template generates a template, don't be mad at me i'm trying my hardest */ -}}
+<table class="table table-striped">
+    <thead>
+    <tr>{{ range $i, $col := .Columns }}
+        <th>{{ $col }}</th>{{ end }}
+    </tr>
+    </thead>
+    <tbody>{{ print "{{ range $i, $x := ." .RowDataFieldName " }}" }}
+    <tr>
+        {{ if not .ExcludeIDRow }}<td><a href="" hx-push-url="{{ .ExternalURL }}" hx-get="{{ .GetURL }}" hx-target="#content">{{ "{{ $x.ID }}" }}</a></td>{{ end }}
+        {{ range $i, $x := .CellFields }}<td>{{ print "{{ $x." $x " }}" }}</td>
+        {{ end }}{{ if .IncludeLastUpdatedOn }}<td>{{ "{{ relativeTimeFromPtr $x.LastUpdatedOn }}" }}</td>{{ end }}
+        {{ if .IncludeCreatedOn }}<td>{{ "{{ relativeTime $x.CreatedOn }}" }}</td>{{ end }}
+    </tr>
+    {{ "{{ end }}" }}</tbody>
+</table>

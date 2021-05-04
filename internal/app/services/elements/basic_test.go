@@ -1,8 +1,9 @@
-package main
+package elements
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_buildBasicEditorTemplate(T *testing.T) {
@@ -30,8 +31,8 @@ func Test_buildBasicEditorTemplate(T *testing.T) {
 
 		expected := `<div id="content" class="">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-		<h1 class="h2">Item #{{ .ID }}</h1>
-	</div>
+        <h1 class="h2">Item #{{ .ID }}</h1>
+    </div>
     <div class="col-md-8 order-md-1">
         <form class="needs-validation" novalidate="">
             <div class="mb3">
@@ -41,7 +42,6 @@ func Test_buildBasicEditorTemplate(T *testing.T) {
                     <div class="invalid-feedback" style="width: 100%;">Name is required.</div>
                 </div>
             </div>
-			
             <div class="mb3">
                 <label for="Details">Details</label>
                 <div class="input-group">
@@ -49,7 +49,6 @@ func Test_buildBasicEditorTemplate(T *testing.T) {
                     
                 </div>
             </div>
-			
             <hr class="mb-4" />
             <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
         </form>
@@ -90,25 +89,24 @@ func Test_buildBasicTableTemplate(T *testing.T) {
 
 		expected := `<table class="table table-striped">
     <thead>
-        <tr>
-            <th>ID</th>
-			<th>Name</th>
-			<th>Details</th>
-			<th>Belongs To Account</th>
-			<th>Last Updated On</th>
-			<th>Created On</th>
-			
-        </tr>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Details</th>
+        <th>Belongs To Account</th>
+        <th>Last Updated On</th>
+        <th>Created On</th>
+    </tr>
     </thead>
     <tbody>{{ range $i, $x := .Items }}
-        <tr>
-            <td><a href="" hx-get="/dashboard_pages/items/123" hx-target="#content">{{ $x.ID }}</a></td>
-			<td>{{ $x.Name }}</td>
-			<td>{{ $x.Details }}</td>
-			<td>{{ $x.BelongsToAccount }}</td>
-			<td>{{ relativeTimeFromPtr $x.LastUpdatedOn }}</td>
-            <td>{{ relativeTime $x.CreatedOn }}</td>
-        </tr>
+    <tr>
+        <td><a href="" hx-push-url="" hx-get="/dashboard_pages/items/123" hx-target="#content">{{ $x.ID }}</a></td>
+        <td>{{ $x.Name }}</td>
+        <td>{{ $x.Details }}</td>
+        <td>{{ $x.BelongsToAccount }}</td>
+        <td>{{ relativeTimeFromPtr $x.LastUpdatedOn }}</td>
+        <td>{{ relativeTime $x.CreatedOn }}</td>
+    </tr>
     {{ end }}</tbody>
 </table>
 `

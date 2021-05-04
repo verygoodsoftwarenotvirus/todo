@@ -1,4 +1,4 @@
-package main
+package elements
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
@@ -19,9 +19,7 @@ func mustGoment(ts uint64) *goment.Goment {
 }
 
 func relativeTime(ts uint64) string {
-	g := mustGoment(ts)
-
-	return g.FromNow()
+	return mustGoment(ts).FromNow()
 }
 
 func relativeTimeFromPtr(ts *uint64) string {

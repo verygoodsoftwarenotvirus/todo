@@ -1,6 +1,8 @@
-package main
+package elements
 
-import "net/http"
+import (
+	"net/http"
+)
 
 const loginPrompt = `<form hx-post="/login" hx-ext="json-enc, ajax-header, event-header">
    <h1 class="h3 mb-3 fw-normal">Sign in</h1>
@@ -11,5 +13,5 @@ const loginPrompt = `<form hx-post="/login" hx-ext="json-enc, ajax-header, event
 </form>`
 
 func loginComponent(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(loginPrompt)(res, req)
+	renderHTMLTemplateToResponse(loginPrompt)(res, req)
 }

@@ -402,12 +402,12 @@ func Wire() error {
 		return err
 	}
 
-	return sh.RunV("wire", "gen", filepath.Join(thisRepo, "cmd", "server"))
+	return sh.RunV("wire", "gen", filepath.Join(thisRepo, "internal", "build", "server"))
 }
 
 // Delete existing dependency injected build file and regenerate it.
 func Rewire() error {
-	os.Remove("cmd/server/wire_gen.go")
+	os.Remove("internal/build/server/wire_gen.go")
 
 	return Wire()
 }

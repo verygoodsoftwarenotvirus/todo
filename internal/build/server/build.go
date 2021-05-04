@@ -1,6 +1,6 @@
 // +build wireinject
 
-package main
+package server
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
+	frontendservice2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/elements"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
@@ -35,8 +36,8 @@ import (
 	"github.com/google/wire"
 )
 
-// BuildServer builds a server.
-func BuildServer(
+// Build builds a server.
+func Build(
 	ctx context.Context,
 	cfg *config.ServerConfig,
 	logger logging.Logger,
@@ -67,6 +68,7 @@ func BuildServer(
 		auditservice.Providers,
 		adminservice.Providers,
 		frontendservice.Providers,
+		frontendservice2.Providers,
 		itemsservice.Providers,
 	)
 	return nil, nil

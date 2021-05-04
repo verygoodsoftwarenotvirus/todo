@@ -1,19 +1,17 @@
-package main
+package elements
 
 import (
-	"bytes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"html/template"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-func buildAPIClientViewer(x *types.APIClient) string {
-	var b bytes.Buffer
-	if err := template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicEditorTemplate(&basicEditorTemplateConfig{
+func buildAPIClientViewer(x *types.APIClient) template.HTML {
+	editorConfig := &basicEditorTemplateConfig{
 		Name: "API Client",
-		ID:   12345,
+		ID:   x.ID,
 		Fields: []genericEditorField{
 			{
 				Name:      "Name",
@@ -31,16 +29,15 @@ func buildAPIClientViewer(x *types.APIClient) string {
 				Required:  true,
 			},
 		},
-	}),
-	)).Execute(&b, x); err != nil {
-		panic(err)
 	}
-	return b.String()
+	tmpl := template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicEditorTemplate(editorConfig)))
+
+	return renderTemplateToHTML(tmpl, x)
 }
 
-func buildAPIClientsTable() string {
+func buildAPIClientsTable() template.HTML {
 	apiClients := fakes.BuildFakeAPIClientList()
-	return renderTemplateToString(template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicTableTemplate(&basicTableTemplateConfig{
+	tableConfig := &basicTableTemplateConfig{
 		ExternalURL: "/api_clients/123",
 		GetURL:      "/dashboard_pages/api_clients/123",
 		Columns:     fetchTableColumns("columns.apiClients"),
@@ -53,9 +50,12 @@ func buildAPIClientsTable() string {
 		RowDataFieldName:     "Clients",
 		IncludeLastUpdatedOn: false,
 		IncludeCreatedOn:     true,
-	}))), apiClients)
+	}
+	tmpl := template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicTableTemplate(tableConfig)))
+
+	return renderTemplateToHTML(tmpl, apiClients)
 }
 
 func apiClientsDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderStringToResponse(buildDashboardSubpageString("API Clients", template.HTML(buildAPIClientsTable())))(res, req)
+	renderHTMLTemplateToResponse(buildDashboardSubpageString("API Clients", buildAPIClientsTable()))(res, req)
 }

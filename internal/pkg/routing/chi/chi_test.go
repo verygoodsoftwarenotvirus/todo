@@ -22,7 +22,7 @@ func buildRouterForTest() routing.Router {
 func TestNewRouter(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		assert.NotNil(t, NewRouter(logging.NewNonOperationalLogger()))
@@ -32,7 +32,7 @@ func TestNewRouter(T *testing.T) {
 func Test_buildChiMux(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		assert.NotNil(t, buildChiMux(logging.NewNonOperationalLogger()))
@@ -42,7 +42,7 @@ func Test_buildChiMux(T *testing.T) {
 func Test_convertMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		assert.NotNil(t, convertMiddleware(func(http.Handler) http.Handler { return nil }))
@@ -52,7 +52,7 @@ func Test_convertMiddleware(T *testing.T) {
 func Test_router_AddRoute(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -74,7 +74,7 @@ func Test_router_AddRoute(T *testing.T) {
 		}
 	})
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -86,7 +86,7 @@ func Test_router_AddRoute(T *testing.T) {
 func Test_router_Connect(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -98,7 +98,7 @@ func Test_router_Connect(T *testing.T) {
 func Test_router_Delete(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -110,7 +110,7 @@ func Test_router_Delete(T *testing.T) {
 func Test_router_Get(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -122,7 +122,7 @@ func Test_router_Get(T *testing.T) {
 func Test_router_Handle(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -134,7 +134,7 @@ func Test_router_Handle(T *testing.T) {
 func Test_router_HandleFunc(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -146,7 +146,7 @@ func Test_router_HandleFunc(T *testing.T) {
 func Test_router_Handler(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -158,7 +158,7 @@ func Test_router_Handler(T *testing.T) {
 func Test_router_Head(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -170,7 +170,7 @@ func Test_router_Head(T *testing.T) {
 func Test_router_LogRoutes(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -184,7 +184,7 @@ func Test_router_LogRoutes(T *testing.T) {
 func Test_router_Options(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -196,7 +196,7 @@ func Test_router_Options(T *testing.T) {
 func Test_router_Patch(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -208,7 +208,7 @@ func Test_router_Patch(T *testing.T) {
 func Test_router_Post(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -220,7 +220,7 @@ func Test_router_Post(T *testing.T) {
 func Test_router_Put(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -232,7 +232,7 @@ func Test_router_Put(T *testing.T) {
 func Test_router_Route(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -244,7 +244,7 @@ func Test_router_Route(T *testing.T) {
 func Test_router_Trace(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -256,7 +256,7 @@ func Test_router_Trace(T *testing.T) {
 func Test_router_WithMiddleware(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouterForTest()
@@ -268,7 +268,7 @@ func Test_router_WithMiddleware(T *testing.T) {
 func Test_router_clone(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouter(nil, nil)
@@ -280,7 +280,7 @@ func Test_router_clone(T *testing.T) {
 func Test_router_BuildRouteParamIDFetcher(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouter(nil, nil)
@@ -331,7 +331,7 @@ func Test_router_BuildRouteParamIDFetcher(T *testing.T) {
 func Test_router_BuildRouteParamStringIDFetcher(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		r := buildRouter(nil, nil)

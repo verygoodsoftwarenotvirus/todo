@@ -21,9 +21,6 @@ services:
             - database
             - prometheus
         volumes:
-            - source: '../../frontend/dist/'
-              target: '/frontend/'
-              type: 'bind'
             - source: '../../artifacts/search_indices'
               target: '/search_indices'
               type: 'bind'

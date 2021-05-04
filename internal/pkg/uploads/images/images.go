@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	headerContentType = "RawHTML-Type"
+	headerContentType = "Content-Type"
 
 	imagePNG  = "image/png"
 	imageJPEG = "image/jpeg"

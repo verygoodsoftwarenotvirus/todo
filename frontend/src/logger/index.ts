@@ -1,2 +1,0 @@
-// core
-export * from './logger';

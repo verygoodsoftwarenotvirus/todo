@@ -1,19 +1,9 @@
-# frontend-build-stage
-FROM node:lts-stretch AS frontend-build-stage
-
-WORKDIR /app
-
-COPY frontend/ .
-
-RUN npm run install:clean
-
 # build stage
 FROM golang:stretch AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 COPY . .
-COPY --from=frontend-build-stage /app/dist /frontend
 
 RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 
@@ -21,7 +11,6 @@ RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/
 FROM debian:stretch
 
 COPY --from=build-stage /todo /todo
-COPY --from=frontend-build-stage /app/dist /frontend
 
 RUN mkdir /home/appuser
 RUN groupadd --gid 999 appuser && \

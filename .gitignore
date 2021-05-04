@@ -12,7 +12,6 @@
 
 # pretty good IDEs
 .idea
-frontend/tsvelte/.vscode/
 
 # Vim
 *.swp
@@ -38,9 +37,6 @@ node_modules
 
 # Log files
 *.log
-
-# svelte compilation artifacts
-frontend//public/bundle.*
 
 # go test profiles
 *.coverprofile

@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	frontendservice2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/elements"
+	frontendservice2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend2"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"

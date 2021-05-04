@@ -172,16 +172,6 @@ func TestImage_Thumbnail(T *testing.T) {
 	})
 }
 
-func TestNewImageUploadProcessor(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		//
-	})
-}
-
 func TestLimitFileSize(T *testing.T) {
 	T.Parallel()
 
@@ -196,30 +186,10 @@ func TestLimitFileSize(T *testing.T) {
 	})
 }
 
-func Test_contentTypeFromFilename(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		//
-	})
-}
-
-func Test_validateContentType(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		//
-	})
-}
-
 func Test_uploadProcessor_Process(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()

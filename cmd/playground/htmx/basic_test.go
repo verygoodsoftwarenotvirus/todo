@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_buildGenericEditorTemplate(T *testing.T) {
+func Test_buildBasicEditorTemplate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -62,7 +62,7 @@ func Test_buildGenericEditorTemplate(T *testing.T) {
 	})
 }
 
-func Test_buildGenericTableTemplate(T *testing.T) {
+func Test_buildBasicTableTemplate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

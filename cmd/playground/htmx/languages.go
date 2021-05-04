@@ -6,7 +6,14 @@ import (
 	"golang.org/x/text/language"
 )
 
-type displayLanguage *struct{}
+type (
+	displayLanguage *string
+
+	languageDetails struct {
+		Name         string
+		Abbreviation string
+	}
+)
 
 var (
 	english        = new(displayLanguage)
@@ -21,11 +28,6 @@ var (
 		Abbreviation: "es-MX",
 	}
 )
-
-type languageDetails struct {
-	Name         string
-	Abbreviation string
-}
 
 func detailsForLanguage(l *displayLanguage) languageDetails {
 	switch l {

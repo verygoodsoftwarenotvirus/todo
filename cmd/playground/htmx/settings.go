@@ -21,11 +21,9 @@ const userSettingsPageSrc = `<div class="col-md-8 order-md-1">
 	</form>
 </div>`
 
-var userSettingsComponentTemplate = template.Must(template.New("").Parse(userSettingsPageSrc))
-
 func buildUserSettingsDashboardPage() string {
 	u := fakes.BuildFakeUser()
-	return buildDashboardSubpageString("User Settings", template.HTML(renderTemplateToString(userSettingsComponentTemplate, u)))
+	return buildDashboardSubpageString("User Settings", template.HTML(renderTemplateToString(template.Must(template.New("").Parse(userSettingsPageSrc)), u)))
 }
 
 func userSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
@@ -47,11 +45,9 @@ const accountSettingsPageSrc = `<div class="col-md-8 order-md-1">
 	</form>
 </div>`
 
-var accountSettingsComponentTemplate = template.Must(template.New("").Parse(accountSettingsPageSrc))
-
 func buildAccountSettingsDashboardPage() string {
 	a := fakes.BuildFakeAccount()
-	return buildDashboardSubpageString("Account Settings", template.HTML(renderTemplateToString(accountSettingsComponentTemplate, a)))
+	return buildDashboardSubpageString("Account Settings", template.HTML(renderTemplateToString(template.Must(template.New("").Parse(accountSettingsPageSrc)), a)))
 }
 
 func accountSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {

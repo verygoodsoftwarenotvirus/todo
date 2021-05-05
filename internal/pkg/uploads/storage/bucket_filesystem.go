@@ -18,6 +18,8 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*FilesystemConfig)(nil)
+
 // ValidateWithContext validates the FilesystemConfig.
 func (c *FilesystemConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,

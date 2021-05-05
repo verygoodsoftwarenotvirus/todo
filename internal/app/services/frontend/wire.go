@@ -1,10 +1,10 @@
 package frontend
 
-import (
-	"github.com/google/wire"
-)
+import "github.com/google/wire"
 
-// Providers is our collection of what we provide to other services.
-var Providers = wire.NewSet(
-	ProvideService,
+var (
+	// Providers is what we offer to dependency injection.
+	Providers = wire.NewSet(
+		ProvideService,
+	)
 )

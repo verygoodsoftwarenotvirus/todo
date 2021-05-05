@@ -221,6 +221,8 @@ func (i *PasswordUpdateInput) ValidateWithContext(ctx context.Context, minPasswo
 	)
 }
 
+var _ validation.ValidatableWithContext = (*TOTPSecretRefreshInput)(nil)
+
 // ValidateWithContext ensures our provided TOTPSecretRefreshInput meets expectations.
 func (i *TOTPSecretRefreshInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
@@ -228,6 +230,8 @@ func (i *TOTPSecretRefreshInput) ValidateWithContext(ctx context.Context) error 
 		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*TOTPSecretVerificationInput)(nil)
 
 // ValidateWithContext ensures our provided TOTPSecretVerificationInput meets expectations.
 func (i *TOTPSecretVerificationInput) ValidateWithContext(ctx context.Context) error {

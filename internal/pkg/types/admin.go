@@ -34,6 +34,8 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*UserReputationUpdateInput)(nil)
+
 // ValidateWithContext ensures our struct is validatable.
 func (i *UserReputationUpdateInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,

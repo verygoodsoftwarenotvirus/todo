@@ -15,7 +15,6 @@ import (
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
-	frontendservice2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend2"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
@@ -68,7 +67,6 @@ func Build(
 		auditservice.Providers,
 		adminservice.Providers,
 		frontendservice.Providers,
-		frontendservice2.Providers,
 		itemsservice.Providers,
 	)
 	return nil, nil

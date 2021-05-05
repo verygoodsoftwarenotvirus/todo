@@ -1,7 +1,9 @@
-package frontend2
+package frontend
 
 import (
 	"bytes"
+	"fmt"
+
 	// import embed for the side effects.
 	_ "embed"
 	"html/template"
@@ -36,6 +38,7 @@ type basicTableTemplateConfig struct {
 	GetURL               string
 	ExternalURL          string
 	RowDataFieldName     string
+	Title                string
 	Columns              []string
 	CellFields           []string
 	ExcludeIDRow         bool
@@ -54,4 +57,11 @@ func buildBasicTableTemplate(cfg *basicTableTemplateConfig) string {
 	}
 
 	return b.String()
+}
+
+func wrapTemplateInDefineTag(name, tmpl string) string {
+	return fmt.Sprintf(`{{ define %q }}
+	%s
+{{ end }}
+	`, name, tmpl)
 }

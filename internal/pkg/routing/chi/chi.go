@@ -59,7 +59,7 @@ func buildChiMux(logger logging.Logger) chi.Router {
 		MaxAge:           maxCORSAge,
 	})
 
-	s := secure.New(secure.Options{
+	sec := secure.New(secure.Options{
 		AllowedHosts:            []string{""},
 		AllowedHostsAreRegex:    false,
 		HostsProxyHeaders:       []string{"X-Forwarded-Hosts"},
@@ -88,7 +88,7 @@ func buildChiMux(logger logging.Logger) chi.Router {
 
 	mux := chi.NewRouter()
 	mux.Use(
-		s.Handler,
+		sec.Handler,
 		chimiddleware.RequestID,
 		chimiddleware.RealIP,
 		chimiddleware.Timeout(maxTimeout),

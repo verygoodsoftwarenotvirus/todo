@@ -86,6 +86,8 @@ func (x *AccountSubscriptionPlan) Update(input *AccountSubscriptionPlanUpdateInp
 	return out
 }
 
+var _ validation.ValidatableWithContext = (*AccountSubscriptionPlanCreationInput)(nil)
+
 // ValidateWithContext validates a AccountSubscriptionPlanCreationInput.
 func (x *AccountSubscriptionPlanCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,

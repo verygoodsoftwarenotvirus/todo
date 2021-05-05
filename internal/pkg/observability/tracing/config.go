@@ -46,6 +46,8 @@ func (c *Config) Initialize(l logging.Logger) (flushFunc func(), err error) {
 	}
 }
 
+var _ validation.ValidatableWithContext = (*Config)(nil)
+
 // ValidateWithContext validates the config struct.
 func (c *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
@@ -53,6 +55,8 @@ func (c *Config) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&c.Jaeger, validation.When(c.Provider == Jaeger, validation.Required).Else(validation.Nil)),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*JaegerConfig)(nil)
 
 // ValidateWithContext validates the config struct.
 func (c *JaegerConfig) ValidateWithContext(ctx context.Context) error {

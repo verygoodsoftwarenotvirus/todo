@@ -75,7 +75,9 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		return nil, errNilInput
 	}
 
-	if err := input.ValidateWithContext(context.Background()); err != nil {
+	ctx := context.Background()
+
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -90,9 +92,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyEncodingContentType, input.Encoding.ContentType)
 
-	cfg.Set(ConfigKeyFrontendDebug, input.Frontend.Debug)
-	cfg.Set(ConfigKeyFrontendStaticFilesDir, input.Frontend.StaticFilesDirectory)
-	cfg.Set(ConfigKeyFrontendCacheStatics, input.Frontend.CacheStaticFiles)
+	// cfg.Set(ConfigKeyFrontend , input.Frontend. )
 
 	cfg.Set(ConfigKeyAuthDebug, input.Auth.Debug)
 	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Auth.EnableUserSignup)

@@ -56,6 +56,8 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*Config)(nil)
+
 // ValidateWithContext validates the Config.
 func (c *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,

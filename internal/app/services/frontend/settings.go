@@ -1,7 +1,6 @@
-package frontend2
+package frontend
 
 import (
-	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
@@ -22,13 +21,19 @@ const userSettingsPageSrc = `<div class="col-md-8 order-md-1">
 	</form>
 </div>`
 
-func buildUserSettingsDashboardPage() template.HTML {
+func buildUserSettingsDashboardPage() (string, error) {
 	u := fakes.BuildFakeUser()
-	return buildDashboardSubpageString("User Settings", renderTemplateToHTML(template.Must(template.New("").Parse(userSettingsPageSrc)), u))
+
+	return renderTemplateIntoDashboard("User Settings", userSettingsPageSrc, u)
 }
 
-func userSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderHTMLTemplateToResponse(buildUserSettingsDashboardPage())(res, req)
+func (s *Service) userSettingsDashboardPage(res http.ResponseWriter, _ *http.Request) {
+	responseContent, err := buildUserSettingsDashboardPage()
+	if err != nil {
+		panic(err)
+	}
+
+	renderStringToResponse(responseContent, res)
 }
 
 const accountSettingsPageSrc = `<div class="col-md-8 order-md-1">
@@ -46,11 +51,17 @@ const accountSettingsPageSrc = `<div class="col-md-8 order-md-1">
 	</form>
 </div>`
 
-func buildAccountSettingsDashboardPage() template.HTML {
+func buildAccountSettingsDashboardPage() (string, error) {
 	a := fakes.BuildFakeAccount()
-	return buildDashboardSubpageString("Account Settings", renderTemplateToHTML(template.Must(template.New("").Parse(accountSettingsPageSrc)), a))
+
+	return renderTemplateIntoDashboard("Account Settings", accountSettingsPageSrc, a)
 }
 
-func accountSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
-	renderHTMLTemplateToResponse(buildAccountSettingsDashboardPage())(res, req)
+func (s *Service) accountSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
+	responseContent, err := buildAccountSettingsDashboardPage()
+	if err != nil {
+		panic(err)
+	}
+
+	renderStringToResponse(responseContent, res)
 }

@@ -104,10 +104,7 @@ var files = map[string]configFunc{
 
 func buildLocalFrontendServiceConfig() frontendservice.Config {
 	return frontendservice.Config{
-		StaticFilesDirectory: defaultFrontendFilepath,
-		Debug:                false,
-		LogStaticFiles:       false,
-		CacheStaticFiles:     false,
+		//
 	}
 }
 

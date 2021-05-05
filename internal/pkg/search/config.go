@@ -17,6 +17,8 @@ type Config struct {
 	ItemsIndexPath IndexPath `json:"items_index_path" mapstructure:"items_index_path" toml:"items_index_path,omitempty"`
 }
 
+var _ validation.ValidatableWithContext = (*Config)(nil)
+
 // ValidateWithContext validates a Config struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,

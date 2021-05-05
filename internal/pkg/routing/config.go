@@ -18,6 +18,8 @@ type Config struct {
 	AllowedHeaders []string `json:"allowed_heade" mapstructure:"allowed_headers" toml:"allowed_headers,omitempty"`
 }
 
+var _ validation.ValidatableWithContext = (*Config)(nil)
+
 // ValidateWithContext validates a router config struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,

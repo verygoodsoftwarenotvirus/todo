@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	frontendservice2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend2"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -33,8 +33,7 @@ type (
 	Server struct {
 		authService       types.AuthService
 		accountsService   types.AccountDataService
-		frontendService   types.FrontendService
-		frontendService2  *frontendservice2.Service
+		frontendService   *frontend.Service
 		auditService      types.AuditLogEntryDataService
 		usersService      types.UserDataService
 		plansService      types.AccountSubscriptionPlanDataService
@@ -67,8 +66,7 @@ func ProvideServer(
 	itemsService types.ItemDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,
-	frontendService types.FrontendService,
-	frontendService2 *frontendservice2.Service,
+	frontendService *frontend.Service,
 	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.ServerEncoderDecoder,
@@ -88,7 +86,6 @@ func ProvideServer(
 		auditService:      auditService,
 		webhooksService:   webhooksService,
 		frontendService:   frontendService,
-		frontendService2:  frontendService2,
 		usersService:      usersService,
 		accountsService:   accountsService,
 		authService:       authService,

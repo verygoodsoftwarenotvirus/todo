@@ -1,4 +1,4 @@
-package frontend2
+package frontend
 
 import (
 	"net/http"
@@ -12,6 +12,6 @@ const loginPrompt = `<form hx-post="/login" hx-ext="json-enc, ajax-header, event
    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
 </form>`
 
-func loginComponent(res http.ResponseWriter, req *http.Request) {
-	renderHTMLTemplateToResponse(loginPrompt)(res, req)
+func (s *Service) loginComponent(res http.ResponseWriter, _ *http.Request) {
+	renderStringToResponse(loginPrompt, res)
 }

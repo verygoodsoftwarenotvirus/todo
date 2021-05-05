@@ -123,12 +123,16 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*ChangeActiveAccountInput)(nil)
+
 // ValidateWithContext validates a ChangeActiveAccountInput.
 func (x *ChangeActiveAccountInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.AccountID, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*PASETOCreationInput)(nil)
 
 // ValidateWithContext ensures our  provided UserLoginInput meets expectations.
 func (i *PASETOCreationInput) ValidateWithContext(ctx context.Context) error {

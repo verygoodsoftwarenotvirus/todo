@@ -47,7 +47,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 	}
 
 	// Frontend routes.
-	s.frontendService2.SetupRoutes(router)
+	s.frontendService.SetupRoutes(router)
 
 	router.WithMiddleware(s.authService.PASETOCreationInputMiddleware).Post("/paseto", s.authService.PASETOHandler)
 

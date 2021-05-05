@@ -53,8 +53,7 @@ type (
 	// runMode describes what method of operation the server is under.
 	runMode string
 
-	// ServerConfig is our server configuration struct. It is comprised of all the other setting structs
-	// For information on this structs fields, refer to their definitions.
+	// ServerConfig is our server configuration struct. It is composed of all the other setting structs.
 	ServerConfig struct {
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
@@ -85,20 +84,55 @@ var _ validation.ValidatableWithContext = (*ServerConfig)(nil)
 
 // ValidateWithContext validates a ServerConfig struct.
 func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.Search),
-		validation.Field(&cfg.Uploads),
-		validation.Field(&cfg.Routing),
-		validation.Field(&cfg.Meta),
-		validation.Field(&cfg.Encoding),
-		validation.Field(&cfg.Frontend),
-		validation.Field(&cfg.Observability),
-		validation.Field(&cfg.Database),
-		validation.Field(&cfg.Auth),
-		validation.Field(&cfg.Server),
-		validation.Field(&cfg.Webhooks),
-		validation.Field(&cfg.AuditLog),
-	)
+	if err := cfg.Search.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Uploads.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Routing.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Meta.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Observability.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Database.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Auth.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Server.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.Webhooks.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	if err := cfg.AuditLog.ValidateWithContext(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.

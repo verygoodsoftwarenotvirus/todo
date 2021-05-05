@@ -106,12 +106,16 @@ func (x *Item) Update(input *ItemUpdateInput) []*FieldChangeSummary {
 	return out
 }
 
+var _ validation.ValidatableWithContext = (*ItemCreationInput)(nil)
+
 // ValidateWithContext validates a ItemCreationInput.
 func (x *ItemCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*ItemUpdateInput)(nil)
 
 // ValidateWithContext validates a ItemUpdateInput.
 func (x *ItemUpdateInput) ValidateWithContext(ctx context.Context) error {

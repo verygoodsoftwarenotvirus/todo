@@ -1,4 +1,4 @@
-package frontend2
+package frontend
 
 import (
 	"testing"
@@ -87,7 +87,10 @@ func Test_buildBasicTableTemplate(T *testing.T) {
 			IncludeCreatedOn:     true,
 		}
 
-		expected := `<table class="table table-striped">
+		expected := `<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"></h1>
+</div>
+<table class="table table-striped">
     <thead>
     <tr>
         <th>ID</th>
@@ -108,8 +111,7 @@ func Test_buildBasicTableTemplate(T *testing.T) {
         <td>{{ relativeTime $x.CreatedOn }}</td>
     </tr>
     {{ end }}</tbody>
-</table>
-`
+</table>`
 
 		actual := buildBasicTableTemplate(exampleInput)
 

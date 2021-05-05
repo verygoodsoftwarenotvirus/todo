@@ -64,7 +64,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",

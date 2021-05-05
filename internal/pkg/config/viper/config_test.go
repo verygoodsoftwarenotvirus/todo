@@ -102,7 +102,7 @@ func TestFromConfig(T *testing.T) {
 				Debug: false,
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
@@ -187,7 +187,7 @@ func TestParseConfigFile(T *testing.T) {
 				},
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
@@ -278,7 +278,7 @@ debug = ":banana:"
 				},
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",

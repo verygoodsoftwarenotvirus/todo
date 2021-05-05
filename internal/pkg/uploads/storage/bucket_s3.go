@@ -18,6 +18,8 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*S3Config)(nil)
+
 // ValidateWithContext validates the S3Config.
 func (c *S3Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,

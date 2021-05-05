@@ -17,7 +17,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend2"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
@@ -98,11 +97,9 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
 	adminService := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
-	frontendConfig := cfg.Frontend
-	frontendService := frontend.ProvideService(logger, frontendConfig)
-	service := frontend2.ProvideService(logger)
+	service := frontend.ProvideService(logger)
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(ctx, httpserverConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, frontendService, service, dbm, logger, serverEncoderDecoder, router)
+	httpserverServer, err := httpserver.ProvideServer(ctx, httpserverConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, dbm, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

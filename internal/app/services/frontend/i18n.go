@@ -1,4 +1,4 @@
-package frontend2
+package frontend
 
 import (
 	"embed"
@@ -15,7 +15,7 @@ var translationsDir embed.FS
 
 var localizer *i18n.Localizer
 
-func getLocalizer() {
+func initLocalizer() {
 	if localizer == nil {
 		bundle := i18n.NewBundle(language.English)
 		bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
@@ -39,6 +39,8 @@ func getLocalizer() {
 }
 
 func getSimpleLocalizedString(messageID string) string {
+	initLocalizer()
+
 	return localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID:      messageID,
 		DefaultMessage: nil,
@@ -48,5 +50,5 @@ func getSimpleLocalizedString(messageID string) string {
 }
 
 func init() {
-	getLocalizer()
+	initLocalizer()
 }

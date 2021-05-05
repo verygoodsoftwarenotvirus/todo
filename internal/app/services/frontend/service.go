@@ -1,34 +1,37 @@
 package frontend
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
 )
 
 const (
-	serviceName = "frontend_service"
+	serviceName string = "frontends_service"
 )
 
 type (
-	// service is responsible for serving HTML (and other static resources).
-	service struct {
-		logger logging.Logger
-		tracer tracing.Tracer
-		config Config
+	// SearchIndex is a type alias for dependency injection's sake.
+	SearchIndex search.IndexManager
+
+	// Service handles to-do list items.
+	Service struct {
+		logger   logging.Logger
+		tracer   tracing.Tracer
+		panicker panicking.Panicker
+		useFakes bool
 	}
 )
 
-func buildService(logger logging.Logger, cfg Config) *service {
-	return &service{
-		config: cfg,
-		logger: logging.EnsureLogger(logger).WithName(serviceName),
-		tracer: tracing.NewTracer(serviceName),
+// ProvideService builds a new ItemsService.
+func ProvideService(logger logging.Logger) *Service {
+	svc := &Service{
+		logger:   logging.EnsureLogger(logger).WithName(serviceName),
+		tracer:   tracing.NewTracer(serviceName),
+		panicker: panicking.NewProductionPanicker(),
+		useFakes: true,
 	}
-}
 
-// ProvideService provides the frontend service to dependency injection.
-func ProvideService(logger logging.Logger, cfg Config) types.FrontendService {
-	return buildService(logger, cfg)
+	return svc
 }

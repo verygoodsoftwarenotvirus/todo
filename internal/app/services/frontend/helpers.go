@@ -32,3 +32,7 @@ func renderTemplateToString(tmpl *template.Template, x interface{}) (string, err
 
 	return b.String(), nil
 }
+
+func parseTemplate(name, source string) *template.Template {
+	return template.Must(template.New(name).Funcs(defaultFuncMap).Parse(source))
+}

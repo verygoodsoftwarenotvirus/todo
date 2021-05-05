@@ -6,7 +6,6 @@ import (
 
 	// import embed for the side effects.
 	_ "embed"
-	"html/template"
 )
 
 type genericEditorField struct {
@@ -27,7 +26,7 @@ var basicEditorTemplateSrc string
 func buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := template.Must(template.New("").Parse(basicEditorTemplateSrc)).Execute(&b, cfg); err != nil {
+	if err := parseTemplate("", basicEditorTemplateSrc).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 
@@ -52,16 +51,16 @@ var basicTableTemplateSrc string
 func buildBasicTableTemplate(cfg *basicTableTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := template.Must(template.New("").Parse(basicTableTemplateSrc)).Execute(&b, cfg); err != nil {
+	if err := parseTemplate("", basicTableTemplateSrc).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 
 	return b.String()
 }
 
-func wrapTemplateInDefineTag(name, tmpl string) string {
-	return fmt.Sprintf(`{{ define %q }}
+func wrapTemplateInContentDefinition(tmpl string) string {
+	return fmt.Sprintf(`{{ define "content" }}
 	%s
 {{ end }}
-	`, name, tmpl)
+	`, tmpl)
 }

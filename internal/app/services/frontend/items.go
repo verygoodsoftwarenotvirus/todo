@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -40,7 +39,7 @@ func buildViewerForItem(x *types.Item) (string, error) {
 			},
 		},
 	}
-	tmpl := template.Must(template.New("").Funcs(defaultFuncMap).Parse(buildBasicEditorTemplate(tmplConfig)))
+	tmpl := parseTemplate("", buildBasicEditorTemplate(tmplConfig))
 
 	return renderTemplateToString(tmpl, x)
 }
@@ -68,7 +67,7 @@ func (s *Service) itemDashboardPage(res http.ResponseWriter, req *http.Request) 
 }
 
 func buildItemsTableDashboardPage(items *types.ItemList) (string, error) {
-	tmpl := template.Must(template.New("dashboard").Funcs(defaultFuncMap).Parse(buildBasicTableTemplate(itemsTableConfig)))
+	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(itemsTableConfig))
 
 	return renderTemplateToString(tmpl, items)
 }
@@ -113,7 +112,7 @@ func buildItemDashboardView(x *types.Item) (string, error) {
 		},
 	}
 
-	return renderTemplateIntoDashboard("Items", wrapTemplateInDefineTag("content", buildBasicEditorTemplate(tmplConfig)), x)
+	return renderTemplateIntoDashboard("Items", wrapTemplateInContentDefinition(buildBasicEditorTemplate(tmplConfig)), x)
 }
 
 func (s *Service) itemDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -139,7 +138,7 @@ func (s *Service) itemDashboardView(res http.ResponseWriter, req *http.Request) 
 }
 
 func buildItemsTableDashboardView(items *types.ItemList) (string, error) {
-	tmpl := wrapTemplateInDefineTag("content", buildBasicTableTemplate(itemsTableConfig))
+	tmpl := wrapTemplateInContentDefinition(buildBasicTableTemplate(itemsTableConfig))
 
 	return renderTemplateIntoDashboard("Items", tmpl, items)
 }

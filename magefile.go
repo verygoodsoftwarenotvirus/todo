@@ -590,6 +590,8 @@ func Lint() error {
 		return errors.New("backend lint failed")
 	}
 
+	fmt.Println(":thumbsup: - lint passed!")
+
 	return nil
 }
 
@@ -677,6 +679,8 @@ func Quicktest() error {
 	if err := backendUnitTests(true, true); err != nil {
 		return err
 	}
+
+	fmt.Println(":thumbsup: - unit tests passed!")
 
 	return nil
 }

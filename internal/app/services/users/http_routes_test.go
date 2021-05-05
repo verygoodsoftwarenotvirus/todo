@@ -1352,7 +1352,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusSeeOther, helper.res.Code)
+		assert.Equal(t, http.StatusOK, helper.res.Code)
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 

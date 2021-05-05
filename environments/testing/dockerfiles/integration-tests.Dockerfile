@@ -6,7 +6,7 @@ WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
 COPY . .
 
-# ENTRYPOINT [ "go", "test", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
+ENTRYPOINT [ "go", "test", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
 
 # to debug a specific test:
-ENTRYPOINT [ "go", "test", "-parallel", "1", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestIntegration/TestPasswordChanging/should_be_possible_to_change_your_password" ]
+# ENTRYPOINT [ "go", "test", "-parallel", "1", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestIntegration/TestSomething" ]

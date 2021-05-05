@@ -111,7 +111,7 @@ func (s *service) CookieRequirementMiddleware(next http.Handler) http.Handler {
 		}
 
 		// if no error was attached to the request, tell them to login first.
-		http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
+		http.Redirect(res, req, "/users/login", http.StatusUnauthorized)
 	})
 }
 
@@ -196,7 +196,7 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		}
 
 		logger.Debug("no user attached to request")
-		http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
+		http.Redirect(res, req, "/users/login", http.StatusUnauthorized)
 	})
 }
 

@@ -468,9 +468,6 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// we're all good, log the user out
 	http.SetCookie(res, &http.Cookie{MaxAge: -1})
-
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
-	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
 }
 
 func stringPointer(storageProviderPath string) *string {

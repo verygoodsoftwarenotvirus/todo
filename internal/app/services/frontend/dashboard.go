@@ -2,6 +2,8 @@ package frontend
 
 import (
 	"bytes"
+	"html/template"
+
 	// import embed for the side effects.
 	_ "embed"
 	"net/http"
@@ -19,8 +21,8 @@ type dashboardPageData struct {
 //go:embed templates/dashboard.gotpl
 var dashboardTemplateSrc string
 
-func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
-	dash, err := renderTemplateIntoDashboard("Home", "", "")
+func (s *Service) homepage(res http.ResponseWriter, _ *http.Request) {
+	dash, err := renderTemplateIntoDashboardAsString("Home", "", "", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -28,16 +30,20 @@ func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
 	renderStringToResponse(dash, res)
 }
 
-func renderTemplateIntoDashboard(title, templateSrc string, contentData interface{}) (string, error) {
+func renderTemplateIntoDashboard(templateSrc string, funcMap template.FuncMap) *template.Template {
+	return parseListOfTemplates(funcMap, "dashboard", dashboardTemplateSrc, wrapTemplateInContentDefinition(templateSrc))
+}
+
+func renderTemplateIntoDashboardAsString(title, templateSrc string, contentData interface{}, funcMap template.FuncMap) (string, error) {
 	x := &dashboardPageData{
 		Title:       title,
 		ContentData: contentData,
 	}
 
-	tmpl := parseListOfTemplates("dashboard", dashboardTemplateSrc, templateSrc)
+	tmpl := parseListOfTemplates(funcMap, "dashboard", dashboardTemplateSrc, templateSrc)
 
 	var b bytes.Buffer
-	if err := tmpl.Funcs(defaultFuncMap).Execute(&b, x); err != nil {
+	if err := tmpl.Execute(&b, x); err != nil {
 		return "", err
 	}
 

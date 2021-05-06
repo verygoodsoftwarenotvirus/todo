@@ -24,24 +24,22 @@ import (
 	"github.com/o1egl/paseto"
 )
 
-func (s *service) issueSessionManagedCookie(ctx context.Context, res http.ResponseWriter, accountID, requesterID uint64) (cookie *http.Cookie, responseWritten bool) {
+func (s *service) issueSessionManagedCookie(ctx context.Context, accountID, requesterID uint64) (cookie *http.Cookie, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger
 
-	ctx, err := s.sessionManager.Load(ctx, "")
+	ctx, err = s.sessionManager.Load(ctx, "")
 	if err != nil {
 		// this will never happen while token is empty.
 		observability.AcknowledgeError(err, logger, span, "loading token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return nil, true
+		return nil, err
 	}
 
 	if err = s.sessionManager.RenewToken(ctx); err != nil {
 		observability.AcknowledgeError(err, logger, span, "renewing token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return nil, true
+		return nil, err
 	}
 
 	s.sessionManager.Put(ctx, accountIDContextKey, accountID)
@@ -51,18 +49,83 @@ func (s *service) issueSessionManagedCookie(ctx context.Context, res http.Respon
 	if err != nil {
 		// this branch cannot be tested because I cannot anticipate what the values committed will be
 		observability.AcknowledgeError(err, logger, span, "writing to session store")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return nil, true
+		return nil, err
 	}
 
 	cookie, err = s.buildCookie(token, expiry)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "building cookie")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return nil, true
+		return nil, err
 	}
 
-	return cookie, false
+	return cookie, nil
+}
+
+var (
+	// ErrUserNotFound indicates a user was not located.
+	ErrUserNotFound = errors.New("user not found")
+	// ErrUserBanned indicates a user is banned from using the service.
+	ErrUserBanned = errors.New("user is banned")
+	// ErrInvalidCredentials indicates a user provided invalid credentials.
+	ErrInvalidCredentials = errors.New("invalid credentials")
+)
+
+func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLoginInput) (*types.User, *http.Cookie, error) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithValue(keys.UsernameKey, loginData.Username)
+
+	user, err := s.userDataManager.GetUserByUsername(ctx, loginData.Username)
+	if err != nil || user == nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil, ErrUserNotFound
+		}
+		return nil, nil, observability.PrepareError(err, logger, span, "fetching user")
+	}
+
+	logger = logger.WithValue(keys.UserIDKey, user.ID)
+	tracing.AttachUserToSpan(span, user)
+
+	if user.IsBanned() {
+		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
+		return user, nil, ErrUserBanned
+	}
+
+	loginValid, err := s.validateLogin(ctx, user, loginData)
+	logger.WithValue("login_valid", loginValid)
+
+	if err != nil {
+		if errors.Is(err, passwords.ErrInvalidTwoFactorCode) {
+			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
+			return user, nil, ErrInvalidCredentials
+		} else if errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
+			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
+			return user, nil, ErrInvalidCredentials
+		}
+
+		logger.Error(err, "error encountered validating login")
+
+		return user, nil, observability.PrepareError(err, logger, span, "validating login")
+	} else if !loginValid {
+		logger.Debug("login was invalid")
+		s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
+		return user, nil, ErrInvalidCredentials
+	}
+
+	defaultAccountID, err := s.accountMembershipManager.GetDefaultAccountIDForUser(ctx, user.ID)
+	if err != nil {
+		return user, nil, observability.PrepareError(err, logger, span, "fetching user memberships")
+	}
+
+	cookie, err := s.issueSessionManagedCookie(ctx, defaultAccountID, user.ID)
+	if err != nil {
+		return user, nil, observability.PrepareError(err, logger, span, "issuing cookie")
+	}
+
+	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
+
+	return user, cookie, nil
 }
 
 // LoginHandler is our login route.
@@ -81,63 +144,22 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger = logger.WithValue(keys.UsernameKey, loginData.Username)
 
-	user, err := s.userDataManager.GetUserByUsername(ctx, loginData.Username)
-	if err != nil || user == nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	user, cookie, err := s.AuthenticateUser(ctx, loginData)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrUserNotFound):
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		} else {
-			observability.AcknowledgeError(err, logger, span, "fetching user")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error fetching user", http.StatusUnauthorized)
+		case errors.Is(err, ErrUserBanned):
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, user.ReputationExplanation, http.StatusForbidden)
+		case errors.Is(err, ErrInvalidCredentials):
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "login was invalid", http.StatusUnauthorized)
+		default:
+			observability.AcknowledgeError(err, logger, span, "issuing cookie")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		}
-
 		return
 	}
 
-	logger = logger.WithValue(keys.UserIDKey, user.ID)
-	tracing.AttachUserToSpan(span, user)
-
-	if user.IsBanned() {
-		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, user.ReputationExplanation, http.StatusForbidden)
-		return
-	}
-
-	loginValid, err := s.validateLogin(ctx, user, loginData)
-	logger.WithValue("login_valid", loginValid)
-
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "validating login")
-
-		if errors.Is(err, passwords.ErrInvalidTwoFactorCode) {
-			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
-		} else if errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
-			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
-		}
-
-		logger.Error(err, "error encountered validating login")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
-
-		return
-	} else if !loginValid {
-		logger.Debug("login was invalid")
-		s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "login was invalid", http.StatusUnauthorized)
-		return
-	}
-
-	defaultAccountID, err := s.accountMembershipManager.GetDefaultAccountIDForUser(ctx, user.ID)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching user memberships")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
-		return
-	}
-
-	cookie, responseWritten := s.issueSessionManagedCookie(ctx, res, defaultAccountID, user.ID)
-	if responseWritten {
-		return
-	}
-
-	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
 	http.SetCookie(res, cookie)
 
 	statusResponse := &types.UserStatusResponse{
@@ -192,8 +214,10 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	cookie, responseWritten := s.issueSessionManagedCookie(ctx, res, accountID, requesterID)
-	if responseWritten {
+	cookie, err := s.issueSessionManagedCookie(ctx, accountID, requesterID)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "issuing cookie")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusInternalServerError)
 		return
 	}
 

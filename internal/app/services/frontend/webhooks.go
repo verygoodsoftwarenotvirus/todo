@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -25,40 +27,37 @@ var webhooksTableConfig = &basicTableTemplateConfig{
 	IncludeCreatedOn:     true,
 }
 
-func buildViewerForWebhook(x *types.Webhook) (string, error) {
-	tmplConfig := &basicEditorTemplateConfig{
-		Name: "Webhook",
-		ID:   x.ID,
-		Fields: []genericEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "Method",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "ContentType",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "URL",
-				InputType: "text",
-				Required:  true,
-			},
+var webhookEditorConfig = &basicEditorTemplateConfig{
+	Fields: []basicEditorField{
+		{
+			Name:      "Name",
+			InputType: "text",
+			Required:  true,
 		},
-	}
-
-	tmpl := parseTemplate("", buildBasicEditorTemplate(tmplConfig))
-
-	return renderTemplateToString(tmpl, x)
+		{
+			Name:      "Method",
+			InputType: "text",
+			Required:  true,
+		},
+		{
+			Name:      "ContentType",
+			InputType: "text",
+			Required:  true,
+		},
+		{
+			Name:      "URL",
+			InputType: "text",
+			Required:  true,
+		},
+	},
+	FuncMap: map[string]interface{}{
+		"componentTitle": func(x *types.Webhook) string {
+			return fmt.Sprintf("Webhook #%d", x.ID)
+		},
+	},
 }
 
-func (s *Service) webhookDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) webhooksEditorView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -70,23 +69,14 @@ func (s *Service) webhookDashboardPage(res http.ResponseWriter, req *http.Reques
 		webhook = fakes.BuildFakeWebhook()
 	}
 
-	page, err := buildViewerForWebhook(webhook)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering webhook table template into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+	tmpl := parseTemplate("", buildBasicEditorTemplate(webhookEditorConfig), webhookEditorConfig.FuncMap)
+
+	if err := renderTemplateToResponse(tmpl, webhook, res); err != nil {
+		log.Panic(err)
 	}
-
-	renderStringToResponse(page, res)
 }
 
-func buildWebhooksTableDashboardPage(webhooks *types.WebhookList) (string, error) {
-	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(webhooksTableConfig))
-
-	return renderTemplateToString(tmpl, webhooks)
-}
-
-func (s *Service) webhooksDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) webhooksTableView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -98,45 +88,11 @@ func (s *Service) webhooksDashboardPage(res http.ResponseWriter, req *http.Reque
 		webhooks = fakes.BuildFakeWebhookList()
 	}
 
-	page, err := buildWebhooksTableDashboardPage(webhooks)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering webhook table template into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(webhooksTableConfig), nil)
+
+	if err := renderTemplateToResponse(tmpl, webhooks, res); err != nil {
+		log.Panic(err)
 	}
-
-	renderStringToResponse(page, res)
-}
-
-func buildWebhookDashboardView(x *types.Webhook) (string, error) {
-	tmplConfig := &basicEditorTemplateConfig{
-		Name: "Webhook",
-		ID:   x.ID,
-		Fields: []genericEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "Method",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "ContentType",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "URL",
-				InputType: "text",
-				Required:  true,
-			},
-		},
-	}
-
-	return renderTemplateIntoDashboard("Webhooks", wrapTemplateInContentDefinition(buildBasicEditorTemplate(tmplConfig)), x)
 }
 
 func (s *Service) webhookDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -151,20 +107,18 @@ func (s *Service) webhookDashboardView(res http.ResponseWriter, req *http.Reques
 		webhook = fakes.BuildFakeWebhook()
 	}
 
-	dashboard, err := buildWebhookDashboardView(webhook)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering webhook viewer into dashboard")
+	view := renderTemplateIntoDashboard(buildBasicEditorTemplate(webhookEditorConfig), webhookEditorConfig.FuncMap)
+
+	page := &dashboardPageData{
+		Title:       fmt.Sprintf("Webhook #%d", webhook.ID),
+		ContentData: webhook,
+	}
+
+	if err := renderTemplateToResponse(view, page, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "rendering webhooks dashboard view")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(dashboard, res)
-}
-
-func buildWebhooksTableDashboardView(webhooks *types.WebhookList) (string, error) {
-	tmpl := wrapTemplateInContentDefinition(buildBasicTableTemplate(webhooksTableConfig))
-
-	return renderTemplateIntoDashboard("Webhooks", tmpl, webhooks)
 }
 
 func (s *Service) webhooksDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -179,12 +133,16 @@ func (s *Service) webhooksDashboardView(res http.ResponseWriter, req *http.Reque
 		webhooks = fakes.BuildFakeWebhookList()
 	}
 
-	dashboard, err := buildWebhooksTableDashboardView(webhooks)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering webhook table template into dashboard")
+	view := renderTemplateIntoDashboard(buildBasicTableTemplate(webhooksTableConfig), nil)
+
+	page := &dashboardPageData{
+		Title:       "Webhooks",
+		ContentData: webhooks,
+	}
+
+	if err := renderTemplateToResponse(view, page, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "rendering webhooks dashboard view")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(dashboard, res)
 }

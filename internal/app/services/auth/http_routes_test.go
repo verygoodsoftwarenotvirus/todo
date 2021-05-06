@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -48,9 +47,9 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now().Add(24*time.Hour), nil)
 		helper.service.sessionManager = sm
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.NotNil(t, cookie)
-		assert.False(t, written)
+		assert.NoError(t, err)
 
 		var actualToken string
 		assert.NoError(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, cookie.Value, &actualToken))
@@ -69,21 +68,11 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		encoderDecoder := &mockencoding.EncoderDecoder{}
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			staticError,
-			http.StatusInternalServerError,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, sm, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, sm)
 	})
 
 	T.Run("with error renewing token", func(t *testing.T) {
@@ -96,21 +85,11 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("RenewToken", testutil.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		encoderDecoder := &mockencoding.EncoderDecoder{}
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			staticError,
-			http.StatusInternalServerError,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, sm, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, sm)
 	})
 
 	T.Run("with error committing", func(t *testing.T) {
@@ -128,21 +107,11 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		encoderDecoder := &mockencoding.EncoderDecoder{}
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			staticError,
-			http.StatusInternalServerError,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, sm, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, sm)
 	})
 
 	T.Run("with error building cookie", func(t *testing.T) {
@@ -165,9 +134,9 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 			[]byte(""),
 		)
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 	})
 }
 
@@ -278,7 +247,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper.service.LoginHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 		mock.AssertExpectationsForObjects(t, userDataManager)
@@ -389,7 +358,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper.service.LoginHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 		mock.AssertExpectationsForObjects(t, userDataManager, authenticator)

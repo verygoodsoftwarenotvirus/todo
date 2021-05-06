@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -176,7 +175,7 @@ func PrintTestPackages() error {
 	}
 
 	for _, x := range packages {
-		fmt.Println(x)
+		logger.Info(x)
 	}
 
 	return nil
@@ -590,7 +589,7 @@ func Lint() error {
 		return errors.New("backend lint failed")
 	}
 
-	fmt.Println(":thumbsup: - lint passed!")
+	logger.Info(":thumbsup: - lint passed!")
 
 	return nil
 }
@@ -632,7 +631,7 @@ func backendCoverage() error {
 	// byte array jesus please forgive me
 	rawCoveragePercentage := string([]byte(results)[len(results)-6 : len(results)])
 
-	fmt.Println(strings.TrimSpace(rawCoveragePercentage))
+	logger.Info(strings.TrimSpace(rawCoveragePercentage))
 
 	return nil
 }
@@ -649,10 +648,6 @@ func backendUnitTests(outLoud, quick bool) error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("fuck")
-	log.Println(packagesToTest)
-	log.Println("fuck")
 
 	var commandStartArgs []string
 	if quick {
@@ -680,7 +675,7 @@ func Quicktest() error {
 		return err
 	}
 
-	fmt.Println(":thumbsup: - unit tests passed!")
+	logger.Info(":thumbsup: - unit tests passed!")
 
 	return nil
 }
@@ -721,6 +716,8 @@ func IntegrationTests() error {
 	if err := IntegrationTest(mariadb); err != nil {
 		return err
 	}
+
+	logger.Info(":thumbsup: - integration tests passed!")
 
 	return nil
 }
@@ -794,6 +791,8 @@ func Run() error {
 	if err := runCompose("environments/local/docker-compose.yaml"); err != nil {
 		return err
 	}
+
+	logger.Info("stopped.")
 
 	return nil
 }

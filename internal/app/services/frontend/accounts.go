@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -23,25 +25,22 @@ var accountsTableConfig = &basicTableTemplateConfig{
 	IncludeCreatedOn:     true,
 }
 
-func buildViewerForAccount(x *types.Account) (string, error) {
-	tmplConfig := &basicEditorTemplateConfig{
-		Name: "Account",
-		ID:   x.ID,
-		Fields: []genericEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
+var accountEditorConfig = &basicEditorTemplateConfig{
+	Fields: []basicEditorField{
+		{
+			Name:      "Name",
+			InputType: "text",
+			Required:  true,
 		},
-	}
-
-	tmpl := parseTemplate("", buildBasicEditorTemplate(tmplConfig))
-
-	return renderTemplateToString(tmpl, x)
+	},
+	FuncMap: map[string]interface{}{
+		"componentTitle": func(x *types.Account) string {
+			return fmt.Sprintf("Account #%d", x.ID)
+		},
+	},
 }
 
-func (s *Service) accountDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) accountsEditorView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -53,23 +52,14 @@ func (s *Service) accountDashboardPage(res http.ResponseWriter, req *http.Reques
 		account = fakes.BuildFakeAccount()
 	}
 
-	page, err := buildViewerForAccount(account)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering account table template into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+	tmpl := parseTemplate("", buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+
+	if err := renderTemplateToResponse(tmpl, account, res); err != nil {
+		log.Panic(err)
 	}
-
-	renderStringToResponse(page, res)
 }
 
-func buildAccountsTableDashboardPage(accounts *types.AccountList) (string, error) {
-	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(accountsTableConfig))
-
-	return renderTemplateToString(tmpl, accounts)
-}
-
-func (s *Service) accountsDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) accountsTableView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -81,30 +71,11 @@ func (s *Service) accountsDashboardPage(res http.ResponseWriter, req *http.Reque
 		accounts = fakes.BuildFakeAccountList()
 	}
 
-	page, err := buildAccountsTableDashboardPage(accounts)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering account table template into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(accountsTableConfig), nil)
+
+	if err := renderTemplateToResponse(tmpl, accounts, res); err != nil {
+		log.Panic(err)
 	}
-
-	renderStringToResponse(page, res)
-}
-
-func buildAccountDashboardView(x *types.Account) (string, error) {
-	tmplConfig := &basicEditorTemplateConfig{
-		Name: "Account",
-		ID:   x.ID,
-		Fields: []genericEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-		},
-	}
-
-	return renderTemplateIntoDashboard("Accounts", wrapTemplateInContentDefinition(buildBasicEditorTemplate(tmplConfig)), x)
 }
 
 func (s *Service) accountDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -119,20 +90,18 @@ func (s *Service) accountDashboardView(res http.ResponseWriter, req *http.Reques
 		account = fakes.BuildFakeAccount()
 	}
 
-	dashboard, err := buildAccountDashboardView(account)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering account viewer into dashboard")
+	view := renderTemplateIntoDashboard(buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+
+	page := &dashboardPageData{
+		Title:       fmt.Sprintf("Account #%d", account.ID),
+		ContentData: account,
+	}
+
+	if err := renderTemplateToResponse(view, page, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(dashboard, res)
-}
-
-func buildAccountsTableDashboardView(accounts *types.AccountList) (string, error) {
-	tmpl := wrapTemplateInContentDefinition(buildBasicTableTemplate(accountsTableConfig))
-
-	return renderTemplateIntoDashboard("Accounts", tmpl, accounts)
 }
 
 func (s *Service) accountsDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -147,12 +116,16 @@ func (s *Service) accountsDashboardView(res http.ResponseWriter, req *http.Reque
 		accounts = fakes.BuildFakeAccountList()
 	}
 
-	dashboard, err := buildAccountsTableDashboardView(accounts)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering account table template into dashboard")
+	view := renderTemplateIntoDashboard(buildBasicTableTemplate(accountsTableConfig), nil)
+
+	page := &dashboardPageData{
+		Title:       "Accounts",
+		ContentData: accounts,
+	}
+
+	if err := renderTemplateToResponse(view, page, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(dashboard, res)
 }

@@ -3,21 +3,21 @@ package frontend
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 
 	// import embed for the side effects.
 	_ "embed"
 )
 
-type genericEditorField struct {
+type basicEditorField struct {
 	Name      string
 	InputType string
 	Required  bool
 }
 
 type basicEditorTemplateConfig struct {
-	Name   string
-	Fields []genericEditorField
-	ID     uint64
+	FuncMap template.FuncMap
+	Fields  []basicEditorField
 }
 
 //go:embed templates/basic_editor.gotpl
@@ -26,7 +26,7 @@ var basicEditorTemplateSrc string
 func buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := parseTemplate("", basicEditorTemplateSrc).Execute(&b, cfg); err != nil {
+	if err := parseTemplate("", basicEditorTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 
@@ -34,6 +34,7 @@ func buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
 }
 
 type basicTableTemplateConfig struct {
+	FuncMap              template.FuncMap
 	GetURL               string
 	ExternalURL          string
 	RowDataFieldName     string
@@ -51,7 +52,7 @@ var basicTableTemplateSrc string
 func buildBasicTableTemplate(cfg *basicTableTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := parseTemplate("", basicTableTemplateSrc).Execute(&b, cfg); err != nil {
+	if err := parseTemplate("", basicTableTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 

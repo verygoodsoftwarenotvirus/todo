@@ -13,9 +13,7 @@ func Test_buildBasicEditorTemplate(T *testing.T) {
 		t.Parallel()
 
 		exampleInput := &basicEditorTemplateConfig{
-			Name: "Item",
-			ID:   12345,
-			Fields: []genericEditorField{
+			Fields: []basicEditorField{
 				{
 					Name:      "Name",
 					InputType: "text",
@@ -31,7 +29,7 @@ func Test_buildBasicEditorTemplate(T *testing.T) {
 
 		expected := `<div id="content" class="">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Item #{{ .ID }}</h1>
+        <h1 class="h2">{{ componentTitle . }}</h1>
     </div>
     <div class="col-md-8 order-md-1">
         <form class="needs-validation" novalidate="">

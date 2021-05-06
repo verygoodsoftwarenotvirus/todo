@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -22,29 +24,27 @@ var itemsTableConfig = &basicTableTemplateConfig{
 	IncludeCreatedOn:     true,
 }
 
-func buildViewerForItem(x *types.Item) (string, error) {
-	tmplConfig := &basicEditorTemplateConfig{
-		Name: "Item",
-		ID:   x.ID,
-		Fields: []genericEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "Details",
-				InputType: "text",
-				Required:  false,
-			},
+var itemEditorConfig = &basicEditorTemplateConfig{
+	Fields: []basicEditorField{
+		{
+			Name:      "Name",
+			InputType: "text",
+			Required:  true,
 		},
-	}
-	tmpl := parseTemplate("", buildBasicEditorTemplate(tmplConfig))
-
-	return renderTemplateToString(tmpl, x)
+		{
+			Name:      "Details",
+			InputType: "text",
+			Required:  false,
+		},
+	},
+	FuncMap: map[string]interface{}{
+		"componentTitle": func(x *types.Item) string {
+			return fmt.Sprintf("Item #%d", x.ID)
+		},
+	},
 }
 
-func (s *Service) itemDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) itemsEditorView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -56,23 +56,14 @@ func (s *Service) itemDashboardPage(res http.ResponseWriter, req *http.Request) 
 		item = fakes.BuildFakeItem()
 	}
 
-	page, err := buildViewerForItem(item)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item table template into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+	tmpl := parseTemplate("", buildBasicEditorTemplate(itemEditorConfig), itemEditorConfig.FuncMap)
+
+	if err := renderTemplateToResponse(tmpl, item, res); err != nil {
+		log.Panic(err)
 	}
-
-	renderStringToResponse(page, res)
 }
 
-func buildItemsTableDashboardPage(items *types.ItemList) (string, error) {
-	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(itemsTableConfig))
-
-	return renderTemplateToString(tmpl, items)
-}
-
-func (s *Service) itemsDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) itemsTableView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -84,35 +75,11 @@ func (s *Service) itemsDashboardPage(res http.ResponseWriter, req *http.Request)
 		items = fakes.BuildFakeItemList()
 	}
 
-	page, err := buildItemsTableDashboardPage(items)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item table template into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(itemsTableConfig), nil)
+
+	if err := renderTemplateToResponse(tmpl, items, res); err != nil {
+		log.Panic(err)
 	}
-
-	renderStringToResponse(page, res)
-}
-
-func buildItemDashboardView(x *types.Item) (string, error) {
-	tmplConfig := &basicEditorTemplateConfig{
-		Name: "Item",
-		ID:   x.ID,
-		Fields: []genericEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "Details",
-				InputType: "text",
-				Required:  false,
-			},
-		},
-	}
-
-	return renderTemplateIntoDashboard("Items", wrapTemplateInContentDefinition(buildBasicEditorTemplate(tmplConfig)), x)
 }
 
 func (s *Service) itemDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -127,20 +94,18 @@ func (s *Service) itemDashboardView(res http.ResponseWriter, req *http.Request) 
 		item = fakes.BuildFakeItem()
 	}
 
-	dashboard, err := buildItemDashboardView(item)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
+	view := renderTemplateIntoDashboard(buildBasicEditorTemplate(itemEditorConfig), itemEditorConfig.FuncMap)
+
+	page := &dashboardPageData{
+		Title:       fmt.Sprintf("Item #%d", item.ID),
+		ContentData: item,
+	}
+
+	if err := renderTemplateToResponse(view, page, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "rendering items dashboard view")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(dashboard, res)
-}
-
-func buildItemsTableDashboardView(items *types.ItemList) (string, error) {
-	tmpl := wrapTemplateInContentDefinition(buildBasicTableTemplate(itemsTableConfig))
-
-	return renderTemplateIntoDashboard("Items", tmpl, items)
 }
 
 func (s *Service) itemsDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -155,12 +120,16 @@ func (s *Service) itemsDashboardView(res http.ResponseWriter, req *http.Request)
 		items = fakes.BuildFakeItemList()
 	}
 
-	dashboard, err := buildItemsTableDashboardView(items)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item table template into dashboard")
+	view := renderTemplateIntoDashboard(buildBasicTableTemplate(itemsTableConfig), nil)
+
+	page := &dashboardPageData{
+		Title:       "Items",
+		ContentData: items,
+	}
+
+	if err := renderTemplateToResponse(view, page, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "rendering items dashboard view")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(dashboard, res)
 }

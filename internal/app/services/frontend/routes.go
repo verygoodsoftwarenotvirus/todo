@@ -38,26 +38,26 @@ func (s *Service) SetupRoutes(router routing.Router) {
 
 	router.Get("/accounts", s.accountsDashboardView)
 	router.Get("/accounts/123", s.accountDashboardView)
-	router.Get("/dashboard_pages/accounts", s.accountsDashboardPage)
-	router.Get("/dashboard_pages/accounts/123", s.accountDashboardPage)
+	router.Get("/dashboard_pages/accounts", s.accountsTableView)
+	router.Get("/dashboard_pages/accounts/123", s.accountsEditorView)
 
 	router.Get("/api_clients", s.apiClientsDashboardView)
 	router.Get("/api_clients/123", s.apiClientDashboardView)
-	router.Get("/dashboard_pages/api_clients", s.apiClientsDashboardPage)
-	router.Get("/dashboard_pages/api_clients/123", s.apiClientDashboardPage)
+	router.Get("/dashboard_pages/api_clients", s.apiClientsTableView)
+	router.Get("/dashboard_pages/api_clients/123", s.apiClientsEditorView)
 
 	router.Get("/account/webhooks", s.webhooksDashboardView)
 	router.Get("/account/webhooks/123", s.webhookDashboardView)
-	router.Get("/dashboard_pages/account/webhooks", s.webhooksDashboardPage)
-	router.Get("/dashboard_pages/account/webhooks/123", s.webhookDashboardPage)
+	router.Get("/dashboard_pages/account/webhooks", s.webhooksTableView)
+	router.Get("/dashboard_pages/account/webhooks/123", s.webhooksEditorView)
+
+	router.Get("/dashboard_pages/user/settings", s.userSettingsView)
+	router.Get("/user/settings", s.userSettingsDashboardView)
+	router.Get("/dashboard_pages/account/settings", s.accountSettingsView)
+	router.Get("/account/settings", s.accountSettingsDashboardView)
 
 	router.Get("/items", s.itemsDashboardView)
 	router.Get("/items/123", s.itemDashboardView)
-	router.Get("/dashboard_pages/items", s.itemsDashboardPage)
-	router.Get("/dashboard_pages/items/123", s.itemDashboardPage)
-
-	router.Get("/dashboard_pages/user/settings", s.userSettingsDashboardPage)
-	router.Get("/user/settings", s.userSettingsDashboardView)
-	router.Get("/dashboard_pages/account/settings", s.accountSettingsDashboardPage)
-	router.Get("/account/settings", s.accountSettingsDashboardView)
+	router.Get("/dashboard_pages/items", s.itemsTableView)
+	router.Get("/dashboard_pages/items/123", s.itemsEditorView)
 }

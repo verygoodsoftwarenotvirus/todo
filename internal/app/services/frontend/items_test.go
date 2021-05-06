@@ -51,7 +51,9 @@ func Test_buildItemsTableDashboardPage(T *testing.T) {
 			Pagination: types.Pagination{},
 		}
 
-		actual, err := buildItemsTableDashboardPage(exampleItemList)
+		tmpl := parseTemplate("dashboard", buildBasicTableTemplate(itemsTableConfig), nil)
+
+		actual, err := renderTemplateToString(tmpl, exampleItemList)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, actual)
 	})
@@ -100,7 +102,9 @@ func Test_buildViewerForItem(T *testing.T) {
     </div>
 </div>`
 
-		actual, err := buildViewerForItem(exampleItem)
+		tmpl := parseTemplate("", buildBasicEditorTemplate(itemEditorConfig), itemEditorConfig.FuncMap)
+
+		actual, err := renderTemplateToString(tmpl, exampleItem)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
@@ -148,7 +152,9 @@ func Test_buildItemsTableDashboardView(T *testing.T) {
 			Pagination: types.Pagination{},
 		}
 
-		actual, err := buildItemsTableDashboardView(exampleItemList)
+		tmpl := wrapTemplateInContentDefinition(buildBasicTableTemplate(itemsTableConfig))
+
+		actual, err := renderTemplateIntoDashboardAsString("Items", tmpl, exampleItemList, nil)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, actual)
 	})

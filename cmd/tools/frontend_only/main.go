@@ -16,7 +16,7 @@ func main() {
 	service := frontend.ProvideService(logger)
 	service.SetupRoutes(router)
 
-	if err := http.ListenAndServe(":8080", router.Handler()); err != nil {
+	if err := http.ListenAndServe(":8888", router.Handler()); err != nil {
 		log.Fatalln(err)
 	}
 }

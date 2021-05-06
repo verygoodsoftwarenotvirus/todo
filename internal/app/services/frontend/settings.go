@@ -20,31 +20,30 @@ const userSettingsPageSrc = `<div class="d-flex justify-content-between flex-wra
 				<div class="invalid-feedback" style="width: 100%;">Name is required.</div>
 			</div>
 		</div>
-		
+
 		<hr class="mb-4" />
 		<button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
 	</form>
 </div>`
 
-func (s *Service) userSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) userSettingsView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
 
-	var u *types.User
+	var user *types.User
 	if s.useFakes {
-		u = fakes.BuildFakeUser()
+		user = fakes.BuildFakeUser()
 	}
 
-	responseContent, err := renderTemplateToString(parseTemplate("", userSettingsPageSrc), u)
-	if err != nil {
+	tmpl := parseTemplate("", userSettingsPageSrc, nil)
+
+	if err := renderTemplateToResponse(tmpl, user, res); err != nil {
 		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(responseContent, res)
 }
 
 func (s *Service) userSettingsDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -53,19 +52,18 @@ func (s *Service) userSettingsDashboardView(res http.ResponseWriter, req *http.R
 
 	logger := s.logger.WithRequest(req)
 
-	var u *types.User
+	var user *types.User
 	if s.useFakes {
-		u = fakes.BuildFakeUser()
+		user = fakes.BuildFakeUser()
 	}
 
-	responseContent, err := renderTemplateIntoDashboard("User Settings", wrapTemplateInContentDefinition(userSettingsPageSrc), u)
-	if err != nil {
+	tmpl := renderTemplateIntoDashboard(userSettingsPageSrc, nil)
+
+	if err := renderTemplateToResponse(tmpl, user, res); err != nil {
 		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(responseContent, res)
 }
 
 const accountSettingsPageSrc = `<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -80,13 +78,13 @@ const accountSettingsPageSrc = `<div class="d-flex justify-content-between flex-
 				<div class="invalid-feedback" style="width: 100%;">Name is required.</div>
 			</div>
 		</div>
-		
+
 		<hr class="mb-4" />
 		<button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
 	</form>
 </div>`
 
-func (s *Service) accountSettingsDashboardPage(res http.ResponseWriter, req *http.Request) {
+func (s *Service) accountSettingsView(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -97,14 +95,13 @@ func (s *Service) accountSettingsDashboardPage(res http.ResponseWriter, req *htt
 		account = fakes.BuildFakeAccount()
 	}
 
-	responseContent, err := renderTemplateToString(parseTemplate("", accountSettingsPageSrc), account)
-	if err != nil {
+	tmpl := parseTemplate("", accountSettingsPageSrc, nil)
+
+	if err := renderTemplateToResponse(tmpl, account, res); err != nil {
 		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(responseContent, res)
 }
 
 func (s *Service) accountSettingsDashboardView(res http.ResponseWriter, req *http.Request) {
@@ -113,17 +110,16 @@ func (s *Service) accountSettingsDashboardView(res http.ResponseWriter, req *htt
 
 	logger := s.logger.WithRequest(req)
 
-	var a *types.Account
+	var account *types.Account
 	if s.useFakes {
-		a = fakes.BuildFakeAccount()
+		account = fakes.BuildFakeAccount()
 	}
 
-	responseContent, err := renderTemplateIntoDashboard("Account Settings", wrapTemplateInContentDefinition(accountSettingsPageSrc), a)
-	if err != nil {
+	tmpl := renderTemplateIntoDashboard(accountSettingsPageSrc, nil)
+
+	if err := renderTemplateToResponse(tmpl, account, res); err != nil {
 		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	renderStringToResponse(responseContent, res)
 }

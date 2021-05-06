@@ -206,7 +206,7 @@ func (e *serverEncoderDecoder) EncodeResponseWithStatus(ctx context.Context, res
 	e.encodeResponse(ctx, res, v, statusCode)
 }
 
-// DecodeRequest decodes responses.
+// DecodeRequest decodes request bodies into values.
 func (e *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Request, v interface{}) error {
 	_, span := e.tracer.StartSpan(ctx)
 	defer span.End()

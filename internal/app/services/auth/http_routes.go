@@ -135,7 +135,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
-	loginData, ok := ctx.Value(userLoginInputMiddlewareCtxKey).(*types.UserLoginInput)
+	loginData, ok := ctx.Value(types.UserLoginInputContextKey).(*types.UserLoginInput)
 	if !ok || loginData == nil {
 		logger.Debug("no input found for login request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)

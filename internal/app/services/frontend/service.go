@@ -5,6 +5,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 const (
@@ -17,20 +18,22 @@ type (
 
 	// Service handles to-do list items.
 	Service struct {
-		logger   logging.Logger
-		tracer   tracing.Tracer
-		panicker panicking.Panicker
-		useFakes bool
+		logger      logging.Logger
+		tracer      tracing.Tracer
+		panicker    panicking.Panicker
+		authService types.AuthService
+		useFakes    bool
 	}
 )
 
 // ProvideService builds a new ItemsService.
-func ProvideService(logger logging.Logger) *Service {
+func ProvideService(logger logging.Logger, authService types.AuthService) *Service {
 	svc := &Service{
-		logger:   logging.EnsureLogger(logger).WithName(serviceName),
-		tracer:   tracing.NewTracer(serviceName),
-		panicker: panicking.NewProductionPanicker(),
-		useFakes: true,
+		useFakes:    true,
+		logger:      logging.EnsureLogger(logger).WithName(serviceName),
+		tracer:      tracing.NewTracer(serviceName),
+		panicker:    panicking.NewProductionPanicker(),
+		authService: authService,
 	}
 
 	return svc

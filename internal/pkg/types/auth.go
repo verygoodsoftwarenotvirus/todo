@@ -14,11 +14,13 @@ import (
 
 const (
 	// SessionContextDataKey is the non-string type we use for referencing SessionContextData structs.
-	SessionContextDataKey ContextKey = "request_context"
+	SessionContextDataKey ContextKey = "session_context_data"
 	// UserIDContextKey is the non-string type we use for referencing SessionContextData structs.
-	UserIDContextKey ContextKey = "userID"
+	UserIDContextKey ContextKey = "user_id"
 	// AccountIDContextKey is the non-string type we use for referencing SessionContextData structs.
-	AccountIDContextKey ContextKey = "accountID"
+	AccountIDContextKey ContextKey = "account_id"
+	// UserLoginInputContextKey is the non-string type we use for referencing SessionContextData structs.
+	UserLoginInputContextKey ContextKey = "user_login_input"
 )
 
 var (
@@ -110,6 +112,8 @@ type (
 		UserLoginInputMiddleware(next http.Handler) http.Handler
 		PASETOCreationInputMiddleware(next http.Handler) http.Handler
 		ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler
+
+		AuthenticateUser(ctx context.Context, loginData *UserLoginInput) (*User, *http.Cookie, error)
 	}
 
 	// AuthAuditManager describes a structure capable of auditing auth events.

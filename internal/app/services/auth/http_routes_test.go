@@ -148,7 +148,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -210,7 +210,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -234,7 +234,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -261,7 +261,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		helper.exampleUser.Reputation = types.BannedUserReputation
 		helper.exampleUser.ReputationExplanation = "bad behavior"
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -292,7 +292,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -334,7 +334,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -369,7 +369,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -412,7 +412,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -455,7 +455,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -498,7 +498,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -545,7 +545,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -593,7 +593,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -644,7 +644,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		cb := &mockCookieEncoderDecoder{}
@@ -696,7 +696,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		cb := &mockCookieEncoderDecoder{}

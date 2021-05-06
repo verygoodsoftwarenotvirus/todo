@@ -35,6 +35,7 @@ func (s *Service) SetupRoutes(router routing.Router) {
 
 	// components
 	router.Get("/components/login_prompt", s.loginComponent)
+	router.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/auth/submit_login", s.handleLoginSubmission)
 
 	router.Get("/accounts", s.accountsDashboardView)
 	router.Get("/accounts/123", s.accountDashboardView)

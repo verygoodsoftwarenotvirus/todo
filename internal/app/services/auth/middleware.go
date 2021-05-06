@@ -6,7 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"errors"
+	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -19,15 +22,14 @@ import (
 )
 
 const (
-	// userLoginInputMiddlewareCtxKey is the context key for login input.
-	userLoginInputMiddlewareCtxKey types.ContextKey = "user_login_input"
 	// pasetoCreationInputMiddlewareCtxKey is the context key for login input.
 	pasetoCreationInputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
 	// changeActiveAccountMiddlewareCtxKey is the context key for login input.
 	changeActiveAccountMiddlewareCtxKey types.ContextKey = "change_active_account"
 
-	signatureHeaderKey     = "Signature"
-	pasetoAuthorizationKey = "Authorization"
+	urlEncodedFormHeaderKey      = "application/x-www-form-urlencoded"
+	signatureHeaderKey           = "Signature"
+	pasetoAuthorizationHeaderKey = "Authorization"
 
 	// usernameFormKey is the string we look for in request forms for username information.
 	usernameFormKey = "username"
@@ -43,17 +45,25 @@ var (
 )
 
 // parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
-func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
-	if err := req.ParseForm(); err == nil {
-		input := &types.UserLoginInput{
-			Username:  req.FormValue(usernameFormKey),
-			Password:  req.FormValue(passwordFormKey),
-			TOTPToken: req.FormValue(totpTokenFormKey),
-		}
+func parseFormEncodedLoginRequest(req *http.Request) *types.UserLoginInput {
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil
+	}
 
-		if input.Username != "" && input.Password != "" && input.TOTPToken != "" {
-			return input
-		}
+	form, err := url.ParseQuery(string(bodyBytes))
+	if err != nil {
+		return nil
+	}
+
+	input := &types.UserLoginInput{
+		Username:  form.Get(usernameFormKey),
+		Password:  form.Get(passwordFormKey),
+		TOTPToken: form.Get(totpTokenFormKey),
+	}
+
+	if input.Username != "" && input.Password != "" && input.TOTPToken != "" {
+		return input
 	}
 
 	return nil
@@ -65,7 +75,7 @@ func (s *service) fetchSessionContextDataFromPASETO(ctx context.Context, req *ht
 
 	logger := s.logger.WithRequest(req)
 
-	if rawToken := req.Header.Get(pasetoAuthorizationKey); rawToken != "" {
+	if rawToken := req.Header.Get(pasetoAuthorizationHeaderKey); rawToken != "" {
 		var token paseto.JSONToken
 
 		if err := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); err != nil {
@@ -308,15 +318,18 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
+		x := new(types.UserLoginInput)
 		logger := s.logger.WithRequest(req)
 
-		x := new(types.UserLoginInput)
-		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			if x = parseLoginInputFromForm(req); x == nil {
-				observability.AcknowledgeError(err, logger, span, "decoding request body")
+		if strings.HasPrefix(req.Header.Get("Content-Type"), urlEncodedFormHeaderKey) {
+			if x = parseFormEncodedLoginRequest(req); x == nil {
 				s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
 				return
 			}
+		} else if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+			return
 		}
 
 		if err := x.ValidateWithContext(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
@@ -325,7 +338,7 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, types.UserLoginInputContextKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

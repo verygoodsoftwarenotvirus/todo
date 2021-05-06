@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,7 +28,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseLoginInputFromForm(T *testing.T) {
+func buildFormFromLoginRequest(input *types.UserLoginInput) url.Values {
+	form := url.Values{}
+
+	form.Set(usernameFormKey, input.Username)
+	form.Set(passwordFormKey, input.Password)
+	form.Set(totpTokenFormKey, input.TOTPToken)
+
+	return form
+}
+
+func TestParseFormEncodedLoginRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -37,15 +49,11 @@ func TestParseLoginInputFromForm(T *testing.T) {
 			Password:  "password",
 			TOTPToken: "123456",
 		}
-		req := &http.Request{}
 
-		form := url.Values{}
-		form.Set(usernameFormKey, expected.Username)
-		form.Set(passwordFormKey, expected.Password)
-		form.Set(totpTokenFormKey, expected.TOTPToken)
-		req.Form = form
+		form := buildFormFromLoginRequest(expected)
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(form.Encode()))
 
-		actual := parseLoginInputFromForm(req)
+		actual := parseFormEncodedLoginRequest(req)
 
 		assert.Equal(t, expected, actual)
 	})
@@ -53,7 +61,10 @@ func TestParseLoginInputFromForm(T *testing.T) {
 	T.Run("returns nil for invalid request", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Nil(t, parseLoginInputFromForm(&http.Request{}))
+		badReader := &testutil.MockReadCloser{}
+		badReader.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
+
+		assert.Nil(t, parseFormEncodedLoginRequest(&http.Request{Body: badReader}))
 	})
 }
 
@@ -93,7 +104,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 		tokenRes, err := helper.service.buildPASETOResponse(helper.ctx, helper.sessionCtxData, helper.exampleAPIClient)
 		require.NoError(t, err)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -106,7 +117,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, "blah")
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, "blah")
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -121,7 +132,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		tokenRes := buildArbitraryPASETO(t, helper, time.Now().Add(-24*time.Hour), time.Minute, base64.RawURLEncoding.EncodeToString(helper.sessionCtxData.ToBytes()))
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -136,7 +147,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, `       \\\\\\\\\\\\               lololo`)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -151,7 +162,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, base64.RawURLEncoding.EncodeToString([]byte("blah")))
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -268,7 +279,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		tokenRes, err := helper.service.buildPASETOResponse(helper.ctx, helper.sessionCtxData, helper.exampleAPIClient)
 		require.NoError(t, err)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		h := &testutil.MockHTTPHandler{}
 		h.On(
@@ -288,7 +299,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.req.Header.Set(pasetoAuthorizationKey, "blah")
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, "blah")
 
 		h := &testutil.MockHTTPHandler{}
 		h.On(
@@ -690,6 +701,28 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		var err error
 		helper.req, err = http.NewRequest(http.MethodPost, "/login", &b)
 		require.NoError(t, err)
+
+		mockHandler := &testutil.MockHTTPHandler{}
+		mockHandler.On(
+			"ServeHTTP",
+			testutil.ResponseWriterMatcher,
+			testutil.RequestMatcher,
+		).Return()
+
+		helper.service.UserLoginInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusOK, helper.res.Code)
+		mock.AssertExpectationsForObjects(t, mockHandler)
+	})
+
+	T.Run("with form-encoded request", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		form := buildFormFromLoginRequest(helper.exampleLoginInput)
+
+		helper.req = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
+		helper.req.Header.Set("Content-Type", urlEncodedFormHeaderKey)
 
 		mockHandler := &testutil.MockHTTPHandler{}
 		mockHandler.On(

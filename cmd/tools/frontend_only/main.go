@@ -13,7 +13,7 @@ func main() {
 	logger := zerolog.NewLogger()
 	router := chi.NewRouter(logger)
 
-	service := frontend.ProvideService(logger)
+	service := frontend.ProvideService(logger, nil)
 	service.SetupRoutes(router)
 
 	if err := http.ListenAndServe(":8888", router.Handler()); err != nil {

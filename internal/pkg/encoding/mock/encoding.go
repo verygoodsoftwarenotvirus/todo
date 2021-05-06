@@ -82,3 +82,8 @@ func (m *EncoderDecoder) EncodeInvalidPermissionsResponse(ctx context.Context, r
 func (m *EncoderDecoder) DecodeRequest(ctx context.Context, req *http.Request, v interface{}) error {
 	return m.Called(ctx, req, v).Error(0)
 }
+
+// DecodeBytes satisfies our EncoderDecoder interface.
+func (m *EncoderDecoder) DecodeBytes(ctx context.Context, data []byte, v interface{}) error {
+	return m.Called(ctx, data, v).Error(0)
+}

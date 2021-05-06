@@ -22,6 +22,19 @@ func (s *Service) loginComponent(res http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+func (s *Service) loginView(res http.ResponseWriter, _ *http.Request) {
+	tmpl := renderTemplateIntoDashboard(loginPrompt, nil)
+
+	pageData := dashboardPageData{
+		Title:       "Login",
+		ContentData: nil,
+	}
+
+	if err := renderTemplateToResponse(tmpl, pageData, res); err != nil {
+		panic(err)
+	}
+}
+
 func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -35,8 +48,6 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	logger.WithValue("login_input", loginInput).Info("we made it!")
-
 	_, cookie, err := s.authService.AuthenticateUser(ctx, loginInput)
 	if err != nil {
 		renderStringToResponse(loginPrompt, res)
@@ -44,5 +55,63 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 	}
 
 	req.AddCookie(cookie)
+
 	http.Redirect(res, req, "/", http.StatusAccepted)
+}
+
+const registrationPrompt = `<form hx-post="/auth/submit_registration" hx-ext="json-enc, ajax-header, event-header">
+   <h1 class="h3 mb-3 fw-normal">Register</h1>
+   <div class="form-floating"><input id="usernameInput" required type="text" placeholder="username" minlength=4 name="username" placeholder="username" class="form-control"><label for="usernameInput">username</label></div>
+   <div class="form-floating"><input id="passwordInput" required type="password" minlength=8 name="password" placeholder="password" class="form-control"><label for="passwordInput">password</label></div>
+   <button class="w-100 btn btn-lg btn-primary" type="submit">Register</button>
+</form>`
+
+func (s *Service) registrationComponent(res http.ResponseWriter, _ *http.Request) {
+	tmpl := parseTemplate("", registrationPrompt, nil)
+
+	if err := renderTemplateToResponse(tmpl, nil, res); err != nil {
+		panic(err)
+	}
+}
+
+func (s *Service) registrationView(res http.ResponseWriter, _ *http.Request) {
+	tmpl := renderTemplateIntoDashboard(registrationPrompt, nil)
+
+	pageData := dashboardPageData{
+		Title:       "Register",
+		ContentData: nil,
+	}
+
+	if err := renderTemplateToResponse(tmpl, pageData, res); err != nil {
+		panic(err)
+	}
+}
+
+const successfulRegistrationResponse = `<div>
+   <img src={{ .TwoFactorQRCode }}/>
+</div>`
+
+func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	registrationInput, ok := ctx.Value(types.UserRegistrationInputContextKey).(*types.UserRegistrationInput)
+	if !ok || registrationInput == nil {
+		logger.Debug("no input found for registration request")
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	ucr, err := s.usersService.RegisterUser(ctx, registrationInput)
+	if err != nil {
+		renderStringToResponse(registrationPrompt, res)
+		return
+	}
+
+	tmpl := parseTemplate("", successfulRegistrationResponse, nil)
+	if err = renderTemplateToResponse(tmpl, ucr, res); err != nil {
+		panic(err)
+	}
 }

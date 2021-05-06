@@ -97,7 +97,9 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
 	adminService := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
-	service := frontend.ProvideService(logger, authService)
+	frontendAuthService := frontend.ProvideAuthService(authService)
+	usersService := frontend.ProvideUsersService(userDataService)
+	service := frontend.ProvideService(logger, frontendAuthService, usersService)
 	router := chi.NewRouter(logger)
 	httpserverServer, err := httpserver.ProvideServer(ctx, httpserverConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, dbm, logger, serverEncoderDecoder, router)
 	if err != nil {

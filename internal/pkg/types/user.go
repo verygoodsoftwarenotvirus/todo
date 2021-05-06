@@ -63,8 +63,8 @@ type (
 		Pagination
 	}
 
-	// UserCreationInput represents the input required from users to register an account.
-	UserCreationInput struct {
+	// UserRegistrationInput represents the input required from users to register an account.
+	UserRegistrationInput struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
@@ -143,7 +143,7 @@ type (
 
 	// UserDataService describes a structure capable of serving traffic related to users.
 	UserDataService interface {
-		UserCreationInputMiddleware(next http.Handler) http.Handler
+		UserRegistrationInputMiddleware(next http.Handler) http.Handler
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
@@ -159,6 +159,8 @@ type (
 		UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)
 		AvatarUploadHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+
+		RegisterUser(ctx context.Context, registrationInput *UserRegistrationInput) (*UserCreationResponse, error)
 	}
 )
 
@@ -195,8 +197,8 @@ func (u *User) IsBanned() bool {
 	return u.Reputation == BannedUserReputation
 }
 
-// ValidateWithContext ensures our provided UserCreationInput meets expectations.
-func (i *UserCreationInput) ValidateWithContext(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+// ValidateWithContext ensures our provided UserRegistrationInput meets expectations.
+func (i *UserRegistrationInput) ValidateWithContext(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),

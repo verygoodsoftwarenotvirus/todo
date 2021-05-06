@@ -107,7 +107,7 @@ func TestUserCreationInput_ValidateWithContext(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		x := &UserCreationInput{
+		x := &UserRegistrationInput{
 			Username: t.Name(),
 			Password: t.Name(),
 		}

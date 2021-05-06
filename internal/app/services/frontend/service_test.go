@@ -16,6 +16,6 @@ func TestProvideItemsService(T *testing.T) {
 
 		logger := logging.NewNonOperationalLogger()
 
-		assert.NotNil(t, ProvideService(logger, nil))
+		assert.NotNil(t, ProvideService(logger, nil, nil))
 	})
 }

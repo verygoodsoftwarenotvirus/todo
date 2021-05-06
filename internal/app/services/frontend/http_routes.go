@@ -23,9 +23,6 @@ var defaultFuncMap = map[string]interface{}{
 }
 
 // SetupRoutes sets up the routes.
-// the routes used to be like this:
-//		router.Get("/login", renderRawStringIntoDashboard(loginPrompt))
-// lol.
 func (s *Service) SetupRoutes(router routing.Router) {
 	initLocalizer()
 
@@ -33,32 +30,39 @@ func (s *Service) SetupRoutes(router routing.Router) {
 	router.Get("/dashboard", s.homepage)
 	router.Get("/favicon.svg", s.favicon)
 
-	// components
+	// auth stuff
+	router.Get("/login", s.loginView)
 	router.Get("/components/login_prompt", s.loginComponent)
 	router.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/auth/submit_login", s.handleLoginSubmission)
 
-	router.Get("/accounts", s.accountsDashboardView)
-	router.Get("/accounts/123", s.accountDashboardView)
-	router.Get("/dashboard_pages/accounts", s.accountsTableView)
-	router.Get("/dashboard_pages/accounts/123", s.accountsEditorView)
+	router.Get("/register", s.registrationView)
+	router.Get("/components/registration_prompt", s.registrationComponent)
+	router.WithMiddleware(s.usersService.UserRegistrationInputMiddleware).Post("/auth/submit_registration", s.handleRegistrationSubmission)
 
-	router.Get("/api_clients", s.apiClientsDashboardView)
-	router.Get("/api_clients/123", s.apiClientDashboardView)
-	router.Get("/dashboard_pages/api_clients", s.apiClientsTableView)
-	router.Get("/dashboard_pages/api_clients/123", s.apiClientsEditorView)
+	attributedRouter := router.WithMiddleware(s.authService.UserAttributionMiddleware)
 
-	router.Get("/account/webhooks", s.webhooksDashboardView)
-	router.Get("/account/webhooks/123", s.webhookDashboardView)
-	router.Get("/dashboard_pages/account/webhooks", s.webhooksTableView)
-	router.Get("/dashboard_pages/account/webhooks/123", s.webhooksEditorView)
+	attributedRouter.Get("/accounts", s.accountsDashboardView)
+	attributedRouter.Get("/accounts/123", s.accountDashboardView)
+	attributedRouter.Get("/dashboard_pages/accounts", s.accountsTableView)
+	attributedRouter.Get("/dashboard_pages/accounts/123", s.accountsEditorView)
 
-	router.Get("/dashboard_pages/user/settings", s.userSettingsView)
-	router.Get("/user/settings", s.userSettingsDashboardView)
-	router.Get("/dashboard_pages/account/settings", s.accountSettingsView)
-	router.Get("/account/settings", s.accountSettingsDashboardView)
+	attributedRouter.Get("/api_clients", s.apiClientsDashboardView)
+	attributedRouter.Get("/api_clients/123", s.apiClientDashboardView)
+	attributedRouter.Get("/dashboard_pages/api_clients", s.apiClientsTableView)
+	attributedRouter.Get("/dashboard_pages/api_clients/123", s.apiClientsEditorView)
 
-	router.Get("/items", s.itemsDashboardView)
-	router.Get("/items/123", s.itemDashboardView)
-	router.Get("/dashboard_pages/items", s.itemsTableView)
-	router.Get("/dashboard_pages/items/123", s.itemsEditorView)
+	attributedRouter.Get("/account/webhooks", s.webhooksDashboardView)
+	attributedRouter.Get("/account/webhooks/123", s.webhookDashboardView)
+	attributedRouter.Get("/dashboard_pages/account/webhooks", s.webhooksTableView)
+	attributedRouter.Get("/dashboard_pages/account/webhooks/123", s.webhooksEditorView)
+
+	attributedRouter.Get("/dashboard_pages/user/settings", s.userSettingsView)
+	attributedRouter.Get("/user/settings", s.userSettingsDashboardView)
+	attributedRouter.Get("/dashboard_pages/account/settings", s.accountSettingsView)
+	attributedRouter.Get("/account/settings", s.accountSettingsDashboardView)
+
+	attributedRouter.Get("/items", s.itemsDashboardView)
+	attributedRouter.Get("/items/123", s.itemDashboardView)
+	attributedRouter.Get("/dashboard_pages/items", s.itemsTableView)
+	attributedRouter.Get("/dashboard_pages/items/123", s.itemsEditorView)
 }

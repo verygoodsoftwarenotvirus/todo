@@ -654,7 +654,7 @@ func TestAuthService_ChangeActiveAccountInputMiddleware(T *testing.T) {
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
 			testutil.ResponseWriterMatcher,
-			"attached input is invalid",
+			"invalid request content",
 			http.StatusBadRequest,
 		)
 		helper.service.encoderDecoder = encoderDecoder
@@ -755,7 +755,7 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher, "attached input is invalid", http.StatusBadRequest)
+			testutil.ResponseWriterMatcher, "invalid request content", http.StatusBadRequest)
 		helper.service.encoderDecoder = encoderDecoder
 
 		mockHandler := &testutil.MockHTTPHandler{}
@@ -834,7 +834,7 @@ func TestAuthService_PASETOCreationInputMiddleware(T *testing.T) {
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
 			testutil.ResponseWriterMatcher,
-			"attached input is invalid",
+			"invalid request content",
 			http.StatusBadRequest,
 		)
 		helper.service.encoderDecoder = encoderDecoder

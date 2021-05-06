@@ -105,6 +105,54 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.RespondWithData(ctx, res, users)
 }
 
+func (s *service) RegisterUser(ctx context.Context, registrationInput *types.UserRegistrationInput) (*types.UserCreationResponse, error) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	// NOTE: I feel comfortable letting username be in the logger, since
+	// the logging statements below are only in the event of errs. If
+	// and when that changes, this can/should be removed.
+	logger := s.logger.WithValue(keys.UsernameKey, registrationInput.Username)
+	tracing.AttachUsernameToSpan(span, registrationInput.Username)
+
+	// hash the password
+	hp, err := s.authenticator.HashPassword(ctx, registrationInput.Password)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "hashing password")
+	}
+
+	input := &types.UserDataStoreCreationInput{
+		Username:        registrationInput.Username,
+		HashedPassword:  hp,
+		TwoFactorSecret: "",
+	}
+
+	// generate a two factor secret.
+	if input.TwoFactorSecret, err = s.secretGenerator.GenerateBase32EncodedString(ctx, totpSecretSize); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "error generating TOTP secret")
+	}
+
+	// create the user.
+	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
+	if userCreationErr != nil {
+		return nil, observability.PrepareError(err, logger, span, "error creating user")
+	}
+
+	// notify the relevant parties.
+	tracing.AttachUserIDToSpan(span, user.ID)
+	s.userCounter.Increment(ctx)
+
+	// UserCreationResponse is a struct we can use to notify the user of their two factor secret, but ideally just this once and then never again.
+	ucr := &types.UserCreationResponse{
+		ID:              user.ID,
+		Username:        user.Username,
+		CreatedOn:       user.CreatedOn,
+		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
+	}
+
+	return ucr, nil
+}
+
 // CreateHandler is our user creation route.
 func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -121,9 +169,9 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch parsed input from session context data.
-	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*types.UserCreationInput)
+	userInput, ok := ctx.Value(types.UserRegistrationInputContextKey).(*types.UserRegistrationInput)
 	if !ok {
-		logger.Info("valid input not attached to UsersService CreateHandler request")
+		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
@@ -134,54 +182,19 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UsernameKey, userInput.Username)
 	tracing.AttachUsernameToSpan(span, userInput.Username)
 
-	// ensure the passwords isn't garbage-tier
+	// ensure the password is not garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
 		logger.WithValue("password_validation_error", err).Debug("weak password provided to user creation route")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "password too weak", http.StatusBadRequest)
 		return
 	}
 
-	// hash the passwords.
-	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
+	ucr, err := s.RegisterUser(ctx, userInput)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "hashing password")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	input := &types.UserDataStoreCreationInput{
-		Username:        userInput.Username,
-		HashedPassword:  hp,
-		TwoFactorSecret: "",
-	}
-
-	// generate a two factor secret.
-	if input.TwoFactorSecret, err = s.secretGenerator.GenerateBase32EncodedString(ctx, totpSecretSize); err != nil {
-		observability.AcknowledgeError(err, logger, span, "error generating TOTP secret")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// create the user.
-	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
-	if userCreationErr != nil {
 		observability.AcknowledgeError(err, logger, span, "error creating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	// UserCreationResponse is a struct we can use to notify the user of
-	// their two factor secret, but ideally just this once and then never again.
-	ucr := &types.UserCreationResponse{
-		ID:              user.ID,
-		Username:        user.Username,
-		CreatedOn:       user.CreatedOn,
-		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
-	}
-
-	// notify the relevant parties.
-	tracing.AttachUserIDToSpan(span, user.ID)
-	s.userCounter.Increment(ctx)
 
 	// encode and peace.
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, ucr, http.StatusCreated)

@@ -57,7 +57,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 	router.Route("/users", func(userRouter routing.Router) {
 		userRouter.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
 		userRouter.WithMiddleware(s.authService.CookieRequirementMiddleware).Post("/logout", s.authService.LogoutHandler)
-		userRouter.WithMiddleware(s.usersService.UserCreationInputMiddleware).Post(root, s.usersService.CreateHandler)
+		userRouter.WithMiddleware(s.usersService.UserRegistrationInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.WithMiddleware(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 
 		// need credentials beyond this point

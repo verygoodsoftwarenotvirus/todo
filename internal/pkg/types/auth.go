@@ -21,6 +21,8 @@ const (
 	AccountIDContextKey ContextKey = "account_id"
 	// UserLoginInputContextKey is the non-string type we use for referencing SessionContextData structs.
 	UserLoginInputContextKey ContextKey = "user_login_input"
+	// UserRegistrationInputContextKey is the non-string type we use for referencing SessionContextData structs.
+	UserRegistrationInputContextKey ContextKey = "user_registration_input"
 )
 
 var (

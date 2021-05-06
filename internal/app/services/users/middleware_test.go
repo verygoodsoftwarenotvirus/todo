@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestService_UserCreationInputMiddleware(T *testing.T) {
+func TestService_UserRegistrationInputMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -37,7 +37,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		res := httptest.NewRecorder()
 		req.Body = testutil.CreateBodyFromStruct(t, fakes.BuildFakeUserCreationInput())
 
-		actual := s.UserCreationInputMiddleware(mh)
+		actual := s.UserRegistrationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)
@@ -55,7 +55,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 			"DecodeRequest",
 			testutil.ContextMatcher,
 			testutil.RequestMatcher,
-			mock.IsType(&types.UserCreationInput{}),
+			mock.IsType(&types.UserRegistrationInput{}),
 		).Return(errors.New("blah"))
 		encoderDecoder.On(
 			"EncodeErrorResponse",
@@ -70,7 +70,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		res := httptest.NewRecorder()
 
 		mh := &testutil.MockHTTPHandler{}
-		actual := s.UserCreationInputMiddleware(mh)
+		actual := s.UserRegistrationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
@@ -93,7 +93,7 @@ func TestService_UserCreationInputMiddleware(T *testing.T) {
 		res := httptest.NewRecorder()
 		req.Body = testutil.CreateBodyFromStruct(t, exampleInput)
 
-		actual := s.UserCreationInputMiddleware(mh)
+		actual := s.UserRegistrationInputMiddleware(mh)
 		actual.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code, "expected %d in status response, got %d", http.StatusOK, res.Code)

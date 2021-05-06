@@ -30,44 +30,12 @@ const (
 	urlEncodedFormHeaderKey      = "application/x-www-form-urlencoded"
 	signatureHeaderKey           = "Signature"
 	pasetoAuthorizationHeaderKey = "Authorization"
-
-	// usernameFormKey is the string we look for in request forms for username information.
-	usernameFormKey = "username"
-	// passwordFormKey is the string we look for in request forms for passwords information.
-	passwordFormKey = "password"
-	// totpTokenFormKey is the string we look for in request forms for TOTP token information.
-	totpTokenFormKey = "totpToken"
 )
 
 var (
 	errTokenExpired  = errors.New("token expired")
 	errTokenNotFound = errors.New("no token data found")
 )
-
-// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
-func parseFormEncodedLoginRequest(req *http.Request) *types.UserLoginInput {
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil
-	}
-
-	form, err := url.ParseQuery(string(bodyBytes))
-	if err != nil {
-		return nil
-	}
-
-	input := &types.UserLoginInput{
-		Username:  form.Get(usernameFormKey),
-		Password:  form.Get(passwordFormKey),
-		TOTPToken: form.Get(totpTokenFormKey),
-	}
-
-	if input.Username != "" && input.Password != "" && input.TOTPToken != "" {
-		return input
-	}
-
-	return nil
-}
 
 func (s *service) fetchSessionContextDataFromPASETO(ctx context.Context, req *http.Request) (*types.SessionContextData, error) {
 	_, span := s.tracer.StartSpan(ctx)
@@ -297,7 +265,7 @@ func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Han
 		x := new(types.ChangeActiveAccountInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
@@ -312,6 +280,40 @@ func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Han
 	})
 }
 
+const (
+	// usernameFormKey is the string we look for in request forms for username information.
+	usernameFormKey = "username"
+	// passwordFormKey is the string we look for in request forms for passwords information.
+	passwordFormKey = "password"
+	// totpTokenFormKey is the string we look for in request forms for TOTP token information.
+	totpTokenFormKey = "totpToken"
+)
+
+// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
+func parseFormEncodedLoginRequest(req *http.Request) *types.UserLoginInput {
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil
+	}
+
+	form, err := url.ParseQuery(string(bodyBytes))
+	if err != nil {
+		return nil
+	}
+
+	input := &types.UserLoginInput{
+		Username:  form.Get(usernameFormKey),
+		Password:  form.Get(passwordFormKey),
+		TOTPToken: form.Get(totpTokenFormKey),
+	}
+
+	if input.Username != "" && input.Password != "" && input.TOTPToken != "" {
+		return input
+	}
+
+	return nil
+}
+
 // UserLoginInputMiddleware fetches user login input from requests.
 func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -323,12 +325,12 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 
 		if strings.HasPrefix(req.Header.Get("Content-Type"), urlEncodedFormHeaderKey) {
 			if x = parseFormEncodedLoginRequest(req); x == nil {
-				s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+				s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 				return
 			}
 		} else if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
@@ -354,7 +356,7 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 		x := new(types.PASETOCreationInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 

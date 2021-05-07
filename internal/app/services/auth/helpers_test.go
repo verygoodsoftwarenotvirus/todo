@@ -204,7 +204,7 @@ func TestAuthService_validateLogin(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-		).Return(true, passwords.ErrInvalidTwoFactorCode)
+		).Return(true, passwords.ErrInvalidTOTPToken)
 		helper.service.authenticator = authenticator
 
 		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)

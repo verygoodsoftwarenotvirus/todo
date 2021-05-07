@@ -18,6 +18,10 @@ other = "ID,Name,Details,Last Updated On,Created On"
 description = "sign in call to action."
 other = "Sign In"
 
+[callsToAction.register]
+description = "registration call to action."
+other = "Register"
+
 [dashboardSidebar.labels.things]
 description = "Sidebar label for the things section."
 other = "Things"

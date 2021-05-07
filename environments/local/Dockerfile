@@ -1,24 +1,12 @@
 # build stage
-FROM golang:stretch AS build-stage
+FROM golang:stretch
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-COPY . .
+RUN	apt-get update && apt-get install -y \
+	--no-install-recommends \
+	entr \
+	&& rm -rf /var/lib/apt/lists/*
+ENV ENTR_INOTIFY_WORKAROUND=true
 
-RUN go build -trimpath -o /todo gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
-
-# final stage
-FROM debian:stretch
-
-RUN mkdir /home/appuser
-RUN groupadd --gid 1000 appuser && \
-    useradd --system --uid 1000 --gid appuser appuser
-RUN chown appuser /home/appuser
-WORKDIR /home/appuser
-USER appuser
-
-COPY --from=build-stage /todo /todo
-
-ENV DOCKER=true
-
-ENTRYPOINT ["/todo"]
+ENTRYPOINT echo "please wait for server to start" && find . -type f \( -iname "*.go" -o -iname "*.gotpl" ! -iname "*_test.go" \) | entr -r go run gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server

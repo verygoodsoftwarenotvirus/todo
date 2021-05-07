@@ -81,7 +81,7 @@ type (
 		Username        string         `json:"username"`
 		AccountStatus   userReputation `json:"accountStatus"`
 		TwoFactorQRCode string         `json:"qrCode"`
-		ID              uint64         `json:"id"`
+		CreatedUserID   uint64         `json:"ID"`
 		CreatedOn       uint64         `json:"createdOn"`
 		IsAdmin         bool           `json:"isAdmin"`
 	}
@@ -161,6 +161,7 @@ type (
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 
 		RegisterUser(ctx context.Context, registrationInput *UserRegistrationInput) (*UserCreationResponse, error)
+		VerifyUserTwoFactorSecret(ctx context.Context, input *TOTPSecretVerificationInput) error
 	}
 )
 

@@ -1,51 +1,53 @@
 package frontend
 
 import (
-	"bytes"
 	"html/template"
-
 	// import embed for the side effects.
 	_ "embed"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 )
 
 type dashboardPageData struct {
-	Title                       string
 	ContentData                 interface{}
+	Title                       string
 	PageDescription             string
 	PageTitle                   string
 	PageImagePreview            string
 	PageImagePreviewDescription string
+	LoggedIn                    bool
 }
 
 //go:embed templates/dashboard.gotpl
 var dashboardTemplateSrc string
 
-func (s *Service) homepage(res http.ResponseWriter, _ *http.Request) {
-	dash, err := renderTemplateIntoDashboardAsString("Home", "", "", nil)
+func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
+	_, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
-		panic(err)
+		// that's okay, it's the homepage.
+		_ = err
 	}
 
-	renderStringToResponse(dash, res)
-}
-
-func renderTemplateIntoDashboard(templateSrc string, funcMap template.FuncMap) *template.Template {
-	return parseListOfTemplates(funcMap, "dashboard", dashboardTemplateSrc, wrapTemplateInContentDefinition(templateSrc))
-}
-
-func renderTemplateIntoDashboardAsString(title, templateSrc string, contentData interface{}, funcMap template.FuncMap) (string, error) {
+	tmpl := s.renderTemplateIntoDashboard("", nil)
 	x := &dashboardPageData{
-		Title:       title,
-		ContentData: contentData,
+		LoggedIn:    sessionCtxData != nil,
+		Title:       "Home",
+		ContentData: "",
 	}
 
-	tmpl := parseListOfTemplates(funcMap, "dashboard", dashboardTemplateSrc, templateSrc)
-
-	var b bytes.Buffer
-	if err := tmpl.Execute(&b, x); err != nil {
-		return "", err
+	if err = s.renderTemplateToResponse(tmpl, x, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+}
 
-	return b.String(), nil
+func (s *Service) renderTemplateIntoDashboard(templateSrc string, funcMap template.FuncMap) *template.Template {
+	return parseListOfTemplates(mergeFuncMaps(s.templateFuncMap, funcMap), "dashboard", dashboardTemplateSrc, wrapTemplateInContentDefinition(templateSrc))
 }

@@ -75,7 +75,7 @@ func (a *Argon2Authenticator) ValidateLogin(ctx context.Context, hash, password,
 			"provided_code":    totpCode,
 		}).Debug("invalid code provided")
 
-		return passwordMatches, ErrInvalidTwoFactorCode
+		return passwordMatches, ErrInvalidTOTPToken
 	}
 
 	return passwordMatches, nil

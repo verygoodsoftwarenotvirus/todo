@@ -23,10 +23,10 @@ type basicEditorTemplateConfig struct {
 //go:embed templates/basic_editor.gotpl
 var basicEditorTemplateSrc string
 
-func buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
+func (s *Service) buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := parseTemplate("", basicEditorTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
+	if err := s.parseTemplate("", basicEditorTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 
@@ -49,10 +49,10 @@ type basicTableTemplateConfig struct {
 //go:embed templates/basic_table.gotpl
 var basicTableTemplateSrc string
 
-func buildBasicTableTemplate(cfg *basicTableTemplateConfig) string {
+func (s *Service) buildBasicTableTemplate(cfg *basicTableTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := parseTemplate("", basicTableTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
+	if err := s.parseTemplate("", basicTableTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 

@@ -4,8 +4,6 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
 const userSettingsPageSrc = `<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
@@ -26,43 +24,50 @@ const userSettingsPageSrc = `<div class="d-flex justify-content-between flex-wra
 	</form>
 </div>`
 
-func (s *Service) userSettingsView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
+func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
 
-	logger := s.logger.WithRequest(req)
+		logger := s.logger.WithRequest(req)
 
-	var user *types.User
-	if s.useFakes {
-		user = fakes.BuildFakeUser()
-	}
+		sessionCtxData, err := s.sessionContextDataFetcher(req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
+			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			return
+		}
 
-	tmpl := parseTemplate("", userSettingsPageSrc, nil)
+		user, err := s.dataStore.GetUser(ctx, sessionCtxData.Requester.ID)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "error fetching user from datastore")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	if err := renderTemplateToResponse(tmpl, user, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
+		if includeBaseTemplate {
+			tmpl := s.renderTemplateIntoDashboard(userSettingsPageSrc, nil)
 
-func (s *Service) userSettingsDashboardView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
+			page := &dashboardPageData{
+				LoggedIn:    sessionCtxData != nil,
+				Title:       "User Settings",
+				ContentData: user,
+			}
 
-	logger := s.logger.WithRequest(req)
+			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering user settings viewer into dashboard")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			tmpl := s.parseTemplate("", userSettingsPageSrc, nil)
 
-	var user *types.User
-	if s.useFakes {
-		user = fakes.BuildFakeUser()
-	}
-
-	tmpl := renderTemplateIntoDashboard(userSettingsPageSrc, nil)
-
-	if err := renderTemplateToResponse(tmpl, user, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+			if err = s.renderTemplateToResponse(tmpl, user, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering user settings viewer into dashboard")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }
 
@@ -84,42 +89,50 @@ const accountSettingsPageSrc = `<div class="d-flex justify-content-between flex-
 	</form>
 </div>`
 
-func (s *Service) accountSettingsView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
+func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
 
-	logger := s.logger.WithRequest(req)
+		logger := s.logger.WithRequest(req)
 
-	var account *types.Account
-	if s.useFakes {
-		account = fakes.BuildFakeAccount()
-	}
+		// get session context data
+		sessionCtxData, err := s.sessionContextDataFetcher(req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
+			http.Redirect(res, req, buildRedirectURL("/login", "/account/settings"), http.StatusSeeOther)
+			return
+		}
 
-	tmpl := parseTemplate("", accountSettingsPageSrc, nil)
+		account, err := s.fetchAccount(ctx, sessionCtxData)
+		if err != nil {
+			s.logger.Error(err, "retrieving account information from database")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
-	if err := renderTemplateToResponse(tmpl, account, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
+		if includeBaseTemplate {
+			tmpl := s.renderTemplateIntoDashboard(accountSettingsPageSrc, nil)
 
-func (s *Service) accountSettingsDashboardView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
+			page := &dashboardPageData{
+				LoggedIn:    sessionCtxData != nil,
+				Title:       "Account Settings",
+				ContentData: account,
+			}
 
-	logger := s.logger.WithRequest(req)
+			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering account settings viewer into dashboard")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			tmpl := s.parseTemplate("", accountSettingsPageSrc, nil)
 
-	var account *types.Account
-	if s.useFakes {
-		account = fakes.BuildFakeAccount()
-	}
-
-	tmpl := renderTemplateIntoDashboard(accountSettingsPageSrc, nil)
-
-	if err := renderTemplateToResponse(tmpl, account, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+			if err = s.renderTemplateToResponse(tmpl, account, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering account settings viewer into dashboard")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }

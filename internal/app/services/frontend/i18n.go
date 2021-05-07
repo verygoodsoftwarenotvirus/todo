@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -13,35 +14,29 @@ import (
 //go:embed translations/*.toml
 var translationsDir embed.FS
 
-var localizer *i18n.Localizer
+func provideLocalizer() (*i18n.Localizer, error) {
+	bundle := i18n.NewBundle(language.English)
+	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 
-func initLocalizer() {
-	if localizer == nil {
-		bundle := i18n.NewBundle(language.English)
-		bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
-
-		translationFolderContents, err := fs.ReadDir(translationsDir, "translations")
-		if err != nil {
-			panic(err)
-		}
-
-		for _, f := range translationFolderContents {
-			translationFileBytes, err := fs.ReadFile(translationsDir, filepath.Join("translations", f.Name()))
-			if err != nil {
-				panic(err)
-			}
-
-			bundle.MustParseMessageFileBytes(translationFileBytes, f.Name())
-		}
-
-		localizer = i18n.NewLocalizer(bundle, "en")
+	translationFolderContents, folderReadErr := fs.ReadDir(translationsDir, "translations")
+	if folderReadErr != nil {
+		return nil, folderReadErr
 	}
+
+	for _, f := range translationFolderContents {
+		translationFileBytes, fileReadErr := fs.ReadFile(translationsDir, filepath.Join("translations", f.Name()))
+		if fileReadErr != nil {
+			return nil, fileReadErr
+		}
+
+		bundle.MustParseMessageFileBytes(translationFileBytes, f.Name())
+	}
+
+	return i18n.NewLocalizer(bundle, "en"), nil
 }
 
-func getSimpleLocalizedString(messageID string) string {
-	initLocalizer()
-
-	return localizer.MustLocalize(&i18n.LocalizeConfig{
+func (s *Service) getSimpleLocalizedString(messageID string) string {
+	return s.localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID:      messageID,
 		DefaultMessage: nil,
 		TemplateData:   nil,
@@ -49,6 +44,12 @@ func getSimpleLocalizedString(messageID string) string {
 	})
 }
 
-func init() {
-	initLocalizer()
+func (s *Service) fetchTableColumns(messageID string) []string {
+	out := []string{}
+
+	for _, x := range strings.Split(s.getSimpleLocalizedString(messageID), ",") {
+		out = append(out, strings.TrimSpace(x))
+	}
+
+	return out
 }

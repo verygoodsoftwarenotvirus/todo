@@ -388,7 +388,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-		).Return(false, passwords.ErrInvalidTwoFactorCode)
+		).Return(false, passwords.ErrInvalidTOTPToken)
 		helper.service.authenticator = authenticator
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}

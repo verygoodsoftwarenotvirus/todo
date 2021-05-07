@@ -96,7 +96,7 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 	logger.WithValue("login_valid", loginValid)
 
 	if err != nil {
-		if errors.Is(err, passwords.ErrInvalidTwoFactorCode) {
+		if errors.Is(err, passwords.ErrInvalidTOTPToken) {
 			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
 			return user, nil, ErrInvalidCredentials
 		} else if errors.Is(err, passwords.ErrPasswordDoesNotMatch) {

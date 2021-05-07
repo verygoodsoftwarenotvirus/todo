@@ -83,8 +83,6 @@ func (s *service) UserRegistrationInputMiddleware(next http.Handler) http.Handle
 			return
 		}
 
-		logger.WithValue("input", x).Info("WE MADE IT THROUGH THE MIDDLEWARE")
-
 		// attach parsed value to session context data.
 		ctx = context.WithValue(ctx, types.UserRegistrationInputContextKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))

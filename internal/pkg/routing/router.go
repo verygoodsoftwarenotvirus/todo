@@ -17,17 +17,10 @@ type (
 	Router interface {
 		LogRoutes()
 		Handler() http.Handler
-		WithMiddleware(middleware ...Middleware) Router
-		AddRoute(method, path string, handler http.HandlerFunc, middleware ...Middleware) error
-
-		// Handle and HandleFunc adds routes for `pattern` that matches
-		// all HTTP methods.
 		Handle(pattern string, handler http.Handler)
 		HandleFunc(pattern string, handler http.HandlerFunc)
-
-		// Route mounts a sub-Router along a `pattern`` string.
+		WithMiddleware(middleware ...Middleware) Router
 		Route(pattern string, fn func(r Router)) Router
-
 		Connect(pattern string, handler http.HandlerFunc)
 		Delete(pattern string, handler http.HandlerFunc)
 		Get(pattern string, handler http.HandlerFunc)
@@ -37,6 +30,7 @@ type (
 		Post(pattern string, handler http.HandlerFunc)
 		Put(pattern string, handler http.HandlerFunc)
 		Trace(pattern string, handler http.HandlerFunc)
+		AddRoute(method, path string, handler http.HandlerFunc, middleware ...Middleware) error
 	}
 
 	// RouteParamManager builds route param fetchers for a compatible router.

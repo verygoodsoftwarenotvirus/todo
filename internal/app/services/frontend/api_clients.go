@@ -1,8 +1,8 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -10,133 +10,186 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-var apiClientsTableConfig = &basicTableTemplateConfig{
-	Title:       "API Clients",
-	ExternalURL: "/api_clients/123",
-	GetURL:      "/dashboard_pages/api_clients/123",
-	Columns:     fetchTableColumns("columns.apiClients"),
-	CellFields: []string{
-		"Name",
-		"ExternalID",
-		"ClientID",
-		"BelongsToUser",
-	},
-	RowDataFieldName:     "Clients",
-	IncludeLastUpdatedOn: false,
-	IncludeCreatedOn:     true,
+const (
+	apiClientIDURLParamKey = "api_client"
+)
+
+func (s *Service) buildAPIClientsTableConfig() *basicTableTemplateConfig {
+	return &basicTableTemplateConfig{
+		Title:       "API Clients",
+		ExternalURL: "/api_clients/123",
+		GetURL:      "/dashboard_pages/api_clients/123",
+		Columns:     s.fetchTableColumns("columns.apiClients"),
+		CellFields: []string{
+			"Name",
+			"ExternalID",
+			"ClientID",
+			"BelongsToUser",
+		},
+		RowDataFieldName:     "Clients",
+		IncludeLastUpdatedOn: false,
+		IncludeCreatedOn:     true,
+	}
 }
 
-var apiClientEditorConfig = &basicEditorTemplateConfig{
-	Fields: []basicEditorField{
-		{
-			Name:      "Name",
-			InputType: "text",
-			Required:  true,
+func (s *Service) buildAPIClientEditorConfig() *basicEditorTemplateConfig {
+	return &basicEditorTemplateConfig{
+		Fields: []basicEditorField{
+			{
+				Name:      "Name",
+				InputType: "text",
+				Required:  true,
+			},
+			{
+				Name:      "ExternalID",
+				InputType: "text",
+				Required:  true,
+			},
+			{
+				Name:      "ClientID",
+				InputType: "text",
+				Required:  true,
+			},
 		},
-		{
-			Name:      "ExternalID",
-			InputType: "text",
-			Required:  true,
+		FuncMap: map[string]interface{}{
+			"componentTitle": func(x *types.APIClient) string {
+				return fmt.Sprintf("Client #%d", x.ID)
+			},
 		},
-		{
-			Name:      "ClientID",
-			InputType: "text",
-			Required:  true,
-		},
-	},
-	FuncMap: map[string]interface{}{
-		"componentTitle": func(x *types.APIClient) string {
-			return fmt.Sprintf("Client #%d", x.ID)
-		},
-	},
+	}
 }
 
-func (s *Service) apiClientsEditorView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
+func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (apiClient *types.APIClient, err error) {
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
+	logger := s.logger
 
-	var apiClient *types.APIClient
-	if s.useFakes {
-		logger.Debug("using fakes")
+	apiClientID := s.routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client")(req)
+
+	if s.useFakeData {
 		apiClient = fakes.BuildFakeAPIClient()
+	} else {
+		apiClient, err = s.dataStore.GetAPIClientByDatabaseID(ctx, apiClientID, sessionCtxData.Requester.ID)
+		if err != nil {
+			return nil, observability.PrepareError(err, logger, span, "fetching API client data")
+		}
 	}
 
-	tmpl := parseTemplate("", buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
+	return apiClient, nil
+}
 
-	if err := renderTemplateToResponse(tmpl, apiClient, res); err != nil {
-		log.Panic(err)
+func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		sessionCtxData, err := s.sessionContextDataFetcher(req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
+			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			return
+		}
+
+		apiClient, err := s.fetchAPIClient(ctx, sessionCtxData, req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "error fetching item from datastore")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		apiClientEditorConfig := s.buildAPIClientEditorConfig()
+		if includeBaseTemplate {
+			tmpl := s.parseTemplate("", s.buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
+
+			if err = s.renderTemplateToResponse(tmpl, apiClient, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering API client editor view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			view := s.renderTemplateIntoDashboard(s.buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
+
+			page := &dashboardPageData{
+				LoggedIn:    sessionCtxData != nil,
+				Title:       fmt.Sprintf("APIClient #%d", apiClient.ID),
+				ContentData: apiClient,
+			}
+
+			if err = s.renderTemplateToResponse(view, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering API clients dashboard view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }
 
-func (s *Service) apiClientsTableView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
+func (s *Service) fetchAPIClients(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (apiClients *types.APIClientList, err error) {
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
+	logger := s.logger
 
-	var apiClients *types.APIClientList
-	if s.useFakes {
-		logger.Debug("using fakes")
+	if s.useFakeData {
 		apiClients = fakes.BuildFakeAPIClientList()
+	} else {
+		filter := types.ExtractQueryFilter(req)
+		apiClients, err = s.dataStore.GetAPIClients(ctx, sessionCtxData.Requester.ID, filter)
+		if err != nil {
+			return nil, observability.PrepareError(err, logger, span, "fetching API client data")
+		}
 	}
 
-	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(apiClientsTableConfig), nil)
-
-	if err := renderTemplateToResponse(tmpl, apiClients, res); err != nil {
-		log.Panic(err)
-	}
+	return apiClients, nil
 }
 
-func (s *Service) apiClientDashboardView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
+func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
 
-	logger := s.logger.WithRequest(req)
+		logger := s.logger.WithRequest(req)
 
-	var apiClient *types.APIClient
-	if s.useFakes {
-		logger.Debug("using fakes")
-		apiClient = fakes.BuildFakeAPIClient()
-	}
+		sessionCtxData, err := s.sessionContextDataFetcher(req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
+			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			return
+		}
 
-	view := renderTemplateIntoDashboard(buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
+		apiClients, err := s.fetchAPIClients(ctx, sessionCtxData, req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "error fetching API client from datastore")
+			res.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	page := &dashboardPageData{
-		Title:       fmt.Sprintf("APIClient #%d", apiClient.ID),
-		ContentData: apiClient,
-	}
+		apiClientsTableConfig := s.buildAPIClientsTableConfig()
+		if includeBaseTemplate {
+			view := s.renderTemplateIntoDashboard(s.buildBasicTableTemplate(apiClientsTableConfig), nil)
 
-	if err := renderTemplateToResponse(view, page, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering API clients dashboard view")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
+			page := &dashboardPageData{
+				LoggedIn:    sessionCtxData != nil,
+				Title:       "APIClients",
+				ContentData: apiClients,
+			}
 
-func (s *Service) apiClientsDashboardView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
+			if err = s.renderTemplateToResponse(view, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering API clients dashboard view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			tmpl := s.parseTemplate("dashboard", s.buildBasicTableTemplate(apiClientsTableConfig), nil)
 
-	logger := s.logger.WithRequest(req)
-
-	var apiClients *types.APIClientList
-	if s.useFakes {
-		logger.Debug("using fakes")
-		apiClients = fakes.BuildFakeAPIClientList()
-	}
-
-	view := renderTemplateIntoDashboard(buildBasicTableTemplate(apiClientsTableConfig), nil)
-
-	page := &dashboardPageData{
-		Title:       "APIClients",
-		ContentData: apiClients,
-	}
-
-	if err := renderTemplateToResponse(view, page, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering API clients dashboard view")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+			if err = s.renderTemplateToResponse(tmpl, apiClients, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering API clients table view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }

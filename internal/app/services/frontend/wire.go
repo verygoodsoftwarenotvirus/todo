@@ -1,8 +1,9 @@
 package frontend
 
 import (
-	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+
+	"github.com/google/wire"
 )
 
 var (
@@ -14,12 +15,12 @@ var (
 	)
 )
 
-// ProvideAuthService does what I hope wire one day figures out how to do.
+// ProvideAuthService does what I hope one day wire figures out how to do.
 func ProvideAuthService(x types.AuthService) AuthService {
 	return x
 }
 
-// ProvideUsersService does what I hope wire one day figures out how to do.
+// ProvideUsersService does what I hope one day wire figures out how to do.
 func ProvideUsersService(x types.UserDataService) UsersService {
 	return x
 }

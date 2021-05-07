@@ -5,10 +5,28 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 )
 
+const (
+	redirectToQueryKey = "redirectTo"
+)
+
+func buildRedirectURL(basePath, redirectTo string) string {
+	u := &url.URL{
+		Path:     basePath,
+		RawQuery: url.Values{redirectToQueryKey: {redirectTo}}.Encode(),
+	}
+
+	return u.String()
+}
+
+func pluckRedirectURL(req *http.Request) string {
+	return req.URL.Query().Get(redirectToQueryKey)
+}
+
 func parseListOfTemplates(funcMap template.FuncMap, name string, templates ...string) *template.Template {
-	tmpl := template.New(name).Funcs(appendToDefaultFuncMap(funcMap))
+	tmpl := template.New(name).Funcs(funcMap)
 
 	for _, t := range templates {
 		tmpl = template.Must(tmpl.Parse(t))
@@ -18,32 +36,27 @@ func parseListOfTemplates(funcMap template.FuncMap, name string, templates ...st
 }
 
 func renderStringToResponse(thing string, res http.ResponseWriter) {
-	if _, err := res.Write([]byte(thing)); err != nil {
+	renderBytesToResponse([]byte(thing), res)
+}
+
+func renderBytesToResponse(thing []byte, res http.ResponseWriter) {
+	if _, err := res.Write(thing); err != nil {
 		log.Fatalln(err)
 	}
 }
 
-func renderTemplateToBytes(tmpl *template.Template, x interface{}) ([]byte, error) {
+func renderTemplateToBytes(tmpl *template.Template, x interface{}, funcMap template.FuncMap) ([]byte, error) {
 	var b bytes.Buffer
 
-	if err := tmpl.Funcs(defaultFuncMap).Execute(&b, x); err != nil {
+	if err := tmpl.Funcs(funcMap).Execute(&b, x); err != nil {
 		return nil, err
 	}
 
 	return b.Bytes(), nil
 }
 
-func renderTemplateToString(tmpl *template.Template, x interface{}) (string, error) {
-	out, err := renderTemplateToBytes(tmpl, x)
-	if err != nil {
-		return "", err
-	}
-
-	return string(out), nil
-}
-
-func renderTemplateToResponse(tmpl *template.Template, x interface{}, res http.ResponseWriter) error {
-	content, err := renderTemplateToBytes(tmpl, x)
+func (s *Service) renderTemplateToResponse(tmpl *template.Template, x interface{}, res http.ResponseWriter) error {
+	content, err := renderTemplateToBytes(tmpl, x, s.templateFuncMap)
 	if err != nil {
 		return err
 	}
@@ -52,20 +65,20 @@ func renderTemplateToResponse(tmpl *template.Template, x interface{}, res http.R
 	return err
 }
 
-func appendToDefaultFuncMap(input template.FuncMap) template.FuncMap {
+func mergeFuncMaps(a, b template.FuncMap) template.FuncMap {
 	out := map[string]interface{}{}
 
-	for k, v := range defaultFuncMap {
+	for k, v := range a {
 		out[k] = v
 	}
 
-	for k, v := range input {
+	for k, v := range b {
 		out[k] = v
 	}
 
 	return out
 }
 
-func parseTemplate(name, source string, funcMap template.FuncMap) *template.Template {
-	return template.Must(template.New(name).Funcs(appendToDefaultFuncMap(funcMap)).Parse(source))
+func (s *Service) parseTemplate(name, source string, funcMap template.FuncMap) *template.Template {
+	return template.Must(template.New(name).Funcs(mergeFuncMaps(s.templateFuncMap, funcMap)).Parse(source))
 }

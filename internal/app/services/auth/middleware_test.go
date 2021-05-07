@@ -7,10 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -27,46 +24,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-func buildFormFromLoginRequest(input *types.UserLoginInput) url.Values {
-	form := url.Values{}
-
-	form.Set(usernameFormKey, input.Username)
-	form.Set(passwordFormKey, input.Password)
-	form.Set(totpTokenFormKey, input.TOTPToken)
-
-	return form
-}
-
-func TestParseFormEncodedLoginRequest(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		expected := &types.UserLoginInput{
-			Username:  "username",
-			Password:  "password",
-			TOTPToken: "123456",
-		}
-
-		form := buildFormFromLoginRequest(expected)
-		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(form.Encode()))
-
-		actual := parseFormEncodedLoginRequest(req)
-
-		assert.Equal(t, expected, actual)
-	})
-
-	T.Run("returns nil for invalid request", func(t *testing.T) {
-		t.Parallel()
-
-		badReader := &testutil.MockReadCloser{}
-		badReader.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
-
-		assert.Nil(t, parseFormEncodedLoginRequest(&http.Request{Body: badReader}))
-	})
-}
 
 func buildArbitraryPASETO(t *testing.T, helper *authServiceHTTPRoutesTestHelper, issueTime time.Time, lifetime time.Duration, pasetoData string) *types.PASETOResponse {
 	t.Helper()
@@ -701,28 +658,6 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		var err error
 		helper.req, err = http.NewRequest(http.MethodPost, "/login", &b)
 		require.NoError(t, err)
-
-		mockHandler := &testutil.MockHTTPHandler{}
-		mockHandler.On(
-			"ServeHTTP",
-			testutil.ResponseWriterMatcher,
-			testutil.RequestMatcher,
-		).Return()
-
-		helper.service.UserLoginInputMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockHandler)
-	})
-
-	T.Run("with form-encoded request", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		form := buildFormFromLoginRequest(helper.exampleLoginInput)
-
-		helper.req = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
-		helper.req.Header.Set("Content-Type", urlEncodedFormHeaderKey)
 
 		mockHandler := &testutil.MockHTTPHandler{}
 		mockHandler.On(

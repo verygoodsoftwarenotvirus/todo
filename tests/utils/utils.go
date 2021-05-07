@@ -64,12 +64,12 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		return nil, fmt.Errorf("generating totp code: %w", tokenErr)
 	}
 
-	if validationErr := c.VerifyTOTPSecret(ctx, ucr.ID, token); validationErr != nil {
+	if validationErr := c.VerifyTOTPSecret(ctx, ucr.CreatedUserID, token); validationErr != nil {
 		return nil, fmt.Errorf("verifying totp code: %w", validationErr)
 	}
 
 	u := &types.User{
-		ID:       ucr.ID,
+		ID:       ucr.CreatedUserID,
 		Username: ucr.Username,
 		// this is a dirty trick to reuse most of this model,
 		HashedPassword:  in.Password,

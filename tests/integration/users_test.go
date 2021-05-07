@@ -21,7 +21,7 @@ func checkUserCreationEquality(t *testing.T, expected *types.UserRegistrationInp
 	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(actual.TwoFactorQRCode)
 	assert.NoError(t, err)
 
-	assert.NotZero(t, actual.ID)
+	assert.NotZero(t, actual.CreatedUserID)
 	assert.Equal(t, expected.Username, actual.Username)
 	assert.NotEmpty(t, twoFactorSecret)
 	assert.NotZero(t, actual.CreatedOn)
@@ -54,7 +54,7 @@ func (s *TestSuite) TestUsers_Creating() {
 			checkUserCreationEquality(t, exampleUserInput, createdUser)
 
 			// Clean up.
-			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -62,9 +62,9 @@ func (s *TestSuite) TestUsers_Creating() {
 				{EventType: audit.AccountCreationEvent},
 				{EventType: audit.UserAddedToAccountEvent},
 			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.CreatedUserID, audit.UserAssignmentKey)
 
-			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 		}
 	})
 }
@@ -209,9 +209,9 @@ func (s *TestSuite) TestUsers_Archiving() {
 			}
 
 			// Execute.
-			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 
-			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
 			require.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -220,7 +220,7 @@ func (s *TestSuite) TestUsers_Archiving() {
 				{EventType: audit.UserAddedToAccountEvent},
 				{EventType: audit.UserArchiveEvent},
 			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.ID, audit.UserAssignmentKey)
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.CreatedUserID, audit.UserAssignmentKey)
 		}
 	})
 }
@@ -262,12 +262,12 @@ func (s *TestSuite) TestUsers_Auditing_InaccessibleToNonAdmins() {
 			requireNotNilAndNoProblems(t, createdUser, err)
 
 			// fetch audit log entries
-			actual, err := testClients.main.GetAuditLogForUser(ctx, createdUser.ID)
+			actual, err := testClients.main.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
 			assert.Error(t, err)
 			assert.Nil(t, actual)
 
 			// Clean up item.
-			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 		}
 	})
 }
@@ -287,7 +287,7 @@ func (s *TestSuite) TestUsers_Auditing() {
 			requireNotNilAndNoProblems(t, createdUser, err)
 
 			// fetch audit log entries
-			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.ID)
+			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
 			assert.NoError(t, err)
 
 			expectedAuditLogEntries := []*types.AuditLogEntry{
@@ -298,7 +298,7 @@ func (s *TestSuite) TestUsers_Auditing() {
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, 0, "")
 
 			// Clean up item.
-			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.ID))
+			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 		}
 	})
 }

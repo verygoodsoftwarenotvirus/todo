@@ -21,11 +21,11 @@ services:
             - database
             - prometheus
         volumes:
-            - source: '../../artifacts/search_indices'
-              target: '/search_indices'
-              type: 'bind'
             - source: '../../environments/local/config.toml'
               target: '/etc/config.toml'
+              type: 'bind'
+            - source: '../../'
+              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
               type: 'bind'
         build:
             context: '../../'
@@ -45,6 +45,8 @@ services:
     prometheus:
         image: quay.io/prometheus/prometheus:v2.25.0
         command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus --log.level=debug'
+        logging:
+          driver: none
         ports:
             - 9090:9090
         volumes:

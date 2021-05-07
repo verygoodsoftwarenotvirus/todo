@@ -1,22 +1,15 @@
 package frontend
 
-import "net/http"
+import (
+	// import embed for the side effects.
+	_ "embed"
+	"net/http"
+)
 
-const svgFaviconSrc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<style>
-  path {
-    fill: #666;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    path {
-      fill: #FFFFFF;
-    } 
-  }
-</style>
-<!-- actual SVG content goes here -->
-</svg>`
+//go:embed assets/favicon.svg
+var svgFaviconSrc []byte
 
 func (s *Service) favicon(res http.ResponseWriter, _ *http.Request) {
-	renderStringToResponse(svgFaviconSrc, res)
+	res.Header().Set("Content-Type", "image/svg+xml")
+	renderBytesToResponse(svgFaviconSrc, res)
 }

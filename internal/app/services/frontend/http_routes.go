@@ -1,68 +1,59 @@
 package frontend
 
 import (
-	"strings"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 )
 
-func fetchTableColumns(messageID string) []string {
-	out := []string{}
-
-	for _, x := range strings.Split(getSimpleLocalizedString(messageID), ",") {
-		out = append(out, strings.TrimSpace(x))
-	}
-
-	return out
-}
-
-var defaultFuncMap = map[string]interface{}{
-	"relativeTime":        relativeTime,
-	"relativeTimeFromPtr": relativeTimeFromPtr,
-	"translate":           getSimpleLocalizedString,
-}
+const (
+	numericIDPattern = "{%s:[0-9]+}"
+)
 
 // SetupRoutes sets up the routes.
 func (s *Service) SetupRoutes(router routing.Router) {
-	initLocalizer()
+	router = router.WithMiddleware(s.authService.UserAttributionMiddleware)
 
 	router.Get("/", s.homepage)
 	router.Get("/dashboard", s.homepage)
 	router.Get("/favicon.svg", s.favicon)
 
 	// auth stuff
-	router.Get("/login", s.loginView)
-	router.Get("/components/login_prompt", s.loginComponent)
-	router.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/auth/submit_login", s.handleLoginSubmission)
+	router.Get("/login", s.buildLoginView(true))
+	router.Get("/components/login_prompt", s.buildLoginView(false))
+	router.Post("/auth/submit_login", s.handleLoginSubmission)
 
 	router.Get("/register", s.registrationView)
 	router.Get("/components/registration_prompt", s.registrationComponent)
-	router.WithMiddleware(s.usersService.UserRegistrationInputMiddleware).Post("/auth/submit_registration", s.handleRegistrationSubmission)
+	router.Post("/auth/submit_registration", s.handleRegistrationSubmission)
+	router.Post("/auth/verify_two_factor_secret", s.handleTOTPVerificationSubmission)
 
-	attributedRouter := router.WithMiddleware(s.authService.UserAttributionMiddleware)
+	singleAccountPattern := fmt.Sprintf(numericIDPattern, accountIDURLParamKey)
+	router.Get("/accounts", s.buildAccountsView(true))
+	router.Get(fmt.Sprintf("/accounts/%s", singleAccountPattern), s.buildAccountView(true))
+	router.Get("/dashboard_pages/accounts", s.buildAccountsView(false))
+	router.Get(fmt.Sprintf("/dashboard_pages/accounts/%s", singleAccountPattern), s.buildAccountView(false))
 
-	attributedRouter.Get("/accounts", s.accountsDashboardView)
-	attributedRouter.Get("/accounts/123", s.accountDashboardView)
-	attributedRouter.Get("/dashboard_pages/accounts", s.accountsTableView)
-	attributedRouter.Get("/dashboard_pages/accounts/123", s.accountsEditorView)
+	singleAPIClientPattern := fmt.Sprintf(numericIDPattern, apiClientIDURLParamKey)
+	router.Get("/api_clients", s.buildAPIClientsTableView(true))
+	router.Get(fmt.Sprintf("/api_clients/%s", singleAPIClientPattern), s.buildAPIClientEditorView(true))
+	router.Get("/dashboard_pages/api_clients", s.buildAPIClientsTableView(false))
+	router.Get(fmt.Sprintf("/dashboard_pages/api_clients/%s", singleAPIClientPattern), s.buildAPIClientEditorView(false))
 
-	attributedRouter.Get("/api_clients", s.apiClientsDashboardView)
-	attributedRouter.Get("/api_clients/123", s.apiClientDashboardView)
-	attributedRouter.Get("/dashboard_pages/api_clients", s.apiClientsTableView)
-	attributedRouter.Get("/dashboard_pages/api_clients/123", s.apiClientsEditorView)
+	singleWebhookPattern := fmt.Sprintf(numericIDPattern, webhookIDURLParamKey)
+	router.Get("/account/webhooks", s.buildWebhooksTableView(true))
+	router.Get(fmt.Sprintf("/account/webhooks/%s", singleWebhookPattern), s.buildWebhookEditorView(true))
+	router.Get("/dashboard_pages/account/webhooks", s.buildWebhooksTableView(false))
+	router.Get(fmt.Sprintf("/dashboard_pages/account/webhooks/%s", singleWebhookPattern), s.buildWebhookEditorView(false))
 
-	attributedRouter.Get("/account/webhooks", s.webhooksDashboardView)
-	attributedRouter.Get("/account/webhooks/123", s.webhookDashboardView)
-	attributedRouter.Get("/dashboard_pages/account/webhooks", s.webhooksTableView)
-	attributedRouter.Get("/dashboard_pages/account/webhooks/123", s.webhooksEditorView)
+	router.Get("/user/settings", s.buildUserSettingsView(true))
+	router.Get("/dashboard_pages/user/settings", s.buildUserSettingsView(false))
+	router.Get("/account/settings", s.buildAccountSettingsView(true))
+	router.Get("/dashboard_pages/account/settings", s.buildAccountSettingsView(false))
 
-	attributedRouter.Get("/dashboard_pages/user/settings", s.userSettingsView)
-	attributedRouter.Get("/user/settings", s.userSettingsDashboardView)
-	attributedRouter.Get("/dashboard_pages/account/settings", s.accountSettingsView)
-	attributedRouter.Get("/account/settings", s.accountSettingsDashboardView)
-
-	attributedRouter.Get("/items", s.itemsDashboardView)
-	attributedRouter.Get("/items/123", s.itemDashboardView)
-	attributedRouter.Get("/dashboard_pages/items", s.itemsTableView)
-	attributedRouter.Get("/dashboard_pages/items/123", s.itemsEditorView)
+	singleItemPattern := fmt.Sprintf(numericIDPattern, itemIDURLParamKey)
+	router.Get("/items", s.buildItemsTableView(true))
+	router.Get(fmt.Sprintf("/items/%s", singleItemPattern), s.buildItemEditorView(true))
+	router.Get("/dashboard_pages/items", s.buildItemsTableView(false))
+	router.Get(fmt.Sprintf("/dashboard_pages/items/%s", singleItemPattern), s.buildItemEditorView(false))
 }

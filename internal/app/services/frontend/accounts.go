@@ -1,8 +1,8 @@
 package frontend
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -10,122 +10,177 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-var accountsTableConfig = &basicTableTemplateConfig{
-	Title:       "Accounts",
-	ExternalURL: "/accounts/123",
-	GetURL:      "/dashboard_pages/accounts/123",
-	Columns:     fetchTableColumns("columns.accounts"),
-	CellFields: []string{
-		"Name",
-		"ExternalID",
-		"BelongsToUser",
-	},
-	RowDataFieldName:     "Accounts",
-	IncludeLastUpdatedOn: true,
-	IncludeCreatedOn:     true,
-}
+const (
+	accountIDURLParamKey = "account"
+)
 
-var accountEditorConfig = &basicEditorTemplateConfig{
-	Fields: []basicEditorField{
-		{
-			Name:      "Name",
-			InputType: "text",
-			Required:  true,
+func (s *Service) buildAccountEditorConfig() *basicEditorTemplateConfig {
+	return &basicEditorTemplateConfig{
+		Fields: []basicEditorField{
+			{
+				Name:      "Name",
+				InputType: "text",
+				Required:  true,
+			},
 		},
-	},
-	FuncMap: map[string]interface{}{
-		"componentTitle": func(x *types.Account) string {
-			return fmt.Sprintf("Account #%d", x.ID)
+		FuncMap: map[string]interface{}{
+			"componentTitle": func(x *types.Account) string {
+				return fmt.Sprintf("Account #%d", x.ID)
+			},
 		},
-	},
+	}
 }
 
-func (s *Service) accountsEditorView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
+func (s *Service) fetchAccount(ctx context.Context, sessionCtxData *types.SessionContextData) (account *types.Account, err error) {
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
+	logger := s.logger
 
-	var account *types.Account
-	if s.useFakes {
-		logger.Debug("using fakes")
+	if s.useFakeData {
 		account = fakes.BuildFakeAccount()
+	} else {
+		account, err = s.dataStore.GetAccount(ctx, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.ID)
+		if err != nil {
+			return nil, observability.PrepareError(err, logger, span, "fetching account data")
+		}
 	}
 
-	tmpl := parseTemplate("", buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+	return account, nil
+}
 
-	if err := renderTemplateToResponse(tmpl, account, res); err != nil {
-		log.Panic(err)
+func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		// get session context data
+		sessionCtxData, err := s.sessionContextDataFetcher(req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
+			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			return
+		}
+
+		account, err := s.fetchAccount(ctx, sessionCtxData)
+		if err != nil {
+			s.logger.Error(err, "retrieving account information from database")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		accountEditorConfig := s.buildAccountEditorConfig()
+		if includeBaseTemplate {
+			view := s.renderTemplateIntoDashboard(s.buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+
+			page := &dashboardPageData{
+				LoggedIn:    sessionCtxData != nil,
+				Title:       fmt.Sprintf("Account #%d", account.ID),
+				ContentData: account,
+			}
+
+			if err = s.renderTemplateToResponse(view, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			tmpl := s.parseTemplate("", s.buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+
+			if err = s.renderTemplateToResponse(tmpl, account, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering accounts editor view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }
 
-func (s *Service) accountsTableView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
+// plural
 
-	logger := s.logger.WithRequest(req)
-
-	var accounts *types.AccountList
-	if s.useFakes {
-		logger.Debug("using fakes")
-		accounts = fakes.BuildFakeAccountList()
-	}
-
-	tmpl := parseTemplate("dashboard", buildBasicTableTemplate(accountsTableConfig), nil)
-
-	if err := renderTemplateToResponse(tmpl, accounts, res); err != nil {
-		log.Panic(err)
-	}
-}
-
-func (s *Service) accountDashboardView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	var account *types.Account
-	if s.useFakes {
-		logger.Debug("using fakes")
-		account = fakes.BuildFakeAccount()
-	}
-
-	view := renderTemplateIntoDashboard(buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
-
-	page := &dashboardPageData{
-		Title:       fmt.Sprintf("Account #%d", account.ID),
-		ContentData: account,
-	}
-
-	if err := renderTemplateToResponse(view, page, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-}
-
-func (s *Service) accountsDashboardView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	var accounts *types.AccountList
-	if s.useFakes {
-		logger.Debug("using fakes")
-		accounts = fakes.BuildFakeAccountList()
-	}
-
-	view := renderTemplateIntoDashboard(buildBasicTableTemplate(accountsTableConfig), nil)
-
-	page := &dashboardPageData{
+func (s *Service) buildAccountsTableConfig() *basicTableTemplateConfig {
+	return &basicTableTemplateConfig{
 		Title:       "Accounts",
-		ContentData: accounts,
+		ExternalURL: "/accounts/123",
+		GetURL:      "/dashboard_pages/accounts/123",
+		Columns:     s.fetchTableColumns("columns.accounts"),
+		CellFields: []string{
+			"Name",
+			"ExternalID",
+			"BelongsToUser",
+		},
+		RowDataFieldName:     "Accounts",
+		IncludeLastUpdatedOn: true,
+		IncludeCreatedOn:     true,
+	}
+}
+
+func (s *Service) fetchAccounts(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (accounts *types.AccountList, err error) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger
+
+	if s.useFakeData {
+		accounts = fakes.BuildFakeAccountList()
+	} else {
+		qf := types.ExtractQueryFilter(req)
+		accounts, err = s.dataStore.GetAccounts(ctx, sessionCtxData.Requester.ID, qf)
+		if err != nil {
+			return nil, observability.PrepareError(err, logger, span, "fetching accounts data")
+		}
 	}
 
-	if err := renderTemplateToResponse(view, page, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
+	return accounts, nil
+}
+
+func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		ctx, span := s.tracer.StartSpan(req.Context())
+		defer span.End()
+
+		logger := s.logger.WithRequest(req)
+
+		// get session context data
+		sessionCtxData, err := s.sessionContextDataFetcher(req)
+		if err != nil {
+			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
+			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			return
+		}
+
+		accounts, err := s.fetchAccounts(ctx, req, sessionCtxData)
+		if err != nil {
+			s.logger.Error(err, "retrieving account information from database")
+			res.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		accountsTableConfig := s.buildAccountsTableConfig()
+		if includeBaseTemplate {
+			view := s.renderTemplateIntoDashboard(s.buildBasicTableTemplate(accountsTableConfig), nil)
+
+			page := &dashboardPageData{
+				LoggedIn:    sessionCtxData != nil,
+				Title:       "Accounts",
+				ContentData: accounts,
+			}
+
+			if err = s.renderTemplateToResponse(view, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else {
+			tmpl := s.parseTemplate("dashboard", s.buildBasicTableTemplate(accountsTableConfig), nil)
+
+			if err = s.renderTemplateToResponse(tmpl, accounts, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }

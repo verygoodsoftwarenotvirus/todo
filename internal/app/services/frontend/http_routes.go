@@ -16,12 +16,15 @@ func (s *Service) SetupRoutes(router routing.Router) {
 
 	router.Get("/", s.homepage)
 	router.Get("/dashboard", s.homepage)
+
+	// statics
 	router.Get("/favicon.svg", s.favicon)
 
 	// auth stuff
 	router.Get("/login", s.buildLoginView(true))
 	router.Get("/components/login_prompt", s.buildLoginView(false))
 	router.Post("/auth/submit_login", s.handleLoginSubmission)
+	router.Post("/logout", s.handleLogoutSubmission)
 
 	router.Get("/register", s.registrationView)
 	router.Get("/components/registration_prompt", s.registrationComponent)
@@ -50,6 +53,8 @@ func (s *Service) SetupRoutes(router routing.Router) {
 	router.Get("/dashboard_pages/user/settings", s.buildUserSettingsView(false))
 	router.Get("/account/settings", s.buildAccountSettingsView(true))
 	router.Get("/dashboard_pages/account/settings", s.buildAccountSettingsView(false))
+	router.Get("/admin/settings", s.buildAdminSettingsView(true))
+	router.Get("/dashboard_pages/admin/settings", s.buildAdminSettingsView(false))
 
 	singleItemPattern := fmt.Sprintf(numericIDPattern, itemIDURLParamKey)
 	router.Get("/items", s.buildItemsTableView(true))

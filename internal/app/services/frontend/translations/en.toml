@@ -22,39 +22,51 @@ other = "Sign In"
 description = "registration call to action."
 other = "Register"
 
+[callsToAction.logOut]
+description = "logout call to action."
+other = "Log Out"
+
 [dashboardSidebar.labels.things]
 description = "Sidebar label for the things section."
 other = "Things"
 
 [dashboardSidebar.labels.user]
-description = "Sidebar label for the things section."
+description = "Sidebar label for the user section."
 other = "User"
 
 [dashboardSidebar.labels.account]
-description = "Sidebar label for the things section."
+description = "Sidebar label for the account section."
 other = "Account"
+
+[dashboardSidebar.labels.admin]
+description = "Sidebar label for the admin section."
+other = "Admin"
 
 [dashboardSidebar.pageLinks.items]
 description = "Sidebar label for the items page."
 other = "Items"
 
 [dashboardSidebar.pageLinks.apiClients]
-description = "Sidebar label for the items page."
+description = "Sidebar label for the API clients page."
 other = "API Clients"
 
 [dashboardSidebar.pageLinks.webhooks]
-description = "Sidebar label for the items page."
+description = "Sidebar label for the webhooks page."
 other = "Webhooks"
 
 [dashboardSidebar.pageLinks.accounts]
-description = "Sidebar label for the items page."
+description = "Sidebar label for the accounts page."
 other = "Accounts"
 
 [dashboardSidebar.pageLinks.userSettings]
-description = "Sidebar label for the items page."
+description = "Sidebar label for the user settings page."
 other = "Settings"
 
 [dashboardSidebar.pageLinks.accountSettings]
-description = "Sidebar label for the items page."
+description = "Sidebar label for the account settings page."
+other = "Settings"
+
+[dashboardSidebar.pageLinks.serviceSettings]
+description = "Sidebar label for the service settings page."
 other = "Settings"
 

@@ -17,10 +17,11 @@ const (
 
 func (s *Service) buildWebhooksTableConfig() *basicTableTemplateConfig {
 	return &basicTableTemplateConfig{
-		Title:       "Webhooks",
-		ExternalURL: "/account/webhooks/123",
-		GetURL:      "/dashboard_pages/account/webhooks/123",
-		Columns:     s.fetchTableColumns("columns.webhooks"),
+		Title:          "Webhooks",
+		ExternalURL:    "/account/webhooks/123",
+		CreatorPageURL: "/accounts/webhooks/new",
+		GetURL:         "/dashboard_pages/account/webhooks/123",
+		Columns:        s.fetchTableColumns("columns.webhooks"),
 		CellFields: []string{
 			"Name",
 			"Method",
@@ -108,15 +109,18 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 
 		webhookEditorConfig := s.buildWebhookEditorConfig()
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoDashboard(s.buildBasicEditorTemplate(webhookEditorConfig), webhookEditorConfig.FuncMap)
+			view := s.renderTemplateIntoBaseTemplate(s.buildBasicEditorTemplate(webhookEditorConfig), webhookEditorConfig.FuncMap)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       fmt.Sprintf("Webhook #%d", webhook.ID),
 				ContentData: webhook,
 			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+			}
 
-			if err := s.renderTemplateToResponse(view, page, res); err != nil {
+			if err = s.renderTemplateToResponse(view, page, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering webhooks dashboard view")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
@@ -173,15 +177,18 @@ func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 
 		webhooksTableConfig := s.buildWebhooksTableConfig()
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoDashboard(s.buildBasicTableTemplate(webhooksTableConfig), nil)
+			view := s.renderTemplateIntoBaseTemplate(s.buildBasicTableTemplate(webhooksTableConfig), nil)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       "Webhooks",
 				ContentData: webhooks,
 			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+			}
 
-			if err := s.renderTemplateToResponse(view, page, res); err != nil {
+			if err = s.renderTemplateToResponse(view, page, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering webhooks dashboard view")
 				res.WriteHeader(http.StatusInternalServerError)
 				return

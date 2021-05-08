@@ -227,6 +227,36 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	res.WriteHeader(http.StatusAccepted)
 }
 
+func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request, res http.ResponseWriter) error {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger
+
+	ctx, err := s.sessionManager.Load(ctx, "")
+	if err != nil {
+		// this can literally never happen in this version of scs, because the token is empty
+		return observability.PrepareError(err, logger, span, "loading token")
+	}
+
+	if destroyErr := s.sessionManager.Destroy(ctx); destroyErr != nil {
+		return observability.PrepareError(err, logger, span, "destroying user session")
+	}
+
+	newCookie, cookieBuildingErr := s.buildCookie("deleted", time.Time{})
+	if cookieBuildingErr != nil || newCookie == nil {
+		return observability.PrepareError(cookieBuildingErr, logger, span, "building cookie")
+	}
+
+	s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.ID)
+	newCookie.MaxAge = -1
+	http.SetCookie(res, newCookie)
+
+	logger.Debug("user logged out")
+
+	return nil
+}
+
 // LogoutHandler is our logout route.
 func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -242,35 +272,13 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx, err = s.sessionManager.Load(ctx, "")
-	if err != nil {
-		// this can literally never happen in this version of scs, because the token is empty
-		observability.AcknowledgeError(err, logger, span, "loading token")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
+	if err = s.LogoutUser(ctx, sessionCtxData, req, res); err != nil {
+		observability.AcknowledgeError(err, logger, span, "logging out user")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	if destroyErr := s.sessionManager.Destroy(ctx); destroyErr != nil {
-		observability.AcknowledgeError(err, logger, span, "destroying user session")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
-		return
-	}
-
-	if cookie, cookieRetrievalErr := req.Cookie(s.config.Cookies.Name); cookieRetrievalErr == nil && cookie != nil {
-		if c, cookieBuildingErr := s.buildCookie("deleted", time.Time{}); cookieBuildingErr == nil && c != nil {
-			c.MaxAge = -1
-			http.SetCookie(res, c)
-			s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.ID)
-		} else {
-			observability.AcknowledgeError(err, logger, span, "building cookie")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "error encountered, please try again later", http.StatusInternalServerError)
-			return
-		}
-	} else {
-		logger.WithError(cookieRetrievalErr).Debug("logout was called, but encountered error loading cookie from request")
-	}
-
-	logger.Debug("user logged out")
+	http.Redirect(res, req, "/", http.StatusSeeOther)
 }
 
 // StatusHandler returns the user info for the user making the request.

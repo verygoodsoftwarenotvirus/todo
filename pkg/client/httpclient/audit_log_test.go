@@ -38,7 +38,7 @@ func (s *auditLogEntriesTestSuite) SetupTest() {
 }
 
 func (s *auditLogEntriesTestSuite) TestClient_GetAuditLogEntry() {
-	const expectedPath = "/api/v1/_admin_/audit_log/%d"
+	const expectedPath = "/api/v1/admin/audit_log/%d"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -84,7 +84,7 @@ func (s *auditLogEntriesTestSuite) TestClient_GetAuditLogEntry() {
 }
 
 func (s *auditLogEntriesTestSuite) TestClient_GetAuditLogEntries() {
-	const expectedPath = "/api/v1/_admin_/audit_log"
+	const expectedPath = "/api/v1/admin/audit_log"
 
 	s.Run("standard", func() {
 		t := s.T()

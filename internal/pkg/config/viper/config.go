@@ -101,6 +101,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyAuthCookieName, input.Auth.Cookies.Name)
 	cfg.Set(ConfigKeyAuthCookieDomain, input.Auth.Cookies.Domain)
+	cfg.Set(ConfigKeyAuthCookieHashKey, input.Auth.Cookies.HashKey)
 	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Auth.Cookies.SigningKey)
 	cfg.Set(ConfigKeyAuthCookieLifetime, input.Auth.Cookies.Lifetime)
 	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)

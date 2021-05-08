@@ -73,12 +73,15 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 
 		accountEditorConfig := s.buildAccountEditorConfig()
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoDashboard(s.buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+			view := s.renderTemplateIntoBaseTemplate(s.buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       fmt.Sprintf("Account #%d", account.ID),
 				ContentData: account,
+			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
 			if err = s.renderTemplateToResponse(view, page, res); err != nil {
@@ -102,10 +105,11 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 
 func (s *Service) buildAccountsTableConfig() *basicTableTemplateConfig {
 	return &basicTableTemplateConfig{
-		Title:       "Accounts",
-		ExternalURL: "/accounts/123",
-		GetURL:      "/dashboard_pages/accounts/123",
-		Columns:     s.fetchTableColumns("columns.accounts"),
+		Title:          "Accounts",
+		ExternalURL:    "/accounts/123",
+		CreatorPageURL: "/accounts/new",
+		GetURL:         "/dashboard_pages/accounts/123",
+		Columns:        s.fetchTableColumns("columns.accounts"),
 		CellFields: []string{
 			"Name",
 			"ExternalID",
@@ -160,12 +164,15 @@ func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.Response
 
 		accountsTableConfig := s.buildAccountsTableConfig()
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoDashboard(s.buildBasicTableTemplate(accountsTableConfig), nil)
+			view := s.renderTemplateIntoBaseTemplate(s.buildBasicTableTemplate(accountsTableConfig), nil)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       "Accounts",
 				ContentData: accounts,
+			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
 			if err = s.renderTemplateToResponse(view, page, res); err != nil {

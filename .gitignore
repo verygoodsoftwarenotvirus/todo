@@ -33,7 +33,7 @@ __pycache__
 artifacts
 
 # frontend things
-node_modules
+internal/app/services/frontend/_vendor_/*
 
 # Log files
 *.log

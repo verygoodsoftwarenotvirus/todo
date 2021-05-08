@@ -9,4 +9,4 @@ RUN	apt-get update && apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/*
 ENV ENTR_INOTIFY_WORKAROUND=true
 
-ENTRYPOINT echo "please wait for server to start" && find . -type f \( -iname "*.go" -o -iname "*.gotpl" ! -iname "*_test.go" \) | entr -r go run gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
+ENTRYPOINT echo "please wait for server to start" && find . -type f \( -iname "*.go*" ! -iname "*_test.go" \) | entr -r go run gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server

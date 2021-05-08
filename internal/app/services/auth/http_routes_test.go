@@ -1023,7 +1023,7 @@ func TestAuthService_LogoutHandler(T *testing.T) {
 
 		helper.service.LogoutHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusOK, helper.res.Code)
+		assert.Equal(t, http.StatusSeeOther, helper.res.Code)
 		actualCookie := helper.res.Header().Get("Set-Cookie")
 		assert.Contains(t, actualCookie, "Max-Age=0")
 
@@ -1059,25 +1059,6 @@ func TestAuthService_LogoutHandler(T *testing.T) {
 		assert.Empty(t, actualCookie)
 
 		mock.AssertExpectationsForObjects(t, sm)
-	})
-
-	T.Run("without cookie", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		var err error
-		helper.ctx, err = helper.service.sessionManager.Load(helper.ctx, "")
-		require.NoError(t, err)
-		require.NoError(t, helper.service.sessionManager.RenewToken(helper.ctx))
-
-		// Then make the privilege-level change.
-		helper.service.sessionManager.Put(helper.ctx, userIDContextKey, helper.exampleUser.ID)
-		helper.service.sessionManager.Put(helper.ctx, accountIDContextKey, helper.exampleAccount.ID)
-
-		helper.service.LogoutHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 	})
 
 	T.Run("with error deleting from session store", func(t *testing.T) {

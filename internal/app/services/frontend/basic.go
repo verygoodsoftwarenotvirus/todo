@@ -1,12 +1,11 @@
 package frontend
 
 import (
+	// import embed for the side effect.
 	"bytes"
+	_ "embed"
 	"fmt"
 	"html/template"
-
-	// import embed for the side effects.
-	_ "embed"
 )
 
 type basicEditorField struct {
@@ -37,6 +36,7 @@ type basicTableTemplateConfig struct {
 	FuncMap              template.FuncMap
 	GetURL               string
 	ExternalURL          string
+	CreatorPageURL       string
 	RowDataFieldName     string
 	Title                string
 	Columns              []string

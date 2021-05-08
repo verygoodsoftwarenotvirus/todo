@@ -4,10 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
+    <link href="https://unpkg.com/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
 
     <title>TODO{{ if ne .PageDescription "" }} - {{ .PageDescription }}{{ end }}</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
 
     <!-- <meta name="description" content="{{ .PageDescription }}">                 -->
     <!-- <meta property="og:title" content="{{ .PageTitle }}">                      -->
@@ -32,7 +31,7 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                {{ if not .LoggedIn }}
+                {{ if not .IsLoggedIn }}
                 <div class="d-flex">
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav">
@@ -41,6 +40,16 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" hx-target="#content" hx-push-url="/register" hx-get="/components/registration_prompt">{{ translate "callsToAction.register" }}</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                {{ else }}
+                <div class="d-flex">
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link" hx-post="/logout">{{ translate "callsToAction.logOut" }}</a>
                             </li>
                         </ul>
                     </div>
@@ -68,7 +77,7 @@
                                 </a>
                             </li>
                         </ul>
-
+                        <hr>
                         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                             <span>{{ translate "dashboardSidebar.labels.account" }}</span>
                         </h6>
@@ -84,7 +93,7 @@
                                 </a>
                             </li>
                         </ul>
-
+                        <hr>
                         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                             <span>{{ translate "dashboardSidebar.labels.user" }}</span>
                         </h6>
@@ -102,6 +111,19 @@
                                 </a>
                             </li>
                         </ul>
+                        {{ if .IsServiceAdmin }}
+                        <hr>
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                            <span>{{ translate "dashboardSidebar.labels.admin" }}</span>
+                        </h6>
+                        <ul class="nav flex-column mb-2">
+                            <li class="nav-item">
+                                <a class="nav-link" hx-target="#content" hx-push-url="/admin/settings" hx-get="/dashboard_pages/admin/settings">
+                                    ⚙{{ translate "dashboardSidebar.pageLinks.serviceSettings" }}
+                                </a>
+                            </li>
+                        </ul>
+                        {{ end }}
                     </div>
                 </nav>
 

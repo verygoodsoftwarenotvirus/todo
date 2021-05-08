@@ -17,10 +17,11 @@ const (
 
 func (s *Service) buildItemsTableConfig() *basicTableTemplateConfig {
 	return &basicTableTemplateConfig{
-		Title:       "Items",
-		ExternalURL: "/items/123",
-		GetURL:      "/dashboard_pages/items/123",
-		Columns:     s.fetchTableColumns("columns.items"),
+		Title:          "Items",
+		ExternalURL:    "/items/123",
+		CreatorPageURL: "/items/new",
+		GetURL:         "/dashboard_pages/items/123",
+		Columns:        s.fetchTableColumns("columns.items"),
 		CellFields: []string{
 			"Name",
 			"Details",
@@ -97,12 +98,15 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 
 		itemEditorConfig := s.buildItemEditorConfig()
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoDashboard(s.buildBasicEditorTemplate(itemEditorConfig), itemEditorConfig.FuncMap)
+			view := s.renderTemplateIntoBaseTemplate(s.buildBasicEditorTemplate(itemEditorConfig), itemEditorConfig.FuncMap)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       fmt.Sprintf("Item #%d", item.ID),
 				ContentData: item,
+			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
 			if err = s.renderTemplateToResponse(view, page, res); err != nil {
@@ -113,7 +117,7 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 		} else {
 			tmpl := s.parseTemplate("", s.buildBasicEditorTemplate(itemEditorConfig), itemEditorConfig.FuncMap)
 
-			if err := s.renderTemplateToResponse(tmpl, item, res); err != nil {
+			if err = s.renderTemplateToResponse(tmpl, item, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering item editor view")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
@@ -132,7 +136,12 @@ func (s *Service) fetchItems(ctx context.Context, sessionCtxData *types.SessionC
 		items = fakes.BuildFakeItemList()
 	} else {
 		filter := types.ExtractQueryFilter(req)
-		items, err = s.dataStore.GetItems(ctx, sessionCtxData.Requester.ID, filter)
+		if isAdminRequest(req) {
+			items, err = s.dataStore.GetItemsForAdmin(ctx, filter)
+		} else {
+			items, err = s.dataStore.GetItems(ctx, sessionCtxData.Requester.ID, filter)
+		}
+
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching item data")
 		}
@@ -164,12 +173,15 @@ func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 
 		itemsTableConfig := s.buildItemsTableConfig()
 		if includeBaseTemplate {
-			tmpl := s.renderTemplateIntoDashboard(s.buildBasicTableTemplate(itemsTableConfig), nil)
+			tmpl := s.renderTemplateIntoBaseTemplate(s.buildBasicTableTemplate(itemsTableConfig), nil)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       "Items",
 				ContentData: items,
+			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
 			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {

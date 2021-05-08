@@ -76,6 +76,7 @@ var (
 	localCookies = authservice.CookieConfig{
 		Name:       defaultCookieName,
 		Domain:     defaultCookieDomain,
+		HashKey:    debugCookieSecret,
 		SigningKey: debugCookieSecret,
 		Lifetime:   authservice.DefaultCookieLifetime,
 		SecureOnly: false,

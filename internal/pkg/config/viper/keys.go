@@ -37,6 +37,8 @@ const (
 	ConfigKeyAuthCookieName = authKey + x + cookiesKey + x + "name"
 	// ConfigKeyAuthCookieDomain is the key viper will use to refer to the AuthSettings.CookieDomain setting.
 	ConfigKeyAuthCookieDomain = authKey + x + cookiesKey + x + "domain"
+	// ConfigKeyAuthCookieHashKey is the key viper will use to refer to the AuthSettings.CookieSecret setting.
+	ConfigKeyAuthCookieHashKey = authKey + x + cookiesKey + x + "hash_key"
 	// ConfigKeyAuthCookieSigningKey is the key viper will use to refer to the AuthSettings.CookieSecret setting.
 	ConfigKeyAuthCookieSigningKey = authKey + x + cookiesKey + x + "signing_key"
 	// ConfigKeyAuthCookieLifetime is the key viper will use to refer to the AuthSettings.CookieLifetime setting.

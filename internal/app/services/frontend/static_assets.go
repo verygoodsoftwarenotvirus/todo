@@ -1,7 +1,7 @@
 package frontend
 
 import (
-	// import embed for the side effects.
+	// import embed for the side effect.
 	_ "embed"
 	"net/http"
 )

@@ -79,6 +79,20 @@ func mergeFuncMaps(a, b template.FuncMap) template.FuncMap {
 	return out
 }
 
+// parseBool differs from strconv.ParseBool in that it returns false by default.
+func parseBool(str string) bool {
+	switch str {
+	case "1", "t", "T", "true", "TRUE", "True":
+		return true
+	default:
+		return false
+	}
+}
+
+func isAdminRequest(req *http.Request) bool {
+	return parseBool(req.URL.Query().Get("admin"))
+}
+
 func (s *Service) parseTemplate(name, source string, funcMap template.FuncMap) *template.Template {
 	return template.Must(template.New(name).Funcs(mergeFuncMaps(s.templateFuncMap, funcMap)).Parse(source))
 }

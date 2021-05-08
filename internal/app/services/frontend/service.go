@@ -27,6 +27,7 @@ type (
 		UserAttributionMiddleware(next http.Handler) http.Handler
 
 		AuthenticateUser(ctx context.Context, loginData *types.UserLoginInput) (*types.User, *http.Cookie, error)
+		LogoutUser(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request, res http.ResponseWriter) error
 	}
 
 	// UsersService is a subset of the larger types.UsersService interface.

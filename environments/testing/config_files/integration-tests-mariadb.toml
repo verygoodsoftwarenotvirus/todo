@@ -10,6 +10,7 @@
 
   [auth.cookies]
     domain = "localhost"
+    hash_key = ""
     lifetime = "24h0m0s"
     name = "todocookie"
     secure_only = false
@@ -18,7 +19,7 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [253, 200, 209, 84, 103, 40, 130, 240, 222, 88, 12, 35, 210, 122, 127, 130, 96, 100, 91, 154, 231, 196, 227, 60, 251, 175, 1, 2, 177, 136, 220, 239]
+    local_mode_key = [168, 144, 10, 187, 239, 108, 210, 93, 236, 211, 192, 167, 84, 245, 198, 102, 112, 198, 187, 229, 148, 123, 196, 199, 207, 49, 243, 98, 161, 210, 201, 71]
 
 [database]
   connection_details = "dbuser:hunter2@tcp(database:3306)/todo"
@@ -29,7 +30,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$argon2id$v=19$m=65536,t=1,p=2$fXszjmcH5AXk0vZ2LnxFpQ$WjMh6dnZBIonaDiMItZFZtj7DHMAo2ln2z8LJl2uuB4"
+    hashed_password = "$argon2id$v=19$m=65536,t=1,p=2$8U23Qx3wLK226bdrYrW/pQ$M+7luXWZRhOk/tyTf5LLaP+7WgBAGh6B6VS/iJRpYck"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

@@ -2,25 +2,26 @@ package frontend
 
 import (
 	"html/template"
-	// import embed for the side effects.
+	// import embed for the side effect.
 	_ "embed"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 )
 
-type dashboardPageData struct {
+type pageData struct {
 	ContentData                 interface{}
 	Title                       string
 	PageDescription             string
 	PageTitle                   string
 	PageImagePreview            string
 	PageImagePreviewDescription string
-	LoggedIn                    bool
+	IsLoggedIn                  bool
+	IsServiceAdmin              bool
 }
 
-//go:embed templates/dashboard.gotpl
-var dashboardTemplateSrc string
+//go:embed templates/base_template.gotpl
+var baseTemplateSrc string
 
 func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
@@ -34,11 +35,14 @@ func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
 		_ = err
 	}
 
-	tmpl := s.renderTemplateIntoDashboard("", nil)
-	x := &dashboardPageData{
-		LoggedIn:    sessionCtxData != nil,
+	tmpl := s.renderTemplateIntoBaseTemplate("", nil)
+	x := &pageData{
+		IsLoggedIn:  sessionCtxData != nil,
 		Title:       "Home",
 		ContentData: "",
+	}
+	if sessionCtxData != nil {
+		x.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 	}
 
 	if err = s.renderTemplateToResponse(tmpl, x, res); err != nil {
@@ -48,6 +52,6 @@ func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *Service) renderTemplateIntoDashboard(templateSrc string, funcMap template.FuncMap) *template.Template {
-	return parseListOfTemplates(mergeFuncMaps(s.templateFuncMap, funcMap), "dashboard", dashboardTemplateSrc, wrapTemplateInContentDefinition(templateSrc))
+func (s *Service) renderTemplateIntoBaseTemplate(templateSrc string, funcMap template.FuncMap) *template.Template {
+	return parseListOfTemplates(mergeFuncMaps(s.templateFuncMap, funcMap), "dashboard", baseTemplateSrc, wrapTemplateInContentDefinition(templateSrc))
 }

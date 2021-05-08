@@ -60,6 +60,11 @@ func ProvideService(
 	encoder encoding.ServerEncoderDecoder,
 	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
+	hashKey := []byte(cfg.Cookies.HashKey)
+	if len(hashKey) == 0 {
+		hashKey = securecookie.GenerateRandomKey(cookieSecretSize)
+	}
+
 	svc := &service{
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		encoderDecoder:            encoder,
@@ -71,11 +76,8 @@ func ProvideService(
 		authenticator:             authenticator,
 		sessionManager:            sessionManager,
 		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
-		cookieManager: securecookie.New(
-			securecookie.GenerateRandomKey(cookieSecretSize),
-			[]byte(cfg.Cookies.SigningKey),
-		),
-		tracer: tracing.NewTracer(serviceName),
+		cookieManager:             securecookie.New(hashKey, []byte(cfg.Cookies.SigningKey)),
+		tracer:                    tracing.NewTracer(serviceName),
 	}
 
 	if _, err := svc.cookieManager.Encode(cfg.Cookies.Name, "blah"); err != nil {

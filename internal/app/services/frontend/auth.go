@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	// import embed for the side effect.
+	_ "embed"
 	"html/template"
 	"io"
 	"net/http"
@@ -11,24 +13,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-const loginPrompt = `<div class="container">
-	<div class="row">
-		<div class="col-3"></div>
-		<div class="col-6">
-			<h1 class="h3 mb-3 text-center fw-normal">Log in</h1>
-			<form hx-post="/auth/submit_login" hx-target="#content" hx-ext="json-enc, ajax-header, event-header">
-				<div class="form-floating"><input id="usernameInput" required type="text" placeholder="username" minlength=4 name="username" placeholder="username" class="form-control"><label for="usernameInput">username</label></div>
-				<div class="form-floating"><input id="passwordInput" required type="password" minlength=8 name="password" placeholder="password" class="form-control"><label for="passwordInput">password</label></div>
-				<div class="form-floating"><input id="totpTokenInput" required type="text" pattern="\d{6}" minlength=6 maxlength=6 name="totpToken" placeholder="123456" class="form-control"><label for="totpTokenInput">2FA Token</label></div>
-				<input type="hidden" name="redirectTo" value="{{ .RedirectTo }}" />
-				<hr />
-				<button class="w-100 btn btn-lg btn-primary" type="submit">Log in</button>
-			</form>
-			<p class="text-center"><sub><a hx-target="#content" hx-push-url="/register" hx-get="/components/registration_prompt">Register instead</a></sub></p>
-		</div>
-		<div class="col-3"></div>
-	</div>
-</div>`
+//go:embed templates/login_partial.gotpl
+var loginPrompt string
 
 type loginPromptData struct {
 	RedirectTo string
@@ -40,17 +26,15 @@ func (s *Service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWri
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-
-		var data *loginPromptData
-		if redirectTo := pluckRedirectURL(req); redirectTo != "" {
-			data = &loginPromptData{RedirectTo: redirectTo}
+		data := &loginPromptData{
+			RedirectTo: pluckRedirectURL(req),
 		}
 
 		if includeBaseTemplate {
-			tmpl := s.renderTemplateIntoDashboard(loginPrompt, nil)
+			tmpl := s.renderTemplateIntoBaseTemplate(loginPrompt, nil)
 
-			pageData := dashboardPageData{
-				LoggedIn:    false,
+			pageData := pageData{
+				IsLoggedIn:  false,
 				Title:       "Login",
 				ContentData: data,
 			}
@@ -137,22 +121,30 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 	}
 }
 
-const registrationPrompt = `<div class="container">
-	<div class="row">
-		<div class="col-3"></div>
-		<div class="col-6">
-			<h1 class="h3 mb-3 text-center fw-normal">Register</h1>
-			<form hx-post="/auth/submit_registration" hx-ext="json-enc, ajax-header, event-header">
-				<div class="form-floating"><input id="usernameInput" required type="text" placeholder="username" minlength=4 name="username" placeholder="username" class="form-control"><label for="usernameInput">username</label></div>
-				<div class="form-floating"><input id="passwordInput" required type="password" minlength=8 name="password" placeholder="password" class="form-control"><label for="passwordInput">password</label></div>
-				<hr />
-				<button class="w-100 btn btn-lg btn-primary" type="submit">Register</button>
-			</form>
-			<p class="text-center"><sub><a hx-target="#content" hx-push-url="/login" hx-get="/components/login_prompt">Login instead</a></sub></p>
-		</div>
-		<div class="col-3"></div>
-	</div>
-</div>`
+func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Request) {
+	ctx, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	sessionCtxData, err := s.sessionContextDataFetcher(req)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
+		http.Redirect(res, req, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if !s.useFakeData {
+		if err = s.authService.LogoutUser(ctx, sessionCtxData, req, res); err != nil {
+			observability.AcknowledgeError(err, logger, span, "logging out user")
+			return
+		}
+		res.Header().Set("HX-Redirect", "/")
+	}
+}
+
+//go:embed templates/registration_partial.gotpl
+var registrationPrompt string
 
 func (s *Service) registrationComponent(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
@@ -175,10 +167,10 @@ func (s *Service) registrationView(res http.ResponseWriter, req *http.Request) {
 
 	logger := s.logger.WithRequest(req)
 
-	tmpl := s.renderTemplateIntoDashboard(registrationPrompt, nil)
+	tmpl := s.renderTemplateIntoBaseTemplate(registrationPrompt, nil)
 
-	pageData := dashboardPageData{
-		LoggedIn:    false,
+	pageData := pageData{
+		IsLoggedIn:  false,
 		Title:       "Register",
 		ContentData: nil,
 	}
@@ -190,22 +182,8 @@ func (s *Service) registrationView(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-const successfulRegistrationResponse = `<div class="container">
-	<div class="row">
-		<div class="col-3"></div>
-		<div class="col-6">
-			<h1 class="h3 mb-3 text-center fw-normal">Verify 2FA</h1>
-			<form hx-post="/auth/verify_two_factor_secret" hx-ext="json-enc, ajax-header, event-header">
-				<img src={{ .TwoFactorQRCode }}>
-				<div class="form-floating"><input id="totpTokenInput" required type="text" pattern="\d{6}" minlength=6 maxlength=6 name="totpToken" placeholder="123456" class="form-control"><label for="totpTokenInput">2FA Token</label></div>
-				<input type="hidden" name="userID" value="{{ .UserID }}" />
-				<hr />	
-				<button class="w-100 btn btn-lg btn-primary" type="submit">Verify</button>
-			</form>
-		</div>
-		<div class="col-3"></div>
-	</div>
-</div>`
+//go:embed templates/registration_success_partial.gotpl
+var successfulRegistrationResponse string
 
 type totpVerificationPrompt struct {
 	TwoFactorQRCode template.URL

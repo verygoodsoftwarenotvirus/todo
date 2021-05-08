@@ -36,7 +36,7 @@ func (s *adminTestSuite) SetupTest() {
 }
 
 func (s *adminTestSuite) TestClient_UpdateUserReputation() {
-	const expectedPath = "/api/v1/_admin_/users/status"
+	const expectedPath = "/api/v1/admin/users/status"
 
 	s.Run("standard", func() {
 		t := s.T()

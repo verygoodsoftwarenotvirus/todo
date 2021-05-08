@@ -56,7 +56,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 
 	router.Route("/users", func(userRouter routing.Router) {
 		userRouter.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
-		userRouter.WithMiddleware(s.authService.CookieRequirementMiddleware).Post("/logout", s.authService.LogoutHandler)
+		userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.CookieRequirementMiddleware).Post("/logout", s.authService.LogoutHandler)
 		userRouter.WithMiddleware(s.usersService.UserRegistrationInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.WithMiddleware(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 
@@ -85,7 +85,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 		})
 
 		// Admin
-		adminRouter.Route("/_admin_", func(adminRouter routing.Router) {
+		adminRouter.Route("/admin", func(adminRouter routing.Router) {
 			adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
 			adminRouter.WithMiddleware(s.adminService.AccountStatusUpdateInputMiddleware).
 				Post("/users/status", s.adminService.UserAccountStatusChangeHandler)

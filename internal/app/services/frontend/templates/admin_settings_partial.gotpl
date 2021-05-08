@@ -1,0 +1,8 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Admin Settings</h1>
+</div>
+<div class="col-md-8 order-md-1">
+    <form class="needs-validation" novalidate="">
+        <button class="btn btn-danger btn-lg btn-block" hx-confirm="This will log all users out, are you sure about that?" type="submit">Cycle Cookie Secret</button>
+    </form>
+</div>

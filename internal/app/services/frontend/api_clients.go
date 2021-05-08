@@ -16,10 +16,11 @@ const (
 
 func (s *Service) buildAPIClientsTableConfig() *basicTableTemplateConfig {
 	return &basicTableTemplateConfig{
-		Title:       "API Clients",
-		ExternalURL: "/api_clients/123",
-		GetURL:      "/dashboard_pages/api_clients/123",
-		Columns:     s.fetchTableColumns("columns.apiClients"),
+		Title:          "API Clients",
+		ExternalURL:    "/api_clients/123",
+		CreatorPageURL: "/api_clients/new",
+		GetURL:         "/dashboard_pages/api_clients/123",
+		Columns:        s.fetchTableColumns("columns.apiClients"),
 		CellFields: []string{
 			"Name",
 			"ExternalID",
@@ -110,12 +111,15 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 				return
 			}
 		} else {
-			view := s.renderTemplateIntoDashboard(s.buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
+			view := s.renderTemplateIntoBaseTemplate(s.buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       fmt.Sprintf("APIClient #%d", apiClient.ID),
 				ContentData: apiClient,
+			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
 			if err = s.renderTemplateToResponse(view, page, res); err != nil {
@@ -169,12 +173,15 @@ func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 
 		apiClientsTableConfig := s.buildAPIClientsTableConfig()
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoDashboard(s.buildBasicTableTemplate(apiClientsTableConfig), nil)
+			view := s.renderTemplateIntoBaseTemplate(s.buildBasicTableTemplate(apiClientsTableConfig), nil)
 
-			page := &dashboardPageData{
-				LoggedIn:    sessionCtxData != nil,
+			page := &pageData{
+				IsLoggedIn:  sessionCtxData != nil,
 				Title:       "APIClients",
 				ContentData: apiClients,
+			}
+			if sessionCtxData != nil {
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
 			if err = s.renderTemplateToResponse(view, page, res); err != nil {

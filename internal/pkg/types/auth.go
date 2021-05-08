@@ -116,6 +116,7 @@ type (
 		ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler
 
 		AuthenticateUser(ctx context.Context, loginData *UserLoginInput) (*User, *http.Cookie, error)
+		LogoutUser(ctx context.Context, sessionCtxData *SessionContextData, req *http.Request, res http.ResponseWriter) error
 	}
 
 	// AuthAuditManager describes a structure capable of auditing auth events.

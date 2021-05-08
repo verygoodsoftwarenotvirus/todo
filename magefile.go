@@ -5,7 +5,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -407,6 +410,25 @@ func Vendor() error {
 	return runGoCommand(true, mod, vendor)
 }
 
+func downloadAndSaveFile(uri, path string) {
+	resp, err := http.Get(uri)
+	if err != nil {
+		logger.Error(err, "fetching file: fetching response from server")
+		return
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error(err, "fetching file: reading response from server")
+		return
+	}
+
+	if err = ioutil.WriteFile(path, content, 0644); err != nil {
+		logger.Error(err, "fetching file: writing content to disk")
+		return
+	}
+}
+
 // Delete existing dependency store and re-establish it for the backend.
 func (Backend) Revendor() error {
 	if err := os.Remove("go.sum"); err != nil {
@@ -791,8 +813,6 @@ func Run() error {
 	if err := runCompose("environments/local/docker-compose.yaml"); err != nil {
 		return err
 	}
-
-	logger.Info("stopped.")
 
 	return nil
 }

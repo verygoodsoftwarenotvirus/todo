@@ -153,7 +153,7 @@ func AttachRequestToSpan(span trace.Span, req *http.Request) {
 			"HX-Request":                 "htmx.request",
 			"HX-Trigger":                 "htmx.trigger",
 			"HX-Current-URL":             "htmx.currentURL",
-			"HX-Trigger-Name":            "htmx.triggerName",
+			"HX-Trigger-LabelName":       "htmx.triggerName",
 			"HX-History-Restore-Request": "htmx.historyRestoreRequest",
 		}
 

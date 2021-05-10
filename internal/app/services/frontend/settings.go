@@ -8,7 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 )
 
-//go:embed templates/user_settings_partial.gotpl
+//go:embed templates/partials/settings/user_settings.gotpl
 var userSettingsPageSrc string
 
 func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -27,7 +27,7 @@ func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 
 		user, err := s.dataStore.GetUser(ctx, sessionCtxData.Requester.ID)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "error fetching user from datastore")
+			observability.AcknowledgeError(err, logger, span, "fetching user from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -61,7 +61,7 @@ func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 	}
 }
 
-//go:embed templates/account_settings_partial.gotpl
+//go:embed templates/partials/settings/account_settings.gotpl
 var accountSettingsPageSrc string
 
 func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -115,7 +115,7 @@ func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 	}
 }
 
-//go:embed templates/admin_settings_partial.gotpl
+//go:embed templates/partials/settings/admin_settings.gotpl
 var adminSettingsPageSrc string
 
 func (s *Service) buildAdminSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {

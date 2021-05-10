@@ -118,6 +118,13 @@
                         </h6>
                         <ul class="nav flex-column mb-2">
                             <li class="nav-item">
+                                <a class="nav-link" hx-target="#content" hx-push-url="/admin/users" hx-get="/dashboard_pages/admin/settings">
+                                    👥{{ translate "dashboardSidebar.pageLinks.adminUsersView" }}
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="nav flex-column mb-2">
+                            <li class="nav-item">
                                 <a class="nav-link" hx-target="#content" hx-push-url="/admin/settings" hx-get="/dashboard_pages/admin/settings">
                                     ⚙{{ translate "dashboardSidebar.pageLinks.serviceSettings" }}
                                 </a>

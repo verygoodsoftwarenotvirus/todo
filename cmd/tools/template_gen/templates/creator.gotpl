@@ -1,0 +1,19 @@
+{{- /* this template generates a template, don't be mad at me i'm trying my hardest */ -}}
+<div id="content" class="">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{{ .Title }}</h1>
+    </div>
+    <div class="col-md-8 order-md-1">
+        <form class="needs-validation" novalidate=""{{ if ne .SubmissionURL "" }} hx-target="#content" hx-post="{{ .SubmissionURL }}"{{ end }}>{{ range $i, $field := .Fields }}
+                <div class="mb3">
+                    <label for="{{ $field.LabelName }}">{{ $field.StructFieldName }}</label>
+                    <div class="input-group">
+                        <input class="form-control" {{- if ne $field.InputType "" }} type="{{ $field.InputType }}"{{ end }} id="{{ $field.TagID }}" name="{{ $field.FormName }}" placeholder="{{ $field.InputPlaceholder }}" {{- if $field.Required }} required=""{{ end}} value="{{ print "{{ ." $field.StructFieldName " }}" }}" />
+                        {{ if $field.Required }}<div class="invalid-feedback" style="width: 100%;">{{ $field.LabelName }} is required.</div>{{ end }}
+                    </div>
+                </div>{{ end }}
+            <hr class="mb-4" />
+            <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
+        </form>
+    </div>
+</div>

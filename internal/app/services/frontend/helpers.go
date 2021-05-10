@@ -10,6 +10,8 @@ import (
 
 const (
 	redirectToQueryKey = "redirectTo"
+
+	htmxRedirectionHeader = "HX-Redirect"
 )
 
 func buildRedirectURL(basePath, redirectTo string) string {
@@ -23,6 +25,10 @@ func buildRedirectURL(basePath, redirectTo string) string {
 
 func pluckRedirectURL(req *http.Request) string {
 	return req.URL.Query().Get(redirectToQueryKey)
+}
+
+func htmxRedirectTo(res http.ResponseWriter, path string) {
+	res.Header().Set(htmxRedirectionHeader, path)
 }
 
 func parseListOfTemplates(funcMap template.FuncMap, name string, templates ...string) *template.Template {
@@ -92,6 +98,8 @@ func parseBool(str string) bool {
 func isAdminRequest(req *http.Request) bool {
 	return parseBool(req.URL.Query().Get("admin"))
 }
+
+//
 
 func (s *Service) parseTemplate(name, source string, funcMap template.FuncMap) *template.Template {
 	return template.Must(template.New(name).Funcs(mergeFuncMaps(s.templateFuncMap, funcMap)).Parse(source))

@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
-//go:embed templates/login_partial.gotpl
+//go:embed templates/partials/auth/login.gotpl
 var loginPrompt string
 
 type loginPromptData struct {
@@ -117,7 +117,7 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 		}
 
 		http.SetCookie(res, cookie)
-		res.Header().Set("HX-Redirect", redirectTo)
+		res.Header().Set(htmxRedirectionHeader, redirectTo)
 	}
 }
 
@@ -139,11 +139,11 @@ func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Requ
 			observability.AcknowledgeError(err, logger, span, "logging out user")
 			return
 		}
-		res.Header().Set("HX-Redirect", "/")
+		res.Header().Set(htmxRedirectionHeader, "/")
 	}
 }
 
-//go:embed templates/registration_partial.gotpl
+//go:embed templates/partials/auth/register.gotpl
 var registrationPrompt string
 
 func (s *Service) registrationComponent(res http.ResponseWriter, req *http.Request) {
@@ -169,20 +169,20 @@ func (s *Service) registrationView(res http.ResponseWriter, req *http.Request) {
 
 	tmpl := s.renderTemplateIntoBaseTemplate(registrationPrompt, nil)
 
-	pageData := pageData{
+	data := pageData{
 		IsLoggedIn:  false,
 		Title:       "Register",
 		ContentData: nil,
 	}
 
-	if err := s.renderTemplateToResponse(tmpl, pageData, res); err != nil {
+	if err := s.renderTemplateToResponse(tmpl, data, res); err != nil {
 		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-//go:embed templates/registration_success_partial.gotpl
+//go:embed templates/partials/auth/registration_success.gotpl
 var successfulRegistrationResponse string
 
 type totpVerificationPrompt struct {

@@ -2,7 +2,9 @@ package frontend
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -13,52 +15,6 @@ import (
 const (
 	apiClientIDURLParamKey = "api_client"
 )
-
-func (s *Service) buildAPIClientsTableConfig() *basicTableTemplateConfig {
-	return &basicTableTemplateConfig{
-		Title:          "API Clients",
-		ExternalURL:    "/api_clients/123",
-		CreatorPageURL: "/api_clients/new",
-		GetURL:         "/dashboard_pages/api_clients/123",
-		Columns:        s.fetchTableColumns("columns.apiClients"),
-		CellFields: []string{
-			"Name",
-			"ExternalID",
-			"ClientID",
-			"BelongsToUser",
-		},
-		RowDataFieldName:     "Clients",
-		IncludeLastUpdatedOn: false,
-		IncludeCreatedOn:     true,
-	}
-}
-
-func (s *Service) buildAPIClientEditorConfig() *basicEditorTemplateConfig {
-	return &basicEditorTemplateConfig{
-		Fields: []basicEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "ExternalID",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "ClientID",
-				InputType: "text",
-				Required:  true,
-			},
-		},
-		FuncMap: map[string]interface{}{
-			"componentTitle": func(x *types.APIClient) string {
-				return fmt.Sprintf("Client #%d", x.ID)
-			},
-		},
-	}
-}
 
 func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (apiClient *types.APIClient, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
@@ -80,6 +36,9 @@ func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 	return apiClient, nil
 }
 
+//go:embed templates/partials/editors/api_client_editor.gotpl
+var apiClientEditorTemplate string
+
 func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
@@ -96,14 +55,19 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 
 		apiClient, err := s.fetchAPIClient(ctx, sessionCtxData, req)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "error fetching item from datastore")
+			observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		apiClientEditorConfig := s.buildAPIClientEditorConfig()
+		tmplFuncMap := map[string]interface{}{
+			"componentTitle": func(x *types.APIClient) string {
+				return fmt.Sprintf("Client #%d", x.ID)
+			},
+		}
+
 		if includeBaseTemplate {
-			tmpl := s.parseTemplate("", s.buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
+			tmpl := s.parseTemplate("", apiClientEditorTemplate, tmplFuncMap)
 
 			if err = s.renderTemplateToResponse(tmpl, apiClient, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering API client editor view")
@@ -111,7 +75,7 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 				return
 			}
 		} else {
-			view := s.renderTemplateIntoBaseTemplate(s.buildBasicEditorTemplate(apiClientEditorConfig), apiClientEditorConfig.FuncMap)
+			view := s.renderTemplateIntoBaseTemplate(apiClientEditorTemplate, tmplFuncMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -150,6 +114,9 @@ func (s *Service) fetchAPIClients(ctx context.Context, sessionCtxData *types.Ses
 	return apiClients, nil
 }
 
+//go:embed templates/partials/tables/api_clients_table.gotpl
+var apiClientsTableTemplate string
+
 func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
@@ -166,14 +133,22 @@ func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 
 		apiClients, err := s.fetchAPIClients(ctx, sessionCtxData, req)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "error fetching API client from datastore")
+			observability.AcknowledgeError(err, logger, span, "fetching API client from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		apiClientsTableConfig := s.buildAPIClientsTableConfig()
+		tmplFuncMap := map[string]interface{}{
+			"individualURL": func(x *types.APIClient) template.URL {
+				return template.URL(fmt.Sprintf("/api_clients/%d", x.ID))
+			},
+			"pushURL": func(x *types.APIClient) template.URL {
+				return template.URL(fmt.Sprintf("/api_clients/%d", x.ID))
+			},
+		}
+
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoBaseTemplate(s.buildBasicTableTemplate(apiClientsTableConfig), nil)
+			view := s.renderTemplateIntoBaseTemplate(apiClientsTableTemplate, tmplFuncMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -190,7 +165,7 @@ func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 				return
 			}
 		} else {
-			tmpl := s.parseTemplate("dashboard", s.buildBasicTableTemplate(apiClientsTableConfig), nil)
+			tmpl := s.parseTemplate("dashboard", apiClientsTableTemplate, tmplFuncMap)
 
 			if err = s.renderTemplateToResponse(tmpl, apiClients, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering API clients table view")

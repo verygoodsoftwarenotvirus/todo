@@ -46,7 +46,7 @@ var (
 	logger          logging.Logger
 
 	Aliases = map[string]interface{}{
-		"dev":                Run,
+		"run":                Dev,
 		"loud":               Verbose,
 		"fmt":                Format,
 		"integration-tests":  IntegrationTests,
@@ -799,13 +799,18 @@ func BrowserDrivenTests() error {
 
 // Development
 
+// Generate frontend templates
+func FrontendTemplates() error {
+	return runGoCommand(false, "run", fmt.Sprintf("%s/cmd/tools/template_gen", thisRepo))
+}
+
 // Generate configuration files.
 func Configs() error {
 	return runGoCommand(true, run, "cmd/tools/config_gen/main.go")
 }
 
-// Run the service in docker-compose.
-func Run() error {
+// Dev runs the service in dev mode locally.
+func Dev() error {
 	if err := freshArtifactsDir(); err != nil {
 		return err
 	}

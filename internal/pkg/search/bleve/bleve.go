@@ -115,7 +115,7 @@ func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID
 		x, parseErr := strconv.ParseUint(result.ID, base, bitSize)
 		if parseErr != nil {
 			// this should literally never happen
-			return nil, observability.PrepareError(err, logger, span, "error parsing integer stored in search index for #%s", result.ID)
+			return nil, observability.PrepareError(err, logger, span, "parsing integer stored in search index for #%s", result.ID)
 		}
 
 		ids = append(ids, x)

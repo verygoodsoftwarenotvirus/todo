@@ -2,7 +2,9 @@ package frontend
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -13,23 +15,6 @@ import (
 const (
 	accountIDURLParamKey = "account"
 )
-
-func (s *Service) buildAccountEditorConfig() *basicEditorTemplateConfig {
-	return &basicEditorTemplateConfig{
-		Fields: []basicEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-		},
-		FuncMap: map[string]interface{}{
-			"componentTitle": func(x *types.Account) string {
-				return fmt.Sprintf("Account #%d", x.ID)
-			},
-		},
-	}
-}
 
 func (s *Service) fetchAccount(ctx context.Context, sessionCtxData *types.SessionContextData) (account *types.Account, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
@@ -48,6 +33,9 @@ func (s *Service) fetchAccount(ctx context.Context, sessionCtxData *types.Sessio
 
 	return account, nil
 }
+
+//go:embed templates/partials/editors/account_editor.gotpl
+var accountEditorTemplate string
 
 func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
@@ -71,9 +59,14 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 			return
 		}
 
-		accountEditorConfig := s.buildAccountEditorConfig()
+		templateFuncMap := map[string]interface{}{
+			"componentTitle": func(x *types.Account) string {
+				return fmt.Sprintf("Account #%d", x.ID)
+			},
+		}
+
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoBaseTemplate(s.buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+			tmpl := s.renderTemplateIntoBaseTemplate(accountEditorTemplate, templateFuncMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -84,13 +77,13 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
+			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard tmpl")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		} else {
-			tmpl := s.parseTemplate("", s.buildBasicEditorTemplate(accountEditorConfig), accountEditorConfig.FuncMap)
+			tmpl := s.parseTemplate("", accountEditorTemplate, templateFuncMap)
 
 			if err = s.renderTemplateToResponse(tmpl, account, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering accounts editor view")
@@ -102,24 +95,6 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 }
 
 // plural
-
-func (s *Service) buildAccountsTableConfig() *basicTableTemplateConfig {
-	return &basicTableTemplateConfig{
-		Title:          "Accounts",
-		ExternalURL:    "/accounts/123",
-		CreatorPageURL: "/accounts/new",
-		GetURL:         "/dashboard_pages/accounts/123",
-		Columns:        s.fetchTableColumns("columns.accounts"),
-		CellFields: []string{
-			"Name",
-			"ExternalID",
-			"BelongsToUser",
-		},
-		RowDataFieldName:     "Accounts",
-		IncludeLastUpdatedOn: true,
-		IncludeCreatedOn:     true,
-	}
-}
 
 func (s *Service) fetchAccounts(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (accounts *types.AccountList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
@@ -139,6 +114,9 @@ func (s *Service) fetchAccounts(ctx context.Context, req *http.Request, sessionC
 
 	return accounts, nil
 }
+
+//go:embed templates/partials/tables/accounts_table.gotpl
+var accountsTableTemplate string
 
 func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
@@ -162,9 +140,17 @@ func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.Response
 			return
 		}
 
-		accountsTableConfig := s.buildAccountsTableConfig()
+		tmplFuncMap := map[string]interface{}{
+			"individualURL": func(x *types.Account) template.URL {
+				return template.URL(fmt.Sprintf("/accounts/%d", x.ID))
+			},
+			"pushURL": func(x *types.Account) template.URL {
+				return template.URL(fmt.Sprintf("/accounts/%d", x.ID))
+			},
+		}
+
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoBaseTemplate(s.buildBasicTableTemplate(accountsTableConfig), nil)
+			tmpl := s.renderTemplateIntoBaseTemplate(accountsTableTemplate, tmplFuncMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -175,13 +161,13 @@ func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.Response
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
+			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard tmpl")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		} else {
-			tmpl := s.parseTemplate("dashboard", s.buildBasicTableTemplate(accountsTableConfig), nil)
+			tmpl := s.parseTemplate("dashboard", accountsTableTemplate, tmplFuncMap)
 
 			if err = s.renderTemplateToResponse(tmpl, accounts, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")

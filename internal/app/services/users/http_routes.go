@@ -128,13 +128,13 @@ func (s *service) RegisterUser(ctx context.Context, registrationInput *types.Use
 
 	// generate a two factor secret.
 	if input.TwoFactorSecret, err = s.secretGenerator.GenerateBase32EncodedString(ctx, totpSecretSize); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "error generating TOTP secret")
+		return nil, observability.PrepareError(err, logger, span, "generating TOTP secret")
 	}
 
 	// create the user.
 	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
 	if userCreationErr != nil {
-		return nil, observability.PrepareError(err, logger, span, "error creating user")
+		return nil, observability.PrepareError(err, logger, span, "creating user")
 	}
 
 	// notify the relevant parties.
@@ -190,7 +190,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	ucr, err := s.RegisterUser(ctx, userInput)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "error creating user")
+		observability.AcknowledgeError(err, logger, span, "creating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -493,7 +493,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// update the user.
 	if err = s.userDataManager.UpdateUserPassword(ctx, user.ID, newPasswordHash); err != nil {
-		observability.AcknowledgeError(err, logger, span, "error encountered updating user")
+		observability.AcknowledgeError(err, logger, span, "encountered updating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

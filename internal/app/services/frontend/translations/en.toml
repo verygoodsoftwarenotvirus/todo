@@ -66,6 +66,10 @@ other = "Settings"
 description = "Sidebar label for the account settings page."
 other = "Settings"
 
+[dashboardSidebar.pageLinks.adminUsersView]
+description = "Sidebar label for the admin users view page."
+other = "Users"
+
 [dashboardSidebar.pageLinks.serviceSettings]
 description = "Sidebar label for the service settings page."
 other = "Settings"

@@ -2,6 +2,10 @@ package frontend
 
 import (
 	"context"
+	"html/template"
+
+	// Import embed for the side effect.
+	_ "embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,57 +19,11 @@ const (
 	webhookIDURLParamKey = "webhook"
 )
 
-func (s *Service) buildWebhooksTableConfig() *basicTableTemplateConfig {
-	return &basicTableTemplateConfig{
-		Title:          "Webhooks",
-		ExternalURL:    "/account/webhooks/123",
-		CreatorPageURL: "/accounts/webhooks/new",
-		GetURL:         "/dashboard_pages/account/webhooks/123",
-		Columns:        s.fetchTableColumns("columns.webhooks"),
-		CellFields: []string{
-			"Name",
-			"Method",
-			"URL",
-			"ContentType",
-			"BelongsToAccount",
-		},
-		RowDataFieldName:     "Webhooks",
-		IncludeLastUpdatedOn: true,
-		IncludeCreatedOn:     true,
-	}
-}
-
-func (s *Service) buildWebhookEditorConfig() *basicEditorTemplateConfig {
-	return &basicEditorTemplateConfig{
-		Fields: []basicEditorField{
-			{
-				Name:      "Name",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "Method",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "ContentType",
-				InputType: "text",
-				Required:  true,
-			},
-			{
-				Name:      "URL",
-				InputType: "text",
-				Required:  true,
-			},
-		},
-		FuncMap: map[string]interface{}{
-			"componentTitle": func(x *types.Webhook) string {
-				return fmt.Sprintf("Webhook #%d", x.ID)
-			},
-		},
-	}
-}
+//map[string]interface{}{
+//	"componentTitle": func(x *types.Webhook) string {
+//		return fmt.Sprintf("Webhook #%d", x.ID)
+//	},
+//}
 
 func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (webhook *types.Webhook, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
@@ -86,6 +44,9 @@ func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.Sessio
 	return webhook, nil
 }
 
+//go:embed templates/partials/editors/webhook_editor.gotpl
+var webhookEditorTemplate string
+
 func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
@@ -102,14 +63,13 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 
 		webhook, err := s.fetchWebhook(ctx, sessionCtxData, req)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "error fetching webhook from datastore")
+			observability.AcknowledgeError(err, logger, span, "fetching webhook from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		webhookEditorConfig := s.buildWebhookEditorConfig()
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoBaseTemplate(s.buildBasicEditorTemplate(webhookEditorConfig), webhookEditorConfig.FuncMap)
+			view := s.renderTemplateIntoBaseTemplate(webhookEditorTemplate, nil)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -126,9 +86,9 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 				return
 			}
 		} else {
-			tmpl := s.parseTemplate("", s.buildBasicEditorTemplate(webhookEditorConfig), webhookEditorConfig.FuncMap)
+			tmpl := s.parseTemplate("", webhookEditorTemplate, nil)
 
-			if err := s.renderTemplateToResponse(tmpl, webhook, res); err != nil {
+			if err = s.renderTemplateToResponse(tmpl, webhook, res); err != nil {
 				log.Panic(err)
 			}
 		}
@@ -154,6 +114,9 @@ func (s *Service) fetchWebhooks(ctx context.Context, sessionCtxData *types.Sessi
 	return webhooks, nil
 }
 
+//go:embed templates/partials/tables/webhooks_table.gotpl
+var webhooksTableTemplate string
+
 func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
@@ -170,14 +133,22 @@ func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 
 		webhooks, err := s.fetchWebhooks(ctx, sessionCtxData, req)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "error fetching webhooks from datastore")
+			observability.AcknowledgeError(err, logger, span, "fetching webhooks from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		webhooksTableConfig := s.buildWebhooksTableConfig()
+		tmplFuncMap := map[string]interface{}{
+			"individualURL": func(x *types.Webhook) template.URL {
+				return template.URL(fmt.Sprintf("/webhooks/%d", x.ID))
+			},
+			"pushURL": func(x *types.Webhook) template.URL {
+				return template.URL(fmt.Sprintf("/webhooks/%d", x.ID))
+			},
+		}
+
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoBaseTemplate(s.buildBasicTableTemplate(webhooksTableConfig), nil)
+			view := s.renderTemplateIntoBaseTemplate(webhooksTableTemplate, tmplFuncMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -194,10 +165,12 @@ func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 				return
 			}
 		} else {
-			tmpl := s.parseTemplate("dashboard", s.buildBasicTableTemplate(webhooksTableConfig), nil)
+			tmpl := s.parseTemplate("dashboard", webhooksTableTemplate, tmplFuncMap)
 
-			if err := s.renderTemplateToResponse(tmpl, webhooks, res); err != nil {
-				log.Panic(err)
+			if err = s.renderTemplateToResponse(tmpl, webhooks, res); err != nil {
+				observability.AcknowledgeError(err, logger, span, "rendering webhooks table component")
+				res.WriteHeader(http.StatusInternalServerError)
+				return
 			}
 		}
 	}

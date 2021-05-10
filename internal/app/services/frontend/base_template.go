@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"fmt"
 	"html/template"
 	// import embed for the side effect.
 	_ "embed"
@@ -54,4 +55,11 @@ func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
 
 func (s *Service) renderTemplateIntoBaseTemplate(templateSrc string, funcMap template.FuncMap) *template.Template {
 	return parseListOfTemplates(mergeFuncMaps(s.templateFuncMap, funcMap), "dashboard", baseTemplateSrc, wrapTemplateInContentDefinition(templateSrc))
+}
+
+func wrapTemplateInContentDefinition(tmpl string) string {
+	return fmt.Sprintf(`{{ define "content" }}
+	%s
+{{ end }}
+	`, tmpl)
 }

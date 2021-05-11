@@ -278,17 +278,13 @@ issues:
         - goerr113
         - bodyclose
         - unparam
-        - gocognit  # FIXME
+        - gocognit
         - gomnd
 
     - path: tests/
       linters:
         - gosec
         - gomnd
-
-    - path: internal/app/services/frontend
-      linters:
-        - unused
 
     - path: pkg/client/httpclient/roundtripper_*
       linters:

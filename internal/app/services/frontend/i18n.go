@@ -1,10 +1,10 @@
 package frontend
 
 import (
+	// import embed for the side effect.
 	"embed"
 	"io/fs"
 	"path/filepath"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -42,14 +42,4 @@ func (s *Service) getSimpleLocalizedString(messageID string) string {
 		TemplateData:   nil,
 		Funcs:          nil,
 	})
-}
-
-func (s *Service) fetchTableColumns(messageID string) []string {
-	out := []string{}
-
-	for _, x := range strings.Split(s.getSimpleLocalizedString(messageID), ",") {
-		out = append(out, strings.TrimSpace(x))
-	}
-
-	return out
 }

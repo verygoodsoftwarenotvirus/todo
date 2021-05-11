@@ -17,26 +17,6 @@ const (
 	userIDURLParamKey = "user"
 )
 
-func (s *Service) fetchUser(ctx context.Context, req *http.Request) (user *types.User, err error) {
-	ctx, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger
-	userID := s.routeParamManager.BuildRouteParamIDFetcher(logger, userIDURLParamKey, "user")(req)
-
-	if s.useFakeData {
-		user = fakes.BuildFakeUser()
-	} else {
-		user, err = s.dataStore.GetUser(ctx, userID)
-		if err != nil {
-			return nil, observability.PrepareError(err, logger, span, "fetching user data")
-		}
-	}
-
-	return user, nil
-}
-
-//
 func (s *Service) fetchUsers(ctx context.Context, req *http.Request) (users *types.UserList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()

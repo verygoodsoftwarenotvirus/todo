@@ -66,7 +66,6 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/tebeka/selenium v0.9.9
 	github.com/tkuchiki/go-timezone v0.2.2 // indirect
 	github.com/unrolled/secure v1.0.8
 	github.com/wagslane/go-password-validator v0.3.0

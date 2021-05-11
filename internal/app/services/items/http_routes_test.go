@@ -18,7 +18,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParseBool(t *testing.T) {
@@ -434,56 +433,6 @@ func TestItemsService_ListHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, itemDataManager, encoderDecoder)
 	})
 
-	T.Run("standard for admin", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		helper.req.URL.RawQuery = url.Values{types.AdminQueryKey: []string{"true"}}.Encode()
-
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
-		helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
-			sessionCtxData, err := types.SessionContextDataFromUser(
-				helper.exampleUser,
-				helper.exampleAccount.ID,
-				map[uint64]*types.UserAccountMembershipInfo{
-					helper.exampleAccount.ID: {
-						AccountName: helper.exampleAccount.Name,
-						Permissions: testutil.BuildMaxUserPerms(),
-					},
-				},
-			)
-			require.NoError(t, err)
-
-			return sessionCtxData, nil
-		}
-
-		exampleItemList := fakes.BuildFakeItemList()
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItemsForAdmin",
-			testutil.ContextMatcher,
-			mock.IsType(&types.QueryFilter{}),
-		).Return(exampleItemList, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType(&types.ItemList{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.ListHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, encoderDecoder)
-	})
-
 	T.Run("with error retrieving session context data", func(t *testing.T) {
 		t.Parallel()
 
@@ -601,67 +550,6 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			"GetItemsWithIDs",
 			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
-			exampleLimit,
-			exampleItemIDs,
-		).Return(exampleItemList.Items, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType([]*types.Item{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.SearchHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, indexManager, itemDataManager, encoderDecoder)
-	})
-
-	T.Run("standard for admin", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		helper.req.URL.RawQuery = url.Values{
-			types.SearchQueryKey: []string{exampleQuery},
-			types.AdminQueryKey:  []string{"true"},
-			types.LimitQueryKey:  []string{strconv.Itoa(int(exampleLimit))},
-		}.Encode()
-
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
-		helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
-			sessionCtxData, err := types.SessionContextDataFromUser(
-				helper.exampleUser,
-				helper.exampleAccount.ID,
-				map[uint64]*types.UserAccountMembershipInfo{
-					helper.exampleAccount.ID: {
-						AccountName: helper.exampleAccount.Name,
-						Permissions: testutil.BuildMaxUserPerms(),
-					},
-				},
-			)
-			require.NoError(t, err)
-
-			return sessionCtxData, nil
-		}
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"SearchForAdmin",
-			testutil.ContextMatcher,
-			exampleQuery,
-		).Return(exampleItemIDs, nil)
-		helper.service.search = indexManager
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItemsWithIDsForAdmin",
-			testutil.ContextMatcher,
 			exampleLimit,
 			exampleItemIDs,
 		).Return(exampleItemList.Items, nil)

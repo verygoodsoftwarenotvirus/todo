@@ -110,7 +110,7 @@ var (
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    PRIMARY KEY (`id`),",
-				"    UNIQUE (`username`, `archived_on`)",
+				"    UNIQUE (`username`)",
 				");",
 			}, "\n"),
 		},

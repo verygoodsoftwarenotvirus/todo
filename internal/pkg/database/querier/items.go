@@ -235,33 +235,6 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *typ
 	return x, nil
 }
 
-// GetItemsForAdmin fetches a list of items from the database that meet a particular filter for all users.
-func (q *SQLQuerier) GetItemsForAdmin(ctx context.Context, filter *types.QueryFilter) (x *types.ItemList, err error) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := filter.AttachToLogger(q.logger)
-	tracing.AttachQueryFilterToSpan(span, filter)
-
-	x = &types.ItemList{}
-	if filter != nil {
-		x.Page, x.Limit = filter.Page, filter.Limit
-	}
-
-	query, args := q.sqlQueryBuilder.BuildGetItemsQuery(ctx, 0, true, filter)
-
-	rows, err := q.performReadQuery(ctx, q.db, "items for admin", query, args...)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "executing items list retrieval query for admin")
-	}
-
-	if x.Items, x.FilteredCount, x.TotalCount, err = q.scanItems(ctx, rows, true); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "scanning items")
-	}
-
-	return x, nil
-}
-
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
 func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
@@ -286,40 +259,6 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limi
 	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, accountID, limit, ids, false)
 
 	rows, err := q.performReadQuery(ctx, q.db, "items with IDs", query, args...)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "fetching items from database")
-	}
-
-	items, _, _, err := q.scanItems(ctx, rows, false)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "scanning items")
-	}
-
-	return items, nil
-}
-
-// GetItemsWithIDsForAdmin fetches items from the database within a given set of IDs.
-func (q *SQLQuerier) GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*types.Item, error) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if limit == 0 {
-		limit = uint8(types.DefaultLimit)
-	}
-
-	if len(ids) == 0 {
-		return []*types.Item{}, nil
-	}
-
-	logger := q.logger.WithValues(map[string]interface{}{
-		"limit":    limit,
-		"id_count": len(ids),
-		"ids":      ids,
-	})
-
-	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, 0, limit, ids, true)
-
-	rows, err := q.performReadQuery(ctx, q.db, "items with IDs for admin", query, args...)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "fetching items from database")
 	}

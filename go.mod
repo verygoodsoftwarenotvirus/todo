@@ -50,6 +50,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/moul/http2curl v1.0.0
 	github.com/mssola/user_agent v0.5.2
+	github.com/mxschmitt/playwright-go v0.1100.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/nleeper/goment v1.4.1

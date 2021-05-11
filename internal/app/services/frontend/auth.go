@@ -1,12 +1,11 @@
 package frontend
 
 import (
+	"context"
 	// import embed for the side effect.
 	_ "embed"
 	"html/template"
-	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -26,20 +25,20 @@ func (s *Service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWri
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		data := &loginPromptData{
+		contentData := &loginPromptData{
 			RedirectTo: pluckRedirectURL(req),
 		}
 
 		if includeBaseTemplate {
 			tmpl := s.renderTemplateIntoBaseTemplate(loginPrompt, nil)
 
-			pageData := pageData{
+			data := pageData{
 				IsLoggedIn:  false,
 				Title:       "Login",
-				ContentData: data,
+				ContentData: contentData,
 			}
 
-			if err := s.renderTemplateToResponse(tmpl, pageData, res); err != nil {
+			if err := s.renderTemplateToResponse(tmpl, data, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
@@ -47,7 +46,7 @@ func (s *Service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWri
 		} else {
 			tmpl := s.parseTemplate("", loginPrompt, nil)
 
-			if err := s.renderTemplateToResponse(tmpl, data, res); err != nil {
+			if err := s.renderTemplateToResponse(tmpl, contentData, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
@@ -68,13 +67,8 @@ const (
 )
 
 // parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
-func parseFormEncodedLoginRequest(req *http.Request) (loginData *types.UserLoginInput, redirectTo string) {
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil, ""
-	}
-
-	form, err := url.ParseQuery(string(bodyBytes))
+func (s *Service) parseFormEncodedLoginRequest(ctx context.Context, req *http.Request) (loginData *types.UserLoginInput, redirectTo string) {
+	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		return nil, ""
 	}
@@ -98,7 +92,7 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 
 	logger := s.logger.WithRequest(req)
 
-	loginInput, redirectTo := parseFormEncodedLoginRequest(req)
+	loginInput, redirectTo := s.parseFormEncodedLoginRequest(ctx, req)
 	if loginInput == nil {
 		logger.Debug("no input found for login request")
 		res.WriteHeader(http.StatusBadRequest)
@@ -117,7 +111,7 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 		}
 
 		http.SetCookie(res, cookie)
-		res.Header().Set(htmxRedirectionHeader, redirectTo)
+		htmxRedirectTo(res, redirectTo)
 	}
 }
 
@@ -139,7 +133,7 @@ func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Requ
 			observability.AcknowledgeError(err, logger, span, "logging out user")
 			return
 		}
-		res.Header().Set(htmxRedirectionHeader, "/")
+		htmxRedirectTo(res, "/")
 	}
 }
 
@@ -191,13 +185,8 @@ type totpVerificationPrompt struct {
 }
 
 // parseFormEncodedRegistrationRequest checks a request for a registration form, and returns the parsed login data if relevant.
-func parseFormEncodedRegistrationRequest(req *http.Request) *types.UserRegistrationInput {
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil
-	}
-
-	form, err := url.ParseQuery(string(bodyBytes))
+func (s *Service) parseFormEncodedRegistrationRequest(ctx context.Context, req *http.Request) *types.UserRegistrationInput {
+	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		return nil
 	}
@@ -220,7 +209,7 @@ func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *htt
 
 	logger := s.logger.WithRequest(req)
 
-	registrationInput := parseFormEncodedRegistrationRequest(req)
+	registrationInput := s.parseFormEncodedRegistrationRequest(ctx, req)
 	if registrationInput == nil {
 		logger.Debug("no input found for registration request")
 		res.WriteHeader(http.StatusBadRequest)
@@ -255,13 +244,8 @@ func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *htt
 }
 
 // parseFormEncodedTOTPSecretVerificationRequest checks a request for a registration form, and returns the parsed input.
-func parseFormEncodedTOTPSecretVerificationRequest(req *http.Request) *types.TOTPSecretVerificationInput {
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil
-	}
-
-	form, err := url.ParseQuery(string(bodyBytes))
+func (s *Service) parseFormEncodedTOTPSecretVerificationRequest(ctx context.Context, req *http.Request) *types.TOTPSecretVerificationInput {
+	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		return nil
 	}
@@ -289,7 +273,7 @@ func (s *Service) handleTOTPVerificationSubmission(res http.ResponseWriter, req 
 
 	logger := s.logger.WithRequest(req)
 
-	verificationInput := parseFormEncodedTOTPSecretVerificationRequest(req)
+	verificationInput := s.parseFormEncodedTOTPSecretVerificationRequest(ctx, req)
 	if verificationInput == nil {
 		logger.Debug("no input found for registration request")
 		res.WriteHeader(http.StatusBadRequest)

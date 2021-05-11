@@ -2,10 +2,14 @@ package frontend
 
 import (
 	"bytes"
+	"context"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 )
 
 const (
@@ -13,6 +17,25 @@ const (
 
 	htmxRedirectionHeader = "HX-Redirect"
 )
+
+func (s *Service) extractFormFromRequest(ctx context.Context, req *http.Request) (url.Values, error) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "reading form from request")
+	}
+
+	form, err := url.ParseQuery(string(bodyBytes))
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "parsing request form")
+	}
+
+	return form, nil
+}
 
 func buildRedirectURL(basePath, redirectTo string) string {
 	u := &url.URL{
@@ -84,22 +107,6 @@ func mergeFuncMaps(a, b template.FuncMap) template.FuncMap {
 
 	return out
 }
-
-// parseBool differs from strconv.ParseBool in that it returns false by default.
-func parseBool(str string) bool {
-	switch str {
-	case "1", "t", "T", "true", "TRUE", "True":
-		return true
-	default:
-		return false
-	}
-}
-
-func isAdminRequest(req *http.Request) bool {
-	return parseBool(req.URL.Query().Get("admin"))
-}
-
-//
 
 func (s *Service) parseTemplate(name, source string, funcMap template.FuncMap) *template.Template {
 	return template.Must(template.New(name).Funcs(mergeFuncMaps(s.templateFuncMap, funcMap)).Parse(source))

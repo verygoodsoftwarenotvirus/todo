@@ -3,7 +3,7 @@
         <h1 class="h2">{{ componentTitle . }}</h1>
     </div>
     <div class="col-md-8 order-md-1">
-        <form class="needs-validation" novalidate="" hx-target="#content" hx-put="{{ individualURL . }}">
+        <form class="needs-validation" novalidate="" hx-target="#content" hx-put="">
             <div class="mb3">
                 <label for="name">Name</label>
                 <div class="input-group">
@@ -12,10 +12,10 @@
                 </div>
             </div>
             <div class="mb3">
-                <label for="details">Details</label>
+                <label for="price">Price</label>
                 <div class="input-group">
-                    <input class="form-control" type="text" id="" name="details" placeholder="" value="{{ .Details }}" />
-                    
+                    <input class="form-control" type="numeric" id="" name="price" placeholder="" required="" value="{{ .Price }}" />
+                    <div class="invalid-feedback" style="width: 100%;">price is required.</div>
                 </div>
             </div>
             <hr class="mb-4" />

@@ -34,7 +34,7 @@ var (
 
 func init() {
 	flag.StringVarP(&uri, "url", "u", "", "where the target instance is hosted")
-	flag.Uint16VarP(&userCount, "user-count", "u", 0, "how many users to create")
+	flag.Uint16VarP(&userCount, "user-count", "c", 0, "how many users to create")
 	flag.Uint16VarP(&dataCount, "data-count", "d", 0, "how many accounts/api clients/etc per user to create")
 	flag.BoolVarP(&debug, "debug", "z", false, "whether debug mode is enabled")
 	flag.BoolVarP(&singleUserMode, "single-user-mode", "s", false, "whether single user mode is enabled")
@@ -136,6 +136,34 @@ func main() {
 						quitter.ComplainAndQuit(fmt.Errorf("creating account #%d: %w", j, accountCreationError))
 					}
 					iterationLogger.WithValue(keys.AccountIDKey, createdAccount.ID).Debug("created account")
+				}
+				wg.Done()
+			}(wg)
+
+			wg.Add(1)
+			go func(wg *sync.WaitGroup) {
+				for j := 0; j < int(dataCount); j++ {
+					iterationLogger := userLogger.WithValue("creating", "api_clients").WithValue("iteration", j)
+
+					code, codeErr := totp.GenerateCode(strings.ToUpper(createdUser.TwoFactorSecret), time.Now().UTC())
+					if codeErr != nil {
+						quitter.ComplainAndQuit(fmt.Errorf("creating API Client #%d: %w", j, codeErr))
+					}
+
+					fakeInput := fakes.BuildFakeAPIClientCreationInput()
+
+					createdAPIClient, apiClientCreationErr := userClient.CreateAPIClient(ctx, cookie, &types.APIClientCreationInput{
+						UserLoginInput: types.UserLoginInput{
+							Username:  createdUser.Username,
+							Password:  createdUser.HashedPassword,
+							TOTPToken: code,
+						},
+						Name: fakeInput.Name,
+					})
+					if apiClientCreationErr != nil {
+						quitter.ComplainAndQuit(fmt.Errorf("API Client webhook #%d: %w", j, apiClientCreationErr))
+					}
+					iterationLogger.WithValue(keys.APIClientDatabaseIDKey, createdAPIClient.ID).Debug("created API Client")
 				}
 				wg.Done()
 			}(wg)

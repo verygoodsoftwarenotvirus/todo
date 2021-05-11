@@ -18,7 +18,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAccountsService_ListHandler(T *testing.T) {
@@ -36,59 +35,6 @@ func TestAccountsService_ListHandler(T *testing.T) {
 			"GetAccounts",
 			testutil.ContextMatcher,
 			helper.exampleUser.ID,
-			mock.IsType(&types.QueryFilter{}),
-		).Return(exampleAccountList, nil)
-		helper.service.accountDataManager = accountDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType(&types.AccountList{}),
-		)
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.ListHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, encoderDecoder)
-	})
-
-	T.Run("standard for admin", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		exampleAccountList := fakes.BuildFakeAccountList()
-
-		helper.req.URL.RawQuery = "admin=true"
-
-		blah := helper.req.URL.String()
-		_ = blah
-
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
-		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			sessionCtxData, err := types.SessionContextDataFromUser(
-				helper.exampleUser,
-				helper.exampleAccount.ID,
-				map[uint64]*types.UserAccountMembershipInfo{
-					helper.exampleAccount.ID: {
-						AccountName: helper.exampleAccount.Name,
-						Permissions: testutil.BuildMaxUserPerms(),
-					},
-				},
-			)
-			require.NoError(t, err)
-
-			return sessionCtxData, nil
-		}
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On(
-			"GetAccountsForAdmin",
-			testutil.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
 		helper.service.accountDataManager = accountDataManager

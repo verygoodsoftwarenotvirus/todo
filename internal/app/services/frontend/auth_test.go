@@ -1,18 +1,18 @@
 package frontend
 
 import (
-	"errors"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func buildFormFromLoginRequest(input *types.UserLoginInput) url.Values {
@@ -31,6 +31,8 @@ func TestParseFormEncodedLoginRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
+
 		expected := &types.UserLoginInput{
 			Username:  "username",
 			Password:  "password",
@@ -40,22 +42,15 @@ func TestParseFormEncodedLoginRequest(T *testing.T) {
 		form := buildFormFromLoginRequest(expected)
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(form.Encode()))
 
+		s := &Service{
+			tracer: tracing.NewTracer("testing"),
+			logger: zerolog.NewLogger(),
+		}
+
 		expectedRedirectTo := ""
-		actual, actualRedirectTo := parseFormEncodedLoginRequest(req)
+		actual, actualRedirectTo := s.parseFormEncodedLoginRequest(ctx, req)
 
 		assert.Equal(t, expected, actual)
 		assert.Equal(t, expectedRedirectTo, actualRedirectTo)
-	})
-
-	T.Run("returns nil for invalid request", func(t *testing.T) {
-		t.Parallel()
-
-		badReader := &testutil.MockReadCloser{}
-		badReader.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
-
-		actual, actualRedirectTo := parseFormEncodedLoginRequest(&http.Request{Body: badReader})
-
-		assert.Nil(t, actual)
-		assert.Empty(t, actualRedirectTo)
 	})
 }

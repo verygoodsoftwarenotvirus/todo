@@ -286,6 +286,10 @@ issues:
         - gosec
         - gomnd
 
+    - path: internal/app/services/frontend
+      linters:
+        - unused
+
     - path: pkg/client/httpclient/roundtripper_*
       linters:
         - bodyclose
@@ -389,6 +393,10 @@ issues:
     #   text: "weak cryptographic primitive"
     #   linters:
     #     - gosec
+
+    - linters:
+        - gocritic
+      text: "appendAssign: "
 
     - linters:
         - goerr113

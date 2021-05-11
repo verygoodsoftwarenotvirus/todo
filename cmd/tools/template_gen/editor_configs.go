@@ -3,10 +3,6 @@ package main
 import (
 	"bytes"
 	_ "embed"
-	"fmt"
-	"text/template"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 //go:embed templates/editor.gotpl
@@ -15,7 +11,7 @@ var basicEditorTemplateSrc string
 func buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := parseTemplate("", basicEditorTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
+	if err := parseTemplate("", basicEditorTemplateSrc, nil).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 
@@ -23,13 +19,12 @@ func buildBasicEditorTemplate(cfg *basicEditorTemplateConfig) string {
 }
 
 type basicEditorTemplateConfig struct {
-	FuncMap       template.FuncMap
-	Fields        []formField
 	SubmissionURL string
+	Fields        []formField
 }
 
 var editorConfigs = map[string]*basicEditorTemplateConfig{
-	"internal/app/services/frontend/templates/partials/editors/account_editor.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/editors/account_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -39,13 +34,26 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 				Required:        true,
 			},
 		},
-		FuncMap: map[string]interface{}{
-			"componentTitle": func(x *types.Account) string {
-				return fmt.Sprintf("Account #%d", x.ID)
+	},
+	"internal/app/services/frontend/templates/partials/generated/editors/account_subscription_plan_editor.gotpl": {
+		Fields: []formField{
+			{
+				LabelName:       "name",
+				FormName:        "name",
+				StructFieldName: "Name",
+				InputType:       "text",
+				Required:        true,
+			},
+			{
+				LabelName:       "price",
+				FormName:        "price",
+				StructFieldName: "Price",
+				InputType:       "numeric",
+				Required:        true,
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/editors/api_client_editor.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/editors/api_client_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -70,7 +78,7 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/editors/webhook_editor.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/editors/webhook_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -98,7 +106,7 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/editors/item_editor.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/editors/item_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -113,11 +121,6 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 				StructFieldName: "Details",
 				InputType:       "text",
 				Required:        false,
-			},
-		},
-		FuncMap: map[string]interface{}{
-			"componentTitle": func(x *types.Item) string {
-				return fmt.Sprintf("Item #%d", x.ID)
 			},
 		},
 	},

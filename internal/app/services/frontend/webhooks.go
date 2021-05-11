@@ -19,12 +19,6 @@ const (
 	webhookIDURLParamKey = "webhook"
 )
 
-//map[string]interface{}{
-//	"componentTitle": func(x *types.Webhook) string {
-//		return fmt.Sprintf("Webhook #%d", x.ID)
-//	},
-//}
-
 func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (webhook *types.Webhook, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
@@ -44,7 +38,7 @@ func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.Sessio
 	return webhook, nil
 }
 
-//go:embed templates/partials/editors/webhook_editor.gotpl
+//go:embed templates/partials/generated/editors/webhook_editor.gotpl
 var webhookEditorTemplate string
 
 func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -114,7 +108,7 @@ func (s *Service) fetchWebhooks(ctx context.Context, sessionCtxData *types.Sessi
 	return webhooks, nil
 }
 
-//go:embed templates/partials/tables/webhooks_table.gotpl
+//go:embed templates/partials/generated/tables/webhooks_table.gotpl
 var webhooksTableTemplate string
 
 func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -140,9 +134,11 @@ func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Webhook) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/webhooks/%d", x.ID))
 			},
 			"pushURL": func(x *types.Webhook) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/webhooks/%d", x.ID))
 			},
 		}

@@ -815,6 +815,10 @@ func Dev() error {
 		return err
 	}
 
+	if err := FrontendTemplates(); err != nil {
+		return err
+	}
+
 	if err := runCompose("environments/local/docker-compose.yaml"); err != nil {
 		return err
 	}
@@ -823,16 +827,17 @@ func Dev() error {
 }
 
 // Create test users in a running instance of the service.
-func ScaffoldUsers(userCount uint) error {
+func ScaffoldUsers(count int) error {
 	fullArgs := []string{
 		run,
 		filepath.Join(thisRepo, "/cmd/tools/data_scaffolder"),
 		fmt.Sprintf("--url=%s", localAddress),
-		fmt.Sprintf("--count=%d", userCount),
+		fmt.Sprintf("--user-count=%d", count),
+		fmt.Sprintf("--data-count=%d", count),
 		"--debug",
 	}
 
-	if userCount == 1 {
+	if count == 1 {
 		fullArgs = append(fullArgs, "--single-user-mode")
 	}
 

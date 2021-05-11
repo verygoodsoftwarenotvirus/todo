@@ -1,10 +1,10 @@
 package frontend
 
 import (
-	"fmt"
-	"html/template"
 	// import embed for the side effect.
 	_ "embed"
+	"fmt"
+	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -17,6 +17,7 @@ type pageData struct {
 	PageTitle                   string
 	PageImagePreview            string
 	PageImagePreviewDescription string
+	InheritedQuery              string
 	IsLoggedIn                  bool
 	IsServiceAdmin              bool
 }

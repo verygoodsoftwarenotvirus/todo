@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -38,8 +36,7 @@ const (
 
 var _ database.DataManager = (*SQLQuerier)(nil)
 
-// SQLQuerier is a wrapper around a database querier. SQLQuerier is where all logging and trace propagation should happen,
-// the querier is where the actual database querying is performed.
+// SQLQuerier is the primary database querying client. All tracing/logging/query execution happens here. Query building generally happens elsewhere.
 type SQLQuerier struct {
 	config          *dbconfig.Config
 	db              *sql.DB
@@ -99,39 +96,6 @@ func ProvideDatabaseClient(
 	}
 
 	return c, nil
-}
-
-// Migrate is a simple wrapper around the core querier Migrate call.
-func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	q.logger.Info("migrating db")
-
-	if !q.IsReady(ctx, maxAttempts) {
-		return database.ErrDBUnready
-	}
-
-	q.migrateOnce.Do(q.sqlQueryBuilder.BuildMigrationFunc(q.db))
-
-	if testUserConfig != nil {
-		q.logger.Debug("creating test user")
-
-		query, args := q.sqlQueryBuilder.BuildTestUserCreationQuery(ctx, testUserConfig)
-
-		// these structs will be fleshed out by createUser
-		user := &types.User{Username: testUserConfig.Username}
-		account := &types.Account{DefaultNewMemberPermissions: permissions.ServiceUserPermission(math.MaxInt64)}
-
-		if err := q.createUser(ctx, user, account, query, args); err != nil {
-			q.logger.Error(err, "creating test user")
-			return observability.PrepareError(err, q.logger, span, "creating test user")
-		}
-
-		q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
-	}
-
-	return nil
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.
@@ -230,11 +194,12 @@ func (q *SQLQuerier) performReadQuery(ctx context.Context, querier database.Quer
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger.WithValue("query", query)
+
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s fetch query", queryDescription), query, args)
 
 	rows, err := querier.QueryContext(ctx, query, args...)
 	if err != nil {
-		logger := q.logger
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 

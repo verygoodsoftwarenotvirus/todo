@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	serviceName string = "frontends_service"
+	serviceName string = "frontend_service"
 )
 
 type (
@@ -26,6 +26,7 @@ type (
 		UserLoginInputMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 
+		AdminMiddleware(next http.Handler) http.Handler
 		AuthenticateUser(ctx context.Context, loginData *types.UserLoginInput) (*types.User, *http.Cookie, error)
 		LogoutUser(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request, res http.ResponseWriter) error
 	}

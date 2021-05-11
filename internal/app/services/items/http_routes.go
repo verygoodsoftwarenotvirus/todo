@@ -170,19 +170,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
-	// determine if it's an admin request
-	rawQueryAdminKey := req.URL.Query().Get("admin")
-	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
-
-	var items *types.ItemList
-
-	if sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() && isAdminRequest {
-		items, err = s.itemDataManager.GetItemsForAdmin(ctx, filter)
-	} else {
-		items, err = s.itemDataManager.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
-	}
-
+	items, err := s.itemDataManager.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
 		items = &types.ItemList{Items: []*types.Item{}}
@@ -222,22 +210,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
-	// determine if it's an admin request
-	rawQueryAdminKey := req.URL.Query().Get(types.AdminQueryKey)
-	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
-
-	var (
-		relevantIDs []uint64
-		items       []*types.Item
-	)
-
-	if isAdminRequest {
-		relevantIDs, err = s.search.SearchForAdmin(ctx, query)
-	} else {
-		relevantIDs, err = s.search.Search(ctx, query, sessionCtxData.ActiveAccountID)
-	}
-
+	relevantIDs, err := s.search.Search(ctx, query, sessionCtxData.ActiveAccountID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "executing item search query")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -245,12 +218,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch items from database.
-	if isAdminRequest {
-		items, err = s.itemDataManager.GetItemsWithIDsForAdmin(ctx, filter.Limit, relevantIDs)
-	} else {
-		items, err = s.itemDataManager.GetItemsWithIDs(ctx, sessionCtxData.ActiveAccountID, filter.Limit, relevantIDs)
-	}
-
+	items, err := s.itemDataManager.GetItemsWithIDs(ctx, sessionCtxData.ActiveAccountID, filter.Limit, relevantIDs)
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist return an empty list.
 		items = []*types.Item{}

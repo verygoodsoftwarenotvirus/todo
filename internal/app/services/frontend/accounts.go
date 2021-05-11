@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	// import embed for the side effect.
 	_ "embed"
 	"fmt"
 	"html/template"
@@ -34,7 +35,7 @@ func (s *Service) fetchAccount(ctx context.Context, sessionCtxData *types.Sessio
 	return account, nil
 }
 
-//go:embed templates/partials/editors/account_editor.gotpl
+//go:embed templates/partials/generated/editors/account_editor.gotpl
 var accountEditorTemplate string
 
 func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -115,7 +116,7 @@ func (s *Service) fetchAccounts(ctx context.Context, req *http.Request, sessionC
 	return accounts, nil
 }
 
-//go:embed templates/partials/tables/accounts_table.gotpl
+//go:embed templates/partials/generated/tables/accounts_table.gotpl
 var accountsTableTemplate string
 
 func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -142,9 +143,11 @@ func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.Response
 
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Account) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/accounts/%d", x.ID))
 			},
 			"pushURL": func(x *types.Account) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/accounts/%d", x.ID))
 			},
 		}

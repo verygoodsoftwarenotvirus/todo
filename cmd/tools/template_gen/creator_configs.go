@@ -3,10 +3,6 @@ package main
 import (
 	"bytes"
 	_ "embed"
-	"fmt"
-	"text/template"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 )
 
 //go:embed templates/creator.gotpl
@@ -15,7 +11,7 @@ var basicCreatorTemplateSrc string
 func buildBasicCreatorTemplate(cfg *basicCreatorTemplateConfig) string {
 	var b bytes.Buffer
 
-	if err := parseTemplate("", basicCreatorTemplateSrc, cfg.FuncMap).Execute(&b, cfg); err != nil {
+	if err := parseTemplate("", basicCreatorTemplateSrc, nil).Execute(&b, cfg); err != nil {
 		panic(err)
 	}
 
@@ -24,13 +20,12 @@ func buildBasicCreatorTemplate(cfg *basicCreatorTemplateConfig) string {
 
 type basicCreatorTemplateConfig struct {
 	Title         string
-	FuncMap       template.FuncMap
-	Fields        []formField
 	SubmissionURL string
+	Fields        []formField
 }
 
 var creatorConfigs = map[string]*basicCreatorTemplateConfig{
-	"internal/app/services/frontend/templates/partials/creators/account_creator.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/creators/account_creator.gotpl": {
 		Title:         "New Account",
 		SubmissionURL: "/accounts/new/submit",
 		Fields: []formField{
@@ -42,13 +37,28 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 				Required:        true,
 			},
 		},
-		FuncMap: map[string]interface{}{
-			"componentTitle": func(x *types.Account) string {
-				return fmt.Sprintf("Account #%d", x.ID)
+	},
+	"internal/app/services/frontend/templates/partials/generated/creators/account_subscription_plan_creator.gotpl": {
+		Title:         "New Plan",
+		SubmissionURL: "/account_subscription_plans/new/submit",
+		Fields: []formField{
+			{
+				LabelName:       "name",
+				FormName:        "name",
+				StructFieldName: "Name",
+				InputType:       "text",
+				Required:        true,
+			},
+			{
+				LabelName:       "price",
+				FormName:        "price",
+				StructFieldName: "Price",
+				InputType:       "numeric",
+				Required:        true,
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/creators/api_client_creator.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/creators/api_client_creator.gotpl": {
 		Title:         "New API Client",
 		SubmissionURL: "/api_clients/new/submit",
 		Fields: []formField{
@@ -75,7 +85,7 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/creators/webhook_creator.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/creators/webhook_creator.gotpl": {
 		Title:         "New Webhook",
 		SubmissionURL: "/webhooks/new/submit",
 		Fields: []formField{
@@ -105,7 +115,7 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/creators/item_creator.gotpl": {
+	"internal/app/services/frontend/templates/partials/generated/creators/item_creator.gotpl": {
 		Title:         "New Item",
 		SubmissionURL: "/items/new/submit",
 		Fields: []formField{
@@ -122,11 +132,6 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 				StructFieldName: "Details",
 				InputType:       "text",
 				Required:        false,
-			},
-		},
-		FuncMap: map[string]interface{}{
-			"componentTitle": func(x *types.Item) string {
-				return fmt.Sprintf("Item #%d", x.ID)
 			},
 		},
 	},

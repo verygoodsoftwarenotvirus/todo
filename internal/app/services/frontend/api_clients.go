@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	// import embed for the side effect.
 	_ "embed"
 	"fmt"
 	"html/template"
@@ -36,7 +37,7 @@ func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 	return apiClient, nil
 }
 
-//go:embed templates/partials/editors/api_client_editor.gotpl
+//go:embed templates/partials/generated/editors/api_client_editor.gotpl
 var apiClientEditorTemplate string
 
 func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -114,7 +115,7 @@ func (s *Service) fetchAPIClients(ctx context.Context, sessionCtxData *types.Ses
 	return apiClients, nil
 }
 
-//go:embed templates/partials/tables/api_clients_table.gotpl
+//go:embed templates/partials/generated/tables/api_clients_table.gotpl
 var apiClientsTableTemplate string
 
 func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -140,9 +141,11 @@ func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.APIClient) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/api_clients/%d", x.ID))
 			},
 			"pushURL": func(x *types.APIClient) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/api_clients/%d", x.ID))
 			},
 		}

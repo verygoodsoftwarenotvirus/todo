@@ -1,7 +1,15 @@
 {{- /* this template generates a template, don't be mad at me i'm trying my hardest */ -}}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">{{ .Title }}</h1>
-    <button class="btn btn-primary" hx-target="#content" hx-push-url="{{ .CreatorPageURL }}" hx-get="/dashboard_pages{{ .CreatorPageURL }}">New</button>
+    {{ if .EnableSearch }}
+        <div>
+            Search: <input type="text">
+            <button class="btn btn-secondary" hx-target="#content" hx-get="{{ .SearchURL }}">🔎</button>
+            <button class="btn btn-primary" hx-target="#content" hx-trigger="keyup" hx-push-url="{{ .CreatorPagePushURL }}" hx-get="{{ .CreatorPageURL }}">New</button>
+        </div>
+    {{ else }}
+    <button class="btn btn-primary" hx-target="#content" hx-push-url="{{ .CreatorPagePushURL }}" hx-get="{{ .CreatorPageURL }}">New</button>
+    {{ end }}
 </div>
 <table class="table table-striped">
     <thead>
@@ -11,11 +19,11 @@
     </thead>
     <tbody>{{ print "{{ range $i, $x := ." .RowDataFieldName " }}" }}
     <tr>
-        {{ if not .ExcludeIDRow }}<td><button class="btn btn-sm btn-outline-dark" hx-push-url="{{ "{{ pushURL . }}" }}" hx-get="{{ "{{ individualURL . }}" }}" hx-target="#content">{{ "{{ $x.ID }}" }}</button></td>{{ end }}
+        {{ if not .ExcludeIDRow }}<td>{{ if .ExcludeLink }}{{ "{{ $x.ID }}" }}{{ else }}<button class="btn btn-sm btn-outline-dark" hx-push-url="{{ "{{ pushURL . }}" }}" hx-get="{{ "{{ individualURL . }}" }}" hx-target="#content">{{ "{{ $x.ID }}" }}</button>{{ end }}</td>{{ end }}
         {{ range $i, $x := .CellFields }}<td>{{ print "{{ $x." $x " }}" }}</td>
         {{ end }}{{ if .IncludeLastUpdatedOn }}<td>{{ "{{ relativeTimeFromPtr $x.LastUpdatedOn }}" }}</td>{{ end }}
         {{ if .IncludeCreatedOn }}<td>{{ "{{ relativeTime $x.CreatedOn }}" }}</td>{{ end }}
-        {{ if .IncludeDeleteRow }}<td><button class="btn btn-sm btn-danger" hx-target="closest tr" hx-delete="{{ "{{ individualURL . }}" }}">Delete</button></td>{{ end }}
+        {{ if .IncludeDeleteRow }}<td><button class="btn btn-sm btn-danger" hx-target="closest tr" hx-confirm="Are you sure you want to delete this?" hx-delete="{{ "{{ individualURL . }}" }}">Delete</button></td>{{ end }}
     </tr>
     {{ "{{ end }}" }}</tbody>
 </table>

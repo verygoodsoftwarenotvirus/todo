@@ -74,7 +74,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				UNIQUE("username", "archived_on")
+				UNIQUE("username")
 			);`,
 		},
 		{

@@ -1,6 +1,8 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Items</h1>
+    
     <button class="btn btn-primary" hx-target="#content" hx-push-url="/items/new" hx-get="/dashboard_pages/items/new">New</button>
+    
 </div>
 <table class="table table-striped">
     <thead>
@@ -10,7 +12,6 @@
         <th>Details</th>
         <th>Last Updated On</th>
         <th>Created On</th>
-        <th></th>
     </tr>
     </thead>
     <tbody>{{ range $i, $x := .Items }}
@@ -20,7 +21,7 @@
         <td>{{ $x.Details }}</td>
         <td>{{ relativeTimeFromPtr $x.LastUpdatedOn }}</td>
         <td>{{ relativeTime $x.CreatedOn }}</td>
-        <td><button class="btn btn-sm btn-danger" hx-target="closest tr" hx-delete="{{ individualURL . }}">Delete</button></td>
+        <td><button class="btn btn-sm btn-danger" hx-target="closest tr" hx-confirm="Are you sure you want to delete this?" hx-delete="{{ individualURL . }}">Delete</button></td>
     </tr>
     {{ end }}</tbody>
 </table>

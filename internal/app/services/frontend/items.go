@@ -2,16 +2,16 @@ package frontend
 
 import (
 	"context"
+	// import embed for the side effect.
 	_ "embed"
 	"fmt"
+	"html/template"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"html/template"
-	"io"
-	"net/http"
-	"net/url"
 )
 
 const (
@@ -37,7 +37,7 @@ func (s *Service) fetchItem(ctx context.Context, sessionCtxData *types.SessionCo
 	return item, nil
 }
 
-//go:embed templates/partials/creators/item_creator.gotpl
+//go:embed templates/partials/generated/creators/item_creator.gotpl
 var itemCreatorTemplate string
 
 func (s *Service) buildItemCreatorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -97,18 +97,12 @@ const (
 
 // parseFormEncodedItemCreationInput checks a request for an ItemCreationInput.
 func (s *Service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemCreationInput) {
-	ctx, span := s.tracer.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
 
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "parsing item creation input")
-		return nil
-	}
-
-	form, err := url.ParseQuery(string(bodyBytes))
+	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "parsing item creation input")
 		return nil
@@ -163,11 +157,11 @@ func (s *Service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 
 	logger.Debug("item Created")
 
-	res.Header().Set(htmxRedirectionHeader, "/items")
+	htmxRedirectTo(res, "/items")
 	res.WriteHeader(http.StatusCreated)
 }
 
-//go:embed templates/partials/editors/item_editor.gotpl
+//go:embed templates/partials/generated/editors/item_editor.gotpl
 var itemEditorTemplate string
 
 func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -176,6 +170,8 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+
+		logger.WithValue("referer", req.Header.Get("Referer")).Debug("referred")
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
@@ -197,6 +193,7 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 				return fmt.Sprintf("Item #%d", x.ID)
 			},
 			"individualURL": func(x *types.Item) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 			},
 		}
@@ -240,12 +237,7 @@ func (s *Service) fetchItems(ctx context.Context, sessionCtxData *types.SessionC
 		items = fakes.BuildFakeItemList()
 	} else {
 		filter := types.ExtractQueryFilter(req)
-		if isAdminRequest(req) {
-			items, err = s.dataStore.GetItemsForAdmin(ctx, filter)
-		} else {
-			items, err = s.dataStore.GetItems(ctx, sessionCtxData.Requester.ID, filter)
-		}
-
+		items, err = s.dataStore.GetItems(ctx, sessionCtxData.Requester.ID, filter)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching item data")
 		}
@@ -254,7 +246,7 @@ func (s *Service) fetchItems(ctx context.Context, sessionCtxData *types.SessionC
 	return items, nil
 }
 
-//go:embed templates/partials/tables/items_table.gotpl
+//go:embed templates/partials/generated/tables/items_table.gotpl
 var itemsTableTemplate string
 
 func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -280,9 +272,11 @@ func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Item) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 			},
 			"pushURL": func(x *types.Item) template.URL {
+				/* #nosec G203 */
 				return template.URL(fmt.Sprintf("/items/%d", x.ID))
 			},
 		}
@@ -317,37 +311,31 @@ func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 }
 
 // parseFormEncodedItemUpdateInput checks a request for an ItemUpdateInput.
-func (s *Service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemUpdateInput) {
-	ctx, span := s.tracer.StartSpan(req.Context())
+func (s *Service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (updateInput *types.ItemUpdateInput) {
+	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
 
-	bodyBytes, err := io.ReadAll(req.Body)
+	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "parsing item creation input")
 		return nil
 	}
 
-	form, err := url.ParseQuery(string(bodyBytes))
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "parsing item creation input")
-		return nil
-	}
-
-	creationInput = &types.ItemUpdateInput{
+	updateInput = &types.ItemUpdateInput{
 		Name:             form.Get(itemCreationInputNameFormKey),
 		Details:          form.Get(itemCreationInputDetailsFormKey),
 		BelongsToAccount: sessionCtxData.ActiveAccountID,
 	}
 
-	if err = creationInput.ValidateWithContext(ctx); err != nil {
-		logger = logger.WithValue("input", creationInput)
+	if err = updateInput.ValidateWithContext(ctx); err != nil {
+		logger = logger.WithValue("input", updateInput)
 		observability.AcknowledgeError(err, logger, span, "invalid item creation input")
 		return nil
 	}
 
-	return creationInput
+	return updateInput
 }
 
 func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Request) {
@@ -391,6 +379,8 @@ func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 			return fmt.Sprintf("Item #%d", x.ID)
 		},
 		"individualURL": func(x *types.Item) template.URL {
+			/* #nosec G203 */
+			/* #nosec G203 */
 			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 		},
 	}
@@ -433,9 +423,13 @@ func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 
 	tmplFuncMap := map[string]interface{}{
 		"individualURL": func(x *types.Item) template.URL {
+			/* #nosec G203 */
+			/* #nosec G203 */
 			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 		},
 		"pushURL": func(x *types.Item) template.URL {
+			/* #nosec G203 */
+			/* #nosec G203 */
 			return template.URL(fmt.Sprintf("/items/%d", x.ID))
 		},
 	}

@@ -11,5 +11,5 @@ var svgFaviconSrc []byte
 
 func (s *Service) favicon(res http.ResponseWriter, _ *http.Request) {
 	res.Header().Set("Content-Type", "image/svg+xml")
-	renderBytesToResponse(svgFaviconSrc, res)
+	s.renderBytesToResponse(svgFaviconSrc, res)
 }

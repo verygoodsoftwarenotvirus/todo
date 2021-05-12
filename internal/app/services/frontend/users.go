@@ -13,10 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
 
-const (
-	userIDURLParamKey = "user"
-)
-
 func (s *Service) fetchUsers(ctx context.Context, req *http.Request) (users *types.UserList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
@@ -57,9 +53,9 @@ func (s *Service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(
 		var users *types.UserList
 		if forSearch {
 			query := req.URL.Query().Get(types.SearchQueryKey)
-			searchResults, err := s.dataStore.SearchForUsersByUsername(ctx, query)
-			if err != nil {
-				observability.AcknowledgeError(err, logger, span, "fetching users from datastore")
+			searchResults, searchResultsErr := s.dataStore.SearchForUsersByUsername(ctx, query)
+			if searchResultsErr != nil {
+				observability.AcknowledgeError(searchResultsErr, logger, span, "fetching users from datastore")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -97,19 +93,11 @@ func (s *Service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering users dashboard tmpl")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate("dashboard", usersTableTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "dashboard", usersTableTemplate, tmplFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, users, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering users table view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, users, res)
 		}
 	}
 }

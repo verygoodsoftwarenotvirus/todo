@@ -30,6 +30,8 @@ func buildTestService() *service {
 }
 
 func TestProvideAccountsService(t *testing.T) {
+	t.Parallel()
+
 	var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {
 		return &mockmetrics.UnitCounter{}
 	}

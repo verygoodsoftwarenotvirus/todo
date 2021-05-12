@@ -5,7 +5,6 @@ import (
 	"context"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -17,25 +16,6 @@ const (
 
 	htmxRedirectionHeader = "HX-Redirect"
 )
-
-func (s *Service) extractFormFromRequest(ctx context.Context, req *http.Request) (url.Values, error) {
-	_, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "reading form from request")
-	}
-
-	form, err := url.ParseQuery(string(bodyBytes))
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "parsing request form")
-	}
-
-	return form, nil
-}
 
 func buildRedirectURL(basePath, redirectTo string) string {
 	u := &url.URL{
@@ -64,34 +44,14 @@ func parseListOfTemplates(funcMap template.FuncMap, name string, templates ...st
 	return tmpl
 }
 
-func renderStringToResponse(thing string, res http.ResponseWriter) {
-	renderBytesToResponse([]byte(thing), res)
+func (s *Service) renderStringToResponse(thing string, res http.ResponseWriter) {
+	s.renderBytesToResponse([]byte(thing), res)
 }
 
-func renderBytesToResponse(thing []byte, res http.ResponseWriter) {
+func (s *Service) renderBytesToResponse(thing []byte, res http.ResponseWriter) {
 	if _, err := res.Write(thing); err != nil {
-		log.Fatalln(err)
+		s.logger.Error(err, "writing response")
 	}
-}
-
-func renderTemplateToBytes(tmpl *template.Template, x interface{}, funcMap template.FuncMap) ([]byte, error) {
-	var b bytes.Buffer
-
-	if err := tmpl.Funcs(funcMap).Execute(&b, x); err != nil {
-		return nil, err
-	}
-
-	return b.Bytes(), nil
-}
-
-func (s *Service) renderTemplateToResponse(tmpl *template.Template, x interface{}, res http.ResponseWriter) error {
-	content, err := renderTemplateToBytes(tmpl, x, s.templateFuncMap)
-	if err != nil {
-		return err
-	}
-
-	_, err = res.Write(content)
-	return err
 }
 
 func mergeFuncMaps(a, b template.FuncMap) template.FuncMap {
@@ -108,6 +68,42 @@ func mergeFuncMaps(a, b template.FuncMap) template.FuncMap {
 	return out
 }
 
-func (s *Service) parseTemplate(name, source string, funcMap template.FuncMap) *template.Template {
+func (s *Service) extractFormFromRequest(ctx context.Context, req *http.Request) (url.Values, error) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithRequest(req)
+
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "reading form from request")
+	}
+
+	form, err := url.ParseQuery(string(bodyBytes))
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "parsing request form")
+	}
+
+	return form, nil
+}
+
+func (s *Service) renderTemplateToResponse(ctx context.Context, tmpl *template.Template, x interface{}, res http.ResponseWriter) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	var b bytes.Buffer
+	if err := tmpl.Funcs(s.templateFuncMap).Execute(&b, x); err != nil {
+		observability.AcknowledgeError(err, s.logger, span, "rendering accounts dashboard view")
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	s.renderBytesToResponse(b.Bytes(), res)
+}
+
+func (s *Service) parseTemplate(ctx context.Context, name, source string, funcMap template.FuncMap) *template.Template {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
 	return template.Must(template.New(name).Funcs(mergeFuncMaps(s.templateFuncMap, funcMap)).Parse(source))
 }

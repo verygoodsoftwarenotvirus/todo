@@ -21,10 +21,9 @@ type loginPromptData struct {
 
 func (s *Service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
-		_, span := s.tracer.StartSpan(req.Context())
+		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
-		logger := s.logger.WithRequest(req)
 		contentData := &loginPromptData{
 			RedirectTo: pluckRedirectURL(req),
 		}
@@ -38,19 +37,11 @@ func (s *Service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWri
 				ContentData: contentData,
 			}
 
-			if err := s.renderTemplateToResponse(tmpl, data, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, data, res)
 		} else {
-			tmpl := s.parseTemplate("", loginPrompt, nil)
+			tmpl := s.parseTemplate(ctx, "", loginPrompt, nil)
 
-			if err := s.renderTemplateToResponse(tmpl, contentData, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, contentData, res)
 		}
 	}
 }
@@ -106,7 +97,7 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 	if !s.useFakeData {
 		_, cookie, err := s.authService.AuthenticateUser(ctx, loginInput)
 		if err != nil {
-			renderStringToResponse(loginPrompt, res)
+			s.renderStringToResponse(loginPrompt, res)
 			return
 		}
 
@@ -141,39 +132,26 @@ func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Requ
 var registrationPrompt string
 
 func (s *Service) registrationComponent(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
+	tmpl := s.parseTemplate(ctx, "", registrationPrompt, nil)
 
-	tmpl := s.parseTemplate("", registrationPrompt, nil)
-
-	if err := s.renderTemplateToResponse(tmpl, nil, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	s.renderTemplateToResponse(ctx, tmpl, nil, res)
 }
 
 func (s *Service) registrationView(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
-	logger := s.logger.WithRequest(req)
-
 	tmpl := s.renderTemplateIntoBaseTemplate(registrationPrompt, nil)
-
 	data := pageData{
 		IsLoggedIn:  false,
 		Title:       "Register",
 		ContentData: nil,
 	}
 
-	if err := s.renderTemplateToResponse(tmpl, data, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	s.renderTemplateToResponse(ctx, tmpl, data, res)
 }
 
 //go:embed templates/partials/auth/registration_success.gotpl
@@ -222,25 +200,21 @@ func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *htt
 		ucr, err = s.usersService.RegisterUser(ctx, registrationInput)
 		if err != nil {
 			// return erroneous markup here
-			renderStringToResponse(registrationPrompt, res)
+			s.renderStringToResponse(registrationPrompt, res)
 			return
 		}
 	} else {
 		ucr = &types.UserCreationResponse{TwoFactorQRCode: ""}
 	}
 
-	tmpl := s.parseTemplate("", successfulRegistrationResponse, nil)
+	tmpl := s.parseTemplate(ctx, "", successfulRegistrationResponse, nil)
 	tmplData := &totpVerificationPrompt{
 		/* #nosec G203 */
 		TwoFactorQRCode: template.URL(ucr.TwoFactorQRCode),
 		UserID:          ucr.CreatedUserID,
 	}
 
-	if err := s.renderTemplateToResponse(tmpl, tmplData, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	s.renderTemplateToResponse(ctx, tmpl, tmplData, res)
 }
 
 // parseFormEncodedTOTPSecretVerificationRequest checks a request for a registration form, and returns the parsed input.

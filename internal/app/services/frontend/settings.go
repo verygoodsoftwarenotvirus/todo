@@ -44,19 +44,15 @@ func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
+			if s.renderTemplateToResponse(ctx, tmpl, page, res); err != nil {
 				observability.AcknowledgeError(err, logger, span, "rendering user settings viewer into dashboard")
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		} else {
-			tmpl := s.parseTemplate("", userSettingsPageSrc, nil)
+			tmpl := s.parseTemplate(ctx, "", userSettingsPageSrc, nil)
 
-			if err = s.renderTemplateToResponse(tmpl, user, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering user settings viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, user, res)
 		}
 	}
 }
@@ -98,19 +94,11 @@ func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering account settings viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate("", accountSettingsPageSrc, nil)
+			tmpl := s.parseTemplate(ctx, "", accountSettingsPageSrc, nil)
 
-			if err = s.renderTemplateToResponse(tmpl, account, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering account settings viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, account, res)
 		}
 	}
 }
@@ -120,7 +108,7 @@ var adminSettingsPageSrc string
 
 func (s *Service) buildAdminSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
-		_, span := s.tracer.StartSpan(req.Context())
+		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -151,19 +139,11 @@ func (s *Service) buildAdminSettingsView(includeBaseTemplate bool) func(http.Res
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering admin settings viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate("", adminSettingsPageSrc, nil)
+			tmpl := s.parseTemplate(ctx, "", adminSettingsPageSrc, nil)
 
-			if err = s.renderTemplateToResponse(tmpl, nil, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering admin settings viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, nil, res)
 		}
 	}
 }

@@ -7,7 +7,6 @@ import (
 	// Import embed for the side effect.
 	_ "embed"
 	"fmt"
-	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -74,17 +73,11 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering webhooks dashboard view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, view, page, res)
 		} else {
-			tmpl := s.parseTemplate("", webhookEditorTemplate, nil)
+			tmpl := s.parseTemplate(ctx, "", webhookEditorTemplate, nil)
 
-			if err = s.renderTemplateToResponse(tmpl, webhook, res); err != nil {
-				log.Panic(err)
-			}
+			s.renderTemplateToResponse(ctx, tmpl, webhook, res)
 		}
 	}
 }
@@ -155,19 +148,11 @@ func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering webhooks dashboard view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, view, page, res)
 		} else {
-			tmpl := s.parseTemplate("dashboard", webhooksTableTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "dashboard", webhooksTableTemplate, tmplFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, webhooks, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering webhooks table component")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, webhooks, res)
 		}
 	}
 }

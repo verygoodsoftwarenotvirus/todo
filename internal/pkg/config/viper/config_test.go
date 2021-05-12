@@ -127,12 +127,16 @@ func TestFromConfig(T *testing.T) {
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
 		actual, err := FromConfig(nil)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
 
 	T.Run("with invalid config", func(t *testing.T) {
+		t.Parallel()
+
 		exampleConfig := &config.ServerConfig{}
 
 		actual, err := FromConfig(exampleConfig)

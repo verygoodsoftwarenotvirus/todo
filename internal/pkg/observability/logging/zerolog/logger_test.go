@@ -172,7 +172,9 @@ func Test_logger_WithRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger().(*logger)
+		l, ok := NewLogger().(*logger)
+		require.True(t, ok)
+
 		l.requestIDFunc = func(r *http.Request) string {
 			return t.Name()
 		}

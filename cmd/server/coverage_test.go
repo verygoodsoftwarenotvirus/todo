@@ -7,7 +7,9 @@ import (
 	"time"
 )
 
-func TestRunMain(_ *testing.T) {
+func TestRunMain(t *testing.T) {
+	t.Parallel()
+
 	// This test is built specifically to capture the coverage that the integration
 	// tests exhibit. We run the main function (i.e. a production server)
 	// on an independent goroutine and sleep for long enough that the integration

@@ -68,13 +68,9 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 		}
 
 		if includeBaseTemplate {
-			tmpl := s.parseTemplate("", apiClientEditorTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "", apiClientEditorTemplate, tmplFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, apiClient, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering API client editor view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, apiClient, res)
 		} else {
 			view := s.renderTemplateIntoBaseTemplate(apiClientEditorTemplate, tmplFuncMap)
 
@@ -87,11 +83,7 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering API clients dashboard view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, view, page, res)
 		}
 	}
 }
@@ -162,19 +154,11 @@ func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering API clients dashboard view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, view, page, res)
 		} else {
-			tmpl := s.parseTemplate("dashboard", apiClientsTableTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "dashboard", apiClientsTableTemplate, tmplFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, apiClients, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering API clients table view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, apiClients, res)
 		}
 	}
 }

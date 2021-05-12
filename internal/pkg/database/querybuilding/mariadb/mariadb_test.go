@@ -19,6 +19,8 @@ const (
 )
 
 func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
+	t.Helper()
+
 	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 

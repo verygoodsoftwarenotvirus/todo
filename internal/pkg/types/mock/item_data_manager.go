@@ -53,18 +53,18 @@ func (m *ItemDataManager) GetItemsWithIDs(ctx context.Context, accountID uint64,
 
 // CreateItem is a mock function.
 func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemCreationInput, createdByUser uint64) (*types.Item, error) {
-	args := m.Called(ctx, input)
+	args := m.Called(ctx, input, createdByUser)
 	return args.Get(0).(*types.Item), args.Error(1)
 }
 
 // UpdateItem is a mock function.
 func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []*types.FieldChangeSummary) error {
-	return m.Called(ctx, updated, changes).Error(0)
+	return m.Called(ctx, updated, changedByUser, changes).Error(0)
 }
 
 // ArchiveItem is a mock function.
 func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedBy uint64) error {
-	return m.Called(ctx, itemID, belongsToAccount).Error(0)
+	return m.Called(ctx, itemID, belongsToAccount, archivedBy).Error(0)
 }
 
 // GetAuditLogEntriesForItem is a mock function.

@@ -9,6 +9,29 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
+// BuildFakeSessionContextData builds a faked SessionContextData.
+func BuildFakeSessionContextData() *types.SessionContextData {
+	fakeAccountID := fake.Uint64()
+
+	return &types.SessionContextData{
+		AccountPermissionsMap: map[uint64]*types.UserAccountMembershipInfo{
+			fakeAccountID: {
+				AccountName: fake.Name(),
+				AccountID:   fakeAccountID,
+				Permissions: permissions.NewServiceUserPermissions(fake.Int64()),
+			},
+		},
+		Requester: types.RequesterInfo{
+			Reputation:             types.GoodStandingAccountStatus,
+			ReputationExplanation:  "",
+			ID:                     fake.Uint64(),
+			ServiceAdminPermission: permissions.NewServiceAdminPermissions(fake.Int64()),
+			RequiresPasswordChange: false,
+		},
+		ActiveAccountID: fakeAccountID,
+	}
+}
+
 // BuildFakeAddUserToAccountInput builds a faked AddUserToAccountInput.
 func BuildFakeAddUserToAccountInput() *types.AddUserToAccountInput {
 	return &types.AddUserToAccountInput{

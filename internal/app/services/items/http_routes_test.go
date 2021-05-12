@@ -50,6 +50,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
+			helper.exampleUser.ID,
 		).Return(helper.exampleItem, nil)
 		helper.service.itemDataManager = itemDataManager
 
@@ -135,6 +136,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
+			helper.exampleUser.ID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -162,6 +164,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
+			helper.exampleUser.ID,
 		).Return(helper.exampleItem, nil)
 		helper.service.itemDataManager = itemDataManager
 
@@ -198,6 +201,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
 		h := buildTestHelper(t)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
@@ -255,7 +260,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -303,13 +309,16 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ItemExists",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(true, nil)
 		helper.service.itemDataManager = itemDataManager
 
@@ -352,7 +361,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager.On(
 			"ItemExists",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(false, sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -379,7 +389,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager.On(
 			"ItemExists",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(false, errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -730,6 +741,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			"UpdateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
+			h.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
 		h.service.itemDataManager = itemDataManager
@@ -810,7 +822,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -837,7 +850,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -864,12 +878,14 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(helper.exampleItem, nil)
 		itemDataManager.On(
 			"UpdateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
+			helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
@@ -902,6 +918,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			"UpdateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
+			h.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
 		h.service.itemDataManager = itemDataManager
@@ -934,13 +951,17 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
 		h := buildTestHelper(t)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			h.exampleItem.ID, h.exampleAccount.ID,
+			h.exampleItem.ID,
+			h.exampleAccount.ID,
+			h.exampleUser.ID,
 		).Return(nil)
 		h.service.itemDataManager = itemDataManager
 
@@ -994,7 +1015,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -1021,7 +1044,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -1048,7 +1073,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.itemDataManager = itemDataManager
 

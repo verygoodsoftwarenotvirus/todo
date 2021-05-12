@@ -26,7 +26,7 @@ type pageData struct {
 var baseTemplateSrc string
 
 func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
-	_, span := s.tracer.StartSpan(req.Context())
+	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
@@ -47,7 +47,7 @@ func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
 		x.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 	}
 
-	if err = s.renderTemplateToResponse(tmpl, x, res); err != nil {
+	if s.renderTemplateToResponse(ctx, tmpl, x, res); err != nil {
 		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

@@ -203,6 +203,10 @@ func (q *SQLQuerier) performReadQuery(ctx context.Context, querier database.Quer
 		return nil, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
+	if rowsErr := rows.Err(); rowsErr != nil {
+		return nil, observability.PrepareError(rowsErr, logger, span, "scanning user")
+	}
+
 	return rows, nil
 }
 

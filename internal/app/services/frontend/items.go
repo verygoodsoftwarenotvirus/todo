@@ -23,12 +23,12 @@ func (s *Service) fetchItem(ctx context.Context, sessionCtxData *types.SessionCo
 	defer span.End()
 
 	logger := s.logger
-	itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
 
 	if s.useFakeData {
 		item = fakes.BuildFakeItem()
 	} else {
-		item, err = s.dataStore.GetItem(ctx, itemID, sessionCtxData.Requester.ID)
+		itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
+		item, err = s.dataStore.GetItem(ctx, itemID, sessionCtxData.ActiveAccountID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching item data")
 		}
@@ -42,7 +42,7 @@ var itemCreatorTemplate string
 
 func (s *Service) buildItemCreatorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
-		_, span := s.tracer.StartSpan(req.Context())
+		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
@@ -54,15 +54,9 @@ func (s *Service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 			return
 		}
 
-		tmplFuncMap := map[string]interface{}{
-			"componentTitle": func(x *types.Item) string {
-				return fmt.Sprintf("Item #%d", x.ID)
-			},
-		}
 		item := &types.Item{}
-
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoBaseTemplate(itemCreatorTemplate, tmplFuncMap)
+			view := s.renderTemplateIntoBaseTemplate(itemCreatorTemplate, nil)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -73,19 +67,11 @@ func (s *Service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering items dashboard view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, view, page, res)
 		} else {
-			tmpl := s.parseTemplate("", itemCreatorTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "", itemCreatorTemplate, nil)
 
-			if err = s.renderTemplateToResponse(tmpl, item, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering item editor view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, item, res)
 		}
 	}
 }
@@ -170,7 +156,6 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-
 		logger.WithValue("referer", req.Header.Get("Referer")).Debug("referred")
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
@@ -192,10 +177,6 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 			"componentTitle": func(x *types.Item) string {
 				return fmt.Sprintf("Item #%d", x.ID)
 			},
-			"individualURL": func(x *types.Item) template.URL {
-				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
-			},
 		}
 
 		if includeBaseTemplate {
@@ -210,19 +191,11 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(view, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering items dashboard view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, view, page, res)
 		} else {
-			tmpl := s.parseTemplate("", itemEditorTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "", itemEditorTemplate, tmplFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, item, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering item editor view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, item, res)
 		}
 	}
 }
@@ -237,7 +210,7 @@ func (s *Service) fetchItems(ctx context.Context, sessionCtxData *types.SessionC
 		items = fakes.BuildFakeItemList()
 	} else {
 		filter := types.ExtractQueryFilter(req)
-		items, err = s.dataStore.GetItems(ctx, sessionCtxData.Requester.ID, filter)
+		items, err = s.dataStore.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching item data")
 		}
@@ -293,19 +266,11 @@ func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering items dashboard tmpl")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate("dashboard", itemsTableTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "dashboard", itemsTableTemplate, tmplFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, items, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering items table view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, items, res)
 		}
 	}
 }
@@ -378,20 +343,11 @@ func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 		"componentTitle": func(x *types.Item) string {
 			return fmt.Sprintf("Item #%d", x.ID)
 		},
-		"individualURL": func(x *types.Item) template.URL {
-			/* #nosec G203 */
-			/* #nosec G203 */
-			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
-		},
 	}
 
-	tmpl := s.parseTemplate("", itemEditorTemplate, tmplFuncMap)
+	tmpl := s.parseTemplate(ctx, "", itemEditorTemplate, tmplFuncMap)
 
-	if err = s.renderTemplateToResponse(tmpl, item, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item editor view")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	s.renderTemplateToResponse(ctx, tmpl, item, res)
 }
 
 func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.Request) {
@@ -408,7 +364,7 @@ func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 	}
 
 	itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
-	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.Requester.ID, sessionCtxData.Requester.ID); err != nil {
+	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.ID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "archiving items in datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -434,11 +390,7 @@ func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 		},
 	}
 
-	tmpl := s.parseTemplate("dashboard", itemsTableTemplate, tmplFuncMap)
+	tmpl := s.parseTemplate(ctx, "dashboard", itemsTableTemplate, tmplFuncMap)
 
-	if err = s.renderTemplateToResponse(tmpl, items, res); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering items table view")
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	s.renderTemplateToResponse(ctx, tmpl, items, res)
 }

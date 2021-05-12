@@ -78,19 +78,11 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard tmpl")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate("", accountEditorTemplate, templateFuncMap)
+			tmpl := s.parseTemplate(ctx, "", accountEditorTemplate, templateFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, account, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering accounts editor view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, account, res)
 		}
 	}
 }
@@ -164,19 +156,11 @@ func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.Response
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if err = s.renderTemplateToResponse(tmpl, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard tmpl")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate("dashboard", accountsTableTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "dashboard", accountsTableTemplate, tmplFuncMap)
 
-			if err = s.renderTemplateToResponse(tmpl, accounts, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering accounts dashboard view")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, accounts, res)
 		}
 	}
 }

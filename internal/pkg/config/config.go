@@ -85,51 +85,51 @@ var _ validation.ValidatableWithContext = (*ServerConfig)(nil)
 // ValidateWithContext validates a ServerConfig struct.
 func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 	if err := cfg.Search.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Search portion of config: %w", err)
 	}
 
 	if err := cfg.Uploads.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Uploads portion of config: %w", err)
 	}
 
 	if err := cfg.Routing.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Routing portion of config: %w", err)
 	}
 
 	if err := cfg.Meta.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Meta portion of config: %w", err)
 	}
 
 	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Encoding portion of config: %w", err)
 	}
 
 	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Encoding portion of config: %w", err)
 	}
 
 	if err := cfg.Observability.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Observability portion of config: %w", err)
 	}
 
 	if err := cfg.Database.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Database portion of config: %w", err)
 	}
 
 	if err := cfg.Auth.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Auth portion of config: %w", err)
 	}
 
 	if err := cfg.Server.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Server portion of config: %w", err)
 	}
 
 	if err := cfg.Webhooks.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
 	}
 
 	if err := cfg.AuditLog.ValidateWithContext(ctx); err != nil {
-		return err
+		return fmt.Errorf("error validating AuditLog portion of config: %w", err)
 	}
 
 	return nil

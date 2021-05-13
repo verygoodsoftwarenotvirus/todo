@@ -1,9 +1,11 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Users</h1>
     
-        <form>
-            Search: <input type="text" name="q" hx-target="#content" hx-trigger="keyup changed delay:1s" hx-params="*" hx-get="/dashboard_pages/admin/users/search">
-        </form>
+        <div>
+            Search: <input type="text">
+            <button class="btn btn-secondary" hx-target="#content" hx-get="">🔎</button>
+            <button class="btn btn-primary" hx-target="#content" hx-trigger="keyup" hx-push-url="" hx-get="">New</button>
+        </div>
     
 </div>
 <table class="table table-striped">

@@ -25,6 +25,7 @@
 
 # Go
 vendor
+mage_output_file.go
 
 # Python
 .env

@@ -357,13 +357,20 @@ issues:
 
     ## BEGIN SPECIAL SNOWFLAKES
 
-    - path: cmd/config_gen
-      linters:
-        - gomnd
-
     - path: internal/app/services/frontend/time_test.go
       linters:
         - paralleltest
+
+    - path: tests/frontend
+      linters:
+        - deadcode
+        - unused
+        - paralleltest
+        - thelper
+
+    - path: cmd/config_gen
+      linters:
+        - gomnd
 
     - path: internal/pkg/database/querybuilding/mariadb/migrations.go
       linters:

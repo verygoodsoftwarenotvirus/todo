@@ -2,24 +2,25 @@ package frontend
 
 import (
 	"fmt"
-	"github.com/mxschmitt/playwright-go"
-	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/mxschmitt/playwright-go"
+	"github.com/stretchr/testify/require"
 )
 
 var (
-	ChromeDisabled  bool
-	FirefoxDisabled bool
-	WebkitDisabled  bool
+	chromeDisabled  bool
+	firefoxDisabled bool
+	webkitDisabled  bool
 )
 
 func init() {
-	ChromeDisabled = true // strings.ToLower(strings.TrimSpace(os.Getenv("CHROME_DISABLED"))) == "y"
-	FirefoxDisabled = strings.ToLower(strings.TrimSpace(os.Getenv("FIREFOX_DISABLED"))) == "y"
-	WebkitDisabled = true // strings.ToLower(strings.TrimSpace(os.Getenv("WEBKIT_DISABLED"))) == "y"
+	chromeDisabled = strings.EqualFold(strings.TrimSpace(os.Getenv("CHROME_DISABLED")), "y")
+	firefoxDisabled = strings.EqualFold(strings.TrimSpace(os.Getenv("FIREFOX_DISABLED")), "y")
+	webkitDisabled = strings.EqualFold(strings.TrimSpace(os.Getenv("WEBKIT_DISABLED")), "y")
 }
 
 func stringPointer(s string) *string {
@@ -39,35 +40,35 @@ func setupTestHelper(t *testing.T) *testHelper {
 
 	th := &testHelper{pw: pw}
 
-	if !ChromeDisabled {
+	if !chromeDisabled {
 		th.Chrome, err = pw.Chromium.Launch()
+		require.NoError(t, err, "could not launch browser")
 		require.NotNil(t, th.Chrome)
-		require.NoError(t, err, "could not launch browser")
 	}
 
-	if !FirefoxDisabled {
+	if !firefoxDisabled {
 		th.Firefox, err = pw.Firefox.Launch()
-		require.NotNil(t, th.Firefox)
 		require.NoError(t, err, "could not launch browser")
+		require.NotNil(t, th.Firefox)
 	}
 
-	if !WebkitDisabled {
+	if !webkitDisabled {
 		th.Webkit, err = pw.WebKit.Launch()
-		require.NotNil(t, th.Webkit)
 		require.NoError(t, err, "could not launch browser")
+		require.NotNil(t, th.Webkit)
 	}
 
 	return th
 }
 
 func (h *testHelper) runForAllBrowsers(t *testing.T, testName string, testFunc func(playwright.Browser) func(*testing.T)) {
-	if !ChromeDisabled {
+	if !chromeDisabled {
 		t.Run(fmt.Sprintf("%s with chrome", testName), testFunc(h.Chrome))
 	}
-	if !FirefoxDisabled {
+	if !firefoxDisabled {
 		t.Run(fmt.Sprintf("%s with firefox", testName), testFunc(h.Firefox))
 	}
-	if !WebkitDisabled {
+	if !webkitDisabled {
 		t.Run(fmt.Sprintf("%s with webkit", testName), testFunc(h.Webkit))
 	}
 }
@@ -76,15 +77,30 @@ func boolPointer(b bool) *bool {
 	return &b
 }
 
+const artifactsDir = "/home/vgsnv/src/gitlab.com/verygoodsoftwarenotvirus/todo/artifacts"
+
 func saveScreenshotTo(t *testing.T, page playwright.Page, path string) {
 	t.Helper()
 
 	opts := playwright.PageScreenshotOptions{
 		FullPage: boolPointer(true),
-		Path:     stringPointer(filepath.Join("/home/vgsnv/src/gitlab.com/verygoodsoftwarenotvirus/todo/artifacts", fmt.Sprintf("%s.png", path))),
+		Path:     stringPointer(filepath.Join(artifactsDir, fmt.Sprintf("%s.png", path))),
 		Type:     playwright.ScreenshotTypePng,
 	}
 
 	_, err := page.Screenshot(opts)
 	require.NoError(t, err)
+}
+
+func getScreenshotBytes(t *testing.T, ss playwright.ElementHandle) []byte {
+	t.Helper()
+
+	opts := playwright.ElementHandleScreenshotOptions{
+		Type: playwright.ScreenshotTypePng,
+	}
+
+	data, err := ss.Screenshot(opts)
+	require.NoError(t, err)
+
+	return data
 }

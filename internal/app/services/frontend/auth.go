@@ -260,5 +260,6 @@ func (s *Service) handleTOTPVerificationSubmission(res http.ResponseWriter, req 
 		return
 	}
 
-	http.Redirect(res, req, "/login", http.StatusAccepted)
+	htmxRedirectTo(res, "/login")
+	res.WriteHeader(http.StatusAccepted)
 }

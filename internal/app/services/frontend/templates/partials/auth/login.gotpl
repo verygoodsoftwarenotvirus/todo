@@ -9,7 +9,7 @@
                 <div class="form-floating"><input id="totpTokenInput" required type="text" pattern="\d{6}" minlength=6 maxlength=6 name="totpToken" placeholder="123456" class="form-control"><label for="totpTokenInput">2FA Token</label></div>
                 <input type="hidden" name="redirectTo" value="{{ .RedirectTo }}" />
                 <hr />
-                <button class="w-100 btn btn-lg btn-primary" type="submit">Log in</button>
+                <button id="loginButton" class="w-100 btn btn-lg btn-primary" type="submit">Log in</button>
             </form>
             <p class="text-center"><sub><a hx-target="#content" hx-push-url="/register" hx-get="/components/registration_prompt">Register instead</a></sub></p>
         </div>

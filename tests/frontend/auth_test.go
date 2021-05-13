@@ -1,20 +1,30 @@
 package frontend
 
 import (
-	"github.com/stretchr/testify/assert"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"bytes"
+	"image/png"
+	"net/url"
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+
+	"github.com/makiuchi-d/gozxing"
+	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/mxschmitt/playwright-go"
+	"github.com/pquerna/otp/totp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var defaultBrowserWaitTime = time.Second / 2
 
 func TestRegistrationFlow(T *testing.T) {
 	helper := setupTestHelper(T)
 
 	helper.runForAllBrowsers(T, "registration flow", func(browser playwright.Browser) func(*testing.T) {
 		return func(t *testing.T) {
+			// register a user
 			user := fakes.BuildFakeUserCreationInput()
 
 			page, err := browser.NewPage()
@@ -23,33 +33,65 @@ func TestRegistrationFlow(T *testing.T) {
 			_, err = page.Goto(urlToUse)
 			require.NoError(t, err, "could not navigate to root page")
 
-			registerLink, err := page.QuerySelector("#registerLink")
-			require.NoError(t, err, "could not find register link on homepage")
-
-			require.NoError(t, registerLink.Click(), "error clicking registration link")
-
-			// fetch the username field and fill it
-			usernameField, usernameFieldFindErr := page.QuerySelector("#usernameInput")
-			require.NoError(t, usernameFieldFindErr, "could not find username input on registration page")
-
-			// fetch the passwords field and fill it
-			passwordField, passwordFieldFindErr := page.QuerySelector("#passwordInput")
-			require.NoError(t, passwordFieldFindErr, "could not find password input on registration page")
-
-			time.Sleep(time.Second)
-
-			assert.Equal(t, urlToUse+"/register", page.URL())
+			registerLinkClickErr := page.Click("#registerLink")
+			require.NoError(t, registerLinkClickErr, "could not find register link on homepage")
 
 			require.NoError(t, page.Type("#usernameInput", user.Username))
 			require.NoError(t, page.Type("#passwordInput", user.Password))
+
+			time.Sleep(defaultBrowserWaitTime)
+
+			assert.Equal(t, urlToUse+"/register", page.URL())
 			require.NoError(t, page.Click("#registrationButton"))
 
-			time.Sleep(time.Second)
+			time.Sleep(defaultBrowserWaitTime)
 
-			saveScreenshotTo(t, page, "fart")
+			qrCodeElement, qrCodeElementErr := page.QuerySelector("#twoFactorSecretQRCode")
+			require.NoError(t, qrCodeElementErr)
 
-			require.NotNil(t, usernameField)
-			require.NotNil(t, passwordField)
+			img, err := png.Decode(bytes.NewReader(getScreenshotBytes(t, qrCodeElement)))
+			require.NoError(t, err)
+
+			// prepare BinaryBitmap
+			bmp, bitmapErr := gozxing.NewBinaryBitmapFromImage(img)
+			require.NoError(t, bitmapErr)
+
+			// decode image
+			qrReader := qrcode.NewQRCodeReader()
+			result, qrCodeDecodeErr := qrReader.Decode(bmp, nil)
+			require.NoError(t, qrCodeDecodeErr)
+
+			u, secretParseErr := url.Parse(result.String())
+			require.NoError(t, secretParseErr)
+			twoFactorSecret := u.Query().Get("secret")
+			require.NotEmpty(t, twoFactorSecret)
+
+			code, firstCodeGenerationErr := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+			require.NoError(t, firstCodeGenerationErr)
+			require.NotEmpty(t, code)
+
+			totpInputFieldFindErr := page.Type("#totpTokenInput", code)
+			require.NoError(t, totpInputFieldFindErr, "unexpected error finding TOTP token input field: %v", totpInputFieldFindErr)
+
+			require.NoError(t, page.Click("#totpTokenSubmitButton"))
+
+			time.Sleep(defaultBrowserWaitTime)
+			assert.Equal(t, urlToUse+"/login", page.URL())
+
+			// login with the newly registered user
+
+			code, secondCodeGenerationErr := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+			require.NoError(t, secondCodeGenerationErr)
+			require.NotEmpty(t, code)
+
+			require.NoError(t, page.Type("#usernameInput", user.Username))
+			require.NoError(t, page.Type("#passwordInput", user.Password))
+			require.NoError(t, page.Type("#totpTokenInput", code))
+
+			require.NoError(t, page.Click("#loginButton"))
+			time.Sleep(defaultBrowserWaitTime)
+
+			assert.Equal(t, urlToUse+"/", page.URL())
 		}
 	})
 }

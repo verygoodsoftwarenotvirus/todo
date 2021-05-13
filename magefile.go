@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -788,9 +789,11 @@ func LoadTests() error {
 	return nil
 }
 
-// Run the browser-driven tests.
-func BrowserDrivenTests() error {
-	if err := runCompose("environments/testing/compose_files/frontend-tests.yaml"); err != nil {
+// Run the browser-driven tests locally.
+func LocalBrowserTests() error {
+	os.Setenv("TARGET_ADDRESS", "http://localhost:8888")
+
+	if err := runGoCommand(true, "test", "-v", path.Join(thisRepo, "tests", "frontend")); err != nil {
 		return err
 	}
 

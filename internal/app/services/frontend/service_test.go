@@ -9,7 +9,6 @@ import (
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/mock"
 
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func buildTestService(t *testing.T) *Service {
@@ -22,7 +21,7 @@ func buildTestService(t *testing.T) *Service {
 	dataManager := database.BuildMockDatabase()
 	rpm := mockrouting.NewRouteParamManager()
 
-	s, err := ProvideService(
+	s := ProvideService(
 		cfg,
 		logger,
 		authService,
@@ -30,9 +29,8 @@ func buildTestService(t *testing.T) *Service {
 		dataManager,
 		rpm,
 	)
-	require.NoError(t, err)
 
-	mock.AssertExpectationsForObjects(t, rpm)
+	mock.AssertExpectationsForObjects(t, authService, usersService, dataManager, rpm)
 
 	return s
 }

@@ -21,7 +21,7 @@ func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
@@ -44,11 +44,7 @@ func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
 			}
 
-			if s.renderTemplateToResponse(ctx, tmpl, page, res); err != nil {
-				observability.AcknowledgeError(err, logger, span, "rendering user settings viewer into dashboard")
-				res.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
 			tmpl := s.parseTemplate(ctx, "", userSettingsPageSrc, nil)
 
@@ -71,14 +67,14 @@ func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, buildRedirectURL("/login", "/account/settings"), http.StatusSeeOther)
+			http.Redirect(res, req, buildRedirectURL("/login", "/account/settings"), unauthorizedRedirectResponseCode)
 			return
 		}
 
 		account, err := s.fetchAccount(ctx, sessionCtxData)
 		if err != nil {
 			s.logger.Error(err, "retrieving account information from database")
-			res.WriteHeader(http.StatusUnauthorized)
+			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -117,7 +113,7 @@ func (s *Service) buildAdminSettingsView(includeBaseTemplate bool) func(http.Res
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, buildRedirectURL("/login", "/admin/settings"), http.StatusSeeOther)
+			http.Redirect(res, req, buildRedirectURL("/login", "/admin/settings"), unauthorizedRedirectResponseCode)
 			return
 		}
 

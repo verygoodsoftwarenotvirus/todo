@@ -38,7 +38,7 @@ func (s *Service) fetchAccount(ctx context.Context, sessionCtxData *types.Sessio
 //go:embed templates/partials/generated/editors/account_editor.gotpl
 var accountEditorTemplate string
 
-func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *Service) buildAccountEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -49,14 +49,14 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
 		account, err := s.fetchAccount(ctx, sessionCtxData)
 		if err != nil {
 			s.logger.Error(err, "retrieving account information from database")
-			res.WriteHeader(http.StatusUnauthorized)
+			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -89,7 +89,7 @@ func (s *Service) buildAccountView(includeBaseTemplate bool) func(http.ResponseW
 
 // plural
 
-func (s *Service) fetchAccounts(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (accounts *types.AccountList, err error) {
+func (s *Service) fetchAccounts(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (accounts *types.AccountList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -111,7 +111,7 @@ func (s *Service) fetchAccounts(ctx context.Context, req *http.Request, sessionC
 //go:embed templates/partials/generated/tables/accounts_table.gotpl
 var accountsTableTemplate string
 
-func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *Service) buildAccountsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -122,14 +122,14 @@ func (s *Service) buildAccountsView(includeBaseTemplate bool) func(http.Response
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
-		accounts, err := s.fetchAccounts(ctx, req, sessionCtxData)
+		accounts, err := s.fetchAccounts(ctx, sessionCtxData, req)
 		if err != nil {
 			s.logger.Error(err, "retrieving account information from database")
-			res.WriteHeader(http.StatusUnauthorized)
+			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 

@@ -2,11 +2,9 @@ package frontend
 
 import (
 	"context"
-	"html/template"
-
-	// Import embed for the side effect.
-	_ "embed"
+	_ "embed" // import embed for the side effect.
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -23,12 +21,12 @@ func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.Sessio
 	defer span.End()
 
 	logger := s.logger
-	webhookID := s.routeParamManager.BuildRouteParamIDFetcher(logger, webhookIDURLParamKey, "webhook")(req)
 
 	if s.useFakeData {
 		webhook = fakes.BuildFakeWebhook()
 	} else {
-		webhook, err = s.dataStore.GetWebhook(ctx, webhookID, sessionCtxData.Requester.ID)
+		webhookID := s.routeParamManager.BuildRouteParamIDFetcher(logger, webhookIDURLParamKey, "webhook")(req)
+		webhook, err = s.dataStore.GetWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching webhook data")
 		}
@@ -50,7 +48,7 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
@@ -61,8 +59,14 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 			return
 		}
 
+		tmplFuncMap := map[string]interface{}{
+			"componentTitle": func(x *types.Webhook) string {
+				return fmt.Sprintf("Webhook #%d", x.ID)
+			},
+		}
+
 		if includeBaseTemplate {
-			view := s.renderTemplateIntoBaseTemplate(webhookEditorTemplate, nil)
+			view := s.renderTemplateIntoBaseTemplate(webhookEditorTemplate, tmplFuncMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -75,7 +79,7 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 
 			s.renderTemplateToResponse(ctx, view, page, res)
 		} else {
-			tmpl := s.parseTemplate(ctx, "", webhookEditorTemplate, nil)
+			tmpl := s.parseTemplate(ctx, "", webhookEditorTemplate, tmplFuncMap)
 
 			s.renderTemplateToResponse(ctx, tmpl, webhook, res)
 		}
@@ -92,7 +96,7 @@ func (s *Service) fetchWebhooks(ctx context.Context, sessionCtxData *types.Sessi
 		webhooks = fakes.BuildFakeWebhookList()
 	} else {
 		filter := types.ExtractQueryFilter(req)
-		webhooks, err = s.dataStore.GetWebhooks(ctx, sessionCtxData.Requester.ID, filter)
+		webhooks, err = s.dataStore.GetWebhooks(ctx, sessionCtxData.ActiveAccountID, filter)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching webhook data")
 		}
@@ -114,7 +118,7 @@ func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 

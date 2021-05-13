@@ -32,6 +32,29 @@ func BuildFakeSessionContextData() *types.SessionContextData {
 	}
 }
 
+// BuildFakeSessionContextDataForAccount builds a faked SessionContextData.
+func BuildFakeSessionContextDataForAccount(account *types.Account) *types.SessionContextData {
+	fakeAccountID := fake.Uint64()
+
+	return &types.SessionContextData{
+		AccountPermissionsMap: map[uint64]*types.UserAccountMembershipInfo{
+			account.ID: {
+				AccountName: account.Name,
+				AccountID:   account.ID,
+				Permissions: permissions.NewServiceUserPermissions(fake.Int64()),
+			},
+		},
+		Requester: types.RequesterInfo{
+			Reputation:             types.GoodStandingAccountStatus,
+			ReputationExplanation:  "",
+			ID:                     fake.Uint64(),
+			ServiceAdminPermission: permissions.NewServiceAdminPermissions(fake.Int64()),
+			RequiresPasswordChange: false,
+		},
+		ActiveAccountID: fakeAccountID,
+	}
+}
+
 // BuildFakeAddUserToAccountInput builds a faked AddUserToAccountInput.
 func BuildFakeAddUserToAccountInput() *types.AddUserToAccountInput {
 	return &types.AddUserToAccountInput{

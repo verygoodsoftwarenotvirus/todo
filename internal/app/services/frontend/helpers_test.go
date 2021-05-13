@@ -1,11 +1,8 @@
 package frontend
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"github.com/stretchr/testify/require"
 	"html/template"
 	"io"
 	"net/http"
@@ -22,13 +19,117 @@ import (
 
 var exampleInvalidForm io.Reader = strings.NewReader("a=|%%%=%%%%%%")
 
-func readerFromStruct(t *testing.T, x interface{}) io.Reader {
-	t.Helper()
+func Test_buildRedirectURL(T *testing.T) {
+	T.Parallel()
 
-	var b bytes.Buffer
-	require.NoError(t, json.NewEncoder(&b).Encode(x))
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
 
-	return strings.NewReader(b.String())
+		buildRedirectURL("/from", "/to")
+	})
+}
+
+func Test_pluckRedirectURL(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		expected := ""
+		actual := pluckRedirectURL(req)
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func Test_htmxRedirectTo(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		res := httptest.NewRecorder()
+
+		htmxRedirectTo(res, "/example")
+	})
+}
+
+func Test_parseListOfTemplates(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		exampleTemplateA := `<div> hi </div>`
+		exampleTemplateB := `<div> bye </div>`
+
+		actual := parseListOfTemplates(nil, exampleTemplateA, exampleTemplateB)
+		assert.NotNil(t, actual)
+	})
+}
+
+func TestService_renderStringToResponse(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		thing := t.Name()
+		res := httptest.NewRecorder()
+		s := buildTestService(t)
+
+		s.renderStringToResponse(thing, res)
+	})
+}
+
+func TestService_renderBytesToResponse(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		thing := []byte(t.Name())
+		res := httptest.NewRecorder()
+		s := buildTestService(t)
+
+		s.renderBytesToResponse(thing, res)
+	})
+
+	T.Run("with error writing response", func(t *testing.T) {
+		t.Parallel()
+
+		thing := []byte(t.Name())
+		res := &testutil.MockHTTPResponseWriter{}
+		res.On("Write", mock.Anything).Return(-1, errors.New("blah"))
+
+		s := buildTestService(t)
+
+		s.renderBytesToResponse(thing, res)
+	})
+}
+
+func Test_mergeFuncMaps(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		inputA := map[string]interface{}{"things": func() {}}
+		inputB := map[string]interface{}{"stuff": func() {}}
+
+		expected := template.FuncMap{
+			"things": func() {},
+			"stuff":  func() {},
+		}
+
+		actual := mergeFuncMaps(inputA, inputB)
+
+		for key := range expected {
+			assert.Contains(t, actual, key)
+		}
+	})
 }
 
 func TestService_extractFormFromRequest(T *testing.T) {
@@ -82,22 +183,6 @@ func TestService_extractFormFromRequest(T *testing.T) {
 	})
 }
 
-func TestService_parseTemplate(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		s := buildTestService(t)
-
-		exampleTemplate := `<div> hi </div>`
-
-		actual := s.parseTemplate(ctx, "", exampleTemplate, nil)
-		assert.NotNil(t, actual)
-	})
-}
-
 func TestService_renderTemplateToResponse(T *testing.T) {
 	T.Parallel()
 
@@ -130,115 +215,30 @@ func TestService_renderTemplateToResponse(T *testing.T) {
 	})
 }
 
-func Test_buildRedirectURL(T *testing.T) {
+func TestService_renderTemplateIntoBaseTemplate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		buildRedirectURL("/from", "/to")
+		s := buildTestService(t)
+
+		assert.NotNil(t, s.renderTemplateIntoBaseTemplate("<div>hi</div>", nil))
 	})
 }
 
-func Test_htmxRedirectTo(T *testing.T) {
+func TestService_parseTemplate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		res := httptest.NewRecorder()
+		ctx := context.Background()
+		s := buildTestService(t)
 
-		htmxRedirectTo(res, "/example")
-	})
-}
+		exampleTemplate := `<div> hi </div>`
 
-func Test_mergeFuncMaps(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		inputA := map[string]interface{}{"things": func() {}}
-		inputB := map[string]interface{}{"stuff": func() {}}
-
-		expected := template.FuncMap{
-			"things": func() {},
-			"stuff":  func() {},
-		}
-
-		actual := mergeFuncMaps(inputA, inputB)
-
-		for key := range expected {
-			assert.Contains(t, actual, key)
-		}
-	})
-}
-
-func Test_parseListOfTemplates(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		exampleTemplateA := `<div> hi </div>`
-		exampleTemplateB := `<div> bye </div>`
-
-		actual := parseListOfTemplates(nil, exampleTemplateA, exampleTemplateB)
+		actual := s.parseTemplate(ctx, "", exampleTemplate, nil)
 		assert.NotNil(t, actual)
-	})
-}
-
-func Test_pluckRedirectURL(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		req := httptest.NewRequest(http.MethodPost, "/", nil)
-
-		expected := ""
-		actual := pluckRedirectURL(req)
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
-func Test_renderBytesToResponse(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		thing := []byte(t.Name())
-		res := httptest.NewRecorder()
-		s := buildTestService(t)
-
-		s.renderBytesToResponse(thing, res)
-	})
-
-	T.Run("with error writing response", func(t *testing.T) {
-		t.Parallel()
-
-		thing := []byte(t.Name())
-		res := &testutil.MockHTTPResponseWriter{}
-		res.On("Write", mock.Anything).Return(-1, errors.New("blah"))
-
-		s := buildTestService(t)
-
-		s.renderBytesToResponse(thing, res)
-	})
-}
-
-func Test_renderStringToResponse(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		thing := t.Name()
-		res := httptest.NewRecorder()
-		s := buildTestService(t)
-
-		s.renderStringToResponse(thing, res)
 	})
 }

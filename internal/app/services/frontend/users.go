@@ -4,8 +4,6 @@ import (
 	"context"
 	// import embed for the side effect.
 	_ "embed"
-	"fmt"
-	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
@@ -46,7 +44,7 @@ func (s *Service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
@@ -70,19 +68,8 @@ func (s *Service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(
 			}
 		}
 
-		tmplFuncMap := map[string]interface{}{
-			"individualURL": func(x *types.User) template.URL {
-				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/dashboard_pages/admin/users/%d", x.ID))
-			},
-			"pushURL": func(x *types.User) template.URL {
-				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/admin/users/%d", x.ID))
-			},
-		}
-
 		if includeBaseTemplate {
-			tmpl := s.renderTemplateIntoBaseTemplate(usersTableTemplate, tmplFuncMap)
+			tmpl := s.renderTemplateIntoBaseTemplate(usersTableTemplate, nil)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
@@ -95,7 +82,7 @@ func (s *Service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate(ctx, "dashboard", usersTableTemplate, tmplFuncMap)
+			tmpl := s.parseTemplate(ctx, "dashboard", usersTableTemplate, nil)
 
 			s.renderTemplateToResponse(ctx, tmpl, users, res)
 		}

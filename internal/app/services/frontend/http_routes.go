@@ -2,12 +2,14 @@ package frontend
 
 import (
 	"fmt"
+	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing"
 )
 
 const (
-	numericIDPattern = "{%s:[0-9]+}"
+	numericIDPattern                 = "{%s:[0-9]+}"
+	unauthorizedRedirectResponseCode = http.StatusSeeOther
 )
 
 // SetupRoutes sets up the routes.
@@ -32,10 +34,10 @@ func (s *Service) SetupRoutes(router routing.Router) {
 	router.Post("/auth/verify_two_factor_secret", s.handleTOTPVerificationSubmission)
 
 	singleAccountPattern := fmt.Sprintf(numericIDPattern, accountIDURLParamKey)
-	router.Get("/accounts", s.buildAccountsView(true))
-	router.Get(fmt.Sprintf("/accounts/%s", singleAccountPattern), s.buildAccountView(true))
-	router.Get("/dashboard_pages/accounts", s.buildAccountsView(false))
-	router.Get(fmt.Sprintf("/dashboard_pages/accounts/%s", singleAccountPattern), s.buildAccountView(false))
+	router.Get("/accounts", s.buildAccountsTableView(true))
+	router.Get(fmt.Sprintf("/accounts/%s", singleAccountPattern), s.buildAccountEditorView(true))
+	router.Get("/dashboard_pages/accounts", s.buildAccountsTableView(false))
+	router.Get(fmt.Sprintf("/dashboard_pages/accounts/%s", singleAccountPattern), s.buildAccountEditorView(false))
 
 	singleAPIClientPattern := fmt.Sprintf(numericIDPattern, apiClientIDURLParamKey)
 	router.Get("/api_clients", s.buildAPIClientsTableView(true))

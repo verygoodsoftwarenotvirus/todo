@@ -23,11 +23,10 @@ func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 
 	logger := s.logger
 
-	apiClientID := s.routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client")(req)
-
 	if s.useFakeData {
 		apiClient = fakes.BuildFakeAPIClient()
 	} else {
+		apiClientID := s.routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client")(req)
 		apiClient, err = s.dataStore.GetAPIClientByDatabaseID(ctx, apiClientID, sessionCtxData.Requester.ID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching API client data")
@@ -50,7 +49,7 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
@@ -120,7 +119,7 @@ func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 

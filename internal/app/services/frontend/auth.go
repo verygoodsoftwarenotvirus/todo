@@ -115,7 +115,7 @@ func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Requ
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-		http.Redirect(res, req, "/login", http.StatusSeeOther)
+		http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 		return
 	}
 

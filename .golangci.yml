@@ -361,6 +361,10 @@ issues:
       linters:
         - gomnd
 
+    - path: internal/app/services/frontend/time_test.go
+      linters:
+        - paralleltest
+
     - path: internal/pkg/database/querybuilding/mariadb/migrations.go
       linters:
         - gomnd

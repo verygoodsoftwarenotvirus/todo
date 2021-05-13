@@ -11,7 +11,7 @@ var gomentPanicker = panicking.NewProductionPanicker()
 func mustGoment(ts uint64) *goment.Goment {
 	g, err := goment.Unix(int64(ts))
 	if err != nil {
-		// literally impossible
+		// literally impossible to get here, and I hate it lol
 		gomentPanicker.Panic(err)
 	}
 

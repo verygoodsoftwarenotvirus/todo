@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
 )
@@ -50,7 +49,7 @@ func (s *Service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
@@ -120,7 +119,7 @@ func (s *Service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-		http.Redirect(res, req, "/login", http.StatusSeeOther)
+		http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 		return
 	}
 
@@ -161,7 +160,7 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
@@ -172,7 +171,6 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 			return
 		}
 
-		logger = logger.WithValue(keys.ItemIDKey, item.ID)
 		tmplFuncMap := map[string]interface{}{
 			"componentTitle": func(x *types.Item) string {
 				return fmt.Sprintf("Item #%d", x.ID)
@@ -232,7 +230,7 @@ func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-			http.Redirect(res, req, "/login", http.StatusSeeOther)
+			http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 			return
 		}
 
@@ -312,7 +310,7 @@ func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-		http.Redirect(res, req, "/login", http.StatusSeeOther)
+		http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 		return
 	}
 
@@ -338,7 +336,6 @@ func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 		return
 	}
 
-	logger = logger.WithValue(keys.ItemIDKey, item.ID)
 	tmplFuncMap := map[string]interface{}{
 		"componentTitle": func(x *types.Item) string {
 			return fmt.Sprintf("Item #%d", x.ID)
@@ -359,7 +356,7 @@ func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
-		http.Redirect(res, req, "/login", http.StatusSeeOther)
+		http.Redirect(res, req, "/login", unauthorizedRedirectResponseCode)
 		return
 	}
 
@@ -380,11 +377,9 @@ func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 	tmplFuncMap := map[string]interface{}{
 		"individualURL": func(x *types.Item) template.URL {
 			/* #nosec G203 */
-			/* #nosec G203 */
 			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 		},
 		"pushURL": func(x *types.Item) template.URL {
-			/* #nosec G203 */
 			/* #nosec G203 */
 			return template.URL(fmt.Sprintf("/items/%d", x.ID))
 		},

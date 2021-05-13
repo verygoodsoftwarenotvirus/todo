@@ -87,6 +87,10 @@ func (s *Service) extractFormFromRequest(ctx context.Context, req *http.Request)
 	return form, nil
 }
 
+func (s *Service) renderTemplateIntoBaseTemplate(templateSrc string, funcMap template.FuncMap) *template.Template {
+	return parseListOfTemplates(mergeFuncMaps(s.templateFuncMap, funcMap), "dashboard", baseTemplateSrc, wrapTemplateInContentDefinition(templateSrc))
+}
+
 func (s *Service) renderTemplateToResponse(ctx context.Context, tmpl *template.Template, x interface{}, res http.ResponseWriter) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()

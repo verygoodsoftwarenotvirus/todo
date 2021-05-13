@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
@@ -23,18 +22,15 @@ const (
 type (
 	// AuthService is a subset of the larger types.AuthService interface.
 	AuthService interface {
-		UserLoginInputMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
-
 		AdminMiddleware(next http.Handler) http.Handler
+
 		AuthenticateUser(ctx context.Context, loginData *types.UserLoginInput) (*types.User, *http.Cookie, error)
 		LogoutUser(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request, res http.ResponseWriter) error
 	}
 
 	// UsersService is a subset of the larger types.UsersService interface.
 	UsersService interface {
-		UserRegistrationInputMiddleware(next http.Handler) http.Handler
-
 		RegisterUser(ctx context.Context, registrationInput *types.UserRegistrationInput) (*types.UserCreationResponse, error)
 		VerifyUserTwoFactorSecret(ctx context.Context, input *types.TOTPSecretVerificationInput) error
 	}
@@ -63,18 +59,13 @@ func ProvideService(
 	usersService UsersService,
 	dataStore database.DataManager,
 	routeParamManager routing.RouteParamManager,
-) (*Service, error) {
-	localizer, err := provideLocalizer()
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, nil, "initializing localizer for frontend")
-	}
-
+) *Service {
 	svc := &Service{
 		useFakeData:               cfg.UseFakeData,
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		tracer:                    tracing.NewTracer(serviceName),
 		panicker:                  panicking.NewProductionPanicker(),
-		localizer:                 localizer,
+		localizer:                 provideLocalizer(),
 		routeParamManager:         routeParamManager,
 		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
 		authService:               authService,
@@ -88,5 +79,5 @@ func ProvideService(
 
 	svc.templateFuncMap["translate"] = svc.getSimpleLocalizedString
 
-	return svc, nil
+	return svc
 }

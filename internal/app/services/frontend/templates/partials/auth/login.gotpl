@@ -1,0 +1,18 @@
+<div class="container">
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-6">
+            <h1 class="h3 mb-3 text-center fw-normal">Log in</h1>
+            <form hx-post="/auth/submit_login" hx-target="#content" hx-ext="json-enc, ajax-header, event-header">
+                <div class="form-floating"><input id="usernameInput" required type="text" placeholder="username" minlength=4 name="username" placeholder="username" class="form-control"><label for="usernameInput">username</label></div>
+                <div class="form-floating"><input id="passwordInput" required type="password" minlength=8 name="password" placeholder="password" class="form-control"><label for="passwordInput">password</label></div>
+                <div class="form-floating"><input id="totpTokenInput" required type="text" pattern="\d{6}" minlength=6 maxlength=6 name="totpToken" placeholder="123456" class="form-control"><label for="totpTokenInput">2FA Token</label></div>
+                <input type="hidden" name="redirectTo" value="{{ .RedirectTo }}" />
+                <hr />
+                <button id="loginButton" class="w-100 btn btn-lg btn-primary" type="submit">Log in</button>
+            </form>
+            <p class="text-center"><sub><a hx-target="#content" hx-push-url="/register" hx-get="/components/registration_prompt">Register instead</a></sub></p>
+        </div>
+        <div class="col-3"></div>
+    </div>
+</div>

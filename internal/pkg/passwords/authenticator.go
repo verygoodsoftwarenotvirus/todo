@@ -14,8 +14,8 @@ func init() {
 }
 
 var (
-	// ErrInvalidTwoFactorCode indicates that a provided two factor code is invalid.
-	ErrInvalidTwoFactorCode = errors.New("invalid two factor code")
+	// ErrInvalidTOTPToken indicates that a provided two factor code is invalid.
+	ErrInvalidTOTPToken = errors.New("invalid two factor code")
 	// ErrPasswordDoesNotMatch indicates that a provided passwords does not match.
 	ErrPasswordDoesNotMatch = errors.New("password does not match")
 )

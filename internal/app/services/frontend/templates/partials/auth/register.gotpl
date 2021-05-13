@@ -1,0 +1,16 @@
+<div class="container">
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-6">
+            <h1 class="h3 mb-3 text-center fw-normal">Register</h1>
+            <form hx-post="/auth/submit_registration" hx-ext="json-enc, ajax-header, event-header">
+                <div class="form-floating"><input id="usernameInput" required type="text" placeholder="username" minlength=4 name="username" placeholder="username" class="form-control"><label for="usernameInput">username</label></div>
+                <div class="form-floating"><input id="passwordInput" required type="password" minlength=8 name="password" placeholder="password" class="form-control"><label for="passwordInput">password</label></div>
+                <hr />
+                <button id="registrationButton" class="w-100 btn btn-lg btn-primary" type="submit">Register</button>
+            </form>
+            <p class="text-center"><sub><a hx-target="#content" hx-push-url="/login" hx-get="/components/login_prompt">Login instead</a></sub></p>
+        </div>
+        <div class="col-3"></div>
+    </div>
+</div>

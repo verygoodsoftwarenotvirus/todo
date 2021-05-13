@@ -10,7 +10,7 @@ COPY . .
 RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/load
 
 # final stage
-FROM debian:stable
+FROM debian:stretch
 
 COPY --from=build-stage /loadtester /loadtester
 

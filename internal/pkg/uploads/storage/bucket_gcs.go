@@ -69,6 +69,8 @@ func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
 	return bucket, nil
 }
 
+var _ validation.ValidatableWithContext = (*GCSConfig)(nil)
+
 // ValidateWithContext validates the GCSConfig.
 func (c *GCSConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,

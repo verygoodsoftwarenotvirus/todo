@@ -97,12 +97,16 @@ func (x *Account) Update(input *AccountUpdateInput) []*FieldChangeSummary {
 	return out
 }
 
+var _ validation.ValidatableWithContext = (*AccountCreationInput)(nil)
+
 // ValidateWithContext validates a AccountCreationInput.
 func (x *AccountCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*AccountUpdateInput)(nil)
 
 // ValidateWithContext validates a AccountUpdateInput.
 func (x *AccountUpdateInput) ValidateWithContext(ctx context.Context) error {

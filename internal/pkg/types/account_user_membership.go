@@ -75,12 +75,16 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*AddUserToAccountInput)(nil)
+
 // ValidateWithContext validates an AddUserToAccountInput.
 func (x *AddUserToAccountInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.UserID, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*TransferAccountOwnershipInput)(nil)
 
 // ValidateWithContext validates a TransferAccountOwnershipInput.
 func (x *TransferAccountOwnershipInput) ValidateWithContext(ctx context.Context) error {
@@ -90,6 +94,8 @@ func (x *TransferAccountOwnershipInput) ValidateWithContext(ctx context.Context)
 		validation.Field(&x.Reason, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*ModifyUserPermissionsInput)(nil)
 
 // ValidateWithContext validates a ModifyUserPermissionsInput.
 func (x *ModifyUserPermissionsInput) ValidateWithContext(ctx context.Context) error {

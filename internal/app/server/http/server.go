@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
@@ -33,7 +33,7 @@ type (
 	Server struct {
 		authService       types.AuthService
 		accountsService   types.AccountDataService
-		frontendService   types.FrontendService
+		frontendService   *frontend.Service
 		auditService      types.AuditLogEntryDataService
 		usersService      types.UserDataService
 		plansService      types.AccountSubscriptionPlanDataService
@@ -55,7 +55,6 @@ type (
 func ProvideServer(
 	ctx context.Context,
 	serverSettings Config,
-	frontendSettings frontendservice.Config,
 	metricsSettings metrics.Config,
 	metricsHandler metrics.InstrumentationHandler,
 	authService types.AuthService,
@@ -67,7 +66,7 @@ func ProvideServer(
 	itemsService types.ItemDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,
-	frontendService types.FrontendService,
+	frontendService *frontend.Service,
 	db database.DataManager,
 	logger logging.Logger,
 	encoder encoding.ServerEncoderDecoder,
@@ -95,7 +94,7 @@ func ProvideServer(
 		plansService:      plansService,
 	}
 
-	srv.setupRouter(ctx, router, frontendSettings, metricsSettings, metricsHandler)
+	srv.setupRouter(ctx, router, metricsSettings, metricsHandler)
 
 	logger.Debug("HTTP server successfully constructed")
 

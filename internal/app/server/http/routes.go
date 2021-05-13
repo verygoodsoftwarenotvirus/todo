@@ -10,7 +10,6 @@ import (
 	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
 	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
@@ -30,8 +29,8 @@ func buildNumericIDURLChunk(key string) string {
 	return fmt.Sprintf(root+numericIDPattern, key)
 }
 
-func (s *Server) setupRouter(ctx context.Context, router routing.Router, frontendSettings frontendservice.Config, _ metrics.Config, metricsHandler metrics.Handler) {
-	ctx, span := s.tracer.StartSpan(ctx)
+func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {
+	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	router.Route("/_meta_", func(metaRouter routing.Router) {
@@ -48,15 +47,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, fronten
 	}
 
 	// Frontend routes.
-	if sfd := frontendSettings.StaticFilesDirectory; sfd != "" {
-		s.logger.Debug("setting up static file server")
-		staticFileServer, err := s.frontendService.StaticDir(ctx, sfd)
-		if err != nil {
-			s.logger.Error(err, "establishing static file server")
-		}
-
-		router.Get("/*", staticFileServer)
-	}
+	s.frontendService.SetupRoutes(router)
 
 	router.WithMiddleware(s.authService.PASETOCreationInputMiddleware).Post("/paseto", s.authService.PASETOHandler)
 
@@ -65,8 +56,8 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, fronten
 
 	router.Route("/users", func(userRouter routing.Router) {
 		userRouter.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
-		userRouter.WithMiddleware(s.authService.CookieRequirementMiddleware).Post("/logout", s.authService.LogoutHandler)
-		userRouter.WithMiddleware(s.usersService.UserCreationInputMiddleware).Post(root, s.usersService.CreateHandler)
+		userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.CookieRequirementMiddleware).Post("/logout", s.authService.LogoutHandler)
+		userRouter.WithMiddleware(s.usersService.UserRegistrationInputMiddleware).Post(root, s.usersService.CreateHandler)
 		userRouter.WithMiddleware(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 
 		// need credentials beyond this point
@@ -94,7 +85,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, fronten
 		})
 
 		// Admin
-		adminRouter.Route("/_admin_", func(adminRouter routing.Router) {
+		adminRouter.Route("/admin", func(adminRouter routing.Router) {
 			adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
 			adminRouter.WithMiddleware(s.adminService.AccountStatusUpdateInputMiddleware).
 				Post("/users/status", s.adminService.UserAccountStatusChangeHandler)

@@ -102,7 +102,7 @@ func TestFromConfig(T *testing.T) {
 				Debug: false,
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
@@ -127,12 +127,16 @@ func TestFromConfig(T *testing.T) {
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
+		t.Parallel()
+
 		actual, err := FromConfig(nil)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
 
 	T.Run("with invalid config", func(t *testing.T) {
+		t.Parallel()
+
 		exampleConfig := &config.ServerConfig{}
 
 		actual, err := FromConfig(exampleConfig)
@@ -187,7 +191,7 @@ func TestParseConfigFile(T *testing.T) {
 				},
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
@@ -278,7 +282,7 @@ debug = ":banana:"
 				},
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",

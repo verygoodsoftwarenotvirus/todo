@@ -31,7 +31,8 @@ func TestServerEncoderDecoder_encodeResponse(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		encoderDecoder, ok := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		require.True(t, ok)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -44,7 +45,8 @@ func TestServerEncoderDecoder_encodeResponse(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &example{Name: expectation}
-		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		encoderDecoder, ok := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		require.True(t, ok)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -58,7 +60,8 @@ func TestServerEncoderDecoder_encodeResponse(T *testing.T) {
 		t.Parallel()
 		expectation := "name"
 		ex := &broken{Name: json.Number(expectation)}
-		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		encoderDecoder, ok := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		require.True(t, ok)
 
 		ctx := context.Background()
 		res := httptest.NewRecorder()
@@ -250,7 +253,8 @@ func TestServerEncoderDecoder_MustEncode(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		encoderDecoder := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		encoderDecoder, ok := ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), ContentTypeJSON).(*serverEncoderDecoder)
+		require.True(t, ok)
 
 		defer func() {
 			assert.NotNil(t, recover())

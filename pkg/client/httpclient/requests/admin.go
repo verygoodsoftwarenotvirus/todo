@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	adminBasePath = "_admin_"
+	adminBasePath = "admin"
 )
 
 // BuildUserReputationUpdateInputRequest builds a request to change a user's reputation.

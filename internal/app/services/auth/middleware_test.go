@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/url"
 	"strconv"
 	"testing"
 	"time"
@@ -25,37 +24,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-func TestParseLoginInputFromForm(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		expected := &types.UserLoginInput{
-			Username:  "username",
-			Password:  "password",
-			TOTPToken: "123456",
-		}
-		req := &http.Request{}
-
-		form := url.Values{}
-		form.Set(usernameFormKey, expected.Username)
-		form.Set(passwordFormKey, expected.Password)
-		form.Set(totpTokenFormKey, expected.TOTPToken)
-		req.Form = form
-
-		actual := parseLoginInputFromForm(req)
-
-		assert.Equal(t, expected, actual)
-	})
-
-	T.Run("returns nil for invalid request", func(t *testing.T) {
-		t.Parallel()
-
-		assert.Nil(t, parseLoginInputFromForm(&http.Request{}))
-	})
-}
 
 func buildArbitraryPASETO(t *testing.T, helper *authServiceHTTPRoutesTestHelper, issueTime time.Time, lifetime time.Duration, pasetoData string) *types.PASETOResponse {
 	t.Helper()
@@ -93,7 +61,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 		tokenRes, err := helper.service.buildPASETOResponse(helper.ctx, helper.sessionCtxData, helper.exampleAPIClient)
 		require.NoError(t, err)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -106,7 +74,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, "blah")
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, "blah")
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -121,7 +89,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		tokenRes := buildArbitraryPASETO(t, helper, time.Now().Add(-24*time.Hour), time.Minute, base64.RawURLEncoding.EncodeToString(helper.sessionCtxData.ToBytes()))
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -136,7 +104,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, `       \\\\\\\\\\\\               lololo`)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -151,7 +119,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 
 		tokenRes := buildArbitraryPASETO(t, helper, time.Now(), time.Hour, base64.RawURLEncoding.EncodeToString([]byte("blah")))
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		actual, err := helper.service.fetchSessionContextDataFromPASETO(helper.ctx, helper.req)
 
@@ -268,7 +236,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		tokenRes, err := helper.service.buildPASETOResponse(helper.ctx, helper.sessionCtxData, helper.exampleAPIClient)
 		require.NoError(t, err)
 
-		helper.req.Header.Set(pasetoAuthorizationKey, tokenRes.Token)
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
 		h := &testutil.MockHTTPHandler{}
 		h.On(
@@ -288,7 +256,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.req.Header.Set(pasetoAuthorizationKey, "blah")
+		helper.req.Header.Set(pasetoAuthorizationHeaderKey, "blah")
 
 		h := &testutil.MockHTTPHandler{}
 		h.On(
@@ -643,7 +611,7 @@ func TestAuthService_ChangeActiveAccountInputMiddleware(T *testing.T) {
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
 			testutil.ResponseWriterMatcher,
-			"attached input is invalid",
+			"invalid request content",
 			http.StatusBadRequest,
 		)
 		helper.service.encoderDecoder = encoderDecoder
@@ -722,7 +690,7 @@ func TestAuthService_UserLoginInputMiddleware(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher, "attached input is invalid", http.StatusBadRequest)
+			testutil.ResponseWriterMatcher, "invalid request content", http.StatusBadRequest)
 		helper.service.encoderDecoder = encoderDecoder
 
 		mockHandler := &testutil.MockHTTPHandler{}
@@ -801,7 +769,7 @@ func TestAuthService_PASETOCreationInputMiddleware(T *testing.T) {
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
 			testutil.ResponseWriterMatcher,
-			"attached input is invalid",
+			"invalid request content",
 			http.StatusBadRequest,
 		)
 		helper.service.encoderDecoder = encoderDecoder

@@ -74,7 +74,7 @@ var (
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
-				CONSTRAINT username_unique UNIQUE (username, archived_on)
+				CONSTRAINT username_unique UNIQUE (username)
 			);`,
 		},
 		{

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type erroneousReader struct{}
@@ -77,7 +78,8 @@ func TestStandardSecretGenerator_GenerateBase32EncodedString(T *testing.T) {
 		ctx := context.Background()
 		exampleLength := 123
 
-		s := NewGenerator(nil).(*standardGenerator)
+		s, ok := NewGenerator(nil).(*standardGenerator)
+		require.True(t, ok)
 		s.randReader = &erroneousReader{}
 		value, err := s.GenerateBase32EncodedString(ctx, exampleLength)
 
@@ -109,7 +111,8 @@ func TestStandardSecretGenerator_GenerateBase64EncodedString(T *testing.T) {
 		ctx := context.Background()
 		exampleLength := 123
 
-		s := NewGenerator(nil).(*standardGenerator)
+		s, ok := NewGenerator(nil).(*standardGenerator)
+		require.True(t, ok)
 		s.randReader = &erroneousReader{}
 		value, err := s.GenerateBase64EncodedString(ctx, exampleLength)
 
@@ -141,7 +144,8 @@ func TestStandardSecretGenerator_GenerateRawBytes(T *testing.T) {
 		ctx := context.Background()
 		exampleLength := 123
 
-		s := NewGenerator(nil).(*standardGenerator)
+		s, ok := NewGenerator(nil).(*standardGenerator)
+		require.True(t, ok)
 		s.randReader = &erroneousReader{}
 		value, err := s.GenerateRawBytes(ctx, exampleLength)
 

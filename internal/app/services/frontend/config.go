@@ -6,17 +6,14 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-// Config describes the settings pertinent to the frontend.
+// Config configures the frontend service.
 type Config struct {
-	StaticFilesDirectory string `json:"static_files_directory" mapstructure:"static_files_directory" toml:"static_files_directory,omitempty"`
-	Debug                bool   `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
-	LogStaticFiles       bool   `json:"log_static_files" mapstructure:"log_static_files" toml:"log_static_files,omitempty"`
-	CacheStaticFiles     bool   `json:"cache_static_files" mapstructure:"cache_static_files" toml:"cache_static_files,omitempty"`
+	UseFakeData bool `json:"use_fake_data" mapstructure:"use_fake_data" toml:"use_fake_data"`
 }
 
+var _ validation.ValidatableWithContext = (*Config)(nil)
+
 // ValidateWithContext validates a Config struct.
-func (s Config) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, &s,
-		validation.Field(&s.StaticFilesDirectory, validation.Required),
-	)
+func (cfg *Config) ValidateWithContext(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg)
 }

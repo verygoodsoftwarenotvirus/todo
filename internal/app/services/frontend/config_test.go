@@ -7,24 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConfig_Validate(T *testing.T) {
+func TestConfig_ValidateWithContext(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := &Config{
-			StaticFilesDirectory: "blah",
-		}
-
-		assert.NoError(t, cfg.ValidateWithContext(context.Background()))
-	})
-
-	T.Run("invalid", func(t *testing.T) {
-		t.Parallel()
-
+		ctx := context.Background()
 		cfg := &Config{}
 
-		assert.Error(t, cfg.ValidateWithContext(context.Background()))
+		assert.NoError(t, cfg.ValidateWithContext(ctx))
 	})
 }

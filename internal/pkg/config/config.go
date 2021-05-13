@@ -53,21 +53,20 @@ type (
 	// runMode describes what method of operation the server is under.
 	runMode string
 
-	// ServerConfig is our server configuration struct. It is comprised of all the other setting structs
-	// For information on this structs fields, refer to their definitions.
+	// ServerConfig is our server configuration struct. It is composed of all the other setting structs.
 	ServerConfig struct {
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
-		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
-		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Auth          authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Server        httpserver.Config      `json:"server" mapstructure:"server" toml:"server,omitempty"`
-		Webhooks      webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
 		AuditLog      audit.Config           `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
+		Webhooks      webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		Frontend      frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 )
 
@@ -85,20 +84,55 @@ var _ validation.ValidatableWithContext = (*ServerConfig)(nil)
 
 // ValidateWithContext validates a ServerConfig struct.
 func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.Search),
-		validation.Field(&cfg.Uploads),
-		validation.Field(&cfg.Routing),
-		validation.Field(&cfg.Meta),
-		validation.Field(&cfg.Encoding),
-		validation.Field(&cfg.Frontend),
-		validation.Field(&cfg.Observability),
-		validation.Field(&cfg.Database),
-		validation.Field(&cfg.Auth),
-		validation.Field(&cfg.Server),
-		validation.Field(&cfg.Webhooks),
-		validation.Field(&cfg.AuditLog),
-	)
+	if err := cfg.Search.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Search portion of config: %w", err)
+	}
+
+	if err := cfg.Uploads.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Uploads portion of config: %w", err)
+	}
+
+	if err := cfg.Routing.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Routing portion of config: %w", err)
+	}
+
+	if err := cfg.Meta.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Meta portion of config: %w", err)
+	}
+
+	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Encoding portion of config: %w", err)
+	}
+
+	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Encoding portion of config: %w", err)
+	}
+
+	if err := cfg.Observability.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Observability portion of config: %w", err)
+	}
+
+	if err := cfg.Database.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Database portion of config: %w", err)
+	}
+
+	if err := cfg.Auth.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Auth portion of config: %w", err)
+	}
+
+	if err := cfg.Server.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Server portion of config: %w", err)
+	}
+
+	if err := cfg.Webhooks.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+	}
+
+	if err := cfg.AuditLog.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating AuditLog portion of config: %w", err)
+	}
+
+	return nil
 }
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.

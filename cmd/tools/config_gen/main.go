@@ -35,7 +35,6 @@ const (
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
-	defaultFrontendFilepath  = "/frontend"
 	defaultCookieName        = authservice.DefaultCookieName
 
 	// run modes.
@@ -77,6 +76,7 @@ var (
 	localCookies = authservice.CookieConfig{
 		Name:       defaultCookieName,
 		Domain:     defaultCookieDomain,
+		HashKey:    debugCookieSecret,
 		SigningKey: debugCookieSecret,
 		Lifetime:   authservice.DefaultCookieLifetime,
 		SecureOnly: false,
@@ -104,10 +104,7 @@ var files = map[string]configFunc{
 
 func buildLocalFrontendServiceConfig() frontendservice.Config {
 	return frontendservice.Config{
-		StaticFilesDirectory: defaultFrontendFilepath,
-		Debug:                false,
-		LogStaticFiles:       false,
-		CacheStaticFiles:     false,
+		UseFakeData: false,
 	}
 }
 
@@ -188,7 +185,7 @@ func localDevelopmentConfig(filePath string) error {
 				GCSConfig:         nil,
 				S3Config:          nil,
 				FilesystemConfig: &storage.FilesystemConfig{
-					RootDirectory: "avatars",
+					RootDirectory: "/avatars",
 				},
 			},
 		},

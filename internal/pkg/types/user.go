@@ -63,8 +63,8 @@ type (
 		Pagination
 	}
 
-	// UserCreationInput represents the input required from users to register an account.
-	UserCreationInput struct {
+	// UserRegistrationInput represents the input required from users to register an account.
+	UserRegistrationInput struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
@@ -81,7 +81,7 @@ type (
 		Username        string         `json:"username"`
 		AccountStatus   userReputation `json:"accountStatus"`
 		TwoFactorQRCode string         `json:"qrCode"`
-		ID              uint64         `json:"id"`
+		CreatedUserID   uint64         `json:"ID"`
 		CreatedOn       uint64         `json:"createdOn"`
 		IsAdmin         bool           `json:"isAdmin"`
 	}
@@ -143,7 +143,7 @@ type (
 
 	// UserDataService describes a structure capable of serving traffic related to users.
 	UserDataService interface {
-		UserCreationInputMiddleware(next http.Handler) http.Handler
+		UserRegistrationInputMiddleware(next http.Handler) http.Handler
 		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
 		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
@@ -159,6 +159,9 @@ type (
 		UpdatePasswordHandler(res http.ResponseWriter, req *http.Request)
 		AvatarUploadHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
+
+		RegisterUser(ctx context.Context, registrationInput *UserRegistrationInput) (*UserCreationResponse, error)
+		VerifyUserTwoFactorSecret(ctx context.Context, input *TOTPSecretVerificationInput) error
 	}
 )
 
@@ -195,8 +198,8 @@ func (u *User) IsBanned() bool {
 	return u.Reputation == BannedUserReputation
 }
 
-// ValidateWithContext ensures our provided UserCreationInput meets expectations.
-func (i *UserCreationInput) ValidateWithContext(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
+// ValidateWithContext ensures our provided UserRegistrationInput meets expectations.
+func (i *UserRegistrationInput) ValidateWithContext(ctx context.Context, minUsernameLength, minPasswordLength uint8) error {
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.Username, validation.Required, validation.Length(int(minUsernameLength), math.MaxInt8)),
 		validation.Field(&i.Password, validation.Required, validation.Length(int(minPasswordLength), math.MaxInt8)),
@@ -221,6 +224,8 @@ func (i *PasswordUpdateInput) ValidateWithContext(ctx context.Context, minPasswo
 	)
 }
 
+var _ validation.ValidatableWithContext = (*TOTPSecretRefreshInput)(nil)
+
 // ValidateWithContext ensures our provided TOTPSecretRefreshInput meets expectations.
 func (i *TOTPSecretRefreshInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, i,
@@ -228,6 +233,8 @@ func (i *TOTPSecretRefreshInput) ValidateWithContext(ctx context.Context) error 
 		validation.Field(&i.TOTPToken, validation.Required, totpTokenLengthRule),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*TOTPSecretVerificationInput)(nil)
 
 // ValidateWithContext ensures our provided TOTPSecretVerificationInput meets expectations.
 func (i *TOTPSecretVerificationInput) ValidateWithContext(ctx context.Context) error {

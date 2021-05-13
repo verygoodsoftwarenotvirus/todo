@@ -14,11 +14,15 @@ import (
 
 const (
 	// SessionContextDataKey is the non-string type we use for referencing SessionContextData structs.
-	SessionContextDataKey ContextKey = "request_context"
+	SessionContextDataKey ContextKey = "session_context_data"
 	// UserIDContextKey is the non-string type we use for referencing SessionContextData structs.
-	UserIDContextKey ContextKey = "userID"
+	UserIDContextKey ContextKey = "user_id"
 	// AccountIDContextKey is the non-string type we use for referencing SessionContextData structs.
-	AccountIDContextKey ContextKey = "accountID"
+	AccountIDContextKey ContextKey = "account_id"
+	// UserLoginInputContextKey is the non-string type we use for referencing SessionContextData structs.
+	UserLoginInputContextKey ContextKey = "user_login_input"
+	// UserRegistrationInputContextKey is the non-string type we use for referencing SessionContextData structs.
+	UserRegistrationInputContextKey ContextKey = "user_registration_input"
 )
 
 var (
@@ -110,6 +114,9 @@ type (
 		UserLoginInputMiddleware(next http.Handler) http.Handler
 		PASETOCreationInputMiddleware(next http.Handler) http.Handler
 		ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler
+
+		AuthenticateUser(ctx context.Context, loginData *UserLoginInput) (*User, *http.Cookie, error)
+		LogoutUser(ctx context.Context, sessionCtxData *SessionContextData, req *http.Request, res http.ResponseWriter) error
 	}
 
 	// AuthAuditManager describes a structure capable of auditing auth events.
@@ -123,12 +130,16 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*ChangeActiveAccountInput)(nil)
+
 // ValidateWithContext validates a ChangeActiveAccountInput.
 func (x *ChangeActiveAccountInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.AccountID, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*PASETOCreationInput)(nil)
 
 // ValidateWithContext ensures our  provided UserLoginInput meets expectations.
 func (i *PASETOCreationInput) ValidateWithContext(ctx context.Context) error {

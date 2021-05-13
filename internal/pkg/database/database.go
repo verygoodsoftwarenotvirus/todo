@@ -15,8 +15,8 @@ var (
 	_ Querier = (*sql.DB)(nil)
 	_ Querier = (*sql.Tx)(nil)
 
-	// ErrDBUnready indicates the given database is not ready.
-	ErrDBUnready = errors.New("database is not ready yet")
+	// ErrDatabaseNotReady indicates the given database is not ready.
+	ErrDatabaseNotReady = errors.New("database is not ready yet")
 )
 
 type (

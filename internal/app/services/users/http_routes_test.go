@@ -378,7 +378,7 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.req = helper.req.WithContext(
 			context.WithValue(
 				helper.req.Context(),
-				userCreationMiddlewareCtxKey,
+				types.UserRegistrationInputContextKey,
 				exampleInput,
 			),
 		)
@@ -454,7 +454,7 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.req = helper.req.WithContext(
 			context.WithValue(
 				helper.req.Context(),
-				userCreationMiddlewareCtxKey,
+				types.UserRegistrationInputContextKey,
 				exampleInput,
 			),
 		)
@@ -492,7 +492,7 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.req = helper.req.WithContext(
 			context.WithValue(
 				helper.req.Context(),
-				userCreationMiddlewareCtxKey,
+				types.UserRegistrationInputContextKey,
 				exampleInput,
 			),
 		)
@@ -546,7 +546,7 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.req = helper.req.WithContext(
 			context.WithValue(
 				helper.req.Context(),
-				userCreationMiddlewareCtxKey,
+				types.UserRegistrationInputContextKey,
 				exampleInput,
 			),
 		)
@@ -592,7 +592,7 @@ func TestService_CreateHandler(T *testing.T) {
 		helper.req = helper.req.WithContext(
 			context.WithValue(
 				helper.req.Context(),
-				userCreationMiddlewareCtxKey,
+				types.UserRegistrationInputContextKey,
 				exampleInput,
 			),
 		)
@@ -1352,7 +1352,7 @@ func TestService_UpdatePasswordHandler(T *testing.T) {
 
 		helper.service.UpdatePasswordHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusSeeOther, helper.res.Code)
+		assert.Equal(t, http.StatusOK, helper.res.Code)
 		mock.AssertExpectationsForObjects(t, mockDB, auth)
 	})
 

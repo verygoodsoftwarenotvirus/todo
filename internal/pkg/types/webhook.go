@@ -151,6 +151,8 @@ func (w *Webhook) Update(input *WebhookUpdateInput) []*FieldChangeSummary {
 	return changes
 }
 
+var _ validation.ValidatableWithContext = (*WebhookCreationInput)(nil)
+
 // ValidateWithContext validates a WebhookCreationInput.
 func (w *WebhookCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, w,
@@ -162,6 +164,8 @@ func (w *WebhookCreationInput) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&w.DataTypes, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*WebhookUpdateInput)(nil)
 
 // ValidateWithContext validates a WebhookUpdateInput.
 func (w *WebhookUpdateInput) ValidateWithContext(ctx context.Context) error {

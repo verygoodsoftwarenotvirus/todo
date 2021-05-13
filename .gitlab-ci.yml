@@ -38,26 +38,6 @@ golang-lint:
     - go mod vendor
     - golangci-lint run --config=.golangci.yml --deadline=15m
 
-frontend-build:
-  stage: quality
-  image: node:lts-stretch
-  before_script:
-    - npm install --global pnpm
-    - cd frontend/
-    - pnpm install
-  script:
-    - pnpm run build
-
-frontend-format-check:
-  stage: quality
-  image: node:lts-stretch
-  before_script:
-    - npm install --global pnpm
-    - cd frontend/
-    - pnpm install
-  script:
-    - pnpm run format:check
-
 #integration_tests_sqlite:
 #  stage: integration-testing
 #  image: docker/compose:latest

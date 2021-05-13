@@ -88,7 +88,7 @@ func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interfa
 }
 
 // search executes search queries.
-func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID uint64, forAdmin bool) (ids []uint64, err error) {
+func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID uint64, forServiceAdmin bool) (ids []uint64, err error) {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -99,7 +99,7 @@ func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID
 		return nil, search.ErrEmptyQueryProvided
 	}
 
-	if !forAdmin && accountID != 0 {
+	if !forServiceAdmin && accountID != 0 {
 		logger = logger.WithValue(keys.AccountIDKey, accountID)
 	}
 
@@ -115,7 +115,7 @@ func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID
 		x, parseErr := strconv.ParseUint(result.ID, base, bitSize)
 		if parseErr != nil {
 			// this should literally never happen
-			return nil, observability.PrepareError(err, logger, span, "error parsing integer stored in search index for #%s", result.ID)
+			return nil, observability.PrepareError(err, logger, span, "parsing integer stored in search index for #%s", result.ID)
 		}
 
 		ids = append(ids, x)

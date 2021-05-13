@@ -18,16 +18,6 @@ const (
 	UserIDURIParamKey = "userID"
 )
 
-// parseBool differs from strconv.ParseBool in that it returns false by default.
-func parseBool(str string) bool {
-	switch str {
-	case "1", "t", "T", "true", "TRUE", "True":
-		return true
-	default:
-		return false
-	}
-}
-
 // ListHandler is our list route.
 func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -53,19 +43,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
-	// determine if this is an admin request
-	rawQueryAdminKey := req.URL.Query().Get("admin")
-	adminQueryPresent := parseBool(rawQueryAdminKey)
-	isAdminRequest := sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() && adminQueryPresent
-
-	var accounts *types.AccountList
-
-	if isAdminRequest {
-		accounts, err = s.accountDataManager.GetAccountsForAdmin(ctx, filter)
-	} else {
-		accounts, err = s.accountDataManager.GetAccounts(ctx, requester, filter)
-	}
-
+	accounts, err := s.accountDataManager.GetAccounts(ctx, requester, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist, return an empty list.
 		accounts = &types.AccountList{Accounts: []*types.Account{}}

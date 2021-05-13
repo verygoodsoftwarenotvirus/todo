@@ -13,7 +13,7 @@ import (
 func TestBuilder_BuildUserReputationUpdateInputRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/_admin_/users/status"
+	const expectedPathFormat = "/api/v1/admin/users/status"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()

@@ -54,9 +54,7 @@ type (
 		GetAllItemsCount(ctx context.Context) (uint64, error)
 		GetAllItems(ctx context.Context, resultChannel chan []*Item, bucketSize uint16) error
 		GetItems(ctx context.Context, accountID uint64, filter *QueryFilter) (*ItemList, error)
-		GetItemsForAdmin(ctx context.Context, filter *QueryFilter) (*ItemList, error)
 		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*Item, error)
-		GetItemsWithIDsForAdmin(ctx context.Context, limit uint8, ids []uint64) ([]*Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput, createdByUser uint64) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item, changedByUser uint64, changes []*FieldChangeSummary) error
 		ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedByUserID uint64) error
@@ -106,12 +104,16 @@ func (x *Item) Update(input *ItemUpdateInput) []*FieldChangeSummary {
 	return out
 }
 
+var _ validation.ValidatableWithContext = (*ItemCreationInput)(nil)
+
 // ValidateWithContext validates a ItemCreationInput.
 func (x *ItemCreationInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*ItemUpdateInput)(nil)
 
 // ValidateWithContext validates a ItemUpdateInput.
 func (x *ItemUpdateInput) ValidateWithContext(ctx context.Context) error {

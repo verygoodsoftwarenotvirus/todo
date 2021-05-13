@@ -104,7 +104,7 @@ func (cfg *Config) ProvideUnitCounterProvider(logger logging.Logger) (UnitCounte
 		logger.Debug("meter initialized successfully")
 
 		return func(name, description string) UnitCounter {
-			logger = logger.WithValue("name", name)
+			l := logger.WithValue("name", name)
 
 			counter := mustMeter.NewInt64Counter(
 				fmt.Sprintf("%s_count", name),
@@ -114,7 +114,7 @@ func (cfg *Config) ProvideUnitCounterProvider(logger logging.Logger) (UnitCounte
 				metric.WithInstrumentationVersion(instrumentationVersion),
 			)
 
-			logger.Debug("returning wrapped unit counter")
+			l.Debug("returning wrapped unit counter")
 
 			return &unitCounter{counter: counter}
 		}, nil

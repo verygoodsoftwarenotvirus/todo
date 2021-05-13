@@ -5,9 +5,12 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
-	"log"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -29,9 +32,7 @@ const (
 	_install = "install"
 	run      = "run"
 
-	frontendTool = "pnpm"
 	artifactsDir = "artifacts"
-	frontendDir  = "frontend"
 
 	thisRepo     = "gitlab.com/verygoodsoftwarenotvirus/todo"
 	localAddress = "http://localhost:8888"
@@ -46,7 +47,7 @@ var (
 	logger          logging.Logger
 
 	Aliases = map[string]interface{}{
-		"dev":                Run,
+		"run":                Dev,
 		"loud":               Verbose,
 		"fmt":                Format,
 		"integration-tests":  IntegrationTests,
@@ -56,7 +57,6 @@ var (
 )
 
 type Backend mg.Namespace
-type Frontend mg.Namespace
 
 type containerRunSpec struct {
 	imageName,
@@ -179,7 +179,7 @@ func PrintTestPackages() error {
 	}
 
 	for _, x := range packages {
-		fmt.Println(x)
+		logger.Info(x)
 	}
 
 	return nil
@@ -203,7 +203,6 @@ func determineTestablePackages() ([]string, error) {
 				artifactsDir,
 				"development",
 				"environments",
-				frontendDir,
 				"tests",
 				vendor,
 			) && doesNotEndWith(path, "mock", "testutil", "fakes")
@@ -333,19 +332,6 @@ func ensureLineCounter() error {
 	return nil
 }
 
-func ensureFrontendInstaller() error {
-	present, checkErr := pkg.IsCommandAvailable("pnpm", "5.18.8", "--version")
-	if checkErr != nil {
-		return checkErr
-	}
-
-	if !present {
-		return sh.Run(npm, _install, "--global", "pnpm")
-	}
-
-	return nil
-}
-
 func checkForDocker() error {
 	present, checkErr := pkg.IsCommandAvailable(docker, "20.10.5", `--format="{{.Client.Version}}"`)
 	if checkErr != nil {
@@ -370,10 +356,6 @@ func EnsureDevTools() error {
 	}
 
 	if err := ensureLineCounter(); err != nil {
-		return err
-	}
-
-	if err := ensureFrontendInstaller(); err != nil {
 		return err
 	}
 
@@ -402,12 +384,12 @@ func Wire() error {
 		return err
 	}
 
-	return sh.RunV("wire", "gen", filepath.Join(thisRepo, "cmd", "server"))
+	return sh.RunV("wire", "gen", filepath.Join(thisRepo, "internal", "build", "server"))
 }
 
 // Delete existing dependency injected build file and regenerate it.
 func Rewire() error {
-	os.Remove("cmd/server/wire_gen.go")
+	os.Remove("internal/build/server/wire_gen.go")
 
 	return Wire()
 }
@@ -429,17 +411,23 @@ func Vendor() error {
 	return runGoCommand(true, mod, vendor)
 }
 
-// Install frontend dependencies.
-func FrontendVendor() error {
-	if err := os.Chdir(frontendDir); err != nil {
-		return err
+func downloadAndSaveFile(uri, path string) {
+	resp, err := http.Get(uri)
+	if err != nil {
+		logger.Error(err, "fetching file: fetching response from server")
+		return
 	}
 
-	if err := sh.RunV(frontendTool, _install); err != nil {
-		return err
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error(err, "fetching file: reading response from server")
+		return
 	}
 
-	return os.Chdir(cwd)
+	if err = ioutil.WriteFile(path, content, 0644); err != nil {
+		logger.Error(err, "fetching file: writing content to disk")
+		return
+	}
 }
 
 // Delete existing dependency store and re-establish it for the backend.
@@ -459,19 +447,6 @@ func (Backend) Revendor() error {
 	return nil
 }
 
-// Delete existing dependency store and re-establish it for the frontend.
-func (Frontend) Revendor() error {
-	if err := os.RemoveAll("frontend/node_modules"); err != nil {
-		return err
-	}
-
-	if err := FrontendVendor(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // meta stuff
 
 // Produce line count report
@@ -485,8 +460,7 @@ func LineCount() error {
 	if err := sh.RunV(
 		"scc", "",
 		"--include-ext", _go,
-		"--exclude-dir", vendor,
-		"--exclude-dir", "frontend/node_modules"); err != nil {
+		"--exclude-dir", vendor); err != nil {
 		logger.Debug("error fetching line count")
 		return err
 	}
@@ -520,24 +494,9 @@ func formatBackend() error {
 	return sh.Run("gofmt", append([]string{"-s", "-w"}, goFiles...)...)
 }
 
-func formatFrontend(outLoud bool) error {
-	rf := sh.Run
-	if outLoud {
-		rf = sh.RunV
-	}
-
-	return runCommandsFromFrontendFolder(func() error {
-		return rf(frontendTool, run, "format")
-	})
-}
-
-// Format the frontend and backend code.
+// Format the backend code.
 func Format() error {
 	if err := formatBackend(); err != nil {
-		return err
-	}
-
-	if err := formatFrontend(false); err != nil {
 		return err
 	}
 
@@ -557,25 +516,9 @@ func checkBackendFormatting() error {
 	return nil
 }
 
-func checkFrontendFormatting() error {
-	if err := os.Chdir(frontendDir); err != nil {
-		return err
-	}
-
-	if err := sh.RunV(frontendTool, run, "format:check"); err != nil {
-		return err
-	}
-
-	return os.Chdir(cwd)
-}
-
-// Check to see if the frontend and backend are formatted correctly.
+// Check to see if the backend is formatted correctly.
 func CheckFormatting() error {
 	if err := checkBackendFormatting(); err != nil {
-		return err
-	}
-
-	if err := checkFrontendFormatting(); err != nil {
 		return err
 	}
 
@@ -669,6 +612,8 @@ func Lint() error {
 		return errors.New("backend lint failed")
 	}
 
+	logger.Info(":thumbsup: - lint passed!")
+
 	return nil
 }
 
@@ -709,7 +654,7 @@ func backendCoverage() error {
 	// byte array jesus please forgive me
 	rawCoveragePercentage := string([]byte(results)[len(results)-6 : len(results)])
 
-	fmt.Println(strings.TrimSpace(rawCoveragePercentage))
+	logger.Info(strings.TrimSpace(rawCoveragePercentage))
 
 	return nil
 }
@@ -726,10 +671,6 @@ func backendUnitTests(outLoud, quick bool) error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("fuck")
-	log.Println(packagesToTest)
-	log.Println("fuck")
 
 	var commandStartArgs []string
 	if quick {
@@ -757,9 +698,7 @@ func Quicktest() error {
 		return err
 	}
 
-	if err := frontendUnitTests(true); err != nil {
-		return err
-	}
+	logger.Info(":thumbsup: - unit tests passed!")
 
 	return nil
 }
@@ -800,6 +739,8 @@ func IntegrationTests() error {
 	if err := IntegrationTest(mariadb); err != nil {
 		return err
 	}
+
+	logger.Info(":thumbsup: - integration tests passed!")
 
 	return nil
 }
@@ -848,9 +789,11 @@ func LoadTests() error {
 	return nil
 }
 
-// Run the browser-driven tests.
-func BrowserDrivenTests() error {
-	if err := runCompose("environments/testing/compose_files/frontend-tests.yaml"); err != nil {
+// Run the browser-driven tests locally.
+func LocalBrowserTests() error {
+	os.Setenv("TARGET_ADDRESS", "http://localhost:8888")
+
+	if err := runGoCommand(true, "test", "-v", path.Join(thisRepo, "tests", "frontend")); err != nil {
 		return err
 	}
 
@@ -859,14 +802,23 @@ func BrowserDrivenTests() error {
 
 // Development
 
+// Generate frontend templates
+func FrontendTemplates() error {
+	return runGoCommand(false, "run", fmt.Sprintf("%s/cmd/tools/template_gen", thisRepo))
+}
+
 // Generate configuration files.
 func Configs() error {
 	return runGoCommand(true, run, "cmd/tools/config_gen/main.go")
 }
 
-// Run the service in docker-compose.
-func Run() error {
+// Dev runs the service in dev mode locally.
+func Dev() error {
 	if err := freshArtifactsDir(); err != nil {
+		return err
+	}
+
+	if err := FrontendTemplates(); err != nil {
 		return err
 	}
 
@@ -877,107 +829,18 @@ func Run() error {
 	return nil
 }
 
-func runCommandsFromFrontendFolder(funcs ...func() error) error {
-	if err := os.Chdir(frontendDir); err != nil {
-		return err
-	}
-
-	for _, f := range funcs {
-		if err := f(); err != nil {
-			return err
-		}
-	}
-
-	return os.Chdir(cwd)
-}
-
-// Populate empty test files for the sake of coverage collection.
-func ScaffoldFrontendTests() error {
-	err := filepath.Walk("frontend/src",
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if strings.HasSuffix(info.Name(), ".ts") && !strings.HasSuffix(info.Name(), ".test.ts") && !strings.HasSuffix(info.Name(), ".d.ts") {
-				sansExtension := path[:len(path)-3]
-				newFileName := sansExtension + ".test.ts"
-				if _, statErr := os.Stat(newFileName); os.IsNotExist(statErr) {
-					output := fmt.Sprintf(`import './%s'; // TODO: test me!
-`, filepath.Base(sansExtension))
-
-					if writeErr := os.WriteFile(newFileName, []byte(output), 0644); writeErr != nil {
-						return writeErr
-					}
-				} else {
-					return statErr
-				}
-			}
-			return nil
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func frontendUnitTests(outLoud bool) error {
-	rf := sh.Run
-	if outLoud {
-		rf = sh.RunV
-	}
-
-	return runCommandsFromFrontendFolder(func() error {
-		return rf(frontendTool, run, "test")
-	})
-}
-
-// Unit test the frontend code.
-func (Frontend) UnitTests() error {
-	return frontendUnitTests(true)
-}
-
-// Watch for changes to the frontend files, build, and then serve them.
-func (Frontend) AutoBuild() error {
-	if err := os.RemoveAll(filepath.Join(frontendDir, "dist", "build")); err != nil {
-		return err
-	}
-
-	return runCommandsFromFrontendFolder(func() error {
-		return sh.RunV(frontendTool, run, "autobuild")
-	})
-}
-
-// Runs the frontend in frontend-only mode.
-func (Frontend) Only() error {
-	if err := os.RemoveAll(filepath.Join(frontendDir, "dist", "build")); err != nil {
-		return err
-	}
-
-	if err := os.Chdir(frontendDir); err != nil {
-		return err
-	}
-
-	if err := sh.RunV(frontendTool, run, "start:frontend-only"); err != nil {
-		return err
-	}
-
-	return os.Chdir(cwd)
-}
-
 // Create test users in a running instance of the service.
-func ScaffoldUsers(userCount uint) error {
+func ScaffoldUsers(count int) error {
 	fullArgs := []string{
 		run,
 		filepath.Join(thisRepo, "/cmd/tools/data_scaffolder"),
 		fmt.Sprintf("--url=%s", localAddress),
-		fmt.Sprintf("--count=%d", userCount),
+		fmt.Sprintf("--user-count=%d", count),
+		fmt.Sprintf("--data-count=%d", count),
 		"--debug",
 	}
 
-	if userCount == 1 {
+	if count == 1 {
 		fullArgs = append(fullArgs, "--single-user-mode")
 	}
 

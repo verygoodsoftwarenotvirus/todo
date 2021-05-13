@@ -148,6 +148,8 @@ func buildTestClientWithInvalidURL(t *testing.T) *Client {
 }
 
 func buildTestClientWithStatusCodeResponse(t *testing.T, spec *requestSpec, code int) (*Client, *httptest.Server) {
+	t.Helper()
+
 	ts := httptest.NewTLSServer(http.HandlerFunc(
 		func(res http.ResponseWriter, req *http.Request) {
 			t.Helper()

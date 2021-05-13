@@ -28,7 +28,7 @@ import (
 func TestServerConfig_EncodeToFile(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := &ServerConfig{
@@ -64,7 +64,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 			},
 			Frontend: frontend.Config{
-				StaticFilesDirectory: "/static",
+				//
 			},
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",

@@ -19,22 +19,13 @@ import (
 )
 
 const (
-	// userLoginInputMiddlewareCtxKey is the context key for login input.
-	userLoginInputMiddlewareCtxKey types.ContextKey = "user_login_input"
 	// pasetoCreationInputMiddlewareCtxKey is the context key for login input.
 	pasetoCreationInputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
 	// changeActiveAccountMiddlewareCtxKey is the context key for login input.
 	changeActiveAccountMiddlewareCtxKey types.ContextKey = "change_active_account"
 
-	signatureHeaderKey     = "Signature"
-	pasetoAuthorizationKey = "Authorization"
-
-	// usernameFormKey is the string we look for in request forms for username information.
-	usernameFormKey = "username"
-	// passwordFormKey is the string we look for in request forms for passwords information.
-	passwordFormKey = "password"
-	// totpTokenFormKey is the string we look for in request forms for TOTP token information.
-	totpTokenFormKey = "totpToken"
+	signatureHeaderKey           = "Signature"
+	pasetoAuthorizationHeaderKey = "Authorization"
 )
 
 var (
@@ -42,30 +33,13 @@ var (
 	errTokenNotFound = errors.New("no token data found")
 )
 
-// parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
-func parseLoginInputFromForm(req *http.Request) *types.UserLoginInput {
-	if err := req.ParseForm(); err == nil {
-		input := &types.UserLoginInput{
-			Username:  req.FormValue(usernameFormKey),
-			Password:  req.FormValue(passwordFormKey),
-			TOTPToken: req.FormValue(totpTokenFormKey),
-		}
-
-		if input.Username != "" && input.Password != "" && input.TOTPToken != "" {
-			return input
-		}
-	}
-
-	return nil
-}
-
 func (s *service) fetchSessionContextDataFromPASETO(ctx context.Context, req *http.Request) (*types.SessionContextData, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
 
-	if rawToken := req.Header.Get(pasetoAuthorizationKey); rawToken != "" {
+	if rawToken := req.Header.Get(pasetoAuthorizationHeaderKey); rawToken != "" {
 		var token paseto.JSONToken
 
 		if err := paseto.NewV2().Decrypt(rawToken, s.config.PASETO.LocalModeKey, &token, nil); err != nil {
@@ -111,7 +85,7 @@ func (s *service) CookieRequirementMiddleware(next http.Handler) http.Handler {
 		}
 
 		// if no error was attached to the request, tell them to login first.
-		http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
+		http.Redirect(res, req, "/users/login", http.StatusUnauthorized)
 	})
 }
 
@@ -125,6 +99,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 		// handle cookies if relevant.
 		if cookieContext, userID, err := s.getUserIDFromCookie(ctx, req); err == nil && userID != 0 {
+			logger.Debug("cookie attached to request")
 			ctx = cookieContext
 
 			tracing.AttachRequestingUserIDToSpan(span, userID)
@@ -142,9 +117,10 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(res, req.WithContext(context.WithValue(ctx, types.SessionContextDataKey, sessionCtxData)))
 			return
 		}
+		logger.Debug("no cookie attached to request")
 
 		tokenSessionContextData, err := s.fetchSessionContextDataFromPASETO(ctx, req)
-		if err != nil {
+		if err != nil && !(errors.Is(err, errTokenNotFound) || errors.Is(err, errTokenExpired)) {
 			observability.AcknowledgeError(err, logger, span, "extracting token from request")
 		}
 
@@ -196,7 +172,7 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 		}
 
 		logger.Debug("no user attached to request")
-		http.Redirect(res, req, "/auth/login", http.StatusUnauthorized)
+		http.Redirect(res, req, "/users/login", http.StatusUnauthorized)
 	})
 }
 
@@ -287,7 +263,7 @@ func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Han
 		x := new(types.ChangeActiveAccountInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 
@@ -308,15 +284,13 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
 
+		x := new(types.UserLoginInput)
 		logger := s.logger.WithRequest(req)
 
-		x := new(types.UserLoginInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			if x = parseLoginInputFromForm(req); x == nil {
-				observability.AcknowledgeError(err, logger, span, "decoding request body")
-				s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
-				return
-			}
+			observability.AcknowledgeError(err, logger, span, "decoding request body")
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+			return
 		}
 
 		if err := x.ValidateWithContext(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
@@ -325,7 +299,7 @@ func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, userLoginInputMiddlewareCtxKey, x)
+		ctx = context.WithValue(ctx, types.UserLoginInputContextKey, x)
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
@@ -341,7 +315,7 @@ func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler 
 		x := new(types.PASETOCreationInput)
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "attached input is invalid", http.StatusBadRequest)
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
 		}
 

@@ -101,7 +101,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		loginInput.TOTPToken,
 	)
 
-	if errors.Is(err, passwords.ErrInvalidTwoFactorCode) || errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
+	if errors.Is(err, passwords.ErrInvalidTOTPToken) || errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
 		return false, err
 	}
 

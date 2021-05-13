@@ -1,0 +1,16 @@
+<div class="container">
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-6">
+            <h1 class="h3 mb-3 text-center fw-normal">Verify 2FA</h1>
+            <form hx-post="/auth/verify_two_factor_secret" hx-ext="json-enc,ajax-header,event-header">
+                <img id="twoFactorSecretQRCode" src={{ .TwoFactorQRCode }}>
+                <div class="form-floating"><input id="totpTokenInput" required type="text" pattern="\d{6}" minlength=6 maxlength=6 name="totpToken" placeholder="123456" class="form-control"><label for="totpTokenInput">2FA Token</label></div>
+                <input id="totpTokenInput" type="hidden" name="userID" value="{{ .UserID }}" />
+                <hr />
+                <button id="totpTokenSubmitButton" class="w-100 btn btn-lg btn-primary" type="submit">Verify</button>
+            </form>
+        </div>
+        <div class="col-3"></div>
+    </div>
+</div>

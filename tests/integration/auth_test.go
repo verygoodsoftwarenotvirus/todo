@@ -349,7 +349,7 @@ func (s *TestSuite) TestTOTPTokenValidation() {
 		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
 		requireNotNilAndNoProblems(t, token, err)
 
-		assert.NoError(t, testClient.VerifyTOTPSecret(ctx, user.ID, token))
+		assert.NoError(t, testClient.VerifyTOTPSecret(ctx, user.CreatedUserID, token))
 	})
 
 	s.Run("should not be possible to validate an invalid TOTP", func() {
@@ -366,6 +366,6 @@ func (s *TestSuite) TestTOTPTokenValidation() {
 		assert.NotNil(t, user)
 		require.NoError(t, err)
 
-		assert.Error(t, testClient.VerifyTOTPSecret(ctx, user.ID, "NOTREAL"))
+		assert.Error(t, testClient.VerifyTOTPSecret(ctx, user.CreatedUserID, "NOTREAL"))
 	})
 }

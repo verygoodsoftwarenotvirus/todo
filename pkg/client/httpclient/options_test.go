@@ -16,7 +16,7 @@ import (
 func TestClient_SetOptions(T *testing.T) {
 	T.Parallel()
 
-	T.Run("normal operation", func(t *testing.T) {
+	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
 		expectedURL, err := url.Parse("https://notarealplace.lol")

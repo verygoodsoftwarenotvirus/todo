@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	uri            string
-	count          int
+	uri string
+	userCount,
+	dataCount uint16
 	debug          bool
 	singleUserMode bool
 
@@ -33,8 +34,9 @@ var (
 
 func init() {
 	flag.StringVarP(&uri, "url", "u", "", "where the target instance is hosted")
-	flag.IntVarP(&count, "count", "c", -1, "how many users/items per user to create")
-	flag.BoolVarP(&debug, "debug", "d", false, "whether debug mode is enabled")
+	flag.Uint16VarP(&userCount, "user-count", "c", 0, "how many users to create")
+	flag.Uint16VarP(&dataCount, "data-count", "d", 0, "how many accounts/api clients/etc per user to create")
+	flag.BoolVarP(&debug, "debug", "z", false, "whether debug mode is enabled")
 	flag.BoolVarP(&singleUserMode, "single-user-mode", "s", false, "whether single user mode is enabled")
 }
 
@@ -67,12 +69,12 @@ func main() {
 		logger.SetLevel(logging.DebugLevel)
 	}
 
-	if count <= 0 {
+	if dataCount <= 0 {
 		logger.Debug("exiting early because the requested amount is already satisfied")
 		quitter.Quit(0)
 	}
 
-	if count == 1 && !singleUserMode {
+	if dataCount == 1 && !singleUserMode {
 		singleUserMode = true
 	}
 
@@ -90,7 +92,7 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < int(userCount); i++ {
 		wg.Add(1)
 		go func(x int, wg *sync.WaitGroup) {
 			// create user.
@@ -126,7 +128,49 @@ func main() {
 
 			wg.Add(1)
 			go func(wg *sync.WaitGroup) {
-				for j := 0; j < count; j++ {
+				for j := 0; j < int(dataCount); j++ {
+					iterationLogger := userLogger.WithValue("creating", "accounts").WithValue("iteration", j)
+
+					createdAccount, accountCreationError := userClient.CreateAccount(ctx, fakes.BuildFakeAccountCreationInput())
+					if accountCreationError != nil {
+						quitter.ComplainAndQuit(fmt.Errorf("creating account #%d: %w", j, accountCreationError))
+					}
+					iterationLogger.WithValue(keys.AccountIDKey, createdAccount.ID).Debug("created account")
+				}
+				wg.Done()
+			}(wg)
+
+			wg.Add(1)
+			go func(wg *sync.WaitGroup) {
+				for j := 0; j < int(dataCount); j++ {
+					iterationLogger := userLogger.WithValue("creating", "api_clients").WithValue("iteration", j)
+
+					code, codeErr := totp.GenerateCode(strings.ToUpper(createdUser.TwoFactorSecret), time.Now().UTC())
+					if codeErr != nil {
+						quitter.ComplainAndQuit(fmt.Errorf("creating API Client #%d: %w", j, codeErr))
+					}
+
+					fakeInput := fakes.BuildFakeAPIClientCreationInput()
+
+					createdAPIClient, apiClientCreationErr := userClient.CreateAPIClient(ctx, cookie, &types.APIClientCreationInput{
+						UserLoginInput: types.UserLoginInput{
+							Username:  createdUser.Username,
+							Password:  createdUser.HashedPassword,
+							TOTPToken: code,
+						},
+						Name: fakeInput.Name,
+					})
+					if apiClientCreationErr != nil {
+						quitter.ComplainAndQuit(fmt.Errorf("API Client webhook #%d: %w", j, apiClientCreationErr))
+					}
+					iterationLogger.WithValue(keys.APIClientDatabaseIDKey, createdAPIClient.ID).Debug("created API Client")
+				}
+				wg.Done()
+			}(wg)
+
+			wg.Add(1)
+			go func(wg *sync.WaitGroup) {
+				for j := 0; j < int(dataCount); j++ {
 					iterationLogger := userLogger.WithValue("creating", "webhooks").WithValue("iteration", j)
 
 					createdWebhook, webhookCreationErr := userClient.CreateWebhook(ctx, fakes.BuildFakeWebhookCreationInput())
@@ -140,7 +184,7 @@ func main() {
 
 			wg.Add(1)
 			go func(wg *sync.WaitGroup) {
-				for j := 0; j < count; j++ {
+				for j := 0; j < int(dataCount); j++ {
 					iterationLogger := userLogger.WithValue("creating", "items").WithValue("iteration", j)
 
 					// create item

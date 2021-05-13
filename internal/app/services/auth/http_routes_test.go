@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
@@ -48,9 +47,9 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now().Add(24*time.Hour), nil)
 		helper.service.sessionManager = sm
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.NotNil(t, cookie)
-		assert.False(t, written)
+		assert.NoError(t, err)
 
 		var actualToken string
 		assert.NoError(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, cookie.Value, &actualToken))
@@ -69,21 +68,11 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		encoderDecoder := &mockencoding.EncoderDecoder{}
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			staticError,
-			http.StatusInternalServerError,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, sm, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, sm)
 	})
 
 	T.Run("with error renewing token", func(t *testing.T) {
@@ -96,21 +85,11 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("RenewToken", testutil.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		encoderDecoder := &mockencoding.EncoderDecoder{}
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			staticError,
-			http.StatusInternalServerError,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, sm, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, sm)
 	})
 
 	T.Run("with error committing", func(t *testing.T) {
@@ -128,21 +107,11 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		encoderDecoder := &mockencoding.EncoderDecoder{}
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			staticError,
-			http.StatusInternalServerError,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, sm, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, sm)
 	})
 
 	T.Run("with error building cookie", func(t *testing.T) {
@@ -165,9 +134,9 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 			[]byte(""),
 		)
 
-		cookie, written := helper.service.issueSessionManagedCookie(helper.ctx, helper.res, helper.exampleAccount.ID, helper.exampleUser.ID)
+		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
 		require.Nil(t, cookie)
-		assert.True(t, written)
+		assert.Error(t, err)
 	})
 }
 
@@ -179,7 +148,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -241,7 +210,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -265,7 +234,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -278,7 +247,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper.service.LoginHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 		mock.AssertExpectationsForObjects(t, userDataManager)
@@ -292,7 +261,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		helper.exampleUser.Reputation = types.BannedUserReputation
 		helper.exampleUser.ReputationExplanation = "bad behavior"
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -323,7 +292,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -365,7 +334,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -389,7 +358,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper.service.LoginHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
 		mock.AssertExpectationsForObjects(t, userDataManager, authenticator)
@@ -400,7 +369,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -419,7 +388,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-		).Return(false, passwords.ErrInvalidTwoFactorCode)
+		).Return(false, passwords.ErrInvalidTOTPToken)
 		helper.service.authenticator = authenticator
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -443,7 +412,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -486,7 +455,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -529,7 +498,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -576,7 +545,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -624,7 +593,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(context.Background(), userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		userDataManager := &mocktypes.UserDataManager{}
@@ -675,7 +644,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		cb := &mockCookieEncoderDecoder{}
@@ -727,7 +696,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.ctx = context.WithValue(helper.ctx, userLoginInputMiddlewareCtxKey, helper.exampleLoginInput)
+		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
 		helper.req = helper.req.WithContext(helper.ctx)
 
 		cb := &mockCookieEncoderDecoder{}
@@ -1054,7 +1023,7 @@ func TestAuthService_LogoutHandler(T *testing.T) {
 
 		helper.service.LogoutHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusOK, helper.res.Code)
+		assert.Equal(t, http.StatusSeeOther, helper.res.Code)
 		actualCookie := helper.res.Header().Get("Set-Cookie")
 		assert.Contains(t, actualCookie, "Max-Age=0")
 
@@ -1090,25 +1059,6 @@ func TestAuthService_LogoutHandler(T *testing.T) {
 		assert.Empty(t, actualCookie)
 
 		mock.AssertExpectationsForObjects(t, sm)
-	})
-
-	T.Run("without cookie", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		var err error
-		helper.ctx, err = helper.service.sessionManager.Load(helper.ctx, "")
-		require.NoError(t, err)
-		require.NoError(t, helper.service.sessionManager.RenewToken(helper.ctx))
-
-		// Then make the privilege-level change.
-		helper.service.sessionManager.Put(helper.ctx, userIDContextKey, helper.exampleUser.ID)
-		helper.service.sessionManager.Put(helper.ctx, accountIDContextKey, helper.exampleAccount.ID)
-
-		helper.service.LogoutHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 	})
 
 	T.Run("with error deleting from session store", func(t *testing.T) {

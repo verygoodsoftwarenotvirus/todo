@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/build/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
@@ -89,7 +90,7 @@ func main() {
 	databaseClientSetupSpan.End()
 
 	// build our server struct.
-	server, err := BuildServer(ctx, cfg, logger, dbClient, rawDB, authenticator)
+	srv, err := server.Build(ctx, cfg, logger, dbClient, rawDB, authenticator)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("initializing HTTP server: %w", err))
 	}
@@ -100,5 +101,5 @@ func main() {
 	// I slept and dreamt that life was joy.
 	//   I awoke and saw that life was service.
 	//   	I acted and behold, service deployed.
-	server.Serve()
+	srv.Serve()
 }

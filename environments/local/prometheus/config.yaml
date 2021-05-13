@@ -21,7 +21,7 @@ scrape_configs:
     metrics_path: '/metrics'
 
     # Configures the protocol scheme used for requests.
-    scheme: 'httpclient'
+    scheme: 'http'
 
     # Optional HTTP URL parameters.
     # routeparams:

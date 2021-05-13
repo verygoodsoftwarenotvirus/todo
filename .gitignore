@@ -12,7 +12,6 @@
 
 # pretty good IDEs
 .idea
-frontend/tsvelte/.vscode/
 
 # Vim
 *.swp
@@ -26,6 +25,7 @@ frontend/tsvelte/.vscode/
 
 # Go
 vendor
+mage_output_file.go
 
 # Python
 .env
@@ -34,13 +34,10 @@ __pycache__
 artifacts
 
 # frontend things
-node_modules
+internal/app/services/frontend/_vendor_/*
 
 # Log files
 *.log
-
-# svelte compilation artifacts
-frontend//public/bundle.*
 
 # go test profiles
 *.coverprofile

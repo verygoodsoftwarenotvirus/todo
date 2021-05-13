@@ -83,8 +83,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		}
 
 		exampleAccount := &Account{
-			ID:            54321,
-			BelongsToUser: exampleUser.ID,
+			ID: 54321,
 		}
 
 		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
@@ -139,8 +138,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		}
 
 		exampleAccount := &Account{
-			ID:            54321,
-			BelongsToUser: exampleUser.ID,
+			ID: 54321,
 		}
 
 		_, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, nil)

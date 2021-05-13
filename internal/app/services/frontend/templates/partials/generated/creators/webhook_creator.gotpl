@@ -1,0 +1,39 @@
+<div id="content" class="">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">New Webhook</h1>
+    </div>
+    <div class="col-md-8 order-md-1">
+        <form class="needs-validation" novalidate="" hx-target="#content" hx-post="/webhooks/new/submit">
+                <div class="mb3">
+                    <label for="name">Name</label>
+                    <div class="input-group">
+                        <input class="form-control" type="text" id="" name="" placeholder="" required="" value="{{ .Name }}" />
+                        <div class="invalid-feedback" style="width: 100%;">name is required.</div>
+                    </div>
+                </div>
+                <div class="mb3">
+                    <label for="Method">Method</label>
+                    <div class="input-group">
+                        <input class="form-control" type="text" id="" name="" placeholder="" required="" value="{{ .Method }}" />
+                        <div class="invalid-feedback" style="width: 100%;">Method is required.</div>
+                    </div>
+                </div>
+                <div class="mb3">
+                    <label for="ContentType">ContentType</label>
+                    <div class="input-group">
+                        <input class="form-control" type="text" id="" name="" placeholder="" required="" value="{{ .ContentType }}" />
+                        <div class="invalid-feedback" style="width: 100%;">ContentType is required.</div>
+                    </div>
+                </div>
+                <div class="mb3">
+                    <label for="URL">URL</label>
+                    <div class="input-group">
+                        <input class="form-control" type="text" id="" name="" placeholder="" required="" value="{{ .URL }}" />
+                        <div class="invalid-feedback" style="width: 100%;">URL is required.</div>
+                    </div>
+                </div>
+            <hr class="mb-4" />
+            <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
+        </form>
+    </div>
+</div>

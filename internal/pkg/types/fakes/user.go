@@ -32,9 +32,9 @@ func BuildFakeUser() *types.User {
 // BuildUserCreationResponseFromUser builds a faked UserCreationResponse.
 func BuildUserCreationResponseFromUser(user *types.User) *types.UserCreationResponse {
 	return &types.UserCreationResponse{
-		ID:        user.ID,
-		Username:  user.Username,
-		CreatedOn: user.CreatedOn,
+		CreatedUserID: user.ID,
+		Username:      user.Username,
+		CreatedOn:     user.CreatedOn,
 	}
 }
 
@@ -56,11 +56,11 @@ func BuildFakeUserList() *types.UserList {
 	}
 }
 
-// BuildFakeUserCreationInput builds a faked UserCreationInput.
-func BuildFakeUserCreationInput() *types.UserCreationInput {
+// BuildFakeUserCreationInput builds a faked UserRegistrationInput.
+func BuildFakeUserCreationInput() *types.UserRegistrationInput {
 	exampleUser := BuildFakeUser()
 
-	return &types.UserCreationInput{
+	return &types.UserRegistrationInput{
 		Username: exampleUser.Username,
 		Password: fake.Password(true, true, true, true, true, 32),
 	}
@@ -78,9 +78,9 @@ func BuildTestUserCreationConfig() *types.TestUserCreationConfig {
 	}
 }
 
-// BuildFakeUserCreationInputFromUser builds a faked UserCreationInput.
-func BuildFakeUserCreationInputFromUser(user *types.User) *types.UserCreationInput {
-	return &types.UserCreationInput{
+// BuildFakeUserCreationInputFromUser builds a faked UserRegistrationInput.
+func BuildFakeUserCreationInputFromUser(user *types.User) *types.UserRegistrationInput {
+	return &types.UserRegistrationInput{
 		Username: user.Username,
 		Password: fake.Password(true, true, true, true, true, 32),
 	}
@@ -101,6 +101,14 @@ func BuildFakeUserReputationUpdateInputFromUser(user *types.User) *types.UserRep
 		TargetUserID:  fake.Uint64(),
 		NewReputation: user.Reputation,
 		Reason:        fake.Sentence(10),
+	}
+}
+
+// BuildFakeUserRegistrationInput builds a faked UserLoginInput.
+func BuildFakeUserRegistrationInput() *types.UserRegistrationInput {
+	return &types.UserRegistrationInput{
+		Username: fake.Username(),
+		Password: fake.Password(true, true, true, true, true, 32),
 	}
 }
 

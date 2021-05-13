@@ -67,6 +67,8 @@ func (c *AzureConfig) authMethodIsSharedKey() bool {
 		c.AuthMethod == azureSharedKeyAuthMethod4
 }
 
+var _ validation.ValidatableWithContext = (*AzureConfig)(nil)
+
 // ValidateWithContext validates the AzureConfig.
 func (c *AzureConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,

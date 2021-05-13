@@ -12,6 +12,8 @@ type MetaSettings struct {
 	Debug   bool    `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 }
 
+var _ validation.ValidatableWithContext = (*MetaSettings)(nil)
+
 // ValidateWithContext validates an MetaSettings struct.
 func (s MetaSettings) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, &s,

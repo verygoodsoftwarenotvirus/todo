@@ -18,7 +18,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParseBool(t *testing.T) {
@@ -51,6 +50,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
+			helper.exampleUser.ID,
 		).Return(helper.exampleItem, nil)
 		helper.service.itemDataManager = itemDataManager
 
@@ -136,6 +136,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
+			helper.exampleUser.ID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -163,6 +164,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.ItemCreationInput{}),
+			helper.exampleUser.ID,
 		).Return(helper.exampleItem, nil)
 		helper.service.itemDataManager = itemDataManager
 
@@ -199,6 +201,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
 		h := buildTestHelper(t)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
@@ -256,7 +260,8 @@ func TestItemsService_ReadHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -304,13 +309,16 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
 		helper := buildTestHelper(t)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ItemExists",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(true, nil)
 		helper.service.itemDataManager = itemDataManager
 
@@ -353,7 +361,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager.On(
 			"ItemExists",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(false, sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -380,7 +389,8 @@ func TestItemsService_ExistenceHandler(T *testing.T) {
 		itemDataManager.On(
 			"ItemExists",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(false, errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -414,56 +424,6 @@ func TestItemsService_ListHandler(T *testing.T) {
 			"GetItems",
 			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
-			mock.IsType(&types.QueryFilter{}),
-		).Return(exampleItemList, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType(&types.ItemList{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.ListHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, encoderDecoder)
-	})
-
-	T.Run("standard for admin", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		helper.req.URL.RawQuery = url.Values{types.AdminQueryKey: []string{"true"}}.Encode()
-
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
-		helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
-			sessionCtxData, err := types.SessionContextDataFromUser(
-				helper.exampleUser,
-				helper.exampleAccount.ID,
-				map[uint64]*types.UserAccountMembershipInfo{
-					helper.exampleAccount.ID: {
-						AccountName: helper.exampleAccount.Name,
-						Permissions: testutil.BuildMaxUserPerms(),
-					},
-				},
-			)
-			require.NoError(t, err)
-
-			return sessionCtxData, nil
-		}
-
-		exampleItemList := fakes.BuildFakeItemList()
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItemsForAdmin",
-			testutil.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
 		helper.service.itemDataManager = itemDataManager
@@ -601,67 +561,6 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			"GetItemsWithIDs",
 			testutil.ContextMatcher,
 			helper.exampleAccount.ID,
-			exampleLimit,
-			exampleItemIDs,
-		).Return(exampleItemList.Items, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType([]*types.Item{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.SearchHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, indexManager, itemDataManager, encoderDecoder)
-	})
-
-	T.Run("standard for admin", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		helper.req.URL.RawQuery = url.Values{
-			types.SearchQueryKey: []string{exampleQuery},
-			types.AdminQueryKey:  []string{"true"},
-			types.LimitQueryKey:  []string{strconv.Itoa(int(exampleLimit))},
-		}.Encode()
-
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
-		helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
-			sessionCtxData, err := types.SessionContextDataFromUser(
-				helper.exampleUser,
-				helper.exampleAccount.ID,
-				map[uint64]*types.UserAccountMembershipInfo{
-					helper.exampleAccount.ID: {
-						AccountName: helper.exampleAccount.Name,
-						Permissions: testutil.BuildMaxUserPerms(),
-					},
-				},
-			)
-			require.NoError(t, err)
-
-			return sessionCtxData, nil
-		}
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"SearchForAdmin",
-			testutil.ContextMatcher,
-			exampleQuery,
-		).Return(exampleItemIDs, nil)
-		helper.service.search = indexManager
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItemsWithIDsForAdmin",
-			testutil.ContextMatcher,
 			exampleLimit,
 			exampleItemIDs,
 		).Return(exampleItemList.Items, nil)
@@ -842,6 +741,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			"UpdateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
+			h.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
 		h.service.itemDataManager = itemDataManager
@@ -922,7 +822,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -949,7 +850,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -976,12 +878,14 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		itemDataManager.On(
 			"GetItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
 		).Return(helper.exampleItem, nil)
 		itemDataManager.On(
 			"UpdateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
+			helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
@@ -1014,6 +918,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			"UpdateItem",
 			testutil.ContextMatcher,
 			mock.IsType(&types.Item{}),
+			h.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
 		h.service.itemDataManager = itemDataManager
@@ -1046,13 +951,17 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
 		h := buildTestHelper(t)
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			h.exampleItem.ID, h.exampleAccount.ID,
+			h.exampleItem.ID,
+			h.exampleAccount.ID,
+			h.exampleUser.ID,
 		).Return(nil)
 		h.service.itemDataManager = itemDataManager
 
@@ -1106,7 +1015,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.itemDataManager = itemDataManager
 
@@ -1133,7 +1044,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
@@ -1160,7 +1073,9 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		itemDataManager.On(
 			"ArchiveItem",
 			testutil.ContextMatcher,
-			helper.exampleItem.ID, helper.exampleAccount.ID,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.itemDataManager = itemDataManager
 

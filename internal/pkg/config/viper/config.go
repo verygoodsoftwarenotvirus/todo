@@ -75,7 +75,9 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 		return nil, errNilInput
 	}
 
-	if err := input.ValidateWithContext(context.Background()); err != nil {
+	ctx := context.Background()
+
+	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -90,9 +92,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyEncodingContentType, input.Encoding.ContentType)
 
-	cfg.Set(ConfigKeyFrontendDebug, input.Frontend.Debug)
-	cfg.Set(ConfigKeyFrontendStaticFilesDir, input.Frontend.StaticFilesDirectory)
-	cfg.Set(ConfigKeyFrontendCacheStatics, input.Frontend.CacheStaticFiles)
+	cfg.Set(ConfigKeyFrontendUseFakeData, input.Frontend.UseFakeData)
 
 	cfg.Set(ConfigKeyAuthDebug, input.Auth.Debug)
 	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Auth.EnableUserSignup)
@@ -101,6 +101,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyAuthCookieName, input.Auth.Cookies.Name)
 	cfg.Set(ConfigKeyAuthCookieDomain, input.Auth.Cookies.Domain)
+	cfg.Set(ConfigKeyAuthCookieHashKey, input.Auth.Cookies.HashKey)
 	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Auth.Cookies.SigningKey)
 	cfg.Set(ConfigKeyAuthCookieLifetime, input.Auth.Cookies.Lifetime)
 	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)

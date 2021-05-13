@@ -1,0 +1,15 @@
+[testing.translation]
+description = "A translation to invoke for tests."
+other = ":)"
+
+[callsToAction.signIn]
+description = "sign in call to action."
+other = "Sign In"
+
+[callsToAction.register]
+description = "registration call to action."
+other = "Register"
+
+[callsToAction.logOut]
+description = "logout call to action."
+other = "Log Out"

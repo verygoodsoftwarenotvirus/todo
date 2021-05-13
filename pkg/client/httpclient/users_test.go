@@ -192,7 +192,7 @@ func (s *usersTestSuite) TestClient_CreateUser() {
 		expected := fakes.BuildUserCreationResponseFromUser(s.exampleUser)
 		exampleInput := fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		c := buildTestClientWithRequestBodyValidation(t, spec, &types.UserCreationInput{}, exampleInput, expected)
+		c := buildTestClientWithRequestBodyValidation(t, spec, &types.UserRegistrationInput{}, exampleInput, expected)
 
 		actual, err := c.CreateUser(s.ctx, exampleInput)
 		assert.NoError(t, err)

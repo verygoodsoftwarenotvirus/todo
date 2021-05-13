@@ -1,0 +1,17 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">User Settings</h1>
+</div>
+<div class="col-md-8 order-md-1">
+    <form class="needs-validation" novalidate="">
+        <div class="mb3">
+            <label for="Username">Username</label>
+            <div class="input-group">
+                <input class="form-control" type="text" id="Username" placeholder="Username"required="" value="{{ .Username }}" />
+                <div class="invalid-feedback" style="width: 100%;">Name is required.</div>
+            </div>
+        </div>
+
+        <hr class="mb-4" />
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
+    </form>
+</div>

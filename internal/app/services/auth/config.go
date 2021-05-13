@@ -26,6 +26,7 @@ type (
 	CookieConfig struct {
 		Name       string        `json:"name" mapstructure:"name" toml:"name,omitempty"`
 		Domain     string        `json:"domain" mapstructure:"domain" toml:"domain,omitempty"`
+		HashKey    string        `json:"hash_key" mapstructure:"hash_key" toml:"hash_key,omitempty"`
 		SigningKey string        `json:"signing_key" mapstructure:"signing_key" toml:"signing_key,omitempty"`
 		Lifetime   time.Duration `json:"lifetime" mapstructure:"lifetime" toml:"lifetime,omitempty"`
 		SecureOnly bool          `json:"secure_only" mapstructure:"secure_only" toml:"secure_only,omitempty"`
@@ -49,6 +50,8 @@ type (
 	}
 )
 
+var _ validation.ValidatableWithContext = (*CookieConfig)(nil)
+
 // ValidateWithContext validates a CookieConfig struct.
 func (cfg *CookieConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
@@ -58,6 +61,8 @@ func (cfg *CookieConfig) ValidateWithContext(ctx context.Context) error {
 	)
 }
 
+var _ validation.ValidatableWithContext = (*PASETOConfig)(nil)
+
 // ValidateWithContext validates a PASETOConfig struct.
 func (cfg *PASETOConfig) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
@@ -65,6 +70,8 @@ func (cfg *PASETOConfig) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&cfg.LocalModeKey, validation.Required, validation.Length(pasetoKeyRequiredLength, pasetoKeyRequiredLength)),
 	)
 }
+
+var _ validation.ValidatableWithContext = (*Config)(nil)
 
 // ValidateWithContext validates a Config struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {

@@ -13,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
 
 	"github.com/makiuchi-d/gozxing"
@@ -25,12 +26,10 @@ const (
 	// UserIDURIParamKey is used to refer to user IDs in router params.
 	UserIDURIParamKey = "userID"
 
-	totpIssuer        = "todoService"
-	base64ImagePrefix = "data:image/jpeg;base64,"
-
+	totpIssuer             = "todoService"
+	base64ImagePrefix      = "data:image/jpeg;base64,"
 	minimumPasswordEntropy = 75
-
-	totpSecretSize = 64
+	totpSecretSize         = 64
 )
 
 // validateCredentialChangeRequest takes a user's credentials and determines
@@ -105,6 +104,54 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.RespondWithData(ctx, res, users)
 }
 
+func (s *service) RegisterUser(ctx context.Context, registrationInput *types.UserRegistrationInput) (*types.UserCreationResponse, error) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	// NOTE: I feel comfortable letting username be in the logger, since
+	// the logging statements below are only in the event of errs. If
+	// and when that changes, this can/should be removed.
+	logger := s.logger.WithValue(keys.UsernameKey, registrationInput.Username)
+	tracing.AttachUsernameToSpan(span, registrationInput.Username)
+
+	// hash the password
+	hp, err := s.authenticator.HashPassword(ctx, registrationInput.Password)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "hashing password")
+	}
+
+	input := &types.UserDataStoreCreationInput{
+		Username:        registrationInput.Username,
+		HashedPassword:  hp,
+		TwoFactorSecret: "",
+	}
+
+	// generate a two factor secret.
+	if input.TwoFactorSecret, err = s.secretGenerator.GenerateBase32EncodedString(ctx, totpSecretSize); err != nil {
+		return nil, observability.PrepareError(err, logger, span, "generating TOTP secret")
+	}
+
+	// create the user.
+	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
+	if userCreationErr != nil {
+		return nil, observability.PrepareError(err, logger, span, "creating user")
+	}
+
+	// notify the relevant parties.
+	tracing.AttachUserIDToSpan(span, user.ID)
+	s.userCounter.Increment(ctx)
+
+	// UserCreationResponse is a struct we can use to notify the user of their two factor secret, but ideally just this once and then never again.
+	ucr := &types.UserCreationResponse{
+		CreatedUserID:   user.ID,
+		Username:        user.Username,
+		CreatedOn:       user.CreatedOn,
+		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
+	}
+
+	return ucr, nil
+}
+
 // CreateHandler is our user creation route.
 func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -121,9 +168,9 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch parsed input from session context data.
-	userInput, ok := ctx.Value(userCreationMiddlewareCtxKey).(*types.UserCreationInput)
+	userInput, ok := ctx.Value(types.UserRegistrationInputContextKey).(*types.UserRegistrationInput)
 	if !ok {
-		logger.Info("valid input not attached to UsersService CreateHandler request")
+		logger.Info("valid input not attached to request")
 		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 		return
 	}
@@ -134,54 +181,19 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.UsernameKey, userInput.Username)
 	tracing.AttachUsernameToSpan(span, userInput.Username)
 
-	// ensure the passwords isn't garbage-tier
+	// ensure the password is not garbage-tier
 	if err := passwordvalidator.Validate(userInput.Password, minimumPasswordEntropy); err != nil {
 		logger.WithValue("password_validation_error", err).Debug("weak password provided to user creation route")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "password too weak", http.StatusBadRequest)
 		return
 	}
 
-	// hash the passwords.
-	hp, err := s.authenticator.HashPassword(ctx, userInput.Password)
+	ucr, err := s.RegisterUser(ctx, userInput)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "hashing password")
+		observability.AcknowledgeError(err, logger, span, "creating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	input := &types.UserDataStoreCreationInput{
-		Username:        userInput.Username,
-		HashedPassword:  hp,
-		TwoFactorSecret: "",
-	}
-
-	// generate a two factor secret.
-	if input.TwoFactorSecret, err = s.secretGenerator.GenerateBase32EncodedString(ctx, totpSecretSize); err != nil {
-		observability.AcknowledgeError(err, logger, span, "error generating TOTP secret")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// create the user.
-	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
-	if userCreationErr != nil {
-		observability.AcknowledgeError(err, logger, span, "error creating user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// UserCreationResponse is a struct we can use to notify the user of
-	// their two factor secret, but ideally just this once and then never again.
-	ucr := &types.UserCreationResponse{
-		ID:              user.ID,
-		Username:        user.Username,
-		CreatedOn:       user.CreatedOn,
-		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
-	}
-
-	// notify the relevant parties.
-	tracing.AttachUserIDToSpan(span, user.ID)
-	s.userCounter.Increment(ctx)
 
 	// encode and peace.
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, ucr, http.StatusCreated)
@@ -283,6 +295,39 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
+var errSecretAlreadyVerified = errors.New("secret already verified")
+
+func (s *service) VerifyUserTwoFactorSecret(ctx context.Context, input *types.TOTPSecretVerificationInput) error {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithValue(keys.UserIDKey, input.UserID)
+
+	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "fetching user with unverified two factor secret")
+	}
+
+	tracing.AttachUserIDToSpan(span, user.ID)
+	tracing.AttachUsernameToSpan(span, user.Username)
+
+	if user.TwoFactorSecretVerifiedOn != nil {
+		// I suppose if this happens too many times, we might want to keep track of that
+		logger.Debug("two factor secret already verified")
+		return errSecretAlreadyVerified
+	}
+
+	if totp.Validate(input.TOTPToken, user.TwoFactorSecret) {
+		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
+			return observability.PrepareError(err, logger, span, "marking 2FA secret as validated")
+		}
+	} else {
+		return passwords.ErrInvalidTOTPToken
+	}
+
+	return nil
+}
+
 // TOTPSecretVerificationHandler accepts a TOTP token as input and returns 200 if the TOTP token
 // is validated by the user's TOTP secret.
 func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *http.Request) {
@@ -301,35 +346,22 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 	logger = logger.WithValue(keys.UserIDKey, input.UserID)
 
-	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching user with unverified two factor secret")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	tracing.AttachUserIDToSpan(span, user.ID)
-	tracing.AttachUsernameToSpan(span, user.Username)
-
-	if user.TwoFactorSecretVerifiedOn != nil {
-		// I suppose if this happens too many times, we'll want to keep track of that
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "TOTP secret already verified", http.StatusAlreadyReported)
-		return
-	}
-
-	statusCode := http.StatusBadRequest
-
-	if totp.Validate(input.TOTPToken, user.TwoFactorSecret) {
-		statusCode = http.StatusAccepted
-
-		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
-			observability.AcknowledgeError(err, logger, span, "marking 2FA secret as validated")
+	if err := s.VerifyUserTwoFactorSecret(ctx, input); err != nil {
+		switch {
+		case errors.Is(err, passwords.ErrInvalidTOTPToken):
+			s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+			return
+		case errors.Is(err, errSecretAlreadyVerified):
+			s.encoderDecoder.EncodeErrorResponse(ctx, res, "TOTP secret already verified", http.StatusAlreadyReported)
+			return
+		default:
+			observability.AcknowledgeError(err, logger, span, "verifying user two factor secret")
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return
 		}
 	}
 
-	res.WriteHeader(statusCode)
+	res.WriteHeader(http.StatusAccepted)
 }
 
 // NewTOTPSecretHandler fetches a user, and issues them a new TOTP secret, after validating
@@ -461,16 +493,13 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// update the user.
 	if err = s.userDataManager.UpdateUserPassword(ctx, user.ID, newPasswordHash); err != nil {
-		observability.AcknowledgeError(err, logger, span, "error encountered updating user")
+		observability.AcknowledgeError(err, logger, span, "encountered updating user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// we're all good, log the user out
 	http.SetCookie(res, &http.Cookie{MaxAge: -1})
-
-	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections#Temporary_redirections
-	http.Redirect(res, req, "/auth/login", http.StatusSeeOther)
 }
 
 func stringPointer(storageProviderPath string) *string {

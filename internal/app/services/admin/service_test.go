@@ -14,9 +14,12 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func buildTestService(t *testing.T) *service {
+	t.Helper()
+
 	logger := logging.NewNonOperationalLogger()
 
 	rpm := mockrouting.NewRouteParamManager()
@@ -37,7 +40,10 @@ func buildTestService(t *testing.T) *service {
 
 	mock.AssertExpectationsForObjects(t, rpm)
 
-	return s.(*service)
+	srv, ok := s.(*service)
+	require.True(t, ok)
+
+	return srv
 }
 
 func TestProvideAdminService(T *testing.T) {

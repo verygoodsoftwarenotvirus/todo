@@ -197,7 +197,7 @@ func (b *Builder) buildDataRequest(ctx context.Context, method, uri string, in i
 		return nil, observability.PrepareError(err, logger, span, "building request")
 	}
 
-	req.Header.Set("Content-type", b.encoder.ContentType())
+	req.Header.Set("RawHTML-type", b.encoder.ContentType())
 	tracing.AttachURLToSpan(span, req.URL)
 
 	return req, nil

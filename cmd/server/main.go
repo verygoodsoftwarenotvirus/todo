@@ -16,6 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
+	flag "github.com/spf13/pflag"
 )
 
 const (
@@ -23,11 +24,20 @@ const (
 	configFilepathEnvVar = "CONFIGURATION_FILEPATH"
 )
 
+var (
+	configFilepath string
+)
+
+func init() {
+	flag.StringVarP(&configFilepath, "config", "c", "", "the config filepath")
+}
+
 func main() {
+	flag.Parse()
+
 	var (
-		ctx            = context.Background()
-		logger         = zerolog.NewLogger()
-		configFilepath string
+		ctx    = context.Background()
+		logger = zerolog.NewLogger()
 	)
 
 	logger.SetLevel(logging.DebugLevel)
@@ -41,8 +51,10 @@ func main() {
 	}
 
 	// find and validate our configuration filepath.
-	if configFilepath = os.Getenv(configFilepathEnvVar); configFilepath == "" {
-		logger.Fatal(errors.New("no configuration file provided"))
+	if configFilepath == "" {
+		if configFilepath = os.Getenv(configFilepathEnvVar); configFilepath == "" {
+			logger.Fatal(errors.New("no configuration file provided"))
+		}
 	}
 
 	// parse our config file.

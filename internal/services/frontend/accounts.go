@@ -3,6 +3,8 @@ package frontend
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	// import embed for the side effect.
@@ -46,6 +48,7 @@ func (s *Service) buildAccountEditorView(includeBaseTemplate bool) func(http.Res
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// get session context data
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
@@ -96,6 +99,7 @@ func (s *Service) fetchAccounts(ctx context.Context, sessionCtxData *types.Sessi
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		accounts = fakes.BuildFakeAccountList()
@@ -119,6 +123,7 @@ func (s *Service) buildAccountsTableView(includeBaseTemplate bool) func(http.Res
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// get session context data
 		sessionCtxData, err := s.sessionContextDataFetcher(req)

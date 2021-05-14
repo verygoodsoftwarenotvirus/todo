@@ -28,6 +28,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		WithValue(keys.FilterPageKey, filter.Page).
 		WithValue(keys.FilterSortByKey, string(filter.SortBy))
 
+	tracing.AttachRequestToSpan(span, req)
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
@@ -65,6 +66,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)

@@ -22,6 +22,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check session context data for parsed input struct.
 	input, ok := ctx.Value(accountStatusUpdateMiddlewareCtxKey).(*types.UserReputationUpdateInput)

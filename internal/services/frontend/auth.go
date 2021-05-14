@@ -3,6 +3,8 @@ package frontend
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	// import embed for the side effect.
@@ -25,6 +27,8 @@ func (s *Service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWri
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
+
+		tracing.AttachRequestToSpan(span, req)
 
 		contentData := &loginPromptData{
 			RedirectTo: pluckRedirectURL(req),
@@ -61,6 +65,11 @@ const (
 
 // parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
 func (s *Service) parseFormEncodedLoginRequest(ctx context.Context, req *http.Request) (loginData *types.UserLoginInput, redirectTo string) {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachRequestToSpan(span, req)
+
 	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		return nil, ""
@@ -84,6 +93,7 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	loginInput, redirectTo := s.parseFormEncodedLoginRequest(ctx, req)
 	if loginInput == nil {
@@ -113,6 +123,7 @@ func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Requ
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -137,6 +148,8 @@ func (s *Service) registrationComponent(res http.ResponseWriter, req *http.Reque
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
+	tracing.AttachRequestToSpan(span, req)
+
 	tmpl := s.parseTemplate(ctx, "", registrationPrompt, nil)
 
 	s.renderTemplateToResponse(ctx, tmpl, nil, res)
@@ -145,6 +158,8 @@ func (s *Service) registrationComponent(res http.ResponseWriter, req *http.Reque
 func (s *Service) registrationView(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
+
+	tracing.AttachRequestToSpan(span, req)
 
 	tmpl := s.renderTemplateIntoBaseTemplate(registrationPrompt, nil)
 	data := pageData{
@@ -166,6 +181,11 @@ type totpVerificationPrompt struct {
 
 // parseFormEncodedRegistrationRequest checks a request for a registration form, and returns the parsed login data if relevant.
 func (s *Service) parseFormEncodedRegistrationRequest(ctx context.Context, req *http.Request) *types.UserRegistrationInput {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachRequestToSpan(span, req)
+
 	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		return nil
@@ -188,6 +208,7 @@ func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *htt
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	registrationInput := s.parseFormEncodedRegistrationRequest(ctx, req)
 	if registrationInput == nil {
@@ -221,6 +242,11 @@ func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *htt
 
 // parseFormEncodedTOTPSecretVerificationRequest checks a request for a registration form, and returns the parsed input.
 func (s *Service) parseFormEncodedTOTPSecretVerificationRequest(ctx context.Context, req *http.Request) *types.TOTPSecretVerificationInput {
+	ctx, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachRequestToSpan(span, req)
+
 	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
 		return nil
@@ -248,6 +274,7 @@ func (s *Service) handleTOTPVerificationSubmission(res http.ResponseWriter, req 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	verificationInput := s.parseFormEncodedTOTPSecretVerificationRequest(ctx, req)
 	if verificationInput == nil {

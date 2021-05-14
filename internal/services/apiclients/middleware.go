@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -17,6 +19,7 @@ func (s *service) CreationInputMiddleware(next http.Handler) http.Handler {
 		x := new(types.APIClientCreationInput)
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// decode value from request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {

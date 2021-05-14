@@ -70,6 +70,7 @@ func (s *service) UsernameSearchHandler(res http.ResponseWriter, req *http.Reque
 
 	query := req.URL.Query().Get(types.SearchQueryKey)
 	logger := s.logger.WithRequest(req).WithValue("query", query)
+	tracing.AttachRequestToSpan(span, req)
 
 	// fetch user data.
 	users, err := s.userDataManager.SearchForUsersByUsername(ctx, query)
@@ -89,6 +90,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine desired filter.
 	qf := types.ExtractQueryFilter(req)
@@ -159,6 +161,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// in the event that we don't want new users to be able to sign up (a config setting)
 	// just decline the request from the get-go
@@ -239,6 +242,7 @@ func (s *service) SelfHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -274,6 +278,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// figure out who this is all for.
 	userID := s.userIDFetcher(req)
@@ -336,6 +341,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check session context data for parsed input.
 	input, ok := req.Context().Value(totpSecretVerificationMiddlewareCtxKey).(*types.TOTPSecretVerificationInput)
@@ -372,6 +378,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check session context data for parsed input.
 	input, ok := req.Context().Value(totpSecretRefreshMiddlewareCtxKey).(*types.TOTPSecretRefreshInput)
@@ -441,6 +448,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check session context data for parsed value.
 	input, ok := ctx.Value(passwordChangeMiddlewareCtxKey).(*types.PasswordUpdateInput)
@@ -513,6 +521,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -565,6 +574,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// figure out who this is for.
 	userID := s.userIDFetcher(req)
@@ -595,6 +605,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// figure out who this is for.
 	userID := s.userIDFetcher(req)

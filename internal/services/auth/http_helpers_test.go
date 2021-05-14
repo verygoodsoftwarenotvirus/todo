@@ -61,7 +61,7 @@ func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher(t *testing.T) {
 	require.NoError(t, err)
 
 	helper.sessionCtxData = sessionCtxData
-	helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
 }

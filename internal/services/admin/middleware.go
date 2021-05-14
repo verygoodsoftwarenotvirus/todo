@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 
@@ -23,6 +25,7 @@ func (s *service) AccountStatusUpdateInputMiddleware(next http.Handler) http.Han
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")

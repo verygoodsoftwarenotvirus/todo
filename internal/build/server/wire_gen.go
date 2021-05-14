@@ -8,36 +8,37 @@ package server
 import (
 	"context"
 	"database/sql"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accounts"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
+	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 )
 
 // Injectors from build.go:
 
 // Build builds a server.
-func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server.Server, error) {
+func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server2.Server, error) {
 	httpserverConfig := cfg.Server
 	observabilityConfig := &cfg.Observability
 	metricsConfig := observabilityConfig.Metrics
@@ -53,7 +54,7 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
 	cookieConfig := authConfig.Cookies
 	configConfig := cfg.Database
-	sessionManager, err := config2.ProvideSessionManager(cookieConfig, configConfig, db)
+	sessionManager, err := dbconfig.ProvideSessionManager(cookieConfig, configConfig, db)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server.ProvideServer(cfg, httpserverServer)
+	serverServer, err := server2.ProvideServer(cfg, httpserverServer)
 	if err != nil {
 		return nil, err
 	}

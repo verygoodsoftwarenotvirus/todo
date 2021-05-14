@@ -18,8 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/makiuchi-d/gozxing"

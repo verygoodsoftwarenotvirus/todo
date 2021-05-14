@@ -14,13 +14,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+
 	"github.com/magefile/mage/mg"
 
 	"github.com/carolynvs/magex/pkg"
 	"github.com/magefile/mage/sh"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 const (
@@ -367,13 +367,13 @@ func EnsureDevTools() error {
 func fixFieldAlignment() {
 	ensureFieldalignment()
 
-	sh.Output("fieldalignment", "-fix", "./...")
+	sh.Run("fieldalignment", "-fix", "./...")
 }
 
 func runGoimports() error {
 	ensureGoimports()
 
-	return runGoCommand(false, "-local", thisRepo)
+	return sh.Run("goimports", "-w", "-local", thisRepo, ".")
 }
 
 // dependency stuff
@@ -582,6 +582,7 @@ func Lint() error {
 	)
 
 	fixFieldAlignment()
+	runGoimports()
 
 	if err := dockerLint(verbose); err != nil {
 		return err

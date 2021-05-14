@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/mock"
 )

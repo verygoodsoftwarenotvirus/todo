@@ -5,14 +5,15 @@ import (
 	"math/rand"
 	"net/http"
 
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
+
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks.
-func fetchRandomWebhook(c *client.Client) *models.Webhook {
+func fetchRandomWebhook(c *httpclient2.Client) *models.Webhook {
 	webhooks, err := c.GetWebhooks(context.Background(), nil)
 	if err != nil || webhooks == nil || len(webhooks.Webhooks) == 0 {
 		return nil
@@ -22,7 +23,7 @@ func fetchRandomWebhook(c *client.Client) *models.Webhook {
 	return webhooks.Webhooks[randIndex]
 }
 
-func buildWebhookActions(c *client.Client, builder *requests.Builder) map[string]*Action {
+func buildWebhookActions(c *httpclient2.Client, builder *requests.Builder) map[string]*Action {
 	return map[string]*Action{
 		"GetWebhooks": {
 			Name: "GetWebhooks",

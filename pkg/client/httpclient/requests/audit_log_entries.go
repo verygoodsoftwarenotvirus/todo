@@ -4,10 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 const (

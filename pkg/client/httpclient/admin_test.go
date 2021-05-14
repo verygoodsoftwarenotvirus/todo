@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 )

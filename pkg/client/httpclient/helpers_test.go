@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

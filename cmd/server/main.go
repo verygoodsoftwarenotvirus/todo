@@ -9,11 +9,11 @@ import (
 	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/build/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
 )

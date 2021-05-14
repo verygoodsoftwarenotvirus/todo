@@ -6,33 +6,33 @@ import (
 	"context"
 	"database/sql"
 
-	server "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server"
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
-	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accounts"
-	plansservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/accountsubscriptionplans"
-	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/admin"
-	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/apiclients"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
-	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/items"
-	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/users"
-	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
-
 	"github.com/google/wire"
+
+	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
+	bleve2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
+	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 )
 
 // Build builds a server.
@@ -43,10 +43,10 @@ func Build(
 	dbm database.DataManager,
 	db *sql.DB,
 	authenticator passwords.Authenticator,
-) (*server.Server, error) {
+) (*server2.Server, error) {
 	wire.Build(
-		server.Providers,
-		bleve.Providers,
+		server2.Providers,
+		bleve2.Providers,
 		config.Providers,
 		database.Providers,
 		encoding.Providers,
@@ -58,16 +58,16 @@ func Build(
 		observability.Providers,
 		storage.Providers,
 		chi.Providers,
-		authservice.Providers,
-		usersservice.Providers,
-		accountsservice.Providers,
-		plansservice.Providers,
-		apiclientsservice.Providers,
-		webhooksservice.Providers,
-		auditservice.Providers,
-		adminservice.Providers,
-		frontendservice.Providers,
-		itemsservice.Providers,
+		auth.Providers,
+		users.Providers,
+		accounts.Providers,
+		accountsubscriptionplans.Providers,
+		apiclients.Providers,
+		webhooks.Providers,
+		audit.Providers,
+		admin.Providers,
+		frontend.Providers,
+		items.Providers,
 	)
 	return nil, nil
 }

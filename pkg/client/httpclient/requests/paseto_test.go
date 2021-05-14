@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

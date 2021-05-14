@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"reflect"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // errorFromResponse returns library errors according to a response's status code.

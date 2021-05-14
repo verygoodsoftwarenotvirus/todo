@@ -9,14 +9,14 @@ import (
 	"os"
 	"time"
 
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 
 	"github.com/emicklei/hazana"
 )
 
 // ServiceAttacker implements hazana's Attacker interface.
 type ServiceAttacker struct {
-	todoClient *client.Client
+	todoClient *httpclient2.Client
 }
 
 // Setup implements hazana's Attacker interface.

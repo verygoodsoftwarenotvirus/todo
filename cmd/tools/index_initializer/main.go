@@ -11,16 +11,17 @@ import (
 	"log"
 	"time"
 
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
+	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	bleve2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	flag "github.com/spf13/pflag"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
 )
 
 var (
@@ -78,7 +79,7 @@ func main() {
 		return
 	}
 
-	im, err := bleve.NewBleveIndexManager(search.IndexPath(indexOutputPath), search.IndexName(typeName), logger)
+	im, err := bleve2.NewBleveIndexManager(search.IndexPath(indexOutputPath), search.IndexName(typeName), logger)
 	if err != nil {
 		log.Fatal(err)
 	}

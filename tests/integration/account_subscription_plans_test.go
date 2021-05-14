@@ -3,14 +3,15 @@ package integration
 import (
 	"testing"
 
+	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/converters"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/converters"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func checkPlanEquality(t *testing.T, expected, actual *types.AccountSubscriptionPlan) {

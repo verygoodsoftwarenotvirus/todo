@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
+
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 var (
@@ -30,7 +31,7 @@ type (
 )
 
 // RandomAction takes a client and returns a closure which is an action.
-func RandomAction(c *client.Client, builder *requests.Builder) *Action {
+func RandomAction(c *httpclient2.Client, builder *requests.Builder) *Action {
 	allActions := map[string]*Action{
 		"GetHealthCheck": {
 			Name: "GetHealthCheck",

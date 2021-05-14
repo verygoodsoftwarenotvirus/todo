@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/net/html"
 	"strings"
+
+	"golang.org/x/net/html"
 
 	"github.com/PuerkitoBio/goquery"
 )

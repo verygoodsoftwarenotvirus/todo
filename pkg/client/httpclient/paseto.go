@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 func (c *Client) fetchAuthTokenForAPIClient(ctx context.Context, httpClient *http.Client, clientID string, secretKey []byte) (string, error) {

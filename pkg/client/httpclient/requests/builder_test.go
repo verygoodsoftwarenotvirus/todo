@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	panicking "gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

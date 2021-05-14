@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search/bleve"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+	bleve2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 func main() {
 	ctx := context.Background()
 
-	im, err := bleve.NewBleveIndexManager("whatever", types.ItemsSearchIndexName, zerolog.NewLogger())
+	im, err := bleve2.NewBleveIndexManager("whatever", types.ItemsSearchIndexName, zerolog.NewLogger())
 	if err != nil {
 		panic(err)
 	}

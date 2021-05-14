@@ -8,11 +8,12 @@ import (
 	"net/url"
 	"time"
 
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/permissions"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
@@ -37,7 +38,7 @@ func (s *TestSuite) TestLogin() {
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		assert.Equal(t, authservice.DefaultCookieName, cookie.Name)
+		assert.Equal(t, auth.DefaultCookieName, cookie.Name)
 		assert.NotEmpty(t, cookie.Value)
 		assert.NotZero(t, cookie.MaxAge)
 		assert.True(t, cookie.HttpOnly)

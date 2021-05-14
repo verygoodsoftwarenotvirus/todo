@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 )
 
 type pageData struct {
@@ -25,6 +27,8 @@ var baseTemplateSrc string
 func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
+
+	tracing.AttachRequestToSpan(span, req)
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {

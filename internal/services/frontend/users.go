@@ -3,6 +3,8 @@ package frontend
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	// import embed for the side effect.
@@ -18,6 +20,7 @@ func (s *Service) fetchUsers(ctx context.Context, req *http.Request) (users *typ
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		users = fakes.BuildFakeUserList()
@@ -42,6 +45,7 @@ func (s *Service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {

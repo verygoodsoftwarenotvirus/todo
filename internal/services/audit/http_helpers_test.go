@@ -51,7 +51,7 @@ func buildTestHelper(t *testing.T) *auditServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	helper.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
 	helper.service.auditLogEntryIDFetcher = func(req *http.Request) uint64 {

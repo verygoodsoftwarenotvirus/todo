@@ -34,6 +34,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check session context data for parsed input struct.
 	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.ItemCreationInput)
@@ -81,6 +82,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
@@ -119,6 +121,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
@@ -158,6 +161,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		WithValue(keys.FilterPageKey, filter.Page).
 		WithValue(keys.FilterSortByKey, string(filter.SortBy))
 
+	tracing.AttachRequestToSpan(span, req)
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
@@ -198,6 +202,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 		WithValue(keys.FilterSortByKey, string(filter.SortBy)).
 		WithValue(keys.SearchQueryKey, query)
 
+	tracing.AttachRequestToSpan(span, req)
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 
 	// determine user ID.
@@ -239,6 +244,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// check for parsed input attached to session context data.
 	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.ItemUpdateInput)
@@ -302,6 +308,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
@@ -347,6 +354,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)

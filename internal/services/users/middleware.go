@@ -2,13 +2,11 @@ package users
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"net/url"
-	"strings"
 
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
@@ -22,40 +20,7 @@ const (
 
 	// totpSecretRefreshMiddlewareCtxKey is the context key for TOTP token refreshes.
 	totpSecretRefreshMiddlewareCtxKey types.ContextKey = "totp_refresh"
-
-	urlEncodedFormHeaderKey = "application/x-www-form-urlencoded"
 )
-
-const (
-	// usernameFormKey is the string we look for in request forms for username information.
-	usernameFormKey = "username"
-	// passwordFormKey is the string we look for in request forms for passwords information.
-	passwordFormKey = "password"
-)
-
-// parseFormEncodedRegistrationRequest checks a request for a registration form, and returns the parsed login data if relevant.
-func parseFormEncodedRegistrationRequest(req *http.Request) *types.UserRegistrationInput {
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil
-	}
-
-	form, err := url.ParseQuery(string(bodyBytes))
-	if err != nil {
-		return nil
-	}
-
-	input := &types.UserRegistrationInput{
-		Username: form.Get(usernameFormKey),
-		Password: form.Get(passwordFormKey),
-	}
-
-	if input.Username != "" && input.Password != "" {
-		return input
-	}
-
-	return nil
-}
 
 // UserRegistrationInputMiddleware fetches user input from requests.
 func (s *service) UserRegistrationInputMiddleware(next http.Handler) http.Handler {
@@ -65,14 +30,10 @@ func (s *service) UserRegistrationInputMiddleware(next http.Handler) http.Handle
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// decode the request.
-		if strings.HasPrefix(req.Header.Get("Content-Type"), urlEncodedFormHeaderKey) {
-			if x = parseFormEncodedRegistrationRequest(req); x == nil {
-				s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
-				return
-			}
-		} else if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
+		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
 			observability.AcknowledgeError(err, logger, span, "decoding request body")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 			return
@@ -98,6 +59,7 @@ func (s *service) PasswordUpdateInputMiddleware(next http.Handler) http.Handler 
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
@@ -126,6 +88,7 @@ func (s *service) TOTPSecretVerificationInputMiddleware(next http.Handler) http.
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
@@ -154,6 +117,7 @@ func (s *service) TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handl
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// decode the request.
 		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {

@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 )
 
@@ -17,6 +19,7 @@ func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
@@ -62,6 +65,7 @@ func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		// get session context data
 		sessionCtxData, err := s.sessionContextDataFetcher(req)

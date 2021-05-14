@@ -3,6 +3,8 @@ package frontend
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	// import embed for the side effect.
@@ -24,6 +26,7 @@ func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		apiClient = fakes.BuildFakeAPIClient()
@@ -47,6 +50,7 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
@@ -94,6 +98,7 @@ func (s *Service) fetchAPIClients(ctx context.Context, sessionCtxData *types.Ses
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		apiClients = fakes.BuildFakeAPIClientList()
@@ -117,6 +122,7 @@ func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {

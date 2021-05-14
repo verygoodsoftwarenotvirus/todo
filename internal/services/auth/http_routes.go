@@ -135,6 +135,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	loginData, ok := ctx.Value(types.UserLoginInputContextKey).(*types.UserLoginInput)
 	if !ok || loginData == nil {
@@ -180,6 +181,7 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	input, ok := ctx.Value(changeActiveAccountMiddlewareCtxKey).(*types.ChangeActiveAccountInput)
 	if !ok {
@@ -233,6 +235,7 @@ func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionC
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	ctx, err := s.sessionManager.Load(ctx, "")
 	if err != nil {
@@ -264,6 +267,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
@@ -288,6 +292,8 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
+
 	var statusResponse *types.UserStatusResponse
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
@@ -319,6 +325,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	pasetoRequest, ok := ctx.Value(pasetoCreationInputMiddlewareCtxKey).(*types.PASETOCreationInput)
 	if !ok || pasetoRequest == nil {
@@ -465,6 +472,8 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
+
 	logger.Info("cycling cookie secret!")
 
 	// determine user ID.

@@ -53,7 +53,7 @@ func newTestHelper(t *testing.T) *usersServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	h.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	h.service.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+	h.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
 

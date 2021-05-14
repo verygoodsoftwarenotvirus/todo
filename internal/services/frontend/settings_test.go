@@ -25,7 +25,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -54,7 +54,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -81,7 +81,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
@@ -99,7 +99,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -132,7 +132,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -162,7 +162,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -190,7 +190,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
@@ -209,7 +209,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -242,7 +242,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -260,7 +260,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 
@@ -277,7 +277,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
@@ -296,7 +296,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 		exampleSessionContextData.Requester.ServiceAdminPermission = 0
-		s.sessionContextDataFetcher = func(_ *http.Request) (*types.SessionContextData, error) {
+		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
 

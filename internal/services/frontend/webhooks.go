@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -22,6 +24,7 @@ func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.Sessio
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		webhook = fakes.BuildFakeWebhook()
@@ -45,6 +48,7 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
@@ -92,6 +96,7 @@ func (s *Service) fetchWebhooks(ctx context.Context, sessionCtxData *types.Sessi
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		webhooks = fakes.BuildFakeWebhookList()
@@ -115,6 +120,7 @@ func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {

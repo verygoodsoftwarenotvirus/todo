@@ -3,6 +3,8 @@ package frontend
 import (
 	"context"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
 	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	// import embed for the side effect.
@@ -24,6 +26,7 @@ func (s *Service) fetchItem(ctx context.Context, sessionCtxData *types.SessionCo
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		item = fakes.BuildFakeItem()
@@ -47,6 +50,7 @@ func (s *Service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
@@ -88,6 +92,7 @@ func (s *Service) parseFormEncodedItemCreationInput(ctx context.Context, req *ht
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
@@ -115,6 +120,7 @@ func (s *Service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	logger.Debug("item Creation route called")
 
@@ -157,7 +163,7 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
-		logger.WithValue("referer", req.Header.Get("Referer")).Debug("referred")
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
@@ -205,6 +211,7 @@ func (s *Service) fetchItems(ctx context.Context, sessionCtxData *types.SessionC
 	defer span.End()
 
 	logger := s.logger
+	tracing.AttachRequestToSpan(span, req)
 
 	if s.useFakeData {
 		items = fakes.BuildFakeItemList()
@@ -228,6 +235,7 @@ func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 		defer span.End()
 
 		logger := s.logger.WithRequest(req)
+		tracing.AttachRequestToSpan(span, req)
 
 		sessionCtxData, err := s.sessionContextDataFetcher(req)
 		if err != nil {
@@ -281,6 +289,7 @@ func (s *Service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	form, err := s.extractFormFromRequest(ctx, req)
 	if err != nil {
@@ -308,6 +317,7 @@ func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -354,6 +364,7 @@ func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 	defer span.End()
 
 	logger := s.logger.WithRequest(req)
+	tracing.AttachRequestToSpan(span, req)
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {

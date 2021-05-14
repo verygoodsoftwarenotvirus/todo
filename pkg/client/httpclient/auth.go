@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // UserStatus fetches a user's status.

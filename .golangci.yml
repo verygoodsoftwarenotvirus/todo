@@ -334,30 +334,30 @@ issues:
         - lll
         - mnd
 
-    - path: internal/pkg/types/
+    - path: pkg/types/
       linters:
         - gocyclo # the update funcs can have very high cyclomatic complexities
 
-    - path: internal/pkg/types/fakes
+    - path: pkg/types/fakes
       linters:
         - gomnd
 
-    - path: internal/pkg/types/mock
+    - path: pkg/types/mock
       linters:
         - gomnd
 
-    - path: internal/pkg/audit/
+    - path: internal/audit/
       linters:
         - gosec
 
-    - path: internal/app/services/
+    - path: internal/services/
       linters:
         - wsl
       text: "return statements should not be cuddled if block has more than two lines"
 
     ## BEGIN SPECIAL SNOWFLAKES
 
-    - path: internal/app/services/frontend/time_test.go
+    - path: internal/services/frontend/time_test.go
       linters:
         - paralleltest
 
@@ -372,19 +372,19 @@ issues:
       linters:
         - gomnd
 
-    - path: internal/pkg/database/querybuilding/mariadb/migrations.go
+    - path: internal/database/querybuilding/mariadb/migrations.go
       linters:
         - gomnd
 
-    - path: internal/pkg/database/querybuilding/postgres/migrations.go
+    - path: internal/database/querybuilding/postgres/migrations.go
       linters:
         - gomnd
 
-    - path: internal/pkg/database/querybuilding/sqlite/migrations.go
+    - path: internal/database/querybuilding/sqlite/migrations.go
       linters:
         - gomnd
 
-    - path: internal/pkg/permissions/permissions.go
+    - path: internal/permissions/permissions.go
       linters:
         - deadcode
         - varcheck
@@ -393,7 +393,7 @@ issues:
       linters:
         - gocyclo
 
-    - path: internal/pkg/observability/logging/zap
+    - path: internal/observability/logging/zap
       linters:
         - gocyclo
 
@@ -410,7 +410,7 @@ issues:
         - gosec
         - lll
 
-    - path: internal/pkg/config/config.go
+    - path: internal/config/config.go
       linters:
         - lll
 
@@ -422,7 +422,7 @@ issues:
       linters:
         - goerr113
 
-    - path: internal/pkg/database/querybuilding/postgres/migrations.go # TODO: FIXME
+    - path: internal/database/querybuilding/postgres/migrations.go # TODO: FIXME
       linters:
         - gocognit
         - gocyclo

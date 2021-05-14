@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 )
 

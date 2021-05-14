@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
 )
 
 func TestClient_AuthenticatedClient(T *testing.T) {

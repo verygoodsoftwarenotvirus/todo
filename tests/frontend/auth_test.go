@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"

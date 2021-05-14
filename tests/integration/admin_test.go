@@ -3,13 +3,14 @@ package integration
 import (
 	"log"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func (s *TestSuite) TestAdmin_Returns404WhenModifyingUserReputation() {

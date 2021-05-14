@@ -6,12 +6,12 @@ import (
 	"log"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/routing/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/images"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
+	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 )
 
 var uploadCount = 0

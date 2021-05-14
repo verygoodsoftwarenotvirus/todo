@@ -7,25 +7,26 @@ import (
 	"log"
 	"time"
 
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/server/http"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/audit"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/auth"
-	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/frontend"
-	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/app/services/webhooks"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/passwords"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/uploads/storage"
+	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	viper "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
+	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 const (
@@ -35,7 +36,7 @@ const (
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
-	defaultCookieName        = authservice.DefaultCookieName
+	defaultCookieName        = auth.DefaultCookieName
 
 	// run modes.
 	developmentEnv = "development"
@@ -73,12 +74,12 @@ var (
 		StartupDeadline: time.Minute,
 	}
 
-	localCookies = authservice.CookieConfig{
+	localCookies = auth.CookieConfig{
 		Name:       defaultCookieName,
 		Domain:     defaultCookieDomain,
 		HashKey:    debugCookieSecret,
 		SigningKey: debugCookieSecret,
-		Lifetime:   authservice.DefaultCookieLifetime,
+		Lifetime:   auth.DefaultCookieLifetime,
 		SecureOnly: false,
 	}
 
@@ -102,8 +103,8 @@ var files = map[string]configFunc{
 	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 
-func buildLocalFrontendServiceConfig() frontendservice.Config {
-	return frontendservice.Config{
+func buildLocalFrontendServiceConfig() frontend.Config {
+	return frontend.Config{
 		UseFakeData: false,
 	}
 }
@@ -141,8 +142,8 @@ func localDevelopmentConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authservice.Config{
-			PASETO: authservice.PASETOConfig{
+		Auth: auth.Config{
+			PASETO: auth.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -193,7 +194,7 @@ func localDevelopmentConfig(filePath string) error {
 			Provider:       "bleve",
 			ItemsIndexPath: "/search_indices/items.bleve",
 		},
-		Webhooks: webhooksservice.Config{
+		Webhooks: webhooks.Config{
 			Debug:   true,
 			Enabled: false,
 		},
@@ -226,8 +227,8 @@ func frontendTestsConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authservice.Config{
-			PASETO: authservice.PASETOConfig{
+		Auth: auth.Config{
+			PASETO: auth.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -266,7 +267,7 @@ func frontendTestsConfig(filePath string) error {
 			Provider:       "bleve",
 			ItemsIndexPath: defaultItemsSearchIndexPath,
 		},
-		Webhooks: webhooksservice.Config{
+		Webhooks: webhooks.Config{
 			Debug:   true,
 			Enabled: false,
 		},
@@ -299,8 +300,8 @@ func coverageConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authservice.Config{
-			PASETO: authservice.PASETOConfig{
+		Auth: auth.Config{
+			PASETO: auth.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -345,7 +346,7 @@ func coverageConfig(filePath string) error {
 			Provider:       "bleve",
 			ItemsIndexPath: defaultItemsSearchIndexPath,
 		},
-		Webhooks: webhooksservice.Config{
+		Webhooks: webhooks.Config{
 			Debug:   false,
 			Enabled: true,
 		},
@@ -388,17 +389,17 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				StartupDeadline: startupDeadline,
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
-			Auth: authservice.Config{
-				PASETO: authservice.PASETOConfig{
+			Auth: auth.Config{
+				PASETO: auth.PASETOConfig{
 					Issuer:       "todo_service",
 					Lifetime:     defaultPASETOLifetime,
 					LocalModeKey: examplePASETOKey,
 				},
-				Cookies: authservice.CookieConfig{
+				Cookies: auth.CookieConfig{
 					Name:       defaultCookieName,
 					Domain:     defaultCookieDomain,
 					SigningKey: debugCookieSecret,
-					Lifetime:   authservice.DefaultCookieLifetime,
+					Lifetime:   auth.DefaultCookieLifetime,
 					SecureOnly: false,
 				},
 				Debug:                 false,
@@ -442,7 +443,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider:       "bleve",
 				ItemsIndexPath: defaultItemsSearchIndexPath,
 			},
-			Webhooks: webhooksservice.Config{
+			Webhooks: webhooks.Config{
 				Debug:   false,
 				Enabled: false,
 			},

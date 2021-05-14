@@ -6,14 +6,15 @@ import (
 	"math/rand"
 	"net/http"
 
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	client "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
+
+	models "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 // fetchRandomItem retrieves a random item from the list of available items.
-func fetchRandomItem(ctx context.Context, c *client.Client) *models.Item {
+func fetchRandomItem(ctx context.Context, c *httpclient2.Client) *models.Item {
 	itemsRes, err := c.GetItems(ctx, nil)
 	if err != nil || itemsRes == nil || len(itemsRes.Items) == 0 {
 		return nil
@@ -24,7 +25,7 @@ func fetchRandomItem(ctx context.Context, c *client.Client) *models.Item {
 	return itemsRes.Items[randIndex]
 }
 
-func buildItemActions(c *client.Client, builder *requests.Builder) map[string]*Action {
+func buildItemActions(c *httpclient2.Client, builder *requests.Builder) map[string]*Action {
 	return map[string]*Action{
 		"CreateItem": {
 			Name: "CreateItem",

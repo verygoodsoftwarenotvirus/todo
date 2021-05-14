@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 

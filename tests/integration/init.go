@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 

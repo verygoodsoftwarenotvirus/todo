@@ -9,13 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging/zerolog"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
-	httpclient "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"

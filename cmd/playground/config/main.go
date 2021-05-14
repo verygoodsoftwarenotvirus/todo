@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/config/viper"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
+	viper "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 const exampleConfig = ``

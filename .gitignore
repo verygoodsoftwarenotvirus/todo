@@ -34,7 +34,7 @@ __pycache__
 artifacts
 
 # frontend things
-internal/app/services/frontend/_vendor_/*
+internal/services/frontend/_vendor_/*
 
 # Log files
 *.log

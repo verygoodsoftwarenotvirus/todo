@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

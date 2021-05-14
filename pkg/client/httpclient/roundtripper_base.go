@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hashicorp/go-retryablehttp"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/pkg/observability/tracing"
+	"github.com/hashicorp/go-retryablehttp"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )

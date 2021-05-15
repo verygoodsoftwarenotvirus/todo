@@ -13,7 +13,7 @@ const (
 )
 
 // SetupRoutes sets up the routes.
-func (s *Service) SetupRoutes(router routing.Router) {
+func (s *service) SetupRoutes(router routing.Router) {
 	router = router.WithMiddleware(s.authService.UserAttributionMiddleware)
 
 	router.Get("/", s.homepage)

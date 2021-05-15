@@ -21,7 +21,7 @@ const (
 	accountIDURLParamKey = "account"
 )
 
-func (s *Service) fetchAccount(ctx context.Context, sessionCtxData *types.SessionContextData) (account *types.Account, err error) {
+func (s *service) fetchAccount(ctx context.Context, sessionCtxData *types.SessionContextData) (account *types.Account, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -42,7 +42,7 @@ func (s *Service) fetchAccount(ctx context.Context, sessionCtxData *types.Sessio
 //go:embed templates/partials/generated/editors/account_editor.gotpl
 var accountEditorTemplate string
 
-func (s *Service) buildAccountEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildAccountEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -94,7 +94,7 @@ func (s *Service) buildAccountEditorView(includeBaseTemplate bool) func(http.Res
 
 // plural
 
-func (s *Service) fetchAccounts(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (accounts *types.AccountList, err error) {
+func (s *service) fetchAccounts(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (accounts *types.AccountList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -117,7 +117,7 @@ func (s *Service) fetchAccounts(ctx context.Context, sessionCtxData *types.Sessi
 //go:embed templates/partials/generated/tables/accounts_table.gotpl
 var accountsTableTemplate string
 
-func (s *Service) buildAccountsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildAccountsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()

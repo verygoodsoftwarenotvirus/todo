@@ -19,12 +19,9 @@ import (
 func checkUserCreationEquality(t *testing.T, expected *types.UserRegistrationInput, actual *types.UserCreationResponse) {
 	t.Helper()
 
-	twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(actual.TwoFactorQRCode)
-	assert.NoError(t, err)
-
 	assert.NotZero(t, actual.CreatedUserID)
 	assert.Equal(t, expected.Username, actual.Username)
-	assert.NotEmpty(t, twoFactorSecret)
+	assert.NotEmpty(t, actual.TwoFactorSecret)
 	assert.NotZero(t, actual.CreatedOn)
 }
 

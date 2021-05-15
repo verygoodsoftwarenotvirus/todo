@@ -21,7 +21,7 @@ const (
 	itemIDURLParamKey = "item"
 )
 
-func (s *Service) fetchItem(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (item *types.Item, err error) {
+func (s *service) fetchItem(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (item *types.Item, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (s *Service) fetchItem(ctx context.Context, sessionCtxData *types.SessionCo
 //go:embed templates/partials/generated/creators/item_creator.gotpl
 var itemCreatorTemplate string
 
-func (s *Service) buildItemCreatorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildItemCreatorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -87,7 +87,7 @@ const (
 )
 
 // parseFormEncodedItemCreationInput checks a request for an ItemCreationInput.
-func (s *Service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemCreationInput) {
+func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemCreationInput) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -115,7 +115,7 @@ func (s *Service) parseFormEncodedItemCreationInput(ctx context.Context, req *ht
 	return creationInput
 }
 
-func (s *Service) handleItemCreationRequest(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -157,7 +157,7 @@ func (s *Service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 //go:embed templates/partials/generated/editors/item_editor.gotpl
 var itemEditorTemplate string
 
-func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -206,7 +206,7 @@ func (s *Service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 	}
 }
 
-func (s *Service) fetchItems(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (items *types.ItemList, err error) {
+func (s *service) fetchItems(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (items *types.ItemList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -229,7 +229,7 @@ func (s *Service) fetchItems(ctx context.Context, sessionCtxData *types.SessionC
 //go:embed templates/partials/generated/tables/items_table.gotpl
 var itemsTableTemplate string
 
-func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -284,7 +284,7 @@ func (s *Service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 }
 
 // parseFormEncodedItemUpdateInput checks a request for an ItemUpdateInput.
-func (s *Service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (updateInput *types.ItemUpdateInput) {
+func (s *service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (updateInput *types.ItemUpdateInput) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -312,7 +312,7 @@ func (s *Service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http
 	return updateInput
 }
 
-func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -359,7 +359,7 @@ func (s *Service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 	s.renderTemplateToResponse(ctx, tmpl, item, res)
 }
 
-func (s *Service) handleItemDeletionRequest(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 

@@ -11,7 +11,7 @@ import (
 //go:embed assets/favicon.svg
 var svgFaviconSrc []byte
 
-func (s *Service) favicon(res http.ResponseWriter, req *http.Request) {
+func (s *service) favicon(res http.ResponseWriter, req *http.Request) {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 

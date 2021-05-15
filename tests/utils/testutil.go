@@ -3,18 +3,14 @@ package testutils
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
 	"math"
 	"net/http"
-	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -23,15 +19,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
-	"github.com/makiuchi-d/gozxing"
-	"github.com/makiuchi-d/gozxing/qrcode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-)
-
-const (
-	base64ImagePrefix = `data:image/jpeg;base64,`
 )
 
 func init() {
@@ -56,41 +46,6 @@ func BuildNoAdminPerms() permissions.ServiceAdminPermission {
 // BuildNoUserPerms builds a helpful ServiceAdminPermissionChecker.
 func BuildNoUserPerms() permissions.ServiceUserPermission {
 	return permissions.NewServiceUserPermissions(0)
-}
-
-// ParseTwoFactorSecretFromBase64EncodedQRCode accepts a base64-encoded QR code representing an otpauth:// URI,
-// parses the QR code and extracts the 2FA secret from the URI. It can also return an error.
-func ParseTwoFactorSecretFromBase64EncodedQRCode(qrCode string) (string, error) {
-	qrCode = strings.TrimPrefix(qrCode, base64ImagePrefix)
-
-	unbased, err := base64.StdEncoding.DecodeString(qrCode)
-	if err != nil {
-		return "", fmt.Errorf("Cannot decode b64: %w", err)
-	}
-
-	im, err := png.Decode(bytes.NewReader(unbased))
-	if err != nil {
-		return "", fmt.Errorf("Bad png: %w", err)
-	}
-
-	bb, err := gozxing.NewBinaryBitmapFromImage(im)
-	if err != nil {
-		return "", fmt.Errorf("Bad binary bitmap: %w", err)
-	}
-
-	res, err := qrcode.NewQRCodeReader().DecodeWithoutHints(bb)
-	if err != nil {
-		return "", fmt.Errorf("decoding: %w", err)
-	}
-
-	totpDetails := res.String()
-
-	u, err := url.Parse(totpDetails)
-	if err != nil {
-		return "", fmt.Errorf("parsing URI: %w", err)
-	}
-
-	return u.Query().Get("secret"), nil
 }
 
 // errArbitrary is an arbitrary error.

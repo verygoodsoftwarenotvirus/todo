@@ -24,7 +24,7 @@ type pageData struct {
 //go:embed templates/base_template.gotpl
 var baseTemplateSrc string
 
-func (s *Service) homepage(res http.ResponseWriter, req *http.Request) {
+func (s *service) homepage(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 

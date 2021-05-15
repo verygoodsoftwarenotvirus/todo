@@ -16,8 +16,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
-	"github.com/makiuchi-d/gozxing"
-	"github.com/makiuchi-d/gozxing/qrcode"
+	"github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/qr"
 	"github.com/pquerna/otp/totp"
 	passwordvalidator "github.com/wagslane/go-password-validator"
 )
@@ -148,6 +148,7 @@ func (s *service) RegisterUser(ctx context.Context, registrationInput *types.Use
 		CreatedUserID:   user.ID,
 		Username:        user.Username,
 		CreatedOn:       user.CreatedOn,
+		TwoFactorSecret: user.TwoFactorSecret,
 		TwoFactorQRCode: s.buildQRCode(ctx, user.Username, user.TwoFactorSecret),
 	}
 
@@ -224,15 +225,23 @@ func (s *service) buildQRCode(ctx context.Context, username, twoFactorSecret str
 		totpIssuer,
 	)
 
-	x, err := qrcode.NewQRCodeWriter().EncodeWithoutHint(otpString, gozxing.BarcodeFormat_QR_CODE, 128, 128)
+	// encode two factor secret as authenticator-friendly QR code
+	qrCode, err := qr.Encode(otpString, qr.L, qr.Auto)
 	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "encoding secret to QR code")
+		observability.AcknowledgeError(err, logger, span, "encoding OTP string")
+		return ""
+	}
+
+	// scale the QR code so that it's not a PNG for ants.
+	qrCode, err = barcode.Scale(qrCode, 256, 256)
+	if err != nil {
+		observability.AcknowledgeError(err, logger, span, "scaling QR code")
 		return ""
 	}
 
 	// encode the QR code to PNG.
 	var b bytes.Buffer
-	if err = png.Encode(&b, x); err != nil {
+	if err = png.Encode(&b, qrCode); err != nil {
 		observability.AcknowledgeError(err, logger, span, "encoding QR code to PNG")
 		return ""
 	}

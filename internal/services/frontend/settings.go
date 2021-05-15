@@ -13,7 +13,7 @@ import (
 //go:embed templates/partials/settings/user_settings.gotpl
 var userSettingsPageSrc string
 
-func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -59,7 +59,7 @@ func (s *Service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 //go:embed templates/partials/settings/account_settings.gotpl
 var accountSettingsPageSrc string
 
-func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -106,7 +106,7 @@ func (s *Service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 //go:embed templates/partials/settings/admin_settings.gotpl
 var adminSettingsPageSrc string
 
-func (s *Service) buildAdminSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildAdminSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()

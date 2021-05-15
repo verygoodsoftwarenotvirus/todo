@@ -19,7 +19,7 @@ const (
 	webhookIDURLParamKey = "webhook"
 )
 
-func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (webhook *types.Webhook, err error) {
+func (s *service) fetchWebhook(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (webhook *types.Webhook, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -42,7 +42,7 @@ func (s *Service) fetchWebhook(ctx context.Context, sessionCtxData *types.Sessio
 //go:embed templates/partials/generated/editors/webhook_editor.gotpl
 var webhookEditorTemplate string
 
-func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildWebhookEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -91,7 +91,7 @@ func (s *Service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 	}
 }
 
-func (s *Service) fetchWebhooks(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (webhooks *types.WebhookList, err error) {
+func (s *service) fetchWebhooks(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (webhooks *types.WebhookList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -114,7 +114,7 @@ func (s *Service) fetchWebhooks(ctx context.Context, sessionCtxData *types.Sessi
 //go:embed templates/partials/generated/tables/webhooks_table.gotpl
 var webhooksTableTemplate string
 
-func (s *Service) buildWebhooksTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildWebhooksTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()

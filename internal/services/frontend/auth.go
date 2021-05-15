@@ -23,7 +23,7 @@ type loginPromptData struct {
 	RedirectTo string
 }
 
-func (s *Service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -64,7 +64,7 @@ const (
 )
 
 // parseLoginInputFromForm checks a request for a login form, and returns the parsed login data if relevant.
-func (s *Service) parseFormEncodedLoginRequest(ctx context.Context, req *http.Request) (loginData *types.UserLoginInput, redirectTo string) {
+func (s *service) parseFormEncodedLoginRequest(ctx context.Context, req *http.Request) (loginData *types.UserLoginInput, redirectTo string) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -88,7 +88,7 @@ func (s *Service) parseFormEncodedLoginRequest(ctx context.Context, req *http.Re
 	return nil, ""
 }
 
-func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleLoginSubmission(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -118,7 +118,7 @@ func (s *Service) handleLoginSubmission(res http.ResponseWriter, req *http.Reque
 	}
 }
 
-func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleLogoutSubmission(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -144,7 +144,7 @@ func (s *Service) handleLogoutSubmission(res http.ResponseWriter, req *http.Requ
 //go:embed templates/partials/auth/register.gotpl
 var registrationPrompt string
 
-func (s *Service) registrationComponent(res http.ResponseWriter, req *http.Request) {
+func (s *service) registrationComponent(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -155,7 +155,7 @@ func (s *Service) registrationComponent(res http.ResponseWriter, req *http.Reque
 	s.renderTemplateToResponse(ctx, tmpl, nil, res)
 }
 
-func (s *Service) registrationView(res http.ResponseWriter, req *http.Request) {
+func (s *service) registrationView(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -180,7 +180,7 @@ type totpVerificationPrompt struct {
 }
 
 // parseFormEncodedRegistrationRequest checks a request for a registration form, and returns the parsed login data if relevant.
-func (s *Service) parseFormEncodedRegistrationRequest(ctx context.Context, req *http.Request) *types.UserRegistrationInput {
+func (s *service) parseFormEncodedRegistrationRequest(ctx context.Context, req *http.Request) *types.UserRegistrationInput {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -203,7 +203,7 @@ func (s *Service) parseFormEncodedRegistrationRequest(ctx context.Context, req *
 	return nil
 }
 
-func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleRegistrationSubmission(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -241,7 +241,7 @@ func (s *Service) handleRegistrationSubmission(res http.ResponseWriter, req *htt
 }
 
 // parseFormEncodedTOTPSecretVerificationRequest checks a request for a registration form, and returns the parsed input.
-func (s *Service) parseFormEncodedTOTPSecretVerificationRequest(ctx context.Context, req *http.Request) *types.TOTPSecretVerificationInput {
+func (s *service) parseFormEncodedTOTPSecretVerificationRequest(ctx context.Context, req *http.Request) *types.TOTPSecretVerificationInput {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -269,7 +269,7 @@ func (s *Service) parseFormEncodedTOTPSecretVerificationRequest(ctx context.Cont
 	return nil
 }
 
-func (s *Service) handleTOTPVerificationSubmission(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleTOTPVerificationSubmission(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 

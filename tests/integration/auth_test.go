@@ -12,13 +12,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func (s *TestSuite) TestLogin() {
@@ -136,11 +135,8 @@ func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginWithoutValidating2FASecret()
 		ucr, err := testClient.CreateUser(ctx, exampleUserCreationInput)
 		requireNotNilAndNoProblems(t, ucr, err)
 
-		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
-		require.NoError(t, err)
-
 		// create login request.
-		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 		requireNotNilAndNoProblems(t, token, err)
 		r := &types.UserLoginInput{
 			Username:  exampleUserCreationInput.Username,
@@ -344,10 +340,7 @@ func (s *TestSuite) TestTOTPTokenValidation() {
 		assert.NotNil(t, user)
 		require.NoError(t, err)
 
-		twoFactorSecret, err := testutil.ParseTwoFactorSecretFromBase64EncodedQRCode(user.TwoFactorQRCode)
-		require.NoError(t, err)
-
-		token, err := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+		token, err := totp.GenerateCode(user.TwoFactorSecret, time.Now().UTC())
 		requireNotNilAndNoProblems(t, token, err)
 
 		assert.NoError(t, testClient.VerifyTOTPSecret(ctx, user.CreatedUserID, token))

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func buildTestService(t *testing.T) *Service {
+func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	cfg := &Config{}
@@ -33,5 +33,5 @@ func buildTestService(t *testing.T) *Service {
 
 	mock.AssertExpectationsForObjects(t, authService, usersService, dataManager, rpm)
 
-	return s
+	return s.(*service)
 }

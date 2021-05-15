@@ -36,8 +36,12 @@ type (
 		VerifyUserTwoFactorSecret(ctx context.Context, input *types.TOTPSecretVerificationInput) error
 	}
 
-	// Service handles to-do list items.
-	Service struct {
+	// Service serves HTML.
+	Service interface {
+		SetupRoutes(router routing.Router)
+	}
+
+	service struct {
 		logger                    logging.Logger
 		tracer                    tracing.Tracer
 		panicker                  panicking.Panicker
@@ -60,8 +64,8 @@ func ProvideService(
 	usersService UsersService,
 	dataStore database.DataManager,
 	routeParamManager routing.RouteParamManager,
-) *Service {
-	svc := &Service{
+) Service {
+	svc := &service{
 		useFakeData:               cfg.UseFakeData,
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		tracer:                    tracing.NewTracer(serviceName),

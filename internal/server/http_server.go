@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
@@ -33,7 +32,7 @@ type (
 	HTTPServer struct {
 		authService       types.AuthService
 		accountsService   types.AccountDataService
-		frontendService   *frontend.Service
+		frontendService   frontend.Service
 		auditService      types.AuditLogEntryDataService
 		usersService      types.UserDataService
 		plansService      types.AccountSubscriptionPlanDataService
@@ -41,7 +40,6 @@ type (
 		apiClientsService types.APIClientDataService
 		webhooksService   types.WebhookDataService
 		itemsService      types.ItemDataService
-		db                database.DataManager
 		encoder           encoding.ServerEncoderDecoder
 		logger            logging.Logger
 		router            routing.Router
@@ -55,7 +53,6 @@ type (
 func ProvideHTTPServer(
 	ctx context.Context,
 	serverSettings Config,
-	metricsSettings metrics.Config,
 	metricsHandler metrics.InstrumentationHandler,
 	authService types.AuthService,
 	auditService types.AuditLogEntryDataService,
@@ -66,15 +63,13 @@ func ProvideHTTPServer(
 	itemsService types.ItemDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,
-	frontendService *frontend.Service,
-	db database.DataManager,
+	frontendService frontend.Service,
 	logger logging.Logger,
 	encoder encoding.ServerEncoderDecoder,
 	router routing.Router,
 ) (*HTTPServer, error) {
 	srv := &HTTPServer{
 		// infra things,
-		db:         db,
 		tracer:     tracing.NewTracer(loggerName),
 		encoder:    encoder,
 		logger:     logging.EnsureLogger(logger).WithName(loggerName),
@@ -94,7 +89,7 @@ func ProvideHTTPServer(
 		plansService:      plansService,
 	}
 
-	srv.setupRouter(ctx, router, metricsSettings, metricsHandler)
+	srv.setupRouter(ctx, router, metricsHandler)
 
 	logger.Debug("HTTP server successfully constructed")
 

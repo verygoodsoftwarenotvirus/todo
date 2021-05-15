@@ -6,7 +6,7 @@
             <form hx-post="/auth/verify_two_factor_secret" hx-ext="json-enc,ajax-header,event-header">
                 <img id="twoFactorSecretQRCode" src={{ .TwoFactorQRCode }}>
                 <div class="form-floating"><input id="totpTokenInput" required type="text" pattern="\d{6}" minlength=6 maxlength=6 name="totpToken" placeholder="123456" class="form-control"><label for="totpTokenInput">2FA Token</label></div>
-                <input id="totpTokenInput" type="hidden" name="userID" value="{{ .UserID }}" />
+                <input id="userID" type="hidden" name="userID" value="{{ .UserID }}" />
                 <hr />
                 <button id="totpTokenSubmitButton" class="w-100 btn btn-lg btn-primary" type="submit">Verify</button>
             </form>

@@ -37,7 +37,7 @@ func provideLocalizer() *i18n.Localizer {
 	return i18n.NewLocalizer(bundle, "en")
 }
 
-func (s *Service) getSimpleLocalizedString(messageID string) string {
+func (s *service) getSimpleLocalizedString(messageID string) string {
 	return s.localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID:      messageID,
 		DefaultMessage: nil,

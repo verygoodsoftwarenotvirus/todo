@@ -15,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
-func (s *Service) fetchUsers(ctx context.Context, req *http.Request) (users *types.UserList, err error) {
+func (s *service) fetchUsers(ctx context.Context, req *http.Request) (users *types.UserList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -39,7 +39,7 @@ func (s *Service) fetchUsers(ctx context.Context, req *http.Request) (users *typ
 //go:embed templates/partials/generated/tables/users_table.gotpl
 var usersTableTemplate string
 
-func (s *Service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()

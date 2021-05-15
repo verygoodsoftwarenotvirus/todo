@@ -40,9 +40,8 @@ import (
 func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server.HTTPServer, error) {
 	serverConfig := cfg.Server
 	observabilityConfig := &cfg.Observability
-	metricsConfig := observabilityConfig.Metrics
-	config3 := &observabilityConfig.Metrics
-	instrumentationHandler, err := metrics.ProvideMetricsInstrumentationHandlerForServer(config3, logger)
+	metricsConfig := &observabilityConfig.Metrics
+	instrumentationHandler, err := metrics.ProvideMetricsInstrumentationHandlerForServer(metricsConfig, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +67,7 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
 	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, serverEncoderDecoder, routeParamManager)
 	accountDataManager := database.ProvideAccountDataManager(dbm)
-	unitCounterProvider, err := metrics.ProvideUnitCounterProvider(config3, logger)
+	unitCounterProvider, err := metrics.ProvideUnitCounterProvider(metricsConfig, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +102,7 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	usersService := frontend.ProvideUsersService(userDataService)
 	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dbm, routeParamManager)
 	router := chi.NewRouter(logger)
-	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, dbm, logger, serverEncoderDecoder, router)
+	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

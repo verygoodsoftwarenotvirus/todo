@@ -30,7 +30,7 @@ func buildNumericIDURLChunk(key string) string {
 	return fmt.Sprintf(root+numericIDPattern, key)
 }
 
-func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {
+func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, metricsHandler metrics.Handler) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 

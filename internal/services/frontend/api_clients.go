@@ -21,7 +21,7 @@ const (
 	apiClientIDURLParamKey = "api_client"
 )
 
-func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (apiClient *types.APIClient, err error) {
+func (s *service) fetchAPIClient(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (apiClient *types.APIClient, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (s *Service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 //go:embed templates/partials/generated/editors/api_client_editor.gotpl
 var apiClientEditorTemplate string
 
-func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()
@@ -93,7 +93,7 @@ func (s *Service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 	}
 }
 
-func (s *Service) fetchAPIClients(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (apiClients *types.APIClientList, err error) {
+func (s *service) fetchAPIClients(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (apiClients *types.APIClientList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -116,7 +116,7 @@ func (s *Service) fetchAPIClients(ctx context.Context, sessionCtxData *types.Ses
 //go:embed templates/partials/generated/tables/api_clients_table.gotpl
 var apiClientsTableTemplate string
 
-func (s *Service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
+func (s *service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
 		defer span.End()

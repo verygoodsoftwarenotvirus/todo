@@ -80,6 +80,7 @@ type (
 	UserCreationResponse struct {
 		Username        string         `json:"username"`
 		AccountStatus   userReputation `json:"accountStatus"`
+		TwoFactorSecret string         `json:"twoFactorSecret"`
 		TwoFactorQRCode string         `json:"qrCode"`
 		CreatedUserID   uint64         `json:"ID"`
 		CreatedOn       uint64         `json:"createdOn"`

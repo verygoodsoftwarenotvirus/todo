@@ -55,12 +55,7 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		return nil, err
 	}
 
-	twoFactorSecret, err := ParseTwoFactorSecretFromBase64EncodedQRCode(ucr.TwoFactorQRCode)
-	if err != nil {
-		return nil, fmt.Errorf("parsing TOTP QR code: %w", err)
-	}
-
-	token, tokenErr := totp.GenerateCode(twoFactorSecret, time.Now().UTC())
+	token, tokenErr := totp.GenerateCode(ucr.TwoFactorSecret, time.Now().UTC())
 	if tokenErr != nil {
 		return nil, fmt.Errorf("generating totp code: %w", tokenErr)
 	}
@@ -74,7 +69,7 @@ func CreateServiceUser(ctx context.Context, address, username string) (*types.Us
 		Username: ucr.Username,
 		// this is a dirty trick to reuse most of this model,
 		HashedPassword:  in.Password,
-		TwoFactorSecret: twoFactorSecret,
+		TwoFactorSecret: ucr.TwoFactorSecret,
 		CreatedOn:       ucr.CreatedOn,
 	}
 

@@ -15,6 +15,9 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 
@@ -148,9 +151,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -199,20 +207,50 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.LoginHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 	})
 
-	T.Run("with now results in the database", func(t *testing.T) {
+	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, &types.UserLoginInput{})
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.LoginHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with no results in the database", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -234,9 +272,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -261,9 +304,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper.exampleUser.Reputation = types.BannedUserReputation
 		helper.exampleUser.ReputationExplanation = "bad behavior"
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -292,9 +340,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -334,9 +387,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -369,9 +427,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -412,9 +475,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -455,9 +523,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -498,9 +571,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -545,9 +623,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -593,9 +676,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(context.Background(), types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
@@ -644,9 +732,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		cb := &mockCookieEncoderDecoder{}
 		cb.On(
@@ -696,9 +789,14 @@ func TestAuthService_LoginHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.ctx = context.WithValue(helper.ctx, types.UserLoginInputContextKey, helper.exampleLoginInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleLoginInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		cb := &mockCookieEncoderDecoder{}
 		cb.On(
@@ -751,9 +849,15 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -772,24 +876,10 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, accountMembershipManager)
 	})
 
-	T.Run("with missing input", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
-	})
-
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-
-		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
 
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
@@ -799,13 +889,56 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 	})
 
+	T.Run("with missing input", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		exampleInput := &types.ChangeActiveAccountInput{}
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
+	})
+
 	T.Run("with error checking user account membership", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -828,9 +961,15 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -853,9 +992,15 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -882,9 +1027,15 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -912,9 +1063,15 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -945,9 +1102,15 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -975,9 +1138,15 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeChangeActiveAccountInput()
-		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, changeActiveAccountMiddlewareCtxKey, exampleInput))
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
@@ -1115,9 +1284,7 @@ func TestAuthService_StatusHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
+		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		helper.service.StatusHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
@@ -1161,9 +1328,7 @@ func TestAuthService_CycleSecretHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
+		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 		c := helper.req.Cookies()[0]
@@ -1223,8 +1388,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			AccountPermissionsMap: helper.examplePerms,
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1315,8 +1485,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			AccountPermissionsMap: helper.examplePerms,
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1389,10 +1564,39 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.PASETOHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+	})
+
+	T.Run("with invalid input", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		helper.service.config.PASETO.LocalModeKey = fakes.BuildFakeAPIClient().ClientSecret
+		helper.service.config.PASETO.Lifetime = time.Minute
+
+		exampleInput := &types.PASETOCreationInput{}
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.PASETOHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 
 	T.Run("with invalid request time", func(t *testing.T) {
@@ -1407,8 +1611,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			RequestTime: 1,
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.PASETOHandler(helper.res, helper.req)
 
@@ -1426,17 +1635,17 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			ClientID:    helper.exampleAPIClient.ClientID,
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
-
-		var bodyBytes bytes.Buffer
-		marshalErr := json.NewEncoder(&bodyBytes).Encode(exampleInput)
-		require.NoError(t, marshalErr)
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		// set HMAC signature
 		mac := hmac.New(sha256.New, helper.exampleAPIClient.ClientSecret)
-		_, macWriteErr := mac.Write(bodyBytes.Bytes())
+		_, macWriteErr := mac.Write(jsonBytes)
 		require.NoError(t, macWriteErr)
 
 		sigHeader := base32.HexEncoding.EncodeToString(mac.Sum(nil))
@@ -1459,8 +1668,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1485,6 +1699,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager)
 	})
 
@@ -1500,8 +1715,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1534,6 +1754,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager)
 	})
 
@@ -1549,8 +1770,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1591,6 +1817,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager, membershipDB)
 	})
 
@@ -1606,8 +1833,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1628,6 +1860,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager)
 	})
 
@@ -1645,8 +1878,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1703,8 +1941,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 			RequestTime: time.Now().UTC().UnixNano(),
 		}
 
-		helper.ctx = context.WithValue(context.Background(), pasetoCreationInputMiddlewareCtxKey, exampleInput)
-		helper.req = helper.req.WithContext(helper.ctx)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
@@ -1745,6 +1988,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.PASETOHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager, membershipDB)
 	})
 }

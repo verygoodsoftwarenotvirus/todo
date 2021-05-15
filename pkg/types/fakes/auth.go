@@ -73,9 +73,9 @@ func BuildFakeUserPermissionModificationInput() *types.ModifyUserPermissionsInpu
 	}
 }
 
-// BuildFakeTransferAccountOwnershipInput builds a faked TransferAccountOwnershipInput.
-func BuildFakeTransferAccountOwnershipInput() *types.TransferAccountOwnershipInput {
-	return &types.TransferAccountOwnershipInput{
+// BuildFakeTransferAccountOwnershipInput builds a faked AccountOwnershipTransferInput.
+func BuildFakeTransferAccountOwnershipInput() *types.AccountOwnershipTransferInput {
+	return &types.AccountOwnershipTransferInput{
 		Reason:       fake.Sentence(10),
 		CurrentOwner: fake.Uint64(),
 		NewOwner:     fake.Uint64(),

@@ -18,11 +18,11 @@ func TestBuilder_BuildGetAuditLogEntryRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAuditLogEntry.ID)
 
-		actual, err := h.builder.BuildGetAuditLogEntryRequest(h.ctx, exampleAuditLogEntry.ID)
+		actual, err := helper.builder.BuildGetAuditLogEntryRequest(helper.ctx, exampleAuditLogEntry.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -37,11 +37,11 @@ func TestBuilder_BuildGetAuditLogEntriesRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		filter := types.DefaultQueryFilter()
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := h.builder.BuildGetAuditLogEntriesRequest(h.ctx, filter)
+		actual, err := helper.builder.BuildGetAuditLogEntriesRequest(helper.ctx, filter)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)

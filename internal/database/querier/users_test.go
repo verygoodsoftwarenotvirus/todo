@@ -2188,7 +2188,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.NoError(t, c.VerifyUserTwoFactorSecret(ctx, exampleUser.ID))
+		assert.NoError(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -2199,7 +2199,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.VerifyUserTwoFactorSecret(ctx, 0))
+		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, 0))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -2212,7 +2212,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		db.ExpectBegin().WillReturnError(errors.New("blah"))
 
-		assert.Error(t, c.VerifyUserTwoFactorSecret(ctx, exampleUser.ID))
+		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db)
 	})
@@ -2244,7 +2244,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.Error(t, c.VerifyUserTwoFactorSecret(ctx, exampleUser.ID))
+		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -2278,7 +2278,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.Error(t, c.VerifyUserTwoFactorSecret(ctx, exampleUser.ID))
+		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -2312,7 +2312,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.Error(t, c.VerifyUserTwoFactorSecret(ctx, exampleUser.ID))
+		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

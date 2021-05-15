@@ -1,4 +1,4 @@
-package httpserver
+package server
 
 import (
 	"github.com/google/wire"
@@ -6,5 +6,5 @@ import (
 
 // Providers is our wire superset of providers this package offers.
 var Providers = wire.NewSet(
-	ProvideServer,
+	ProvideHTTPServer,
 )

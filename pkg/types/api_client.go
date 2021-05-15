@@ -67,8 +67,6 @@ type (
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
-
-		CreationInputMiddleware(next http.Handler) http.Handler
 	}
 )
 

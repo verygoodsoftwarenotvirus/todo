@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/http"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
@@ -19,9 +19,8 @@ const (
 	// APIClientIDURIParamKey is used for referring to API client IDs in router params.
 	APIClientIDURIParamKey = "apiClientID"
 
-	clientIDSize                      = 32
-	clientSecretSize                  = 128
-	clientIDKey      types.ContextKey = "client_id"
+	clientIDSize     = 32
+	clientSecretSize = 128
 )
 
 // ListHandler is a handler that returns a list of API clients.
@@ -75,19 +74,26 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// fetch creation input from session context data.
-	input, ok := ctx.Value(creationMiddlewareCtxKey).(*types.APIClientCreationInput)
-	if !ok {
-		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
-
 	// check session context data for user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
+	// fetch creation input from session context data.
+	input := new(types.APIClientCreationInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		s.logger.Error(err, "error encountered decoding request body")
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err = input.ValidateWithContext(ctx, s.cfg.minimumUsernameLength, s.cfg.minimumPasswordLength); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 

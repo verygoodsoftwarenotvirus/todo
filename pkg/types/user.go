@@ -129,7 +129,7 @@ type (
 		UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (bool, error)
 		GetUser(ctx context.Context, userID uint64) (*User, error)
 		GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*User, error)
-		VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error
+		MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID uint64) error
 		GetUserByUsername(ctx context.Context, username string) (*User, error)
 		SearchForUsersByUsername(ctx context.Context, usernameQuery string) ([]*User, error)
 		GetAllUsersCount(ctx context.Context) (uint64, error)
@@ -143,11 +143,6 @@ type (
 
 	// UserDataService describes a structure capable of serving traffic related to users.
 	UserDataService interface {
-		UserRegistrationInputMiddleware(next http.Handler) http.Handler
-		PasswordUpdateInputMiddleware(next http.Handler) http.Handler
-		TOTPSecretRefreshInputMiddleware(next http.Handler) http.Handler
-		TOTPSecretVerificationInputMiddleware(next http.Handler) http.Handler
-
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)

@@ -69,9 +69,6 @@ type (
 
 	// WebhookDataService describes a structure capable of serving traffic related to webhooks.
 	WebhookDataService interface {
-		CreationInputMiddleware(next http.Handler) http.Handler
-		UpdateInputMiddleware(next http.Handler) http.Handler
-
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)

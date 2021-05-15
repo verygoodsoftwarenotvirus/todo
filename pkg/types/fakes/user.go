@@ -78,8 +78,8 @@ func BuildTestUserCreationConfig() *types.TestUserCreationConfig {
 	}
 }
 
-// BuildFakeUserCreationInputFromUser builds a faked UserRegistrationInput.
-func BuildFakeUserCreationInputFromUser(user *types.User) *types.UserRegistrationInput {
+// BuildFakeUserRegistrationInputFromUser builds a faked UserRegistrationInput.
+func BuildFakeUserRegistrationInputFromUser(user *types.User) *types.UserRegistrationInput {
 	return &types.UserRegistrationInput{
 		Username: user.Username,
 		Password: fake.Password(true, true, true, true, true, 32),

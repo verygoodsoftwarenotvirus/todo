@@ -19,12 +19,12 @@ func TestBuilder_BuildGetAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
 
-		actual, err := h.builder.BuildGetAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
+		actual, err := helper.builder.BuildGetAccountSubscriptionPlanRequest(helper.ctx, exampleAccountSubscriptionPlan.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -33,9 +33,9 @@ func TestBuilder_BuildGetAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("with invalid account subscription plan ID", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildGetAccountSubscriptionPlanRequest(h.ctx, 0)
+		actual, err := helper.builder.BuildGetAccountSubscriptionPlanRequest(helper.ctx, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -49,13 +49,13 @@ func TestBuilder_BuildGetAccountSubscriptionPlansRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
 		filter := (*types.QueryFilter)(nil)
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := h.builder.BuildGetAccountSubscriptionPlansRequest(h.ctx, filter)
+		actual, err := helper.builder.BuildGetAccountSubscriptionPlansRequest(helper.ctx, filter)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -70,12 +70,12 @@ func TestBuilder_BuildCreateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		actual, err := h.builder.BuildCreateAccountSubscriptionPlanRequest(h.ctx, exampleInput)
+		actual, err := helper.builder.BuildCreateAccountSubscriptionPlanRequest(helper.ctx, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -84,9 +84,9 @@ func TestBuilder_BuildCreateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildCreateAccountSubscriptionPlanRequest(h.ctx, nil)
+		actual, err := helper.builder.BuildCreateAccountSubscriptionPlanRequest(helper.ctx, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -94,9 +94,9 @@ func TestBuilder_BuildCreateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildCreateAccountSubscriptionPlanRequest(h.ctx, &types.AccountSubscriptionPlanCreationInput{})
+		actual, err := helper.builder.BuildCreateAccountSubscriptionPlanRequest(helper.ctx, &types.AccountSubscriptionPlanCreationInput{})
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -110,12 +110,12 @@ func TestBuilder_BuildUpdateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
 
-		actual, err := h.builder.BuildUpdateAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan)
+		actual, err := helper.builder.BuildUpdateAccountSubscriptionPlanRequest(helper.ctx, exampleAccountSubscriptionPlan)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -124,9 +124,9 @@ func TestBuilder_BuildUpdateAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildUpdateAccountSubscriptionPlanRequest(h.ctx, nil)
+		actual, err := helper.builder.BuildUpdateAccountSubscriptionPlanRequest(helper.ctx, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -140,12 +140,12 @@ func TestBuilder_BuildArchiveAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAccountSubscriptionPlan.ID)
 
-		actual, err := h.builder.BuildArchiveAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
+		actual, err := helper.builder.BuildArchiveAccountSubscriptionPlanRequest(helper.ctx, exampleAccountSubscriptionPlan.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -154,9 +154,9 @@ func TestBuilder_BuildArchiveAccountSubscriptionPlanRequest(T *testing.T) {
 	T.Run("with invalid plan ID", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildArchiveAccountSubscriptionPlanRequest(h.ctx, 0)
+		actual, err := helper.builder.BuildArchiveAccountSubscriptionPlanRequest(helper.ctx, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -170,10 +170,10 @@ func TestBuilder_BuildGetAuditLogForAccountSubscriptionPlanRequest(T *testing.T)
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAccountSubscriptionPlan := fakes.BuildFakeAccountSubscriptionPlan()
 
-		actual, err := h.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(h.ctx, exampleAccountSubscriptionPlan.ID)
+		actual, err := helper.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(helper.ctx, exampleAccountSubscriptionPlan.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err)
 
@@ -184,9 +184,9 @@ func TestBuilder_BuildGetAuditLogForAccountSubscriptionPlanRequest(T *testing.T)
 	T.Run("with invalid plan ID", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(h.ctx, 0)
+		actual, err := helper.builder.BuildGetAuditLogForAccountSubscriptionPlanRequest(helper.ctx, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

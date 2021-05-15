@@ -7,16 +7,17 @@ import (
 	"log"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+
 	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	viper "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
@@ -68,7 +69,7 @@ var (
 		SpanCollectionProbability: 1,
 	}
 
-	localServer = httpserver.Config{
+	localServer = server.Config{
 		Debug:           true,
 		HTTPPort:        defaultPort,
 		StartupDeadline: time.Minute,
@@ -383,7 +384,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			Encoding: encoding.Config{
 				ContentType: contentTypeJSON,
 			},
-			Server: httpserver.Config{
+			Server: server.Config{
 				Debug:           false,
 				HTTPPort:        defaultPort,
 				StartupDeadline: startupDeadline,

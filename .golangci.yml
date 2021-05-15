@@ -107,9 +107,6 @@ linters-settings:
 #      # define here regexp type values, for example
 #      # AUTHOR: .*@mycompany\.com
 #    template-path: development/header_template.md
-  golint:
-    # minimal confidence for issues, default is 0.8
-    min-confidence: 0.8
   gofmt:
     # simplify code: gofmt with `-s` option, true by default
     simplify: true
@@ -193,7 +190,7 @@ linters-settings:
       rangeValCopy:
         sizeThreshold: 32
 
-# last updated this list at v1.40.0
+# last updated this list at v1.41.0
 linters:
   fast: false
   disable-all: false
@@ -238,7 +235,6 @@ linters:
     # - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
     - goheader         # Checks is file header matches to pattern
     - goimports        # Goimports does everything that gofmt does. Additionally it checks unused imports
-    - golint           # Golint differs from gofmt. Gofmt reformats Go source code, whereas golint prints out style mistakes
     - gomnd            # An analyzer to detect magic numbers.
     - gomoddirectives  # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
     - gomodguard       # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.

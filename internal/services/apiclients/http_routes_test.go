@@ -1,10 +1,17 @@
 package apiclients
 
 import (
+	"bytes"
 	"database/sql"
 	"errors"
+	"math"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
@@ -43,7 +50,7 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.APIClientList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -65,7 +72,7 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -96,7 +103,7 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.APIClientList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -126,12 +133,13 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ListHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
 	})
 }
@@ -143,6 +151,14 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
@@ -188,64 +204,69 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		uc.On("Increment", testutil.ContextMatcher).Return()
 		helper.service.apiClientCounter = uc
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeResponseWithStatus",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType(&types.APIClientCreationResponse{}), http.StatusCreated)
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, uc, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg, uc)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
 	T.Run("without input attached to request", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.req = testutil.BuildTestRequest(t)
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeInvalidInputResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
+	})
+
+	T.Run("with invalid input attached to request", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		helper.service.cfg.minimumPasswordLength = math.MaxUint8
+		helper.exampleInput.Password = ""
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.CreateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 
 	T.Run("with error retrieving user", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
@@ -256,23 +277,24 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockDB, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with invalid credentials", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
@@ -300,23 +322,24 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(false, nil)
 		helper.service.authenticator = a
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnauthorizedResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockDB, a, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a)
 	})
 
 	T.Run("with invalid password", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
@@ -344,23 +367,24 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(true, errors.New("blah"))
 		helper.service.authenticator = a
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockDB, a, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a)
 	})
 
 	T.Run("with error generating client ID", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
@@ -398,23 +422,24 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg)
 	})
 
 	T.Run("with error generating client secret", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
@@ -456,23 +481,24 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg)
 	})
 
 	T.Run("with error creating API Client in data store", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
@@ -515,17 +541,10 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, mockDB, a, sg, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, mockDB, a, sg)
 	})
 }
 
@@ -550,7 +569,7 @@ func TestAPIClientsService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.APIClient{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -572,7 +591,7 @@ func TestAPIClientsService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -603,7 +622,7 @@ func TestAPIClientsService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -632,7 +651,7 @@ func TestAPIClientsService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		)
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -683,7 +702,7 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -715,7 +734,7 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -745,7 +764,7 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		)
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -779,7 +798,7 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType([]*types.AuditLogEntry{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -787,6 +806,7 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
 	})
 
@@ -800,7 +820,7 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -809,6 +829,7 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -829,13 +850,14 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
 	})
 
@@ -856,13 +878,14 @@ func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
 	})
 }

@@ -229,9 +229,7 @@ func TestService_handleLogoutSubmission(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
+		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)
@@ -389,6 +387,7 @@ func TestService_handleRegistrationSubmission(T *testing.T) {
 		s.handleRegistrationSubmission(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
 		mock.AssertExpectationsForObjects(t, mockUsersService)
 	})
 
@@ -427,6 +426,7 @@ func TestService_handleRegistrationSubmission(T *testing.T) {
 		s.handleRegistrationSubmission(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
+
 		mock.AssertExpectationsForObjects(t, mockUsersService)
 	})
 

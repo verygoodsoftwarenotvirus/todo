@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 )
 
 const (

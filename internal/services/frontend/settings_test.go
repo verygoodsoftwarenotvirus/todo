@@ -81,9 +81,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
+		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)
@@ -190,9 +188,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
+		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)
@@ -277,9 +273,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
+		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)

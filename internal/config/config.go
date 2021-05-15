@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
@@ -64,7 +65,7 @@ type (
 		Meta          MetaSettings         `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
 		Database      dbconfig.Config      `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Auth          auth.Config          `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Server        httpserver.Config    `json:"server" mapstructure:"server" toml:"server,omitempty"`
+		Server        server.Config        `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		AuditLog      audit.Config         `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 		Webhooks      webhooks.Config      `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
 		Frontend      frontend.Config      `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
@@ -122,7 +123,7 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 	}
 
 	if err := cfg.Server.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Server portion of config: %w", err)
+		return fmt.Errorf("error validating HTTPServer portion of config: %w", err)
 	}
 
 	if err := cfg.Webhooks.ValidateWithContext(ctx); err != nil {

@@ -1,4 +1,4 @@
-package httpserver
+package server
 
 import (
 	"context"
@@ -29,8 +29,8 @@ const (
 )
 
 type (
-	// Server is our API http server.
-	Server struct {
+	// HTTPServer is our API http server.
+	HTTPServer struct {
 		authService       types.AuthService
 		accountsService   types.AccountDataService
 		frontendService   *frontend.Service
@@ -51,8 +51,8 @@ type (
 	}
 )
 
-// ProvideServer builds a new Server instance.
-func ProvideServer(
+// ProvideHTTPServer builds a new HTTPServer instance.
+func ProvideHTTPServer(
 	ctx context.Context,
 	serverSettings Config,
 	metricsSettings metrics.Config,
@@ -71,8 +71,8 @@ func ProvideServer(
 	logger logging.Logger,
 	encoder encoding.ServerEncoderDecoder,
 	router routing.Router,
-) (*Server, error) {
-	srv := &Server{
+) (*HTTPServer, error) {
+	srv := &HTTPServer{
 		// infra things,
 		db:         db,
 		tracer:     tracing.NewTracer(loggerName),
@@ -102,7 +102,7 @@ func ProvideServer(
 }
 
 // Serve serves HTTP traffic.
-func (s *Server) Serve() {
+func (s *HTTPServer) Serve() {
 	s.logger.Debug("setting up server")
 
 	s.httpServer.Handler = otelhttp.NewHandler(

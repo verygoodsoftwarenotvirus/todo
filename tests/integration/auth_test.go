@@ -132,7 +132,7 @@ func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginWithoutValidating2FASecret()
 
 		// create a user.
 		exampleUser := fakes.BuildFakeUser()
-		exampleUserCreationInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
+		exampleUserCreationInput := fakes.BuildFakeUserRegistrationInputFromUser(exampleUser)
 		ucr, err := testClient.CreateUser(ctx, exampleUserCreationInput)
 		requireNotNilAndNoProblems(t, ucr, err)
 

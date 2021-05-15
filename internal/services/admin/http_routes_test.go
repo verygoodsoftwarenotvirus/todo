@@ -1,13 +1,15 @@
 package admin
 
 import (
+	"bytes"
 	"database/sql"
 	"errors"
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -18,40 +20,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.T) {
+func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 	T.Parallel()
-
-	T.Run("with no input attached to request", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		var err error
-		helper.req, err = http.NewRequest(http.MethodGet, "/blah", nil)
-		require.NoError(t, err)
-
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-	})
-
-	T.Run("with error fetching session context data", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
-
-		helper.exampleInput.NewReputation = types.BannedUserReputation
-
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-	})
 
 	T.Run("banning users", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
 		helper.exampleInput.NewReputation = types.BannedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
@@ -80,7 +65,16 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
 		helper.exampleInput.NewReputation = types.TerminatedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
@@ -101,6 +95,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
 	})
 
@@ -108,6 +103,16 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		helper.exampleInput.NewReputation = types.GoodStandingAccountStatus
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
@@ -120,14 +125,71 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, userDataManager)
+	})
+
+	T.Run("with error fetching session context data", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+
+		helper.exampleInput.NewReputation = types.BannedUserReputation
+
+		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+	})
+
+	T.Run("with no input attached to request", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+	})
+
+	T.Run("with invalid input attached to request", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		helper.exampleInput = &types.UserReputationUpdateInput{}
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 
 	T.Run("with inadequate admin user attempting to ban", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
 		helper.exampleInput.NewReputation = types.BannedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
@@ -149,7 +211,16 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
 		helper.exampleInput.NewReputation = types.TerminatedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
@@ -173,7 +244,15 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		helper := buildTestHelper(t)
 		helper.neuterAdminUser()
 
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
 		helper.exampleInput.NewReputation = types.BannedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
@@ -183,7 +262,16 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
 		helper.exampleInput.NewReputation = types.BannedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
@@ -196,6 +284,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
@@ -203,7 +292,16 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
 		helper.exampleInput.NewReputation = types.BannedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
@@ -216,6 +314,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
@@ -224,11 +323,19 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper := buildTestHelper(t)
 
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		helper.exampleInput.NewReputation = types.BannedUserReputation
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
 		mockHandler := &mockstore.MockStore{}
 		mockHandler.ExpectDelete("", errors.New("blah"))
 		helper.service.sessionManager.Store = mockHandler
-
-		helper.exampleInput.NewReputation = types.BannedUserReputation
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
@@ -249,6 +356,7 @@ func TestAdminService_UserAccountStatusChangeHandler_BanningAccounts(T *testing.
 
 		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 }

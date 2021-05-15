@@ -39,11 +39,11 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakePASETOCreationInput()
 		exampleSecretKey := []byte(strings.Repeat("A", validClientSecretSize))
 
-		actual, err := h.builder.BuildAPIClientAuthTokenRequest(h.ctx, exampleInput, exampleSecretKey)
+		actual, err := helper.builder.BuildAPIClientAuthTokenRequest(helper.ctx, exampleInput, exampleSecretKey)
 		assert.NoError(t, err)
 		assert.NotNil(t, actual)
 	})
@@ -51,10 +51,10 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleSecretKey := []byte(strings.Repeat("A", validClientSecretSize))
 
-		actual, err := h.builder.BuildAPIClientAuthTokenRequest(h.ctx, nil, exampleSecretKey)
+		actual, err := helper.builder.BuildAPIClientAuthTokenRequest(helper.ctx, nil, exampleSecretKey)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -62,10 +62,10 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Run("with invalid secret key", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakePASETOCreationInput()
 
-		actual, err := h.builder.BuildAPIClientAuthTokenRequest(h.ctx, exampleInput, nil)
+		actual, err := helper.builder.BuildAPIClientAuthTokenRequest(helper.ctx, exampleInput, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -73,11 +73,11 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := &types.PASETOCreationInput{}
 		exampleSecretKey := []byte(strings.Repeat("A", validClientSecretSize))
 
-		actual, err := h.builder.BuildAPIClientAuthTokenRequest(h.ctx, exampleInput, exampleSecretKey)
+		actual, err := helper.builder.BuildAPIClientAuthTokenRequest(helper.ctx, exampleInput, exampleSecretKey)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -85,12 +85,12 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Run("with error building request", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
-		h.builder = buildTestRequestBuilderWithInvalidURL()
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
 		exampleInput := fakes.BuildFakePASETOCreationInput()
 		exampleSecretKey := []byte(strings.Repeat("A", validClientSecretSize))
 
-		actual, err := h.builder.BuildAPIClientAuthTokenRequest(h.ctx, exampleInput, exampleSecretKey)
+		actual, err := helper.builder.BuildAPIClientAuthTokenRequest(helper.ctx, exampleInput, exampleSecretKey)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -98,7 +98,7 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Run("with error encoding input to buffer", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakePASETOCreationInput()
 		exampleSecretKey := []byte(strings.Repeat("A", validClientSecretSize))
 
@@ -115,9 +115,9 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 			mock.IsType(&bytes.Buffer{}),
 			exampleInput,
 		).Return(errors.New("blah"))
-		h.builder.encoder = clientEncoder
+		helper.builder.encoder = clientEncoder
 
-		actual, err := h.builder.BuildAPIClientAuthTokenRequest(h.ctx, exampleInput, exampleSecretKey)
+		actual, err := helper.builder.BuildAPIClientAuthTokenRequest(helper.ctx, exampleInput, exampleSecretKey)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -125,11 +125,11 @@ func TestBuilder_BuildAPIClientAuthTokenRequest(T *testing.T) {
 	T.Run("with error setting signature", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakePASETOCreationInput()
 		exampleSecretKey := []byte("A") // invalid key means the signature fails
 
-		actual, err := h.builder.BuildAPIClientAuthTokenRequest(h.ctx, exampleInput, exampleSecretKey)
+		actual, err := helper.builder.BuildAPIClientAuthTokenRequest(helper.ctx, exampleInput, exampleSecretKey)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

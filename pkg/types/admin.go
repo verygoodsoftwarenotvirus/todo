@@ -11,8 +11,6 @@ type (
 	// AdminService describes a structure capable of serving traffic related to users.
 	AdminService interface {
 		UserAccountStatusChangeHandler(res http.ResponseWriter, req *http.Request)
-
-		AccountStatusUpdateInputMiddleware(next http.Handler) http.Handler
 	}
 
 	// AdminAuditManager describes a structure capable of managing audit entries for admin events.

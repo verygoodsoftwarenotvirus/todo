@@ -258,7 +258,7 @@ func (s *TestSuite) TestUsers_Auditing_InaccessibleToNonAdmins() {
 
 			// Create user.
 			exampleUser := fakes.BuildFakeUser()
-			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
+			exampleUserInput := fakes.BuildFakeUserRegistrationInputFromUser(exampleUser)
 			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
 			requireNotNilAndNoProblems(t, createdUser, err)
 
@@ -283,7 +283,7 @@ func (s *TestSuite) TestUsers_Auditing() {
 
 			// Create user.
 			exampleUser := fakes.BuildFakeUser()
-			exampleUserInput := fakes.BuildFakeUserCreationInputFromUser(exampleUser)
+			exampleUserInput := fakes.BuildFakeUserRegistrationInputFromUser(exampleUser)
 			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
 			requireNotNilAndNoProblems(t, createdUser, err)
 

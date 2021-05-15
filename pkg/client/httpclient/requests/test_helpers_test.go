@@ -120,20 +120,20 @@ type testHelper struct {
 }
 
 func buildTestHelper() *testHelper {
-	h := &testHelper{
+	helper := &testHelper{
 		ctx:         context.Background(),
 		builder:     buildTestRequestBuilder(),
 		exampleUser: fakes.BuildFakeUser(),
 	}
 
 	// the hashed passwords is never transmitted over the wire.
-	h.exampleUser.HashedPassword = ""
+	helper.exampleUser.HashedPassword = ""
 	// the two factor secret is transmitted over the wire only on creation.
-	h.exampleUser.TwoFactorSecret = ""
+	helper.exampleUser.TwoFactorSecret = ""
 	// the two factor secret validation is never transmitted over the wire.
-	h.exampleUser.TwoFactorSecretVerifiedOn = nil
+	helper.exampleUser.TwoFactorSecretVerifiedOn = nil
 
-	return h
+	return helper
 }
 
 func buildTestRequestBuilderWithInvalidURL() *Builder {

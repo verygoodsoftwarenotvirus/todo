@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
@@ -20,11 +20,6 @@ import (
 )
 
 const (
-	// pasetoCreationInputMiddlewareCtxKey is the context key for login input.
-	pasetoCreationInputMiddlewareCtxKey types.ContextKey = "paseto_creation_input"
-	// changeActiveAccountMiddlewareCtxKey is the context key for login input.
-	changeActiveAccountMiddlewareCtxKey types.ContextKey = "change_active_account"
-
 	signatureHeaderKey           = "Signature"
 	pasetoAuthorizationHeaderKey = "Authorization"
 )
@@ -100,7 +95,6 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 
 		// handle cookies if relevant.
 		if cookieContext, userID, err := s.getUserIDFromCookie(ctx, req); err == nil && userID != 0 {
-			logger.Debug("cookie attached to request")
 			ctx = cookieContext
 
 			tracing.AttachRequestingUserIDToSpan(span, userID)
@@ -250,83 +244,5 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(res, req)
-	})
-}
-
-// ChangeActiveAccountInputMiddleware fetches user login input from requests.
-func (s *service) ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := s.tracer.StartSpan(req.Context())
-		defer span.End()
-
-		logger := s.logger.WithRequest(req)
-
-		x := new(types.ChangeActiveAccountInput)
-		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
-			return
-		}
-
-		if err := x.ValidateWithContext(ctx); err != nil {
-			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(ctx, changeActiveAccountMiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
-
-// UserLoginInputMiddleware fetches user login input from requests.
-func (s *service) UserLoginInputMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := s.tracer.StartSpan(req.Context())
-		defer span.End()
-
-		x := new(types.UserLoginInput)
-		logger := s.logger.WithRequest(req)
-
-		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
-			return
-		}
-
-		if err := x.ValidateWithContext(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
-			observability.AcknowledgeError(err, logger, span, "validating input")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(ctx, types.UserLoginInputContextKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
-	})
-}
-
-// PASETOCreationInputMiddleware fetches user login input from requests.
-func (s *service) PASETOCreationInputMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		ctx, span := s.tracer.StartSpan(req.Context())
-		defer span.End()
-
-		logger := s.logger.WithRequest(req)
-
-		x := new(types.PASETOCreationInput)
-		if err := s.encoderDecoder.DecodeRequest(ctx, req, x); err != nil {
-			observability.AcknowledgeError(err, logger, span, "decoding request body")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
-			return
-		}
-
-		if err := x.ValidateWithContext(ctx); err != nil {
-			logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
-			s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(ctx, pasetoCreationInputMiddlewareCtxKey, x)
-		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }

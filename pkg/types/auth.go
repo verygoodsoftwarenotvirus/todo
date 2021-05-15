@@ -111,9 +111,6 @@ type (
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
 		AdminMiddleware(next http.Handler) http.Handler
-		UserLoginInputMiddleware(next http.Handler) http.Handler
-		PASETOCreationInputMiddleware(next http.Handler) http.Handler
-		ChangeActiveAccountInputMiddleware(next http.Handler) http.Handler
 
 		AuthenticateUser(ctx context.Context, loginData *UserLoginInput) (*User, *http.Cookie, error)
 		LogoutUser(ctx context.Context, sessionCtxData *SessionContextData, req *http.Request, res http.ResponseWriter) error

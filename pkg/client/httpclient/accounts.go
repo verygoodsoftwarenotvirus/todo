@@ -3,7 +3,7 @@ package httpclient
 import (
 	"context"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
@@ -285,7 +285,7 @@ func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID 
 }
 
 // TransferAccountOwnership transfers ownership of an account to a given user.
-func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64, input *types.TransferAccountOwnershipInput) error {
+func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64, input *types.AccountOwnershipTransferInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

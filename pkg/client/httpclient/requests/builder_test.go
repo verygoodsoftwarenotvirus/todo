@@ -69,9 +69,9 @@ func TestBuilder_URL(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		assert.NotNil(t, h.builder.URL())
+		assert.NotNil(t, helper.builder.URL())
 	})
 }
 
@@ -81,17 +81,17 @@ func TestBuilder_SetURL(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		assert.NoError(t, h.builder.SetURL(&url.URL{}))
+		assert.NoError(t, helper.builder.SetURL(&url.URL{}))
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		assert.Error(t, h.builder.SetURL(nil))
+		assert.Error(t, helper.builder.SetURL(nil))
 	})
 }
 
@@ -153,22 +153,22 @@ func TestBuilder_Must(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		h.builder.Must(&http.Request{}, nil)
+		helper.builder.Must(&http.Request{}, nil)
 	})
 
 	T.Run("with panic", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleErr := errors.New("blah")
 
 		mockPanicker := panicking.NewMockPanicker()
 		mockPanicker.On("Panic", exampleErr).Return()
-		h.builder.panicker = mockPanicker
+		helper.builder.panicker = mockPanicker
 
-		h.builder.Must(&http.Request{}, exampleErr)
+		helper.builder.Must(&http.Request{}, exampleErr)
 
 		mock.AssertExpectationsForObjects(t, mockPanicker)
 	})
@@ -192,9 +192,9 @@ func TestBuilder_buildAPIV1URL(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		assert.NotNil(t, h.builder.buildAPIV1URL(h.ctx, url.Values{}, "things", "and", "stuff"))
+		assert.NotNil(t, helper.builder.buildAPIV1URL(helper.ctx, url.Values{}, "things", "and", "stuff"))
 	})
 }
 

@@ -34,8 +34,8 @@ func (m *UserDataManager) GetUserWithUnverifiedTwoFactorSecret(ctx context.Conte
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
-// VerifyUserTwoFactorSecret is a mock function.
-func (m *UserDataManager) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+// MarkUserTwoFactorSecretAsVerified is a mock function.
+func (m *UserDataManager) MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID uint64) error {
 	args := m.Called(ctx, userID)
 	return args.Error(0)
 }

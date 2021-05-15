@@ -429,7 +429,7 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			require.Error(t, err)
 
 			// add them to the account
-			require.NoError(t, testClients.main.TransferAccountOwnership(ctx, account.ID, &types.TransferAccountOwnershipInput{
+			require.NoError(t, testClients.main.TransferAccountOwnership(ctx, account.ID, &types.AccountOwnershipTransferInput{
 				Reason:       t.Name(),
 				CurrentOwner: account.BelongsToUser,
 				NewOwner:     futureOwner.ID,

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
@@ -36,19 +36,25 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check session context data for parsed input struct.
-	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.ItemCreationInput)
-	if !ok {
-		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
-
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	// check session context data for parsed input struct.
+	input := new(types.ItemCreationInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err = input.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -246,19 +252,25 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check for parsed input attached to session context data.
-	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.ItemUpdateInput)
-	if !ok {
-		logger.Info("no input attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
-
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	// check for parsed input attached to session context data.
+	input := new(types.ItemUpdateInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		logger.Error(err, "error encountered decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err = input.ValidateWithContext(ctx); err != nil {
+		logger.Error(err, "provided input was invalid")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -272,7 +284,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// fetch item from database.
-	x, err := s.itemDataManager.GetItem(ctx, itemID, sessionCtxData.ActiveAccountID)
+	item, err := s.itemDataManager.GetItem(ctx, itemID, sessionCtxData.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -283,23 +295,23 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update the data structure.
-	changeReport := x.Update(input)
+	changeReport := item.Update(input)
 	tracing.AttachChangeSummarySpan(span, "item", changeReport)
 
 	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, x, sessionCtxData.Requester.ID, changeReport); err != nil {
+	if err = s.itemDataManager.UpdateItem(ctx, item, sessionCtxData.Requester.ID, changeReport); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	// notify relevant parties.
-	if searchIndexErr := s.search.Index(ctx, x.ID, x); searchIndexErr != nil {
+	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
 		observability.AcknowledgeError(err, logger, span, "updating item in search index")
 	}
 
 	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
+	s.encoderDecoder.RespondWithData(ctx, res, item)
 }
 
 // ArchiveHandler returns a handler that archives an item.

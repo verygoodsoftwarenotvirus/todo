@@ -31,7 +31,7 @@ func TestTransferAccountOwnershipInput_ValidateWithContext(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		x := &TransferAccountOwnershipInput{
+		x := &AccountOwnershipTransferInput{
 			CurrentOwner: 123,
 			NewOwner:     321,
 			Reason:       t.Name(),

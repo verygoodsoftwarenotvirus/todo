@@ -36,6 +36,16 @@ func BuildFakeItemList() *types.ItemList {
 	}
 }
 
+// BuildFakeItemUpdateInput builds a faked ItemUpdateInput from an item.
+func BuildFakeItemUpdateInput() *types.ItemUpdateInput {
+	item := BuildFakeItem()
+	return &types.ItemUpdateInput{
+		Name:             item.Name,
+		Details:          item.Details,
+		BelongsToAccount: item.BelongsToAccount,
+	}
+}
+
 // BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateInput from an item.
 func BuildFakeItemUpdateInputFromItem(item *types.Item) *types.ItemUpdateInput {
 	return &types.ItemUpdateInput{

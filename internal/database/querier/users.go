@@ -7,7 +7,7 @@ import (
 	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
@@ -514,8 +514,8 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID uint6
 	return nil
 }
 
-// VerifyUserTwoFactorSecret marks a user's two factor secret as validated.
-func (q *SQLQuerier) VerifyUserTwoFactorSecret(ctx context.Context, userID uint64) error {
+// MarkUserTwoFactorSecretAsVerified marks a user's two factor secret as validated.
+func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID uint64) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 

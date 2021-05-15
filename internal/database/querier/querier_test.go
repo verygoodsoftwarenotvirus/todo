@@ -231,6 +231,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		assert.NoError(t, err)
 
 		assert.True(t, migrationFunctionCalled)
+
 		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
 	})
 
@@ -266,6 +267,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		assert.NoError(t, err)
 
 		assert.True(t, migrationFunctionCalled)
+
 		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
 	})
 

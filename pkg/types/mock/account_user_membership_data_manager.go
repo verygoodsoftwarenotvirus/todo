@@ -65,6 +65,6 @@ func (m *AccountUserMembershipDataManager) ModifyUserPermissions(ctx context.Con
 }
 
 // TransferAccountOwnership implements the interface.
-func (m *AccountUserMembershipDataManager) TransferAccountOwnership(ctx context.Context, accountID, transferredBy uint64, input *types.TransferAccountOwnershipInput) error {
+func (m *AccountUserMembershipDataManager) TransferAccountOwnership(ctx context.Context, accountID, transferredBy uint64, input *types.AccountOwnershipTransferInput) error {
 	return m.Called(ctx, accountID, transferredBy, input).Error(0)
 }

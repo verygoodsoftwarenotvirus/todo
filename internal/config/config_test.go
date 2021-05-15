@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +21,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
@@ -32,7 +33,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 		t.Parallel()
 
 		cfg := &ServerConfig{
-			Server: httpserver.Config{
+			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
 				StartupDeadline: time.Minute,

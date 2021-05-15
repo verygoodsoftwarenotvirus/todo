@@ -47,6 +47,15 @@ func BuildFakeAccountList() *types.AccountList {
 	}
 }
 
+// BuildFakeAccountUpdateInput builds a faked AccountUpdateInput from an account.
+func BuildFakeAccountUpdateInput() *types.AccountUpdateInput {
+	account := BuildFakeAccount()
+	return &types.AccountUpdateInput{
+		Name:          account.Name,
+		BelongsToUser: account.BelongsToUser,
+	}
+}
+
 // BuildFakeAccountUpdateInputFromAccount builds a faked AccountUpdateInput from an account.
 func BuildFakeAccountUpdateInputFromAccount(account *types.Account) *types.AccountUpdateInput {
 	return &types.AccountUpdateInput{

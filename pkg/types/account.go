@@ -60,20 +60,14 @@ type (
 
 	// AccountDataService describes a structure capable of serving traffic related to accounts.
 	AccountDataService interface {
-		AddMemberInputMiddleware(next http.Handler) http.Handler
-		ModifyMemberPermissionsInputMiddleware(next http.Handler) http.Handler
-		AccountTransferInputMiddleware(next http.Handler) http.Handler
-		CreationInputMiddleware(next http.Handler) http.Handler
-		UpdateInputMiddleware(next http.Handler) http.Handler
-
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 		UpdateHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
-		AddUserHandler(res http.ResponseWriter, req *http.Request)
-		RemoveUserHandler(res http.ResponseWriter, req *http.Request)
-		MarkAsDefaultHandler(res http.ResponseWriter, req *http.Request)
+		AddMemberHandler(res http.ResponseWriter, req *http.Request)
+		RemoveMemberHandler(res http.ResponseWriter, req *http.Request)
+		MarkAsDefaultAccountHandler(res http.ResponseWriter, req *http.Request)
 		ModifyMemberPermissionsHandler(res http.ResponseWriter, req *http.Request)
 		TransferAccountOwnershipHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)

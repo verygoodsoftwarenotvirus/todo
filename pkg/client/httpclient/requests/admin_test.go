@@ -18,12 +18,12 @@ func TestBuilder_BuildUserReputationUpdateInputRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		exampleInput := fakes.BuildFakeUserReputationUpdateInputFromUser(h.exampleUser)
+		exampleInput := fakes.BuildFakeUserReputationUpdateInputFromUser(helper.exampleUser)
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPathFormat)
 
-		actual, err := h.builder.BuildUserReputationUpdateInputRequest(h.ctx, exampleInput)
+		actual, err := helper.builder.BuildUserReputationUpdateInputRequest(helper.ctx, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -32,9 +32,9 @@ func TestBuilder_BuildUserReputationUpdateInputRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildUserReputationUpdateInputRequest(h.ctx, nil)
+		actual, err := helper.builder.BuildUserReputationUpdateInputRequest(helper.ctx, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -42,9 +42,9 @@ func TestBuilder_BuildUserReputationUpdateInputRequest(T *testing.T) {
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildUserReputationUpdateInputRequest(h.ctx, &types.UserReputationUpdateInput{})
+		actual, err := helper.builder.BuildUserReputationUpdateInputRequest(helper.ctx, &types.UserReputationUpdateInput{})
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

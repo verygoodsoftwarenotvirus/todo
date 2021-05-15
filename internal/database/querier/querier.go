@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"

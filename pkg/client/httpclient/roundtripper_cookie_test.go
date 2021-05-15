@@ -59,6 +59,7 @@ func Test_cookieRoundtripper_RoundTrip(T *testing.T) {
 		assert.NotNil(t, res)
 
 		assert.Equal(t, exampleResponse, res)
+
 		mock.AssertExpectationsForObjects(t, mrt)
 	})
 

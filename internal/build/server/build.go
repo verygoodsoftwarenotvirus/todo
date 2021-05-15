@@ -8,18 +8,17 @@ import (
 
 	"github.com/google/wire"
 
-	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
-	bleve2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
-	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
@@ -43,14 +42,13 @@ func Build(
 	dbm database.DataManager,
 	db *sql.DB,
 	authenticator passwords.Authenticator,
-) (*server2.Server, error) {
+) (*server.HTTPServer, error) {
 	wire.Build(
-		server2.Providers,
-		bleve2.Providers,
+		bleve.Providers,
 		config.Providers,
 		database.Providers,
 		encoding.Providers,
-		httpserver.Providers,
+		server.Providers,
 		metrics.Providers,
 		dbconfig.Providers,
 		images.Providers,

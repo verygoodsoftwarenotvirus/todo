@@ -15,9 +15,6 @@ import (
 )
 
 const (
-	// creationMiddlewareCtxKey is a string alias for referring to API client creation data.
-	creationMiddlewareCtxKey types.ContextKey = "create_api_client"
-
 	counterName        metrics.CounterName = "api_clients"
 	counterDescription string              = "number of API clients managed by the API client service"
 	serviceName        string              = "api_clients_service"
@@ -26,9 +23,14 @@ const (
 var _ types.APIClientDataService = (*service)(nil)
 
 type (
+	config struct {
+		minimumUsernameLength, minimumPasswordLength uint8
+	}
+
 	// service manages our API clients via HTTP.
 	service struct {
 		logger                    logging.Logger
+		cfg                       *config
 		apiClientDataManager      types.APIClientDataManager
 		userDataManager           types.UserDataManager
 		authenticator             passwords.Authenticator
@@ -50,17 +52,19 @@ func ProvideAPIClientsService(
 	encoderDecoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
+	cfg *config,
 ) types.APIClientDataService {
 	return &service{
+		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
+		cfg:                       cfg,
 		apiClientDataManager:      clientDataManager,
 		userDataManager:           userDataManager,
-		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
-		encoderDecoder:            encoderDecoder,
 		authenticator:             authenticator,
-		secretGenerator:           random.NewGenerator(logger),
-		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		encoderDecoder:            encoderDecoder,
 		urlClientIDExtractor:      routeParamManager.BuildRouteParamIDFetcher(logger, APIClientIDURIParamKey, "api client"),
-		tracer:                    tracing.NewTracer(serviceName),
+		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
 		apiClientCounter:          metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
+		secretGenerator:           random.NewGenerator(logger),
+		tracer:                    tracing.NewTracer(serviceName),
 	}
 }

@@ -1,11 +1,16 @@
 package accountsubscriptionplans
 
 import (
-	"context"
+	"bytes"
 	"database/sql"
 	"errors"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
@@ -40,7 +45,7 @@ func TestAccountSubscriptionPlansService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AccountSubscriptionPlanList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -62,7 +67,7 @@ func TestAccountSubscriptionPlansService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		)
@@ -71,6 +76,7 @@ func TestAccountSubscriptionPlansService_ListHandler(T *testing.T) {
 		helper.service.ListHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -91,7 +97,7 @@ func TestAccountSubscriptionPlansService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AccountSubscriptionPlanList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -120,13 +126,14 @@ func TestAccountSubscriptionPlansService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ListHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -138,9 +145,15 @@ func TestAccountSubscriptionPlansService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(helper.exampleAccountSubscriptionPlan)
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), createMiddlewareCtxKey, exampleInput))
+		exampleCreationInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountSubscriptionPlanDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		accountSubscriptionPlanDataManager.On(
@@ -154,73 +167,81 @@ func TestAccountSubscriptionPlansService_CreateHandler(T *testing.T) {
 		unitCounter.On("Increment", testutil.ContextMatcher).Return()
 		helper.service.planCounter = unitCounter
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeResponseWithStatus",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			mock.IsType(&types.AccountSubscriptionPlan{}),
-			http.StatusCreated,
-		)
-		helper.service.encoderDecoder = encoderDecoder
-
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, unitCounter, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, unitCounter)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-
-		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(helper.exampleAccountSubscriptionPlan)
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), createMiddlewareCtxKey, exampleInput))
-
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-			"unauthenticated",
-			http.StatusUnauthorized,
-		)
-		helper.service.encoderDecoder = encoderDecoder
+		exampleCreationInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
 	T.Run("without input attached to request", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeInvalidInputResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
+	})
+
+	T.Run("with invalid input attached to request", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+
+		exampleCreationInput := &types.AccountSubscriptionPlanCreationInput{}
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		helper.service.CreateHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 
 	T.Run("with error creating account subscription plan in database", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(helper.exampleAccountSubscriptionPlan)
+		exampleCreationInput := fakes.BuildFakeAccountSubscriptionPlanCreationInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountSubscriptionPlanDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		accountSubscriptionPlanDataManager.On(
@@ -230,19 +251,11 @@ func TestAccountSubscriptionPlansService_CreateHandler(T *testing.T) {
 		).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		helper.service.accountSubscriptionPlanDataManager = accountSubscriptionPlanDataManager
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), createMiddlewareCtxKey, exampleInput))
-
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 }
 
@@ -266,7 +279,7 @@ func TestAccountSubscriptionPlansService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AccountSubscriptionPlan{}))
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -282,16 +295,13 @@ func TestAccountSubscriptionPlansService_ReadHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		exampleInput := fakes.BuildFakeAccountSubscriptionPlanCreationInputFromAccountSubscriptionPlan(helper.exampleAccountSubscriptionPlan)
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), createMiddlewareCtxKey, exampleInput))
-
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		)
@@ -300,6 +310,7 @@ func TestAccountSubscriptionPlansService_ReadHandler(T *testing.T) {
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -320,12 +331,13 @@ func TestAccountSubscriptionPlansService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
+			testutil.HTTPResponseWriterMatcher)
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 
@@ -346,12 +358,13 @@ func TestAccountSubscriptionPlansService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
+			testutil.HTTPResponseWriterMatcher)
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -363,25 +376,26 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		exampleCreationInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountSubscriptionPlanDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		accountSubscriptionPlanDataManager.On("GetAccountSubscriptionPlan", testutil.ContextMatcher, helper.exampleAccountSubscriptionPlan.ID).Return(helper.exampleAccountSubscriptionPlan, nil)
 		accountSubscriptionPlanDataManager.On("UpdateAccountSubscriptionPlan", testutil.ContextMatcher, mock.IsType(&types.AccountSubscriptionPlan{})).Return(nil)
 		helper.service.accountSubscriptionPlanDataManager = accountSubscriptionPlanDataManager
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On("RespondWithData", testutil.ContextMatcher, testutil.ResponseWriterMatcher, mock.IsType(&types.AccountSubscriptionPlan{}))
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
-
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -389,15 +403,21 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
+		exampleCreationInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		)
@@ -414,26 +434,31 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeInvalidInputResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
-		helper.service.encoderDecoder = encoderDecoder
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
 	T.Run("with no results in database", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		exampleCreationInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountSubscriptionPlanDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		accountSubscriptionPlanDataManager.On(
@@ -443,27 +468,26 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		).Return((*types.AccountSubscriptionPlan)(nil), sql.ErrNoRows)
 		helper.service.accountSubscriptionPlanDataManager = accountSubscriptionPlanDataManager
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeNotFoundResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
-
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 
 	T.Run("with error fetching from database", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		exampleCreationInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountSubscriptionPlanDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		accountSubscriptionPlanDataManager.On(
@@ -473,27 +497,26 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		).Return((*types.AccountSubscriptionPlan)(nil), errors.New("blah"))
 		helper.service.accountSubscriptionPlanDataManager = accountSubscriptionPlanDataManager
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
-
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 
 	T.Run("with error performing update", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		exampleInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		exampleCreationInput := fakes.BuildFakePlanUpdateInputFromPlan(helper.exampleAccountSubscriptionPlan)
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
 
 		accountSubscriptionPlanDataManager := &mocktypes.AccountSubscriptionPlanDataManager{}
 		accountSubscriptionPlanDataManager.On(
@@ -508,19 +531,11 @@ func TestAccountSubscriptionPlansService_UpdateHandler(T *testing.T) {
 		).Return(errors.New("blah"))
 		helper.service.accountSubscriptionPlanDataManager = accountSubscriptionPlanDataManager
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), updateMiddlewareCtxKey, exampleInput))
-
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
+
+		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 }
 
@@ -547,6 +562,7 @@ func TestAccountSubscriptionPlansService_ArchiveHandler(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, unitCounter)
 	})
 
@@ -560,7 +576,7 @@ func TestAccountSubscriptionPlansService_ArchiveHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		)
@@ -590,12 +606,13 @@ func TestAccountSubscriptionPlansService_ArchiveHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
+			testutil.HTTPResponseWriterMatcher)
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 
@@ -616,12 +633,13 @@ func TestAccountSubscriptionPlansService_ArchiveHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher)
+			testutil.HTTPResponseWriterMatcher)
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager, encoderDecoder)
 	})
 }
@@ -647,6 +665,7 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 
@@ -660,7 +679,7 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -669,6 +688,7 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -688,6 +708,7 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 
@@ -707,6 +728,7 @@ func TestAccountSubscriptionPlansService_AuditEntryHandler(T *testing.T) {
 		helper.service.AuditEntryHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, accountSubscriptionPlanDataManager)
 	})
 }

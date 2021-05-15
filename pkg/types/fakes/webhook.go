@@ -44,6 +44,21 @@ func BuildFakeWebhookList() *types.WebhookList {
 	}
 }
 
+// BuildFakeWebhookUpdateInput builds a faked WebhookUpdateInput.
+func BuildFakeWebhookUpdateInput() *types.WebhookUpdateInput {
+	webhook := BuildFakeWebhook()
+	return &types.WebhookUpdateInput{
+		Name:             webhook.Name,
+		ContentType:      webhook.ContentType,
+		URL:              webhook.URL,
+		Method:           webhook.Method,
+		Events:           webhook.Events,
+		DataTypes:        webhook.DataTypes,
+		Topics:           webhook.Topics,
+		BelongsToAccount: webhook.BelongsToAccount,
+	}
+}
+
 // BuildFakeWebhookUpdateInputFromWebhook builds a faked WebhookUpdateInput.
 func BuildFakeWebhookUpdateInputFromWebhook(webhook *types.Webhook) *types.WebhookUpdateInput {
 	return &types.WebhookUpdateInput{

@@ -251,7 +251,7 @@ func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 }
 
 // BuildTransferAccountOwnershipRequest builds a request that transfers ownership of an account to a given user.
-func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, accountID uint64, input *types.TransferAccountOwnershipInput) (*http.Request, error) {
+func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, accountID uint64, input *types.AccountOwnershipTransferInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

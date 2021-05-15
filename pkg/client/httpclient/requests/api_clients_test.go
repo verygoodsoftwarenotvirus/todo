@@ -18,12 +18,12 @@ func TestBuilder_BuildGetAPIClientRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleAPIClient.ID)
 
-		actual, err := h.builder.BuildGetAPIClientRequest(h.ctx, exampleAPIClient.ID)
+		actual, err := helper.builder.BuildGetAPIClientRequest(helper.ctx, exampleAPIClient.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -32,9 +32,9 @@ func TestBuilder_BuildGetAPIClientRequest(T *testing.T) {
 	T.Run("with invalid client ID", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildGetAPIClientRequest(h.ctx, 0)
+		actual, err := helper.builder.BuildGetAPIClientRequest(helper.ctx, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -48,11 +48,11 @@ func TestBuilder_BuildGetAPIClientsRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
 
-		actual, err := h.builder.BuildGetAPIClientsRequest(h.ctx, nil)
+		actual, err := helper.builder.BuildGetAPIClientsRequest(helper.ctx, nil)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -67,12 +67,12 @@ func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakeAPIClientCreationInput()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, &http.Cookie{}, exampleInput)
+		actual, err := helper.builder.BuildCreateAPIClientRequest(helper.ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -81,10 +81,10 @@ func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
 	T.Run("with nil cookie", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakeAPIClientCreationInput()
 
-		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, nil, exampleInput)
+		actual, err := helper.builder.BuildCreateAPIClientRequest(helper.ctx, nil, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -92,9 +92,9 @@ func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, &http.Cookie{}, nil)
+		actual, err := helper.builder.BuildCreateAPIClientRequest(helper.ctx, &http.Cookie{}, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -102,11 +102,11 @@ func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
 	T.Run("with error building data request", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakeAPIClientCreationInput()
 
-		h.builder = buildTestRequestBuilderWithInvalidURL()
-		actual, err := h.builder.BuildCreateAPIClientRequest(h.ctx, &http.Cookie{}, exampleInput)
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+		actual, err := helper.builder.BuildCreateAPIClientRequest(helper.ctx, &http.Cookie{}, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -120,12 +120,12 @@ func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleAPIClient.ID)
 
-		actual, err := h.builder.BuildArchiveAPIClientRequest(h.ctx, exampleAPIClient.ID)
+		actual, err := helper.builder.BuildArchiveAPIClientRequest(helper.ctx, exampleAPIClient.ID)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -134,9 +134,9 @@ func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
 	T.Run("with invalid client ID", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildArchiveAPIClientRequest(h.ctx, 0)
+		actual, err := helper.builder.BuildArchiveAPIClientRequest(helper.ctx, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -150,10 +150,10 @@ func TestBuilder_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		actual, err := h.builder.BuildGetAuditLogForAPIClientRequest(h.ctx, exampleAPIClient.ID)
+		actual, err := helper.builder.BuildGetAuditLogForAPIClientRequest(helper.ctx, exampleAPIClient.ID)
 		require.NotNil(t, actual)
 		assert.NoError(t, err)
 
@@ -164,9 +164,9 @@ func TestBuilder_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
 	T.Run("with invalid client ID", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildGetAuditLogForAPIClientRequest(h.ctx, 0)
+		actual, err := helper.builder.BuildGetAuditLogForAPIClientRequest(helper.ctx, 0)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

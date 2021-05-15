@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 

@@ -550,7 +550,7 @@ func (s *accountsTestSuite) TestClient_TransferAccountOwnership() {
 		t := s.T()
 
 		c, _ := buildSimpleTestClient(t)
-		exampleInput := &types.TransferAccountOwnershipInput{}
+		exampleInput := &types.AccountOwnershipTransferInput{}
 
 		assert.Error(t, c.TransferAccountOwnership(s.ctx, s.exampleAccount.ID, exampleInput))
 	})

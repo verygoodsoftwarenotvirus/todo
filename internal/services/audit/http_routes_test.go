@@ -38,7 +38,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AuditLogEntryList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -46,6 +46,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		helper.service.ListHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 
@@ -59,7 +60,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -68,6 +69,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		helper.service.ListHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -88,7 +90,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AuditLogEntryList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -96,6 +98,7 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		helper.service.ListHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 	T.Run("with error reading from datastore", func(t *testing.T) {
@@ -115,13 +118,14 @@ func TestAuditLogEntriesService_ListHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ListHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 }
@@ -146,7 +150,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"RespondWithData",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AuditLogEntry{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -154,6 +158,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 
@@ -167,7 +172,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -176,6 +181,7 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, encoderDecoder)
 	})
 
@@ -196,13 +202,14 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 
@@ -223,13 +230,14 @@ func TestAuditLogEntriesService_ReadHandler(T *testing.T) {
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
 			testutil.ContextMatcher,
-			testutil.ResponseWriterMatcher,
+			testutil.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
 		helper.service.ReadHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
 		mock.AssertExpectationsForObjects(t, auditLogEntryManager, encoderDecoder)
 	})
 }

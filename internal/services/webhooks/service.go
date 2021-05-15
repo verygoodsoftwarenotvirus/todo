@@ -13,11 +13,6 @@ import (
 )
 
 const (
-	// createMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts.
-	createMiddlewareCtxKey types.ContextKey = "webhook_create_input"
-	// updateMiddlewareCtxKey is a string alias we can use for referring to webhook input data in contexts.
-	updateMiddlewareCtxKey types.ContextKey = "webhook_update_input"
-
 	counterName        metrics.CounterName = "webhooks"
 	counterDescription string              = "the number of webhooks managed by the webhooks service"
 	serviceName        string              = "webhooks_service"

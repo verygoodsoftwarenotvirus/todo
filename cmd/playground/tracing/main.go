@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"

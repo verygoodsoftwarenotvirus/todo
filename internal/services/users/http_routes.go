@@ -10,11 +10,10 @@ import (
 	"image/png"
 	"net/http"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/makiuchi-d/gozxing"
@@ -171,11 +170,17 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// fetch parsed input from session context data.
-	userInput, ok := ctx.Value(types.UserRegistrationInputContextKey).(*types.UserRegistrationInput)
-	if !ok {
-		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+	// decode the request.
+	userInput := new(types.UserRegistrationInput)
+	if err := s.encoderDecoder.DecodeRequest(ctx, req, userInput); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err := userInput.ValidateWithContext(ctx, s.authSettings.MinimumUsernameLength, s.authSettings.MinimumPasswordLength); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -323,12 +328,13 @@ func (s *service) VerifyUserTwoFactorSecret(ctx context.Context, input *types.TO
 		return errSecretAlreadyVerified
 	}
 
-	if totp.Validate(input.TOTPToken, user.TwoFactorSecret) {
-		if updateUserErr := s.userDataManager.VerifyUserTwoFactorSecret(ctx, user.ID); updateUserErr != nil {
-			return observability.PrepareError(err, logger, span, "marking 2FA secret as validated")
-		}
-	} else {
+	totpValid := totp.Validate(input.TOTPToken, user.TwoFactorSecret)
+	if !totpValid {
 		return passwords.ErrInvalidTOTPToken
+	}
+
+	if updateUserErr := s.userDataManager.MarkUserTwoFactorSecretAsVerified(ctx, user.ID); updateUserErr != nil {
+		return observability.PrepareError(err, logger, span, "marking 2FA secret as validated")
 	}
 
 	return nil
@@ -343,11 +349,17 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check session context data for parsed input.
-	input, ok := req.Context().Value(totpSecretVerificationMiddlewareCtxKey).(*types.TOTPSecretVerificationInput)
-	if !ok || input == nil {
-		logger.Debug("no input found on TOTP secret refresh request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+	// decode the request.
+	input := new(types.TOTPSecretVerificationInput)
+	if err := s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err := input.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -380,11 +392,17 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check session context data for parsed input.
-	input, ok := req.Context().Value(totpSecretRefreshMiddlewareCtxKey).(*types.TOTPSecretRefreshInput)
-	if !ok {
-		logger.Debug("no input found on TOTP secret refresh request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+	// decode the request.
+	input := new(types.TOTPSecretRefreshInput)
+	if err := s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err := input.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -441,8 +459,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, result, http.StatusAccepted)
 }
 
-// UpdatePasswordHandler updates a user's passwords, after validating that information received
-// from PasswordUpdateInputContextMiddleware is valid.
+// UpdatePasswordHandler updates a user's password.
 func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -450,11 +467,17 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check session context data for parsed value.
-	input, ok := ctx.Value(passwordChangeMiddlewareCtxKey).(*types.PasswordUpdateInput)
-	if !ok {
-		logger.Debug("no input found on UpdatePasswordHandler request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
+	// decode the request.
+	input := new(types.PasswordUpdateInput)
+	if err := s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err := input.ValidateWithContext(ctx, s.authSettings.MinimumPasswordLength); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 

@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
@@ -137,10 +137,16 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	loginData, ok := ctx.Value(types.UserLoginInputContextKey).(*types.UserLoginInput)
-	if !ok || loginData == nil {
-		logger.Debug("no input found for login request")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "error validating request", http.StatusUnauthorized)
+	loginData := new(types.UserLoginInput)
+	if err := s.encoderDecoder.DecodeRequest(ctx, req, loginData); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err := loginData.ValidateWithContext(ctx, s.config.MinimumUsernameLength, s.config.MinimumPasswordLength); err != nil {
+		observability.AcknowledgeError(err, logger, span, "validating input")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -183,16 +189,6 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	input, ok := ctx.Value(changeActiveAccountMiddlewareCtxKey).(*types.ChangeActiveAccountInput)
-	if !ok {
-		logger.Info("no input attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
-
-	accountID := input.AccountID
-	logger = logger.WithValue("new_session_account_id", accountID)
-
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -200,6 +196,22 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 		return
 	}
+
+	input := new(types.ChangeActiveAccountInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err = input.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	accountID := input.AccountID
+	logger = logger.WithValue("new_session_account_id", accountID)
 
 	requesterID := sessionCtxData.Requester.ID
 	logger = logger.WithValue("user_id", requesterID)
@@ -327,21 +339,27 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	pasetoRequest, ok := ctx.Value(pasetoCreationInputMiddlewareCtxKey).(*types.PASETOCreationInput)
-	if !ok || pasetoRequest == nil {
-		logger.Info("no input found for PASETO request")
-		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+	input := new(types.PASETOCreationInput)
+	if err := s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 		return
 	}
 
-	requestedAccount := pasetoRequest.AccountID
-	logger = logger.WithValue(keys.APIClientClientIDKey, pasetoRequest.ClientID)
+	if err := input.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	requestedAccount := input.AccountID
+	logger = logger.WithValue(keys.APIClientClientIDKey, input.ClientID)
 
 	if requestedAccount != 0 {
 		logger = logger.WithValue("requested_account", requestedAccount)
 	}
 
-	reqTime := time.Unix(0, pasetoRequest.RequestTime)
+	reqTime := time.Unix(0, input.RequestTime)
 	if time.Until(reqTime) > pasetoRequestTimeThreshold || time.Since(reqTime) > pasetoRequestTimeThreshold {
 		logger.WithValue("provided_request_time", reqTime.String()).Debug("PASETO request denied because its time is out of threshold")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -355,7 +373,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	client, clientRetrievalErr := s.apiClientManager.GetAPIClientByClientID(ctx, pasetoRequest.ClientID)
+	client, clientRetrievalErr := s.apiClientManager.GetAPIClientByClientID(ctx, input.ClientID)
 	if clientRetrievalErr != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching API client")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -363,7 +381,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	mac := hmac.New(sha256.New, client.ClientSecret)
-	if _, macWriteErr := mac.Write(s.encoderDecoder.MustEncodeJSON(ctx, pasetoRequest)); macWriteErr != nil {
+	if _, macWriteErr := mac.Write(s.encoderDecoder.MustEncodeJSON(ctx, input)); macWriteErr != nil {
 		// sha256.digest.Write does not ever return an error, so this branch will remain "uncovered" :(
 		observability.AcknowledgeError(err, logger, span, "writing HMAC message for comparison")
 		s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)

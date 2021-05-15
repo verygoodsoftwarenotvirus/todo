@@ -61,8 +61,6 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 	require.NotNil(t, helper.req)
 
-	helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), accountStatusUpdateMiddlewareCtxKey, helper.exampleInput))
-
 	sessionCtxData, err := types.SessionContextDataFromUser(
 		helper.exampleUser,
 		helper.exampleAccount.ID,

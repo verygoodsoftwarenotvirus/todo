@@ -3,7 +3,7 @@ package passwords
 import (
 	"context"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 

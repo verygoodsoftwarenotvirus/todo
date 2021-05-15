@@ -7,7 +7,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 )
 
 //go:embed templates/partials/settings/user_settings.gotpl

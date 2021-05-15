@@ -57,9 +57,6 @@ type (
 
 	// AccountSubscriptionPlanDataService describes a structure capable of serving traffic related to account subscription plans.
 	AccountSubscriptionPlanDataService interface {
-		CreationInputMiddleware(next http.Handler) http.Handler
-		UpdateInputMiddleware(next http.Handler) http.Handler
-
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)

@@ -49,8 +49,8 @@ type (
 		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`
 	}
 
-	// TransferAccountOwnershipInput represents what a User could set as input for updating account user memberships.
-	TransferAccountOwnershipInput struct {
+	// AccountOwnershipTransferInput represents what a User could set as input for updating account user memberships.
+	AccountOwnershipTransferInput struct {
 		Reason       string `json:"reason"`
 		CurrentOwner uint64 `json:"currentOwner"`
 		NewOwner     uint64 `json:"newOwner"`
@@ -69,7 +69,7 @@ type (
 		MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser uint64) error
 		UserIsMemberOfAccount(ctx context.Context, userID, accountID uint64) (bool, error)
 		ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser uint64, input *ModifyUserPermissionsInput) error
-		TransferAccountOwnership(ctx context.Context, accountID uint64, transferredBy uint64, input *TransferAccountOwnershipInput) error
+		TransferAccountOwnership(ctx context.Context, accountID uint64, transferredBy uint64, input *AccountOwnershipTransferInput) error
 		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput, addedByUser uint64) error
 		RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser uint64, reason string) error
 	}
@@ -84,10 +84,10 @@ func (x *AddUserToAccountInput) ValidateWithContext(ctx context.Context) error {
 	)
 }
 
-var _ validation.ValidatableWithContext = (*TransferAccountOwnershipInput)(nil)
+var _ validation.ValidatableWithContext = (*AccountOwnershipTransferInput)(nil)
 
-// ValidateWithContext validates a TransferAccountOwnershipInput.
-func (x *TransferAccountOwnershipInput) ValidateWithContext(ctx context.Context) error {
+// ValidateWithContext validates a AccountOwnershipTransferInput.
+func (x *AccountOwnershipTransferInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
 		validation.Field(&x.CurrentOwner, validation.Required),
 		validation.Field(&x.NewOwner, validation.Required),

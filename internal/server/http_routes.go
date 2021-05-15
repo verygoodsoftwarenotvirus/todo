@@ -1,11 +1,12 @@
-package httpserver
+package server
 
 import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
@@ -29,7 +30,7 @@ func buildNumericIDURLChunk(key string) string {
 	return fmt.Sprintf(root+numericIDPattern, key)
 }
 
-func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {
+func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, _ metrics.Config, metricsHandler metrics.Handler) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -49,22 +50,22 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 	// Frontend routes.
 	s.frontendService.SetupRoutes(router)
 
-	router.WithMiddleware(s.authService.PASETOCreationInputMiddleware).Post("/paseto", s.authService.PASETOHandler)
+	router.Post("/paseto", s.authService.PASETOHandler)
 
 	authenticatedRouter := router.WithMiddleware(s.authService.UserAttributionMiddleware)
 	authenticatedRouter.Get("/auth/status", s.authService.StatusHandler)
 
 	router.Route("/users", func(userRouter routing.Router) {
-		userRouter.WithMiddleware(s.authService.UserLoginInputMiddleware).Post("/login", s.authService.LoginHandler)
+		userRouter.Post("/login", s.authService.LoginHandler)
 		userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.CookieRequirementMiddleware).Post("/logout", s.authService.LogoutHandler)
-		userRouter.WithMiddleware(s.usersService.UserRegistrationInputMiddleware).Post(root, s.usersService.CreateHandler)
-		userRouter.WithMiddleware(s.usersService.TOTPSecretVerificationInputMiddleware).Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
+		userRouter.Post(root, s.usersService.CreateHandler)
+		userRouter.Post("/totp_secret/verify", s.usersService.TOTPSecretVerificationHandler)
 
 		// need credentials beyond this point
 		authedRouter := userRouter.WithMiddleware(s.authService.UserAttributionMiddleware, s.authService.AuthorizationMiddleware)
-		authedRouter.WithMiddleware(s.authService.ChangeActiveAccountInputMiddleware).Post("/account/select", s.authService.ChangeActiveAccountHandler)
-		authedRouter.WithMiddleware(s.usersService.TOTPSecretRefreshInputMiddleware).Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
-		authedRouter.WithMiddleware(s.usersService.PasswordUpdateInputMiddleware).Put("/password/new", s.usersService.UpdatePasswordHandler)
+		authedRouter.Post("/account/select", s.authService.ChangeActiveAccountHandler)
+		authedRouter.Post("/totp_secret/new", s.usersService.NewTOTPSecretHandler)
+		authedRouter.Put("/password/new", s.usersService.UpdatePasswordHandler)
 	})
 
 	authenticatedRouter.WithMiddleware(s.authService.AuthorizationMiddleware).Route("/api/v1", func(v1Router routing.Router) {
@@ -73,21 +74,21 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 		// Account Subscription Plans
 		adminRouter.Route("/account_subscription_plans", func(plansRouter routing.Router) {
 			plansRouter.Get(root, s.plansService.ListHandler)
-			plansRouter.WithMiddleware(s.plansService.CreationInputMiddleware).Post(root, s.plansService.CreateHandler)
+			plansRouter.Post(root, s.plansService.CreateHandler)
 
 			singlePlanRoute := buildNumericIDURLChunk(accountsubscriptionplans.AccountSubscriptionPlanIDURIParamKey)
 			plansRouter.Route(singlePlanRoute, func(singlePlanRouter routing.Router) {
 				singlePlanRouter.Get(root, s.plansService.ReadHandler)
 				singlePlanRouter.Get(auditRoute, s.plansService.AuditEntryHandler)
 				singlePlanRouter.Delete(root, s.plansService.ArchiveHandler)
-				singlePlanRouter.WithMiddleware(s.plansService.UpdateInputMiddleware).Put(root, s.plansService.UpdateHandler)
+				singlePlanRouter.Put(root, s.plansService.UpdateHandler)
 			})
 		})
 
 		// Admin
 		adminRouter.Route("/admin", func(adminRouter routing.Router) {
 			adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
-			adminRouter.WithMiddleware(s.adminService.AccountStatusUpdateInputMiddleware).
+			adminRouter.
 				Post("/users/status", s.adminService.UserAccountStatusChangeHandler)
 
 			adminRouter.Route("/audit_log", func(auditRouter routing.Router) {
@@ -117,47 +118,42 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 
 		// Accounts
 		v1Router.Route("/accounts", func(accountsRouter routing.Router) {
-			accountsRouter.WithMiddleware(s.accountsService.CreationInputMiddleware).Post(root, s.accountsService.CreateHandler)
+			accountsRouter.Post(root, s.accountsService.CreateHandler)
 			accountsRouter.Get(root, s.accountsService.ListHandler)
 
 			singleUserRoute := buildNumericIDURLChunk(accounts.UserIDURIParamKey)
 			singleAccountRoute := buildNumericIDURLChunk(accounts.AccountIDURIParamKey)
 			accountsRouter.Route(singleAccountRoute, func(singleAccountRouter routing.Router) {
 				singleAccountRouter.Get(root, s.accountsService.ReadHandler)
-				singleAccountRouter.WithMiddleware(s.accountsService.UpdateInputMiddleware).Put(root, s.accountsService.UpdateHandler)
+				singleAccountRouter.Put(root, s.accountsService.UpdateHandler)
 				singleAccountRouter.Delete(root, s.accountsService.ArchiveHandler)
 				singleAccountRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.accountsService.AuditEntryHandler)
 
-				singleAccountRouter.Post("/default", s.accountsService.MarkAsDefaultHandler)
-				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveUserHandler)
-				singleAccountRouter.WithMiddleware(s.accountsService.AddMemberInputMiddleware).
-					Post("/member", s.accountsService.AddUserHandler)
-				singleAccountRouter.WithMiddleware(s.accountsService.ModifyMemberPermissionsInputMiddleware).
-					Patch("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
-				singleAccountRouter.WithMiddleware(s.accountsService.AccountTransferInputMiddleware).
-					Post("/transfer", s.accountsService.TransferAccountOwnershipHandler)
+				singleAccountRouter.Post("/default", s.accountsService.MarkAsDefaultAccountHandler)
+				singleAccountRouter.Delete("/members"+singleUserRoute, s.accountsService.RemoveMemberHandler)
+				singleAccountRouter.Post("/member", s.accountsService.AddMemberHandler)
+				singleAccountRouter.Patch("/members"+singleUserRoute+"/permissions", s.accountsService.ModifyMemberPermissionsHandler)
+				singleAccountRouter.Post("/transfer", s.accountsService.TransferAccountOwnershipHandler)
 			})
 		})
 
 		// API Clients
 		v1Router.Route("/api_clients", func(clientRouter routing.Router) {
 			clientRouter.Get(root, s.apiClientsService.ListHandler)
-			clientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageAPIClients), s.apiClientsService.CreationInputMiddleware).Post(root, s.apiClientsService.CreateHandler)
+			clientRouter.Post(root, s.apiClientsService.CreateHandler)
 
 			singleClientRoute := buildNumericIDURLChunk(apiclients.APIClientIDURIParamKey)
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
 				singleClientRouter.Get(root, s.apiClientsService.ReadHandler)
-				singleClientRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageAPIClients)).Delete(root, s.apiClientsService.ArchiveHandler)
+				singleClientRouter.Delete(root, s.apiClientsService.ArchiveHandler)
 				singleClientRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.apiClientsService.AuditEntryHandler)
 			})
 		})
 
 		// Webhooks
 		v1Router.Route("/webhooks", func(webhookRouter routing.Router) {
-			webhookRouter.WithMiddleware(
-				s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks),
-				s.webhooksService.CreationInputMiddleware,
-			).Post(root, s.webhooksService.CreateHandler)
+			webhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks)).
+				Post(root, s.webhooksService.CreateHandler)
 			webhookRouter.Get(root, s.webhooksService.ListHandler)
 
 			singleWebhookRoute := buildNumericIDURLChunk(webhooks.WebhookIDURIParamKey)
@@ -165,10 +161,8 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 				singleWebhookRouter.Get(root, s.webhooksService.ReadHandler)
 				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks)).
 					Delete(root, s.webhooksService.ArchiveHandler)
-				singleWebhookRouter.WithMiddleware(
-					s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks),
-					s.webhooksService.UpdateInputMiddleware,
-				).Put(root, s.webhooksService.UpdateHandler)
+				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks)).
+					Put(root, s.webhooksService.UpdateHandler)
 				singleWebhookRouter.WithMiddleware(s.authService.AdminMiddleware).
 					Get(auditRoute, s.webhooksService.AuditEntryHandler)
 			})
@@ -179,7 +173,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 		itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
 		itemIDRouteParam := buildNumericIDURLChunk(items.ItemIDURIParamKey)
 		v1Router.Route(itemsRouteWithPrefix, func(itemsRouter routing.Router) {
-			itemsRouter.WithMiddleware(s.itemsService.CreationInputMiddleware).
+			itemsRouter.
 				Post(root, s.itemsService.CreateHandler)
 			itemsRouter.Get(root, s.itemsService.ListHandler)
 			itemsRouter.Get(searchRoot, s.itemsService.SearchHandler)
@@ -188,7 +182,7 @@ func (s *Server) setupRouter(ctx context.Context, router routing.Router, _ metri
 				singleItemRouter.Get(root, s.itemsService.ReadHandler)
 				singleItemRouter.Head(root, s.itemsService.ExistenceHandler)
 				singleItemRouter.Delete(root, s.itemsService.ArchiveHandler)
-				singleItemRouter.WithMiddleware(s.itemsService.UpdateInputMiddleware).Put(root, s.itemsService.UpdateHandler)
+				singleItemRouter.Put(root, s.itemsService.UpdateHandler)
 				singleItemRouter.WithMiddleware(s.authService.AdminMiddleware).Get(auditRoute, s.itemsService.AuditEntryHandler)
 			})
 		})

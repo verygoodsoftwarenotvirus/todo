@@ -581,9 +581,11 @@ func Lint() error {
 		lintImageVersion = "latest"
 	)
 
+	logger.Info("running some quick fixers")
 	fixFieldAlignment()
 	runGoimports()
 
+	logger.Info("linting...")
 	if err := dockerLint(verbose); err != nil {
 		return err
 	}

@@ -5,7 +5,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	// import embed for the side effect.
 	_ "embed"

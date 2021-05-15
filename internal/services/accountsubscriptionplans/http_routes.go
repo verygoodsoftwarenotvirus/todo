@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	observability "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
@@ -65,19 +65,25 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check session context data for parsed input struct.
-	input, ok := ctx.Value(createMiddlewareCtxKey).(*types.AccountSubscriptionPlanCreationInput)
-	if !ok {
-		logger.Info("valid input not attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
-
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
+		return
+	}
+
+	// check session context data for parsed input struct.
+	input := new(types.AccountSubscriptionPlanCreationInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	if err = input.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -147,14 +153,6 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	// check for parsed input attached to session context data.
-	input, ok := ctx.Value(updateMiddlewareCtxKey).(*types.AccountSubscriptionPlanUpdateInput)
-	if !ok {
-		logger.Info("no input attached to request")
-		s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
-		return
-	}
-
 	// determine user ID.
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -165,6 +163,16 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+
+	// check for parsed input attached to session context data.
+	input := new(types.AccountSubscriptionPlanUpdateInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "decoding request body")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
+		return
+	}
+
+	// we would call input.ValidateWithContext(ctx) here if that were applicable.
 
 	// determine plan ID.
 	accountSubscriptionPlanID := s.accountSubscriptionPlanIDFetcher(req)

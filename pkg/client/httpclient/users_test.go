@@ -190,7 +190,7 @@ func (s *usersTestSuite) TestClient_CreateUser() {
 		t := s.T()
 
 		expected := fakes.BuildUserCreationResponseFromUser(s.exampleUser)
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
+		exampleInput := fakes.BuildFakeUserRegistrationInputFromUser(s.exampleUser)
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 		c := buildTestClientWithRequestBodyValidation(t, spec, &types.UserRegistrationInput{}, exampleInput, expected)
 
@@ -212,7 +212,7 @@ func (s *usersTestSuite) TestClient_CreateUser() {
 	s.Run("with error building request", func() {
 		t := s.T()
 
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
+		exampleInput := fakes.BuildFakeUserRegistrationInputFromUser(s.exampleUser)
 		c := buildTestClientWithInvalidURL(t)
 		actual, err := c.CreateUser(s.ctx, exampleInput)
 
@@ -223,7 +223,7 @@ func (s *usersTestSuite) TestClient_CreateUser() {
 	s.Run("with error executing request", func() {
 		t := s.T()
 
-		exampleInput := fakes.BuildFakeUserCreationInputFromUser(s.exampleUser)
+		exampleInput := fakes.BuildFakeUserRegistrationInputFromUser(s.exampleUser)
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
 		actual, err := c.CreateUser(s.ctx, exampleInput)

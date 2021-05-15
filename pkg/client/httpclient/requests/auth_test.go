@@ -18,10 +18,10 @@ func TestBuilder_BuildUserStatusRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPath)
 
-		actual, err := h.builder.BuildUserStatusRequest(h.ctx)
+		actual, err := helper.builder.BuildUserStatusRequest(helper.ctx)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -36,12 +36,12 @@ func TestBuilder_BuildLoginRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		exampleInput := fakes.BuildFakeUserLoginInputFromUser(h.exampleUser)
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(helper.exampleUser)
 
-		actual, err := h.builder.BuildLoginRequest(h.ctx, exampleInput)
+		actual, err := helper.builder.BuildLoginRequest(helper.ctx, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -50,9 +50,9 @@ func TestBuilder_BuildLoginRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		req, err := h.builder.BuildLoginRequest(h.ctx, nil)
+		req, err := helper.builder.BuildLoginRequest(helper.ctx, nil)
 		assert.Nil(t, req)
 		assert.Error(t, err)
 	})
@@ -66,10 +66,10 @@ func TestBuilder_BuildLogoutRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		spec := newRequestSpec(true, http.MethodPost, "", expectedPath)
 
-		actual, err := h.builder.BuildLogoutRequest(h.ctx)
+		actual, err := helper.builder.BuildLogoutRequest(helper.ctx)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -84,11 +84,11 @@ func TestBuilder_BuildChangePasswordRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPath)
 
-		actual, err := h.builder.BuildChangePasswordRequest(h.ctx, &http.Cookie{}, exampleInput)
+		actual, err := helper.builder.BuildChangePasswordRequest(helper.ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -97,9 +97,9 @@ func TestBuilder_BuildChangePasswordRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildChangePasswordRequest(h.ctx, &http.Cookie{}, nil)
+		actual, err := helper.builder.BuildChangePasswordRequest(helper.ctx, &http.Cookie{}, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -107,11 +107,11 @@ func TestBuilder_BuildChangePasswordRequest(T *testing.T) {
 	T.Run("with error building request", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
-		h.builder = buildTestRequestBuilderWithInvalidURL()
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
 		exampleInput := fakes.BuildFakePasswordUpdateInput()
 
-		actual, err := h.builder.BuildChangePasswordRequest(h.ctx, &http.Cookie{}, exampleInput)
+		actual, err := helper.builder.BuildChangePasswordRequest(helper.ctx, &http.Cookie{}, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -125,11 +125,11 @@ func TestBuilder_BuildCycleTwoFactorSecretRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
-		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, exampleInput)
+		actual, err := helper.builder.BuildCycleTwoFactorSecretRequest(helper.ctx, &http.Cookie{}, exampleInput)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -138,10 +138,10 @@ func TestBuilder_BuildCycleTwoFactorSecretRequest(T *testing.T) {
 	T.Run("with nil cookie", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
-		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, nil, exampleInput)
+		actual, err := helper.builder.BuildCycleTwoFactorSecretRequest(helper.ctx, nil, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -149,9 +149,9 @@ func TestBuilder_BuildCycleTwoFactorSecretRequest(T *testing.T) {
 	T.Run("with nil input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, nil)
+		actual, err := helper.builder.BuildCycleTwoFactorSecretRequest(helper.ctx, &http.Cookie{}, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -159,9 +159,9 @@ func TestBuilder_BuildCycleTwoFactorSecretRequest(T *testing.T) {
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, &types.TOTPSecretRefreshInput{})
+		actual, err := helper.builder.BuildCycleTwoFactorSecretRequest(helper.ctx, &http.Cookie{}, &types.TOTPSecretRefreshInput{})
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -169,11 +169,11 @@ func TestBuilder_BuildCycleTwoFactorSecretRequest(T *testing.T) {
 	T.Run("with error building request", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
-		h.builder = buildTestRequestBuilderWithInvalidURL()
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
 		exampleInput := fakes.BuildFakeTOTPSecretRefreshInput()
 
-		actual, err := h.builder.BuildCycleTwoFactorSecretRequest(h.ctx, &http.Cookie{}, exampleInput)
+		actual, err := helper.builder.BuildCycleTwoFactorSecretRequest(helper.ctx, &http.Cookie{}, exampleInput)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -187,12 +187,12 @@ func TestBuilder_BuildVerifyTOTPSecretRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(h.exampleUser)
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
 
-		actual, err := h.builder.BuildVerifyTOTPSecretRequest(h.ctx, h.exampleUser.ID, exampleInput.TOTPToken)
+		actual, err := helper.builder.BuildVerifyTOTPSecretRequest(helper.ctx, helper.exampleUser.ID, exampleInput.TOTPToken)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
@@ -201,10 +201,10 @@ func TestBuilder_BuildVerifyTOTPSecretRequest(T *testing.T) {
 	T.Run("with invalid user ID", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
-		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(h.exampleUser)
+		helper := buildTestHelper()
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
 
-		actual, err := h.builder.BuildVerifyTOTPSecretRequest(h.ctx, 0, exampleInput.TOTPToken)
+		actual, err := helper.builder.BuildVerifyTOTPSecretRequest(helper.ctx, 0, exampleInput.TOTPToken)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -212,9 +212,9 @@ func TestBuilder_BuildVerifyTOTPSecretRequest(T *testing.T) {
 	T.Run("with invalid token", func(t *testing.T) {
 		t.Parallel()
 
-		h := buildTestHelper()
+		helper := buildTestHelper()
 
-		actual, err := h.builder.BuildVerifyTOTPSecretRequest(h.ctx, h.exampleUser.ID, " nope lol ")
+		actual, err := helper.builder.BuildVerifyTOTPSecretRequest(helper.ctx, helper.exampleUser.ID, " nope lol ")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

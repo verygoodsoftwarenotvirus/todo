@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -44,7 +44,7 @@ func TestFromConfig(T *testing.T) {
 		t.Parallel()
 
 		exampleConfig := &config.ServerConfig{
-			Server: httpserver.Config{
+			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
 				StartupDeadline: time.Minute,
@@ -160,7 +160,7 @@ func TestParseConfigFile(T *testing.T) {
 		filename := tf.Name()
 
 		exampleConfig := &config.ServerConfig{
-			Server: httpserver.Config{
+			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
 				StartupDeadline: time.Minute,
@@ -251,7 +251,7 @@ debug = ":banana:"
 		filename := tf.Name()
 
 		exampleConfig := &config.ServerConfig{
-			Server: httpserver.Config{
+			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
 				StartupDeadline: time.Minute,

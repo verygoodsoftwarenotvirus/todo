@@ -11,15 +11,14 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
-	server2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	httpserver "gitlab.com/verygoodsoftwarenotvirus/todo/internal/server/http"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
@@ -38,8 +37,8 @@ import (
 // Injectors from build.go:
 
 // Build builds a server.
-func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server2.Server, error) {
-	httpserverConfig := cfg.Server
+func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server.HTTPServer, error) {
+	serverConfig := cfg.Server
 	observabilityConfig := &cfg.Observability
 	metricsConfig := observabilityConfig.Metrics
 	config3 := &observabilityConfig.Metrics
@@ -54,7 +53,7 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
 	cookieConfig := authConfig.Cookies
 	configConfig := cfg.Database
-	sessionManager, err := dbconfig.ProvideSessionManager(cookieConfig, configConfig, db)
+	sessionManager, err := config2.ProvideSessionManager(cookieConfig, configConfig, db)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,8 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	accountDataService := accounts.ProvideService(logger, accountDataManager, accountUserMembershipDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
 	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
 	accountSubscriptionPlanDataService := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
-	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager)
+	apiclientsConfig := apiclients.ProvideConfig(authConfig)
+	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager, apiclientsConfig)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	searchConfig := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
@@ -103,13 +103,9 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	usersService := frontend.ProvideUsersService(userDataService)
 	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dbm, routeParamManager)
 	router := chi.NewRouter(logger)
-	httpserverServer, err := httpserver.ProvideServer(ctx, httpserverConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, dbm, logger, serverEncoderDecoder, router)
+	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, metricsConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, dbm, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}
-	serverServer, err := server2.ProvideServer(cfg, httpserverServer)
-	if err != nil {
-		return nil, err
-	}
-	return serverServer, nil
+	return httpServer, nil
 }

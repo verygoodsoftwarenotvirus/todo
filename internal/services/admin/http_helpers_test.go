@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
@@ -28,7 +30,7 @@ type adminServiceHTTPRoutesTestHelper struct {
 }
 
 func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
-	helper.exampleUser.ServiceAdminPermission = 0
+	helper.exampleUser.ServiceRole = authorization.ServiceUserRole
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
 			helper.exampleAccount.ID: {
@@ -51,7 +53,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	helper.exampleUser = fakes.BuildFakeUser()
-	helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
+	helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
 	helper.exampleAccount = fakes.BuildFakeAccount()
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 	helper.exampleInput = fakes.BuildFakeUserReputationUpdateInput()

@@ -78,8 +78,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{
-			ID:                     12345,
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(1),
+			ID: 12345,
 		}
 
 		exampleAccount := &Account{
@@ -91,7 +90,6 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		expected := &SessionContextData{
 			Requester: RequesterInfo{
 				ID:                     exampleUser.ID,
-				ServiceAdminPermission: exampleUser.ServiceAdminPermission,
 				ServiceRole:            exampleUser.ServiceRole,
 				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
 			},
@@ -119,8 +117,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{
-			ID:                     12345,
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(1),
+			ID: 12345,
 		}
 
 		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
@@ -134,8 +131,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{
-			ID:                     12345,
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(1),
+			ID: 12345,
 		}
 
 		exampleAccount := &Account{

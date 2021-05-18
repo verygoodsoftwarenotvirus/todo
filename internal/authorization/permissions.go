@@ -76,6 +76,7 @@ func (p permission) Match(perm gorbac.Permission) bool {
 var (
 	// service admin permissions.
 	serviceAdminPermissions = map[string]gorbac.Permission{
+		CycleCookieSecretPermission.ID():            CycleCookieSecretPermission,
 		ReadAccountAuditLogEntriesPermission.ID():   ReadAccountAuditLogEntriesPermission,
 		ReadAPIClientAuditLogEntriesPermission.ID(): ReadAPIClientAuditLogEntriesPermission,
 		ReadUserAuditLogEntriesPermission.ID():      ReadUserAuditLogEntriesPermission,

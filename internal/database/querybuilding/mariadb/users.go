@@ -3,10 +3,9 @@ package mariadb
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
@@ -161,9 +160,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 	defer span.End()
 
 	serviceRole := authorization.ServiceUserRole
-	perms := 0
 	if testUserConfig.IsServiceAdmin {
-		perms = math.MaxInt64
 		serviceRole = authorization.ServiceAdminRole
 	}
 
@@ -179,7 +176,6 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
 				querybuilding.UsersTableServiceRoleColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -189,7 +185,6 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
 				serviceRole.String(),
-				perms,
 				currentUnixTimeQuery,
 			),
 	)
@@ -216,7 +211,6 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
 				querybuilding.UsersTableServiceRoleColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),
@@ -225,7 +219,6 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
 				authorization.ServiceUserRole.String(),
-				0,
 			),
 	)
 }

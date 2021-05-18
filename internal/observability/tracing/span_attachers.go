@@ -93,7 +93,7 @@ func AttachSessionContextDataToSpan(span trace.Span, sessionCtxData *types.Sessi
 	if sessionCtxData != nil {
 		attachUint64ToSpan(span, keys.RequesterIDKey, sessionCtxData.Requester.ID)
 		attachUint64ToSpan(span, keys.ActiveAccountIDKey, sessionCtxData.ActiveAccountID)
-		attachBooleanToSpan(span, keys.UserIsAdminKey, sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin())
+		attachStringToSpan(span, keys.ServiceRoleKey, sessionCtxData.Requester.ServiceRole.String())
 	}
 }
 

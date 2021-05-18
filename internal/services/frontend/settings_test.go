@@ -240,6 +240,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		exampleSessionContextData.Requester.ServiceRole = authorization.ServiceAdminRole
 		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
@@ -258,6 +259,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		exampleSessionContextData.Requester.ServiceRole = authorization.ServiceAdminRole
 		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
@@ -291,8 +293,8 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+
 		exampleSessionContextData.Requester.ServiceRole = authorization.ServiceUserRole
-		exampleSessionContextData.Requester.ServiceAdminPermission = 0
 		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}

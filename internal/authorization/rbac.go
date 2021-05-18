@@ -4,6 +4,10 @@ import (
 	"gopkg.in/mikespook/gorbac.v2"
 )
 
+type (
+	role int
+)
+
 var (
 	globalAuthorizer *gorbac.RBAC
 )

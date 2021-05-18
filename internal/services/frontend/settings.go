@@ -44,7 +44,7 @@ func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 				ContentData: user,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
@@ -91,7 +91,7 @@ func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 				ContentData: account,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
@@ -121,7 +121,7 @@ func (s *service) buildAdminSettingsView(includeBaseTemplate bool) func(http.Res
 			return
 		}
 
-		if !sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() {
+		if !sessionCtxData.Requester.ServiceRole.IsServiceAdmin() {
 			observability.AcknowledgeError(err, logger, span, "no session context data attached to request")
 			res.WriteHeader(http.StatusUnauthorized)
 			return
@@ -136,7 +136,7 @@ func (s *service) buildAdminSettingsView(includeBaseTemplate bool) func(http.Res
 				ContentData: nil,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)

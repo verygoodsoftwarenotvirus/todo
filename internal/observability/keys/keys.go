@@ -23,6 +23,8 @@ const (
 	UserIsAdminKey = "user.is_admin"
 	// UsernameKey is the standard key for referring to a username.
 	UsernameKey = "user.username"
+	// ServiceRoleKey is the standard key for referring to a username.
+	ServiceRoleKey = "user.service_role"
 	// NameKey is the standard key for referring to a name.
 	NameKey = "name"
 	// FilterCreatedAfterKey is the standard key for referring to a types.QueryFilter's CreatedAfter field.

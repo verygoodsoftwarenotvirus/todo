@@ -89,7 +89,7 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 		adminRouter.Route("/admin", func(adminRouter routing.Router) {
 			adminRouter.Post("/cycle_cookie_secret", s.authService.CycleCookieSecretHandler)
 			adminRouter.
-				Post("/users/status", s.adminService.UserAccountStatusChangeHandler)
+				Post("/users/status", s.adminService.UserReputationChangeHandler)
 
 			adminRouter.Route("/audit_log", func(auditRouter routing.Router) {
 				entryIDRouteParam := buildNumericIDURLChunk(audit.LogEntryURIParamKey)

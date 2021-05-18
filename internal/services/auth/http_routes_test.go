@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
@@ -1299,7 +1301,7 @@ func TestAuthService_CycleSecretHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
+		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
 		helper.setContextFetcher(t)
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -1379,11 +1381,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expectedOutput := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				ID:                     helper.exampleUser.ID,
-				Reputation:             helper.exampleUser.Reputation,
-				ReputationExplanation:  helper.exampleUser.ReputationExplanation,
-				ServiceAdminPermission: helper.exampleUser.ServiceAdminPermission,
-				ServiceRole:            helper.exampleUser.ServiceRole,
+				ID:                    helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.Reputation,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServiceRole:           helper.exampleUser.ServiceRole,
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,
 			AccountPermissionsMap: helper.examplePerms,
@@ -1477,11 +1478,10 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expectedOutput := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				ID:                     helper.exampleUser.ID,
-				Reputation:             helper.exampleUser.Reputation,
-				ReputationExplanation:  helper.exampleUser.ReputationExplanation,
-				ServiceAdminPermission: helper.exampleUser.ServiceAdminPermission,
-				ServiceRole:            helper.exampleUser.ServiceRole,
+				ID:                    helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.Reputation,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServiceRole:           helper.exampleUser.ServiceRole,
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,
 			AccountPermissionsMap: helper.examplePerms,

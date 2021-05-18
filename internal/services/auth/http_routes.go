@@ -171,10 +171,9 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 	http.SetCookie(res, cookie)
 
 	statusResponse := &types.UserStatusResponse{
-		UserIsAuthenticated:            true,
-		UserReputation:                 user.Reputation,
-		UserReputationExplanation:      user.ReputationExplanation,
-		ServiceAdminPermissionsSummary: user.ServiceAdminPermission.Summary(),
+		UserIsAuthenticated:       true,
+		UserReputation:            user.Reputation,
+		UserReputationExplanation: user.ReputationExplanation,
 	}
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, statusResponse, http.StatusAccepted)
@@ -298,7 +297,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	http.Redirect(res, req, "/", http.StatusSeeOther)
 }
 
-// StatusHandler returns the user info for the user making the request.
+// StatusHandler returns the user info for the user making the request. TODO: DELETEME
 func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -316,12 +315,11 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	statusResponse = &types.UserStatusResponse{
-		AccountPermissions:             sessionCtxData.AccountPermissionsMap.ToPermissionMapByAccountName(),
-		ActiveAccount:                  sessionCtxData.ActiveAccountID,
-		ServiceAdminPermissionsSummary: sessionCtxData.Requester.ServiceAdminPermission.Summary(),
-		UserReputation:                 sessionCtxData.Requester.Reputation,
-		UserReputationExplanation:      sessionCtxData.Requester.ReputationExplanation,
-		UserIsAuthenticated:            true,
+		AccountPermissions:        sessionCtxData.AccountPermissionsMap.ToPermissionMapByAccountName(),
+		ActiveAccount:             sessionCtxData.ActiveAccountID,
+		UserReputation:            sessionCtxData.Requester.Reputation,
+		UserReputationExplanation: sessionCtxData.Requester.ReputationExplanation,
+		UserIsAuthenticated:       true,
 	}
 
 	s.encoderDecoder.RespondWithData(ctx, res, statusResponse)
@@ -502,8 +500,8 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if !sessionCtxData.Requester.ServiceAdminPermission.CanCycleCookieSecrets() {
-		logger.WithValue("admin_permissions", sessionCtxData.Requester.ServiceAdminPermission).Debug("invalid permissions")
+	if !sessionCtxData.Requester.ServiceRole.CanCycleCookieSecrets() {
+		logger.WithValue(keys.ServiceRoleKey, sessionCtxData.Requester.ServiceRole.String()).Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}

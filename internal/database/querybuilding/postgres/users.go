@@ -3,10 +3,9 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
@@ -153,9 +152,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 	defer span.End()
 
 	serviceRole := authorization.ServiceUserRole
-	perms := 0
 	if testUserConfig.IsServiceAdmin {
-		perms = math.MaxInt64
 		serviceRole = authorization.ServiceAdminRole
 	}
 
@@ -169,7 +166,6 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
 				querybuilding.UsersTableServiceRoleColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -179,7 +175,6 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
 				serviceRole.String(),
-				perms,
 				currentUnixTimeQuery,
 			).
 			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
@@ -205,7 +200,6 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
 				querybuilding.UsersTableServiceRoleColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),
@@ -214,7 +208,6 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
 				authorization.ServiceUserRole.String(),
-				0,
 			).
 			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
 	)

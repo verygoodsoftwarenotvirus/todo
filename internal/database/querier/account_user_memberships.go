@@ -114,7 +114,6 @@ func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID 
 			Reputation:             user.Reputation,
 			ReputationExplanation:  user.ReputationExplanation,
 			ServiceRole:            user.ServiceRole,
-			ServiceAdminPermission: user.ServiceAdminPermission,
 			RequiresPasswordChange: user.RequiresPasswordChange,
 		},
 		AccountPermissionsMap: membershipMap,

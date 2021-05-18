@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -26,7 +24,6 @@ func BuildFakeUser() *types.User {
 		Reputation:                types.GoodStandingAccountStatus,
 		TwoFactorSecret:           base32.StdEncoding.EncodeToString([]byte(fake.Password(false, true, true, false, false, 32))),
 		TwoFactorSecretVerifiedOn: func(i uint64) *uint64 { return &i }(uint64(uint32(fake.Date().Unix()))),
-		ServiceAdminPermission:    permissions.NewServiceAdminPermissions(0),
 		ServiceRole:               authorization.ServiceUserRole,
 		CreatedOn:                 uint64(uint32(fake.Date().Unix())),
 	}

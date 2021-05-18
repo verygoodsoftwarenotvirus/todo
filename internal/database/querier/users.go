@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"math"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -31,7 +32,6 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 
 	var (
 		serviceRole string
-		perms       int64
 	)
 
 	targetVars := []interface{}{
@@ -45,7 +45,6 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		&user.TwoFactorSecret,
 		&user.TwoFactorSecretVerifiedOn,
 		&serviceRole,
-		&perms,
 		&user.Reputation,
 		&user.ReputationExplanation,
 		&user.CreatedOn,
@@ -65,8 +64,6 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 	if err != nil {
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "loading service role")
 	}
-
-	user.ServiceAdminPermission = permissions.NewServiceAdminPermissions(perms)
 
 	return user, filteredCount, totalCount, nil
 }
@@ -385,6 +382,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
+		ServiceRole:     authorization.ServiceUserRole,
 		CreatedOn:       q.currentTime(),
 	}
 

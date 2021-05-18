@@ -63,22 +63,20 @@ type (
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
-		Reputation             userReputation                     `json:"-"`
-		ReputationExplanation  string                             `json:"-"`
-		ServiceRole            authorization.ServiceRole          `json:"-"`
-		ID                     uint64                             `json:"-"`
-		ServiceAdminPermission permissions.ServiceAdminPermission `json:"-"`
-		RequiresPasswordChange bool                               `json:"-"`
+		Reputation             userReputation            `json:"-"`
+		ReputationExplanation  string                    `json:"-"`
+		ServiceRole            authorization.ServiceRole `json:"-"`
+		ID                     uint64                    `json:"-"`
+		RequiresPasswordChange bool                      `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		AccountPermissions             map[string]*FrontendUserAccountMembershipInfo `json:"accountPermissions,omitempty"`
-		ServiceAdminPermissionsSummary *permissions.ServiceAdminPermissionsSummary   `json:"adminPermissions,omitempty"`
-		UserReputation                 userReputation                                `json:"userReputation,omitempty"`
-		UserReputationExplanation      string                                        `json:"reputationExplanation"`
-		ActiveAccount                  uint64                                        `json:"activeAccount,omitempty"`
-		UserIsAuthenticated            bool                                          `json:"isAuthenticated"`
+		AccountPermissions        map[string]*FrontendUserAccountMembershipInfo `json:"accountPermissions,omitempty"`
+		UserReputation            userReputation                                `json:"userReputation,omitempty"`
+		UserReputationExplanation string                                        `json:"reputationExplanation"`
+		ActiveAccount             uint64                                        `json:"activeAccount,omitempty"`
+		UserIsAuthenticated       bool                                          `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -193,7 +191,6 @@ func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermi
 			Reputation:             user.Reputation,
 			ReputationExplanation:  user.ReputationExplanation,
 			ServiceRole:            user.ServiceRole,
-			ServiceAdminPermission: user.ServiceAdminPermission,
 			RequiresPasswordChange: user.RequiresPasswordChange,
 		},
 		AccountPermissionsMap: accountPermissionsMap,

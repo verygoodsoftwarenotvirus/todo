@@ -53,10 +53,9 @@ func (s *authTestSuite) TestClient_UserStatus() {
 		t := s.T()
 
 		expected := &types.UserStatusResponse{
-			ServiceAdminPermissionsSummary: s.exampleUser.ServiceAdminPermission.Summary(),
-			UserReputation:                 s.exampleUser.Reputation,
-			UserReputationExplanation:      s.exampleUser.ReputationExplanation,
-			UserIsAuthenticated:            true,
+			UserReputation:            s.exampleUser.Reputation,
+			UserReputationExplanation: s.exampleUser.ReputationExplanation,
+			UserIsAuthenticated:       true,
 		}
 		spec := newRequestSpec(false, http.MethodGet, "", expectedPath)
 		c, _ := buildTestClientWithJSONResponse(t, spec, expected)

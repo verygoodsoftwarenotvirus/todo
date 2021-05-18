@@ -7,8 +7,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -34,22 +32,21 @@ type (
 
 	// User represents a User.
 	User struct {
-		PasswordLastChangedOn     *uint64                            `json:"passwordLastChangedOn"`
-		ArchivedOn                *uint64                            `json:"archivedOn"`
-		LastUpdatedOn             *uint64                            `json:"lastUpdatedOn"`
-		TwoFactorSecretVerifiedOn *uint64                            `json:"-"`
-		AvatarSrc                 *string                            `json:"avatar"`
-		ReputationExplanation     string                             `json:"reputationExplanation"`
-		Username                  string                             `json:"username"`
-		ExternalID                string                             `json:"externalID"`
-		Reputation                userReputation                     `json:"reputation"`
-		TwoFactorSecret           string                             `json:"-"`
-		HashedPassword            string                             `json:"-"`
-		CreatedOn                 uint64                             `json:"createdOn"`
-		ID                        uint64                             `json:"id"`
-		ServiceRole               authorization.ServiceRole          `json:"serviceRole"`
-		ServiceAdminPermission    permissions.ServiceAdminPermission `json:"serviceAdminPermissions"`
-		RequiresPasswordChange    bool                               `json:"requiresPasswordChange"`
+		PasswordLastChangedOn     *uint64                   `json:"passwordLastChangedOn"`
+		ArchivedOn                *uint64                   `json:"archivedOn"`
+		LastUpdatedOn             *uint64                   `json:"lastUpdatedOn"`
+		TwoFactorSecretVerifiedOn *uint64                   `json:"-"`
+		AvatarSrc                 *string                   `json:"avatar"`
+		ReputationExplanation     string                    `json:"reputationExplanation"`
+		Username                  string                    `json:"username"`
+		ExternalID                string                    `json:"externalID"`
+		Reputation                userReputation            `json:"reputation"`
+		TwoFactorSecret           string                    `json:"-"`
+		HashedPassword            string                    `json:"-"`
+		CreatedOn                 uint64                    `json:"createdOn"`
+		ID                        uint64                    `json:"id"`
+		ServiceRole               authorization.ServiceRole `json:"serviceRole"`
+		RequiresPasswordChange    bool                      `json:"requiresPasswordChange"`
 	}
 
 	// TestUserCreationConfig is here because of cyclical imports.

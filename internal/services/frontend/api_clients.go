@@ -85,7 +85,7 @@ func (s *service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 				ContentData: apiClient,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)
@@ -158,7 +158,7 @@ func (s *service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 				ContentData: apiClients,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)

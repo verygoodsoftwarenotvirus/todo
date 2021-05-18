@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -415,7 +417,7 @@ func TestAuthService_PermissionRestrictionMiddleware(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
+		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			sessionContextData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{})
 			require.NoError(t, err)
@@ -500,7 +502,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
+		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
 		helper.setContextFetcher(t)
 
 		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
@@ -527,7 +529,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
+		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
 		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
 
 	"github.com/pquerna/otp/totp"
@@ -173,7 +172,6 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		assert.Equal(t, true, actual.UserIsAuthenticated, "expected UserIsAuthenticated to equal %v, but got %v", true, actual.UserIsAuthenticated)
 		assert.Equal(t, types.GoodStandingAccountStatus, actual.UserReputation, "expected UserReputation to equal %v, but got %v", types.GoodStandingAccountStatus, actual.UserReputation)
 		assert.Equal(t, "", actual.UserReputationExplanation, "expected UserReputationExplanation to equal %v, but got %v", "", actual.UserReputationExplanation)
-		assert.Equal(t, &permissions.ServiceAdminPermissionsSummary{}, actual.ServiceAdminPermissionsSummary, "expected ServiceAdminPermissionsSummary to be nil, but got %v", actual.ServiceAdminPermissionsSummary)
 		assert.NotZero(t, actual.ActiveAccount)
 
 		var activeAccountPresent bool

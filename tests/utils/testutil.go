@@ -28,19 +28,9 @@ func init() {
 	fake.Seed(time.Now().UnixNano())
 }
 
-// BuildMaxServiceAdminPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildMaxServiceAdminPerms() permissions.ServiceAdminPermission {
-	return permissions.NewServiceAdminPermissions(math.MaxInt64)
-}
-
 // BuildMaxUserPerms builds a helpful ServiceAdminPermissionChecker.
 func BuildMaxUserPerms() permissions.ServiceUserPermission {
 	return permissions.NewServiceUserPermissions(math.MaxInt64)
-}
-
-// BuildNoAdminPerms builds a helpful ServiceAdminPermissionChecker.
-func BuildNoAdminPerms() permissions.ServiceAdminPermission {
-	return permissions.NewServiceAdminPermissions(0)
 }
 
 // BuildNoUserPerms builds a helpful ServiceAdminPermissionChecker.

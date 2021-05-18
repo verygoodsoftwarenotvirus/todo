@@ -195,8 +195,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
 				Requester: types.RequesterInfo{
-					ServiceRole: authorization.ServiceUserRole,
-					//ServiceAdminPermission: permissions.ServiceAdminPermission(1),
+					ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 				},
 			}
 
@@ -227,8 +226,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
 				Requester: types.RequesterInfo{
-					ServiceRole: authorization.ServiceUserRole,
-					//ServiceAdminPermission: permissions.ServiceAdminPermission(1),
+					ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 				},
 			}
 

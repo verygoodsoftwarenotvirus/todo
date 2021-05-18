@@ -28,7 +28,7 @@ func BuildFakeSessionContextData() *types.SessionContextData {
 			ReputationExplanation:  "",
 			ID:                     fake.Uint64(),
 			RequiresPasswordChange: false,
-			ServiceRole:            authorization.ServiceUserRole,
+			ServicePermissions:     authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		ActiveAccountID: fakeAccountID,
 	}
@@ -39,6 +39,9 @@ func BuildFakeSessionContextDataForAccount(account *types.Account) *types.Sessio
 	fakeAccountID := fake.Uint64()
 
 	return &types.SessionContextData{
+		AccountRolesMap: map[uint64]authorization.AccountRolePermissionsChecker{
+			account.ID: authorization.NewAccountRolePermissionChecker(authorization.ServiceUserRole.String()),
+		},
 		AccountPermissionsMap: map[uint64]*types.UserAccountMembershipInfo{
 			account.ID: {
 				AccountName: account.Name,
@@ -51,7 +54,7 @@ func BuildFakeSessionContextDataForAccount(account *types.Account) *types.Sessio
 			ReputationExplanation:  "",
 			ID:                     fake.Uint64(),
 			RequiresPasswordChange: false,
-			ServiceRole:            authorization.ServiceUserRole,
+			ServicePermissions:     authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		ActiveAccountID: fakeAccountID,
 	}

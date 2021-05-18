@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -80,7 +82,7 @@ func TestQuerier_ScanAccountUserMemberships(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, err := q.scanAccountUserMemberships(ctx, mockRows)
+		_, _, _, err := q.scanAccountUserMemberships(ctx, mockRows)
 		assert.Error(t, err)
 	})
 
@@ -95,7 +97,7 @@ func TestQuerier_ScanAccountUserMemberships(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, err := q.scanAccountUserMemberships(ctx, mockRows)
+		_, _, _, err := q.scanAccountUserMemberships(ctx, mockRows)
 		assert.Error(t, err)
 	})
 }
@@ -118,6 +120,11 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 				AccountID:   membership.BelongsToAccount,
 				Permissions: membership.UserAccountPermissions,
 			}
+		}
+
+		exampleAccountPermissionsMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+		for _, membership := range exampleAccount.Members {
+			exampleAccountPermissionsMap[membership.BelongsToAccount] = authorization.NewAccountRolePermissionChecker(membership.AccountRoles...)
 		}
 
 		c, db := buildTestClient(t)
@@ -150,7 +157,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap)
+		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap, nil)
 		require.NoError(t, err)
 		require.NotNil(t, expected)
 		expected.ActiveAccountID = exampleAccount.Members[0].BelongsToAccount
@@ -226,6 +233,11 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 			}
 		}
 
+		exampleAccountPermissionsMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+		for _, membership := range exampleAccount.Members {
+			exampleAccountPermissionsMap[membership.BelongsToAccount] = authorization.NewAccountRolePermissionChecker(membership.AccountRoles...)
+		}
+
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -256,7 +268,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap)
+		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap, exampleAccountPermissionsMap)
 		require.NoError(t, err)
 		require.NotNil(t, expected)
 		expected.ActiveAccountID = 0
@@ -280,6 +292,11 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 				AccountID:   membership.BelongsToAccount,
 				Permissions: membership.UserAccountPermissions,
 			}
+		}
+
+		exampleAccountPermissionsMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+		for _, membership := range exampleAccount.Members {
+			exampleAccountPermissionsMap[membership.BelongsToAccount] = authorization.NewAccountRolePermissionChecker(membership.AccountRoles...)
 		}
 
 		c, db := buildTestClient(t)
@@ -312,7 +329,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap)
+		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap, exampleAccountPermissionsMap)
 		require.NoError(t, err)
 		require.NotNil(t, expected)
 		expected.ActiveAccountID = 0

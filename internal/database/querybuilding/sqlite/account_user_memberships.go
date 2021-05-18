@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 
@@ -139,7 +141,7 @@ func (b *Sqlite) BuildTransferAccountMembershipsQuery(ctx context.Context, curre
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
+func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission, newRole string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -147,6 +149,7 @@ func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, ac
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
 			Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, perms).
+			Set(querybuilding.AccountsUserMembershipTableAccountRoleColumn, newRole).
 			Where(squirrel.Eq{
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
@@ -167,12 +170,14 @@ func (b *Sqlite) BuildCreateMembershipForNewUserQuery(ctx context.Context, userI
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
 				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
+				querybuilding.AccountsUserMembershipTableAccountRoleColumn,
 			).
 			Values(
 				userID,
 				accountID,
 				true,
 				math.MaxInt64,
+				authorization.AccountAdminRole.String(),
 			),
 	)
 }
@@ -208,11 +213,13 @@ func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, input *types.Ad
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
+				querybuilding.AccountsUserMembershipTableAccountRoleColumn,
 			).
 			Values(
 				input.UserID,
 				input.AccountID,
 				input.UserAccountPermissions,
+				input.AccountRole,
 			),
 	)
 }

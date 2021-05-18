@@ -11,7 +11,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -176,7 +175,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
@@ -277,7 +276,7 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
@@ -312,7 +311,7 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 		helper.exampleUser.Reputation = types.BannedUserReputation
 		helper.setContextFetcher(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
@@ -362,10 +361,11 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		sessionCtxData.AccountPermissionsMap = map[uint64]*types.UserAccountMembershipInfo{}
+		sessionCtxData.AccountRolesMap = map[uint64]authorization.AccountRolePermissionsChecker{}
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return sessionCtxData, nil
 		}
@@ -378,122 +378,6 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 	})
 }
 
-func TestAuthService_PermissionRestrictionMiddleware(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		h := &testutil.MockHTTPHandler{}
-		h.On(
-			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
-		).Return()
-
-		helper.service.
-			PermissionRestrictionMiddleware(permissions.CanManageAPIClients)(h).
-			ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-	})
-
-	T.Run("with error fetching session context data", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
-
-		helper.service.
-			PermissionRestrictionMiddleware(permissions.CanManageAPIClients)(&testutil.MockHTTPHandler{}).
-			ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-	})
-
-	T.Run("with admin permissions", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
-		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			sessionContextData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{})
-			require.NoError(t, err)
-
-			return sessionContextData, nil
-		}
-
-		h := &testutil.MockHTTPHandler{}
-		h.On(
-			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
-		).Return()
-
-		helper.service.
-			PermissionRestrictionMiddleware(permissions.CanManageAPIClients)(h).
-			ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-	})
-
-	T.Run("without adequate account permissions", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			sessionContextData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{})
-			require.NoError(t, err)
-
-			return sessionContextData, nil
-		}
-
-		h := &testutil.MockHTTPHandler{}
-		h.On(
-			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
-		).Return()
-
-		helper.service.
-			PermissionRestrictionMiddleware(permissions.CanManageAPIClients)(h).
-			ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-	})
-
-	T.Run("with inadequate account permissions", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-			sessionContextData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
-				helper.exampleAccount.ID: {
-					Permissions: permissions.ServiceUserPermission(0),
-				},
-			})
-			require.NoError(t, err)
-
-			return sessionContextData, nil
-		}
-
-		h := &testutil.MockHTTPHandler{}
-		h.On(
-			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
-		).Return()
-
-		helper.service.
-			PermissionRestrictionMiddleware(permissions.CanManageAPIClients)(h).
-			ServeHTTP(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-	})
-}
-
 func TestAuthService_AdminMiddleware(T *testing.T) {
 	T.Parallel()
 
@@ -502,10 +386,10 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
+		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.setContextFetcher(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
@@ -529,10 +413,10 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
+		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
@@ -550,7 +434,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))

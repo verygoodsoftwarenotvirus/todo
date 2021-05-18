@@ -40,19 +40,18 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
-		AccountName string                            `json:"name"`
-		AccountID   uint64                            `json:"accountID"`
-		Permissions permissions.ServiceUserPermission `json:"permissions"`
+		AccountName  string                            `json:"name"`
+		AccountID    uint64                            `json:"accountID"`
+		AccountRoles []string                          `json:"-"`
+		Permissions  permissions.ServiceUserPermission `json:"permissions"`
 	}
-
-	// AccountPermissionsMap maps accounts to membership info.
-	AccountPermissionsMap map[uint64]*UserAccountMembershipInfo
 
 	// SessionContextData represents what we encode in our passwords cookies.
 	SessionContextData struct {
-		AccountPermissionsMap AccountPermissionsMap `json:"-"`
-		Requester             RequesterInfo         `json:"-"`
-		ActiveAccountID       uint64                `json:"-"`
+		AccountRolesMap       map[uint64]authorization.AccountRolePermissionsChecker `json:"-"`
+		AccountPermissionsMap map[uint64]*UserAccountMembershipInfo                  `json:"-"`
+		Requester             RequesterInfo                                          `json:"-"`
+		ActiveAccountID       uint64                                                 `json:"-"`
 	}
 
 	// FrontendUserAccountMembershipInfo represents key information about an account membership to the frontend.
@@ -63,20 +62,19 @@ type (
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
-		Reputation             userReputation            `json:"-"`
-		ReputationExplanation  string                    `json:"-"`
-		ServiceRole            authorization.ServiceRole `json:"-"`
-		ID                     uint64                    `json:"-"`
-		RequiresPasswordChange bool                      `json:"-"`
+		Reputation             userReputation                             `json:"-"`
+		ReputationExplanation  string                                     `json:"-"`
+		ServicePermissions     authorization.ServiceRolePermissionChecker `json:"-"`
+		ID                     uint64                                     `json:"-"`
+		RequiresPasswordChange bool                                       `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		AccountPermissions        map[string]*FrontendUserAccountMembershipInfo `json:"accountPermissions,omitempty"`
-		UserReputation            userReputation                                `json:"userReputation,omitempty"`
-		UserReputationExplanation string                                        `json:"reputationExplanation"`
-		ActiveAccount             uint64                                        `json:"activeAccount,omitempty"`
-		UserIsAuthenticated       bool                                          `json:"isAuthenticated"`
+		UserReputation            userReputation `json:"userReputation,omitempty"`
+		UserReputationExplanation string         `json:"reputationExplanation"`
+		ActiveAccount             uint64         `json:"activeAccount,omitempty"`
+		UserIsAuthenticated       bool           `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -107,6 +105,7 @@ type (
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
+		PermissionFilterMiddleware(filters ...func(authorization.AccountRolePermissionsChecker) bool) func(next http.Handler) http.Handler
 		PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler
 		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
@@ -147,19 +146,6 @@ func (i *PASETOCreationInput) ValidateWithContext(ctx context.Context) error {
 	)
 }
 
-// ToPermissionMapByAccountName returns an AccountPermissionsMap arranged by account name.
-func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]*FrontendUserAccountMembershipInfo {
-	out := map[string]*FrontendUserAccountMembershipInfo{}
-	for _, v := range perms {
-		out[v.AccountName] = &FrontendUserAccountMembershipInfo{
-			UserAccountMembershipInfo: *v,
-			Permissions:               v.Permissions.Summary(),
-		}
-	}
-
-	return out
-}
-
 // ToBytes returns the gob encoded session info.
 func (x *SessionContextData) ToBytes() []byte {
 	var b bytes.Buffer
@@ -172,7 +158,7 @@ func (x *SessionContextData) ToBytes() []byte {
 }
 
 // SessionContextDataFromUser produces a SessionContextData object from a User's data.
-func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap AccountPermissionsMap) (*SessionContextData, error) {
+func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]*UserAccountMembershipInfo, accountRolesMap map[uint64]authorization.AccountRolePermissionsChecker) (*SessionContextData, error) {
 	if user == nil {
 		return nil, errNilUser
 	}
@@ -185,14 +171,19 @@ func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermi
 		return nil, errNilPermissionMap
 	}
 
+	if accountRolesMap == nil {
+		return nil, errNilPermissionMap
+	}
+
 	sessionCtxData := &SessionContextData{
 		Requester: RequesterInfo{
 			ID:                     user.ID,
 			Reputation:             user.Reputation,
 			ReputationExplanation:  user.ReputationExplanation,
-			ServiceRole:            user.ServiceRole,
+			ServicePermissions:     authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
 			RequiresPasswordChange: user.RequiresPasswordChange,
 		},
+		AccountRolesMap:       accountRolesMap,
 		AccountPermissionsMap: accountPermissionsMap,
 		ActiveAccountID:       activeAccountID,
 	}

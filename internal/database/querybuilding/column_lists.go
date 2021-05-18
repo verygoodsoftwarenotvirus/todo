@@ -31,6 +31,7 @@ var (
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, IDColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, userOwnershipColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, accountOwnershipColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableAccountRoleColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableUserPermissionsColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableDefaultUserAccountColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, CreatedOnColumn),

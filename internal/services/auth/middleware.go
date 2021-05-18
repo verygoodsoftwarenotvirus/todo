@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -189,7 +191,7 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 			}
 
 			// TODO: REPLACEME
-			if sessionContextData.Requester.ServiceRole.IsServiceAdmin() {
+			if sessionContextData.Requester.ServicePermissions.IsServiceAdmin() {
 				logger.Debug("allowing admin user!")
 				next.ServeHTTP(res, req)
 				return
@@ -219,6 +221,54 @@ func (s *service) PermissionRestrictionMiddleware(perms ...permissions.ServiceUs
 	}
 }
 
+// PermissionFilterMiddleware filters users out of requests based on provided functions.
+func (s *service) PermissionFilterMiddleware(filters ...func(authorization.AccountRolePermissionsChecker) (shouldReject bool)) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+			ctx, span := s.tracer.StartSpan(req.Context())
+			defer span.End()
+
+			logger := s.logger.WithRequest(req)
+
+			// check for a session context data first.
+			sessionContextData, err := s.sessionContextDataFetcher(req)
+			if err != nil {
+				observability.AcknowledgeError(err, logger, span, "retrieving session context data")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			// TODO: REPLACEME
+			if sessionContextData.Requester.ServicePermissions.IsServiceAdmin() {
+				logger.Debug("allowing admin user!")
+				next.ServeHTTP(res, req)
+				return
+			}
+
+			accountRoles, allowed := sessionContextData.AccountRolesMap[sessionContextData.ActiveAccountID]
+			if !allowed {
+				logger.Debug("not authorized for account!")
+				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+				return
+			}
+
+			logger = logger.WithValue(keys.RequesterIDKey, sessionContextData.Requester.ID).
+				WithValue(keys.AccountIDKey, sessionContextData.ActiveAccountID).
+				WithValue(keys.PermissionsKey, sessionContextData.AccountPermissionsMap)
+
+			for _, filter := range filters {
+				if x := filter(accountRoles); x {
+					logger.Debug("request filtered out")
+					s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
+					return
+				}
+			}
+
+			next.ServeHTTP(res, req)
+		})
+	}
+}
+
 // AdminMiddleware restricts requests to admin users only. TODO: DELETEME
 func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
@@ -238,7 +288,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 
 		logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
 
-		if !sessionCtxData.Requester.ServiceRole.IsServiceAdmin() {
+		if !sessionCtxData.Requester.ServicePermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return

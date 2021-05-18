@@ -69,7 +69,7 @@ func (s *service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 				ContentData: item,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)
@@ -194,7 +194,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 				ContentData: item,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)
@@ -271,7 +271,7 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 				ContentData: items,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)

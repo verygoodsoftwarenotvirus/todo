@@ -174,17 +174,6 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		assert.Equal(t, "", actual.UserReputationExplanation, "expected UserReputationExplanation to equal %v, but got %v", "", actual.UserReputationExplanation)
 		assert.NotZero(t, actual.ActiveAccount)
 
-		var activeAccountPresent bool
-		for _, accountInfo := range actual.AccountPermissions {
-			if !activeAccountPresent && accountInfo.AccountID == actual.ActiveAccount {
-				activeAccountPresent = true
-				break
-			}
-		}
-		assert.True(t, activeAccountPresent)
-
-		assert.NotEmpty(t, actual.AccountPermissions)
-
 		assert.NoError(t, testClient.Logout(ctx))
 	})
 }

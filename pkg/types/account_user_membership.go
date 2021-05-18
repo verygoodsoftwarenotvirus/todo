@@ -13,6 +13,7 @@ type (
 	AccountUserMembership struct {
 		ArchivedOn             *uint64                           `json:"archivedOn"`
 		LastUpdatedOn          *uint64                           `json:"lastUpdatedOn"`
+		AccountRoles           []string                          `json:"accountRole"`
 		BelongsToUser          uint64                            `json:"belongsToUser"`
 		BelongsToAccount       uint64                            `json:"belongsToAccount"`
 		CreatedOn              uint64                            `json:"createdOn"`
@@ -44,6 +45,7 @@ type (
 	// AddUserToAccountInput represents what a User could set as input for updating account user memberships.
 	AddUserToAccountInput struct {
 		Reason                 string                            `json:"reason"`
+		AccountRole            string                            `json:"accountRole"` // TODO: make me a []string{}
 		UserID                 uint64                            `json:"userID"`
 		AccountID              uint64                            `json:"accountID"`
 		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`

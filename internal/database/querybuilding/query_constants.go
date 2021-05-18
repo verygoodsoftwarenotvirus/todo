@@ -54,8 +54,10 @@ const (
 
 	// AccountsUserMembershipTableName is what the accounts membership table calls itself.
 	AccountsUserMembershipTableName = "account_user_memberships"
-	// AccountsUserMembershipTableUserPermissionsColumn is what the accounts membership table calls the column indicating primary status.
+	// AccountsUserMembershipTableUserPermissionsColumn is what the accounts membership table calls the column indicating user permissions.
 	AccountsUserMembershipTableUserPermissionsColumn = "user_account_permissions"
+	// AccountsUserMembershipTableAccountRoleColumn is what the accounts membership table calls the column indicating account role.
+	AccountsUserMembershipTableAccountRoleColumn = "account_role"
 	// AccountsUserMembershipTableAccountOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsUserMembershipTableAccountOwnershipColumn = accountOwnershipColumn
 	// AccountsUserMembershipTableUserOwnershipColumn is what the accounts membership table calls the user ownership column.

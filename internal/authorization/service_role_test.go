@@ -12,7 +12,7 @@ func TestServiceRoles(T *testing.T) {
 	T.Run("service user", func(t *testing.T) {
 		t.Parallel()
 
-		r := ServiceUserRole
+		r := NewServiceRolePermissionChecker(ServiceUserRole.String())
 
 		assert.False(t, r.IsServiceAdmin())
 		assert.False(t, r.CanCycleCookieSecrets())
@@ -28,7 +28,7 @@ func TestServiceRoles(T *testing.T) {
 	T.Run("service admin", func(t *testing.T) {
 		t.Parallel()
 
-		r := ServiceAdminRole
+		r := NewServiceRolePermissionChecker(ServiceAdminRole.String())
 
 		assert.True(t, r.IsServiceAdmin())
 		assert.True(t, r.CanCycleCookieSecrets())

@@ -4,11 +4,15 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/mock"
 )
+
+var _ types.AuthService = (*AuthService)(nil)
 
 // AuthService is a mock types.AuthService.
 type AuthService struct {
@@ -18,6 +22,11 @@ type AuthService struct {
 // StatusHandler satisfies our interface contract.
 func (m *AuthService) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(req, res)
+}
+
+// PermissionFilterMiddleware satisfies our interface contract.
+func (m *AuthService) PermissionFilterMiddleware(filters ...func(authorization.AccountRolePermissionsChecker) bool) func(next http.Handler) http.Handler {
+	return m.Called(filters).Get(0).(func(http.Handler) http.Handler)
 }
 
 // LoginHandler satisfies our interface contract.

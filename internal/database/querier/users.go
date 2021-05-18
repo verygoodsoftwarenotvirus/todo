@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"math"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
@@ -22,6 +23,10 @@ var (
 	_ types.UserDataManager = (*SQLQuerier)(nil)
 )
 
+const (
+	serviceRolesSeparator = ","
+)
+
 // scanUser provides a consistent way to scan something like a *sql.Row into a Requester struct.
 func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
@@ -29,10 +34,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 
 	logger := q.logger.WithValue("include_counts", includeCounts)
 	user = &types.User{}
-
-	var (
-		serviceRole string
-	)
+	var rawRoles string
 
 	targetVars := []interface{}{
 		&user.ID,
@@ -44,7 +46,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		&user.PasswordLastChangedOn,
 		&user.TwoFactorSecret,
 		&user.TwoFactorSecretVerifiedOn,
-		&serviceRole,
+		&rawRoles,
 		&user.Reputation,
 		&user.ReputationExplanation,
 		&user.CreatedOn,
@@ -60,10 +62,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
-	user.ServiceRole, err = authorization.ServiceRoleFromString(serviceRole)
-	if err != nil {
-		return nil, 0, 0, observability.PrepareError(err, logger, span, "loading service role")
-	}
+	user.ServiceRoles = strings.Split(rawRoles, serviceRolesSeparator)
 
 	return user, filteredCount, totalCount, nil
 }
@@ -382,7 +381,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
-		ServiceRole:     authorization.ServiceUserRole,
+		ServiceRoles:    []string{authorization.ServiceUserRole.String()},
 		CreatedOn:       q.currentTime(),
 	}
 

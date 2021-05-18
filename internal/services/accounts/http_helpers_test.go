@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -44,6 +45,9 @@ func buildTestHelper(t *testing.T) *accountsServiceHTTPRoutesTestHelper {
 				AccountName: helper.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),
 			},
+		},
+		map[uint64]authorization.AccountRolePermissionsChecker{
+			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	)
 	require.NoError(t, err)

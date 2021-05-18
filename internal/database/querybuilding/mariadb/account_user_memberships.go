@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 
@@ -102,7 +104,7 @@ func (b *MariaDB) BuildTransferAccountMembershipsQuery(ctx context.Context, curr
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
+func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission, newRole string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -113,6 +115,7 @@ func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, a
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
 			Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, perms).
+			Set(querybuilding.AccountsUserMembershipTableAccountRoleColumn, newRole).
 			Where(squirrel.Eq{
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
@@ -180,12 +183,14 @@ func (b *MariaDB) BuildCreateMembershipForNewUserQuery(ctx context.Context, user
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
+				querybuilding.AccountsUserMembershipTableAccountRoleColumn,
 				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
 			).
 			Values(
 				userID,
 				accountID,
 				true,
+				authorization.AccountAdminRole.String(),
 				math.MaxInt64,
 			),
 	)
@@ -226,11 +231,13 @@ func (b *MariaDB) BuildAddUserToAccountQuery(ctx context.Context, input *types.A
 			Columns(
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+				querybuilding.AccountsUserMembershipTableAccountRoleColumn,
 				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
 			).
 			Values(
 				input.UserID,
 				input.AccountID,
+				input.AccountRole,
 				input.UserAccountPermissions,
 			),
 	)

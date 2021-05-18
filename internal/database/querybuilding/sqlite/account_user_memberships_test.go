@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"math"
 	"testing"
 
@@ -77,11 +78,12 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 			Reason:    t.Name(),
 		}
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,user_account_permissions) VALUES (?,?,?)"
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,user_account_permissions,account_role) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleInput.UserID,
 			exampleAccount.ID,
 			exampleInput.UserAccountPermissions,
+			exampleInput.AccountRole,
 		}
 		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(ctx, exampleInput)
 
@@ -151,12 +153,13 @@ func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account,user_account_permissions) VALUES (?,?,?,?)"
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account,user_account_permissions,account_role) VALUES (?,?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,
 			true,
 			math.MaxInt64,
+			authorization.AccountAdminRole.String(),
 		}
 		actualQuery, actualArgs := q.BuildCreateMembershipForNewUserQuery(ctx, exampleUser.ID, exampleAccount.ID)
 
@@ -177,7 +180,7 @@ func TestSqlite_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on, accounts.name FROM account_user_memberships JOIN accounts ON accounts.id = account_user_memberships.belongs_to_account WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = ?"
+		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.account_role, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on, accounts.name FROM account_user_memberships JOIN accounts ON accounts.id = account_user_memberships.belongs_to_account WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = ?"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -225,16 +228,18 @@ func TestSqlite_BuildModifyUserPermissionsQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleRole := authorization.AccountMemberRole.String()
 		exampleAccount := fakes.BuildFakeAccount()
 		examplePermissions := testutil.BuildMaxUserPerms()
 
-		expectedQuery := "UPDATE account_user_memberships SET user_account_permissions = ? WHERE belongs_to_account = ? AND belongs_to_user = ?"
+		expectedQuery := "UPDATE account_user_memberships SET user_account_permissions = ?, account_role = ? WHERE belongs_to_account = ? AND belongs_to_user = ?"
 		expectedArgs := []interface{}{
 			examplePermissions,
+			exampleRole,
 			exampleAccount.ID,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildModifyUserPermissionsQuery(ctx, exampleUser.ID, exampleAccount.ID, examplePermissions)
+		actualQuery, actualArgs := q.BuildModifyUserPermissionsQuery(ctx, exampleUser.ID, exampleAccount.ID, examplePermissions, exampleRole)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

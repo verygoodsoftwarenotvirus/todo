@@ -1301,7 +1301,7 @@ func TestAuthService_CycleSecretHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
+		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.setContextFetcher(t)
 
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
@@ -1384,10 +1384,11 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 				ID:                    helper.exampleUser.ID,
 				Reputation:            helper.exampleUser.Reputation,
 				ReputationExplanation: helper.exampleUser.ReputationExplanation,
-				ServiceRole:           helper.exampleUser.ServiceRole,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,
 			AccountPermissionsMap: helper.examplePerms,
+			AccountRolesMap:       helper.examplePermCheckers,
 		}
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
@@ -1481,10 +1482,11 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 				ID:                    helper.exampleUser.ID,
 				Reputation:            helper.exampleUser.Reputation,
 				ReputationExplanation: helper.exampleUser.ReputationExplanation,
-				ServiceRole:           helper.exampleUser.ServiceRole,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 			},
 			ActiveAccountID:       helper.exampleAccount.ID,
 			AccountPermissionsMap: helper.examplePerms,
+			AccountRolesMap:       helper.examplePermCheckers,
 		}
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
@@ -1905,6 +1907,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		helper.service.userDataManager = userDataManager
 
 		delete(helper.sessionCtxData.AccountPermissionsMap, helper.exampleAccount.ID)
+		delete(helper.sessionCtxData.AccountRolesMap, helper.exampleAccount.ID)
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(

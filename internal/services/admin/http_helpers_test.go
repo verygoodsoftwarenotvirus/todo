@@ -30,14 +30,14 @@ type adminServiceHTTPRoutesTestHelper struct {
 }
 
 func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
-	helper.exampleUser.ServiceRole = authorization.ServiceUserRole
+	helper.exampleUser.ServiceRoles = []string{authorization.ServiceUserRole.String()}
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
 			helper.exampleAccount.ID: {
 				AccountName: helper.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),
 			},
-		})
+		}, nil)
 	}
 }
 
@@ -53,7 +53,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	helper.exampleUser = fakes.BuildFakeUser()
-	helper.exampleUser.ServiceRole = authorization.ServiceAdminRole
+	helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 	helper.exampleAccount = fakes.BuildFakeAccount()
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 	helper.exampleInput = fakes.BuildFakeUserReputationUpdateInput()
@@ -71,6 +71,9 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 				AccountName: helper.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),
 			},
+		},
+		map[uint64]authorization.AccountRolePermissionsChecker{
+			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	)
 	require.NoError(t, err)

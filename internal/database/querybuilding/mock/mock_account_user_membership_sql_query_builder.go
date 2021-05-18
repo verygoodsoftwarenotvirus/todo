@@ -81,7 +81,7 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildRemoveUserFromAccountQuery(c
 }
 
 // BuildModifyUserPermissionsQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission, newRole string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, accountID, perms)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

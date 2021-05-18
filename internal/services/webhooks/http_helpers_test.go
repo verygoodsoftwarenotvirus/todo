@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
@@ -55,6 +57,9 @@ func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
 				AccountName: h.exampleAccount.Name,
 				Permissions: testutil.BuildMaxUserPerms(),
 			},
+		},
+		map[uint64]authorization.AccountRolePermissionsChecker{
+			h.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	)
 	require.NoError(t, err)

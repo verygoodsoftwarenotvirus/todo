@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -28,7 +29,10 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 	account = &types.Account{Members: []*types.AccountUserMembership{}}
 	membership = &types.AccountUserMembership{}
 
-	var perms int64
+	var (
+		perms    int64
+		rawRoles string
+	)
 
 	targetVars := []interface{}{
 		&account.ID,
@@ -43,6 +47,7 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&membership.ID,
 		&membership.BelongsToUser,
 		&membership.BelongsToAccount,
+		&rawRoles,
 		&perms,
 		&membership.DefaultAccount,
 		&membership.CreatedOn,
@@ -58,6 +63,7 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		return nil, nil, 0, 0, observability.PrepareError(err, logger, span, "fetching memberships from database")
 	}
 
+	membership.AccountRoles = strings.Split(rawRoles, accountMemberRolesSeparator)
 	membership.UserAccountPermissions = permissions.ServiceUserPermission(perms)
 
 	return account, membership, filteredCount, totalCount, nil

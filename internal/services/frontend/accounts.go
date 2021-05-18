@@ -80,7 +80,7 @@ func (s *service) buildAccountEditorView(includeBaseTemplate bool) func(http.Res
 				ContentData: account,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
@@ -160,7 +160,7 @@ func (s *service) buildAccountsTableView(includeBaseTemplate bool) func(http.Res
 				ContentData: accounts,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
@@ -42,22 +44,23 @@ func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, u
 }
 
 type authServiceHTTPRoutesTestHelper struct {
-	ctx               context.Context
-	req               *http.Request
-	res               *httptest.ResponseRecorder
-	sessionCtxData    *types.SessionContextData
-	service           *service
-	exampleUser       *types.User
-	exampleAccount    *types.Account
-	exampleAPIClient  *types.APIClient
-	examplePerms      map[uint64]*types.UserAccountMembershipInfo
-	exampleLoginInput *types.UserLoginInput
+	ctx                 context.Context
+	req                 *http.Request
+	res                 *httptest.ResponseRecorder
+	sessionCtxData      *types.SessionContextData
+	service             *service
+	exampleUser         *types.User
+	exampleAccount      *types.Account
+	exampleAPIClient    *types.APIClient
+	examplePerms        map[uint64]*types.UserAccountMembershipInfo
+	examplePermCheckers map[uint64]authorization.AccountRolePermissionsChecker
+	exampleLoginInput   *types.UserLoginInput
 }
 
 func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher(t *testing.T) {
 	t.Helper()
 
-	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms)
+	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
 	require.NoError(t, err)
 
 	helper.sessionCtxData = sessionCtxData
@@ -85,6 +88,9 @@ func buildTestHelper(t *testing.T) *authServiceHTTPRoutesTestHelper {
 			AccountName: helper.exampleAccount.Name,
 			Permissions: testutil.BuildMaxUserPerms(),
 		},
+	}
+	helper.examplePermCheckers = map[uint64]authorization.AccountRolePermissionsChecker{
+		helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 	}
 
 	helper.setContextFetcher(t)

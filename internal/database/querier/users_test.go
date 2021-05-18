@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"math"
+	"strings"
 	"testing"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
@@ -41,7 +42,7 @@ func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*
 			user.PasswordLastChangedOn,
 			user.TwoFactorSecret,
 			user.TwoFactorSecretVerifiedOn,
-			user.ServiceRole.String(),
+			strings.Join(user.ServiceRoles, serviceRolesSeparator),
 			user.Reputation,
 			user.ReputationExplanation,
 			user.CreatedOn,

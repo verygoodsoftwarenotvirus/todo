@@ -315,7 +315,6 @@ func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	statusResponse = &types.UserStatusResponse{
-		AccountPermissions:        sessionCtxData.AccountPermissionsMap.ToPermissionMapByAccountName(),
 		ActiveAccount:             sessionCtxData.ActiveAccountID,
 		UserReputation:            sessionCtxData.Requester.Reputation,
 		UserReputationExplanation: sessionCtxData.Requester.ReputationExplanation,
@@ -500,8 +499,8 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if !sessionCtxData.Requester.ServiceRole.CanCycleCookieSecrets() {
-		logger.WithValue(keys.ServiceRoleKey, sessionCtxData.Requester.ServiceRole.String()).Debug("invalid permissions")
+	if !sessionCtxData.Requester.ServicePermissions.CanCycleCookieSecrets() {
+		logger.Debug("invalid permissions")
 		s.encoderDecoder.EncodeInvalidPermissionsResponse(ctx, res)
 		return
 	}

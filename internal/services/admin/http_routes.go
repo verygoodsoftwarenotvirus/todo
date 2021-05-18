@@ -51,7 +51,7 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
-	if !sessionCtxData.Requester.ServiceRole.CanUpdateUserReputations() {
+	if !sessionCtxData.Requester.ServicePermissions.CanUpdateUserReputations() {
 		// this should never happen in production
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "inadequate permissions for route", http.StatusForbidden)
 		return
@@ -64,7 +64,7 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 
 	switch input.NewReputation {
 	case types.BannedUserReputation, types.TerminatedUserReputation:
-		allowed = sessionCtxData.Requester.ServiceRole.CanUpdateUserReputations()
+		allowed = sessionCtxData.Requester.ServicePermissions.CanUpdateUserReputations()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 		allowed = true
 	}

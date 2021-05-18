@@ -79,7 +79,7 @@ func (s *service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 				ContentData: webhook,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)
@@ -156,7 +156,7 @@ func (s *service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 				ContentData: webhooks,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceRole.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)

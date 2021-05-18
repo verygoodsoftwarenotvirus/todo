@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -289,6 +291,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		exampleSessionContextData.Requester.ServiceRole = authorization.ServiceUserRole
 		exampleSessionContextData.Requester.ServiceAdminPermission = 0
 		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil

@@ -3,6 +3,8 @@ package fakes
 import (
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
@@ -27,6 +29,7 @@ func BuildFakeSessionContextData() *types.SessionContextData {
 			ID:                     fake.Uint64(),
 			ServiceAdminPermission: permissions.NewServiceAdminPermissions(fake.Int64()),
 			RequiresPasswordChange: false,
+			ServiceRole:            authorization.ServiceUserRole,
 		},
 		ActiveAccountID: fakeAccountID,
 	}
@@ -50,6 +53,7 @@ func BuildFakeSessionContextDataForAccount(account *types.Account) *types.Sessio
 			ID:                     fake.Uint64(),
 			ServiceAdminPermission: permissions.NewServiceAdminPermissions(fake.Int64()),
 			RequiresPasswordChange: false,
+			ServiceRole:            authorization.ServiceUserRole,
 		},
 		ActiveAccountID: fakeAccountID,
 	}

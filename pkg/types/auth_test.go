@@ -92,6 +92,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 			Requester: RequesterInfo{
 				ID:                     exampleUser.ID,
 				ServiceAdminPermission: exampleUser.ServiceAdminPermission,
+				ServiceRole:            exampleUser.ServiceRole,
 				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
 			},
 			ActiveAccountID:       exampleAccount.ID,

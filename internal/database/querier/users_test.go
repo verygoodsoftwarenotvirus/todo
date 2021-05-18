@@ -41,6 +41,7 @@ func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*
 			user.PasswordLastChangedOn,
 			user.TwoFactorSecret,
 			user.TwoFactorSecretVerifiedOn,
+			user.ServiceRole,
 			user.ServiceAdminPermission,
 			user.Reputation,
 			user.ReputationExplanation,

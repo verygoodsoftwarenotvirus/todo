@@ -68,6 +68,7 @@ var (
 				requires_password_change BOOLEAN NOT NULL DEFAULT 'false',
 				two_factor_secret TEXT NOT NULL,
 				two_factor_secret_verified_on INTEGER DEFAULT NULL,
+				service_role TEXT NOT NULL DEFAULT 'service_user',
 				site_admin_permissions INTEGER NOT NULL DEFAULT 0,
 				reputation TEXT NOT NULL DEFAULT 'unverified',
 				reputation_explanation TEXT NOT NULL DEFAULT '',

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
@@ -28,7 +29,10 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 	logger := q.logger.WithValue("include_counts", includeCounts)
 	user = &types.User{}
 
-	var perms int64
+	var (
+		serviceRole string
+		perms       int64
+	)
 
 	targetVars := []interface{}{
 		&user.ID,
@@ -40,6 +44,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		&user.PasswordLastChangedOn,
 		&user.TwoFactorSecret,
 		&user.TwoFactorSecretVerifiedOn,
+		&serviceRole,
 		&perms,
 		&user.Reputation,
 		&user.ReputationExplanation,
@@ -54,6 +59,11 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 
 	if err = scan.Scan(targetVars...); err != nil {
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning user")
+	}
+
+	user.ServiceRole, err = authorization.ServiceRoleFromString(serviceRole)
+	if err != nil {
+		return nil, 0, 0, observability.PrepareError(err, logger, span, "loading service role")
 	}
 
 	user.ServiceAdminPermission = permissions.NewServiceAdminPermissions(perms)

@@ -5,6 +5,8 @@ import (
 	"math"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -45,6 +47,7 @@ type (
 		HashedPassword            string                             `json:"-"`
 		CreatedOn                 uint64                             `json:"createdOn"`
 		ID                        uint64                             `json:"id"`
+		ServiceRole               authorization.ServiceRole          `json:"serviceRole"`
 		ServiceAdminPermission    permissions.ServiceAdminPermission `json:"serviceAdminPermissions"`
 		RequiresPasswordChange    bool                               `json:"requiresPasswordChange"`
 	}

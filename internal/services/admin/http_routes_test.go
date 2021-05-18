@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
@@ -194,6 +196,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
 				Requester: types.RequesterInfo{
+					ServiceRole:            authorization.ServiceUserRole,
 					ServiceAdminPermission: permissions.ServiceAdminPermission(1),
 				},
 			}
@@ -225,6 +228,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
 				Requester: types.RequesterInfo{
+					ServiceRole:            authorization.ServiceUserRole,
 					ServiceAdminPermission: permissions.ServiceAdminPermission(1),
 				},
 			}
@@ -341,7 +345,9 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		auditLog.On(
 			"LogUserBanEvent",
 			testutil.ContextMatcher,
-			helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason,
+			helper.exampleUser.ID,
+			helper.exampleInput.TargetUserID,
+			helper.exampleInput.Reason,
 		).Return()
 		helper.service.auditLog = auditLog
 

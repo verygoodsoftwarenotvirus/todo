@@ -103,6 +103,7 @@ var (
 				"    `password_last_changed_on` INTEGER UNSIGNED,",
 				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
 				"    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `service_role` VARCHAR(128) NOT NULL DEFAULT 'service_user',",
 				"    `site_admin_permissions` BIGINT NOT NULL DEFAULT 0,",
 				"    `reputation` VARCHAR(64) NOT NULL DEFAULT 'unverified',",
 				"    `reputation_explanation` VARCHAR(1024) NOT NULL DEFAULT '',",

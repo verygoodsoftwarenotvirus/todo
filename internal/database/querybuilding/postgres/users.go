@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
@@ -151,9 +152,11 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	serviceRole := authorization.ServiceUserRole
 	perms := 0
 	if testUserConfig.IsServiceAdmin {
 		perms = math.MaxInt64
+		serviceRole = authorization.ServiceAdminRole
 	}
 
 	return b.buildQuery(
@@ -165,6 +168,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
+				querybuilding.UsersTableServiceRoleColumn,
 				querybuilding.UsersTableAdminPermissionsColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
@@ -174,6 +178,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				testUserConfig.HashedPassword,
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
+				serviceRole.String(),
 				perms,
 				currentUnixTimeQuery,
 			).
@@ -199,6 +204,7 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
+				querybuilding.UsersTableServiceRoleColumn,
 				querybuilding.UsersTableAdminPermissionsColumn,
 			).
 			Values(
@@ -207,6 +213,7 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				input.HashedPassword,
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
+				authorization.ServiceUserRole.String(),
 				0,
 			).
 			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),

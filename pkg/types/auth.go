@@ -7,6 +7,8 @@ import (
 	"errors"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -63,6 +65,7 @@ type (
 	RequesterInfo struct {
 		Reputation             userReputation                     `json:"-"`
 		ReputationExplanation  string                             `json:"-"`
+		ServiceRole            authorization.ServiceRole          `json:"-"`
 		ID                     uint64                             `json:"-"`
 		ServiceAdminPermission permissions.ServiceAdminPermission `json:"-"`
 		RequiresPasswordChange bool                               `json:"-"`
@@ -189,6 +192,7 @@ func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermi
 			ID:                     user.ID,
 			Reputation:             user.Reputation,
 			ReputationExplanation:  user.ReputationExplanation,
+			ServiceRole:            user.ServiceRole,
 			ServiceAdminPermission: user.ServiceAdminPermission,
 			RequiresPasswordChange: user.RequiresPasswordChange,
 		},

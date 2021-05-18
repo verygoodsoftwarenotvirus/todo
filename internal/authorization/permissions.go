@@ -1,37 +1,67 @@
 package authorization
 
-import "gopkg.in/mikespook/gorbac.v2"
+import (
+	"gopkg.in/mikespook/gorbac.v2"
+)
 
-type permission string
+type (
+	permission string
+)
 
 const (
-	CycleCookieSecretPermission            permission = "update.cookie_secret"
-	ReadAccountAuditLogEntriesPermission   permission = "read.account_audit_log_entries"
+	// CycleCookieSecretPermission is a service admin permission.
+	CycleCookieSecretPermission permission = "update.cookie_secret"
+	// ReadAccountAuditLogEntriesPermission is a service admin permission.
+	ReadAccountAuditLogEntriesPermission permission = "read.account_audit_log_entries"
+	// ReadAPIClientAuditLogEntriesPermission is a service admin permission.
 	ReadAPIClientAuditLogEntriesPermission permission = "read.api_client_audit_log_entries"
-	ReadUserAuditLogEntriesPermission      permission = "read.user_audit_log_entries"
-	ReadWebhookAuditLogEntriesPermission   permission = "read.webhook_audit_log_entries"
-	UpdateUserReputationPermission         permission = "update.user_reputation"
-	ReadUserPermission                     permission = "read.user"
-	SearchUserPermission                   permission = "search.user"
+	// ReadUserAuditLogEntriesPermission is a service admin permission.
+	ReadUserAuditLogEntriesPermission permission = "read.user_audit_log_entries"
+	// ReadWebhookAuditLogEntriesPermission is a service admin permission.
+	ReadWebhookAuditLogEntriesPermission permission = "read.webhook_audit_log_entries"
+	// UpdateUserReputationPermission is a service admin permission.
+	UpdateUserReputationPermission permission = "update.user_reputation"
+	// ReadUserPermission is a service admin permission.
+	ReadUserPermission permission = "read.user"
+	// SearchUserPermission is a service admin permission.
+	SearchUserPermission permission = "search.user"
 
-	UpdateAccountPermission            permission = "update.account"
-	DeleteAccountPermission            permission = "delete.account"
-	AddMemberAccountPermission         permission = "add_member.account"
-	RemoveMemberAccountPermission      permission = "remove_member.account"
-	TransferAccountPermission          permission = "transfer.account"
-	CreateWebhooksPermission           permission = "create.webhooks"
-	ReadWebhooksPermission             permission = "read.webhooks"
-	UpdateWebhooksPermission           permission = "update.webhooks"
-	DeleteWebhooksPermission           permission = "delete.webhooks"
-	CreateAPIClientsPermission         permission = "create.api_clients"
-	ReadAPIClientsPermission           permission = "read.api_clients"
-	DeleteAPIClientsPermission         permission = "delete.api_clients"
+	// UpdateAccountPermission is an account admin permission.
+	UpdateAccountPermission permission = "update.account"
+	// DeleteAccountPermission is an account admin permission.
+	DeleteAccountPermission permission = "delete.account"
+	// AddMemberAccountPermission is an account admin permission.
+	AddMemberAccountPermission permission = "add_member.account"
+	// RemoveMemberAccountPermission is an account admin permission.
+	RemoveMemberAccountPermission permission = "remove_member.account"
+	// TransferAccountPermission is an account admin permission.
+	TransferAccountPermission permission = "transfer.account"
+	// CreateWebhooksPermission is an account admin permission.
+	CreateWebhooksPermission permission = "create.webhooks"
+	// ReadWebhooksPermission is an account admin permission.
+	ReadWebhooksPermission permission = "read.webhooks"
+	// UpdateWebhooksPermission is an account admin permission.
+	UpdateWebhooksPermission permission = "update.webhooks"
+	// DeleteWebhooksPermission is an account admin permission.
+	DeleteWebhooksPermission permission = "delete.webhooks"
+	// CreateAPIClientsPermission is an account admin permission.
+	CreateAPIClientsPermission permission = "create.api_clients"
+	// ReadAPIClientsPermission is an account admin permission.
+	ReadAPIClientsPermission permission = "read.api_clients"
+	// DeleteAPIClientsPermission is an account admin permission.
+	DeleteAPIClientsPermission permission = "delete.api_clients"
+	// ReadItemsAuditLogEntriesPermission is an account admin permission.
 	ReadItemsAuditLogEntriesPermission permission = "read.items_audit_log_entries"
 
+	// CreateItemsPermission is an account user permission.
 	CreateItemsPermission permission = "create.items"
-	ReadItemsPermission   permission = "read.items"
+	// ReadItemsPermission is an account user permission.
+	ReadItemsPermission permission = "read.items"
+	// SearchItemsPermission is an account user permission.
 	SearchItemsPermission permission = "search.items"
+	// UpdateItemsPermission is an account user permission.
 	UpdateItemsPermission permission = "update.items"
+	// DeleteItemsPermission is an account user permission.
 	DeleteItemsPermission permission = "delete.items"
 )
 
@@ -44,7 +74,7 @@ func (p permission) Match(perm gorbac.Permission) bool {
 }
 
 var (
-	// service admin permissions
+	// service admin permissions.
 	serviceAdminPermissions = map[string]gorbac.Permission{
 		ReadAccountAuditLogEntriesPermission.ID():   ReadAccountAuditLogEntriesPermission,
 		ReadAPIClientAuditLogEntriesPermission.ID(): ReadAPIClientAuditLogEntriesPermission,
@@ -55,7 +85,7 @@ var (
 		SearchUserPermission.ID():                   SearchUserPermission,
 	}
 
-	// account admin permissions
+	// account admin permissions.
 	accountAdminPermissions = map[string]gorbac.Permission{
 		UpdateAccountPermission.ID():            UpdateAccountPermission,
 		DeleteAccountPermission.ID():            DeleteAccountPermission,
@@ -72,7 +102,7 @@ var (
 		ReadItemsAuditLogEntriesPermission.ID(): ReadItemsAuditLogEntriesPermission,
 	}
 
-	// account member permissions
+	// account member permissions.
 	accountMemberPermissions = map[string]gorbac.Permission{
 		CreateItemsPermission.ID(): CreateItemsPermission,
 		ReadItemsPermission.ID():   ReadItemsPermission,
@@ -83,17 +113,17 @@ var (
 )
 
 func init() {
-	// assign service admin permissions
+	// assign service admin permissions.
 	for _, perm := range serviceAdminPermissions {
 		must(serviceAdmin.Assign(perm))
 	}
 
-	// assign account admin permissions
+	// assign account admin permissions.
 	for _, perm := range accountAdminPermissions {
 		must(accountAdmin.Assign(perm))
 	}
 
-	// assign account member permissions
+	// assign account member permissions.
 	for _, perm := range accountMemberPermissions {
 		must(accountMember.Assign(perm))
 	}

@@ -3,6 +3,7 @@ package mariadb
 import (
 	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
@@ -159,9 +160,11 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	serviceRole := authorization.ServiceUserRole
 	perms := 0
 	if testUserConfig.IsServiceAdmin {
 		perms = math.MaxInt64
+		serviceRole = authorization.ServiceAdminRole
 	}
 
 	tracing.AttachUsernameToSpan(span, testUserConfig.Username)
@@ -175,6 +178,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
+				querybuilding.UsersTableServiceRoleColumn,
 				querybuilding.UsersTableAdminPermissionsColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
@@ -184,6 +188,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				testUserConfig.HashedPassword,
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
+				serviceRole.String(),
 				perms,
 				currentUnixTimeQuery,
 			),
@@ -210,6 +215,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
+				querybuilding.UsersTableServiceRoleColumn,
 				querybuilding.UsersTableAdminPermissionsColumn,
 			).
 			Values(
@@ -218,6 +224,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				input.HashedPassword,
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
+				authorization.ServiceUserRole.String(),
 				0,
 			),
 	)

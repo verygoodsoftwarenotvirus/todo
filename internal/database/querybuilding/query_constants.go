@@ -96,6 +96,8 @@ const (
 	UsersTableTwoFactorSekretColumn = "two_factor_secret"
 	// UsersTableTwoFactorVerifiedOnColumn is what the users table calls the <> column.
 	UsersTableTwoFactorVerifiedOnColumn = "two_factor_secret_verified_on"
+	// UsersTableServiceRoleColumn is what the users table calls the <> column.
+	UsersTableServiceRoleColumn = "service_role"
 	// UsersTableAdminPermissionsColumn is what the users table calls the <> column.
 	UsersTableAdminPermissionsColumn = "site_admin_permissions"
 	// UsersTableReputationColumn is what the users table calls the <> column.

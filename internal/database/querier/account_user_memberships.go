@@ -2,6 +2,8 @@ package querier
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
@@ -258,8 +260,8 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, userID, accountI
 
 	query, args := q.sqlQueryBuilder.BuildModifyUserPermissionsQuery(ctx, userID, accountID, input.NewRoles)
 
-	// create the membership.
-	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user account permissions modification", query, args); err != nil {
+	// modify the membership.
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user account permissions modification", query, args); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "modifying user account permissions")
 	}

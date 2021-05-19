@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"strings"
 	"testing"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
@@ -35,7 +38,6 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 				x.ExternalID,
 				x.Name,
 				x.AccountSubscriptionPlanID,
-				x.DefaultNewMemberPermissions,
 				x.CreatedOn,
 				x.LastUpdatedOn,
 				x.ArchivedOn,
@@ -43,7 +45,7 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 				y.ID,
 				y.BelongsToUser,
 				y.BelongsToAccount,
-				int64(y.UserAccountPermissions),
+				strings.Join(y.AccountRoles, accountMemberRolesSeparator),
 				y.DefaultAccount,
 				y.CreatedOn,
 				x.LastUpdatedOn,
@@ -789,10 +791,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1017,10 +1019,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1087,10 +1089,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1168,10 +1170,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1616,7 +1618,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		c, db := buildTestClient(t)
 
@@ -1657,7 +1659,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccount := fakes.BuildFakeAccount()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
@@ -1685,7 +1687,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccount := fakes.BuildFakeAccount()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()

@@ -240,7 +240,7 @@ func (q *SQLQuerier) createAuditLogEntry(ctx context.Context, querier database.Q
 	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(ctx, input)
 
 	// create the audit log entry.
-	id, err := q.performWriteQuery(ctx, querier, false, "audit log entry creation", query, args)
+	id, err := q.performWriteQuery(ctx, querier, true, "audit log entry creation", query, args)
 	if err != nil {
 		logger.Error(err, "executing audit log entry creation query")
 	}

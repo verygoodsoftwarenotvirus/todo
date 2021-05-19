@@ -3,10 +3,11 @@ package mariadb
 import (
 	"context"
 	"fmt"
-	"math"
+	"strings"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 
 	"github.com/Masterminds/squirrel"
 
@@ -15,6 +16,10 @@ import (
 )
 
 var _ querybuilding.AccountUserMembershipSQLQueryBuilder = (*MariaDB)(nil)
+
+const (
+	accountMemberRolesSeparator = ","
+)
 
 // BuildGetDefaultAccountIDForUserQuery does .
 func (b *MariaDB) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
@@ -102,7 +107,7 @@ func (b *MariaDB) BuildTransferAccountMembershipsQuery(ctx context.Context, curr
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
+func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -112,7 +117,7 @@ func (b *MariaDB) BuildModifyUserPermissionsQuery(ctx context.Context, userID, a
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
-			Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, perms).
+			Set(querybuilding.AccountsUserMembershipTableAccountRolesColumn, strings.Join(newRoles, accountMemberRolesSeparator)).
 			Where(squirrel.Eq{
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
@@ -144,11 +149,10 @@ func (b *MariaDB) BuildGetAccountMembershipsForUserQuery(ctx context.Context, us
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	columns := append(querybuilding.AccountsUserMembershipTableColumns, fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableNameColumn))
 
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Select(columns...).
+		b.sqlBuilder.Select(querybuilding.AccountsUserMembershipTableColumns...).
 			Join(fmt.Sprintf(
 				"%s ON %s.%s = %s.%s",
 				querybuilding.AccountsTableName,
@@ -180,13 +184,13 @@ func (b *MariaDB) BuildCreateMembershipForNewUserQuery(ctx context.Context, user
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
-				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
+				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
 				userID,
 				accountID,
 				true,
-				math.MaxInt64,
+				strings.Join([]string{authorization.AccountAdminRole.String()}, accountMemberRolesSeparator),
 			),
 	)
 }
@@ -226,12 +230,12 @@ func (b *MariaDB) BuildAddUserToAccountQuery(ctx context.Context, input *types.A
 			Columns(
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
+				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
 				input.UserID,
 				input.AccountID,
-				input.UserAccountPermissions,
+				strings.Join(input.AccountRoles, accountMemberRolesSeparator),
 			),
 	)
 }

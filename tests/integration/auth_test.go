@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +36,7 @@ func (s *TestSuite) TestLogin() {
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		assert.Equal(t, auth.DefaultCookieName, cookie.Name)
+		assert.Equal(t, authentication.DefaultCookieName, cookie.Name)
 		assert.NotEmpty(t, cookie.Value)
 		assert.NotZero(t, cookie.MaxAge)
 		assert.True(t, cookie.HttpOnly)
@@ -173,19 +172,7 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		assert.Equal(t, true, actual.UserIsAuthenticated, "expected UserIsAuthenticated to equal %v, but got %v", true, actual.UserIsAuthenticated)
 		assert.Equal(t, types.GoodStandingAccountStatus, actual.UserReputation, "expected UserReputation to equal %v, but got %v", types.GoodStandingAccountStatus, actual.UserReputation)
 		assert.Equal(t, "", actual.UserReputationExplanation, "expected UserReputationExplanation to equal %v, but got %v", "", actual.UserReputationExplanation)
-		assert.Equal(t, &permissions.ServiceAdminPermissionsSummary{}, actual.ServiceAdminPermissionsSummary, "expected ServiceAdminPermissionsSummary to be nil, but got %v", actual.ServiceAdminPermissionsSummary)
 		assert.NotZero(t, actual.ActiveAccount)
-
-		var activeAccountPresent bool
-		for _, accountInfo := range actual.AccountPermissions {
-			if !activeAccountPresent && accountInfo.AccountID == actual.ActiveAccount {
-				activeAccountPresent = true
-				break
-			}
-		}
-		assert.True(t, activeAccountPresent)
-
-		assert.NotEmpty(t, actual.AccountPermissions)
 
 		assert.NoError(t, testClient.Logout(ctx))
 	})

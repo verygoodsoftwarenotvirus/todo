@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
@@ -151,9 +151,9 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	perms := 0
+	serviceRole := authorization.ServiceUserRole
 	if testUserConfig.IsServiceAdmin {
-		perms = math.MaxInt64
+		serviceRole = authorization.ServiceAdminRole
 	}
 
 	return b.buildQuery(
@@ -165,7 +165,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -174,7 +174,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				testUserConfig.HashedPassword,
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
-				perms,
+				serviceRole.String(),
 				currentUnixTimeQuery,
 			).
 			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
@@ -199,7 +199,7 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),
@@ -207,7 +207,7 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				input.HashedPassword,
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
-				0,
+				authorization.ServiceUserRole.String(),
 			).
 			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
 	)

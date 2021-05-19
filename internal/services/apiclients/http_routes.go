@@ -45,7 +45,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.UserIDKey, requester)
 
@@ -102,7 +102,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue("username", input.Username)
 
 	// retrieve user.
-	user, err := s.userDataManager.GetUser(ctx, sessionCtxData.Requester.ID)
+	user, err := s.userDataManager.GetUser(ctx, sessionCtxData.Requester.UserID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching user")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -183,7 +183,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
@@ -223,7 +223,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
@@ -266,7 +266,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.UserIDKey, requester)
 

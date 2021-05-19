@@ -10,7 +10,7 @@ import (
 type (
 	// AdminService describes a structure capable of serving traffic related to users.
 	AdminService interface {
-		UserAccountStatusChangeHandler(res http.ResponseWriter, req *http.Request)
+		UserReputationChangeHandler(res http.ResponseWriter, req *http.Request)
 	}
 
 	// AdminAuditManager describes a structure capable of managing audit entries for admin events.
@@ -21,9 +21,9 @@ type (
 
 	// UserReputationUpdateInput represents what an admin User could provide as input for changing statuses.
 	UserReputationUpdateInput struct {
-		NewReputation userReputation `json:"newReputation"`
-		Reason        string         `json:"reason"`
-		TargetUserID  uint64         `json:"targetUserID"`
+		NewReputation accountStatus `json:"newReputation"`
+		Reason        string        `json:"reason"`
+		TargetUserID  uint64        `json:"targetUserID"`
 	}
 
 	// FrontendService serves static frontend files.

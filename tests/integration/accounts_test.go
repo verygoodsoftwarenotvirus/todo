@@ -2,21 +2,21 @@ package integration
 
 import (
 	"fmt"
-	"math"
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
@@ -249,7 +249,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			const userCount = 10
+			const userCount = 1
 
 			currentStatus, statusErr := testClients.main.UserStatus(s.ctx)
 			requireNotNilAndNoProblems(t, currentStatus, statusErr)
@@ -257,8 +257,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			// fetch account data
 			accountCreationInput := &types.AccountCreationInput{
-				Name:                   fakes.BuildFakeAccount().Name,
-				DefaultUserPermissions: permissions.ServiceUserPermission(math.MaxInt64),
+				Name: fakes.BuildFakeAccount().Name,
 			}
 			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
 			require.NoError(t, accountCreationErr)
@@ -266,7 +265,6 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			t.Logf("created account #%d", account.ID)
 
-			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultNewMemberPermissions, "expected and actual permissions do not match")
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
 			t.Logf("switched main test client active account to #%d, creating webhook", account.ID)
@@ -313,9 +311,10 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			for i := 0; i < userCount; i++ {
 				t.Logf("adding user #%d to account #%d", users[i].ID, account.ID)
 				require.NoError(t, testClients.main.AddUserToAccount(ctx, &types.AddUserToAccountInput{
-					UserID:    users[i].ID,
-					AccountID: account.ID,
-					Reason:    t.Name(),
+					UserID:       users[i].ID,
+					AccountID:    account.ID,
+					Reason:       t.Name(),
+					AccountRoles: []string{authorization.AccountAdminRole.String()},
 				}))
 				t.Logf("added user #%d to account #%d", users[i].ID, account.ID)
 				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAddedToAccountEvent})
@@ -329,26 +328,21 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				t.Logf("set user #%d's current active account to #%d", users[i].ID, account.ID)
 			}
 
+			// grant all permissions
+			for i := 0; i < userCount; i++ {
+				input := &types.ModifyUserPermissionsInput{
+					Reason:   t.Name(),
+					NewRoles: []string{authorization.AccountAdminRole.String()},
+				}
+				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
+				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAccountPermissionsModifiedEvent})
+			}
+
 			// check that each user can see the webhook
 			for i := 0; i < userCount; i++ {
 				t.Logf("checking if user #%d CAN now see webhook #%d belonging to account #%d", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
 				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
 				requireNotNilAndNoProblems(t, webhook, err)
-			}
-
-			// check that each user cannot update the webhook
-			for i := 0; i < userCount; i++ {
-				require.Error(t, clients[i].UpdateWebhook(ctx, createdWebhook))
-			}
-
-			// grant all permissions
-			for i := 0; i < userCount; i++ {
-				input := &types.ModifyUserPermissionsInput{
-					UserAccountPermissions: testutil.BuildMaxUserPerms(),
-					Reason:                 t.Name(),
-				}
-				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAccountPermissionsModifiedEvent})
 			}
 
 			originalWebhookName := createdWebhook.Name
@@ -400,8 +394,7 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 
 			// fetch account data
 			accountCreationInput := &types.AccountCreationInput{
-				Name:                   fakes.BuildFakeAccount().Name,
-				DefaultUserPermissions: permissions.ServiceUserPermission(math.MaxInt64),
+				Name: fakes.BuildFakeAccount().Name,
 			}
 			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
 			require.NoError(t, accountCreationErr)
@@ -409,7 +402,6 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 
 			t.Logf("created account #%d", account.ID)
 
-			require.Equal(t, accountCreationInput.DefaultUserPermissions, account.DefaultNewMemberPermissions, "expected and actual permissions do not match")
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
 			t.Logf("switched to active account: %d", account.ID)

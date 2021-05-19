@@ -43,7 +43,7 @@ func (s *service) homepage(res http.ResponseWriter, req *http.Request) {
 		ContentData: "",
 	}
 	if sessionCtxData != nil {
-		x.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+		x.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 	}
 
 	s.renderTemplateToResponse(ctx, tmpl, x, res)

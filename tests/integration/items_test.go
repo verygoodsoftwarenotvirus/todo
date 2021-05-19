@@ -374,28 +374,3 @@ func (s *TestSuite) TestItems_Auditing_Returns404ForNonexistentItem() {
 		}
 	})
 }
-
-func (s *TestSuite) TestItems_Auditing() {
-	s.runForEachClientExcept("it should not be auditable by a non-admin", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create item.
-			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			requireNotNilAndNoProblems(t, createdItem, err)
-
-			// fetch audit log entries
-			actual, err := testClients.main.GetAuditLogForItem(ctx, createdItem.ID)
-			assert.Error(t, err)
-			assert.Nil(t, actual)
-
-			// Clean up item.
-			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		}
-	})
-}

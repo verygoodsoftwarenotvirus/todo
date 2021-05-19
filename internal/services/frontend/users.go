@@ -83,7 +83,7 @@ func (s *service) buildUsersTableView(includeBaseTemplate, forSearch bool) func(
 				ContentData: users,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)

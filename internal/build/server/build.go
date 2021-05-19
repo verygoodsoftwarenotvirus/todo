@@ -20,11 +20,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
@@ -56,10 +55,9 @@ func Build(
 		observability.Providers,
 		storage.Providers,
 		chi.Providers,
-		auth.Providers,
+		authentication.Providers,
 		users.Providers,
 		accounts.Providers,
-		accountsubscriptionplans.Providers,
 		apiclients.Providers,
 		webhooks.Providers,
 		audit.Providers,

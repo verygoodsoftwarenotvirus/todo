@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"math"
+	"strings"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -20,6 +21,10 @@ var (
 	_ types.UserDataManager = (*SQLQuerier)(nil)
 )
 
+const (
+	serviceRolesSeparator = ","
+)
+
 // scanUser provides a consistent way to scan something like a *sql.Row into a Requester struct.
 func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includeCounts bool) (user *types.User, filteredCount, totalCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
@@ -27,8 +32,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 
 	logger := q.logger.WithValue("include_counts", includeCounts)
 	user = &types.User{}
-
-	var perms int64
+	var rawRoles string
 
 	targetVars := []interface{}{
 		&user.ID,
@@ -40,8 +44,8 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		&user.PasswordLastChangedOn,
 		&user.TwoFactorSecret,
 		&user.TwoFactorSecretVerifiedOn,
-		&perms,
-		&user.Reputation,
+		&rawRoles,
+		&user.ServiceAccountStatus,
 		&user.ReputationExplanation,
 		&user.CreatedOn,
 		&user.LastUpdatedOn,
@@ -56,7 +60,11 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
-	user.ServiceAdminPermission = permissions.NewServiceAdminPermissions(perms)
+	if roles := strings.Split(rawRoles, serviceRolesSeparator); len(roles) > 0 {
+		user.ServiceRoles = roles
+	} else {
+		user.ServiceRoles = []string{}
+	}
 
 	return user, filteredCount, totalCount, nil
 }
@@ -123,6 +131,81 @@ func (q *SQLQuerier) getUser(ctx context.Context, userID uint64, withVerifiedTOT
 	}
 
 	return u, nil
+}
+
+// createUser creates a user. The `user` and `account` parameters are meant to be filled out.
+func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *types.Account, userCreationQuery string, userCreationArgs []interface{}) error {
+	ctx, span := q.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := q.logger.WithValue("username", user.Username)
+
+	tx, err := q.db.BeginTx(ctx, nil)
+	if err != nil {
+		return observability.PrepareError(err, logger, span, "beginning transaction")
+	}
+
+	userID, err := q.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs)
+	if err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "creating user")
+	}
+
+	user.ID = userID
+	account.BelongsToUser = user.ID
+	logger = logger.WithValue(keys.UserIDKey, userID)
+
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user creation audit log entry")
+	}
+
+	// create the account.
+	accountCreationInput := types.AccountCreationInputForNewUser(user)
+	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, accountCreationInput)
+
+	accountID, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
+	if err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "create account")
+	}
+
+	account.ID = accountID
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing account creation audit log entry")
+	}
+
+	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(ctx, userID, accountID)
+	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
+	}
+
+	addToAccountInput := &types.AddUserToAccountInput{
+		UserID:       user.ID,
+		AccountID:    account.ID,
+		AccountRoles: []string{authorization.AccountMemberRole.String()},
+		Reason:       "account creation",
+	}
+
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, addToAccountInput)); err != nil {
+		q.rollbackTransaction(ctx, tx)
+		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
+	}
+
+	if err = tx.Commit(); err != nil {
+		return observability.PrepareError(err, logger, span, "committing transaction")
+	}
+
+	tracing.AttachUserIDToSpan(span, user.ID)
+	tracing.AttachAccountIDToSpan(span, account.ID)
+
+	logger.Info("user and account created")
+
+	return nil
 }
 
 // UserHasStatus fetches whether an item exists from the database.
@@ -280,82 +363,6 @@ func (q *SQLQuerier) GetUsers(ctx context.Context, filter *types.QueryFilter) (x
 	return x, nil
 }
 
-// createUser creates a user. The `user` and `account` parameters are meant to be filled out.
-func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *types.Account, userCreationQuery string, userCreationArgs []interface{}) error {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := q.logger.WithValue("username", user.Username)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
-
-	userID, err := q.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs)
-	if err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "creating user")
-	}
-
-	user.ID = userID
-	account.BelongsToUser = user.ID
-	logger = logger.WithValue(keys.UserIDKey, userID)
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user creation audit log entry")
-	}
-
-	// create the account.
-	accountCreationInput := types.AccountCreationInputForNewUser(user)
-	accountCreationInput.DefaultUserPermissions = account.DefaultNewMemberPermissions
-	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, accountCreationInput)
-
-	accountID, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
-	if err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "create account")
-	}
-
-	account.ID = accountID
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing account creation audit log entry")
-	}
-
-	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(ctx, userID, accountID)
-	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
-	}
-
-	addToAccountInput := &types.AddUserToAccountInput{
-		UserID:                 user.ID,
-		AccountID:              account.ID,
-		UserAccountPermissions: account.DefaultNewMemberPermissions,
-		Reason:                 "account creation",
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, addToAccountInput)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
-	}
-
-	tracing.AttachUserIDToSpan(span, user.ID)
-	tracing.AttachAccountIDToSpan(span, account.ID)
-
-	logger.Info("user and account created")
-
-	return nil
-}
-
 // CreateUser creates a user.
 func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreCreationInput) (*types.User, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
@@ -375,14 +382,14 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
+		ServiceRoles:    []string{authorization.ServiceUserRole.String()},
 		CreatedOn:       q.currentTime(),
 	}
 
 	account := &types.Account{
-		Name:                        input.Username,
-		AccountSubscriptionPlanID:   nil,
-		CreatedOn:                   q.currentTime(),
-		DefaultNewMemberPermissions: permissions.ServiceUserPermission(math.MaxInt64),
+		Name:                      input.Username,
+		AccountSubscriptionPlanID: nil,
+		CreatedOn:                 q.currentTime(),
 	}
 
 	if err := q.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {

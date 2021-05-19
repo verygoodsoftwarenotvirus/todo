@@ -6,14 +6,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/require"
 )
 
 type adminServiceHTTPRoutesTestHelper struct {
@@ -28,13 +29,10 @@ type adminServiceHTTPRoutesTestHelper struct {
 }
 
 func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
-	helper.exampleUser.ServiceAdminPermission = 0
+	helper.exampleUser.ServiceRoles = []string{authorization.ServiceUserRole.String()}
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-		return types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
-			helper.exampleAccount.ID: {
-				AccountName: helper.exampleAccount.Name,
-				Permissions: testutil.BuildMaxUserPerms(),
-			},
+		return types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		})
 	}
 }
@@ -51,7 +49,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 
 	helper.exampleUser = fakes.BuildFakeUser()
-	helper.exampleUser.ServiceAdminPermission = testutil.BuildMaxServiceAdminPerms()
+	helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 	helper.exampleAccount = fakes.BuildFakeAccount()
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 	helper.exampleInput = fakes.BuildFakeUserReputationUpdateInput()
@@ -61,16 +59,9 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 	require.NotNil(t, helper.req)
 
-	sessionCtxData, err := types.SessionContextDataFromUser(
-		helper.exampleUser,
-		helper.exampleAccount.ID,
-		map[uint64]*types.UserAccountMembershipInfo{
-			helper.exampleAccount.ID: {
-				AccountName: helper.exampleAccount.Name,
-				Permissions: testutil.BuildMaxUserPerms(),
-			},
-		},
-	)
+	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+		helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+	})
 	require.NoError(t, err)
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)

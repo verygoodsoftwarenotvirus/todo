@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
@@ -35,7 +35,7 @@ type (
 	service struct {
 		userDataManager           types.UserDataManager
 		accountDataManager        types.AccountDataManager
-		authSettings              *auth.Config
+		authSettings              *authentication.Config
 		authenticator             passwords.Authenticator
 		logger                    logging.Logger
 		encoderDecoder            encoding.ServerEncoderDecoder
@@ -51,7 +51,7 @@ type (
 
 // ProvideUsersService builds a new UsersService.
 func ProvideUsersService(
-	authSettings *auth.Config,
+	authSettings *authentication.Config,
 	logger logging.Logger,
 	userDataManager types.UserDataManager,
 	accountDataManager types.AccountDataManager,

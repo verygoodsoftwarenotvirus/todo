@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"github.com/spf13/viper"
 
@@ -39,8 +39,8 @@ func BuildViperConfig() *viper.Viper {
 	cfg.SetDefault(ConfigKeyEncodingContentType, "application/json")
 
 	// auth stuff.
-	cfg.SetDefault(ConfigKeyAuthCookieDomain, auth.DefaultCookieDomain)
-	cfg.SetDefault(ConfigKeyAuthCookieLifetime, auth.DefaultCookieLifetime)
+	cfg.SetDefault(ConfigKeyAuthCookieDomain, authentication.DefaultCookieDomain)
+	cfg.SetDefault(ConfigKeyAuthCookieLifetime, authentication.DefaultCookieLifetime)
 	cfg.SetDefault(ConfigKeyAuthEnableUserSignup, true)
 
 	// database stuff

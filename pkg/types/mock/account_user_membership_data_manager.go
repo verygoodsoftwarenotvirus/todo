@@ -3,7 +3,6 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/mock"
@@ -28,13 +27,6 @@ func (m *AccountUserMembershipDataManager) GetDefaultAccountIDForUser(ctx contex
 	returnValues := m.Called(ctx, userID)
 
 	return returnValues.Get(0).(uint64), returnValues.Error(1)
-}
-
-// GetMembershipsForUser satisfies our interface contract.
-func (m *AccountUserMembershipDataManager) GetMembershipsForUser(ctx context.Context, userID uint64) (defaultAccount uint64, permissionsMap map[uint64]permissions.ServiceUserPermission, err error) {
-	args := m.Called(ctx, userID)
-
-	return args.Get(0).(uint64), args.Get(1).(map[uint64]permissions.ServiceUserPermission), args.Error(2)
 }
 
 // MarkAccountAsUserDefault implements the interface.

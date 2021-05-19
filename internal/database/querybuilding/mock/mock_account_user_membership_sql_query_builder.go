@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/mock"
@@ -81,8 +81,8 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildRemoveUserFromAccountQuery(c
 }
 
 // BuildModifyUserPermissionsQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, userID, accountID, perms)
+func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{}) {
+	returnArgs := m.Called(ctx, userID, accountID, newRoles)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

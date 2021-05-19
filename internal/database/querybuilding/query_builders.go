@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -22,24 +21,13 @@ type (
 		BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID uint64) (query string, args []interface{})
 	}
 
-	// AccountSubscriptionPlanSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	AccountSubscriptionPlanSQLQueryBuilder interface {
-		BuildGetAccountSubscriptionPlanQuery(ctx context.Context, accountSubscriptionPlanID uint64) (query string, args []interface{})
-		BuildGetAllAccountSubscriptionPlansCountQuery(ctx context.Context) string
-		BuildGetAccountSubscriptionPlansQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{})
-		BuildCreateAccountSubscriptionPlanQuery(ctx context.Context, input *types.AccountSubscriptionPlanCreationInput) (query string, args []interface{})
-		BuildUpdateAccountSubscriptionPlanQuery(ctx context.Context, input *types.AccountSubscriptionPlan) (query string, args []interface{})
-		BuildArchiveAccountSubscriptionPlanQuery(ctx context.Context, accountSubscriptionPlanID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesForAccountSubscriptionPlanQuery(ctx context.Context, accountSubscriptionPlanID uint64) (query string, args []interface{})
-	}
-
 	// AccountUserMembershipSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
 	AccountUserMembershipSQLQueryBuilder interface {
 		BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildGetAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{})
 		BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{})
-		BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission) (query string, args []interface{})
+		BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{})
 		BuildTransferAccountMembershipsQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{})
 		BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{})
 		BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{})
@@ -121,7 +109,6 @@ type (
 
 		AccountSQLQueryBuilder
 		AccountUserMembershipSQLQueryBuilder
-		AccountSubscriptionPlanSQLQueryBuilder
 		UserSQLQueryBuilder
 		AuditLogEntrySQLQueryBuilder
 		APIClientSQLQueryBuilder

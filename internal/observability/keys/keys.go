@@ -19,10 +19,12 @@ const (
 	ActiveAccountIDKey = "active_account_id"
 	// UserIDKey is the standard key for referring to a user ID.
 	UserIDKey = "user.id"
-	// UserIsAdminKey is the standard key for referring to a user's admin status.
-	UserIsAdminKey = "user.is_admin"
+	// UserIsServiceAdminKey is the standard key for referring to a user's admin status.
+	UserIsServiceAdminKey = "user.is_admin"
 	// UsernameKey is the standard key for referring to a username.
 	UsernameKey = "user.username"
+	// ServiceRoleKey is the standard key for referring to a username.
+	ServiceRoleKey = "user.service_role"
 	// NameKey is the standard key for referring to a name.
 	NameKey = "name"
 	// FilterCreatedAfterKey is the standard key for referring to a types.QueryFilter's CreatedAfter field.

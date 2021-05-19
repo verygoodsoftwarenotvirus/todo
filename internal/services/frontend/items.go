@@ -69,7 +69,7 @@ func (s *service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 				ContentData: item,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)
@@ -142,7 +142,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 
 	logger.Debug("item Creation input parsed successfully")
 
-	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.ID); err != nil {
+	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "writing item to datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -194,7 +194,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 				ContentData: item,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)
@@ -271,7 +271,7 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 				ContentData: items,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
@@ -342,7 +342,7 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 
 	changes := item.Update(updateInput)
 
-	if err = s.dataStore.UpdateItem(ctx, item, sessionCtxData.Requester.ID, changes); err != nil {
+	if err = s.dataStore.UpdateItem(ctx, item, sessionCtxData.Requester.UserID, changes); err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -374,7 +374,7 @@ func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 	}
 
 	itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
-	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.ID); err != nil {
+	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "archiving items in datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

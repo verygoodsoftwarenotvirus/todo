@@ -18,8 +18,8 @@ const (
 	UserIDURIParamKey = "userID"
 )
 
-// UserAccountStatusChangeHandler changes a user's status.
-func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *http.Request) {
+// UserReputationChangeHandler changes a user's status.
+func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -51,22 +51,20 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
-	if !sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin() {
+	if !sessionCtxData.Requester.ServicePermissions.CanUpdateUserReputations() {
 		// this should never happen in production
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "inadequate permissions for route", http.StatusForbidden)
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.UserID
 	logger = logger.WithValue("ban_giver", requester)
 
 	var allowed bool
 
 	switch input.NewReputation {
-	case types.BannedUserReputation:
-		allowed = sessionCtxData.Requester.ServiceAdminPermission.CanBanUsers()
-	case types.TerminatedUserReputation:
-		allowed = sessionCtxData.Requester.ServiceAdminPermission.CanTerminateAccounts()
+	case types.BannedUserAccountStatus, types.TerminatedUserReputation:
+		allowed = sessionCtxData.Requester.ServicePermissions.CanUpdateUserReputations()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 		allowed = true
 	}
@@ -91,7 +89,7 @@ func (s *service) UserAccountStatusChangeHandler(res http.ResponseWriter, req *h
 	}
 
 	switch input.NewReputation {
-	case types.BannedUserReputation:
+	case types.BannedUserAccountStatus:
 		s.auditLog.LogUserBanEvent(ctx, requester, input.TargetUserID, input.Reason)
 	case types.TerminatedUserReputation:
 		s.auditLog.LogAccountTerminationEvent(ctx, requester, input.TargetUserID, input.Reason)

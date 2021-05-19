@@ -8,7 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2"
@@ -29,7 +29,7 @@ func buildTestService(t *testing.T) *service {
 
 	s := ProvideService(
 		logger,
-		&auth.Config{Cookies: auth.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
+		&authentication.Config{Cookies: authentication.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
 		&passwords.MockAuthenticator{},
 		&mocktypes.AdminUserDataManager{},
 		&mocktypes.AuditLogEntryDataManager{},
@@ -61,7 +61,7 @@ func TestProvideAdminService(T *testing.T) {
 
 		s := ProvideService(
 			logger,
-			&auth.Config{Cookies: auth.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
+			&authentication.Config{Cookies: authentication.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
 			&passwords.MockAuthenticator{},
 			&mocktypes.AdminUserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},

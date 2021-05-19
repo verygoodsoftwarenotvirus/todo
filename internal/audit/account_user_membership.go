@@ -1,7 +1,6 @@
 package audit
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -24,7 +23,6 @@ func BuildUserAddedToAccountEventEntry(addedBy uint64, input *types.AddUserToAcc
 		ActorAssignmentKey:   addedBy,
 		AccountAssignmentKey: input.AccountID,
 		UserAssignmentKey:    input.UserID,
-		PermissionsKey:       input.UserAccountPermissions,
 	}
 
 	if input.Reason != "" {
@@ -70,12 +68,12 @@ func BuildUserMarkedAccountAsDefaultEventEntry(performedBy, userID, accountID ui
 }
 
 // BuildModifyUserPermissionsEventEntry builds an entry creation input for when a membership is created.
-func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, newPermissions permissions.ServiceUserPermission, reason string) *types.AuditLogEntryCreationInput {
+func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, newRoles []string, reason string) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   modifiedBy,
 		AccountAssignmentKey: accountID,
 		UserAssignmentKey:    userID,
-		PermissionsKey:       newPermissions,
+		AccountRolesKey:      newRoles,
 	}
 
 	if reason != "" {

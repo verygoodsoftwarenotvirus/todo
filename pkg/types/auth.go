@@ -7,7 +7,7 @@ import (
 	"errors"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -38,44 +38,32 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
-		AccountName string                            `json:"name"`
-		AccountID   uint64                            `json:"accountID"`
-		Permissions permissions.ServiceUserPermission `json:"permissions"`
+		AccountName  string   `json:"name"`
+		AccountRoles []string `json:"-"`
+		AccountID    uint64   `json:"accountID"`
 	}
-
-	// AccountPermissionsMap maps accounts to membership info.
-	AccountPermissionsMap map[uint64]*UserAccountMembershipInfo
 
 	// SessionContextData represents what we encode in our passwords cookies.
 	SessionContextData struct {
-		AccountPermissionsMap AccountPermissionsMap `json:"-"`
-		Requester             RequesterInfo         `json:"-"`
-		ActiveAccountID       uint64                `json:"-"`
-	}
-
-	// FrontendUserAccountMembershipInfo represents key information about an account membership to the frontend.
-	FrontendUserAccountMembershipInfo struct {
-		UserAccountMembershipInfo
-		Permissions permissions.ServiceUserPermissionsSummary `json:"permissions"`
+		AccountPermissions map[uint64]authorization.AccountRolePermissionsChecker `json:"-"`
+		Requester          RequesterInfo                                          `json:"-"`
+		ActiveAccountID    uint64                                                 `json:"-"`
 	}
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
-		Reputation             userReputation                     `json:"-"`
-		ReputationExplanation  string                             `json:"-"`
-		ID                     uint64                             `json:"-"`
-		ServiceAdminPermission permissions.ServiceAdminPermission `json:"-"`
-		RequiresPasswordChange bool                               `json:"-"`
+		ServicePermissions    authorization.ServiceRolePermissionChecker `json:"-"`
+		Reputation            accountStatus                              `json:"-"`
+		ReputationExplanation string                                     `json:"-"`
+		UserID                uint64                                     `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		AccountPermissions             map[string]*FrontendUserAccountMembershipInfo `json:"accountPermissions,omitempty"`
-		ServiceAdminPermissionsSummary *permissions.ServiceAdminPermissionsSummary   `json:"adminPermissions,omitempty"`
-		UserReputation                 userReputation                                `json:"userReputation,omitempty"`
-		UserReputationExplanation      string                                        `json:"reputationExplanation"`
-		ActiveAccount                  uint64                                        `json:"activeAccount,omitempty"`
-		UserIsAuthenticated            bool                                          `json:"isAuthenticated"`
+		UserReputation            accountStatus `json:"accountStatus,omitempty"`
+		UserReputationExplanation string        `json:"reputationExplanation"`
+		ActiveAccount             uint64        `json:"activeAccount,omitempty"`
+		UserIsAuthenticated       bool          `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -106,7 +94,7 @@ type (
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
-		PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler
+		PermissionFilterMiddleware(permissions ...authorization.Permission) func(next http.Handler) http.Handler
 		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
@@ -146,17 +134,14 @@ func (i *PASETOCreationInput) ValidateWithContext(ctx context.Context) error {
 	)
 }
 
-// ToPermissionMapByAccountName returns an AccountPermissionsMap arranged by account name.
-func (perms AccountPermissionsMap) ToPermissionMapByAccountName() map[string]*FrontendUserAccountMembershipInfo {
-	out := map[string]*FrontendUserAccountMembershipInfo{}
-	for _, v := range perms {
-		out[v.AccountName] = &FrontendUserAccountMembershipInfo{
-			UserAccountMembershipInfo: *v,
-			Permissions:               v.Permissions.Summary(),
-		}
-	}
+// AccountRolePermissionsChecker returns the relevant AccountRolePermissionsChecker.
+func (x *SessionContextData) AccountRolePermissionsChecker() authorization.AccountRolePermissionsChecker {
+	return x.AccountPermissions[x.ActiveAccountID]
+}
 
-	return out
+// ServiceRolePermissionChecker returns the relevant ServiceRolePermissionChecker.
+func (x *SessionContextData) ServiceRolePermissionChecker() authorization.ServiceRolePermissionChecker {
+	return x.Requester.ServicePermissions
 }
 
 // ToBytes returns the gob encoded session info.
@@ -171,7 +156,7 @@ func (x *SessionContextData) ToBytes() []byte {
 }
 
 // SessionContextDataFromUser produces a SessionContextData object from a User's data.
-func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap AccountPermissionsMap) (*SessionContextData, error) {
+func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]authorization.AccountRolePermissionsChecker) (*SessionContextData, error) {
 	if user == nil {
 		return nil, errNilUser
 	}
@@ -186,14 +171,13 @@ func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermi
 
 	sessionCtxData := &SessionContextData{
 		Requester: RequesterInfo{
-			ID:                     user.ID,
-			Reputation:             user.Reputation,
-			ReputationExplanation:  user.ReputationExplanation,
-			ServiceAdminPermission: user.ServiceAdminPermission,
-			RequiresPasswordChange: user.RequiresPasswordChange,
+			UserID:                user.ID,
+			Reputation:            user.ServiceAccountStatus,
+			ReputationExplanation: user.ReputationExplanation,
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
 		},
-		AccountPermissionsMap: accountPermissionsMap,
-		ActiveAccountID:       activeAccountID,
+		AccountPermissions: accountPermissionsMap,
+		ActiveAccountID:    activeAccountID,
 	}
 
 	return sessionCtxData, nil

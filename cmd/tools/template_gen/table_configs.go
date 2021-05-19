@@ -80,26 +80,6 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		IncludeLastUpdatedOn: true,
 		IncludeCreatedOn:     true,
 	},
-	"internal/app/services/frontend/templates/partials/generated/tables/account_subscription_plans_table.gotpl": {
-		Title:              "Account Subscription Plans",
-		CreatorPagePushURL: "/account_subscription_plans/new",
-		CreatorPageURL:     "/dashboard_pages/account_subscription_plans/new",
-		Columns: []string{
-			"ID",
-			"Name",
-			"Price",
-			"Last Updated On",
-			"Created On",
-		},
-		CellFields: []string{
-			"Name",
-			"Price",
-		},
-		RowDataFieldName:     "AccountSubscriptionPlans",
-		IncludeLastUpdatedOn: true,
-		IncludeCreatedOn:     true,
-		IncludeDeleteRow:     true,
-	},
 	"internal/app/services/frontend/templates/partials/generated/tables/users_table.gotpl": {
 		Title: "Users",
 		Columns: []string{

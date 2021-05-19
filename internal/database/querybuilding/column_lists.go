@@ -6,23 +6,6 @@ import (
 
 var (
 	//
-	// AccountSubscriptionPlans Table.
-	//
-
-	// AccountSubscriptionPlansTableColumns are the columns for the users table.
-	AccountSubscriptionPlansTableColumns = []string{
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, IDColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, ExternalIDColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableNameColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableDescriptionColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTablePriceColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTablePeriodColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, ArchivedOnColumn),
-	}
-
-	//
 	// Accounts Table.
 	//
 
@@ -31,7 +14,7 @@ var (
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, IDColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, userOwnershipColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, accountOwnershipColumn),
-		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableUserPermissionsColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableAccountRolesColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableDefaultUserAccountColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, LastUpdatedOnColumn),
@@ -48,7 +31,6 @@ var (
 		fmt.Sprintf("%s.%s", AccountsTableName, ExternalIDColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableNameColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTablePlanIDColumn),
-		fmt.Sprintf("%s.%s", AccountsTableName, AccountsTableDefaultUserPermissionsColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, ArchivedOnColumn),
@@ -70,7 +52,7 @@ var (
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTablePasswordLastChangedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorSekretColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorVerifiedOnColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableAdminPermissionsColumn),
+		fmt.Sprintf("%s.%s", UsersTableName, UsersTableServiceRolesColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableReputationColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableStatusExplanationColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, CreatedOnColumn),

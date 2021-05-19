@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -36,11 +38,8 @@ func Test_FetchContextFromRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		expected, _ := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
-			exampleAccount.ID: {
-				AccountName: exampleAccount.Name,
-				Permissions: testutil.BuildMaxUserPerms(),
-			},
+		expected, _ := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+			exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		})
 
 		req := testutil.BuildTestRequest(t)
@@ -77,11 +76,8 @@ func Test_UserIDFetcherFromSessionContextData(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		sessionContextData, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
-			exampleAccount.ID: {
-				AccountName: exampleAccount.Name,
-				Permissions: testutil.BuildMaxUserPerms(),
-			},
+		sessionContextData, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+			exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		})
 		require.NoError(t, err)
 

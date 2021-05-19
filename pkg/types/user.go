@@ -5,20 +5,18 @@ import (
 	"math"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
 	// GoodStandingAccountStatus indicates a User's account is in good standing.
-	GoodStandingAccountStatus userReputation = "good"
+	GoodStandingAccountStatus accountStatus = "good"
 	// UnverifiedAccountStatus indicates a User's account requires two factor secret verification.
-	UnverifiedAccountStatus userReputation = "unverified"
-	// BannedUserReputation indicates a User's account is banned.
-	BannedUserReputation userReputation = "banned"
+	UnverifiedAccountStatus accountStatus = "unverified"
+	// BannedUserAccountStatus indicates a User's account is banned.
+	BannedUserAccountStatus accountStatus = "banned"
 	// TerminatedUserReputation indicates a User's account is banned.
-	TerminatedUserReputation userReputation = "terminated"
+	TerminatedUserReputation accountStatus = "terminated"
 
 	validTOTPTokenLength = 6
 )
@@ -28,25 +26,25 @@ var (
 )
 
 type (
-	userReputation string
+	accountStatus string
 
 	// User represents a User.
 	User struct {
-		PasswordLastChangedOn     *uint64                            `json:"passwordLastChangedOn"`
-		ArchivedOn                *uint64                            `json:"archivedOn"`
-		LastUpdatedOn             *uint64                            `json:"lastUpdatedOn"`
-		TwoFactorSecretVerifiedOn *uint64                            `json:"-"`
-		AvatarSrc                 *string                            `json:"avatar"`
-		ReputationExplanation     string                             `json:"reputationExplanation"`
-		Username                  string                             `json:"username"`
-		ExternalID                string                             `json:"externalID"`
-		Reputation                userReputation                     `json:"reputation"`
-		TwoFactorSecret           string                             `json:"-"`
-		HashedPassword            string                             `json:"-"`
-		CreatedOn                 uint64                             `json:"createdOn"`
-		ID                        uint64                             `json:"id"`
-		ServiceAdminPermission    permissions.ServiceAdminPermission `json:"serviceAdminPermissions"`
-		RequiresPasswordChange    bool                               `json:"requiresPasswordChange"`
+		PasswordLastChangedOn     *uint64       `json:"passwordLastChangedOn"`
+		ArchivedOn                *uint64       `json:"archivedOn"`
+		LastUpdatedOn             *uint64       `json:"lastUpdatedOn"`
+		TwoFactorSecretVerifiedOn *uint64       `json:"-"`
+		AvatarSrc                 *string       `json:"avatar"`
+		ExternalID                string        `json:"externalID"`
+		Username                  string        `json:"username"`
+		ReputationExplanation     string        `json:"reputationExplanation"`
+		ServiceAccountStatus      accountStatus `json:"reputation"`
+		TwoFactorSecret           string        `json:"-"`
+		HashedPassword            string        `json:"-"`
+		ServiceRoles              []string      `json:"serviceRole"`
+		ID                        uint64        `json:"id"`
+		CreatedOn                 uint64        `json:"createdOn"`
+		RequiresPasswordChange    bool          `json:"requiresPasswordChange"`
 	}
 
 	// TestUserCreationConfig is here because of cyclical imports.
@@ -78,13 +76,13 @@ type (
 
 	// UserCreationResponse is a response structure for Users that doesn't contain passwords fields, but does contain the two factor secret.
 	UserCreationResponse struct {
-		Username        string         `json:"username"`
-		AccountStatus   userReputation `json:"accountStatus"`
-		TwoFactorSecret string         `json:"twoFactorSecret"`
-		TwoFactorQRCode string         `json:"qrCode"`
-		CreatedUserID   uint64         `json:"ID"`
-		CreatedOn       uint64         `json:"createdOn"`
-		IsAdmin         bool           `json:"isAdmin"`
+		Username        string        `json:"username"`
+		AccountStatus   accountStatus `json:"accountStatus"`
+		TwoFactorSecret string        `json:"twoFactorSecret"`
+		TwoFactorQRCode string        `json:"qrCode"`
+		CreatedUserID   uint64        `json:"ID"`
+		CreatedOn       uint64        `json:"createdOn"`
+		IsAdmin         bool          `json:"isAdmin"`
 	}
 
 	// UserLoginInput represents the payload used to log in a User.
@@ -176,12 +174,12 @@ func (u *User) Update(input *User) {
 	}
 }
 
-// IsValidAccountStatus returns whether the provided string is a valid userReputation.
+// IsValidAccountStatus returns whether the provided string is a valid accountStatus.
 func IsValidAccountStatus(s string) bool {
 	switch s {
 	case string(GoodStandingAccountStatus),
 		string(UnverifiedAccountStatus),
-		string(BannedUserReputation),
+		string(BannedUserAccountStatus),
 		string(TerminatedUserReputation):
 		return true
 	default:
@@ -191,7 +189,7 @@ func IsValidAccountStatus(s string) bool {
 
 // IsBanned is a handy helper function.
 func (u *User) IsBanned() bool {
-	return u.Reputation == BannedUserReputation
+	return u.ServiceAccountStatus == BannedUserAccountStatus
 }
 
 // ValidateWithContext ensures our provided UserRegistrationInput meets expectations.

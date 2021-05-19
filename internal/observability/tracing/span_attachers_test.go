@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
@@ -147,18 +149,6 @@ func TestAttachRequestingUserIDToSpan(T *testing.T) {
 	})
 }
 
-func TestAttachAccountSubscriptionPlanIDToSpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachAccountSubscriptionPlanIDToSpan(span, 123)
-	})
-}
-
 func TestAttachChangeSummarySpan(T *testing.T) {
 	T.Parallel()
 
@@ -185,9 +175,11 @@ func TestAttachSessionContextDataToSpan(T *testing.T) {
 		_, span := StartSpan(context.Background())
 
 		AttachSessionContextDataToSpan(span, &types.SessionContextData{
-			AccountPermissionsMap: nil,
-			Requester:             types.RequesterInfo{},
-			ActiveAccountID:       0,
+			AccountPermissions: nil,
+			Requester: types.RequesterInfo{
+				ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
+			},
+			ActiveAccountID: 0,
 		})
 	})
 }

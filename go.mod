@@ -23,7 +23,7 @@ require (
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.32
 	github.com/blevesearch/bleve/v2 v2.0.3
-	github.com/boombuler/barcode v1.0.1 // indirect
+	github.com/boombuler/barcode v1.0.1
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/carolynvs/magex v0.5.0
 	github.com/cznic/ql v1.2.0 // indirect
@@ -90,6 +90,7 @@ require (
 	google.golang.org/genproto v0.0.0-20210504143626-3b2ad6ccc450 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
+	gopkg.in/mikespook/gorbac.v2 v2.1.0
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

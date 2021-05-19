@@ -5,24 +5,21 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type (
 	// Account represents an account.
 	Account struct {
-		ArchivedOn                  *uint64                           `json:"archivedOn"`
-		AccountSubscriptionPlanID   *uint64                           `json:"accountSubscriptionPlanID"`
-		LastUpdatedOn               *uint64                           `json:"lastUpdatedOn"`
-		Name                        string                            `json:"name"`
-		ExternalID                  string                            `json:"externalID"`
-		Members                     []*AccountUserMembership          `json:"members"`
-		CreatedOn                   uint64                            `json:"createdOn"`
-		ID                          uint64                            `json:"id"`
-		BelongsToUser               uint64                            `json:"belongsToUser"`
-		DefaultNewMemberPermissions permissions.ServiceUserPermission `json:"defaultNewMemberPermissions"`
+		ArchivedOn                *uint64                  `json:"archivedOn"`
+		AccountSubscriptionPlanID *uint64                  `json:"accountSubscriptionPlanID"`
+		LastUpdatedOn             *uint64                  `json:"lastUpdatedOn"`
+		Name                      string                   `json:"name"`
+		ExternalID                string                   `json:"externalID"`
+		Members                   []*AccountUserMembership `json:"members"`
+		CreatedOn                 uint64                   `json:"createdOn"`
+		ID                        uint64                   `json:"id"`
+		BelongsToUser             uint64                   `json:"belongsToUser"`
 	}
 
 	// AccountList represents a list of accounts.
@@ -33,16 +30,14 @@ type (
 
 	// AccountCreationInput represents what a User could set as input for creating accounts.
 	AccountCreationInput struct {
-		Name                   string                            `json:"name"`
-		DefaultUserPermissions permissions.ServiceUserPermission `json:"defaultUserPermissions"`
-		BelongsToUser          uint64                            `json:"-"`
+		Name          string `json:"name"`
+		BelongsToUser uint64 `json:"-"`
 	}
 
 	// AccountUpdateInput represents what a User could set as input for updating accounts.
 	AccountUpdateInput struct {
-		Name                   string                            `json:"name"`
-		DefaultUserPermissions permissions.ServiceUserPermission `json:"defaultUserPermissions"`
-		BelongsToUser          uint64                            `json:"-"`
+		Name          string `json:"name"`
+		BelongsToUser uint64 `json:"-"`
 	}
 
 	// AccountDataManager describes a structure capable of storing accounts permanently.

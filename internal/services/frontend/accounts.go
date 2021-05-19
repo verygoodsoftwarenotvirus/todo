@@ -30,7 +30,7 @@ func (s *service) fetchAccount(ctx context.Context, sessionCtxData *types.Sessio
 	if s.useFakeData {
 		account = fakes.BuildFakeAccount()
 	} else {
-		account, err = s.dataStore.GetAccount(ctx, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.ID)
+		account, err = s.dataStore.GetAccount(ctx, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching account data")
 		}
@@ -80,7 +80,7 @@ func (s *service) buildAccountEditorView(includeBaseTemplate bool) func(http.Res
 				ContentData: account,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
@@ -105,7 +105,7 @@ func (s *service) fetchAccounts(ctx context.Context, sessionCtxData *types.Sessi
 		accounts = fakes.BuildFakeAccountList()
 	} else {
 		qf := types.ExtractQueryFilter(req)
-		accounts, err = s.dataStore.GetAccounts(ctx, sessionCtxData.Requester.ID, qf)
+		accounts, err = s.dataStore.GetAccounts(ctx, sessionCtxData.Requester.UserID, qf)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching accounts data")
 		}
@@ -160,7 +160,7 @@ func (s *service) buildAccountsTableView(includeBaseTemplate bool) func(http.Res
 				ContentData: accounts,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)

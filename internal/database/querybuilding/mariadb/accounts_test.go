@@ -25,7 +25,7 @@ func TestMariaDB_BuildGetAccountQuery(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.BelongsToUser = exampleUser.ID
 
-		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.default_user_permissions, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on FROM accounts JOIN account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.id = ?"
+		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.subscription_plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.account_roles, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on FROM accounts JOIN account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.id = ?"
 		expectedArgs := []interface{}{
 			exampleAccount.BelongsToUser,
 			exampleAccount.ID,
@@ -66,7 +66,7 @@ func TestMariaDB_BuildGetBatchOfAccountsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.default_user_permissions, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.id > ? AND accounts.id < ?"
+		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.subscription_plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user FROM accounts WHERE accounts.id > ? AND accounts.id < ?"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -91,7 +91,7 @@ func TestMariaDB_BuildGetAccountsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.plan_id, accounts.default_user_permissions, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ?) as total_count, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.created_on > ? AND accounts.created_on < ? AND accounts.last_updated_on > ? AND accounts.last_updated_on < ?) as filtered_count FROM accounts JOIN account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.created_on > ? AND accounts.created_on < ? AND accounts.last_updated_on > ? AND accounts.last_updated_on < ? GROUP BY accounts.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT accounts.id, accounts.external_id, accounts.name, accounts.subscription_plan_id, accounts.created_on, accounts.last_updated_on, accounts.archived_on, accounts.belongs_to_user, account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.account_roles, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ?) as total_count, (SELECT COUNT(accounts.id) FROM accounts WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.created_on > ? AND accounts.created_on < ? AND accounts.last_updated_on > ? AND accounts.last_updated_on < ?) as filtered_count FROM accounts JOIN account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id WHERE accounts.archived_on IS NULL AND accounts.belongs_to_user = ? AND accounts.created_on > ? AND accounts.created_on < ? AND accounts.last_updated_on > ? AND accounts.last_updated_on < ? GROUP BY accounts.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -131,12 +131,11 @@ func TestMariaDB_BuildCreateAccountQuery(T *testing.T) {
 		exIDGen.On("NewExternalID").Return(exampleAccount.ExternalID)
 		q.externalIDGenerator = exIDGen
 
-		expectedQuery := "INSERT INTO accounts (external_id,name,belongs_to_user,default_user_permissions) VALUES (?,?,?,?)"
+		expectedQuery := "INSERT INTO accounts (external_id,name,belongs_to_user) VALUES (?,?,?)"
 		expectedArgs := []interface{}{
 			exampleAccount.ExternalID,
 			exampleAccount.Name,
 			exampleAccount.BelongsToUser,
-			exampleAccount.DefaultNewMemberPermissions,
 		}
 		actualQuery, actualArgs := q.BuildAccountCreationQuery(ctx, exampleInput)
 

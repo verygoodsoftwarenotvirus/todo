@@ -3,9 +3,9 @@ package mariadb
 import (
 	"context"
 	"fmt"
-	"math"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
@@ -159,9 +159,9 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	perms := 0
+	serviceRole := authorization.ServiceUserRole
 	if testUserConfig.IsServiceAdmin {
-		perms = math.MaxInt64
+		serviceRole = authorization.ServiceAdminRole
 	}
 
 	tracing.AttachUsernameToSpan(span, testUserConfig.Username)
@@ -175,7 +175,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -184,7 +184,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				testUserConfig.HashedPassword,
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
-				perms,
+				serviceRole.String(),
 				currentUnixTimeQuery,
 			),
 	)
@@ -210,7 +210,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableAdminPermissionsColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),
@@ -218,7 +218,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				input.HashedPassword,
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
-				0,
+				authorization.ServiceUserRole.String(),
 			),
 	)
 }

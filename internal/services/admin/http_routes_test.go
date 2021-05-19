@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -30,7 +31,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -55,7 +56,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return()
 		helper.service.auditLog = auditLog
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
@@ -93,7 +94,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return()
 		helper.service.auditLog = auditLog
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
@@ -123,7 +124,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDB = userDataManager
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, userDataManager)
@@ -135,9 +136,9 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 	})
 
@@ -152,7 +153,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
@@ -172,7 +173,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 
@@ -183,7 +184,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -194,14 +195,14 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
 				Requester: types.RequesterInfo{
-					ServiceAdminPermission: permissions.ServiceAdminPermission(1),
+					ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 				},
 			}
 
 			return scd, nil
 		}
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t)
@@ -225,14 +226,14 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			scd := &types.SessionContextData{
 				Requester: types.RequesterInfo{
-					ServiceAdminPermission: permissions.ServiceAdminPermission(1),
+					ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 				},
 			}
 
 			return scd, nil
 		}
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t)
@@ -246,7 +247,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -254,7 +255,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
 	})
 
@@ -265,7 +266,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -282,7 +283,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(sql.ErrNoRows)
 		helper.service.userDB = userDataManager
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, userDataManager)
@@ -295,7 +296,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -312,7 +313,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(errors.New("blah"))
 		helper.service.userDB = userDataManager
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, userDataManager)
@@ -325,7 +326,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -341,7 +342,9 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		auditLog.On(
 			"LogUserBanEvent",
 			testutil.ContextMatcher,
-			helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason,
+			helper.exampleUser.ID,
+			helper.exampleInput.TargetUserID,
+			helper.exampleInput.Reason,
 		).Return()
 		helper.service.auditLog = auditLog
 
@@ -354,7 +357,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDB = userDataManager
 
-		helper.service.UserAccountStatusChangeHandler(helper.res, helper.req)
+		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, userDataManager)

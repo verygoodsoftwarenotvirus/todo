@@ -39,23 +39,6 @@ var (
 		},
 		{
 			Version:     0.03,
-			Description: "create account subscription plans table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS account_subscription_plans (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				external_id TEXT NOT NULL,
-				name TEXT NOT NULL,
-				description TEXT NOT NULL DEFAULT '',
-				price INTEGER NOT NULL,
-				period TEXT NOT NULL DEFAULT '0m0s',
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				last_updated_on BIGINT DEFAULT NULL,
-				archived_on BIGINT DEFAULT NULL,
-				UNIQUE("name", "archived_on")
-			);`,
-		},
-		{
-			Version:     0.04,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -68,7 +51,7 @@ var (
 				requires_password_change BOOLEAN NOT NULL DEFAULT 'false',
 				two_factor_secret TEXT NOT NULL,
 				two_factor_secret_verified_on BIGINT DEFAULT NULL,
-				site_admin_permissions BIGINT NOT NULL DEFAULT 0,
+				service_roles TEXT NOT NULL DEFAULT 'service_user',
 				reputation TEXT NOT NULL DEFAULT 'unverified',
 				reputation_explanation TEXT NOT NULL DEFAULT '',
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
@@ -78,15 +61,14 @@ var (
 			);`,
 		},
 		{
-			Version:     0.05,
+			Version:     0.04,
 			Description: "create accounts table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
 				external_id TEXT NOT NULL,
 				name CHARACTER VARYING NOT NULL,
-				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
-				default_user_permissions BIGINT NOT NULL DEFAULT 0,
+				subscription_plan_id TEXT,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
@@ -95,7 +77,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.06,
+			Version:     0.05,
 			Description: "create account user memberships table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_user_memberships (
@@ -103,7 +85,7 @@ var (
 				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
 				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				default_account BOOLEAN NOT NULL DEFAULT 'false',
-				user_account_permissions BIGINT NOT NULL DEFAULT 0,
+				account_roles TEXT NOT NULL DEFAULT 'account_user',
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
@@ -111,7 +93,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.07,
+			Version:     0.06,
 			Description: "create API clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS api_clients (
@@ -129,7 +111,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.08,
+			Version:     0.07,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -149,7 +131,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.9,
+			Version:     0.8,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

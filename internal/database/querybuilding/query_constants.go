@@ -42,9 +42,7 @@ const (
 	// AccountsTableNameColumn is what the accounts table calls the name column.
 	AccountsTableNameColumn = "name"
 	// AccountsTablePlanIDColumn is what the accounts table calls the <> column.
-	AccountsTablePlanIDColumn = "plan_id"
-	// AccountsTableDefaultUserPermissionsColumn is what the accounts table calls the <> column.
-	AccountsTableDefaultUserPermissionsColumn = "default_user_permissions"
+	AccountsTablePlanIDColumn = "subscription_plan_id"
 	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
 	AccountsTableUserOwnershipColumn = userOwnershipColumn
 
@@ -54,29 +52,14 @@ const (
 
 	// AccountsUserMembershipTableName is what the accounts membership table calls itself.
 	AccountsUserMembershipTableName = "account_user_memberships"
-	// AccountsUserMembershipTableUserPermissionsColumn is what the accounts membership table calls the column indicating primary status.
-	AccountsUserMembershipTableUserPermissionsColumn = "user_account_permissions"
+	// AccountsUserMembershipTableAccountRolesColumn is what the accounts membership table calls the column indicating account role.
+	AccountsUserMembershipTableAccountRolesColumn = "account_roles"
 	// AccountsUserMembershipTableAccountOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsUserMembershipTableAccountOwnershipColumn = accountOwnershipColumn
 	// AccountsUserMembershipTableUserOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsUserMembershipTableUserOwnershipColumn = userOwnershipColumn
 	// AccountsUserMembershipTableDefaultUserAccountColumn is what the accounts membership table calls the .
 	AccountsUserMembershipTableDefaultUserAccountColumn = "default_account"
-
-	//
-	// AccountSubscriptionPlans Table.
-	//
-
-	// AccountSubscriptionPlansTableName is what the users table calls the <> column.
-	AccountSubscriptionPlansTableName = "account_subscription_plans"
-	// AccountSubscriptionPlansTableNameColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTableNameColumn = "name"
-	// AccountSubscriptionPlansTableDescriptionColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTableDescriptionColumn = "description"
-	// AccountSubscriptionPlansTablePriceColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTablePriceColumn = "price"
-	// AccountSubscriptionPlansTablePeriodColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTablePeriodColumn = "period"
 
 	//
 	// Users Table.
@@ -96,8 +79,8 @@ const (
 	UsersTableTwoFactorSekretColumn = "two_factor_secret"
 	// UsersTableTwoFactorVerifiedOnColumn is what the users table calls the <> column.
 	UsersTableTwoFactorVerifiedOnColumn = "two_factor_secret_verified_on"
-	// UsersTableAdminPermissionsColumn is what the users table calls the <> column.
-	UsersTableAdminPermissionsColumn = "site_admin_permissions"
+	// UsersTableServiceRolesColumn is what the users table calls the <> column.
+	UsersTableServiceRolesColumn = "service_roles"
 	// UsersTableReputationColumn is what the users table calls the <> column.
 	UsersTableReputationColumn = "reputation"
 	// UsersTableStatusExplanationColumn is what the users table calls the <> column.

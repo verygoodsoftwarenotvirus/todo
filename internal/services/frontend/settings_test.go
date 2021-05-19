@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -33,7 +35,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB.UserDataManager.On(
 			"GetUser",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleUser, nil)
 		s.dataStore = mockDB
 
@@ -62,7 +64,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB.UserDataManager.On(
 			"GetUser",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleUser, nil)
 		s.dataStore = mockDB
 
@@ -105,7 +107,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB.UserDataManager.On(
 			"GetUser",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.UserID,
 		).Return((*types.User)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -139,7 +141,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAccount, nil)
 		s.dataStore = mockDB
 
@@ -169,7 +171,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAccount, nil)
 		s.dataStore = mockDB
 
@@ -214,7 +216,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.UserID,
 		).Return((*types.Account)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -238,6 +240,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		exampleSessionContextData.Requester.ServicePermissions = authorization.NewServiceRolePermissionChecker(authorization.ServiceAdminRole.String())
 		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
@@ -256,6 +259,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		exampleSessionContextData.Requester.ServicePermissions = authorization.NewServiceRolePermissionChecker(authorization.ServiceAdminRole.String())
 		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}
@@ -289,7 +293,8 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 		s := buildTestService(t)
 
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		exampleSessionContextData.Requester.ServiceAdminPermission = 0
+
+		exampleSessionContextData.Requester.ServicePermissions = authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String())
 		s.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return exampleSessionContextData, nil
 		}

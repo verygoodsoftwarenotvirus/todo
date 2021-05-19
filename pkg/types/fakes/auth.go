@@ -3,7 +3,8 @@ package fakes
 import (
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -14,19 +15,14 @@ func BuildFakeSessionContextData() *types.SessionContextData {
 	fakeAccountID := fake.Uint64()
 
 	return &types.SessionContextData{
-		AccountPermissionsMap: map[uint64]*types.UserAccountMembershipInfo{
-			fakeAccountID: {
-				AccountName: fake.Name(),
-				AccountID:   fakeAccountID,
-				Permissions: permissions.NewServiceUserPermissions(fake.Int64()),
-			},
+		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+			fakeAccountID: authorization.NewAccountRolePermissionChecker(authorization.AccountAdminRole.String()),
 		},
 		Requester: types.RequesterInfo{
-			Reputation:             types.GoodStandingAccountStatus,
-			ReputationExplanation:  "",
-			ID:                     fake.Uint64(),
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(fake.Int64()),
-			RequiresPasswordChange: false,
+			Reputation:            types.GoodStandingAccountStatus,
+			ReputationExplanation: "",
+			UserID:                fake.Uint64(),
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		ActiveAccountID: fakeAccountID,
 	}
@@ -37,19 +33,14 @@ func BuildFakeSessionContextDataForAccount(account *types.Account) *types.Sessio
 	fakeAccountID := fake.Uint64()
 
 	return &types.SessionContextData{
-		AccountPermissionsMap: map[uint64]*types.UserAccountMembershipInfo{
-			account.ID: {
-				AccountName: account.Name,
-				AccountID:   account.ID,
-				Permissions: permissions.NewServiceUserPermissions(fake.Int64()),
-			},
+		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+			account.ID: authorization.NewAccountRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		Requester: types.RequesterInfo{
-			Reputation:             types.GoodStandingAccountStatus,
-			ReputationExplanation:  "",
-			ID:                     fake.Uint64(),
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(fake.Int64()),
-			RequiresPasswordChange: false,
+			Reputation:            types.GoodStandingAccountStatus,
+			ReputationExplanation: "",
+			UserID:                fake.Uint64(),
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		ActiveAccountID: fakeAccountID,
 	}
@@ -58,18 +49,18 @@ func BuildFakeSessionContextDataForAccount(account *types.Account) *types.Sessio
 // BuildFakeAddUserToAccountInput builds a faked AddUserToAccountInput.
 func BuildFakeAddUserToAccountInput() *types.AddUserToAccountInput {
 	return &types.AddUserToAccountInput{
-		Reason:                 fake.Sentence(10),
-		UserID:                 fake.Uint64(),
-		AccountID:              fake.Uint64(),
-		UserAccountPermissions: permissions.ServiceUserPermission(fake.Int64()),
+		Reason:       fake.Sentence(10),
+		UserID:       fake.Uint64(),
+		AccountID:    fake.Uint64(),
+		AccountRoles: []string{authorization.AccountMemberRole.String()},
 	}
 }
 
 // BuildFakeUserPermissionModificationInput builds a faked ModifyUserPermissionsInput.
 func BuildFakeUserPermissionModificationInput() *types.ModifyUserPermissionsInput {
 	return &types.ModifyUserPermissionsInput{
-		Reason:                 fake.Sentence(10),
-		UserAccountPermissions: permissions.ServiceUserPermission(fake.Int64()),
+		Reason:   fake.Sentence(10),
+		NewRoles: []string{authorization.AccountMemberRole.String()},
 	}
 }
 

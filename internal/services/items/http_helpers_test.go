@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
@@ -47,16 +49,9 @@ func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 		return h.exampleItem.ID
 	}
 
-	sessionCtxData, err := types.SessionContextDataFromUser(
-		h.exampleUser,
-		h.exampleAccount.ID,
-		map[uint64]*types.UserAccountMembershipInfo{
-			h.exampleAccount.ID: {
-				AccountName: h.exampleAccount.Name,
-				Permissions: testutil.BuildMaxUserPerms(),
-			},
-		},
-	)
+	sessionCtxData, err := types.SessionContextDataFromUser(h.exampleUser, h.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+		h.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+	})
 	require.NoError(t, err)
 
 	h.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)

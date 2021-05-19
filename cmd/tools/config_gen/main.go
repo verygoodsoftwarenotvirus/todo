@@ -19,7 +19,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
@@ -37,7 +37,7 @@ const (
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
-	defaultCookieName        = auth.DefaultCookieName
+	defaultCookieName        = authentication.DefaultCookieName
 
 	// run modes.
 	developmentEnv = "development"
@@ -75,12 +75,12 @@ var (
 		StartupDeadline: time.Minute,
 	}
 
-	localCookies = auth.CookieConfig{
+	localCookies = authentication.CookieConfig{
 		Name:       defaultCookieName,
 		Domain:     defaultCookieDomain,
 		HashKey:    debugCookieSecret,
 		SigningKey: debugCookieSecret,
-		Lifetime:   auth.DefaultCookieLifetime,
+		Lifetime:   authentication.DefaultCookieLifetime,
 		SecureOnly: false,
 	}
 
@@ -143,8 +143,8 @@ func localDevelopmentConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: auth.Config{
-			PASETO: auth.PASETOConfig{
+		Auth: authentication.Config{
+			PASETO: authentication.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -228,8 +228,8 @@ func frontendTestsConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: auth.Config{
-			PASETO: auth.PASETOConfig{
+		Auth: authentication.Config{
+			PASETO: authentication.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -301,8 +301,8 @@ func coverageConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: auth.Config{
-			PASETO: auth.PASETOConfig{
+		Auth: authentication.Config{
+			PASETO: authentication.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -390,17 +390,17 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				StartupDeadline: startupDeadline,
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
-			Auth: auth.Config{
-				PASETO: auth.PASETOConfig{
+			Auth: authentication.Config{
+				PASETO: authentication.PASETOConfig{
 					Issuer:       "todo_service",
 					Lifetime:     defaultPASETOLifetime,
 					LocalModeKey: examplePASETOKey,
 				},
-				Cookies: auth.CookieConfig{
+				Cookies: authentication.CookieConfig{
 					Name:       defaultCookieName,
 					Domain:     defaultCookieDomain,
 					SigningKey: debugCookieSecret,
-					Lifetime:   auth.DefaultCookieLifetime,
+					Lifetime:   authentication.DefaultCookieLifetime,
 					SecureOnly: false,
 				},
 				Debug:                 false,

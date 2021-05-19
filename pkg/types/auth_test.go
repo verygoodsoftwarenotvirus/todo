@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -53,24 +53,6 @@ func TestSessionContextData_ToBytes(T *testing.T) {
 	})
 }
 
-func TestAccountPermissionsMap_ToPermissionMapByAccountName(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		x := AccountPermissionsMap{
-			123: &UserAccountMembershipInfo{
-				AccountName: t.Name(),
-				AccountID:   123,
-				Permissions: permissions.ServiceUserPermission(123),
-			},
-		}
-
-		assert.NotEmpty(t, x.ToPermissionMapByAccountName())
-	})
-}
-
 func TestSessionContextDataFromUser(T *testing.T) {
 	T.Parallel()
 
@@ -78,27 +60,25 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{
-			ID:                     12345,
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(1),
+			ID: 12345,
 		}
 
 		exampleAccount := &Account{
 			ID: 54321,
 		}
 
-		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
+		exampleAccountPermissions := map[uint64]authorization.AccountRolePermissionsChecker{}
 
 		expected := &SessionContextData{
 			Requester: RequesterInfo{
-				ID:                     exampleUser.ID,
-				ServiceAdminPermission: exampleUser.ServiceAdminPermission,
-				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
+				UserID:             exampleUser.ID,
+				ServicePermissions: authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
 			},
-			ActiveAccountID:       exampleAccount.ID,
-			AccountPermissionsMap: examplePermissions,
+			ActiveAccountID:    exampleAccount.ID,
+			AccountPermissions: exampleAccountPermissions,
 		}
 
-		actual, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermissions)
+		actual, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, exampleAccountPermissions)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
@@ -107,9 +87,8 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleAccount := &Account{ID: 54321}
-		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
 
-		actual, err := SessionContextDataFromUser(nil, exampleAccount.ID, examplePermissions)
+		actual, err := SessionContextDataFromUser(nil, exampleAccount.ID, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -118,13 +97,10 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{
-			ID:                     12345,
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(1),
+			ID: 12345,
 		}
 
-		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
-
-		actual, err := SessionContextDataFromUser(exampleUser, 0, examplePermissions)
+		actual, err := SessionContextDataFromUser(exampleUser, 0, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -133,8 +109,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := &User{
-			ID:                     12345,
-			ServiceAdminPermission: permissions.NewServiceAdminPermissions(1),
+			ID: 12345,
 		}
 
 		exampleAccount := &Account{

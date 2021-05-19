@@ -32,7 +32,7 @@ func (s *service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 		apiClient = fakes.BuildFakeAPIClient()
 	} else {
 		apiClientID := s.routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client")(req)
-		apiClient, err = s.dataStore.GetAPIClientByDatabaseID(ctx, apiClientID, sessionCtxData.Requester.ID)
+		apiClient, err = s.dataStore.GetAPIClientByDatabaseID(ctx, apiClientID, sessionCtxData.Requester.UserID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching API client data")
 		}
@@ -85,7 +85,7 @@ func (s *service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 				ContentData: apiClient,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)
@@ -104,7 +104,7 @@ func (s *service) fetchAPIClients(ctx context.Context, sessionCtxData *types.Ses
 		apiClients = fakes.BuildFakeAPIClientList()
 	} else {
 		filter := types.ExtractQueryFilter(req)
-		apiClients, err = s.dataStore.GetAPIClients(ctx, sessionCtxData.Requester.ID, filter)
+		apiClients, err = s.dataStore.GetAPIClients(ctx, sessionCtxData.Requester.UserID, filter)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching API client data")
 		}
@@ -158,7 +158,7 @@ func (s *service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 				ContentData: apiClients,
 			}
 			if sessionCtxData != nil {
-				page.IsServiceAdmin = sessionCtxData.Requester.ServiceAdminPermission.IsServiceAdmin()
+				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
 			}
 
 			s.renderTemplateToResponse(ctx, view, page, res)

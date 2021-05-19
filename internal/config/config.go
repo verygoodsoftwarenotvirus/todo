@@ -16,7 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
@@ -57,18 +57,18 @@ type (
 
 	// ServerConfig is our server configuration struct. It is composed of all the other setting structs.
 	ServerConfig struct {
-		Search        search.Config        `json:"search" mapstructure:"search" toml:"search,omitempty"`
-		Encoding      encoding.Config      `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
-		Uploads       uploads.Config       `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
-		Observability observability.Config `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
-		Routing       routing.Config       `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
-		Meta          MetaSettings         `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      dbconfig.Config      `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Auth          auth.Config          `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Server        server.Config        `json:"server" mapstructure:"server" toml:"server,omitempty"`
-		AuditLog      audit.Config         `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
-		Webhooks      webhooks.Config      `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		Frontend      frontend.Config      `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+		Search        search.Config         `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Encoding      encoding.Config       `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
+		Uploads       uploads.Config        `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Observability observability.Config  `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
+		Routing       routing.Config        `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
+		Meta          MetaSettings          `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
+		Database      dbconfig.Config       `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Auth          authentication.Config `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		Server        server.Config         `json:"server" mapstructure:"server" toml:"server,omitempty"`
+		AuditLog      audit.Config          `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
+		Webhooks      webhooks.Config       `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		Frontend      frontend.Config       `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 )
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -251,7 +251,7 @@ func TestProvideSessionManager(T *testing.T) {
 	T.Run("with nil database", func(t *testing.T) {
 		t.Parallel()
 
-		cookieConfig := auth.CookieConfig{}
+		cookieConfig := authentication.CookieConfig{}
 		cfg := Config{
 			Provider:          PostgresProvider,
 			ConnectionDetails: "example_connection_string",
@@ -265,7 +265,7 @@ func TestProvideSessionManager(T *testing.T) {
 	T.Run("standard for postgres", func(t *testing.T) {
 		t.Parallel()
 
-		cookieConfig := auth.CookieConfig{}
+		cookieConfig := authentication.CookieConfig{}
 		cfg := Config{
 			Provider:          PostgresProvider,
 			ConnectionDetails: "example_connection_string",
@@ -279,7 +279,7 @@ func TestProvideSessionManager(T *testing.T) {
 	T.Run("standard for sqlite", func(t *testing.T) {
 		t.Parallel()
 
-		cookieConfig := auth.CookieConfig{}
+		cookieConfig := authentication.CookieConfig{}
 		cfg := Config{
 			Provider:          SqliteProvider,
 			ConnectionDetails: "example_connection_string",
@@ -293,7 +293,7 @@ func TestProvideSessionManager(T *testing.T) {
 	T.Run("standard for mariadb", func(t *testing.T) {
 		t.Parallel()
 
-		cookieConfig := auth.CookieConfig{}
+		cookieConfig := authentication.CookieConfig{}
 		cfg := Config{
 			Provider:          MariaDBProvider,
 			ConnectionDetails: "example_connection_string",
@@ -316,7 +316,7 @@ func TestProvideSessionManager(T *testing.T) {
 	T.Run("with invalid provider", func(t *testing.T) {
 		t.Parallel()
 
-		cookieConfig := auth.CookieConfig{}
+		cookieConfig := authentication.CookieConfig{}
 		cfg := Config{
 			Provider:          invalidProvider,
 			ConnectionDetails: "example_connection_string",

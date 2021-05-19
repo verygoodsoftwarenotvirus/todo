@@ -33,7 +33,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
@@ -91,7 +91,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, sessionCtxData.ActiveAccountID, filter)
@@ -126,7 +126,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -170,7 +170,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
-	userID := sessionCtxData.Requester.ID
+	userID := sessionCtxData.Requester.UserID
 	logger = logger.WithValue(keys.RequesterIDKey, userID)
 
 	accountID := sessionCtxData.ActiveAccountID
@@ -246,7 +246,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	userID := sessionCtxData.Requester.ID
+	userID := sessionCtxData.Requester.UserID
 	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	accountID := sessionCtxData.ActiveAccountID
@@ -258,7 +258,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// do the deed.
-	err = s.webhookDataManager.ArchiveWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.ID)
+	err = s.webhookDataManager.ArchiveWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -293,7 +293,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
 	// determine item ID.
 	webhookID := s.webhookIDFetcher(req)

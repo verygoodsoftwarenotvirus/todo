@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"math"
 	"testing"
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
@@ -36,9 +35,8 @@ func TestQuerier_Migrate(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.ExternalID = ""
 		exampleAccountCreationInput := &types.AccountCreationInput{
-			Name:                   fmt.Sprintf("%s_default", exampleUser.Username),
-			DefaultUserPermissions: math.MaxInt64,
-			BelongsToUser:          exampleUser.ID,
+			Name:          fmt.Sprintf("%s_default", exampleUser.Username),
+			BelongsToUser: exampleUser.ID,
 		}
 
 		exampleInput := &types.TestUserCreationConfig{

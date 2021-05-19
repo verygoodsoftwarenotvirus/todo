@@ -6,7 +6,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/mock"
@@ -52,11 +51,6 @@ func (m *AuthService) PASETOHandler(res http.ResponseWriter, req *http.Request) 
 // ChangeActiveAccountHandler satisfies our interface contract.
 func (m *AuthService) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(req, res)
-}
-
-// PermissionRestrictionMiddleware satisfies our interface contract.
-func (m *AuthService) PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler {
-	return m.Called(perms).Get(0).(func(next http.Handler) http.Handler)
 }
 
 // CookieRequirementMiddleware satisfies our interface contract.

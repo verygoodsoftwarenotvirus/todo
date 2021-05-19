@@ -296,7 +296,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			exampleInput,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(exampleItem, nil)
 		s.dataStore = mockDB
 
@@ -348,7 +348,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			exampleInput,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(exampleItem, nil)
 		s.dataStore = mockDB
 
@@ -380,7 +380,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutil.ContextMatcher,
 			exampleInput,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -820,7 +820,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			"UpdateItem",
 			testutil.ContextMatcher,
 			exampleItem,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 			[]*types.FieldChangeSummary(nil),
 		).Return(nil)
 		s.dataStore = mockDB
@@ -954,7 +954,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			"UpdateItem",
 			testutil.ContextMatcher,
 			exampleItem,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 			[]*types.FieldChangeSummary(nil),
 		).Return(errors.New("blah"))
 		s.dataStore = mockDB
@@ -1003,7 +1003,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			testutil.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(nil)
 		s.dataStore = mockDB
 
@@ -1071,7 +1071,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			testutil.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -1114,7 +1114,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			testutil.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(nil)
 		s.dataStore = mockDB
 

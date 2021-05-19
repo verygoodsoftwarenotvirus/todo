@@ -38,19 +38,9 @@ func Test_FetchContextFromRequest(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		expected, _ := types.SessionContextDataFromUser(
-			exampleUser,
-			exampleAccount.ID,
-			map[uint64]*types.UserAccountMembershipInfo{
-				exampleAccount.ID: {
-					AccountName: exampleAccount.Name,
-					Permissions: testutil.BuildMaxUserPerms(),
-				},
-			},
-			map[uint64]authorization.AccountRolePermissionsChecker{
-				exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-			},
-		)
+		expected, _ := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+			exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+		})
 
 		req := testutil.BuildTestRequest(t)
 		req = req.WithContext(
@@ -86,19 +76,9 @@ func Test_UserIDFetcherFromSessionContextData(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		sessionContextData, err := types.SessionContextDataFromUser(
-			exampleUser,
-			exampleAccount.ID,
-			map[uint64]*types.UserAccountMembershipInfo{
-				exampleAccount.ID: {
-					AccountName: exampleAccount.Name,
-					Permissions: testutil.BuildMaxUserPerms(),
-				},
-			},
-			map[uint64]authorization.AccountRolePermissionsChecker{
-				exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-			},
-		)
+		sessionContextData, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+			exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+		})
 		require.NoError(t, err)
 
 		req := testutil.BuildTestRequest(t)

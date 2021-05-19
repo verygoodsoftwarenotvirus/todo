@@ -2,7 +2,7 @@ package fakes
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
@@ -11,13 +11,12 @@ import (
 // BuildFakeAccountUserMembership builds a faked item.
 func BuildFakeAccountUserMembership() *types.AccountUserMembership {
 	return &types.AccountUserMembership{
-		ID:                     uint64(fake.Uint32()),
-		BelongsToUser:          fake.Uint64(),
-		BelongsToAccount:       fake.Uint64(),
-		UserAccountPermissions: permissions.ServiceUserPermission(fake.Int64()),
-		AccountRoles:           []string{authorization.AccountMemberRole.String()},
-		CreatedOn:              0,
-		ArchivedOn:             nil,
+		ID:               uint64(fake.Uint32()),
+		BelongsToUser:    fake.Uint64(),
+		BelongsToAccount: fake.Uint64(),
+		AccountRoles:     []string{authorization.AccountMemberRole.String()},
+		CreatedOn:        0,
+		ArchivedOn:       nil,
 	}
 }
 
@@ -42,9 +41,8 @@ func BuildFakeAccountUserMembershipList() *types.AccountUserMembershipList {
 // BuildFakeAccountUserMembershipUpdateInputFromAccountUserMembership builds a faked AccountUserMembershipUpdateInput from an item.
 func BuildFakeAccountUserMembershipUpdateInputFromAccountUserMembership(accountUserMembership *types.AccountUserMembership) *types.AccountUserMembershipUpdateInput {
 	return &types.AccountUserMembershipUpdateInput{
-		BelongsToUser:          accountUserMembership.BelongsToUser,
-		BelongsToAccount:       accountUserMembership.BelongsToAccount,
-		UserAccountPermissions: accountUserMembership.UserAccountPermissions,
+		BelongsToUser:    accountUserMembership.BelongsToUser,
+		BelongsToAccount: accountUserMembership.BelongsToAccount,
 	}
 }
 
@@ -56,8 +54,7 @@ func BuildFakeAccountUserMembershipCreationInput() *types.AccountUserMembershipC
 // BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership builds a faked AccountUserMembershipCreationInput from an item.
 func BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership(accountUserMembership *types.AccountUserMembership) *types.AccountUserMembershipCreationInput {
 	return &types.AccountUserMembershipCreationInput{
-		BelongsToUser:          accountUserMembership.BelongsToUser,
-		BelongsToAccount:       accountUserMembership.BelongsToAccount,
-		UserAccountPermissions: accountUserMembership.UserAccountPermissions,
+		BelongsToUser:    accountUserMembership.BelongsToUser,
+		BelongsToAccount: accountUserMembership.BelongsToAccount,
 	}
 }

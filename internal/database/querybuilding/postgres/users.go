@@ -165,7 +165,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableServiceRoleColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -199,7 +199,7 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableServiceRoleColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),

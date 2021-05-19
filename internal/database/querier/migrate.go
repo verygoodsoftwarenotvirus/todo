@@ -2,11 +2,9 @@ package querier
 
 import (
 	"context"
-	"math"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -37,7 +35,7 @@ func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserCon
 
 			// these structs will be fleshed out by createUser
 			user := &types.User{Username: testUserConfig.Username}
-			account := &types.Account{DefaultNewMemberPermissions: permissions.ServiceUserPermission(math.MaxInt64)}
+			account := &types.Account{}
 
 			if err = q.createUser(ctx, user, account, testUserCreationQuery, testUserCreationArgs); err != nil {
 				observability.AcknowledgeError(err, q.logger, span, "creating test user")

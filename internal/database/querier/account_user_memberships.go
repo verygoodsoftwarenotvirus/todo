@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -24,14 +24,13 @@ const (
 )
 
 // scanAccountUserMembership takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountUserMembership struct.
-func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan database.Scanner) (x *types.AccountUserMembership, accountName string, err error) {
+func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan database.Scanner) (x *types.AccountUserMembership, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	x = &types.AccountUserMembership{}
 
 	var (
-		rawPerms        int64
 		rawAccountRoles string
 	)
 
@@ -40,20 +39,15 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 		&x.BelongsToUser,
 		&x.BelongsToAccount,
 		&rawAccountRoles,
-		&rawPerms,
 		&x.DefaultAccount,
 		&x.CreatedOn,
 		&x.LastUpdatedOn,
 		&x.ArchivedOn,
-		&accountName,
 	}
 
 	if err = scan.Scan(targetVars...); err != nil {
-		return nil, "", observability.PrepareError(err, q.logger, span, "scanning account user memberships")
+		return nil, observability.PrepareError(err, q.logger, span, "scanning account user memberships")
 	}
-
-	newPerms := permissions.NewServiceUserPermissions(rawPerms)
-	x.UserAccountPermissions = newPerms
 
 	if roles := strings.Split(rawAccountRoles, accountMemberRolesSeparator); len(roles) > 0 {
 		x.AccountRoles = roles
@@ -61,42 +55,35 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 		x.AccountRoles = []string{}
 	}
 
-	return x, accountName, nil
+	return x, nil
 }
 
 // scanAccountUserMemberships takes some database rows and turns them into a slice of memberships.
-func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (defaultAccount uint64, membershipMap map[uint64]*types.UserAccountMembershipInfo, accountRolesMap map[uint64][]string, err error) {
+func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (defaultAccount uint64, accountRolesMap map[uint64][]string, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	membershipMap = map[uint64]*types.UserAccountMembershipInfo{}
 	accountRolesMap = map[uint64][]string{}
 	logger := q.logger
 
 	for rows.Next() {
-		x, accountName, scanErr := q.scanAccountUserMembership(ctx, rows)
+		x, scanErr := q.scanAccountUserMembership(ctx, rows)
 		if scanErr != nil {
-			return 0, nil, nil, scanErr
+			return 0, nil, scanErr
 		}
 
 		if x.DefaultAccount && defaultAccount == 0 {
 			defaultAccount = x.BelongsToAccount
 		}
 
-		membershipMap[x.BelongsToAccount] = &types.UserAccountMembershipInfo{
-			AccountID:    x.BelongsToAccount,
-			AccountName:  accountName,
-			Permissions:  x.UserAccountPermissions,
-			AccountRoles: x.AccountRoles,
-		}
 		accountRolesMap[x.BelongsToAccount] = x.AccountRoles
 	}
 
 	if err = q.checkRowsForErrorAndClose(ctx, rows); err != nil {
-		return 0, nil, nil, observability.PrepareError(err, logger, span, "handling rows")
+		return 0, nil, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
-	return defaultAccount, membershipMap, accountRolesMap, nil
+	return defaultAccount, accountRolesMap, nil
 }
 
 // BuildSessionContextDataForUser does .
@@ -123,27 +110,26 @@ func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID 
 		return nil, observability.PrepareError(err, logger, span, "fetching user's memberships from database")
 	}
 
-	defaultAccountID, membershipMap, accountRolesMap, err := q.scanAccountUserMemberships(ctx, membershipRows)
+	defaultAccountID, accountRolesMap, err := q.scanAccountUserMemberships(ctx, membershipRows)
 	if err != nil {
 		return nil, observability.PrepareError(err, logger, span, "scanning user's memberships from database")
 	}
 
 	actualAccountRolesMap := map[uint64]authorization.AccountRolePermissionsChecker{}
-	for k, v := range accountRolesMap {
-		actualAccountRolesMap[k] = authorization.NewAccountRolePermissionChecker(v...)
+	for accountID, roles := range accountRolesMap {
+		actualAccountRolesMap[accountID] = authorization.NewAccountRolePermissionChecker(roles...)
 	}
 
 	sessionCtxData := &types.SessionContextData{
 		Requester: types.RequesterInfo{
-			ID:                     user.ID,
+			RequestingUserID:       user.ID,
 			Reputation:             user.Reputation,
 			ReputationExplanation:  user.ReputationExplanation,
 			ServicePermissions:     authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
 			RequiresPasswordChange: user.RequiresPasswordChange,
 		},
-		AccountRolesMap:       actualAccountRolesMap,
-		AccountPermissionsMap: membershipMap,
-		ActiveAccountID:       defaultAccountID,
+		AccountPermissions: actualAccountRolesMap,
+		ActiveAccountID:    defaultAccountID,
 	}
 
 	return sessionCtxData, nil
@@ -259,7 +245,7 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, userID, accountI
 		keys.AccountIDKey:   accountID,
 		keys.UserIDKey:      userID,
 		keys.RequesterIDKey: changedByUser,
-		"new_permissions":   input.UserAccountPermissions,
+		"new_roles":         input.NewRoles,
 	})
 
 	tracing.AttachUserIDToSpan(span, userID)
@@ -271,7 +257,7 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, userID, accountI
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	query, args := q.sqlQueryBuilder.BuildModifyUserPermissionsQuery(ctx, userID, accountID, input.UserAccountPermissions, "")
+	query, args := q.sqlQueryBuilder.BuildModifyUserPermissionsQuery(ctx, userID, accountID, input.NewRoles)
 
 	// create the membership.
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user account permissions modification", query, args); err != nil {
@@ -279,7 +265,7 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, userID, accountI
 		return observability.PrepareError(err, logger, span, "modifying user account permissions")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.UserAccountPermissions, input.Reason)); err != nil {
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.NewRoles, input.Reason)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing user account membership permission modification audit log entry")
 	}
@@ -369,7 +355,6 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 		keys.RequesterIDKey: addedByUser,
 		keys.UserIDKey:      input.UserID,
 		keys.AccountIDKey:   input.AccountID,
-		keys.PermissionsKey: input.UserAccountPermissions,
 	})
 
 	tracing.AttachUserIDToSpan(span, input.UserID)

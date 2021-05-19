@@ -9,8 +9,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -40,24 +38,16 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
-		AccountName  string                            `json:"name"`
-		AccountRoles []string                          `json:"-"`
-		AccountID    uint64                            `json:"accountID"`
-		Permissions  permissions.ServiceUserPermission `json:"permissions"`
+		AccountName  string   `json:"name"`
+		AccountRoles []string `json:"-"`
+		AccountID    uint64   `json:"accountID"`
 	}
 
 	// SessionContextData represents what we encode in our passwords cookies.
 	SessionContextData struct {
-		AccountRolesMap       map[uint64]authorization.AccountRolePermissionsChecker `json:"-"`
-		AccountPermissionsMap map[uint64]*UserAccountMembershipInfo                  `json:"-"`
-		Requester             RequesterInfo                                          `json:"-"`
-		ActiveAccountID       uint64                                                 `json:"-"`
-	}
-
-	// FrontendUserAccountMembershipInfo represents key information about an account membership to the frontend.
-	FrontendUserAccountMembershipInfo struct {
-		UserAccountMembershipInfo
-		Permissions permissions.ServiceUserPermissionsSummary `json:"permissions"`
+		AccountPermissions map[uint64]authorization.AccountRolePermissionsChecker `json:"-"`
+		Requester          RequesterInfo                                          `json:"-"`
+		ActiveAccountID    uint64                                                 `json:"-"`
 	}
 
 	// RequesterInfo contains data relevant to the user making a request.
@@ -65,7 +55,7 @@ type (
 		ServicePermissions     authorization.ServiceRolePermissionChecker `json:"-"`
 		Reputation             userReputation                             `json:"-"`
 		ReputationExplanation  string                                     `json:"-"`
-		ID                     uint64                                     `json:"-"`
+		RequestingUserID       uint64                                     `json:"-"`
 		RequiresPasswordChange bool                                       `json:"-"`
 	}
 
@@ -106,7 +96,6 @@ type (
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
 		PermissionFilterMiddleware(filters ...func(authorization.AccountRolePermissionsChecker) bool) func(next http.Handler) http.Handler
-		PermissionRestrictionMiddleware(perms ...permissions.ServiceUserPermission) func(next http.Handler) http.Handler
 		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
@@ -158,7 +147,7 @@ func (x *SessionContextData) ToBytes() []byte {
 }
 
 // SessionContextDataFromUser produces a SessionContextData object from a User's data.
-func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]*UserAccountMembershipInfo, accountRolesMap map[uint64]authorization.AccountRolePermissionsChecker) (*SessionContextData, error) {
+func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]authorization.AccountRolePermissionsChecker) (*SessionContextData, error) {
 	if user == nil {
 		return nil, errNilUser
 	}
@@ -171,21 +160,16 @@ func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermi
 		return nil, errNilPermissionMap
 	}
 
-	if accountRolesMap == nil {
-		return nil, errNilPermissionMap
-	}
-
 	sessionCtxData := &SessionContextData{
 		Requester: RequesterInfo{
-			ID:                     user.ID,
+			RequestingUserID:       user.ID,
 			Reputation:             user.Reputation,
 			ReputationExplanation:  user.ReputationExplanation,
 			ServicePermissions:     authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
 			RequiresPasswordChange: user.RequiresPasswordChange,
 		},
-		AccountRolesMap:       accountRolesMap,
-		AccountPermissionsMap: accountPermissionsMap,
-		ActiveAccountID:       activeAccountID,
+		AccountPermissions: accountPermissionsMap,
+		ActiveAccountID:    activeAccountID,
 	}
 
 	return sessionCtxData, nil

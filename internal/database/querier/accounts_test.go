@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -36,7 +38,6 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 				x.ExternalID,
 				x.Name,
 				x.AccountSubscriptionPlanID,
-				x.DefaultNewMemberPermissions,
 				x.CreatedOn,
 				x.LastUpdatedOn,
 				x.ArchivedOn,
@@ -45,7 +46,6 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 				y.BelongsToUser,
 				y.BelongsToAccount,
 				strings.Join(y.AccountRoles, accountMemberRolesSeparator),
-				int64(y.UserAccountPermissions),
 				y.DefaultAccount,
 				y.CreatedOn,
 				x.LastUpdatedOn,
@@ -791,10 +791,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1019,10 +1019,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1089,10 +1089,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1170,10 +1170,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
 		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:                 "account creation",
-			UserID:                 exampleUser.ID,
-			AccountID:              exampleAccount.ID,
-			UserAccountPermissions: exampleAccount.DefaultNewMemberPermissions,
+			Reason:       "account creation",
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
 		ctx := context.Background()

@@ -59,11 +59,11 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
 	// create item in database.
-	item, err := s.itemDataManager.CreateItem(ctx, input, sessionCtxData.Requester.ID)
+	item, err := s.itemDataManager.CreateItem(ctx, input, sessionCtxData.Requester.RequestingUserID)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "creating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -99,7 +99,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -138,7 +138,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -179,7 +179,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	items, err := s.itemDataManager.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -220,7 +220,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	relevantIDs, err := s.search.Search(ctx, query, sessionCtxData.ActiveAccountID)
 	if err != nil {
@@ -275,7 +275,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
 	// determine item ID.
@@ -299,7 +299,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachChangeSummarySpan(span, "item", changeReport)
 
 	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, item, sessionCtxData.Requester.ID, changeReport); err != nil {
+	if err = s.itemDataManager.UpdateItem(ctx, item, sessionCtxData.Requester.RequestingUserID, changeReport); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -331,7 +331,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -339,7 +339,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	// archive the item in the database.
-	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.ID)
+	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.RequestingUserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -377,7 +377,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)

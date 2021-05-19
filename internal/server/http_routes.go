@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
@@ -152,17 +152,22 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 
 		// Webhooks
 		v1Router.Route("/webhooks", func(webhookRouter routing.Router) {
-			webhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks)).
-				Post(root, s.webhooksService.CreateHandler)
+			singleWebhookRoute := buildNumericIDURLChunk(webhooks.WebhookIDURIParamKey)
 			webhookRouter.Get(root, s.webhooksService.ListHandler)
 
-			singleWebhookRoute := buildNumericIDURLChunk(webhooks.WebhookIDURIParamKey)
+			webhookRouter.WithMiddleware(s.authService.PermissionFilterMiddleware(
+				func(checker authorization.AccountRolePermissionsChecker) bool { return checker.CanCreateWebhooks() },
+			)).Post(root, s.webhooksService.CreateHandler)
+
 			webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
 				singleWebhookRouter.Get(root, s.webhooksService.ReadHandler)
-				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks)).
-					Delete(root, s.webhooksService.ArchiveHandler)
-				singleWebhookRouter.WithMiddleware(s.authService.PermissionRestrictionMiddleware(permissions.CanManageWebhooks)).
-					Put(root, s.webhooksService.UpdateHandler)
+
+				singleWebhookRouter.WithMiddleware(s.authService.PermissionFilterMiddleware(
+					func(checker authorization.AccountRolePermissionsChecker) bool { return checker.CanDeleteWebhooks() },
+				)).Delete(root, s.webhooksService.ArchiveHandler)
+				singleWebhookRouter.WithMiddleware(s.authService.PermissionFilterMiddleware(
+					func(checker authorization.AccountRolePermissionsChecker) bool { return checker.CanUpdateWebhooks() },
+				)).Put(root, s.webhooksService.UpdateHandler)
 				singleWebhookRouter.WithMiddleware(s.authService.AdminMiddleware).
 					Get(auditRoute, s.webhooksService.AuditEntryHandler)
 			})

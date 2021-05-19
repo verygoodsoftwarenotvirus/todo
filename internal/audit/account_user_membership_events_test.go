@@ -5,11 +5,10 @@ import (
 
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 
+	"github.com/stretchr/testify/assert"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildUserAddedToAccountEventEntry(t *testing.T) {
@@ -33,7 +32,7 @@ func TestBuildUserMarkedAccountAsDefaultEventEntry(t *testing.T) {
 func TestBuildModifyUserPermissionsEventEntry(t *testing.T) {
 	t.Parallel()
 
-	assert.NotNil(t, audit.BuildModifyUserPermissionsEventEntry(exampleUserID, exampleAccountID, exampleAdminUserID, testutil.BuildNoUserPerms(), t.Name()))
+	assert.NotNil(t, audit.BuildModifyUserPermissionsEventEntry(exampleUserID, exampleAccountID, exampleAdminUserID, []string{t.Name()}, t.Name()))
 }
 
 func TestBuildTransferAccountOwnershipEventEntry(t *testing.T) {

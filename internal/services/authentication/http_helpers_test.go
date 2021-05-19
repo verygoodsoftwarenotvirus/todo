@@ -12,12 +12,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request, string) {
@@ -60,7 +59,7 @@ type authServiceHTTPRoutesTestHelper struct {
 func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher(t *testing.T) {
 	t.Helper()
 
-	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 	require.NoError(t, err)
 
 	helper.sessionCtxData = sessionCtxData
@@ -85,8 +84,8 @@ func buildTestHelper(t *testing.T) *authServiceHTTPRoutesTestHelper {
 
 	helper.examplePerms = map[uint64]*types.UserAccountMembershipInfo{
 		helper.exampleAccount.ID: {
-			AccountName: helper.exampleAccount.Name,
-			Permissions: testutil.BuildMaxUserPerms(),
+			AccountName:  helper.exampleAccount.Name,
+			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		},
 	}
 	helper.examplePermCheckers = map[uint64]authorization.AccountRolePermissionsChecker{

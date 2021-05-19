@@ -3,20 +3,21 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"math"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 var _ querybuilding.AccountUserMembershipSQLQueryBuilder = (*Sqlite)(nil)
+
+const (
+	accountMemberRolesSeparator = ","
+)
 
 // BuildGetDefaultAccountIDForUserQuery does .
 func (b *Sqlite) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
@@ -63,14 +64,10 @@ func (b *Sqlite) BuildGetAccountMembershipsForUserQuery(ctx context.Context, use
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
-	columns := append(
-		querybuilding.AccountsUserMembershipTableColumns,
-		fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableNameColumn),
-	)
 
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Select(columns...).
+		b.sqlBuilder.Select(querybuilding.AccountsUserMembershipTableColumns...).
 			Join(fmt.Sprintf(
 				"%s ON %s.%s = %s.%s",
 				querybuilding.AccountsTableName,
@@ -141,15 +138,14 @@ func (b *Sqlite) BuildTransferAccountMembershipsQuery(ctx context.Context, curre
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, perms permissions.ServiceUserPermission, newRole string) (query string, args []interface{}) {
+func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
-			Set(querybuilding.AccountsUserMembershipTableUserPermissionsColumn, perms).
-			Set(querybuilding.AccountsUserMembershipTableAccountRoleColumn, newRole).
+			Set(querybuilding.AccountsUserMembershipTableAccountRolesColumn, strings.Join(newRoles, accountMemberRolesSeparator)).
 			Where(squirrel.Eq{
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
@@ -169,14 +165,12 @@ func (b *Sqlite) BuildCreateMembershipForNewUserQuery(ctx context.Context, userI
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
-				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
-				querybuilding.AccountsUserMembershipTableAccountRoleColumn,
+				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
 				userID,
 				accountID,
 				true,
-				math.MaxInt64,
 				authorization.AccountAdminRole.String(),
 			),
 	)
@@ -212,14 +206,12 @@ func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, input *types.Ad
 			Columns(
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-				querybuilding.AccountsUserMembershipTableUserPermissionsColumn,
-				querybuilding.AccountsUserMembershipTableAccountRoleColumn,
+				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
 				input.UserID,
 				input.AccountID,
-				input.UserAccountPermissions,
-				input.AccountRoles,
+				strings.Join(input.AccountRoles, accountMemberRolesSeparator),
 			),
 	)
 }

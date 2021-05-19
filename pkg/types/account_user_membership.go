@@ -3,23 +3,20 @@ package types
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type (
 	// AccountUserMembership defines a relationship between a user and an account.
 	AccountUserMembership struct {
-		ArchivedOn             *uint64                           `json:"archivedOn"`
-		LastUpdatedOn          *uint64                           `json:"lastUpdatedOn"`
-		AccountRoles           []string                          `json:"accountRole"`
-		BelongsToUser          uint64                            `json:"belongsToUser"`
-		BelongsToAccount       uint64                            `json:"belongsToAccount"`
-		CreatedOn              uint64                            `json:"createdOn"`
-		ID                     uint64                            `json:"id"`
-		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`
-		DefaultAccount         bool                              `json:"defaultAccount"`
+		ArchivedOn       *uint64  `json:"archivedOn"`
+		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
+		AccountRoles     []string `json:"accountRole"`
+		BelongsToUser    uint64   `json:"belongsToUser"`
+		BelongsToAccount uint64   `json:"belongsToAccount"`
+		CreatedOn        uint64   `json:"createdOn"`
+		ID               uint64   `json:"id"`
+		DefaultAccount   bool     `json:"defaultAccount"`
 	}
 
 	// AccountUserMembershipList represents a list of account user memberships.
@@ -30,25 +27,22 @@ type (
 
 	// AccountUserMembershipCreationInput represents what a User could set as input for creating account user memberships.
 	AccountUserMembershipCreationInput struct {
-		BelongsToUser          uint64                            `json:"belongsToUser"`
-		BelongsToAccount       uint64                            `json:"belongsToAccount"`
-		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`
+		BelongsToUser    uint64 `json:"belongsToUser"`
+		BelongsToAccount uint64 `json:"belongsToAccount"`
 	}
 
 	// AccountUserMembershipUpdateInput represents what a User could set as input for updating account user memberships.
 	AccountUserMembershipUpdateInput struct {
-		BelongsToUser          uint64                            `json:"belongsToUser"`
-		BelongsToAccount       uint64                            `json:"belongsToAccount"`
-		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`
+		BelongsToUser    uint64 `json:"belongsToUser"`
+		BelongsToAccount uint64 `json:"belongsToAccount"`
 	}
 
 	// AddUserToAccountInput represents what a User could set as input for updating account user memberships.
 	AddUserToAccountInput struct {
-		Reason                 string                            `json:"reason"`
-		AccountRoles           []string                          `json:"accountRole"`
-		UserID                 uint64                            `json:"userID"`
-		AccountID              uint64                            `json:"accountID"`
-		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`
+		Reason       string   `json:"reason"`
+		AccountRoles []string `json:"accountRole"`
+		UserID       uint64   `json:"userID"`
+		AccountID    uint64   `json:"accountID"`
 	}
 
 	// AccountOwnershipTransferInput represents what a User could set as input for updating account user memberships.
@@ -60,8 +54,8 @@ type (
 
 	// ModifyUserPermissionsInput  represents what a User could set as input for updating account user memberships.
 	ModifyUserPermissionsInput struct {
-		Reason                 string                            `json:"reason"`
-		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`
+		Reason   string   `json:"reason"`
+		NewRoles []string `json:"newRoles"`
 	}
 
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
@@ -102,7 +96,7 @@ var _ validation.ValidatableWithContext = (*ModifyUserPermissionsInput)(nil)
 // ValidateWithContext validates a ModifyUserPermissionsInput.
 func (x *ModifyUserPermissionsInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, x,
-		validation.Field(&x.UserAccountPermissions, validation.Required),
+		validation.Field(&x.NewRoles, validation.Required),
 		validation.Field(&x.Reason, validation.Required),
 	)
 }

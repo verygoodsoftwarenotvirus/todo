@@ -42,19 +42,9 @@ func newTestHelper(t *testing.T) *usersServiceHTTPRoutesTestHelper {
 		return h.exampleUser.ID
 	}
 
-	sessionCtxData, err := types.SessionContextDataFromUser(
-		h.exampleUser,
-		h.exampleAccount.ID,
-		map[uint64]*types.UserAccountMembershipInfo{
-			h.exampleAccount.ID: {
-				AccountName: h.exampleAccount.Name,
-				Permissions: testutil.BuildMaxUserPerms(),
-			},
-		},
-		map[uint64]authorization.AccountRolePermissionsChecker{
-			h.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-		},
-	)
+	sessionCtxData, err := types.SessionContextDataFromUser(h.exampleUser, h.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
+		h.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+	})
 	require.NoError(t, err)
 
 	h.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)

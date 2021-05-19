@@ -91,7 +91,7 @@ func AttachChangeSummarySpan(span trace.Span, typeName string, changes []*types.
 // AttachSessionContextDataToSpan provides a consistent way to attach a SessionContextData object to a span.
 func AttachSessionContextDataToSpan(span trace.Span, sessionCtxData *types.SessionContextData) {
 	if sessionCtxData != nil {
-		attachUint64ToSpan(span, keys.RequesterIDKey, sessionCtxData.Requester.ID)
+		attachUint64ToSpan(span, keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 		attachUint64ToSpan(span, keys.ActiveAccountIDKey, sessionCtxData.ActiveAccountID)
 		attachBooleanToSpan(span, keys.ServiceRoleKey, sessionCtxData.Requester.ServicePermissions.IsServiceAdmin())
 	}

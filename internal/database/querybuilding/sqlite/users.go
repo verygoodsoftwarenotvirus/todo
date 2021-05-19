@@ -167,7 +167,7 @@ func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig 
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableServiceRoleColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -200,7 +200,7 @@ func (b *Sqlite) BuildCreateUserQuery(ctx context.Context, input *types.UserData
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableServiceRoleColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),

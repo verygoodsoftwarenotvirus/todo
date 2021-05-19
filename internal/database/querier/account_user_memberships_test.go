@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -22,10 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func buildMockRowsFromAccountUserMemberships(accountName string, memberships ...*types.AccountUserMembership) *sqlmock.Rows {
-	columns := append(querybuilding.AccountsUserMembershipTableColumns, fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableNameColumn))
-
-	exampleRows := sqlmock.NewRows(columns)
+func buildMockRowsFromAccountUserMemberships(memberships ...*types.AccountUserMembership) *sqlmock.Rows {
+	exampleRows := sqlmock.NewRows(querybuilding.AccountsUserMembershipTableColumns)
 
 	for _, x := range memberships {
 		rowValues := []driver.Value{
@@ -33,12 +30,10 @@ func buildMockRowsFromAccountUserMemberships(accountName string, memberships ...
 			&x.BelongsToUser,
 			&x.BelongsToAccount,
 			strings.Join(x.AccountRoles, accountMemberRolesSeparator),
-			&x.UserAccountPermissions,
 			&x.DefaultAccount,
 			&x.CreatedOn,
 			&x.LastUpdatedOn,
 			&x.ArchivedOn,
-			&accountName,
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -47,23 +42,19 @@ func buildMockRowsFromAccountUserMemberships(accountName string, memberships ...
 	return exampleRows
 }
 
-func buildInvalidMockRowsFromAccountUserMemberships(accountName string, memberships ...*types.AccountUserMembership) *sqlmock.Rows {
-	columns := append(querybuilding.AccountsUserMembershipTableColumns, fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableNameColumn))
-
-	exampleRows := sqlmock.NewRows(columns)
+func buildInvalidMockRowsFromAccountUserMemberships(memberships ...*types.AccountUserMembership) *sqlmock.Rows {
+	exampleRows := sqlmock.NewRows(querybuilding.AccountsUserMembershipTableColumns)
 
 	for _, x := range memberships {
 		rowValues := []driver.Value{
-			&accountName,
-			&x.ID,
+			&x.DefaultAccount,
 			&x.BelongsToUser,
 			&x.BelongsToAccount,
 			strings.Join(x.AccountRoles, accountMemberRolesSeparator),
-			&x.UserAccountPermissions,
-			&x.DefaultAccount,
 			&x.CreatedOn,
 			&x.LastUpdatedOn,
 			&x.ArchivedOn,
+			&x.ID,
 		}
 
 		exampleRows.AddRow(rowValues...)
@@ -85,7 +76,7 @@ func TestQuerier_ScanAccountUserMemberships(T *testing.T) {
 		mockRows.On("Next").Return(false)
 		mockRows.On("Err").Return(errors.New("blah"))
 
-		_, _, _, err := q.scanAccountUserMemberships(ctx, mockRows)
+		_, _, err := q.scanAccountUserMemberships(ctx, mockRows)
 		assert.Error(t, err)
 	})
 
@@ -100,7 +91,7 @@ func TestQuerier_ScanAccountUserMemberships(T *testing.T) {
 		mockRows.On("Err").Return(nil)
 		mockRows.On("Close").Return(errors.New("blah"))
 
-		_, _, _, err := q.scanAccountUserMemberships(ctx, mockRows)
+		_, _, err := q.scanAccountUserMemberships(ctx, mockRows)
 		assert.Error(t, err)
 	})
 }
@@ -121,7 +112,6 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
 				AccountName:  exampleAccount.Name,
 				AccountID:    membership.BelongsToAccount,
-				Permissions:  membership.UserAccountPermissions,
 				AccountRoles: membership.AccountRoles,
 			}
 		}
@@ -157,7 +147,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeAccountMembershipsQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountMembershipsArgs)...).
-			WillReturnRows(buildMockRowsFromAccountUserMemberships(exampleAccount.Name, exampleAccount.Members...))
+			WillReturnRows(buildMockRowsFromAccountUserMemberships(exampleAccount.Members...))
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -165,15 +155,14 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		expected := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				ID:                     exampleUser.ID,
+				RequestingUserID:       exampleUser.ID,
 				Reputation:             exampleUser.Reputation,
 				ReputationExplanation:  exampleUser.ReputationExplanation,
 				ServicePermissions:     authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
 				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
 			},
-			AccountRolesMap:       exampleAccountPermissionsMap,
-			AccountPermissionsMap: examplePermsMap,
-			ActiveAccountID:       expectedActiveAccountID,
+			AccountPermissions: exampleAccountPermissionsMap,
+			ActiveAccountID:    expectedActiveAccountID,
 		}
 
 		actual, err := c.BuildSessionContextDataForUser(ctx, exampleUser.ID)
@@ -202,9 +191,9 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
-				AccountName: exampleAccount.Name,
-				AccountID:   membership.BelongsToAccount,
-				Permissions: membership.UserAccountPermissions,
+				AccountName:  exampleAccount.Name,
+				AccountID:    membership.BelongsToAccount,
+				AccountRoles: membership.AccountRoles,
 			}
 		}
 
@@ -241,9 +230,9 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
-				AccountName: exampleAccount.Name,
-				AccountID:   membership.BelongsToAccount,
-				Permissions: membership.UserAccountPermissions,
+				AccountName:  exampleAccount.Name,
+				AccountID:    membership.BelongsToAccount,
+				AccountRoles: membership.AccountRoles,
 			}
 		}
 
@@ -282,7 +271,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap, exampleAccountPermissionsMap)
+		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, exampleAccountPermissionsMap)
 		require.NoError(t, err)
 		require.NotNil(t, expected)
 		expected.ActiveAccountID = 0
@@ -302,9 +291,9 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
-				AccountName: exampleAccount.Name,
-				AccountID:   membership.BelongsToAccount,
-				Permissions: membership.UserAccountPermissions,
+				AccountName:  exampleAccount.Name,
+				AccountID:    membership.BelongsToAccount,
+				AccountRoles: membership.AccountRoles,
 			}
 		}
 
@@ -339,11 +328,11 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeAccountMembershipsQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountMembershipsArgs)...).
-			WillReturnRows(buildInvalidMockRowsFromAccountUserMemberships(exampleAccount.Name, exampleAccount.Members...))
+			WillReturnRows(buildInvalidMockRowsFromAccountUserMemberships(exampleAccount.Members...))
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap, exampleAccountPermissionsMap)
+		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, exampleAccountPermissionsMap)
 		require.NoError(t, err)
 		require.NotNil(t, expected)
 		expected.ActiveAccountID = 0
@@ -702,7 +691,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 			testutil.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
-			exampleInput.UserAccountPermissions,
+			exampleInput.NewRoles,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -788,7 +777,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 			testutil.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
-			exampleInput.UserAccountPermissions,
+			exampleInput.NewRoles,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -820,7 +809,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 			testutil.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
-			exampleInput.UserAccountPermissions,
+			exampleInput.NewRoles,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -854,7 +843,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 			testutil.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
-			exampleInput.UserAccountPermissions,
+			exampleInput.NewRoles,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -1155,10 +1144,10 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		exampleAccountUserMembership.BelongsToAccount = exampleAccount.ID
 
 		exampleInput := &types.AddUserToAccountInput{
-			Reason:                 t.Name(),
-			AccountID:              exampleAccount.ID,
-			UserID:                 exampleAccount.BelongsToUser,
-			UserAccountPermissions: testutil.BuildMaxUserPerms(),
+			Reason:       t.Name(),
+			AccountID:    exampleAccount.ID,
+			UserID:       exampleAccount.BelongsToUser,
+			AccountRoles: []string{accountMemberRolesSeparator},
 		}
 
 		ctx := context.Background()
@@ -1197,10 +1186,10 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		exampleAccountUserMembership.BelongsToAccount = exampleAccount.ID
 
 		exampleInput := &types.AddUserToAccountInput{
-			Reason:                 t.Name(),
-			AccountID:              exampleAccount.ID,
-			UserID:                 exampleAccount.BelongsToUser,
-			UserAccountPermissions: testutil.BuildMaxUserPerms(),
+			Reason:       t.Name(),
+			AccountID:    exampleAccount.ID,
+			UserID:       exampleAccount.BelongsToUser,
+			AccountRoles: []string{accountMemberRolesSeparator},
 		}
 
 		ctx := context.Background()
@@ -1232,10 +1221,10 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		exampleAccountUserMembership.BelongsToAccount = exampleAccount.ID
 
 		exampleInput := &types.AddUserToAccountInput{
-			Reason:                 t.Name(),
-			AccountID:              exampleAccount.ID,
-			UserID:                 exampleAccount.BelongsToUser,
-			UserAccountPermissions: testutil.BuildMaxUserPerms(),
+			Reason:       t.Name(),
+			AccountID:    exampleAccount.ID,
+			UserID:       exampleAccount.BelongsToUser,
+			AccountRoles: []string{accountMemberRolesSeparator},
 		}
 
 		ctx := context.Background()
@@ -1255,10 +1244,10 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		exampleAccountUserMembership.BelongsToAccount = exampleAccount.ID
 
 		exampleInput := &types.AddUserToAccountInput{
-			Reason:                 t.Name(),
-			AccountID:              exampleAccount.ID,
-			UserID:                 exampleAccount.BelongsToUser,
-			UserAccountPermissions: testutil.BuildMaxUserPerms(),
+			Reason:       t.Name(),
+			AccountID:    exampleAccount.ID,
+			UserID:       exampleAccount.BelongsToUser,
+			AccountRoles: []string{accountMemberRolesSeparator},
 		}
 
 		ctx := context.Background()
@@ -1296,10 +1285,10 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		exampleAccountUserMembership.BelongsToAccount = exampleAccount.ID
 
 		exampleInput := &types.AddUserToAccountInput{
-			Reason:                 t.Name(),
-			AccountID:              exampleAccount.ID,
-			UserID:                 exampleAccount.BelongsToUser,
-			UserAccountPermissions: testutil.BuildMaxUserPerms(),
+			Reason:       t.Name(),
+			AccountID:    exampleAccount.ID,
+			UserID:       exampleAccount.BelongsToUser,
+			AccountRoles: []string{accountMemberRolesSeparator},
 		}
 
 		ctx := context.Background()
@@ -1339,10 +1328,10 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		exampleAccountUserMembership.BelongsToAccount = exampleAccount.ID
 
 		exampleInput := &types.AddUserToAccountInput{
-			Reason:                 t.Name(),
-			AccountID:              exampleAccount.ID,
-			UserID:                 exampleAccount.BelongsToUser,
-			UserAccountPermissions: testutil.BuildMaxUserPerms(),
+			Reason:       t.Name(),
+			AccountID:    exampleAccount.ID,
+			UserID:       exampleAccount.BelongsToUser,
+			AccountRoles: []string{accountMemberRolesSeparator},
 		}
 
 		ctx := context.Background()

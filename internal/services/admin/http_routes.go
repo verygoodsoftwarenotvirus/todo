@@ -57,7 +57,7 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue("ban_giver", requester)
 
 	var allowed bool

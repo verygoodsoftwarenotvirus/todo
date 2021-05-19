@@ -40,7 +40,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	accountSubscriptionPlans, err := s.accountSubscriptionPlanDataManager.GetAccountSubscriptionPlans(ctx, filter)
 
@@ -88,7 +88,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	// create plan in database.
 	accountSubscriptionPlan, err := s.accountSubscriptionPlanDataManager.CreateAccountSubscriptionPlan(ctx, input)
@@ -123,7 +123,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	// determine plan ID.
 	accountSubscriptionPlanID := s.accountSubscriptionPlanIDFetcher(req)
@@ -162,7 +162,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	// check for parsed input attached to session context data.
 	input := new(types.AccountSubscriptionPlanUpdateInput)
@@ -195,7 +195,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachChangeSummarySpan(span, "account_subscription_plan", changeReport)
 
 	// update plan in database.
-	if err = s.accountSubscriptionPlanDataManager.UpdateAccountSubscriptionPlan(ctx, accountSubscriptionPlan, sessionCtxData.Requester.ID, changeReport); err != nil {
+	if err = s.accountSubscriptionPlanDataManager.UpdateAccountSubscriptionPlan(ctx, accountSubscriptionPlan, sessionCtxData.Requester.RequestingUserID, changeReport); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating account subscription plan")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -222,7 +222,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	// determine plan ID.
 	planID := s.accountSubscriptionPlanIDFetcher(req)
@@ -230,7 +230,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountSubscriptionPlanIDToSpan(span, planID)
 
 	// archive the plan in the database.
-	err = s.accountSubscriptionPlanDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, sessionCtxData.Requester.ID)
+	err = s.accountSubscriptionPlanDataManager.ArchiveAccountSubscriptionPlan(ctx, planID, sessionCtxData.Requester.RequestingUserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -264,7 +264,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.ID)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
 
 	// determine plan ID.
 	planID := s.accountSubscriptionPlanIDFetcher(req)

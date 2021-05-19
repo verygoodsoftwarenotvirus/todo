@@ -43,8 +43,6 @@ const (
 	AccountsTableNameColumn = "name"
 	// AccountsTablePlanIDColumn is what the accounts table calls the <> column.
 	AccountsTablePlanIDColumn = "plan_id"
-	// AccountsTableDefaultUserPermissionsColumn is what the accounts table calls the <> column.
-	AccountsTableDefaultUserPermissionsColumn = "default_user_permissions"
 	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
 	AccountsTableUserOwnershipColumn = userOwnershipColumn
 
@@ -54,10 +52,8 @@ const (
 
 	// AccountsUserMembershipTableName is what the accounts membership table calls itself.
 	AccountsUserMembershipTableName = "account_user_memberships"
-	// AccountsUserMembershipTableUserPermissionsColumn is what the accounts membership table calls the column indicating user permissions.
-	AccountsUserMembershipTableUserPermissionsColumn = "user_account_permissions"
-	// AccountsUserMembershipTableAccountRoleColumn is what the accounts membership table calls the column indicating account role.
-	AccountsUserMembershipTableAccountRoleColumn = "account_role"
+	// AccountsUserMembershipTableAccountRolesColumn is what the accounts membership table calls the column indicating account role.
+	AccountsUserMembershipTableAccountRolesColumn = "account_roles"
 	// AccountsUserMembershipTableAccountOwnershipColumn is what the accounts membership table calls the user ownership column.
 	AccountsUserMembershipTableAccountOwnershipColumn = accountOwnershipColumn
 	// AccountsUserMembershipTableUserOwnershipColumn is what the accounts membership table calls the user ownership column.
@@ -98,8 +94,8 @@ const (
 	UsersTableTwoFactorSekretColumn = "two_factor_secret"
 	// UsersTableTwoFactorVerifiedOnColumn is what the users table calls the <> column.
 	UsersTableTwoFactorVerifiedOnColumn = "two_factor_secret_verified_on"
-	// UsersTableServiceRoleColumn is what the users table calls the <> column.
-	UsersTableServiceRoleColumn = "service_role"
+	// UsersTableServiceRolesColumn is what the users table calls the <> column.
+	UsersTableServiceRolesColumn = "service_roles"
 	// UsersTableReputationColumn is what the users table calls the <> column.
 	UsersTableReputationColumn = "reputation"
 	// UsersTableStatusExplanationColumn is what the users table calls the <> column.

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
-
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 )
 
 func TestAddUserToAccountInput_ValidateWithContext(T *testing.T) {
@@ -49,8 +49,8 @@ func TestModifyUserPermissionsInput_ValidateWithContext(T *testing.T) {
 
 		ctx := context.Background()
 		x := &ModifyUserPermissionsInput{
-			UserAccountPermissions: permissions.ServiceUserPermission(123),
-			Reason:                 t.Name(),
+			NewRoles: []string{authorization.AccountMemberRole.String()},
+			Reason:   t.Name(),
 		}
 
 		assert.NoError(t, x.ValidateWithContext(ctx))

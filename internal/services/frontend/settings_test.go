@@ -35,7 +35,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB.UserDataManager.On(
 			"GetUser",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(exampleUser, nil)
 		s.dataStore = mockDB
 
@@ -64,7 +64,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB.UserDataManager.On(
 			"GetUser",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(exampleUser, nil)
 		s.dataStore = mockDB
 
@@ -107,7 +107,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB.UserDataManager.On(
 			"GetUser",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return((*types.User)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -141,7 +141,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(exampleAccount, nil)
 		s.dataStore = mockDB
 
@@ -171,7 +171,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return(exampleAccount, nil)
 		s.dataStore = mockDB
 
@@ -216,7 +216,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
+			exampleSessionContextData.Requester.RequestingUserID,
 		).Return((*types.Account)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 

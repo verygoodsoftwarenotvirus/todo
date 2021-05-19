@@ -2,16 +2,15 @@ package postgres
 
 import (
 	"context"
-	"math"
+	"strings"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
+	"github.com/stretchr/testify/assert"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestPostgres_BuildGetDefaultAccountIDForUserQuery(T *testing.T) {
@@ -72,7 +71,7 @@ func TestPostgres_BuildGetAccountMembershipsForUserQuery(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 
-		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.account_role, account_user_memberships.user_account_permissions, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on, accounts.name FROM account_user_memberships JOIN accounts ON accounts.id = account_user_memberships.belongs_to_account WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = $1"
+		expectedQuery := "SELECT account_user_memberships.id, account_user_memberships.belongs_to_user, account_user_memberships.belongs_to_account, account_user_memberships.account_roles, account_user_memberships.default_account, account_user_memberships.created_on, account_user_memberships.last_updated_on, account_user_memberships.archived_on FROM account_user_memberships JOIN accounts ON accounts.id = account_user_memberships.belongs_to_account WHERE account_user_memberships.archived_on IS NULL AND account_user_memberships.belongs_to_user = $1"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 		}
@@ -152,12 +151,11 @@ func TestPostgres_BuildAddUserToAccountQuery(T *testing.T) {
 			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,account_role,user_account_permissions) VALUES ($1,$2,$3,$4)"
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,account_roles) VALUES ($1,$2,$3)"
 		expectedArgs := []interface{}{
 			exampleInput.UserID,
 			exampleAccount.ID,
-			exampleInput.AccountRoles,
-			exampleInput.UserAccountPermissions,
+			strings.Join(exampleInput.AccountRoles, accountMemberRolesSeparator),
 		}
 		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(ctx, exampleInput)
 
@@ -204,13 +202,12 @@ func TestPostgres_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account,account_role,user_account_permissions) VALUES ($1,$2,$3,$4,$5)"
+		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account,account_roles) VALUES ($1,$2,$3,$4)"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAccount.ID,
 			true,
 			authorization.AccountAdminRole.String(),
-			math.MaxInt64,
 		}
 		actualQuery, actualArgs := q.BuildCreateMembershipForNewUserQuery(ctx, exampleUser.ID, exampleAccount.ID)
 
@@ -230,18 +227,16 @@ func TestPostgres_BuildModifyUserPermissionsQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleRole := authorization.AccountMemberRole.String()
+		exampleRoles := []string{authorization.AccountMemberRole.String()}
 		exampleAccount := fakes.BuildFakeAccount()
-		examplePermissions := testutil.BuildMaxUserPerms()
 
-		expectedQuery := "UPDATE account_user_memberships SET user_account_permissions = $1, account_role = $2 WHERE belongs_to_account = $3 AND belongs_to_user = $4"
+		expectedQuery := "UPDATE account_user_memberships SET account_roles = $1 WHERE belongs_to_account = $2 AND belongs_to_user = $3"
 		expectedArgs := []interface{}{
-			examplePermissions,
-			exampleRole,
+			strings.Join(exampleRoles, accountMemberRolesSeparator),
 			exampleAccount.ID,
 			exampleUser.ID,
 		}
-		actualQuery, actualArgs := q.BuildModifyUserPermissionsQuery(ctx, exampleUser.ID, exampleAccount.ID, examplePermissions, exampleRole)
+		actualQuery, actualArgs := q.BuildModifyUserPermissionsQuery(ctx, exampleUser.ID, exampleAccount.ID, exampleRoles)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

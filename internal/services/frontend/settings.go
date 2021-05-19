@@ -28,7 +28,7 @@ func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 			return
 		}
 
-		user, err := s.dataStore.GetUser(ctx, sessionCtxData.Requester.ID)
+		user, err := s.dataStore.GetUser(ctx, sessionCtxData.Requester.RequestingUserID)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "fetching user from datastore")
 			res.WriteHeader(http.StatusInternalServerError)

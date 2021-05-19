@@ -1381,14 +1381,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expected := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				ID:                    helper.exampleUser.ID,
+				RequestingUserID:      helper.exampleUser.ID,
 				Reputation:            helper.exampleUser.Reputation,
 				ReputationExplanation: helper.exampleUser.ReputationExplanation,
 				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 			},
-			ActiveAccountID:       helper.exampleAccount.ID,
-			AccountPermissionsMap: helper.examplePerms,
-			AccountRolesMap:       helper.examplePermCheckers,
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
 		}
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
@@ -1481,14 +1480,13 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expected := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				ID:                    helper.exampleUser.ID,
+				RequestingUserID:      helper.exampleUser.ID,
 				Reputation:            helper.exampleUser.Reputation,
 				ReputationExplanation: helper.exampleUser.ReputationExplanation,
 				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 			},
-			ActiveAccountID:       helper.exampleAccount.ID,
-			AccountPermissionsMap: helper.examplePerms,
-			AccountRolesMap:       helper.examplePermCheckers,
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
 		}
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
@@ -1910,8 +1908,7 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		delete(helper.sessionCtxData.AccountPermissionsMap, helper.exampleAccount.ID)
-		delete(helper.sessionCtxData.AccountRolesMap, helper.exampleAccount.ID)
+		delete(helper.sessionCtxData.AccountPermissions, helper.exampleAccount.ID)
 
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(

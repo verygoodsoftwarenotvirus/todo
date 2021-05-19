@@ -187,8 +187,7 @@ func TestAttachSessionContextDataToSpan(T *testing.T) {
 		_, span := StartSpan(context.Background())
 
 		AttachSessionContextDataToSpan(span, &types.SessionContextData{
-			AccountPermissionsMap: nil,
-			AccountRolesMap:       nil,
+			AccountPermissions: nil,
 			Requester: types.RequesterInfo{
 				ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 			},

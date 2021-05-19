@@ -14,15 +14,12 @@ services:
             TARGET_ADDRESS: 'http://todo-server:8888'
         links:
             - todo-server
+#            - tracing-server
+#            - prometheus
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
         container_name: 'integration_tests'
-#        links:
-#            - tracing-server
-#            - prometheus
-#            - loki
-#            - promtail
 #    tracing-server:
 #        image: jaegertracing/all-in-one:1.22.0
 #        logging:

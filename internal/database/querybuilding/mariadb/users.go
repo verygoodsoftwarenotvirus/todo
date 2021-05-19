@@ -175,7 +175,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableServiceRoleColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
@@ -210,7 +210,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
 				querybuilding.UsersTableReputationColumn,
-				querybuilding.UsersTableServiceRoleColumn,
+				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),

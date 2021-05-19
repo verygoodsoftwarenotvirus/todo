@@ -67,21 +67,19 @@ func TestSessionContextDataFromUser(T *testing.T) {
 			ID: 54321,
 		}
 
-		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
 		exampleAccountPermissions := map[uint64]authorization.AccountRolePermissionsChecker{}
 
 		expected := &SessionContextData{
 			Requester: RequesterInfo{
-				ID:                     exampleUser.ID,
+				RequestingUserID:       exampleUser.ID,
 				ServicePermissions:     authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
 				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
 			},
-			ActiveAccountID:       exampleAccount.ID,
-			AccountPermissionsMap: examplePermissions,
-			AccountRolesMap:       exampleAccountPermissions,
+			ActiveAccountID:    exampleAccount.ID,
+			AccountPermissions: exampleAccountPermissions,
 		}
 
-		actual, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermissions, exampleAccountPermissions)
+		actual, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, exampleAccountPermissions)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})
@@ -90,9 +88,8 @@ func TestSessionContextDataFromUser(T *testing.T) {
 		t.Parallel()
 
 		exampleAccount := &Account{ID: 54321}
-		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
 
-		actual, err := SessionContextDataFromUser(nil, exampleAccount.ID, examplePermissions, nil)
+		actual, err := SessionContextDataFromUser(nil, exampleAccount.ID, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -104,9 +101,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 			ID: 12345,
 		}
 
-		examplePermissions := map[uint64]*UserAccountMembershipInfo{}
-
-		actual, err := SessionContextDataFromUser(exampleUser, 0, examplePermissions, nil)
+		actual, err := SessionContextDataFromUser(exampleUser, 0, nil)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -122,7 +117,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 			ID: 54321,
 		}
 
-		_, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, nil, nil)
+		_, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, nil)
 		assert.Error(t, err)
 	})
 }

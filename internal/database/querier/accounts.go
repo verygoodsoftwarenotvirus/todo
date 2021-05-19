@@ -6,12 +6,14 @@ import (
 	"errors"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -30,7 +32,6 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 	membership = &types.AccountUserMembership{}
 
 	var (
-		perms    int64
 		rawRoles string
 	)
 
@@ -39,7 +40,6 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&account.ExternalID,
 		&account.Name,
 		&account.AccountSubscriptionPlanID,
-		&account.DefaultNewMemberPermissions,
 		&account.CreatedOn,
 		&account.LastUpdatedOn,
 		&account.ArchivedOn,
@@ -48,7 +48,6 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&membership.BelongsToUser,
 		&membership.BelongsToAccount,
 		&rawRoles,
-		&perms,
 		&membership.DefaultAccount,
 		&membership.CreatedOn,
 		&membership.LastUpdatedOn,
@@ -64,7 +63,6 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 	}
 
 	membership.AccountRoles = strings.Split(rawRoles, accountMemberRolesSeparator)
-	membership.UserAccountPermissions = permissions.ServiceUserPermission(perms)
 
 	return account, membership, filteredCount, totalCount, nil
 }
@@ -316,11 +314,10 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	logger = logger.WithValue(keys.AccountIDKey, id)
 
 	account := &types.Account{
-		ID:                          id,
-		Name:                        input.Name,
-		BelongsToUser:               input.BelongsToUser,
-		DefaultNewMemberPermissions: input.DefaultUserPermissions,
-		CreatedOn:                   q.currentTime(),
+		ID:            id,
+		Name:          input.Name,
+		BelongsToUser: input.BelongsToUser,
+		CreatedOn:     q.currentTime(),
 	}
 
 	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, createdByUser)); err != nil {
@@ -329,10 +326,10 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	}
 
 	addInput := &types.AddUserToAccountInput{
-		UserID:                 input.BelongsToUser,
-		AccountID:              account.ID,
-		UserAccountPermissions: account.DefaultNewMemberPermissions,
-		Reason:                 "account creation",
+		UserID:       input.BelongsToUser,
+		AccountID:    account.ID,
+		Reason:       "account creation",
+		AccountRoles: []string{authorization.AccountAdminRole.String()},
 	}
 
 	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildAddUserToAccountQuery(ctx, addInput)

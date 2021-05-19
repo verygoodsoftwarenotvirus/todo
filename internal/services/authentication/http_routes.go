@@ -212,7 +212,7 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	accountID := input.AccountID
 	logger = logger.WithValue("new_session_account_id", accountID)
 
-	requesterID := sessionCtxData.Requester.ID
+	requesterID := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue("user_id", requesterID)
 
 	authorizedForAccount, err := s.accountMembershipManager.UserIsMemberOfAccount(ctx, requesterID, accountID)
@@ -263,7 +263,7 @@ func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionC
 		return observability.PrepareError(cookieBuildingErr, logger, span, "building cookie")
 	}
 
-	s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.ID)
+	s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.RequestingUserID)
 	newCookie.MaxAge = -1
 	http.SetCookie(res, newCookie)
 
@@ -297,7 +297,7 @@ func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
 	http.Redirect(res, req, "/", http.StatusSeeOther)
 }
 
-// StatusHandler returns the user info for the user making the request. TODO: DELETEME
+// StatusHandler returns the user info for the user making the request.
 func (s *service) StatusHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -410,7 +410,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	var requestedAccountID uint64
 
 	if requestedAccount != 0 {
-		if _, isMember := sessionCtxData.AccountPermissionsMap[requestedAccount]; !isMember {
+		if _, isMember := sessionCtxData.AccountPermissions[requestedAccount]; !isMember {
 			logger.Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 			return
@@ -510,7 +510,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		[]byte(s.config.Cookies.SigningKey),
 	)
 
-	s.auditLog.LogCycleCookieSecretEvent(ctx, sessionCtxData.Requester.ID)
+	s.auditLog.LogCycleCookieSecretEvent(ctx, sessionCtxData.Requester.RequestingUserID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

@@ -40,7 +40,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
@@ -91,7 +91,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.NameKey, input.Name)
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
@@ -128,7 +128,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
@@ -182,7 +182,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
@@ -233,7 +233,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
@@ -290,7 +290,7 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
@@ -338,7 +338,7 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
@@ -394,7 +394,7 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
@@ -428,7 +428,7 @@ func (s *service) RemoveMemberHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
@@ -470,7 +470,7 @@ func (s *service) MarkAsDefaultAccountHandler(res http.ResponseWriter, req *http
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
@@ -500,7 +500,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	requester := sessionCtxData.Requester.ID
+	requester := sessionCtxData.Requester.RequestingUserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 

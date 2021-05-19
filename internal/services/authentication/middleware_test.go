@@ -175,7 +175,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
@@ -276,7 +276,7 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
@@ -311,7 +311,7 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 		helper.exampleUser.Reputation = types.BannedUserReputation
 		helper.setContextFetcher(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
@@ -361,11 +361,10 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 		require.NoError(t, err)
 
-		sessionCtxData.AccountPermissionsMap = map[uint64]*types.UserAccountMembershipInfo{}
-		sessionCtxData.AccountRolesMap = map[uint64]authorization.AccountRolePermissionsChecker{}
+		sessionCtxData.AccountPermissions = map[uint64]authorization.AccountRolePermissionsChecker{}
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return sessionCtxData, nil
 		}
@@ -389,7 +388,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.setContextFetcher(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
@@ -416,7 +415,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
@@ -434,7 +433,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePerms, helper.examplePermCheckers)
+		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
 		require.NoError(t, err)
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))

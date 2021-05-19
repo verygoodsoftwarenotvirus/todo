@@ -17,6 +17,9 @@ type (
 
 	// ServiceRolePermissionChecker checks permissions for one or more service Roles.
 	ServiceRolePermissionChecker interface {
+		HasPermission(Permission) bool
+
+		AsAccountRolePermissionChecker() AccountRolePermissionsChecker
 		IsServiceAdmin() bool
 		CanCycleCookieSecrets() bool
 		CanSeeAccountAuditLogEntries() bool
@@ -56,18 +59,6 @@ func (r ServiceRole) String() string {
 	}
 }
 
-// ServiceRoleFromString returns a service role from a string, or possibly an error for an invalid string.
-func ServiceRoleFromString(s string) ServiceRole {
-	switch s {
-	case serviceAdminRoleName:
-		return ServiceAdminRole
-	case serviceUserRoleName:
-		return ServiceUserRole
-	default:
-		return invalidServiceRole
-	}
-}
-
 type serviceRoleCollection struct {
 	Roles []string
 }
@@ -83,7 +74,16 @@ func NewServiceRolePermissionChecker(roles ...string) ServiceRolePermissionCheck
 	}
 }
 
-// IsServiceAdmin returns if a role is an admin. Should probably be DELTEME'd.
+func (r serviceRoleCollection) AsAccountRolePermissionChecker() AccountRolePermissionsChecker {
+	return NewAccountRolePermissionChecker(r.Roles...)
+}
+
+// HasPermission returns whether a user can do something or not.
+func (r serviceRoleCollection) HasPermission(p Permission) bool {
+	return hasPermission(p, r.Roles...)
+}
+
+// IsServiceAdmin returns if a role is an admin.
 func (r serviceRoleCollection) IsServiceAdmin() bool {
 	for _, x := range r.Roles {
 		if x == ServiceAdminRole.String() {
@@ -121,7 +121,7 @@ func (r serviceRoleCollection) CanSeeWebhookAuditLogEntries() bool {
 
 // CanUpdateUserReputations returns whether a user can update user reputations or not.
 func (r serviceRoleCollection) CanUpdateUserReputations() bool {
-	return hasPermission(UpdateUserReputationPermission, r.Roles...)
+	return hasPermission(UpdateUserStatusPermission, r.Roles...)
 }
 
 // CanSeeUserData returns whether a user can view users or not.

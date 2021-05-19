@@ -20,7 +20,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
@@ -59,7 +58,6 @@ func Build(
 		authentication.Providers,
 		users.Providers,
 		accounts.Providers,
-		accountsubscriptionplans.Providers,
 		apiclients.Providers,
 		webhooks.Providers,
 		audit.Providers,

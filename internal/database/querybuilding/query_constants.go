@@ -42,7 +42,7 @@ const (
 	// AccountsTableNameColumn is what the accounts table calls the name column.
 	AccountsTableNameColumn = "name"
 	// AccountsTablePlanIDColumn is what the accounts table calls the <> column.
-	AccountsTablePlanIDColumn = "plan_id"
+	AccountsTablePlanIDColumn = "subscription_plan_id"
 	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
 	AccountsTableUserOwnershipColumn = userOwnershipColumn
 
@@ -60,21 +60,6 @@ const (
 	AccountsUserMembershipTableUserOwnershipColumn = userOwnershipColumn
 	// AccountsUserMembershipTableDefaultUserAccountColumn is what the accounts membership table calls the .
 	AccountsUserMembershipTableDefaultUserAccountColumn = "default_account"
-
-	//
-	// AccountSubscriptionPlans Table.
-	//
-
-	// AccountSubscriptionPlansTableName is what the users table calls the <> column.
-	AccountSubscriptionPlansTableName = "account_subscription_plans"
-	// AccountSubscriptionPlansTableNameColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTableNameColumn = "name"
-	// AccountSubscriptionPlansTableDescriptionColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTableDescriptionColumn = "description"
-	// AccountSubscriptionPlansTablePriceColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTablePriceColumn = "price"
-	// AccountSubscriptionPlansTablePeriodColumn is what the users table calls the <> column.
-	AccountSubscriptionPlansTablePeriodColumn = "period"
 
 	//
 	// Users Table.

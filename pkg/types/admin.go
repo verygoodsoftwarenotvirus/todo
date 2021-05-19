@@ -21,9 +21,9 @@ type (
 
 	// UserReputationUpdateInput represents what an admin User could provide as input for changing statuses.
 	UserReputationUpdateInput struct {
-		NewReputation userReputation `json:"newReputation"`
-		Reason        string         `json:"reason"`
-		TargetUserID  uint64         `json:"targetUserID"`
+		NewReputation accountStatus `json:"newReputation"`
+		Reason        string        `json:"reason"`
+		TargetUserID  uint64        `json:"targetUserID"`
 	}
 
 	// FrontendService serves static frontend files.

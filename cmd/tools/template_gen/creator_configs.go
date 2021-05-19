@@ -38,26 +38,6 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/creators/account_subscription_plan_creator.gotpl": {
-		Title:         "New Plan",
-		SubmissionURL: "/account_subscription_plans/new/submit",
-		Fields: []formField{
-			{
-				LabelName:       "name",
-				FormName:        "name",
-				StructFieldName: "Name",
-				InputType:       "text",
-				Required:        true,
-			},
-			{
-				LabelName:       "price",
-				FormName:        "price",
-				StructFieldName: "Price",
-				InputType:       "numeric",
-				Required:        true,
-			},
-		},
-	},
 	"internal/app/services/frontend/templates/partials/generated/creators/api_client_creator.gotpl": {
 		Title:         "New API Client",
 		SubmissionURL: "/api_clients/new/submit",

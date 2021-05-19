@@ -17,15 +17,14 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		AuditLogEntryDataManager:           &mocktypes.AuditLogEntryDataManager{},
-		AccountDataManager:                 &mocktypes.AccountDataManager{},
-		AccountUserMembershipDataManager:   &mocktypes.AccountUserMembershipDataManager{},
-		AccountSubscriptionPlanDataManager: &mocktypes.AccountSubscriptionPlanDataManager{},
-		ItemDataManager:                    &mocktypes.ItemDataManager{},
-		UserDataManager:                    &mocktypes.UserDataManager{},
-		AdminUserDataManager:               &mocktypes.AdminUserDataManager{},
-		APIClientDataManager:               &mocktypes.APIClientDataManager{},
-		WebhookDataManager:                 &mocktypes.WebhookDataManager{},
+		AuditLogEntryDataManager:         &mocktypes.AuditLogEntryDataManager{},
+		AccountDataManager:               &mocktypes.AccountDataManager{},
+		AccountUserMembershipDataManager: &mocktypes.AccountUserMembershipDataManager{},
+		ItemDataManager:                  &mocktypes.ItemDataManager{},
+		UserDataManager:                  &mocktypes.UserDataManager{},
+		AdminUserDataManager:             &mocktypes.AdminUserDataManager{},
+		APIClientDataManager:             &mocktypes.APIClientDataManager{},
+		WebhookDataManager:               &mocktypes.WebhookDataManager{},
 	}
 }
 
@@ -35,7 +34,6 @@ type MockDatabase struct {
 	*mocktypes.AdminUserDataManager
 	*mocktypes.AuditLogEntryDataManager
 	*mocktypes.AccountUserMembershipDataManager
-	*mocktypes.AccountSubscriptionPlanDataManager
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
 	*mocktypes.APIClientDataManager
@@ -65,14 +63,13 @@ var _ querybuilding.SQLQueryBuilder = (*MockSQLQueryBuilder)(nil)
 // BuildMockSQLQueryBuilder builds a MockSQLQueryBuilder.
 func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 	return &MockSQLQueryBuilder{
-		AccountSQLQueryBuilder:                 &mockquerybuilding.AccountSQLQueryBuilder{},
-		AccountUserMembershipSQLQueryBuilder:   &mockquerybuilding.AccountUserMembershipSQLQueryBuilder{},
-		AccountSubscriptionPlanSQLQueryBuilder: &mockquerybuilding.AccountSubscriptionPlanSQLQueryBuilder{},
-		AuditLogEntrySQLQueryBuilder:           &mockquerybuilding.AuditLogEntrySQLQueryBuilder{},
-		ItemSQLQueryBuilder:                    &mockquerybuilding.ItemSQLQueryBuilder{},
-		APIClientSQLQueryBuilder:               &mockquerybuilding.APIClientSQLQueryBuilder{},
-		UserSQLQueryBuilder:                    &mockquerybuilding.UserSQLQueryBuilder{},
-		WebhookSQLQueryBuilder:                 &mockquerybuilding.WebhookSQLQueryBuilder{},
+		AccountSQLQueryBuilder:               &mockquerybuilding.AccountSQLQueryBuilder{},
+		AccountUserMembershipSQLQueryBuilder: &mockquerybuilding.AccountUserMembershipSQLQueryBuilder{},
+		AuditLogEntrySQLQueryBuilder:         &mockquerybuilding.AuditLogEntrySQLQueryBuilder{},
+		ItemSQLQueryBuilder:                  &mockquerybuilding.ItemSQLQueryBuilder{},
+		APIClientSQLQueryBuilder:             &mockquerybuilding.APIClientSQLQueryBuilder{},
+		UserSQLQueryBuilder:                  &mockquerybuilding.UserSQLQueryBuilder{},
+		WebhookSQLQueryBuilder:               &mockquerybuilding.WebhookSQLQueryBuilder{},
 	}
 }
 
@@ -81,7 +78,6 @@ type MockSQLQueryBuilder struct {
 	*mockquerybuilding.UserSQLQueryBuilder
 	*mockquerybuilding.AccountSQLQueryBuilder
 	*mockquerybuilding.AccountUserMembershipSQLQueryBuilder
-	*mockquerybuilding.AccountSubscriptionPlanSQLQueryBuilder
 	*mockquerybuilding.AuditLogEntrySQLQueryBuilder
 	*mockquerybuilding.ItemSQLQueryBuilder
 	*mockquerybuilding.APIClientSQLQueryBuilder

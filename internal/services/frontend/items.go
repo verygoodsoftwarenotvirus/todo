@@ -142,7 +142,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 
 	logger.Debug("item Creation input parsed successfully")
 
-	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.RequestingUserID); err != nil {
+	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "writing item to datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -342,7 +342,7 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 
 	changes := item.Update(updateInput)
 
-	if err = s.dataStore.UpdateItem(ctx, item, sessionCtxData.Requester.RequestingUserID, changes); err != nil {
+	if err = s.dataStore.UpdateItem(ctx, item, sessionCtxData.Requester.UserID, changes); err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -374,7 +374,7 @@ func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 	}
 
 	itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
-	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.RequestingUserID); err != nil {
+	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "archiving items in datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

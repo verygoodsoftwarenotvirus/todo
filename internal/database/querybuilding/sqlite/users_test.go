@@ -29,10 +29,10 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 		expectedQuery := "SELECT EXISTS ( SELECT users.id FROM users WHERE users.archived_on IS NULL AND users.id = ? AND (users.reputation = ? OR users.reputation = ?) )"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
-			string(types.BannedUserReputation),
+			string(types.BannedUserAccountStatus),
 			string(types.TerminatedUserReputation),
 		}
-		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, string(types.BannedUserReputation), string(types.TerminatedUserReputation))
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, string(types.BannedUserAccountStatus), string(types.TerminatedUserReputation))
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

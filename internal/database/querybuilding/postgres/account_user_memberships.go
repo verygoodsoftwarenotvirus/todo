@@ -109,7 +109,7 @@ func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, use
 				userID,
 				accountID,
 				true,
-				authorization.AccountAdminRole.String(),
+				strings.Join([]string{authorization.AccountAdminRole.String()}, accountMemberRolesSeparator),
 			),
 	)
 }

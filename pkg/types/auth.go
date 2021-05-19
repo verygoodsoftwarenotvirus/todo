@@ -52,19 +52,18 @@ type (
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
-		ServicePermissions     authorization.ServiceRolePermissionChecker `json:"-"`
-		Reputation             userReputation                             `json:"-"`
-		ReputationExplanation  string                                     `json:"-"`
-		RequestingUserID       uint64                                     `json:"-"`
-		RequiresPasswordChange bool                                       `json:"-"`
+		ServicePermissions    authorization.ServiceRolePermissionChecker `json:"-"`
+		Reputation            accountStatus                              `json:"-"`
+		ReputationExplanation string                                     `json:"-"`
+		UserID                uint64                                     `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
-		UserReputation            userReputation `json:"userReputation,omitempty"`
-		UserReputationExplanation string         `json:"reputationExplanation"`
-		ActiveAccount             uint64         `json:"activeAccount,omitempty"`
-		UserIsAuthenticated       bool           `json:"isAuthenticated"`
+		UserReputation            accountStatus `json:"accountStatus,omitempty"`
+		UserReputationExplanation string        `json:"reputationExplanation"`
+		ActiveAccount             uint64        `json:"activeAccount,omitempty"`
+		UserIsAuthenticated       bool          `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
@@ -95,7 +94,7 @@ type (
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)
 
-		PermissionFilterMiddleware(filters ...func(authorization.AccountRolePermissionsChecker) bool) func(next http.Handler) http.Handler
+		PermissionFilterMiddleware(permissions ...authorization.Permission) func(next http.Handler) http.Handler
 		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
@@ -135,6 +134,16 @@ func (i *PASETOCreationInput) ValidateWithContext(ctx context.Context) error {
 	)
 }
 
+// AccountRolePermissionsChecker returns the relevant AccountRolePermissionsChecker.
+func (x *SessionContextData) AccountRolePermissionsChecker() authorization.AccountRolePermissionsChecker {
+	return x.AccountPermissions[x.ActiveAccountID]
+}
+
+// ServiceRolePermissionChecker returns the relevant ServiceRolePermissionChecker.
+func (x *SessionContextData) ServiceRolePermissionChecker() authorization.ServiceRolePermissionChecker {
+	return x.Requester.ServicePermissions
+}
+
 // ToBytes returns the gob encoded session info.
 func (x *SessionContextData) ToBytes() []byte {
 	var b bytes.Buffer
@@ -162,11 +171,10 @@ func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermi
 
 	sessionCtxData := &SessionContextData{
 		Requester: RequesterInfo{
-			RequestingUserID:       user.ID,
-			Reputation:             user.Reputation,
-			ReputationExplanation:  user.ReputationExplanation,
-			ServicePermissions:     authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
-			RequiresPasswordChange: user.RequiresPasswordChange,
+			UserID:                user.ID,
+			Reputation:            user.ServiceAccountStatus,
+			ReputationExplanation: user.ReputationExplanation,
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
 		},
 		AccountPermissions: accountPermissionsMap,
 		ActiveAccountID:    activeAccountID,

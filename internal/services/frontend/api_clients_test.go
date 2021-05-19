@@ -45,7 +45,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 			"GetAPIClientByDatabaseID",
 			testutil.ContextMatcher,
 			exampleAPIClient.ID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAPIClient, nil)
 		s.dataStore = mockDB
 
@@ -99,7 +99,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 			"GetAPIClientByDatabaseID",
 			testutil.ContextMatcher,
 			exampleAPIClient.ID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -143,7 +143,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 			"GetAPIClientByDatabaseID",
 			testutil.ContextMatcher,
 			exampleAPIClient.ID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAPIClient, nil)
 		s.dataStore = mockDB
 
@@ -184,7 +184,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 			"GetAPIClientByDatabaseID",
 			testutil.ContextMatcher,
 			exampleAPIClient.ID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAPIClient, nil)
 		s.dataStore = mockDB
 
@@ -242,7 +242,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 			"GetAPIClientByDatabaseID",
 			testutil.ContextMatcher,
 			exampleAPIClient.ID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -273,7 +273,7 @@ func TestService_fetchAPIClients(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAPIClientList, nil)
 		s.dataStore = mockDB
@@ -315,7 +315,7 @@ func TestService_fetchAPIClients(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.APIClientList)(nil), errors.New("blah"))
 		s.dataStore = mockDB
@@ -348,7 +348,7 @@ func TestService_buildAPIClientsTableView(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAPIClientList, nil)
 		s.dataStore = mockDB
@@ -378,7 +378,7 @@ func TestService_buildAPIClientsTableView(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAPIClientList, nil)
 		s.dataStore = mockDB
@@ -423,7 +423,7 @@ func TestService_buildAPIClientsTableView(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.APIClientList)(nil), errors.New("blah"))
 		s.dataStore = mockDB

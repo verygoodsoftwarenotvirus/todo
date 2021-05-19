@@ -39,23 +39,6 @@ var (
 		},
 		{
 			Version:     0.03,
-			Description: "create account subscription plans table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS account_subscription_plans (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
-				name TEXT NOT NULL,
-				description TEXT NOT NULL DEFAULT '',
-				price INTEGER NOT NULL,
-				period TEXT NOT NULL DEFAULT '0m0s',
-				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-				last_updated_on INTEGER DEFAULT NULL,
-				archived_on INTEGER DEFAULT NULL,
-				CONSTRAINT plan_name_unique UNIQUE (name, archived_on)
-			);`,
-		},
-		{
-			Version:     0.04,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -78,14 +61,14 @@ var (
 			);`,
 		},
 		{
-			Version:     0.05,
+			Version:     0.04,
 			Description: "create accounts table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				external_id TEXT NOT NULL,
 				name CHARACTER VARYING NOT NULL,
-				plan_id BIGINT REFERENCES account_subscription_plans(id) ON DELETE RESTRICT,
+				subscription_plan_id TEXT,
 				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
@@ -94,7 +77,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.06,
+			Version:     0.05,
 			Description: "create account user memberships table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_user_memberships (
@@ -110,7 +93,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.07,
+			Version:     0.06,
 			Description: "create API clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS api_clients (
@@ -128,7 +111,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.08,
+			Version:     0.07,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -148,7 +131,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.09,
+			Version:     0.08,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

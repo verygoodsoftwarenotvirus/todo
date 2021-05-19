@@ -20,7 +20,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accountsubscriptionplans"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
@@ -45,12 +44,12 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	if err != nil {
 		return nil, err
 	}
-	authConfig := &cfg.Auth
+	authenticationConfig := &cfg.Auth
 	userDataManager := database.ProvideUserDataManager(dbm)
 	authAuditManager := database.ProvideAuthAuditManager(dbm)
 	apiClientDataManager := database.ProvideAPIClientDataManager(dbm)
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
-	cookieConfig := authConfig.Cookies
+	cookieConfig := authenticationConfig.Cookies
 	configConfig := cfg.Database
 	sessionManager, err := config2.ProvideSessionManager(cookieConfig, configConfig, db)
 	if err != nil {
@@ -60,7 +59,7 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	contentType := encoding.ProvideContentType(encodingConfig)
 	serverEncoderDecoder := encoding.ProvideServerEncoderDecoder(logger, contentType)
 	routeParamManager := chi.NewRouteParamManager()
-	authService, err := authentication.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
+	authService, err := authentication.ProvideService(logger, authenticationConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -79,11 +78,9 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 		return nil, err
 	}
 	uploadManager := uploads.ProvideUploadManager(uploader)
-	userDataService := users.ProvideUsersService(authConfig, logger, userDataManager, accountDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
+	userDataService := users.ProvideUsersService(authenticationConfig, logger, userDataManager, accountDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
 	accountDataService := accounts.ProvideService(logger, accountDataManager, accountUserMembershipDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
-	accountSubscriptionPlanDataManager := database.ProvidePlanDataManager(dbm)
-	accountSubscriptionPlanDataService := accountsubscriptionplans.ProvideService(logger, accountSubscriptionPlanDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
-	apiclientsConfig := apiclients.ProvideConfig(authConfig)
+	apiclientsConfig := apiclients.ProvideConfig(authenticationConfig)
 	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager, apiclientsConfig)
 	itemDataManager := database.ProvideItemDataManager(dbm)
 	searchConfig := cfg.Search
@@ -96,13 +93,13 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	webhookDataService := webhooks.ProvideWebhooksService(logger, webhookDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
 	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
 	adminAuditManager := database.ProvideAdminAuditManager(dbm)
-	adminService := admin.ProvideService(logger, authConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
+	adminService := admin.ProvideService(logger, authenticationConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
 	frontendConfig := &cfg.Frontend
 	frontendAuthService := frontend.ProvideAuthService(authService)
 	usersService := frontend.ProvideUsersService(userDataService)
 	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dbm, routeParamManager)
 	router := chi.NewRouter(logger)
-	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, accountSubscriptionPlanDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
+	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

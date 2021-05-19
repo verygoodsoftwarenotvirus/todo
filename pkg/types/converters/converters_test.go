@@ -49,19 +49,3 @@ func TestConvertItemToItemUpdateInput(T *testing.T) {
 		assert.Equal(t, expected.Details, actual.Details)
 	})
 }
-
-func TestConvertAccountSubscriptionPlanToPlanUpdateInput(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		expected := fakes.BuildFakeAccountSubscriptionPlan()
-		actual := ConvertAccountSubscriptionPlanToPlanUpdateInput(expected)
-
-		assert.Equal(t, expected.Name, actual.Name)
-		assert.Equal(t, expected.Description, actual.Description)
-		assert.Equal(t, expected.Price, actual.Price)
-		assert.Equal(t, expected.Period, actual.Period)
-	})
-}

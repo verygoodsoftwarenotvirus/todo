@@ -71,9 +71,8 @@ func TestSessionContextDataFromUser(T *testing.T) {
 
 		expected := &SessionContextData{
 			Requester: RequesterInfo{
-				RequestingUserID:       exampleUser.ID,
-				ServicePermissions:     authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
-				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
+				UserID:             exampleUser.ID,
+				ServicePermissions: authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
 			},
 			ActiveAccountID:    exampleAccount.ID,
 			AccountPermissions: exampleAccountPermissions,

@@ -19,11 +19,10 @@ func BuildFakeSessionContextData() *types.SessionContextData {
 			fakeAccountID: authorization.NewAccountRolePermissionChecker(authorization.AccountAdminRole.String()),
 		},
 		Requester: types.RequesterInfo{
-			Reputation:             types.GoodStandingAccountStatus,
-			ReputationExplanation:  "",
-			RequestingUserID:       fake.Uint64(),
-			RequiresPasswordChange: false,
-			ServicePermissions:     authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
+			Reputation:            types.GoodStandingAccountStatus,
+			ReputationExplanation: "",
+			UserID:                fake.Uint64(),
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		ActiveAccountID: fakeAccountID,
 	}
@@ -38,11 +37,10 @@ func BuildFakeSessionContextDataForAccount(account *types.Account) *types.Sessio
 			account.ID: authorization.NewAccountRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		Requester: types.RequesterInfo{
-			Reputation:             types.GoodStandingAccountStatus,
-			ReputationExplanation:  "",
-			RequestingUserID:       fake.Uint64(),
-			RequiresPasswordChange: false,
-			ServicePermissions:     authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
+			Reputation:            types.GoodStandingAccountStatus,
+			ReputationExplanation: "",
+			UserID:                fake.Uint64(),
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 		},
 		ActiveAccountID: fakeAccountID,
 	}

@@ -6,23 +6,6 @@ import (
 
 var (
 	//
-	// AccountSubscriptionPlans Table.
-	//
-
-	// AccountSubscriptionPlansTableColumns are the columns for the users table.
-	AccountSubscriptionPlansTableColumns = []string{
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, IDColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, ExternalIDColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableNameColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTableDescriptionColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTablePriceColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, AccountSubscriptionPlansTablePeriodColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, CreatedOnColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, LastUpdatedOnColumn),
-		fmt.Sprintf("%s.%s", AccountSubscriptionPlansTableName, ArchivedOnColumn),
-	}
-
-	//
 	// Accounts Table.
 	//
 

@@ -12,6 +12,8 @@ type (
 
 	// AccountRolePermissionsChecker checks permissions for one or more account Roles.
 	AccountRolePermissionsChecker interface {
+		HasPermission(Permission) bool
+
 		CanUpdateAccounts() bool
 		CanDeleteAccounts() bool
 		CanAddMemberToAccounts() bool
@@ -20,11 +22,12 @@ type (
 		CanCreateWebhooks() bool
 		CanSeeWebhooks() bool
 		CanUpdateWebhooks() bool
-		CanDeleteWebhooks() bool
+		CanArchiveWebhooks() bool
 		CanCreateAPIClients() bool
 		CanSeeAPIClients() bool
 		CanDeleteAPIClients() bool
-		CanSeeItemsAuditLogEntries() bool
+		CanSeeAuditLogEntriesForItems() bool
+		CanSeeAuditLogEntriesForWebhooks() bool
 	}
 )
 
@@ -69,6 +72,11 @@ func (r AccountRole) String() string {
 	}
 }
 
+// HasPermission returns whether a user can do something or not.
+func (r accountRoleCollection) HasPermission(p Permission) bool {
+	return hasPermission(p, r.Roles...)
+}
+
 // CanUpdateAccounts returns whether a user can update accounts or not.
 func (r accountRoleCollection) CanUpdateAccounts() bool {
 	return hasPermission(UpdateAccountPermission, r.Roles...)
@@ -76,7 +84,7 @@ func (r accountRoleCollection) CanUpdateAccounts() bool {
 
 // CanDeleteAccounts returns whether a user can delete accounts or not.
 func (r accountRoleCollection) CanDeleteAccounts() bool {
-	return hasPermission(DeleteAccountPermission, r.Roles...)
+	return hasPermission(ArchiveAccountPermission, r.Roles...)
 }
 
 // CanAddMemberToAccounts returns whether a user can add members to accounts or not.
@@ -109,9 +117,9 @@ func (r accountRoleCollection) CanUpdateWebhooks() bool {
 	return hasPermission(UpdateWebhooksPermission, r.Roles...)
 }
 
-// CanDeleteWebhooks returns whether a user can delete webhooks or not.
-func (r accountRoleCollection) CanDeleteWebhooks() bool {
-	return hasPermission(DeleteWebhooksPermission, r.Roles...)
+// CanArchiveWebhooks returns whether a user can delete webhooks or not.
+func (r accountRoleCollection) CanArchiveWebhooks() bool {
+	return hasPermission(ArchiveWebhooksPermission, r.Roles...)
 }
 
 // CanCreateAPIClients returns whether a user can create API clients or not.
@@ -126,10 +134,15 @@ func (r accountRoleCollection) CanSeeAPIClients() bool {
 
 // CanDeleteAPIClients returns whether a user can delete API clients or not.
 func (r accountRoleCollection) CanDeleteAPIClients() bool {
-	return hasPermission(DeleteAPIClientsPermission, r.Roles...)
+	return hasPermission(ArchiveAPIClientsPermission, r.Roles...)
 }
 
-// CanSeeItemsAuditLogEntries returns whether a user can view item audit log entries or not.
-func (r accountRoleCollection) CanSeeItemsAuditLogEntries() bool {
+// CanSeeAuditLogEntriesForItems returns whether a user can view item audit log entries or not.
+func (r accountRoleCollection) CanSeeAuditLogEntriesForItems() bool {
 	return hasPermission(ReadItemsAuditLogEntriesPermission, r.Roles...)
+}
+
+// CanSeeAuditLogEntriesForWebhooks returns whether a user can view item audit log entries or not.
+func (r accountRoleCollection) CanSeeAuditLogEntriesForWebhooks() bool {
+	return hasPermission(ReadWebhooksAuditLogEntriesPermission, r.Roles...)
 }

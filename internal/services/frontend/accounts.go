@@ -30,7 +30,7 @@ func (s *service) fetchAccount(ctx context.Context, sessionCtxData *types.Sessio
 	if s.useFakeData {
 		account = fakes.BuildFakeAccount()
 	} else {
-		account, err = s.dataStore.GetAccount(ctx, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.RequestingUserID)
+		account, err = s.dataStore.GetAccount(ctx, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching account data")
 		}
@@ -105,7 +105,7 @@ func (s *service) fetchAccounts(ctx context.Context, sessionCtxData *types.Sessi
 		accounts = fakes.BuildFakeAccountList()
 	} else {
 		qf := types.ExtractQueryFilter(req)
-		accounts, err = s.dataStore.GetAccounts(ctx, sessionCtxData.Requester.RequestingUserID, qf)
+		accounts, err = s.dataStore.GetAccounts(ctx, sessionCtxData.Requester.UserID, qf)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching accounts data")
 		}

@@ -33,7 +33,7 @@ func TestService_fetchAccount(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAccount, nil)
 		s.dataStore = mockDB
 
@@ -73,7 +73,7 @@ func TestService_fetchAccount(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return((*types.Account)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -104,7 +104,7 @@ func TestService_buildAccountEditorView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAccount, nil)
 		s.dataStore = mockDB
 
@@ -134,7 +134,7 @@ func TestService_buildAccountEditorView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAccount, nil)
 		s.dataStore = mockDB
 
@@ -181,7 +181,7 @@ func TestService_buildAccountEditorView(T *testing.T) {
 			"GetAccount",
 			testutil.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 		).Return((*types.Account)(nil), errors.New("blah"))
 		s.dataStore = mockDB
 
@@ -213,7 +213,7 @@ func TestService_fetchAccounts(T *testing.T) {
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
 		s.dataStore = mockDB
@@ -257,7 +257,7 @@ func TestService_fetchAccounts(T *testing.T) {
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AccountList)(nil), errors.New("blah"))
 		s.dataStore = mockDB
@@ -291,7 +291,7 @@ func TestService_buildAccountsTableView(T *testing.T) {
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
 		s.dataStore = mockDB
@@ -322,7 +322,7 @@ func TestService_buildAccountsTableView(T *testing.T) {
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
 		s.dataStore = mockDB
@@ -368,7 +368,7 @@ func TestService_buildAccountsTableView(T *testing.T) {
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
 			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.RequestingUserID,
+			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AccountList)(nil), errors.New("blah"))
 		s.dataStore = mockDB

@@ -172,7 +172,7 @@ func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
 
 	statusResponse := &types.UserStatusResponse{
 		UserIsAuthenticated:       true,
-		UserReputation:            user.Reputation,
+		UserReputation:            user.ServiceAccountStatus,
 		UserReputationExplanation: user.ReputationExplanation,
 	}
 
@@ -212,7 +212,7 @@ func (s *service) ChangeActiveAccountHandler(res http.ResponseWriter, req *http.
 	accountID := input.AccountID
 	logger = logger.WithValue("new_session_account_id", accountID)
 
-	requesterID := sessionCtxData.Requester.RequestingUserID
+	requesterID := sessionCtxData.Requester.UserID
 	logger = logger.WithValue("user_id", requesterID)
 
 	authorizedForAccount, err := s.accountMembershipManager.UserIsMemberOfAccount(ctx, requesterID, accountID)
@@ -263,7 +263,7 @@ func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionC
 		return observability.PrepareError(cookieBuildingErr, logger, span, "building cookie")
 	}
 
-	s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.RequestingUserID)
+	s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.UserID)
 	newCookie.MaxAge = -1
 	http.SetCookie(res, newCookie)
 
@@ -510,7 +510,7 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		[]byte(s.config.Cookies.SigningKey),
 	)
 
-	s.auditLog.LogCycleCookieSecretEvent(ctx, sessionCtxData.Requester.RequestingUserID)
+	s.auditLog.LogCycleCookieSecretEvent(ctx, sessionCtxData.Requester.UserID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

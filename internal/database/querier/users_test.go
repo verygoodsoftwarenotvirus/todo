@@ -42,7 +42,7 @@ func buildMockRowsFromUsers(includeCounts bool, filteredCount uint64, users ...*
 			user.TwoFactorSecret,
 			user.TwoFactorSecretVerifiedOn,
 			strings.Join(user.ServiceRoles, serviceRolesSeparator),
-			user.Reputation,
+			user.ServiceAccountStatus,
 			user.ReputationExplanation,
 			user.CreatedOn,
 			user.LastUpdatedOn,
@@ -1479,7 +1479,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		exampleUser.ExternalID = ""
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.CreatedOn = exampleCreationTime
-		exampleUser.Reputation = ""
+		exampleUser.ServiceAccountStatus = ""
 		exampleUserCreationInput := fakes.BuildFakeUserDataStoreCreationInputFromUser(exampleUser)
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)

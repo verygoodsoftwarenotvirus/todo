@@ -57,13 +57,13 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 		return
 	}
 
-	requester := sessionCtxData.Requester.RequestingUserID
+	requester := sessionCtxData.Requester.UserID
 	logger = logger.WithValue("ban_giver", requester)
 
 	var allowed bool
 
 	switch input.NewReputation {
-	case types.BannedUserReputation, types.TerminatedUserReputation:
+	case types.BannedUserAccountStatus, types.TerminatedUserReputation:
 		allowed = sessionCtxData.Requester.ServicePermissions.CanUpdateUserReputations()
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 		allowed = true
@@ -89,7 +89,7 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 	}
 
 	switch input.NewReputation {
-	case types.BannedUserReputation:
+	case types.BannedUserAccountStatus:
 		s.auditLog.LogUserBanEvent(ctx, requester, input.TargetUserID, input.Reason)
 	case types.TerminatedUserReputation:
 		s.auditLog.LogAccountTerminationEvent(ctx, requester, input.TargetUserID, input.Reason)

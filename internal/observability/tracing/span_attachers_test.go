@@ -149,18 +149,6 @@ func TestAttachRequestingUserIDToSpan(T *testing.T) {
 	})
 }
 
-func TestAttachAccountSubscriptionPlanIDToSpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachAccountSubscriptionPlanIDToSpan(span, 123)
-	})
-}
-
 func TestAttachChangeSummarySpan(T *testing.T) {
 	T.Parallel()
 

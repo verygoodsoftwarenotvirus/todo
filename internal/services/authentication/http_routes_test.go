@@ -304,7 +304,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.exampleUser.Reputation = types.BannedUserReputation
+		helper.exampleUser.ServiceAccountStatus = types.BannedUserAccountStatus
 		helper.exampleUser.ReputationExplanation = "bad behavior"
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
@@ -1381,8 +1381,8 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expected := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				RequestingUserID:      helper.exampleUser.ID,
-				Reputation:            helper.exampleUser.Reputation,
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
 				ReputationExplanation: helper.exampleUser.ReputationExplanation,
 				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 			},
@@ -1458,8 +1458,6 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		var actual *types.SessionContextData
 		require.NoError(t, gob.NewDecoder(bytes.NewReader(gobEncoding)).Decode(&actual))
 
-		// TODO: see if there's a way to restore this:
-		// 		assert.Equal(t, expected, actual)
 		assert.NotNil(t, actual)
 
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager, membershipDB)
@@ -1480,8 +1478,8 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 
 		expected := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				RequestingUserID:      helper.exampleUser.ID,
-				Reputation:            helper.exampleUser.Reputation,
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
 				ReputationExplanation: helper.exampleUser.ReputationExplanation,
 				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 			},
@@ -1557,8 +1555,6 @@ func TestAuthService_PASETOHandler(T *testing.T) {
 		var actual *types.SessionContextData
 		require.NoError(t, gob.NewDecoder(bytes.NewReader(gobEncoding)).Decode(&actual))
 
-		// TODO: see if there's a way to restore this:
-		// 		assert.Equal(t, expected, actual)
 		assert.NotNil(t, actual)
 
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, userDataManager, membershipDB)

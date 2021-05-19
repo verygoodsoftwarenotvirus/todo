@@ -35,7 +35,6 @@ type (
 		frontendService   frontend.Service
 		auditService      types.AuditLogEntryDataService
 		usersService      types.UserDataService
-		plansService      types.AccountSubscriptionPlanDataService
 		adminService      types.AdminService
 		apiClientsService types.APIClientDataService
 		webhooksService   types.WebhookDataService
@@ -58,7 +57,6 @@ func ProvideHTTPServer(
 	auditService types.AuditLogEntryDataService,
 	usersService types.UserDataService,
 	accountsService types.AccountDataService,
-	plansService types.AccountSubscriptionPlanDataService,
 	apiClientsService types.APIClientDataService,
 	itemsService types.ItemDataService,
 	webhooksService types.WebhookDataService,
@@ -86,7 +84,6 @@ func ProvideHTTPServer(
 		authService:       authService,
 		itemsService:      itemsService,
 		apiClientsService: apiClientsService,
-		plansService:      plansService,
 	}
 
 	srv.setupRouter(ctx, router, metricsHandler)

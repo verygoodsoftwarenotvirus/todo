@@ -794,7 +794,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 			Reason:       "account creation",
 			UserID:       exampleUser.ID,
 			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountMemberRole.String()},
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1022,7 +1022,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 			Reason:       "account creation",
 			UserID:       exampleUser.ID,
 			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountMemberRole.String()},
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1092,7 +1092,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 			Reason:       "account creation",
 			UserID:       exampleUser.ID,
 			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountMemberRole.String()},
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1173,7 +1173,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 			Reason:       "account creation",
 			UserID:       exampleUser.ID,
 			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountMemberRole.String()},
+			AccountRoles: []string{authorization.AccountAdminRole.String()},
 		}
 
 		ctx := context.Background()
@@ -1618,7 +1618,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccount := fakes.BuildFakeAccount()
 		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList()
 		c, db := buildTestClient(t)
 
@@ -1659,7 +1659,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccount := fakes.BuildFakeAccount()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
@@ -1687,7 +1687,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccountSubscriptionPlan()
+		exampleAccount := fakes.BuildFakeAccount()
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()

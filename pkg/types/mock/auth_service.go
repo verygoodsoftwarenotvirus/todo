@@ -24,8 +24,8 @@ func (m *AuthService) StatusHandler(res http.ResponseWriter, req *http.Request) 
 }
 
 // PermissionFilterMiddleware satisfies our interface contract.
-func (m *AuthService) PermissionFilterMiddleware(filters ...func(authorization.AccountRolePermissionsChecker) bool) func(next http.Handler) http.Handler {
-	return m.Called(filters).Get(0).(func(http.Handler) http.Handler)
+func (m *AuthService) PermissionFilterMiddleware(perms ...authorization.Permission) func(next http.Handler) http.Handler {
+	return m.Called(perms).Get(0).(func(http.Handler) http.Handler)
 }
 
 // LoginHandler satisfies our interface contract.

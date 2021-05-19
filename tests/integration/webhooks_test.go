@@ -254,36 +254,6 @@ func (s *TestSuite) TestWebhooks_Auditing_Returns404ForNonexistentWebhook() {
 	})
 }
 
-func (s *TestSuite) TestWebhooks_Auditing_InaccessibleToNonAdmins() {
-	s.runForEachClientExcept("should only be auditable to admins", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create webhook.
-			exampleWebhook := fakes.BuildFakeWebhook()
-			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, premade, err)
-
-			// Change webhook.
-			premade.Name = reverseString(premade.Name)
-			exampleWebhook.Name = premade.Name
-			assert.NoError(t, testClients.main.UpdateWebhook(ctx, premade))
-
-			// fetch audit log entries
-			actual, err := testClients.main.GetAuditLogForWebhook(ctx, premade.ID)
-			assert.Error(t, err)
-			assert.Nil(t, actual)
-
-			// Clean up item.
-			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
-		}
-	})
-}
-
 func (s *TestSuite) TestWebhooks_Auditing() {
 	s.runForEachClientExcept("should be auditable", func(testClients *testClientWrapper) func() {
 		return func() {

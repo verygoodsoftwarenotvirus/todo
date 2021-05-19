@@ -155,11 +155,10 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		expected := &types.SessionContextData{
 			Requester: types.RequesterInfo{
-				RequestingUserID:       exampleUser.ID,
-				Reputation:             exampleUser.Reputation,
-				ReputationExplanation:  exampleUser.ReputationExplanation,
-				ServicePermissions:     authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
-				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
+				UserID:                exampleUser.ID,
+				Reputation:            exampleUser.ServiceAccountStatus,
+				ReputationExplanation: exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
 			},
 			AccountPermissions: exampleAccountPermissionsMap,
 			ActiveAccountID:    expectedActiveAccountID,

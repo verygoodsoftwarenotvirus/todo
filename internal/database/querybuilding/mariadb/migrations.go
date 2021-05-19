@@ -67,30 +67,6 @@ var (
 		},
 		{
 			Version:     0.05,
-			Description: "create account subscription plans table",
-			Script: strings.Join([]string{
-				"CREATE TABLE IF NOT EXISTS account_subscription_plans (",
-				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
-				"    `external_id` VARCHAR(36) NOT NULL,",
-				"    `name` VARCHAR(128) NOT NULL,",
-				"    `description` VARCHAR(128) NOT NULL DEFAULT '',",
-				"    `price` INT UNSIGNED NOT NULL,",
-				"    `period` VARCHAR(128) NOT NULL DEFAULT '0m0s',",
-				"    `created_on` BIGINT UNSIGNED,",
-				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
-				"    PRIMARY KEY (`id`),",
-				"    UNIQUE (`name`, `archived_on`)",
-				");",
-			}, "\n"),
-		},
-		{
-			Version:     0.06,
-			Description: "create account subscription plans table creation trigger",
-			Script:      buildCreationTriggerScript(querybuilding.AccountSubscriptionPlansTableName),
-		},
-		{
-			Version:     0.07,
 			Description: "create users table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
@@ -115,36 +91,35 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.08,
+			Version:     0.06,
 			Description: "create users table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.UsersTableName),
 		},
 		{
-			Version:     0.09,
+			Version:     0.07,
 			Description: "create accounts table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS accounts (",
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` LONGTEXT NOT NULL,",
-				"    `plan_id` BIGINT UNSIGNED,",
+				"    `subscription_plan_id` VARCHAR(128),",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
 				"    `belongs_to_user` BIGINT UNSIGNED NOT NULL,",
 				"    PRIMARY KEY (`id`),",
-				"    FOREIGN KEY (`plan_id`) REFERENCES account_subscription_plans(`id`) ON DELETE RESTRICT,",
 				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE",
 				");",
 			}, "\n"),
 		},
 		{
-			Version:     0.10,
+			Version:     0.08,
 			Description: "create accounts table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.AccountsTableName),
 		},
 		{
-			Version:     0.11,
+			Version:     0.09,
 			Description: "create account user memberships table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS account_user_memberships (",
@@ -164,12 +139,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.12,
+			Version:     0.10,
 			Description: "create accounts membership creation trigger",
 			Script:      buildCreationTriggerScript("account_user_memberships"),
 		},
 		{
-			Version:     0.13,
+			Version:     0.11,
 			Description: "create API clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS api_clients (",
@@ -191,12 +166,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.14,
+			Version:     0.12,
 			Description: "create api_clients table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.APIClientsTableName),
 		},
 		{
-			Version:     0.15,
+			Version:     0.13,
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -219,12 +194,12 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.16,
+			Version:     0.14,
 			Description: "create webhooks table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.WebhooksTableName),
 		},
 		{
-			Version:     0.17,
+			Version:     0.15,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",
@@ -242,7 +217,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.18,
+			Version:     0.16,
 			Description: "create items table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.ItemsTableName),
 		},

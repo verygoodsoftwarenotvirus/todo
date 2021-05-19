@@ -139,10 +139,9 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 
 		// UserAttributionMiddleware should be called before this middleware.
 		if sessionCtxData, err := s.sessionContextDataFetcher(req); err == nil && sessionCtxData != nil {
-			logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
+			logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
-			// If your request gets here, you're likely either trying to get here, or desperately trying to get anywhere.
-			if sessionCtxData.Requester.Reputation == types.BannedUserReputation {
+			if sessionCtxData.Requester.Reputation == types.BannedUserAccountStatus || sessionCtxData.Requester.Reputation == types.TerminatedUserReputation {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return
@@ -166,14 +165,13 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 }
 
 // PermissionFilterMiddleware filters users out of requests based on provided functions.
-func (s *service) PermissionFilterMiddleware(filters ...func(authorization.AccountRolePermissionsChecker) (shouldAccept bool)) func(next http.Handler) http.Handler {
+func (s *service) PermissionFilterMiddleware(permissions ...authorization.Permission) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 			ctx, span := s.tracer.StartSpan(req.Context())
 			defer span.End()
 
 			logger := s.logger.WithRequest(req)
-			logger.Debug("PermissionFilterMiddleware called")
 
 			// check for a session context data first.
 			sessionContextData, err := s.sessionContextDataFetcher(req)
@@ -184,29 +182,29 @@ func (s *service) PermissionFilterMiddleware(filters ...func(authorization.Accou
 			}
 
 			logger = logger.WithValues(map[string]interface{}{
-				keys.RequesterIDKey: sessionContextData.Requester.RequestingUserID,
+				keys.RequesterIDKey: sessionContextData.Requester.UserID,
 				keys.AccountIDKey:   sessionContextData.ActiveAccountID,
 				"account_perms":     sessionContextData.AccountPermissions,
 			})
+			logger.Debug("PermissionFilterMiddleware called")
 
 			isServiceAdmin := sessionContextData.Requester.ServicePermissions.IsServiceAdmin()
 			logger = logger.WithValue(keys.UserIsServiceAdminKey, isServiceAdmin)
 
-			accountRoles, allowed := sessionContextData.AccountPermissions[sessionContextData.ActiveAccountID]
+			_, allowed := sessionContextData.AccountPermissions[sessionContextData.ActiveAccountID]
 			if !allowed && !isServiceAdmin {
 				logger.Debug("not authorized for account!")
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
 
-			logger = logger.WithValue("can_update_webhooks", accountRoles.CanUpdateWebhooks())
-
-			logger = logger.WithValue(keys.RequesterIDKey, sessionContextData.Requester.RequestingUserID).
+			logger = logger.WithValue(keys.RequesterIDKey, sessionContextData.Requester.UserID).
 				WithValue(keys.AccountIDKey, sessionContextData.ActiveAccountID)
 
-			for _, filter := range filters {
-				if x := filter(accountRoles); !x {
-					logger.Debug("request filtered out")
+			for _, perm := range permissions {
+				if !sessionContextData.ServiceRolePermissionChecker().HasPermission(perm) &&
+					!sessionContextData.AccountRolePermissionsChecker().HasPermission(perm) {
+					logger.WithValue("deficient_permission", perm.ID()).Debug("request filtered out")
 					s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 					return
 				}
@@ -234,7 +232,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.RequestingUserID)
+		logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
 		if !sessionCtxData.Requester.ServicePermissions.IsServiceAdmin() {
 			logger.Debug("AdminMiddleware called by non-admin user")

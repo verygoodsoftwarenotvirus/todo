@@ -6,7 +6,7 @@ func must(err error) {
 	}
 }
 
-func hasPermission(p permission, roles ...string) bool {
+func hasPermission(p Permission, roles ...string) bool {
 	for _, r := range roles {
 		if !globalAuthorizer.IsGranted(r, p, nil) {
 			return false
@@ -38,5 +38,5 @@ func CanUpdateItems(roles ...string) bool {
 
 // CanDeleteItems returns whether a user can delete items or not.
 func CanDeleteItems(roles ...string) bool {
-	return hasPermission(DeleteItemsPermission, roles...)
+	return hasPermission(ArchiveItemsPermission, roles...)
 }

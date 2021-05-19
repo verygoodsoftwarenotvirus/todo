@@ -45,7 +45,7 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		&user.TwoFactorSecret,
 		&user.TwoFactorSecretVerifiedOn,
 		&rawRoles,
-		&user.Reputation,
+		&user.ServiceAccountStatus,
 		&user.ReputationExplanation,
 		&user.CreatedOn,
 		&user.LastUpdatedOn,

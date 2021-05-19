@@ -107,7 +107,7 @@ func (s *TestSuite) checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats 
 }
 
 func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 81
+	const totalExpectedTestCount = 69
 
 	s.checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats)
 	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)

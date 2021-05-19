@@ -171,7 +171,7 @@ func (b *Sqlite) BuildCreateMembershipForNewUserQuery(ctx context.Context, userI
 				userID,
 				accountID,
 				true,
-				authorization.AccountAdminRole.String(),
+				strings.Join([]string{authorization.AccountAdminRole.String()}, accountMemberRolesSeparator),
 			),
 	)
 }

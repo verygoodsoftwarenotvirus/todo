@@ -31,7 +31,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -136,7 +136,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 
 		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
@@ -184,7 +184,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -247,7 +247,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -266,7 +266,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -296,7 +296,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error
@@ -326,7 +326,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 
-		helper.exampleInput.NewReputation = types.BannedUserReputation
+		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
 		var err error

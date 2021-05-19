@@ -249,7 +249,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			const userCount = 10
+			const userCount = 1
 
 			currentStatus, statusErr := testClients.main.UserStatus(s.ctx)
 			requireNotNilAndNoProblems(t, currentStatus, statusErr)
@@ -314,7 +314,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 					UserID:       users[i].ID,
 					AccountID:    account.ID,
 					Reason:       t.Name(),
-					AccountRoles: []string{authorization.AccountMemberRole.String()},
+					AccountRoles: []string{authorization.AccountAdminRole.String()},
 				}))
 				t.Logf("added user #%d to account #%d", users[i].ID, account.ID)
 				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAddedToAccountEvent})
@@ -328,18 +328,6 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				t.Logf("set user #%d's current active account to #%d", users[i].ID, account.ID)
 			}
 
-			// check that each user can see the webhook
-			for i := 0; i < userCount; i++ {
-				t.Logf("checking if user #%d CAN now see webhook #%d belonging to account #%d", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
-				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
-				requireNotNilAndNoProblems(t, webhook, err)
-			}
-
-			// check that each user cannot update the webhook
-			for i := 0; i < userCount; i++ {
-				require.Error(t, clients[i].UpdateWebhook(ctx, createdWebhook))
-			}
-
 			// grant all permissions
 			for i := 0; i < userCount; i++ {
 				input := &types.ModifyUserPermissionsInput{
@@ -348,6 +336,13 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				}
 				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
 				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAccountPermissionsModifiedEvent})
+			}
+
+			// check that each user can see the webhook
+			for i := 0; i < userCount; i++ {
+				t.Logf("checking if user #%d CAN now see webhook #%d belonging to account #%d", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
+				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+				requireNotNilAndNoProblems(t, webhook, err)
 			}
 
 			originalWebhookName := createdWebhook.Name

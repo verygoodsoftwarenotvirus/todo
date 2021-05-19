@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +36,7 @@ func (s *TestSuite) TestLogin() {
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		assert.Equal(t, auth.DefaultCookieName, cookie.Name)
+		assert.Equal(t, authentication.DefaultCookieName, cookie.Name)
 		assert.NotEmpty(t, cookie.Value)
 		assert.NotZero(t, cookie.MaxAge)
 		assert.True(t, cookie.HttpOnly)

@@ -237,7 +237,7 @@ func (b *MariaDB) BuildAddUserToAccountQuery(ctx context.Context, input *types.A
 			Values(
 				input.UserID,
 				input.AccountID,
-				input.AccountRole,
+				input.AccountRoles,
 				input.UserAccountPermissions,
 			),
 	)

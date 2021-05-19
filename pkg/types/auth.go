@@ -41,8 +41,8 @@ type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
 		AccountName  string                            `json:"name"`
-		AccountID    uint64                            `json:"accountID"`
 		AccountRoles []string                          `json:"-"`
+		AccountID    uint64                            `json:"accountID"`
 		Permissions  permissions.ServiceUserPermission `json:"permissions"`
 	}
 
@@ -62,9 +62,9 @@ type (
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
+		ServicePermissions     authorization.ServiceRolePermissionChecker `json:"-"`
 		Reputation             userReputation                             `json:"-"`
 		ReputationExplanation  string                                     `json:"-"`
-		ServicePermissions     authorization.ServiceRolePermissionChecker `json:"-"`
 		ID                     uint64                                     `json:"-"`
 		RequiresPasswordChange bool                                       `json:"-"`
 	}

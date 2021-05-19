@@ -32,12 +32,19 @@ type adminServiceHTTPRoutesTestHelper struct {
 func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
 	helper.exampleUser.ServiceRoles = []string{authorization.ServiceUserRole.String()}
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-		return types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]*types.UserAccountMembershipInfo{
-			helper.exampleAccount.ID: {
-				AccountName: helper.exampleAccount.Name,
-				Permissions: testutil.BuildMaxUserPerms(),
+		return types.SessionContextDataFromUser(
+			helper.exampleUser,
+			helper.exampleAccount.ID,
+			map[uint64]*types.UserAccountMembershipInfo{
+				helper.exampleAccount.ID: {
+					AccountName: helper.exampleAccount.Name,
+					Permissions: testutil.BuildMaxUserPerms(),
+				},
 			},
-		}, nil)
+			map[uint64]authorization.AccountRolePermissionsChecker{
+				helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+			},
+		)
 	}
 }
 

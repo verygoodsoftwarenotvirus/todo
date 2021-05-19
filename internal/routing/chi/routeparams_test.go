@@ -2,9 +2,10 @@ package chi
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"strconv"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 

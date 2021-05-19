@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
@@ -125,7 +125,7 @@ func (cfg *Config) ProvideCurrentUnixTimestampQuery() string {
 // ProvideSessionManager provides a session manager based on some settings.
 // There's not a great place to put this function. I don't think it belongs in Auth because it accepts a DB connection,
 // but it obviously doesn't belong in the database package, or maybe it does.
-func ProvideSessionManager(cookieConfig auth.CookieConfig, dbConf Config, db *sql.DB) (*scs.SessionManager, error) {
+func ProvideSessionManager(cookieConfig authentication.CookieConfig, dbConf Config, db *sql.DB) (*scs.SessionManager, error) {
 	sessionManager := scs.New()
 
 	if db == nil {

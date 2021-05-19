@@ -62,7 +62,11 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning user")
 	}
 
-	user.ServiceRoles = strings.Split(rawRoles, serviceRolesSeparator)
+	if roles := strings.Split(rawRoles, serviceRolesSeparator); len(roles) > 0 {
+		user.ServiceRoles = roles
+	} else {
+		user.ServiceRoles = []string{}
+	}
 
 	return user, filteredCount, totalCount, nil
 }

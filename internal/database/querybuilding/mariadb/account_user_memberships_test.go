@@ -2,9 +2,10 @@ package mariadb
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"math"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -73,16 +74,17 @@ func TestMariaDB_BuildAddUserToAccountQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleInput := &types.AddUserToAccountInput{
-			UserID:    exampleUser.ID,
-			AccountID: exampleAccount.ID,
-			Reason:    t.Name(),
+			UserID:       exampleUser.ID,
+			AccountID:    exampleAccount.ID,
+			Reason:       t.Name(),
+			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
 		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,account_role,user_account_permissions) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
 			exampleInput.UserID,
 			exampleAccount.ID,
-			exampleInput.AccountRole,
+			exampleInput.AccountRoles,
 			exampleInput.UserAccountPermissions,
 		}
 		actualQuery, actualArgs := q.BuildAddUserToAccountQuery(ctx, exampleInput)

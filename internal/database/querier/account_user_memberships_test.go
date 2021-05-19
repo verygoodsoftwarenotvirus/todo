@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
@@ -31,6 +32,7 @@ func buildMockRowsFromAccountUserMemberships(accountName string, memberships ...
 			&x.ID,
 			&x.BelongsToUser,
 			&x.BelongsToAccount,
+			strings.Join(x.AccountRoles, accountMemberRolesSeparator),
 			&x.UserAccountPermissions,
 			&x.DefaultAccount,
 			&x.CreatedOn,
@@ -56,6 +58,7 @@ func buildInvalidMockRowsFromAccountUserMemberships(accountName string, membersh
 			&x.ID,
 			&x.BelongsToUser,
 			&x.BelongsToAccount,
+			strings.Join(x.AccountRoles, accountMemberRolesSeparator),
 			&x.UserAccountPermissions,
 			&x.DefaultAccount,
 			&x.CreatedOn,
@@ -116,9 +119,10 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
-				AccountName: exampleAccount.Name,
-				AccountID:   membership.BelongsToAccount,
-				Permissions: membership.UserAccountPermissions,
+				AccountName:  exampleAccount.Name,
+				AccountID:    membership.BelongsToAccount,
+				Permissions:  membership.UserAccountPermissions,
+				AccountRoles: membership.AccountRoles,
 			}
 		}
 
@@ -157,10 +161,20 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermsMap, nil)
-		require.NoError(t, err)
-		require.NotNil(t, expected)
-		expected.ActiveAccountID = exampleAccount.Members[0].BelongsToAccount
+		expectedActiveAccountID := exampleAccount.Members[0].BelongsToAccount
+
+		expected := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				ID:                     exampleUser.ID,
+				Reputation:             exampleUser.Reputation,
+				ReputationExplanation:  exampleUser.ReputationExplanation,
+				ServicePermissions:     authorization.NewServiceRolePermissionChecker(exampleUser.ServiceRoles...),
+				RequiresPasswordChange: exampleUser.RequiresPasswordChange,
+			},
+			AccountRolesMap:       exampleAccountPermissionsMap,
+			AccountPermissionsMap: examplePermsMap,
+			ActiveAccountID:       expectedActiveAccountID,
+		}
 
 		actual, err := c.BuildSessionContextDataForUser(ctx, exampleUser.ID)
 		assert.NoError(t, err)

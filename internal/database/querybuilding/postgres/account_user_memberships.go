@@ -240,7 +240,7 @@ func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, input *types.
 			Values(
 				input.UserID,
 				input.AccountID,
-				input.AccountRole,
+				input.AccountRoles,
 				input.UserAccountPermissions,
 			),
 	)

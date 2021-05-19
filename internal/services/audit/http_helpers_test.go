@@ -2,10 +2,11 @@ package audit
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"

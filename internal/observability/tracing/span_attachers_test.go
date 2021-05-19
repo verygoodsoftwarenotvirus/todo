@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
@@ -187,8 +189,10 @@ func TestAttachSessionContextDataToSpan(T *testing.T) {
 		AttachSessionContextDataToSpan(span, &types.SessionContextData{
 			AccountPermissionsMap: nil,
 			AccountRolesMap:       nil,
-			Requester:             types.RequesterInfo{},
-			ActiveAccountID:       0,
+			Requester: types.RequesterInfo{
+				ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
+			},
+			ActiveAccountID: 0,
 		})
 	})
 }

@@ -7,7 +7,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -22,7 +22,7 @@ const (
 type (
 	// service handles passwords service-wide.
 	service struct {
-		config                    *auth.Config
+		config                    *authentication.Config
 		logger                    logging.Logger
 		authenticator             passwords.Authenticator
 		userDB                    types.AdminUserDataManager
@@ -38,7 +38,7 @@ type (
 // ProvideService builds a new AuthService.
 func ProvideService(
 	logger logging.Logger,
-	cfg *auth.Config,
+	cfg *authentication.Config,
 	authenticator passwords.Authenticator,
 	userDataManager types.AdminUserDataManager,
 	auditLog types.AdminAuditManager,

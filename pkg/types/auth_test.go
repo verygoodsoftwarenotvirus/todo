@@ -81,7 +81,7 @@ func TestSessionContextDataFromUser(T *testing.T) {
 			AccountRolesMap:       exampleAccountPermissions,
 		}
 
-		actual, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermissions, nil)
+		actual, err := SessionContextDataFromUser(exampleUser, exampleAccount.ID, examplePermissions, exampleAccountPermissions)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, actual)
 	})

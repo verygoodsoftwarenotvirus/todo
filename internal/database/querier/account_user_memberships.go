@@ -55,7 +55,11 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 	newPerms := permissions.NewServiceUserPermissions(rawPerms)
 	x.UserAccountPermissions = newPerms
 
-	x.AccountRoles = strings.Split(rawAccountRoles, accountMemberRolesSeparator)
+	if roles := strings.Split(rawAccountRoles, accountMemberRolesSeparator); len(roles) > 0 {
+		x.AccountRoles = roles
+	} else {
+		x.AccountRoles = []string{}
+	}
 
 	return x, accountName, nil
 }
@@ -92,7 +96,7 @@ func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows databa
 		return 0, nil, nil, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
-	return defaultAccount, membershipMap, nil, nil
+	return defaultAccount, membershipMap, accountRolesMap, nil
 }
 
 // BuildSessionContextDataForUser does .
@@ -124,6 +128,11 @@ func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID 
 		return nil, observability.PrepareError(err, logger, span, "scanning user's memberships from database")
 	}
 
+	actualAccountRolesMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+	for k, v := range accountRolesMap {
+		actualAccountRolesMap[k] = authorization.NewAccountRolePermissionChecker(v...)
+	}
+
 	sessionCtxData := &types.SessionContextData{
 		Requester: types.RequesterInfo{
 			ID:                     user.ID,
@@ -132,12 +141,9 @@ func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID 
 			ServicePermissions:     authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
 			RequiresPasswordChange: user.RequiresPasswordChange,
 		},
+		AccountRolesMap:       actualAccountRolesMap,
 		AccountPermissionsMap: membershipMap,
 		ActiveAccountID:       defaultAccountID,
-	}
-
-	for accountID, roles := range accountRolesMap {
-		sessionCtxData.AccountRolesMap[accountID] = authorization.NewAccountRolePermissionChecker(roles...)
 	}
 
 	return sessionCtxData, nil

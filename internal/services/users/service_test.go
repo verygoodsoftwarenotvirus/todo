@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
 	mockuploads "gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -35,7 +35,7 @@ func buildTestService(t *testing.T) *service {
 	).Return(expectedUserCount, nil)
 
 	s := ProvideUsersService(
-		&auth.Config{},
+		&authentication.Config{},
 		logging.NewNonOperationalLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
@@ -66,7 +66,7 @@ func TestProvideUsersService(T *testing.T) {
 			mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideUsersService(
-			&auth.Config{},
+			&authentication.Config{},
 			logging.NewNonOperationalLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},

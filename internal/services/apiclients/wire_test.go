@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 )
 
 func TestProvideConfig(T *testing.T) {
@@ -14,6 +14,6 @@ func TestProvideConfig(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, ProvideConfig(&auth.Config{}))
+		assert.NotNil(t, ProvideConfig(&authentication.Config{}))
 	})
 }

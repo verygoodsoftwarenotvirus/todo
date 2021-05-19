@@ -22,7 +22,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 )
 
@@ -47,8 +47,8 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 			Encoding: encoding.Config{
 				ContentType: "application/json",
 			},
-			Auth: auth.Config{
-				Cookies: auth.CookieConfig{
+			Auth: authentication.Config{
+				Cookies: authentication.CookieConfig{
 					Name:     "todocookie",
 					Domain:   "https://verygoodsoftwarenotvirus.ru",
 					Lifetime: time.Second,

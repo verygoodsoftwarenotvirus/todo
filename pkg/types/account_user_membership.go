@@ -45,7 +45,7 @@ type (
 	// AddUserToAccountInput represents what a User could set as input for updating account user memberships.
 	AddUserToAccountInput struct {
 		Reason                 string                            `json:"reason"`
-		AccountRole            string                            `json:"accountRole"` // TODO: make me a []string{}
+		AccountRoles           []string                          `json:"accountRole"`
 		UserID                 uint64                            `json:"userID"`
 		AccountID              uint64                            `json:"accountID"`
 		UserAccountPermissions permissions.ServiceUserPermission `json:"userAccountPermissions"`

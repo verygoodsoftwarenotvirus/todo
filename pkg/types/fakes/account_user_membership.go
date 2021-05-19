@@ -1,6 +1,7 @@
 package fakes
 
 import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/permissions"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
@@ -14,6 +15,7 @@ func BuildFakeAccountUserMembership() *types.AccountUserMembership {
 		BelongsToUser:          fake.Uint64(),
 		BelongsToAccount:       fake.Uint64(),
 		UserAccountPermissions: permissions.ServiceUserPermission(fake.Int64()),
+		AccountRoles:           []string{authorization.AccountMemberRole.String()},
 		CreatedOn:              0,
 		ArchivedOn:             nil,
 	}

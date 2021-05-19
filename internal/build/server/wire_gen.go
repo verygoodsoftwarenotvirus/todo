@@ -24,7 +24,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/auth"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
@@ -60,7 +60,7 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	contentType := encoding.ProvideContentType(encodingConfig)
 	serverEncoderDecoder := encoding.ProvideServerEncoderDecoder(logger, contentType)
 	routeParamManager := chi.NewRouteParamManager()
-	authService, err := auth.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
+	authService, err := authentication.ProvideService(logger, authConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}

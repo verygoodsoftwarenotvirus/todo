@@ -219,7 +219,7 @@ func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, input *types.Ad
 				input.UserID,
 				input.AccountID,
 				input.UserAccountPermissions,
-				input.AccountRole,
+				input.AccountRoles,
 			),
 	)
 }

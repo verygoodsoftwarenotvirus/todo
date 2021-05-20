@@ -12,6 +12,8 @@ func BuildFakeAccount() *types.Account {
 		ID:            uint64(fake.Uint32()),
 		ExternalID:    fake.UUID(),
 		Name:          fake.Word(),
+		ContactEmail:  fake.Email(),
+		ContactPhone:  fake.PhoneFormatted(),
 		CreatedOn:     uint64(uint32(fake.Date().Unix())),
 		BelongsToUser: fake.Uint64(),
 		Members:       BuildFakeAccountUserMembershipList().AccountUserMemberships,

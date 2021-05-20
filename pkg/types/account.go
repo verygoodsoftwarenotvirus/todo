@@ -11,15 +11,18 @@ import (
 type (
 	// Account represents an account.
 	Account struct {
-		ArchivedOn                *uint64                  `json:"archivedOn"`
-		AccountSubscriptionPlanID *uint64                  `json:"accountSubscriptionPlanID"`
-		LastUpdatedOn             *uint64                  `json:"lastUpdatedOn"`
-		Name                      string                   `json:"name"`
-		ExternalID                string                   `json:"externalID"`
-		Members                   []*AccountUserMembership `json:"members"`
-		CreatedOn                 uint64                   `json:"createdOn"`
-		ID                        uint64                   `json:"id"`
-		BelongsToUser             uint64                   `json:"belongsToUser"`
+		ArchivedOn                 *uint64                  `json:"archivedOn"`
+		AccountSubscriptionPlanID  *uint64                  `json:"accountSubscriptionPlanID"`
+		LastUpdatedOn              *uint64                  `json:"lastUpdatedOn"`
+		Name                       string                   `json:"name"`
+		ContactEmail               string                   `json:"contactEmail"`             // TODO: schema
+		ContactPhone               string                   `json:"contactPhone"`             // TODO: schema
+		PaymentProcessorCustomerID string                   `json:"paymentProcessorCustomer"` // TODO: schema
+		ExternalID                 string                   `json:"externalID"`
+		Members                    []*AccountUserMembership `json:"members"`
+		CreatedOn                  uint64                   `json:"createdOn"`
+		ID                         uint64                   `json:"id"`
+		BelongsToUser              uint64                   `json:"belongsToUser"`
 	}
 
 	// AccountList represents a list of accounts.

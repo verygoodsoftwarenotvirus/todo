@@ -3,17 +3,19 @@ package stripe
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/client"
 	"github.com/stripe/stripe-go/form"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	"net/http"
-	"testing"
 )
 
 const (
@@ -25,7 +27,7 @@ func buildTestPaymentManager(t *testing.T) *stripePaymentManager {
 
 	logger := logging.NewNonOperationalLogger()
 
-	pm := NewStripePaymentManager(logger, fakeAPIKey)
+	pm := NewStripePaymentManager(logger, &capitalism.StripeConfig{})
 
 	return pm.(*stripePaymentManager)
 }
@@ -37,7 +39,7 @@ func TestNewStripePaymentManager(T *testing.T) {
 		t.Parallel()
 
 		logger := logging.NewNonOperationalLogger()
-		pm := NewStripePaymentManager(logger, fakeAPIKey)
+		pm := NewStripePaymentManager(logger, &capitalism.StripeConfig{})
 
 		assert.NotNil(t, pm)
 	})
@@ -270,12 +272,33 @@ func Test_stripePaymentManager_UnsubscribeFromPlan(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
+		exampleAPIKey := fakeAPIKey
 		exampleSubscriptionID := "fake_subscription_id"
 		pm := buildTestPaymentManager(t)
 
 		mockAPIBackend := &mockBackend{}
 		mockConnectBackend := &mockBackend{}
 		mockUploadsBackend := &mockBackend{}
+
+		expectedCustomer := &stripe.Customer{
+			Subscriptions: &stripe.SubscriptionList{
+				Data: []*stripe.Subscription{
+					{
+						ID: exampleSubscriptionID,
+					},
+				},
+			},
+		}
+
+		mockAPIBackend.AnticipateCall(t, expectedCustomer)
+		mockAPIBackend.On(
+			"Call",
+			http.MethodDelete,
+			fmt.Sprintf("/v1/subscriptions/%s", exampleSubscriptionID),
+			exampleAPIKey,
+			buildCancellationParams(),
+			mock.IsType(&stripe.Subscription{}),
+		).Return(nil)
 
 		mockedBackends := &stripe.Backends{
 			API:     mockAPIBackend,
@@ -299,6 +322,7 @@ func Test_stripePaymentManager_findSubscriptionID(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
+		exampleAPIKey := fakeAPIKey
 		exampleCustomerID := "fake_customer"
 		examplePlanID := "fake_plan"
 		pm := buildTestPaymentManager(t)
@@ -307,14 +331,38 @@ func Test_stripePaymentManager_findSubscriptionID(T *testing.T) {
 		mockConnectBackend := &mockBackend{}
 		mockUploadsBackend := &mockBackend{}
 
+		expected := "fake_subscription_id"
+
+		expectedCustomer := &stripe.Customer{
+			ID: exampleCustomerID,
+			Subscriptions: &stripe.SubscriptionList{
+				Data: []*stripe.Subscription{
+					{
+						ID: expected,
+						Plan: &stripe.Plan{
+							ID: examplePlanID,
+						},
+					},
+				},
+			},
+		}
+
+		mockAPIBackend.AnticipateCall(t, expectedCustomer)
+		mockAPIBackend.On(
+			"Call",
+			http.MethodGet,
+			fmt.Sprintf("/v1/customers/%s", exampleCustomerID),
+			exampleAPIKey,
+			mock.IsType(&stripe.CustomerParams{}),
+			mock.IsType(&stripe.Customer{}),
+		).Return(nil)
+
 		mockedBackends := &stripe.Backends{
 			API:     mockAPIBackend,
 			Connect: mockConnectBackend,
 			Uploads: mockUploadsBackend,
 		}
 		pm.client = client.New(fakeAPIKey, mockedBackends)
-
-		expected := "fake_subscription_id"
 
 		actual, err := pm.findSubscriptionID(ctx, exampleCustomerID, examplePlanID)
 		assert.NoError(t, err)

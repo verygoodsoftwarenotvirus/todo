@@ -4,10 +4,11 @@ import (
 	// import embed for the side effect.
 	_ "embed"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"html/template"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
@@ -60,17 +61,22 @@ func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 	}
 }
 
+const (
+	basicPlanPrice   = 300
+	premiumPlanPrice = 1000
+)
+
 var (
 	validSubscriptionPlans = []capitalism.SubscriptionPlan{
 		{
 			ID:    "price_1ItP8lJ45Mr1esdKtP70clB2",
 			Name:  "Basic Plan",
-			Price: 300,
+			Price: basicPlanPrice,
 		},
 		{
 			ID:    "price_1ItP8wJ45Mr1esdK4KDseAQ8",
 			Name:  "Premium Plan",
-			Price: 1000,
+			Price: premiumPlanPrice,
 		},
 	}
 )

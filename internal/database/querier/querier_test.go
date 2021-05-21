@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -220,7 +221,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		mockDB.ExpectPing().WillDelayFor(0)
 
-		exampleConfig := &dbconfig.Config{
+		exampleConfig := &config.Config{
 			Debug:           true,
 			RunMigrations:   true,
 			MaxPingAttempts: 1,
@@ -255,8 +256,8 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		mockDB.ExpectPing().WillDelayFor(0)
 
-		exampleConfig := &dbconfig.Config{
-			Provider:        dbconfig.PostgresProvider,
+		exampleConfig := &config.Config{
+			Provider:        config.PostgresProvider,
 			Debug:           true,
 			RunMigrations:   true,
 			MaxPingAttempts: 1,
@@ -283,7 +284,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		mockDB.ExpectPing().WillReturnError(errors.New("blah"))
 
-		exampleConfig := &dbconfig.Config{
+		exampleConfig := &config.Config{
 			Debug:           true,
 			RunMigrations:   true,
 			MaxPingAttempts: 1,

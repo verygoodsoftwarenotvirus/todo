@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"log"
 	"os"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 
@@ -26,7 +28,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -169,7 +170,7 @@ func localDevelopmentConfig(filePath string) error {
 			MinimumPasswordLength: 8,
 		},
 		Capitalism: localCapitalism,
-		Database: dbconfig.Config{
+		Database: config2.Config{
 			Debug:                     true,
 			RunMigrations:             true,
 			MaxPingAttempts:           maxAttempts,
@@ -255,7 +256,7 @@ func frontendTestsConfig(filePath string) error {
 			MinimumPasswordLength: 8,
 		},
 		Capitalism: localCapitalism,
-		Database: dbconfig.Config{
+		Database: config2.Config{
 			Debug:                     true,
 			RunMigrations:             true,
 			Provider:                  postgres,
@@ -345,7 +346,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				MinimumUsernameLength: 4,
 				MinimumPasswordLength: 8,
 			},
-			Database: dbconfig.Config{
+			Database: config2.Config{
 				Debug:                     false,
 				RunMigrations:             true,
 				Provider:                  dbVendor,

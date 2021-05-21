@@ -8,6 +8,7 @@ package server
 import (
 	"context"
 	"database/sql"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -50,8 +51,8 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	apiClientDataManager := database.ProvideAPIClientDataManager(dbm)
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
 	cookieConfig := authenticationConfig.Cookies
-	configConfig := cfg.Database
-	sessionManager, err := config2.ProvideSessionManager(cookieConfig, configConfig, db)
+	databaseConfig := cfg.Database
+	sessionManager, err := config2.ProvideSessionManager(cookieConfig, databaseConfig, db)
 	if err != nil {
 		return nil, err
 	}

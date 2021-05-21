@@ -2,8 +2,9 @@ package frontend
 
 import (
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 )

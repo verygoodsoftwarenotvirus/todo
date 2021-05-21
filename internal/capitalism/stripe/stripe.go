@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
@@ -25,20 +24,22 @@ const (
 )
 
 type (
+	// WebhookSecret is a string alias for dependency injection.
 	WebhookSecret string
-	APIKey        string
+	// APIKey is a string alias for dependency injection.
+	APIKey string
 
 	stripePaymentManager struct {
+		logger        logging.Logger
+		tracer        tracing.Tracer
 		client        *client.API
 		successURL    string
 		cancelURL     string
 		webhookSecret string
-		logger        logging.Logger
-		tracer        tracing.Tracer
 	}
 )
 
-// NewStripePaymentManager builds a Stripe-backed stripePaymentManager
+// NewStripePaymentManager builds a Stripe-backed stripePaymentManager.
 func NewStripePaymentManager(logger logging.Logger, cfg *capitalism.StripeConfig) capitalism.PaymentManager {
 	return &stripePaymentManager{
 		client:        client.New(cfg.APIKey, nil),
@@ -101,30 +102,20 @@ const (
 	webhookEventTypeInvoicePaymentFailed = "invoice.payment_failed"
 )
 
-func (s *stripePaymentManager) handleWebhook(res http.ResponseWriter, req *http.Request) {
+func (s *stripePaymentManager) HandleSubscriptionEventWebhook(req *http.Request) error {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
-
-	if req.Method != "POST" {
-		http.Error(res, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
 
 	logger := s.logger.WithRequest(req)
 
 	b, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		http.Error(res, err.Error(), http.StatusBadRequest)
-		observability.AcknowledgeError(err, logger, span, "parsing received webhook content")
-		return
+		return observability.PrepareError(err, logger, span, "parsing received webhook content")
 	}
 
 	event, err := webhook.ConstructEvent(b, req.Header.Get("Stripe-Signature"), s.webhookSecret)
-
 	if err != nil {
-		http.Error(res, err.Error(), http.StatusBadRequest)
-		log.Printf("webhook.ConstructEvent: %v", err)
-		return
+		return observability.PrepareError(err, logger, span, "constructing webhook event")
 	}
 
 	switch event.Type {
@@ -142,6 +133,8 @@ func (s *stripePaymentManager) handleWebhook(res http.ResponseWriter, req *http.
 	default:
 		// unhandled event type
 	}
+
+	return nil
 }
 
 func (s *stripePaymentManager) CreateCustomerID(ctx context.Context, account *types.Account) (string, error) {
@@ -234,16 +227,20 @@ func (s *stripePaymentManager) SubscribeToPlan(ctx context.Context, customerID, 
 	return subscription.ID, nil
 }
 
+func buildCancellationParams() *stripe.SubscriptionCancelParams {
+	return &stripe.SubscriptionCancelParams{
+		InvoiceNow: stripe.Bool(true),
+		Prorate:    stripe.Bool(true),
+	}
+}
+
 func (s *stripePaymentManager) UnsubscribeFromPlan(ctx context.Context, subscriptionID string) error {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithValue("subscription_id", subscriptionID)
 
-	params := &stripe.SubscriptionCancelParams{
-		InvoiceNow: stripe.Bool(true),
-		Prorate:    stripe.Bool(true),
-	}
+	params := buildCancellationParams()
 
 	if _, err := s.client.Subscriptions.Cancel(subscriptionID, params); err != nil {
 		return observability.PrepareError(err, logger, span, "unsubscribing from plan")

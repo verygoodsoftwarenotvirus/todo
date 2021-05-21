@@ -117,7 +117,7 @@ func (c *Client) ChangePassword(ctx context.Context, cookie *http.Cookie, input 
 	c.closeResponseBody(ctx, res)
 
 	if res.StatusCode != http.StatusOK {
-		return observability.PrepareError(err, logger, span, "invalid response code: %d", res.StatusCode)
+		return observability.PrepareError(errInvalidResponseCode, logger, span, "invalid response code: %d", res.StatusCode)
 	}
 
 	return nil
@@ -185,7 +185,7 @@ func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token stri
 	if res.StatusCode == http.StatusBadRequest {
 		return ErrInvalidTOTPToken
 	} else if res.StatusCode != http.StatusAccepted {
-		return observability.PrepareError(err, logger, span, "erroneous response code when validating TOTP secret: %d", res.StatusCode)
+		return observability.PrepareError(errInvalidResponseCode, logger, span, "erroneous response code when validating TOTP secret: %d", res.StatusCode)
 	}
 
 	return nil

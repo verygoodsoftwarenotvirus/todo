@@ -2,9 +2,10 @@ package frontend
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"html/template"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"

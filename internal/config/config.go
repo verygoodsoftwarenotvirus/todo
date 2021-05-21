@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"os"
 	"strings"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 
@@ -22,7 +24,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querier"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
@@ -65,7 +66,7 @@ type (
 		Observability observability.Config  `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config        `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
 		Meta          MetaSettings          `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      dbconfig.Config       `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Database      config.Config         `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Auth          authentication.Config `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Server        server.Config         `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		AuditLog      audit.Config          `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`

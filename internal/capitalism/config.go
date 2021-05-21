@@ -7,14 +7,15 @@ import (
 )
 
 const (
+	// StripeProvider is the key that indicates Stripe should be used for payments.
 	StripeProvider = "stripe"
 )
 
 type (
 	Config struct {
-		Enabled  bool          `json:"enabled" mapstructure:"enabled" toml:"enabled"`
-		Provider string        `json:"provider" mapstructure:"provider" toml:"provider"`
 		Stripe   *StripeConfig `json:"stripe" mapstructure:"stripe" toml:"stripe"`
+		Provider string        `json:"provider" mapstructure:"provider" toml:"provider"`
+		Enabled  bool          `json:"enabled" mapstructure:"enabled" toml:"enabled"`
 	}
 
 	// StripeConfig configures our Stripe interface.

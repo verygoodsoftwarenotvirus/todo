@@ -28,7 +28,9 @@ func (s *service) handleCheckoutSessionStart(res http.ResponseWriter, req *http.
 
 	logger.WithValue("sessionID", sessionID).Debug("session id fetched")
 
-	res.Write([]byte(fmt.Sprintf(`{ "sessionID": %q }`, sessionID)))
+	if _, err = res.Write([]byte(fmt.Sprintf(`{ "sessionID": %q }`, sessionID))); err != nil {
+		return
+	}
 }
 
 func (s *service) handleCheckoutSuccess(res http.ResponseWriter, req *http.Request) {

@@ -248,14 +248,14 @@ func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionC
 	logger := s.logger
 	tracing.AttachRequestToSpan(span, req)
 
-	ctx, err := s.sessionManager.Load(ctx, "")
-	if err != nil {
+	ctx, loadErr := s.sessionManager.Load(ctx, "")
+	if loadErr != nil {
 		// this can literally never happen in this version of scs, because the token is empty
-		return observability.PrepareError(err, logger, span, "loading token")
+		return observability.PrepareError(loadErr, logger, span, "loading token")
 	}
 
 	if destroyErr := s.sessionManager.Destroy(ctx); destroyErr != nil {
-		return observability.PrepareError(err, logger, span, "destroying user session")
+		return observability.PrepareError(destroyErr, logger, span, "destroying user session")
 	}
 
 	newCookie, cookieBuildingErr := s.buildCookie("deleted", time.Time{})

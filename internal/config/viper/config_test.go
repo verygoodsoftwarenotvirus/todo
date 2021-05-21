@@ -8,11 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -57,6 +59,16 @@ func TestFromConfig(T *testing.T) {
 			},
 			Encoding: encoding.Config{
 				ContentType: "application/json",
+			},
+			Capitalism: capitalism.Config{
+				Enabled:  false,
+				Provider: capitalism.StripeProvider,
+				Stripe: &capitalism.StripeConfig{
+					APIKey:        "whatever",
+					SuccessURL:    "whatever",
+					CancelURL:     "whatever",
+					WebhookSecret: "whatever",
+				},
 			},
 			Auth: authentication.Config{
 				Cookies: authentication.CookieConfig{
@@ -108,7 +120,7 @@ func TestFromConfig(T *testing.T) {
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
 			},
-			Database: dbconfig.Config{
+			Database: config2.Config{
 				Provider:                  "postgres",
 				MetricsCollectionInterval: 2 * time.Second,
 				Debug:                     true,
@@ -197,7 +209,7 @@ func TestParseConfigFile(T *testing.T) {
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
 			},
-			Database: dbconfig.Config{
+			Database: config2.Config{
 				Provider:                  "postgres",
 				MetricsCollectionInterval: 2 * time.Second,
 				Debug:                     true,
@@ -288,7 +300,7 @@ debug = ":banana:"
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
 			},
-			Database: dbconfig.Config{
+			Database: config2.Config{
 				Provider:                  "postgres",
 				MetricsCollectionInterval: 2 * time.Second,
 				Debug:                     true,

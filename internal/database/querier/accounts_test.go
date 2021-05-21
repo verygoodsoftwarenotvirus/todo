@@ -37,7 +37,11 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 				x.ID,
 				x.ExternalID,
 				x.Name,
-				x.AccountSubscriptionPlanID,
+				x.BillingStatus,
+				x.ContactEmail,
+				x.ContactPhone,
+				x.PaymentProcessorCustomerID,
+				x.SubscriptionPlanID,
 				x.CreatedOn,
 				x.LastUpdatedOn,
 				x.ArchivedOn,
@@ -787,6 +791,8 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.ExternalID = ""
+		exampleAccount.BillingStatus = types.UnpaidAccountBillingStatus
+		exampleAccount.PaymentProcessorCustomerID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)

@@ -136,7 +136,7 @@ func TestService_fetchSessionContextDataFromPASETO(T *testing.T) {
 	})
 }
 
-func TestAuthService_CookieAuthenticationMiddleware(T *testing.T) {
+func TestAuthenticationService_CookieAuthenticationMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestAuthService_CookieAuthenticationMiddleware(T *testing.T) {
 	})
 }
 
-func TestAuthService_UserAttributionMiddleware(T *testing.T) {
+func TestAuthenticationService_UserAttributionMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -268,7 +268,7 @@ func TestAuthService_UserAttributionMiddleware(T *testing.T) {
 	})
 }
 
-func TestAuthService_AuthorizationMiddleware(T *testing.T) {
+func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -377,7 +377,7 @@ func TestAuthService_AuthorizationMiddleware(T *testing.T) {
 	})
 }
 
-func TestAuthService_AdminMiddleware(T *testing.T) {
+func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

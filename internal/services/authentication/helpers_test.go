@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAuthService_getUserIDFromCookie(T *testing.T) {
+func TestAuthenticationService_getUserIDFromCookie(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -107,7 +107,7 @@ func TestAuthService_getUserIDFromCookie(T *testing.T) {
 	})
 }
 
-func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
+func TestAuthenticationService_determineUserFromRequestCookie(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -166,7 +166,7 @@ func TestAuthService_determineUserFromRequestCookie(T *testing.T) {
 	})
 }
 
-func TestAuthService_validateLogin(T *testing.T) {
+func TestAuthenticationService_validateLogin(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -264,7 +264,7 @@ func TestAuthService_validateLogin(T *testing.T) {
 	})
 }
 
-func TestAuthService_buildCookie(T *testing.T) {
+func TestAuthenticationService_buildCookie(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

@@ -143,11 +143,17 @@ func (b *Sqlite) BuildAccountCreationQuery(ctx context.Context, input *types.Acc
 			Columns(
 				querybuilding.ExternalIDColumn,
 				querybuilding.AccountsTableNameColumn,
+				querybuilding.AccountsTableBillingStatusColumn,
+				querybuilding.AccountsTableContactEmailColumn,
+				querybuilding.AccountsTableContactPhoneColumn,
 				querybuilding.AccountsTableUserOwnershipColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),
 				input.Name,
+				types.UnpaidAccountBillingStatus,
+				input.ContactEmail,
+				input.ContactPhone,
 				input.BelongsToUser,
 			),
 	)
@@ -162,6 +168,8 @@ func (b *Sqlite) BuildUpdateAccountQuery(ctx context.Context, input *types.Accou
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsTableName).
 			Set(querybuilding.AccountsTableNameColumn, input.Name).
+			Set(querybuilding.AccountsTableContactEmailColumn, input.ContactEmail).
+			Set(querybuilding.AccountsTableContactPhoneColumn, input.ContactPhone).
 			Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:                         input.ID,

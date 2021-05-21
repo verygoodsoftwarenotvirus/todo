@@ -67,7 +67,11 @@ var (
 			CREATE TABLE IF NOT EXISTS accounts (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				external_id TEXT NOT NULL,
-				name CHARACTER VARYING NOT NULL,
+				name TEXT NOT NULL,
+				billing_status TEXT NOT NULL DEFAULT 'unpaid',
+				contact_email TEXT NOT NULL DEFAULT '',
+				contact_phone TEXT NOT NULL DEFAULT '',
+				payment_processor_customer_id TEXT NOT NULL DEFAULT '',
 				subscription_plan_id TEXT,
 				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
@@ -137,8 +141,8 @@ var (
 			CREATE TABLE IF NOT EXISTS items (
 				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 				external_id TEXT NOT NULL,
-				name CHARACTER VARYING NOT NULL,
-				details CHARACTER VARYING NOT NULL DEFAULT '',
+				name TEXT NOT NULL,
+				details TEXT NOT NULL DEFAULT '',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,

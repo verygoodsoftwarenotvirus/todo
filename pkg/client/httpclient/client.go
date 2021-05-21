@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -32,6 +33,8 @@ var (
 	cookieAuthMethod   = new(authMethod)
 	pasetoAuthMethod   = new(authMethod)
 	defaultContentType = encoding.ContentTypeJSON
+
+	errInvalidResponseCode = errors.New("invalid response code")
 )
 
 // Client is a client for interacting with v1 of our HTTP API.

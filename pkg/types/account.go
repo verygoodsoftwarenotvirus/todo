@@ -8,16 +8,27 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+const (
+	// PaidAccountBillingStatus indicates an account is fully paid.
+	PaidAccountBillingStatus AccountBillingStatus = "paid"
+	// UnpaidAccountBillingStatus indicates an account is not paid.
+	UnpaidAccountBillingStatus AccountBillingStatus = "unpaid"
+)
+
 type (
+	// AccountBillingStatus is the type to use/compare against when checking billing status.
+	AccountBillingStatus string
+
 	// Account represents an account.
 	Account struct {
 		ArchivedOn                 *uint64                  `json:"archivedOn"`
-		AccountSubscriptionPlanID  *uint64                  `json:"accountSubscriptionPlanID"`
+		SubscriptionPlanID         *uint64                  `json:"subscriptionPlanID"`
 		LastUpdatedOn              *uint64                  `json:"lastUpdatedOn"`
 		Name                       string                   `json:"name"`
-		ContactEmail               string                   `json:"contactEmail"`             // TODO: schema
-		ContactPhone               string                   `json:"contactPhone"`             // TODO: schema
-		PaymentProcessorCustomerID string                   `json:"paymentProcessorCustomer"` // TODO: schema
+		BillingStatus              AccountBillingStatus     `json:"billingStatus"`
+		ContactEmail               string                   `json:"contactEmail"`
+		ContactPhone               string                   `json:"contactPhone"`
+		PaymentProcessorCustomerID string                   `json:"paymentProcessorCustomer"`
 		ExternalID                 string                   `json:"externalID"`
 		Members                    []*AccountUserMembership `json:"members"`
 		CreatedOn                  uint64                   `json:"createdOn"`
@@ -34,12 +45,16 @@ type (
 	// AccountCreationInput represents what a User could set as input for creating accounts.
 	AccountCreationInput struct {
 		Name          string `json:"name"`
+		ContactEmail  string `json:"contactEmail"`
+		ContactPhone  string `json:"contactPhone"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
 	// AccountUpdateInput represents what a User could set as input for updating accounts.
 	AccountUpdateInput struct {
 		Name          string `json:"name"`
+		ContactEmail  string `json:"contactEmail"`
+		ContactPhone  string `json:"contactPhone"`
 		BelongsToUser uint64 `json:"-"`
 	}
 
